@@ -1,0 +1,2434 @@
+@import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css);
+@import url(https://fonts.cdnfonts.com/css/sf-mono);
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-bg-dark: #121212;
+  --color-bg-alt-dark: #1E1E1E;
+  --color-surface-dark: rgba(255, 255, 255, 0.05);
+  --color-surface-hover-dark: rgba(255, 255, 255, 0.08);
+  --color-surface-active-dark: rgba(255, 255, 255, 0.12);
+  --color-text-dark: #E1E1E1;
+  --color-text-secondary-dark: #A8A8A8;
+  --color-text-tertiary-dark: #7F7F7F;
+  /* Unify accent blue across app to match the UI font scale slider tone */
+  --color-accent-dark: #007AFF;
+  --color-accent-alt-dark: #c792ea;
+  --color-cursor-dark: var(--color-accent-dark);
+  --color-border-dark: rgba(255, 255, 255, 0.12);
+  --color-recording-dark: #ff453a;
+  --color-success-dark: #32d74b;
+  --color-warning-dark: #ff9f0a;
+
+  --glass-bg-dark: rgba(30, 30, 30, 0.6);
+  --glass-border-dark: rgba(255, 255, 255, 0.15);
+  --glass-highlight-dark: rgba(255, 255, 255, 0.1);
+  --glass-shadow-dark: rgba(0, 0, 0, 0.3);
+
+  --glass-recording-bg-dark: rgba(28, 28, 30, 0.75);
+  --glass-recording-border-dark: rgba(255, 255, 255, 0.15);
+
+  --color-bg-light: #F7F7F7;
+  --color-bg-alt-light: #EDEDED;
+  --color-surface-light: #FFFFFF;
+  --color-surface-hover-light: #F0F0F0;
+  --color-surface-active-light: #EAEAEA;
+  --color-text-light: #333333;
+  --color-text-secondary-light: #666666;
+  --color-text-tertiary-light: #999999;
+  --color-accent-light: #007AFF;
+  --color-accent-alt-light: #5856d6;
+  --color-cursor-light: var(--color-accent-light);
+  --color-border-light: #DCDCDC;
+  --color-recording-light: #ff3b30;
+  --color-success-light: #30d158;
+  --color-warning-light: #ff9500;
+
+  --glass-bg-light: rgba(255, 255, 255, 0.65);
+  --glass-border-light: rgba(0, 0, 0, 0.07);
+  --glass-highlight-light: var(--color-surface-active-light);
+  --glass-shadow-light: rgba(0, 0, 0, 0.05);
+
+  --glass-recording-bg-light: rgba(248, 248, 248, 0.75);
+  --glass-recording-border-light: rgba(0, 0, 0, 0.1);
+
+  --color-bg: var(--color-bg-dark);
+  --color-bg-alt: var(--color-bg-alt-dark);
+  --color-surface: var(--color-surface-dark);
+  --color-surface-hover: var(--color-surface-hover-dark);
+  --color-surface-active: var(--color-surface-active-dark);
+  --color-text: var(--color-text-dark);
+  --color-text-secondary: var(--color-text-secondary-dark);
+  --color-text-tertiary: var(--color-text-tertiary-dark);
+  --color-accent: var(--color-accent-dark);
+  --color-accent-alt: var(--color-accent-alt-dark);
+  --color-cursor: var(--color-cursor-dark);
+  --color-border: var(--color-border-dark);
+  --color-recording: var(--color-recording-dark);
+  --color-success: var(--color-success-dark);
+  --color-warning: var(--color-warning-dark);
+  --glass-bg: var(--glass-bg-dark);
+  --glass-border: var(--glass-border-dark);
+  --glass-highlight: var(--glass-highlight-dark);
+  --glass-shadow: var(--glass-shadow-dark);
+  --glass-recording-bg: var(--glass-recording-bg-dark);
+  --glass-recording-border: var(--glass-recording-border-dark);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.45s ease;
+  --transition-tabs: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  --footer-height: 120px; /* Height of the non-live recording interface */
+  --live-footer-height: 350px; /* Height of the live recording interface when fixed */
+  /* Approximate width of Windows caption buttons; used to reserve right padding on narrow widths */
+  --caption-buttons-width: 140px;
+}
+
+body.light-mode {
+  --color-bg: var(--color-bg-light);
+  --color-bg-alt: var(--color-bg-alt-light);
+  --color-surface: var(--color-surface-light);
+  --color-surface-hover: var(--color-surface-hover-light);
+  --color-surface-active: var(--color-surface-active-light);
+  --color-text: var(--color-text-light);
+  --color-text-secondary: var(--color-text-secondary-light);
+  --color-text-tertiary: var(--color-text-tertiary-light);
+  --color-accent: var(--color-accent-light);
+  --color-accent-alt: var(--color-accent-alt-light);
+  --color-cursor: var(--color-cursor-light);
+  --color-border: var(--color-border-light);
+  --color-recording: var(--color-recording-light);
+  --color-success: var(--color-success-light);
+  --color-warning: var(--color-warning-light);
+  --glass-bg: var(--glass-bg-light);
+  --glass-border: var(--glass-border-light);
+  --glass-highlight: var(--glass-highlight-light);
+  --glass-shadow: var(--glass-shadow-light);
+  --glass-recording-bg: var(--glass-recording-bg-light);
+  --glass-recording-border: var(--glass-recording-border-light);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0,0,0,0.03);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0,0,0,0.05);
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.icon {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-copy { -webkit-mask-image: url('/ui-icons/copy-note.svg'); mask-image: url('/ui-icons/copy-note.svg'); }
+.icon-translate { -webkit-mask-image: url('/ui-icons/translate-selection.svg'); mask-image: url('/ui-icons/translate-selection.svg'); }
+.icon-transcribe { -webkit-mask-image: url('/ui-icons/transcribe-audio.svg'); mask-image: url('/ui-icons/transcribe-audio.svg'); }
+.icon-new-note { -webkit-mask-image: url('/ui-icons/new-empty-note.svg'); mask-image: url('/ui-icons/new-empty-note.svg'); }
+
+[contenteditable] {
+  caret-color: var(--color-cursor);
+}
+[contenteditable][placeholder].placeholder-active {
+  color: var(--color-text-tertiary);
+  opacity: 0.85;
+}
+
+html {
+  height: 100%;
+  overflow: hidden; /* Prevent global scrollbars, app is self-contained */
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.65;
+  height: 100vh; /* Fixed viewport height */
+  /* Allow the app window to show a scrollbar when content exceeds viewport (even at high UI zoom) */
+  overflow: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+  margin: 0;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Fill body */
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden; /* Ensure app container doesn't scroll */
+  position: relative; /* Establish positioning context for corner buttons */
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* For z-index context of children and :has selector behavior */
+  /* Keep parent from scrolling; inner .note-area will be the scroll container */
+  overflow: hidden;
+  min-height: 0;
+  transition: padding-bottom var(--transition-slow) ease-in-out; /* Smoothly adjust padding for fixed panel */
+  padding-bottom: var(--footer-height); /* Always reserve space for idle footer */
+}
+
+/* When .is-live is a direct child of .main-content, add padding to .main-content */
+.main-content:has(> .recording-interface.is-live) {
+  padding-bottom: var(--live-footer-height);
+}
+
+.note-area {
+  flex: 1; /* Takes available space within main-content */
+  /* Let inner content wrapper handle scrolling so the header stays clean */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  padding: 0;
+  transition: background-color var(--transition-normal);
+  min-height: 0; /* Allows this flex item to shrink below its content size if needed */
+}
+
+.title-bar-drag-region {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px; /* Matches top padding of .note-header */
+    -webkit-app-region: drag;
+    z-index: 0; /* Behind other header content */
+}
+
+.note-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 60px 16px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 12px;
+  transition: border-color var(--transition-normal);
+  -webkit-app-region: no-drag; /* Make entire header non-draggable by default */
+  position: sticky; /* Keep header visible while scrolling */
+  top: 0;
+  z-index: 10; /* Above content */
+  background-color: var(--color-bg); /* Solid bg to avoid transparency over content */
+}
+
+.header-top-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+  position: relative; /* Ensure it sits above the drag region */
+  z-index: 2;
+}
+
+.header-left-controls,
+.header-right-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.model-selector {
+  position: relative;
+  min-width: 220px;
+}
+.modal-tab-content .model-selector {
+  width: 100%;
+}
+
+.header-action-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all var(--transition-fast);
+    -webkit-app-region: no-drag; /* Make control clickable */
+}
+
+.header-action-btn:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text);
+    transform: translateY(-1px);
+    border-color: var(--glass-highlight);
+}
+
+.header-action-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+.header-action-btn:disabled:hover {
+    color: var(--color-text-secondary);
+    background-color: var(--color-surface);
+}
+
+.header-center-controls {
+  -webkit-app-region: no-drag; /* Ensure the tab container is not draggable */
+  position: relative; /* Ensure it sits above the drag region */
+  z-index: 1;
+}
+
+.tab-navigation-container {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 4px;
+  display: inline-flex;
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+  -webkit-app-region: no-drag; /* Make control clickable */
+}
+
+.tab-navigation {
+  display: flex;
+  position: relative;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.tab-button {
+  background: transparent;
+  border: none;
+  padding: 6px 16px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  font-family: var(--font-primary);
+  letter-spacing: -0.01em;
+}
+
+.tab-button:hover {
+  color: var(--color-text);
+}
+
+.tab-button.active {
+  color: var(--color-text);
+}
+
+body.light-mode .tab-button {
+    color: var(--color-text-secondary);
+}
+body.light-mode .tab-button:hover {
+    color: var(--color-text);
+}
+body.light-mode .tab-button.active {
+  color: var(--color-text);
+}
+
+.active-tab-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background-color: var(--glass-highlight);
+  border-radius: 6px;
+  transition: left var(--transition-tabs), width var(--transition-tabs);
+  z-index: 0;
+  box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(0,0,0,0.02) inset;
+}
+
+body.light-mode .active-tab-indicator {
+  box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.03) inset;
+}
+
+.note-content-wrapper {
+  flex: 1 1 auto;
+  overflow-y: auto; /* This becomes the only scroll container for notes */
+  scrollbar-gutter: stable both-edges; /* keep gutter and avoid overlaying header */
+  /* Add extra bottom padding to keep content visible above the fixed footer */
+  padding: 0 40px calc(40px + var(--footer-height));
+  position: relative;
+  min-height: 0; /* allow it to shrink and create scrollbar */
+}
+/* When live footer is shown, reserve more space so the last lines are visible */
+.main-content:has(> .recording-interface.is-live) .note-content-wrapper {
+  padding-bottom: calc(40px + var(--live-footer-height));
+}
+
+.note-content {
+  outline: none;
+  min-height: 100px;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--color-text);
+  padding: 12px 0;
+  font-family: var(--font-primary);
+  letter-spacing: -0.01em;
+
+  opacity: 0;
+  transform: scale(0.985) translateY(8px);
+  transition: opacity var(--transition-tabs), transform var(--transition-tabs);
+  display: none;
+  will-change: opacity, transform;
+}
+.note-content.suppress-caret { caret-color: transparent; }
+.copy-bubble-btn {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all var(--transition-fast);
+  z-index: 2; /* Ensure the bubble is above the note text when scaled */
+  outline: none; /* prevent default inner focus ring artifact */
+  -webkit-tap-highlight-color: transparent; /* remove blue tap highlight on some platforms */
+  appearance: none;
+  -webkit-appearance: none;
+  overflow: hidden; /* hide any inner focus ring artifacts */
+  background-clip: padding-box; /* prevent border bleed */
+  user-select: none;
+  line-height: 1; /* avoid font baseline artifacts */
+  color: var(--color-text-secondary);
+}
+.copy-bubble-btn:focus { outline: none; }
+/* Keyboard focus: show a subtle outer ring for accessibility without inner artifacts */
+.copy-bubble-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--glass-highlight); }
+.copy-bubble-btn:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text);
+}
+/* Position a secondary left bubble (e.g., Polish) to the left of the copy bubble */
+.copy-bubble-btn.left { right: 48px; }
+/* When two left bubbles exist, shift the farther-left one more */
+.copy-bubble-btn.left2 { right: 88px; }
+.copy-bubble-btn.delete i { color: #ff4d4f; }
+.copy-bubble-btn .icon {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+.copy-bubble-btn.copied {
+  background-color: var(--color-success);
+  border-color: transparent;
+  color: white;
+}
+.copy-bubble-btn.copied .icon {
+  opacity: 0.1;
+}
+.copy-bubble-btn.copied::after {
+  content: '\2713';
+  position: absolute;
+  font-size: 16px;
+  line-height: 1;
+  color: white;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.note-content-wrapper .note-section {
+  position: relative;
+}
+/* Leave room for the floating copy bubble so text doesn't go underneath at high zoom */
+.note-content-wrapper .note-section .note-chunk {
+  padding-right: 48px;
+}
+/* If a left bubble is present (paste/polish), reserve a bit more space */
+.note-content-wrapper .note-section:has(.copy-bubble-btn.left) .note-chunk { padding-right: 92px; }
+/* If two left bubbles exist (polish + delete), reserve even more space */
+.note-content-wrapper .note-section:has(.copy-bubble-btn.left2) .note-chunk { padding-right: 132px; }
+
+/* Make editable chunks look like normal notes (no input box visuals) */
+.note-content-wrapper .note-section .note-chunk {
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  border-radius: 0;
+}
+.note-content-wrapper .note-section .note-chunk:focus,
+.note-content-wrapper .note-section .note-chunk:focus-visible,
+.note-content-wrapper .note-section .note-chunk:focus-within {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Range slider basic style */
+#uiZoomSlider { width: 100%; accent-color: var(--color-accent); }
+
+.note-content.active {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  display: block;
+}
+
+.note-content hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 1.5em 0;
+  opacity: 0.6;
+}
+
+.note-content h1, .note-content h2, .note-content h3 { margin-bottom: 0.75em; margin-top: 1.25em; font-weight: 600; color: var(--color-text); }
+.note-content h1 { font-size: 1.8em; }
+.note-content h2 { font-size: 1.5em; }
+.note-content h3 { font-size: 1.25em; }
+.note-content p { margin-bottom: 1em; }
+.note-content ul, .note-content ol { margin-bottom: 1em; padding-left: 1.5em; }
+.note-content li { margin-bottom: 0.5em; }
+.note-content pre { background-color: var(--color-bg-alt); padding: 1em; border-radius: 8px; margin-bottom: 1em; font-size: 0.9em; overflow-x: auto; transition: background-color var(--transition-normal); font-family: var(--font-mono); }
+.note-content code { font-family: var(--font-mono); background-color: var(--color-bg-alt); padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em;}
+.note-content pre code { background-color: transparent; padding: 0; border-radius: 0;}
+
+
+.recording-interface {
+  /* Default state: fixed footer, always visible regardless of container clipping/zoom */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--footer-height);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 20px 24px;
+  background-color: var(--color-bg);
+  border-top: 1px solid transparent;
+  /* Transition for switching to live mode */
+  transition: opacity 0.3s ease-out, transform 0.35s ease-out,
+              background-color var(--transition-slow) ease-in-out,
+              height var(--transition-slow) ease-in-out;
+  z-index: 1000; /* Stays above content but below modals and corner buttons */
+}
+
+.recording-interface.is-live {
+  position: fixed; /* Take out of flow, overlay */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--live-footer-height); /* Explicit height for the fixed panel */
+  z-index: 1000; /* High z-index to be on top */
+
+  /* Visuals for live state */
+  background-color: var(--glass-recording-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--glass-recording-border);
+  box-shadow: 0 -4px 20px var(--glass-shadow);
+
+  /* Internal layout */
+  justify-content: flex-start; /* Align live content to top */
+  padding-top: 20px; /* Internal padding from top of the fixed panel */
+  padding-bottom: 20px; /* Internal padding from bottom of the fixed panel - CRITICAL for button */
+}
+
+.status-indicator { margin-bottom: 16px; }
+/* When live, the status indicator related to non-live state is hidden */
+.recording-interface.is-live .status-indicator { display: none; }
+.status-text { font-size: 14px; color: var(--color-text-tertiary); text-align: center; transition: color var(--transition-normal); font-family: var(--font-primary); }
+
+/* Elements specific to the live recording view */
+.live-recording-title,
+#liveWaveformCanvas,
+.live-recording-timer {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.3s ease-out 0.1s, transform 0.35s ease-out 0.1s;
+}
+
+.recording-interface.is-live .live-recording-title,
+.recording-interface.is-live #liveWaveformCanvas,
+.recording-interface.is-live .live-recording-timer {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.live-recording-title {
+  font-size: 17px;
+  color: var(--color-text);
+  margin-bottom: 12px;
+  text-align: center;
+  font-weight: 500;
+  font-family: var(--font-primary);
+}
+
+#liveWaveformCanvas {
+  width: 100%;
+  max-width: 340px;
+  height: 70px;
+  margin-bottom: 18px;
+  border-radius: 4px;
+}
+
+.live-recording-timer {
+  font-family: var(--font-mono);
+  font-size: 44px;
+  font-weight: 400;
+  color: var(--color-text);
+  margin-bottom: 22px;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.recording-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  gap: 24px;
+}
+
+.record-button { position: relative; width: 72px; height: 72px; border-radius: 50%; border: none; outline: none; background: none; cursor: pointer; z-index: 1; }
+.record-button-inner {
+  position: relative; width: 100%; height: 100%; border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text); font-size: 24px; z-index: 2; box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+}
+.record-button:hover .record-button-inner { transform: scale(1.08); background-color: var(--color-surface-hover); border-color: var(--glass-highlight); }
+.record-button.recording .record-button-inner { background-color: var(--color-recording); border: 1px solid transparent; color: white; }
+body.light-mode .record-button.recording .record-button-inner { color: white; }
+.record-button.recording:hover .record-button-inner {
+    background-color: var(--color-recording);
+    filter: brightness(0.9);
+}
+
+.record-button:disabled,
+.record-button:disabled .record-button-inner {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.record-button:disabled:hover .record-button-inner {
+  transform: none;
+  background-color: var(--glass-bg);
+}
+
+.side-control-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    color: var(--color-text-secondary);
+}
+.side-control-btn:hover {
+    background-color: var(--color-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    color: var(--color-text);
+}
+
+.side-control-btn .icon {
+    width: 22px;
+    height: 22px;
+    pointer-events: none;
+    transition: opacity var(--transition-fast);
+}
+
+#copyButton {
+    color: var(--color-accent);
+}
+
+#copyButton:hover,
+#copyButton:focus-visible {
+    color: var(--color-accent);
+}
+
+#clearButton i {
+    color: var(--color-recording);
+    transition: color var(--transition-fast);
+}
+#clearButton:hover i {
+    filter: brightness(1.2);
+}
+
+#copyButton.copied .icon {
+    opacity: 0.15;
+}
+
+#copyButton.copied::after {
+    content: '\2713';
+    color: var(--color-success);
+    font-size: 28px;
+    position: absolute;
+    line-height: 1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+
+/* Ensure record button icon changes work in fixed panel */
+.recording-interface.is-live .record-button.recording .record-button-inner i.fa-stop { display: inline-block; font-size: 20px; }
+.recording-interface.is-live .record-button.recording .record-button-inner i.fa-microphone { display: none; }
+
+.record-waves { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; z-index: 1; opacity: 0; transition: opacity var(--transition-normal); pointer-events: none; }
+.record-button.recording .record-waves { opacity: 1; }
+/* Hide waves when the panel is the fixed overlay */
+.recording-interface.is-live .record-waves { display: none; }
+.wave { fill: none; stroke: var(--color-recording); stroke-width: 1.5px; opacity: 0; transform-origin: center; }
+.record-button.recording .wave1 { animation: wave 2s infinite ease-out; }
+.record-button.recording .wave2 { animation: wave 2s infinite ease-out; animation-delay: 0.4s; }
+.record-button.recording .wave3 { animation: wave 2s infinite ease-out; animation-delay: 0.8s; }
+@keyframes wave { 0% { transform: scale(0.4); opacity: 0.8; stroke-width: 2px; } 100% { transform: scale(1.8); opacity: 0; stroke-width: 0.5px; } }
+
+.record-text { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); font-size: 12px; white-space: nowrap; color: var(--color-text-tertiary); opacity: 0; transition: opacity var(--transition-fast); font-family: var(--font-primary); }
+.record-button:hover .record-text { opacity: 1; }
+/* Hide record text hint when panel is the fixed overlay */
+.recording-interface.is-live .record-text { display: none; }
+
+/* --- Corner Controls --- */
+.app-corner-controls {
+  position: fixed; /* Keep corner buttons visible even when body/app containers clip overflow or UI zoom is increased */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 1500; /* Above live recording panel, below modals */
+}
+
+.corner-btn {
+  position: absolute;
+  bottom: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.corner-btn:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.corner-btn .icon {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+
+.corner-btn:disabled .icon {
+  opacity: 0.4;
+}
+
+.corner-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: var(--glass-bg);
+  transform: none;
+}
+.corner-btn:disabled:hover {
+  color: var(--color-text-secondary);
+  background-color: var(--glass-bg);
+  transform: none;
+  box-shadow: var(--shadow-md);
+}
+
+button#translateButton.corner-btn {
+  left: 20px;
+}
+button#fileTranscribeButton.corner-btn {
+  left: 76px;
+}
+button#createEmptyNoteButton.corner-btn {
+  left: 132px;
+}
+button#promptSettingsButton.corner-btn {
+  right: 20px;
+}
+
+button#translateButton.corner-btn i.fa-language {
+  color: var(--color-accent-alt);
+  font-size: 20px;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+button#translateButton.corner-btn:hover i.fa-language {
+  filter: brightness(1.15);
+}
+button#translateButton.corner-btn:disabled i.fa-language {
+  color: var(--color-text-secondary);
+  filter: none;
+}
+button#promptSettingsButton.corner-btn i {
+  font-size: 18px;
+}
+
+/* Modal Styles */
+.prompt-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal);
+}
+.prompt-modal-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.prompt-modal {
+  position: fixed;
+  /* Use insets instead of vertical centering so footer never goes off-screen at high zoom */
+  top: 64px; /* keep at least ~10px below OS caption buttons */
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  background-color: var(--color-bg-alt);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  z-index: 2000;
+  width: 90%;
+  max-width: 680px;
+  border: 1px solid var(--glass-border);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  height: auto; /* Let height adapt within safe insets */
+  max-height: calc(100vh - 48px);
+}
+.prompt-modal.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) scale(1);
+}
+
+/* Make Settings prompt modal 10px taller so it reaches slightly closer to the footer */
+#promptModal.prompt-modal { bottom: 14px; max-height: calc(100vh - 38px); }
+.prompt-modal.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) scale(1);
+}
+
+.prompt-modal-header {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag; /* Modals are not draggable */
+}
+.prompt-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.prompt-modal-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  position: relative;
+  transition: background-color var(--transition-fast);
+  z-index: 10;
+  -webkit-app-region: no-drag;
+}
+.prompt-modal-close:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.prompt-modal-close::before,
+.prompt-modal-close::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 2.5px;
+  background-color: var(--color-text-secondary);
+  border-radius: 2px;
+  transition: background-color var(--transition-fast);
+}
+
+.prompt-modal-close:hover::before,
+.prompt-modal-close:hover::after {
+  background-color: var(--color-text);
+}
+
+.prompt-modal-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.prompt-modal-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.prompt-modal-body {
+  padding: 0;
+  overflow-y: hidden; /* prevent outer body scroll */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto; /* allow body to grow so footer stays visible */
+}
+
+.modal-tab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 12px 24px 8px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+  gap: 8px; /* Space between tab buttons, like settings buttons */
+  justify-content: center; /* Center rows when they wrap */
+}
+
+/* Force two rows with 4 tabs each in Settings modal */
+/* Two fixed rows (4 columns each) for Settings tabs, regardless of width */
+.modal-tab-nav.two-row-tabs {
+  display: grid; /* override base flex layout */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.modal-tab-nav.two-row-tabs .modal-tab-button {
+  width: 100%; /* fill the grid cell */
+}
+
+.modal-tab-button {
+  background-color: var(--color-surface-active);
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  border-radius: 8px;
+  margin: 0;
+  transition: all var(--transition-fast);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap; /* Prevent multi-line labels from skewing height */
+}
+
+.modal-tab-button:hover {
+  background-color: var(--color-surface-hover);
+  border-color: var(--glass-highlight);
+  color: var(--color-text);
+}
+
+.modal-tab-button.active {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+}
+body.light-mode .modal-tab-button.active { color: white; }
+/* Dark theme: ensure active tab labels are clear white in settings modal header */
+body:not(.light-mode) .modal-tab-button.active { color: white; }
+
+.modal-tab-content-wrapper {
+  padding: 24px;
+  overflow-y: auto; /* inner scroll for modal content */
+  flex: 1 1 auto; /* occupy space between header and footer */
+}
+/* When Custom Prompt tab is active, avoid scrolling the whole modal body; let the textarea scroll instead */
+.modal-tab-content-wrapper:has(#promptTabContent.active) {
+  overflow-y: hidden;
+}
+
+.modal-tab-content {
+  display: none;
+}
+
+.modal-tab-content.active {
+  display: block;
+}
+
+/* --- Prompt sub-tabs --- */
+.prompt-subtab-nav {
+  display: flex;
+  justify-content: center; /* Center the Raw / Variant 1 / Variant 2 buttons */
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.prompt-subtab-button {
+  background-color: var(--color-surface-active);
+  border: 1px solid var(--color-border);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  border-radius: 8px;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+.prompt-subtab-button:hover { background-color: var(--color-surface-hover); color: var(--color-text); border-color: var(--glass-highlight); }
+.prompt-subtab-button.active { background-color: var(--color-accent); color: var(--color-bg); border-color: var(--color-accent); }
+body.light-mode .prompt-subtab-button.active { color: white; }
+/* Dark theme: ensure active Variant sub-tab labels are white */
+body:not(.light-mode) .prompt-subtab-button.active { color: white; }
+.prompt-subtab-content { display: none; }
+.prompt-subtab-content.active { display: block; }
+
+/* Fix the height of the prompt tab content area and let its textareas scroll when needed */
+#promptTabContent {
+  /* Don't force display here; default is controlled by .modal-tab-content */
+  flex-direction: column;
+  min-height: 0; /* allow inner content to size properly inside flex */
+}
+#promptTabContent.active { display: flex; }
+.prompt-subtab-content-wrapper {
+  flex: 1 1 auto;
+  min-height: 0; /* critical to allow the inner textarea to become scrollable */
+  overflow: hidden; /* prevent double scrollbars; inner textarea handles overflow */
+}
+.prompt-subtab-content.active {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+#customPromptTextarea,
+#customPromptRawTextarea,
+#customPromptV1Textarea,
+#customPromptV2Textarea {
+  flex: 1 1 auto;
+  min-height: 0; /* let it shrink and create an internal scrollbar */
+  overflow: auto;
+}
+
+/* API Providers Tab Styles */
+.provider-section h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+.provider-info {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.provider-info code {
+  font-family: var(--font-mono);
+  background-color: var(--color-surface);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  transition: all var(--transition-fast);
+}
+.form-group input[type="text"]:focus,
+.form-group input[type="password"]:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-dark);
+}
+body.light-mode .form-group input[type="text"]:focus,
+body.light-mode .form-group input[type="password"]:focus {
+  box-shadow: 0 0 0 2px var(--color-accent-light);
+}
+
+.form-group input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    vertical-align: middle;
+    margin-right: 8px;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+.form-group input[type="checkbox"]:checked {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+.form-group input[type="checkbox"]:checked::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 3px;
+    left: 7px;
+    width: 5px;
+    height: 10px;
+    border: solid var(--color-bg);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+body.light-mode .form-group input[type="checkbox"]:checked::after {
+    border-color: white;
+}
+/* Dark theme: make the checkmark visibly white */
+body:not(.light-mode) .form-group input[type="checkbox"]:checked::after {
+  border-color: white;
+}
+
+
+.prompt-instructions {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.prompt-instructions code {
+  background-color: var(--color-surface);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+}
+
+#customPromptTextarea,
+#customPromptRawTextarea,
+#customPromptV1Textarea,
+#customPromptV2Textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  resize: none; /* remove resize gizmo */
+  min-height: 500px; /* twice longer */
+}
+#customPromptTextarea:focus,
+#customPromptRawTextarea:focus,
+#customPromptV1Textarea:focus,
+#customPromptV2Textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-dark);
+}
+body.light-mode #customPromptTextarea:focus,
+body.light-mode #customPromptRawTextarea:focus,
+body.light-mode #customPromptV1Textarea:focus,
+body.light-mode #customPromptV2Textarea:focus {
+    box-shadow: 0 0 0 2px var(--color-accent-light);
+}
+
+.modal-separator {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 24px 0;
+}
+
+#hotkeyInput {
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+#hotkeyInput.is-listening {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-dark);
+  color: var(--color-accent);
+}
+body.light-mode #hotkeyInput.is-listening {
+  box-shadow: 0 0 0 2px var(--color-accent-light);
+}
+
+.hotkey-error-message {
+  color: var(--color-recording);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+
+#statsTabContent .token-counter-section {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+#statsTabContent .token-counter-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+}
+#statsTabContent .token-counter-title #statsModelName {
+    color: var(--color-accent-alt);
+    font-weight: 500;
+}
+.token-stats {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.8;
+}
+.token-stats b {
+    color: var(--color-text);
+    font-weight: 500;
+}
+.token-stats span {
+    display: inline-block;
+    min-width: 50px;
+    text-align: left;
+}
+
+
+.prompt-modal-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Custom header and footer colors for better contrast - Only for Settings Modal */
+body.light-mode .prompt-modal:has(.modal-tab-nav) .prompt-modal-header {
+  background-color: #c4c4c4; /* Very light pale blue */
+  border-radius: 16px 16px 0 0; /* Top corners only */
+}
+body.light-mode .prompt-modal:has(.modal-tab-nav) .modal-tab-nav {
+  background-color: #c4c4c4; /* Very light pale blue */
+}
+body.light-mode .prompt-modal:has(.modal-tab-nav) .prompt-modal-footer {
+  background-color: #c4c4c4; /* Very light pale blue */
+  border-radius: 0 0 16px 16px; /* Bottom corners only */
+}
+
+body:not(.light-mode) .prompt-modal:has(.modal-tab-nav) .prompt-modal-header {
+  background-color: #151515; /* 30% darker than #1E1E1E */
+  border-radius: 16px 16px 0 0; /* Top corners only */
+}
+body:not(.light-mode) .prompt-modal:has(.modal-tab-nav) .modal-tab-nav {
+  background-color: #151515; /* 30% darker than #1E1E1E */
+}
+body:not(.light-mode) .prompt-modal:has(.modal-tab-nav) .prompt-modal-footer {
+  background-color: #151515; /* 30% darker than #1E1E1E */
+  border-radius: 0 0 16px 16px; /* Bottom corners only */
+}
+.prompt-modal-footer .footer-left,
+.prompt-modal-footer .footer-right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.modal-button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.modal-button.icon-button {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    font-size: 18px;
+}
+.modal-button.icon-button .fa-sun {
+    color: #f1c40f;
+}
+.modal-button.icon-button .fa-moon {
+    color: #a9c1d1;
+}
+
+.modal-button.primary {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+}
+body.light-mode .modal-button.primary {
+    color: white;
+}
+/* Dark theme: ensure primary action buttons (e.g., Save) use white text */
+body:not(.light-mode) .modal-button.primary { color: white; }
+
+/* Improve visibility of theme toggle in light theme */
+body.light-mode #themeToggleButtonModal.modal-button.icon-button {
+  background-color: var(--color-text); /* dark button on light bg */
+  border-color: var(--color-text);
+}
+body.light-mode #themeToggleButtonModal.modal-button.icon-button:hover {
+  filter: brightness(1.1);
+}
+body.light-mode #themeToggleButtonModal.modal-button.icon-button i {
+  color: var(--color-bg) !important; /* light icon on dark button */
+}
+.modal-button.primary:hover {
+  filter: brightness(1.15);
+}
+.modal-button.secondary {
+  background-color: var(--color-surface-active);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.modal-button.secondary:hover {
+  background-color: var(--color-surface-hover);
+  border-color: var(--glass-highlight);
+}
+/* Recording state for the translation modal Record button */
+#modalRecordButton.recording,
+.modal-button.recording {
+  background-color: var(--color-recording);
+  color: white;
+  border-color: var(--color-recording);
+}
+body.light-mode #modalRecordButton.recording,
+body.light-mode .modal-button.recording {
+  color: white;
+}
+#modalRecordButton.recording:hover,
+.modal-button.recording:hover {
+  filter: brightness(0.95);
+}
+.modal-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: none;
+}
+
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-bg-alt); border-radius: 5px; }
+::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 5px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--glass-highlight); }
+
+/* Improve scrollbar contrast in light mode: pale blue thumb and hover */
+body.light-mode ::-webkit-scrollbar-track { background: var(--color-surface-light); }
+body.light-mode ::-webkit-scrollbar-thumb {
+  background: #bcdcff; /* pale blue */
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+body.light-mode ::-webkit-scrollbar-thumb:hover {
+  background: #99cbff; /* slightly stronger on hover */
+}
+
+.debug-panel { background-color: rgba(0, 0, 0, 0.95); color: #33ff33; font-family: var(--font-mono); font-size: 12px; padding: 12px; position: fixed; bottom: 0; left: 0; max-height: 200px; width: 100%; z-index: 2000; overflow-y: auto; display: none; }
+.debug-panel.visible { display: block; }
+.hidden { display: none !important; }
+
+/* Translation Modal Specific Styles */
+.translation-text-box {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 8px;
+  min-height: 80px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+.translation-text-box em {
+  color: var(--color-text-tertiary);
+}
+
+/* Custom Language card grid */
+.language-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* two columns */
+  gap: 10px;
+  padding: 4px 0;
+}
+.language-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.language-card:hover { background-color: var(--color-surface-hover); border-color: var(--glass-highlight); }
+.language-card .tick {
+  width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--color-surface);
+  display: inline-flex; align-items: center; justify-content: center; color: transparent; transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+.language-card.selected { border-color: var(--color-accent); box-shadow: 0 0 0 2px rgba(130,170,255,0.25); }
+.language-card.selected .tick { background: var(--color-accent); border-color: var(--color-accent); color: white; }
+.language-card .label { font-size: 14px; color: var(--color-text); }
+
+@media (max-width: 640px) {
+  .language-grid { grid-template-columns: 1fr; }
+}
+
+/* Retranslate action under translation field */
+.retranslate-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+.retranslate-actions.with-hint {
+  justify-content: space-between;
+}
+
+/* Confirmation Dialog Specific Styles */
+.confirmation-message {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text);
+  margin: 0;
+  text-align: center;
+}
+
+/* Compact confirmation modal: much smaller than full settings modal */
+#confirmationModal.prompt-modal {
+  top: 50%;
+  bottom: auto; /* don’t stretch to screen insets */
+  width: min(520px, 85%); /* another ~20% wider */
+  max-height: 60vh; /* safety cap in rare multiline cases */
+  transform: translate(-50%, -50%) scale(0.95); /* center vertically */
+  /* Blue frame */
+  border: 2px solid var(--color-accent);
+  box-shadow: var(--shadow-lg), 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+#confirmationModal.prompt-modal.visible {
+  transform: translate(-50%, -50%) scale(1);
+}
+#confirmationModal .prompt-modal-header {
+  padding: 8px 16px; /* tighter header */
+}
+#confirmationModal .prompt-modal-header h3 {
+  font-size: 16px;
+}
+#confirmationModal .prompt-modal-body {
+  padding: 12px 16px !important; /* override inline padding; keep small */
+}
+#confirmationModal .confirmation-message {
+  font-size: 14px; /* smaller text */
+  line-height: 1.4;
+}
+#confirmationModal .prompt-modal-footer {
+  padding: 8px 16px; /* tighter footer */
+}
+#confirmationModal .modal-button {
+  padding: 6px 12px; /* more compact buttons */
+  font-size: 13px;
+}
+
+/* Compact error modal: much smaller than full settings modal */
+#errorModal.prompt-modal {
+  top: 50%;
+  bottom: auto; /* don't stretch to screen insets */
+  width: min(520px, 85%); /* smaller than confirmation modal */
+  max-height: 40vh; /* even smaller height cap */
+  transform: translate(-50%, -50%) scale(0.95); /* center vertically */
+  /* Blue frame */
+  border: 2px solid var(--color-accent);
+  box-shadow: var(--shadow-lg), 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+#errorModal.prompt-modal.visible {
+  transform: translate(-50%, -50%) scale(1);
+}
+#errorModal .prompt-modal-header {
+  padding: 8px 16px; /* tighter header */
+}
+#errorModal .prompt-modal-header h3 {
+  font-size: 16px;
+  color: var(--color-error);
+}
+#errorModal .prompt-modal-body {
+  padding: 12px 16px !important; /* override inline padding; keep small */
+}
+#errorModal .prompt-modal-footer {
+  padding: 8px 16px; /* tighter footer */
+}
+#errorModal .modal-button {
+  padding: 6px 12px; /* more compact buttons */
+  font-size: 13px;
+}
+
+/* --- Local Models UI --- */
+.local-model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px; /* match Ollama models list spacing */
+}
+.local-language-control {
+  margin: 16px auto;
+  max-width: 360px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.local-language-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: center;
+  width: 100%;
+}
+.local-language-select {
+  min-width: 220px;
+}
+.local-language-custom {
+  max-width: 140px;
+}
+.local-language-control .provider-info {
+  text-align: center;
+}
+.local-language-control .custom-select-container {
+  width: 100%;
+  max-width: 280px;
+}
+.local-model-item {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  transition: all var(--transition-fast);
+  position: relative;
+  min-height: 120px; /* match Ollama card height */
+}
+.local-model-item.active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+.local-model-item.can-select:hover {
+  border-color: var(--glass-highlight);
+  background-color: var(--color-surface-hover);
+  cursor: pointer;
+}
+/* Light theme: reduce hover darkening by ~65% and keep border visible */
+body.light-mode .local-model-item.can-select:hover {
+  background-color: #FAFAFA; /* from #F0F0F0 -> #FAFAFA ≈ 65% less change */
+  border-color: var(--color-border-light);
+}
+.model-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: var(--color-bg-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--color-text);
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+}
+.model-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.compute-badge .meta-tag { /* keep compute chip compact */
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+.model-details {
+  flex-grow: 1;
+  /* Allow flex item to shrink so the action column stays on the right */
+  min-width: 0;
+}
+.model-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.model-name {
+  font-size: 16px; /* match Ollama title size */
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 4px 0; /* align with Ollama spacing */
+}
+.model-badge {
+  background-color: var(--color-accent);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+body.light-mode .model-badge {
+  color: white;
+}
+
+.model-badge.active-indicator {
+  background-color: var(--color-success);
+  color: white;
+}
+
+body.light-mode .model-badge.active-indicator {
+    color: white;
+}
+
+.model-description {
+  font-size: 14px; /* match Ollama description size */
+  color: var(--color-text-secondary);
+  margin: 0 0 8px 0;
+  line-height: 1.4; /* match Ollama */
+  display: -webkit-box;
+  line-clamp: 2; /* Standard property for supporting browsers */
+  -webkit-line-clamp: 2; /* Clamp to two lines to normalize card height */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.model-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px; /* match Ollama meta spacing */
+  /* Allow up to two rows so size/language chips remain visible on narrow widths */
+  max-height: 64px; /* 2 rows without clipping */
+  overflow: hidden;
+}
+.meta-tag {
+  background-color: var(--color-bg-alt);
+  color: var(--color-text-secondary);
+  padding: 2px 8px; /* match Ollama meta chip */
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: none; /* remove border to match Ollama */
+}
+.meta-tag i {
+  font-size: 13px;
+}
+.rating-dots {
+  display: flex;
+  gap: 3px;
+}
+.rating-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-border);
+}
+.rating-dot.filled {
+  background-color: var(--color-text-secondary);
+}
+.model-action {
+  flex-shrink: 0;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  /* Pin the action column to the right edge in the row layout */
+  margin-left: auto;
+}
+.action-message {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.download-button {
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+body.light-mode .download-button {
+  color: white;
+}
+.download-button:not(.remove-button):not(:disabled):hover {
+  filter: brightness(1.1);
+}
+
+.download-button.downloading {
+  background-color: var(--color-surface-hover);
+  color: #fff; /* Ensure readable text during download */
+  cursor: not-allowed;
+}
+
+/* Theme-aware text for progress label */
+body.light-mode .download-button.downloading {
+  color: #000; /* Black text in light theme while downloading */
+}
+
+/* When progress reaches 100%, force white text in both themes */
+.download-button.downloading.complete {
+  color: #fff !important;
+}
+
+/* Simple non-animated progress fill overlay for download buttons */
+.download-button.downloading .progress-bar-fill,
+.ollama-model-action .download-button.downloading .progress-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background-color: var(--color-accent); /* Match other blue buttons */
+  pointer-events: none;
+  z-index: 0; /* Keep fill behind content */
+}
+
+.download-button.remove-button {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text-secondary);
+}
+.download-button.remove-button:hover {
+    background-color: var(--color-recording-dark);
+    color: white;
+    filter: none;
+}
+body.light-mode .download-button.remove-button:hover {
+    background-color: #ffdede;
+    color: #c52920;
+}
+.download-button.retry {
+  background-color: var(--color-warning);
+}
+
+.download-button.downloaded {
+  background-color: var(--color-surface-active);
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+.download-button.downloaded:hover {
+  filter: none;
+}
+.download-button.downloaded .fa-check {
+  margin-right: 6px;
+}
+.download-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* Keep strong contrast while downloading even if the button is disabled */
+.download-button.downloading:disabled {
+  opacity: 1;
+}
+
+.download-button-content-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1; /* Ensure content is above the progress fill */
+}
+
+/* Provider Section Layout (matching Local Models layout) */
+.provider-section {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 0;
+}
+
+/* Keep Custom provider in original vertical layout */
+.provider-section:last-child {
+  display: block;
+  padding: 0;
+}
+
+.provider-details {
+  flex-grow: 1;
+}
+
+.provider-action {
+  flex-shrink: 0;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.provider-action .download-button {
+  width: 100%;
+  background-color: var(--color-accent);
+  color: #fff; /* Ensure white text for Use button */
+}
+
+.provider-action .download-button .fa-external-link-alt {
+  margin-right: 6px;
+}
+
+.meta-tag.compute-gpu {
+  background-color: rgba(48, 209, 88, 0.15); /* A green tint */
+  color: var(--color-success);
+  border-color: rgba(48, 209, 88, 0.3);
+}
+body.light-mode .meta-tag.compute-gpu {
+  background-color: #e5f8e9;
+  border-color: #a3e9b4;
+}
+
+/* Yellow-tinted CPU badge */
+.meta-tag.compute-cpu {
+  background-color: rgba(255, 204, 0, 0.15);
+  color: var(--color-warning);
+  border-color: rgba(255, 204, 0, 0.35);
+}
+body.light-mode .meta-tag.compute-cpu {
+  background-color: #fff4cc;
+  border-color: #ffe28a;
+}
+
+/* Failure/disabled badge */
+.meta-tag.compute-failed {
+  background-color: rgba(255, 59, 48, 0.15);
+  color: #ff3b30;
+  border-color: rgba(255, 59, 48, 0.35);
+}
+body.light-mode .meta-tag.compute-failed {
+  background-color: #ffe5e3;
+  border-color: #f8b3ad;
+}
+.meta-tag.compute-unknown {
+  background-color: rgba(128, 128, 128, 0.15);
+  color: var(--color-text-secondary);
+  border-color: rgba(128, 128, 128, 0.3);
+}
+body.light-mode .meta-tag.compute-unknown {
+  background-color: #efefef;
+  border-color: #d5d5d5;
+}
+.meta-tag .fa-rocket {
+  font-size: 13px;
+}
+.meta-tag .fa-info-circle {
+  color: var(--color-text-tertiary);
+  margin-left: 4px;
+  cursor: help;
+  transition: color var(--transition-fast);
+}
+.meta-tag:hover .fa-info-circle {
+  color: var(--color-accent);
+}
+
+
+/* Local LLM Tab Styles */
+/* Ollama Install Section (flexbox layout like Local Models) */
+.ollama-install-section {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 0;
+}
+
+.ollama-install-details {
+  flex-grow: 1;
+}
+
+.ollama-install-action {
+  flex-shrink: 0;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ollama-install-action .download-button {
+  width: 100%;
+  background-color: var(--color-accent);
+}
+
+.ollama-install-action .download-button .fa-download {
+  margin-right: 6px;
+}
+
+/* Ollama button states */
+.ollama-install-action .download-button.running {
+  background-color: var(--color-success, #28a745);
+  color: white;
+  box-shadow: 0 0 0 2px var(--color-success, #28a745), 0 0 0 4px rgba(40, 167, 69, 0.3);
+}
+
+/* Keep running button fully opaque even when disabled */
+.ollama-install-action .download-button.running:disabled {
+  opacity: 1;
+}
+
+.ollama-install-action .download-button.running:hover {
+  background-color: var(--color-success, #28a745);
+  filter: brightness(1.1);
+}
+
+/* Ollama status message */
+.ollama-status-message {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* Ollama IP Section (vertical layout like Custom provider) */
+.ollama-ip-section {
+  display: block;
+  padding: 0;
+}
+
+/* Ollama Models Section */
+.ollama-models-section {
+  display: block;
+  padding: 0;
+}
+
+.ollama-models-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.ollama-model-item {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  transition: all var(--transition-fast);
+  min-height: 120px;
+}
+
+.ollama-model-item.can-select:hover {
+  border-color: var(--glass-highlight);
+  background-color: var(--color-surface-hover);
+  cursor: pointer;
+}
+/* Light theme: mirror Local Models light hover tuning */
+body.light-mode .ollama-model-item.can-select:hover {
+  background-color: #FAFAFA;
+  border-color: var(--color-border-light);
+}
+
+.ollama-model-details {
+  flex-grow: 1;
+  /* Allow flex item to shrink so the action column stays on the right */
+  min-width: 0;
+}
+
+.ollama-model-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 4px 0;
+}
+
+.ollama-model-description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  margin: 0 0 8px 0;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ollama-model-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  /* Allow up to two rows so chips like size/parameters stay visible */
+  max-height: 64px; /* 2 rows without clipping */
+  overflow: hidden;
+}
+
+.ollama-model-meta .meta-tag {
+  background-color: var(--color-bg-alt);
+  color: var(--color-text-secondary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ollama-model-action {
+  flex-shrink: 0;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Pin the action column to the right edge in the row layout */
+  margin-left: auto;
+}
+
+.ollama-model-action .download-button {
+  width: 100%;
+  background-color: var(--color-accent);
+}
+
+/* Ensure Ollama download buttons use neutral bg while downloading so the fill is visible */
+.ollama-model-action .download-button.downloading {
+  background-color: var(--color-surface-hover) !important;
+}
+
+.ollama-model-action .download-button.use-button {
+  background-color: var(--color-success, #28a745);
+}
+
+.ollama-model-action .download-button.use-button:hover {
+  background-color: var(--color-success, #28a745);
+  filter: brightness(1.1);
+}
+
+.ollama-model-action .download-button.use-button.selected {
+  background-color: var(--color-success, #28a745);
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--color-success, #28a745), 0 0 0 4px rgba(40, 167, 69, 0.3);
+}
+
+.ollama-model-action .download-button.use-button.not-selected {
+  background-color: var(--color-warning, #ffc107);
+  color: #fff; /* White text even on warning color */
+}
+
+.ollama-model-action .download-button.use-button.not-selected:hover {
+  background-color: var(--color-warning, #ffc107);
+  filter: brightness(1.1);
+}
+
+/* Mirror Use button styling for Local Models */
+.model-action .download-button.use-button {
+  background-color: var(--color-accent);
+  color: #fff; /* Ensure white text for Use button */
+}
+.model-action .download-button.use-button.selected {
+  background-color: var(--color-success, #28a745);
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--color-success, #28a745), 0 0 0 4px rgba(40, 167, 69, 0.3);
+}
+.model-action .download-button.use-button.not-selected {
+  background-color: var(--color-warning, #ffc107);
+  color: #fff; /* White text for unselected Use button too */
+}
+.model-action .download-button.use-button.not-selected:hover {
+  background-color: var(--color-warning, #ffc107);
+  filter: brightness(1.1);
+}
+
+/* Ensure custom select for log level stays full width in modal */
+.modal-tab-content .custom-select-container.model-selector {
+  width: 100%;
+}
+
+.ollama-model-item {
+  position: relative;
+}
+
+.corner-delete {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background-color: #dc3545;
+  border-color: #dc3545;
+  width: auto;
+  min-width: 120px;
+  height: 32px;
+  font-size: 14px;
+  padding: 8px 16px;
+}
+
+.corner-delete:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+.corner-delete .download-button-content-wrapper {
+  gap: 8px;
+}
+
+.corner-delete .download-button-text {
+  font-size: 14px;
+}
+
+/* --- Setup Wizard Styles --- */
+.setup-wizard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 2999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity var(--transition-normal);
+}
+
+.setup-wizard {
+  background-color: var(--color-bg-alt);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 480px;
+  border: 1px solid var(--glass-border);
+  padding: 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.setup-wizard h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+.wizard-intro {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-top: -12px;
+}
+
+.wizard-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  background-color: var(--color-surface);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.wizard-checklist-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.wizard-checklist-item i {
+  margin-right: 12px;
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+.wizard-checklist-item i.fa-question-circle { color: var(--color-accent-alt); }
+.wizard-checklist-item i.fa-check-circle { color: var(--color-success); }
+.wizard-checklist-item i.fa-exclamation-triangle { color: var(--color-warning); }
+
+.wizard-checklist-item.success span { color: var(--color-text); }
+.wizard-checklist-item.warning span { color: var(--color-text); }
+
+.wizard-actions {
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+
+.wizard-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--color-surface);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.wizard-info kbd {
+  font-family: var(--font-mono);
+  background-color: var(--color-bg-alt);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.wizard-finish-button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+}
+
+
+/* --- Custom Select Styles --- */
+.custom-select-container {
+    position: relative;
+    -webkit-app-region: no-drag;
+}
+
+.custom-select-trigger {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-family: var(--font-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    -webkit-app-region: no-drag;
+}
+.custom-select-container:not(.disabled):hover .custom-select-trigger {
+    border-color: var(--glass-highlight);
+    background-color: var(--color-surface-hover);
+}
+.custom-select-container.open .custom-select-trigger,
+.custom-select-container.open:hover .custom-select-trigger {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px var(--color-accent-dark);
+}
+body.light-mode .custom-select-container.open .custom-select-trigger {
+    box-shadow: 0 0 0 2px var(--color-accent-light);
+}
+
+.custom-select-container.disabled .custom-select-trigger {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.custom-select-trigger i {
+    color: var(--color-text-tertiary);
+    transition: transform var(--transition-fast);
+}
+.custom-select-container.open .custom-select-trigger i {
+    transform: rotate(180deg);
+}
+
+.custom-select-options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    z-index: 1001; /* Must be higher than other elements */
+    max-height: 250px;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    padding: 4px;
+    box-shadow: var(--shadow-md);
+}
+
+.custom-select-container.open .custom-select-options {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.custom-option {
+    padding: 10px 12px; /* This controls the spacing */
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--color-text);
+    border-radius: 6px;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.custom-option:hover {
+    background-color: var(--color-surface-hover);
+}
+
+.custom-option.selected {
+    background-color: var(--color-accent);
+    color: white;
+}
+body.light-mode .custom-option.selected {
+  color: white;
+}
+
+
+@media (max-width: 768px) {
+  .note-area { padding: 0; }
+  .note-header {
+    padding: 44px 20px 12px;
+  }
+  .title-bar-drag-region {
+    height: 40px;
+  }
+  .header-top-row {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .header-left-controls, .header-right-controls {
+    justify-content: space-between;
+  }
+  .model-selector {
+    width: calc(50% - 4px);
+  }
+  .header-center-controls {
+    width: 100%;
+  }
+  .tab-navigation-container {
+    width: 100%;
+  }
+  .tab-navigation {
+    width: 100%;
+  }
+  .tab-button {
+    flex-grow: 1;
+    text-align: center;
+  }
+  .note-content-wrapper { padding: 0 20px 20px; }
+  .recording-interface.is-live { padding-left: 15px; padding-right: 15px; }
+  #liveWaveformCanvas { max-width: calc(100% - 30px); height: 60px; }
+  .live-recording-timer { font-size: 36px; }
+  .record-button { width: 64px; height: 64px; }
+  .side-control-btn { width: 56px; height: 56px; font-size: 18px; }
+  .recording-controls { gap: 20px; }
+  .modal-tab-button {
+      flex-grow: 1;
+      text-align: center;
+  width: auto !important; /* On small screens, let tabs auto-size equally via flex */
+  }
+  /* Keep Local Models in a single row so the action buttons stay on the right */
+  .local-model-item { flex-direction: row; }
+  .model-action { width: auto; align-items: center; margin-top: 0; margin-left: auto; }
+  /* Reduce vertical margins on small screens to preserve footer visibility */
+  .prompt-modal { top: 44px; bottom: 16px; max-height: calc(100vh - 32px); }
+}

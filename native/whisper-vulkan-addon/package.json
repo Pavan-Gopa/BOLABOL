@@ -1,0 +1,15 @@
+{
+  "name": "whisper-vulkan-addon",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Experimental Vulkan (MoltenVK) Whisper.cpp Node.js addon for SmartScribe (Intel macOS).",
+  "license": "UNLICENSED",
+  "scripts": {
+  "prepare:whisper": "test -d third_party/whisper.cpp || git clone --depth 1 https://github.com/ggerganov/whisper.cpp third_party/whisper.cpp",
+  "build": "npm run prepare:whisper && cmake-js build && node scripts/post-build-copy.js",
+  "rebuild": "rm -rf build && npm run build"
+  },
+  "dependencies": {
+    "node-addon-api": "^7.0.0"
+  }
+}

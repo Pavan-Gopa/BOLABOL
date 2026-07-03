@@ -1,0 +1,1927 @@
+import SwiftUI
+import VaniScriptCore
+
+struct SettingsView: View {
+    @EnvironmentObject private var store: WorkflowStore
+    @State private var onboardingFrames: [String: CGRect] = [:]
+    @State private var glossarySource = ""
+    @State private var glossaryTranslation = ""
+    @State private var glossaryCategory = ""
+    @State private var glossaryVariants = ""
+    @State private var selectedPromptId = "transcriptionSystem"
+    @State private var glossarySearch = ""
+    @State private var glossaryCategoryFilter = "all"
+    @State private var glossarySortMode = GlossarySortMode.newest
+    @State private var editingEntry: GlossaryEntry? = nil
+
+    @State private var customLabel = ""
+    @State private var customBaseUrl = ""
+    @State private var customApiKey = ""
+    @State private var customModelName = ""
+    @State private var customInputCost = ""
+    @State private var customOutputCost = ""
+    @State private var customBudgetLimit = ""
+
+    var body: some View {
+        ZStack {
+            AppBackground()
+            VStack(spacing: 0) {
+                header
+
+                TabView(selection: $store.selectedSettingsTab) {
+                    apiKeysTab
+                        .onboardingTarget("settings-tab-0")
+                        .tabItem { Label("API & Usage", systemImage: "key.fill") }
+                        .tag(SettingsTab.apiKeys)
+                    modelsTab
+                        .onboardingTarget("settings-tab-1")
+                        .tabItem { Label("Models", systemImage: "cpu") }
+                        .tag(SettingsTab.models)
+                    appearanceTab
+                        .onboardingTarget("settings-tab-2")
+                        .tabItem { Label("Appearance", systemImage: "paintpalette") }
+                        .tag(SettingsTab.appearance)
+                    glossaryTab
+                        .onboardingTarget("settings-tab-3")
+                        .tabItem { Label("Glossary", systemImage: "text.book.closed") }
+                        .tag(SettingsTab.glossary)
+                    chunkingTab
+                        .onboardingTarget("settings-tab-4")
+                        .tabItem { Label("Chunking", systemImage: "scissors") }
+                        .tag(SettingsTab.chunking)
+                    transcriptionTab
+                        .onboardingTarget("settings-tab-5")
+                        .tabItem { Label("Transcription", systemImage: "waveform.badge.mic") }
+                        .tag(SettingsTab.transcription)
+                    promptsTab
+                        .onboardingTarget("settings-tab-6")
+                        .tabItem { Label("Prompts", systemImage: "doc.text") }
+                        .tag(SettingsTab.prompts)
+                }
+                .tint(VaniScriptTheme.accent)
+            }
+            .padding(18)
+            .glassPanel()
+            .padding(20)
+
+            if store.isTourActive {
+                OnboardingTourView(
+                    screen: "settings",
+                    store: store,
+                    frames: onboardingFrames
+                )
+            }
+        }
+        .coordinateSpace(name: "OnboardingSpace")
+        .onPreferenceChange(OnboardingFramesPreferenceKey.self) { dict in
+            onboardingFrames = dict
+        }
+        .preferredColorScheme(store.settings.theme == .dark ? .dark : .light)
+        .onChange(of: store.selectedSettingsTab) { _, newTab in
+            if store.isTourActive && store.activeTourScreen == "settings" {
+                let stepIndex: Int
+                switch newTab {
+                case .apiKeys: stepIndex = 0
+                case .models: stepIndex = 1
+                case .appearance: stepIndex = 2
+                case .glossary: stepIndex = 3
+                case .chunking: stepIndex = 4
+                case .transcription: stepIndex = 5
+                case .prompts: stepIndex = 6
+                }
+                if store.tourStepIndex != stepIndex {
+                    store.tourStepIndex = stepIndex
+                }
+            }
+        }
+        .sheet(item: $editingEntry) { entry in
+            GlossaryEditSheet(entry: entry) { updatedEntry in
+                var finalEntry = updatedEntry
+                finalEntry.translations[store.workflow.targetLang] = updatedEntry.translation
+                if store.workflow.targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "russian" {
+                    finalEntry.translations["Russian"] = updatedEntry.translation
+                }
+                store.updateSettings { settings in
+                    if let index = settings.glossary.firstIndex(where: { $0.id == entry.id }) {
+                        settings.glossary[index] = finalEntry
+                    }
+                }
+                editingEntry = nil
+            } onCancel: {
+                editingEntry = nil
+            }
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            VaniScriptLogoMark(size: 34)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("VaniScript Settings")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(VaniScriptTheme.text0)
+                Text("Universal workflow settings for the native Apple Silicon app")
+                    .font(.system(size: 11))
+                    .foregroundStyle(VaniScriptTheme.text2)
+            }
+            Spacer()
+
+            Button {
+                store.startTour(for: "settings")
+            } label: {
+                Image(systemName: "questionmark.circle")
+            }
+            .buttonStyle(CornerIconButtonStyle())
+            .help("Help Tour")
+        }
+        .padding(.bottom, 12)
+    }
+
+    private var apiKeysTab: some View {
+        SettingsScroll {
+            let geminiIsTranscription = store.settings.transcriptionProvider == "gemini-cloud"
+            let geminiIsTranslation = store.settings.translationProvider == "gemini-cloud"
+            SettingsSection(title: "Google Gemini", headerAccessory: AnyView(
+                HStack(spacing: 4) {
+                    if geminiIsTranscription {
+                        Text("Transcribing")
+                            .font(.system(size: 8, weight: .heavy))
+                            .foregroundStyle(Color.dynamic(light: .white, dark: Color(red: 10/255, green: 10/255, blue: 18/255)))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(VaniScriptTheme.green)
+                            .cornerRadius(4)
+                    }
+                    if geminiIsTranslation {
+                        Text("Translation")
+                            .font(.system(size: 8, weight: .heavy))
+                            .foregroundStyle(Color.dynamic(light: .white, dark: Color(red: 10/255, green: 10/255, blue: 18/255)))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(VaniScriptTheme.green)
+                            .cornerRadius(4)
+                    }
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Gemini API key for cloud transcription, translation, and editing.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .padding(.bottom, 2)
+
+                    ApiKeyInputRow(title: "Gemini Key", text: binding(\.geminiKey), urlString: "https://aistudio.google.com/app/apikey")
+                    ReadOnlyRow(title: "Text Model", value: "gemini-2.5-flash")
+                    SliderRow(title: "Gemini Budget", value: binding(\.geminiBudgetUsd), range: 0...200, format: "$%.0f")
+
+                    HStack(spacing: 8) {
+                        let hasKey = !store.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+                        Button {
+                            store.updateSettings { settings in
+                                settings.transcriptionProvider = geminiIsTranscription ? "coreml-whisperkit" : "gemini-cloud"
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: geminiIsTranscription ? "checkmark.circle.fill" : "circle")
+                                Text(geminiIsTranscription ? "Used for Transcribing" : "Use for Transcribing")
+                            }
+                        }
+                        .buttonStyle(SettingsSmallButtonStyle(primary: geminiIsTranscription))
+                        .disabled(!hasKey)
+
+                        Button {
+                            store.updateSettings { settings in
+                                settings.translationProvider = geminiIsTranslation ? "mlx-native" : "gemini-cloud"
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: geminiIsTranslation ? "checkmark.circle.fill" : "circle")
+                                Text(geminiIsTranslation ? "Used for Translation" : "Use for Translation")
+                            }
+                        }
+                        .buttonStyle(SettingsSmallButtonStyle(primary: geminiIsTranslation))
+                        .disabled(!hasKey)
+                    }
+                    .padding(.top, 4)
+                }
+            }
+
+            let openaiIsTranscription = store.settings.transcriptionProvider == "gpt-cloud"
+            let openaiIsTranslation = store.settings.translationProvider == "gpt-cloud"
+            SettingsSection(title: "OpenAI", headerAccessory: AnyView(
+                HStack(spacing: 4) {
+                    if openaiIsTranscription {
+                        Text("Transcribing")
+                            .font(.system(size: 8, weight: .heavy))
+                            .foregroundStyle(Color.dynamic(light: .white, dark: Color(red: 10/255, green: 10/255, blue: 18/255)))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(VaniScriptTheme.green)
+                            .cornerRadius(4)
+                    }
+                    if openaiIsTranslation {
+                        Text("Translation")
+                            .font(.system(size: 8, weight: .heavy))
+                            .foregroundStyle(Color.dynamic(light: .white, dark: Color(red: 10/255, green: 10/255, blue: 18/255)))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(VaniScriptTheme.green)
+                            .cornerRadius(4)
+                    }
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("OpenAI API key for cloud transcription, translation, and editing.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .padding(.bottom, 2)
+
+                    ApiKeyInputRow(title: "OpenAI Key", text: binding(\.openaiKey), urlString: "https://platform.openai.com/api-keys")
+                    ReadOnlyRow(title: "Text Model", value: "gpt-4o-mini / whisper-1")
+                    SliderRow(title: "OpenAI Budget", value: binding(\.openaiBudgetUsd), range: 0...200, format: "$%.0f")
+
+                    HStack(spacing: 8) {
+                        let hasKey = !store.settings.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+                        Button {
+                            store.updateSettings { settings in
+                                settings.transcriptionProvider = openaiIsTranscription ? "coreml-whisperkit" : "gpt-cloud"
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: openaiIsTranscription ? "checkmark.circle.fill" : "circle")
+                                Text(openaiIsTranscription ? "Used for Transcribing" : "Use for Transcribing")
+                            }
+                        }
+                        .buttonStyle(SettingsSmallButtonStyle(primary: openaiIsTranscription))
+                        .disabled(!hasKey)
+
+                        Button {
+                            store.updateSettings { settings in
+                                settings.translationProvider = openaiIsTranslation ? "mlx-native" : "gpt-cloud"
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: openaiIsTranslation ? "checkmark.circle.fill" : "circle")
+                                Text(openaiIsTranslation ? "Used for Translation" : "Use for Translation")
+                            }
+                        }
+                        .buttonStyle(SettingsSmallButtonStyle(primary: openaiIsTranslation))
+                        .disabled(!hasKey)
+                    }
+                    .padding(.top, 4)
+                }
+            }
+
+            SettingsSection(title: "Anthropic") {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Anthropic API key for cloud text polishing and editing.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .padding(.bottom, 2)
+
+                    ApiKeyInputRow(title: "Anthropic Key", text: binding(\.anthropicKey), urlString: "https://console.anthropic.com/settings/keys")
+                    ReadOnlyRow(title: "Text Model", value: "claude-3-5-sonnet")
+                }
+            }
+
+            SettingsSection(title: "Custom Cloud Providers") {
+                VStack(alignment: .leading, spacing: 10) {
+                    if store.settings.customCloudProviders.isEmpty {
+                        Text("No custom cloud providers configured.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(VaniScriptTheme.text2)
+                            .padding(.bottom, 6)
+                    } else {
+                        ForEach(store.settings.customCloudProviders) { provider in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(provider.label)
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(VaniScriptTheme.text0)
+                                    Text("Model: \(provider.modelName) • URL: \(provider.baseUrl)")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(VaniScriptTheme.text2)
+                                    Text("Pricing per 1M tokens: In $\(String(format: "%.2f", provider.inputCostPerMillion)) / Out $\(String(format: "%.2f", provider.outputCostPerMillion))")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(VaniScriptTheme.accent)
+                                }
+                                Spacer()
+                                if provider.budgetLimitUsd > 0 {
+                                    Text("Limit: $\(String(format: "%.0f", provider.budgetLimitUsd))")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(VaniScriptTheme.text1)
+                                        .padding(.trailing, 8)
+                                }
+                                Button(role: .destructive) {
+                                    store.updateSettings { settings in
+                                        settings.customCloudProviders.removeAll { $0.id == provider.id }
+                                    }
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .foregroundStyle(VaniScriptTheme.red)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(8)
+                            .background(Color.white.opacity(0.02))
+                            .cornerRadius(6)
+                        }
+                    }
+
+                    Divider().padding(.vertical, 4)
+
+                    Text("Add Custom Cloud Model")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(VaniScriptTheme.accent)
+
+                    VStack(spacing: 8) {
+                        TextInputRow(title: "Provider Name", text: $customLabel)
+                        TextInputRow(title: "API Endpoint URL", text: $customBaseUrl)
+                        SecureInputRow(title: "API Key", text: $customApiKey)
+                        TextInputRow(title: "Model Name", text: $customModelName)
+                        TextInputRow(title: "Input cost / 1M tokens ($)", text: $customInputCost)
+                        TextInputRow(title: "Output cost / 1M tokens ($)", text: $customOutputCost)
+                        TextInputRow(title: "Monthly Budget Limit ($)", text: $customBudgetLimit)
+
+                        Button {
+                            addCustomProvider()
+                        } label: {
+                            Label("Add Custom Provider", systemImage: "plus")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(SettingsPrimaryButtonStyle())
+                        .disabled(customLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || customBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+            }
+
+            SettingsSection(title: "Cloud Usage Statistics") {
+                VStack(spacing: 16) {
+                    let defaultProviders = ["gemini", "openai", "anthropic"]
+                    let allProviders = defaultProviders + store.settings.customCloudProviders.map { $0.label }
+
+                    ForEach(allProviders, id: \.self) { provider in
+                        let stats = store.settings.usage[provider.lowercased()] ?? ProviderUsage()
+                        let cost = estimateCost(provider: provider, input: stats.inputTokens, output: stats.outputTokens)
+
+                        let isConfigured: Bool = {
+                            switch provider.lowercased() {
+                            case "gemini": return !store.settings.geminiKey.isEmpty
+                            case "openai": return !store.settings.openaiKey.isEmpty
+                            case "anthropic": return !store.settings.anthropicKey.isEmpty
+                            default: return true
+                            }
+                        }()
+
+                        if isConfigured || stats.sessions > 0 {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(provider)
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundStyle(VaniScriptTheme.accent)
+                                    Spacer()
+                                    Text(String(format: "$%.4f", cost))
+                                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                        .foregroundStyle(VaniScriptTheme.green)
+                                }
+
+                                HStack(spacing: 20) {
+                                    StatItem(title: "Sessions", value: "\(stats.sessions)")
+                                    StatItem(title: "Audio Time", value: String(format: "%.1f m", stats.audioMinutes))
+                                    StatItem(title: "Input Tokens", value: formatTokens(stats.inputTokens))
+                                    StatItem(title: "Output Tokens", value: formatTokens(stats.outputTokens))
+                                }
+                                .padding(.vertical, 4)
+
+                                let budgetLimit: Double = {
+                                    switch provider.lowercased() {
+                                    case "gemini": return store.settings.geminiBudgetUsd
+                                    case "openai": return store.settings.openaiBudgetUsd
+                                    default:
+                                        if let custom = store.settings.customCloudProviders.first(where: { $0.label.lowercased() == provider.lowercased() }) {
+                                            return custom.budgetLimitUsd
+                                        }
+                                        return 0.0
+                                    }
+                                }()
+
+                                if budgetLimit > 0 {
+                                    BudgetBar(title: "\(provider) Budget Limit", spent: cost, limit: budgetLimit)
+                                }
+                            }
+                            .padding(12)
+                            .background(Color.white.opacity(0.025))
+                            .cornerRadius(10)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.06), lineWidth: 1))
+                        }
+                    }
+
+                    Button(role: .destructive) {
+                        store.updateSettings { settings in
+                            settings.usage = [:]
+                        }
+                    } label: {
+                        Label("Reset All Statistics", systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SettingsPrimaryButtonStyle())
+                    .padding(.top, 8)
+                }
+            }
+        }
+    }
+
+    private var modelsTab: some View {
+        SettingsScroll {
+            SettingsSection(title: "Scan Local Models") {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Already downloaded models in another version of VaniScript (e.g. VaniScript Electron) or stored in common system folders? Run a fast native scan to discover and automatically connect them.")
+                        .font(.subheadline)
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if store.isScanning {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Scanning system folders for Whisper and MLX models...")
+                                .font(.subheadline)
+                                .foregroundStyle(VaniScriptTheme.accent)
+                        }
+                        .padding(.vertical, 4)
+                    } else {
+                        Button {
+                            store.scanForLocalModels()
+                        } label: {
+                            Label("Scan Computer for Local Models", systemImage: "magnifyingglass.and.waveform")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(SettingsPrimaryButtonStyle())
+                    }
+                }
+            }
+
+            SettingsSection(title: "Core ML Transcription Models") {
+                ForEach(store.settings.localAsrModels.keys.sorted(), id: \.self) { id in
+                    if let model = store.settings.localAsrModels[id] {
+                        ModelSettingsRow(
+                            id: id,
+                            model: model,
+                            isActive: store.settings.isDownloadedLocalASRModelActive(id: id),
+                            downloadUrl: modelDownloadUrl(id: id),
+                            download: {
+                                store.downloadLocalModel(id: id, isTranslation: false)
+                            },
+                            locate: {
+                                store.locateLocalASRModel(id: id)
+                            },
+                            use: {
+                                store.updateSettings { settings in
+                                    settings.transcriptionProvider = id
+                                }
+                            },
+                            remove: {
+                                store.removeLocalASRModel(id: id)
+                            }
+                        )
+                    }
+                }
+            }
+
+            SettingsSection(title: "MLX Translation Models") {
+                ForEach(store.settings.localTranslationModels.keys.sorted(), id: \.self) { id in
+                    if let model = store.settings.localTranslationModels[id] {
+                        ModelSettingsRow(
+                            id: id,
+                            model: model,
+                            isActive: store.settings.isDownloadedLocalTranslationModelActive(id: id),
+                            downloadUrl: modelDownloadUrl(id: id),
+                            download: {
+                                store.downloadLocalModel(id: id, isTranslation: true)
+                            },
+                            locate: {
+                                store.locateLocalTranslationModel(id: id)
+                            },
+                            use: {
+                                store.updateSettings { settings in
+                                    settings.translationProvider = id
+                                }
+                            },
+                            remove: {
+                                store.removeLocalTranslationModel(id: id)
+                            }
+                        )
+                    }
+                }
+            }
+
+            SettingsSection(title: "Native Runtime Info") {
+                SettingsRow(title: "Application", value: AppIdentity.displayName)
+                SettingsRow(title: "Bundle", value: AppIdentity.bundleIdentifier)
+                SettingsRow(title: "Architecture", value: AppleSiliconRuntimePolicy.requiredArchitecture)
+                SettingsRow(title: "macOS", value: AppIdentity.minimumMacOSVersion)
+                SettingsRow(title: "Transcription Backend", value: NativeEngineCatalog.transcriptionBackend)
+                SettingsRow(title: "LLM Backend", value: NativeEngineCatalog.polishingBackend)
+            }
+        }
+        .onAppear {
+            store.reconcileLocalModelStates()
+        }
+    }
+
+    private var appearanceTab: some View {
+        SettingsScroll {
+            SettingsSection(title: "Appearance Options") {
+                PickerRow(title: "Theme", selection: binding(\.theme), values: Theme.allCases)
+                PickerRow(title: "Reading Font", selection: binding(\.fontFamily), values: FontFamily.allCases)
+                PickerRow(title: "Font Size", selection: binding(\.fontSize), values: FontSize.allCases)
+                SliderRow(title: "Font Scale", value: binding(\.fontScale), range: 0.5...3.0, format: "%.2f")
+            }
+
+            SettingsSection(title: "System Diagnostics & Logs") {
+                PickerRow(title: "Log Level", selection: binding(\.logLevel), values: LogLevel.allCases)
+
+                HStack(spacing: 12) {
+                    Button {
+                        store.exportSystemLogs()
+                    } label: {
+                        Label("Export System Logs", systemImage: "square.and.arrow.up")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SettingsPrimaryButtonStyle())
+
+                    Button {
+                        AppLogger.shared.clearLogs()
+                        store.statusMessage = "Logs cleared successfully."
+                    } label: {
+                        Label("Clear Logs", systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SettingsPrimaryButtonStyle())
+                }
+                .padding(.top, 6)
+            }
+        }
+    }
+
+    private var uniqueCategories: [String] {
+        let allCats = store.settings.glossary.compactMap(\.category).filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        return Array(Set(allCats)).sorted()
+    }
+
+    private var filteredAndSortedGlossary: [GlossaryEntry] {
+        var entries = store.settings.glossary
+
+        let query = glossarySearch.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if !query.isEmpty {
+            entries = entries.filter {
+                $0.source.lowercased().contains(query) ||
+                $0.translation.lowercased().contains(query) ||
+                $0.variants.contains { $0.lowercased().contains(query) }
+            }
+        }
+
+        if glossaryCategoryFilter != "all" {
+            entries = entries.filter { $0.category == glossaryCategoryFilter }
+        }
+
+        switch glossarySortMode {
+        case .newest:
+            break
+        case .oldest:
+            entries.reverse()
+        case .alphabetical:
+            entries.sort { $0.source.localizedCaseInsensitiveCompare($1.source) == .orderedAscending }
+        }
+
+        return entries
+    }
+
+    private var glossaryTab: some View {
+        SettingsScroll {
+            SettingsSection(title: "Active Glossary Language") {
+                HStack(spacing: 12) {
+                    Text("Select Target Language:")
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .font(.system(size: 13))
+
+                    Picker("", selection: glossaryLanguageBinding) {
+                        ForEach(glossaryLangs, id: \.self) { lang in
+                            Text(lang == "same" ? "Original / Latin Fallback" : lang).tag(lang)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+
+                    Spacer()
+                }
+                .padding(.vertical, 4)
+            }
+
+            SettingsSection(title: "Add Glossary Entry") {
+                TextInputRow(title: "Source", text: $glossarySource)
+                TextInputRow(title: "Translation", text: $glossaryTranslation)
+                TextInputRow(title: "Category", text: $glossaryCategory)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Variants")
+                            .foregroundStyle(VaniScriptTheme.text2)
+                            .frame(width: 140, alignment: .leading)
+                        TextField("Comma-separated variations...", text: $glossaryVariants)
+                            .textFieldStyle(.plain)
+                            .foregroundStyle(VaniScriptTheme.text0)
+                            .padding(.horizontal, 10)
+                            .frame(height: 34)
+                            .background(VaniScriptTheme.input)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    Text("Comma-separated spelling variations or incorrect spellings (e.g. Srila Prabhupada, Prabhupad)")
+                        .font(.system(size: 10))
+                        .foregroundStyle(VaniScriptTheme.text2.opacity(0.75))
+                        .padding(.leading, 140)
+                }
+                .font(.system(size: 13))
+
+                Button {
+                    addGlossaryEntry()
+                } label: {
+                    Label("Add Term", systemImage: "plus")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(SettingsPrimaryButtonStyle())
+                .disabled(glossarySource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+
+            SettingsSection(title: "Glossary Backup") {
+                HStack(spacing: 12) {
+                    Button {
+                        importGlossaryJSON()
+                    } label: {
+                        Label("Import JSON", systemImage: "arrow.down.doc")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SettingsSmallButtonStyle(primary: false))
+
+                    Button {
+                        exportGlossaryJSON()
+                    } label: {
+                        Label("Export JSON", systemImage: "arrow.up.doc")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                }
+            }
+
+            SettingsSection(title: "Terms") {
+                VStack(spacing: 10) {
+                    HStack(spacing: 8) {
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(VaniScriptTheme.text2)
+                                .font(.system(size: 11))
+                            TextField("Search glossary...", text: $glossarySearch)
+                                .textFieldStyle(.plain)
+                                .font(.system(size: 12))
+                            if !glossarySearch.isEmpty {
+                                Button {
+                                    glossarySearch = ""
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(VaniScriptTheme.text2)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .frame(height: 28)
+                        .background(VaniScriptTheme.input)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                        Picker("Category", selection: $glossaryCategoryFilter) {
+                            Text("All Categories").tag("all")
+                            ForEach(uniqueCategories, id: \.self) { cat in
+                                Text(cat).tag(cat)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 130)
+
+                        Picker("Sort", selection: $glossarySortMode) {
+                            ForEach(GlossarySortMode.allCases) { mode in
+                                Text(mode.rawValue).tag(mode)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 110)
+                    }
+                    .padding(.bottom, 6)
+
+                    if filteredAndSortedGlossary.isEmpty {
+                        Text("No matching terms in glossary.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(VaniScriptTheme.text2)
+                            .padding(.vertical, 8)
+                    } else {
+                        ForEach(filteredAndSortedGlossary) { entry in
+                            GlossarySettingsRow(
+                                entry: entry,
+                                edit: {
+                                    editingEntry = entry
+                                },
+                                delete: {
+                                    store.updateSettings { settings in
+                                        settings.glossary.removeAll { $0.id == entry.id }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var chunkingTab: some View {
+        SettingsScroll {
+            SettingsSection(title: "Audio Chunking Settings") {
+                StepperRow(title: "Chunk Duration", value: binding(\.chunkDurationMin), range: 1...60, suffix: "min")
+                PickerRow(title: "Slice Mode", selection: binding(\.sliceMode), values: SliceMode.allCases)
+                StepperRow(title: "Silence Threshold", value: binding(\.silenceThreshDb), range: -60 ... -1, suffix: "dB")
+                StepperRow(title: "Minimum Silence", value: binding(\.minSilenceMs), range: 100...3000, suffix: "ms")
+            }
+        }
+    }
+
+    private var transcriptionTab: some View {
+        SettingsScroll {
+            SettingsSection(title: "Default Languages") {
+                TextInputRow(title: "Default Source", text: binding(\.defaultSourceLang))
+                TextInputRow(title: "Default Target", text: binding(\.defaultTargetLang))
+            }
+
+            SettingsSection(title: "Default Engines") {
+                HStack(spacing: 12) {
+                    Text("Default Transcription Engine")
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .font(.system(size: 13))
+                        .frame(width: 220, alignment: .leading)
+
+                    Picker("", selection: binding(\.transcriptionProvider)) {
+                        ForEach(ProviderRegistry.availableTranscriptionProviders(settings: store.settings), id: \.id) { provider in
+                            Text(provider.label).tag(provider.id)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                }
+
+                HStack(spacing: 12) {
+                    Text("Default Translation Engine")
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .font(.system(size: 13))
+                        .frame(width: 220, alignment: .leading)
+
+                    Picker("", selection: binding(\.translationProvider)) {
+                        ForEach(ProviderRegistry.availableTranslationProviders(settings: store.settings, targetLang: store.settings.defaultTargetLang).providers, id: \.id) { provider in
+                            Text(provider.label).tag(provider.id)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                }
+            }
+        }
+    }
+
+    private var promptsTab: some View {
+        HStack(spacing: 16) {
+            promptsSidebar
+
+            Divider()
+                .background(Color.white.opacity(0.12))
+
+            promptEditor
+        }
+        .padding(.vertical, 8)
+    }
+
+    private var promptsSidebar: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                let stages = ["Transcription", "Translation", "Editing", "Shorts & Reels", "Export"]
+                ForEach(stages, id: \.self) { stage in
+                    let stageDefs = DefaultPrompts.definitions.filter { $0.stage == stage }
+                    if !stageDefs.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(stage)
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(VaniScriptTheme.accent)
+                                .textCase(.uppercase)
+                                .padding(.horizontal, 4)
+
+                            ForEach(stageDefs) { def in
+                                Button(action: {
+                                    selectedPromptId = def.id
+                                }) {
+                                    HStack {
+                                        Text(def.label)
+                                            .font(.system(size: 12, weight: selectedPromptId == def.id ? .bold : .regular))
+                                            .foregroundStyle(selectedPromptId == def.id ? Color(red: 10/255, green: 10/255, blue: 18/255) : VaniScriptTheme.text0)
+                                            .lineLimit(1)
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 6)
+                                    .background(selectedPromptId == def.id ? VaniScriptTheme.accent : Color.clear)
+                                    .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.trailing, 4)
+            .background(ThinScrollbarTuner())
+        }
+        .frame(width: 180)
+    }
+
+    private var promptEditor: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let def = DefaultPrompts.definitions.first(where: { $0.id == selectedPromptId }) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(def.label)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(VaniScriptTheme.text0)
+                    Text(def.description)
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .lineLimit(2)
+                }
+
+                if !def.variables.isEmpty {
+                    HStack(spacing: 6) {
+                        Text("Variables:")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(VaniScriptTheme.text2)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 4) {
+                                ForEach(def.variables, id: \.self) { variable in
+                                    Text("{{\(variable)}}")
+                                        .font(.system(size: 9, design: .monospaced))
+                                        .foregroundStyle(VaniScriptTheme.accent)
+                                        .padding(.horizontal, 5)
+                                        .padding(.vertical, 1.5)
+                                        .background(Color.white.opacity(0.06))
+                                        .cornerRadius(4)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let activePreset = store.settings.promptPresets[selectedPromptId] ?? PromptPresetSettings()
+
+                HStack(spacing: 12) {
+                    Text("Slot")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(VaniScriptTheme.text2)
+
+                    Picker("", selection: Binding(
+                        get: { activePreset.active },
+                        set: { value in
+                            store.updateSettings { settings in
+                                if settings.promptPresets[selectedPromptId] == nil {
+                                    settings.promptPresets[selectedPromptId] = PromptPresetSettings(active: value)
+                                } else {
+                                    settings.promptPresets[selectedPromptId]?.active = value
+                                }
+                            }
+                        }
+                    )) {
+                        Text("Default").tag("default")
+                        Text("Slot 1").tag("custom1")
+                        Text("Slot 2").tag("custom2")
+                        Text("Slot 3").tag("custom3")
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 250)
+
+                    Spacer()
+
+                    if activePreset.active != "default" {
+                        Button(action: {
+                            store.updateSettings { settings in
+                                if settings.promptPresets[selectedPromptId] == nil {
+                                    var customMap = ["custom1": "", "custom2": "", "custom3": ""]
+                                    customMap[activePreset.active] = def.defaultText
+                                    settings.promptPresets[selectedPromptId] = PromptPresetSettings(active: activePreset.active, custom: customMap)
+                                } else {
+                                    settings.promptPresets[selectedPromptId]?.custom[activePreset.active] = def.defaultText
+                                }
+                            }
+                        }) {
+                            Label("Copy Default", systemImage: "doc.on.doc")
+                        }
+                        .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                    }
+                }
+
+                if activePreset.active == "default" {
+                    TextEditor(text: .constant(def.defaultText))
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(VaniScriptTheme.text1)
+                        .padding(6)
+                        .background(Color.white.opacity(0.02))
+                        .cornerRadius(8)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                        .disabled(true)
+                } else {
+                    TextEditor(text: Binding(
+                        get: { activePreset.custom[activePreset.active] ?? "" },
+                        set: { value in
+                            store.updateSettings { settings in
+                                if settings.promptPresets[selectedPromptId] == nil {
+                                    var customMap = ["custom1": "", "custom2": "", "custom3": ""]
+                                    customMap[activePreset.active] = value
+                                    settings.promptPresets[selectedPromptId] = PromptPresetSettings(active: activePreset.active, custom: customMap)
+                                } else {
+                                    settings.promptPresets[selectedPromptId]?.custom[activePreset.active] = value
+                                }
+                            }
+                        }
+                    ))
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(VaniScriptTheme.text0)
+                    .padding(6)
+                    .background(VaniScriptTheme.input)
+                    .cornerRadius(8)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                }
+            } else {
+                Spacer()
+                Text("Select a prompt from the sidebar to edit")
+                    .font(.system(size: 13))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                Spacer()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func addCustomProvider() {
+        let label = customLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        let baseUrl = customBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        let apiKey = customApiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let modelName = customModelName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let inputCost = Double(customInputCost.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0.0
+        let outputCost = Double(customOutputCost.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0.0
+        let budgetLimit = Double(customBudgetLimit.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0.0
+
+        guard !label.isEmpty, !baseUrl.isEmpty else { return }
+
+        let newProvider = CustomCloudProvider(
+            label: label,
+            baseUrl: baseUrl,
+            apiKey: apiKey,
+            modelName: modelName.isEmpty ? "default" : modelName,
+            inputCostPerMillion: inputCost,
+            outputCostPerMillion: outputCost,
+            budgetLimitUsd: budgetLimit
+        )
+
+        store.updateSettings { settings in
+            settings.customCloudProviders.append(newProvider)
+        }
+
+        customLabel = ""
+        customBaseUrl = ""
+        customApiKey = ""
+        customModelName = ""
+        customInputCost = ""
+        customOutputCost = ""
+        customBudgetLimit = ""
+    }
+
+    private func estimateCost(provider: String, input: Int, output: Int) -> Double {
+        switch provider.lowercased() {
+        case "gemini":
+            return (Double(input) * 0.000002) + (Double(output) * 0.000008)
+        case "openai":
+            return (Double(input) * 0.0000025) + (Double(output) * 0.000010)
+        case "anthropic":
+            return (Double(input) * 0.000003) + (Double(output) * 0.000015)
+        default:
+            if let custom = store.settings.customCloudProviders.first(where: { $0.label.lowercased() == provider.lowercased() || $0.id == provider }) {
+                return (Double(input) * (custom.inputCostPerMillion / 1_000_000.0)) + (Double(output) * (custom.outputCostPerMillion / 1_000_000.0))
+            }
+            return 0.0
+        }
+    }
+
+    private func formatTokens(_ count: Int) -> String {
+        if count >= 1_000_000 {
+            return String(format: "%.2fM", Double(count) / 1_000_000.0)
+        } else if count >= 1_000 {
+            return String(format: "%.1fK", Double(count) / 1_000.0)
+        } else {
+            return "\(count)"
+        }
+    }
+
+    private func binding<Value>(_ keyPath: WritableKeyPath<AppSettings, Value>) -> Binding<Value> {
+        Binding {
+            store.settings[keyPath: keyPath]
+        } set: { value in
+            store.updateSettings { settings in
+                settings[keyPath: keyPath] = value
+            }
+        }
+    }
+
+    private func addGlossaryEntry() {
+        let source = glossarySource.trimmingCharacters(in: .whitespacesAndNewlines)
+        let translation = glossaryTranslation.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !source.isEmpty else { return }
+        let now = ISO8601DateFormatter().string(from: Date())
+        var translations: [String: String] = [:]
+        if !translation.isEmpty {
+            translations[store.workflow.targetLang] = translation
+            if store.workflow.targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "russian" {
+                translations["Russian"] = translation
+            }
+        }
+
+        let parsedVariants = glossaryVariants
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        let entry = GlossaryEntry(
+            id: UUID().uuidString,
+            variants: parsedVariants,
+            source: source,
+            translation: translation,
+            category: glossaryCategory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : glossaryCategory,
+            translations: translations,
+            remember: true,
+            createdAt: now,
+            updatedAt: now
+        )
+        store.updateSettings { settings in
+            settings.glossary.insert(entry, at: 0)
+        }
+        glossarySource = ""
+        glossaryTranslation = ""
+        glossaryCategory = ""
+        glossaryVariants = ""
+    }
+
+    private func exportGlossaryJSON() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "vaniscript-glossary.json"
+        panel.message = "Export VaniScript Glossary"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let data = try JSONEncoder().encode(store.settings.glossary)
+            try data.write(to: url)
+        } catch {
+            print("Failed to export glossary: \(error.localizedDescription)")
+        }
+    }
+
+    private func importGlossaryJSON() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.allowedContentTypes = [.json]
+        panel.message = "Choose a VaniScript Glossary JSON file"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let data = try Data(contentsOf: url)
+            let imported = try JSONDecoder().decode([GlossaryEntry].self, from: data)
+
+            store.updateSettings { settings in
+                var current = settings.glossary
+                for entry in imported {
+                    if let index = current.firstIndex(where: { $0.id == entry.id || $0.source.lowercased() == entry.source.lowercased() }) {
+                        current[index] = entry
+                    } else {
+                        current.append(entry)
+                    }
+                }
+                settings.glossary = current
+            }
+        } catch {
+            print("Failed to import glossary: \(error.localizedDescription)")
+        }
+    }
+
+    private let glossaryLangs = ["same", "Russian", "Czech", "French", "German", "Polish", "English", "Hindi", "Spanish", "Swedish", "Italian", "Portuguese", "Dutch"]
+
+    private var glossaryLanguageBinding: Binding<String> {
+        Binding {
+            store.workflow.targetLang
+        } set: { value in
+            store.setTargetLanguage(value)
+        }
+    }
+}
+
+
+private struct SettingsScroll<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                content
+            }
+            .padding(.top, 10)
+            .padding(.bottom, 18)
+            .background(ThinScrollbarTuner())
+        }
+    }
+}
+
+private struct SettingsSection<Content: View>: View {
+    let title: String
+    var headerAccessory: AnyView? = nil
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(VaniScriptTheme.accent)
+                    .textCase(.uppercase)
+                Spacer()
+                if let accessory = headerAccessory {
+                    accessory
+                }
+            }
+            VStack(spacing: 8) {
+                content
+            }
+        }
+        .padding(14)
+        .background(Color.white.opacity(0.035))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.09), lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+private struct SettingsRow: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .foregroundStyle(VaniScriptTheme.text2)
+            Spacer()
+            Text(value)
+                .fontWeight(.semibold)
+                .foregroundStyle(VaniScriptTheme.text0)
+        }
+        .font(.system(size: 13))
+        .padding(.horizontal, 12)
+        .frame(height: 36)
+        .background(Color.white.opacity(0.04))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+private struct TextInputRow: View {
+    let title: String
+    @Binding var text: String
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .foregroundStyle(VaniScriptTheme.text2)
+                .frame(width: 140, alignment: .leading)
+            TextField("", text: $text)
+                .textFieldStyle(.plain)
+                .foregroundStyle(VaniScriptTheme.text0)
+                .padding(.horizontal, 10)
+                .frame(height: 34)
+                .background(VaniScriptTheme.input)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .font(.system(size: 13))
+    }
+}
+
+private struct SecureInputRow: View {
+    let title: String
+    @Binding var text: String
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .foregroundStyle(VaniScriptTheme.text2)
+                .frame(width: 140, alignment: .leading)
+            SecureField("", text: $text)
+                .textFieldStyle(.plain)
+                .foregroundStyle(VaniScriptTheme.text0)
+                .padding(.horizontal, 10)
+                .frame(height: 34)
+                .background(VaniScriptTheme.input)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .font(.system(size: 13))
+    }
+}
+
+private struct ApiKeyInputRow: View {
+    let title: String
+    @Binding var text: String
+    let urlString: String
+    @State private var isRevealed = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .foregroundStyle(VaniScriptTheme.text2)
+                .frame(width: 140, alignment: .leading)
+            HStack(spacing: 6) {
+                Group {
+                    if isRevealed {
+                        TextField("", text: $text)
+                    } else {
+                        SecureField("", text: $text)
+                    }
+                }
+                .textFieldStyle(.plain)
+                .foregroundStyle(VaniScriptTheme.text0)
+
+                Button {
+                    isRevealed.toggle()
+                } label: {
+                    Image(systemName: isRevealed ? "eye.slash" : "eye")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(isRevealed ? "Hide API key" : "Show API key")
+                .accessibilityLabel(isRevealed ? "Hide API key" : "Show API key")
+            }
+            .padding(.leading, 10)
+            .padding(.trailing, 6)
+            .frame(height: 34)
+            .background(VaniScriptTheme.input)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            Button {
+                if let url = URL(string: urlString) {
+                    NSWorkspace.shared.open(url)
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.up.right.square")
+                    Text("Get API Key")
+                }
+            }
+            .buttonStyle(SettingsSmallButtonStyle(primary: false))
+        }
+        .font(.system(size: 13))
+    }
+}
+
+private struct ReadOnlyRow: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .foregroundStyle(VaniScriptTheme.text2)
+                .frame(width: 140, alignment: .leading)
+            Text(value)
+                .foregroundStyle(VaniScriptTheme.text1)
+                .padding(.horizontal, 10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: 34)
+                .background(VaniScriptTheme.input)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.06), lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .font(.system(size: 13))
+    }
+}
+
+private struct PickerRow<Value: RawRepresentable & CaseIterable & Hashable>: View where Value.RawValue == String, Value.AllCases: RandomAccessCollection {
+    let title: String
+    @Binding var selection: Value
+    let values: Value.AllCases
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .foregroundStyle(VaniScriptTheme.text2)
+                .frame(width: 140, alignment: .leading)
+            Picker(title, selection: $selection) {
+                ForEach(Array(values), id: \.self) { value in
+                    Text(value.rawValue.capitalized).tag(value)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+        }
+        .font(.system(size: 13))
+    }
+}
+
+private struct SliderRow: View {
+    let title: String
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let format: String
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .foregroundStyle(VaniScriptTheme.text2)
+                .frame(width: 140, alignment: .leading)
+            Slider(value: $value, in: range)
+                .tint(VaniScriptTheme.accent)
+            Text(String(format: format, value))
+                .foregroundStyle(VaniScriptTheme.accent)
+                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .frame(width: 54, alignment: .trailing)
+        }
+        .font(.system(size: 13))
+    }
+}
+
+private struct StepperRow: View {
+    let title: String
+    @Binding var value: Int
+    let range: ClosedRange<Int>
+    let suffix: String
+
+    var body: some View {
+        Stepper(value: $value, in: range) {
+            HStack {
+                Text(title)
+                    .foregroundStyle(VaniScriptTheme.text2)
+                Spacer()
+                Text("\(value) \(suffix)")
+                    .foregroundStyle(VaniScriptTheme.accent)
+                    .fontWeight(.bold)
+            }
+        }
+        .font(.system(size: 13))
+    }
+}
+
+private struct ProviderList: View {
+    let title: String
+    let providers: [ProviderOption]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(VaniScriptTheme.text2)
+            if providers.isEmpty {
+                Text("No providers available")
+                    .font(.system(size: 12))
+                    .foregroundStyle(VaniScriptTheme.text2)
+            } else {
+                ForEach(providers, id: \.id) { provider in
+                    HStack {
+                        Text(provider.label)
+                            .foregroundStyle(VaniScriptTheme.text0)
+                        Spacer()
+                        Text(provider.group.rawValue.capitalized)
+                            .font(.system(size: 10, weight: .heavy))
+                            .foregroundStyle(provider.group == .local ? VaniScriptTheme.accent : VaniScriptTheme.green)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.white.opacity(0.06))
+                            .clipShape(Capsule())
+                    }
+                    .font(.system(size: 12))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct ModelMeta: Sendable {
+    let size: String
+    let accuracy: Int
+    let speed: Int
+    let badge: String
+    let description: String
+}
+
+private struct RatingDotsView: View {
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<5, id: \.self) { i in
+                Circle()
+                    .fill(i < count ? VaniScriptTheme.accent : Color.white.opacity(0.15))
+                    .frame(width: 5, height: 5)
+            }
+        }
+    }
+}
+
+private func modelDownloadUrl(id: String) -> String {
+    switch id {
+    case "qwen35-08b-4bit":
+        return "https://huggingface.co/mlx-community/Qwen3.5-0.8B-4bit"
+    case "qwen35-2b-4bit":
+        return "https://huggingface.co/mlx-community/Qwen3.5-2B-4bit"
+    case "qwen35-4b-4bit":
+        return "https://huggingface.co/mlx-community/Qwen3.5-4B-4bit"
+    case "qwen35-9b-4bit":
+        return "https://huggingface.co/mlx-community/Qwen3.5-9B-4bit"
+    case "nemotron3-nano-4b-4bit":
+        return "https://huggingface.co/mlx-community/NVIDIA-Nemotron-3-Nano-4B-4bit"
+    case "whisper-small-en":
+        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/small.en"
+    case "whisper-small-multilingual":
+        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/small"
+    case "whisper-medium-en":
+        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/medium.en"
+    case "whisper-medium-multilingual":
+        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/medium"
+    case "whisper-large-v3-turbo":
+        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/large-v3-turbo"
+    case "whisper-large-v3":
+        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/large-v3"
+    default:
+        return "https://huggingface.co"
+    }
+}
+
+private func getModelMeta(id: String) -> ModelMeta {
+    switch id {
+    case "qwen35-9b-4bit":
+        return ModelMeta(size: "≈ 5.54 GiB", accuracy: 5, speed: 2, badge: "Quality 9B", description: "Highest quality within the 9B cap. Best for Gaudiya Vaishnava translation.")
+    case "qwen35-4b-4bit":
+        return ModelMeta(size: "≈ 2.83 GiB", accuracy: 4, speed: 4, badge: "Recommended 4B", description: "Balanced default. Strong quality, comfortable speed.")
+    case "nemotron3-nano-4b-4bit":
+        return ModelMeta(size: "≈ 2.08 GiB", accuracy: 4, speed: 4, badge: "NVIDIA 4B", description: "Strong compact NVIDIA model.")
+    case "qwen35-2b-4bit":
+        return ModelMeta(size: "≈ 1.60 GiB", accuracy: 3, speed: 5, badge: "Fast 2B", description: "Fast and light. Good for quick passes.")
+    case "qwen35-08b-4bit":
+        return ModelMeta(size: "≈ 0.58 GiB", accuracy: 2, speed: 5, badge: "Tiny 0.8B", description: "Ultra-light for tests and low-memory machines.")
+
+    case "whisper-small-en":
+        return ModelMeta(size: "≈ 240 MiB", accuracy: 3, speed: 4, badge: "Light EN", description: "English speech only. Fast, low memory footprint.")
+    case "whisper-small-multilingual":
+        return ModelMeta(size: "≈ 240 MiB", accuracy: 3, speed: 4, badge: "Light ML", description: "Multilingual. Moderate accuracy, highly responsive.")
+    case "whisper-medium-en":
+        return ModelMeta(size: "≈ 760 MiB", accuracy: 4, speed: 3, badge: "Balanced EN", description: "English speech only. Highly accurate balanced model.")
+    case "whisper-medium-multilingual":
+        return ModelMeta(size: "≈ 760 MiB", accuracy: 4, speed: 3, badge: "Balanced ML", description: "Multilingual. Strong accuracy with a balanced Apple Silicon footprint.")
+    case "whisper-large-v3-turbo":
+        return ModelMeta(size: "≈ 800 MiB", accuracy: 4, speed: 3, badge: "Fast Very Good", description: "Multilingual. Fast with excellent accuracy.")
+    case "whisper-large-v3":
+        return ModelMeta(size: "≈ 1.5 GiB", accuracy: 5, speed: 2, badge: "Max accuracy", description: "Multilingual. Maximum possible precision for complex terms.")
+
+    default:
+        return ModelMeta(size: "Unknown", accuracy: 1, speed: 1, badge: "Custom", description: "Custom local model folder.")
+    }
+}
+
+private struct ModelSettingsRow: View {
+    let id: String
+    let model: LocalModelState
+    let isActive: Bool
+    let downloadUrl: String
+    let download: () -> Void
+    let locate: () -> Void
+    let use: () -> Void
+    let remove: () -> Void
+
+    var body: some View {
+        let meta = getModelMeta(id: id)
+
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
+                // Left column: Icon & Compute badge
+                VStack(spacing: 6) {
+                    Image(systemName: model.runtime == .whisper ? "waveform" : "brain")
+                        .font(.system(size: 16))
+                        .foregroundStyle(VaniScriptTheme.accent)
+                        .frame(width: 32, height: 32)
+                        .background(Color.white.opacity(0.04))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                    Text(model.runtime == .mlx ? "METAL" : "NE/GPU")
+                        .font(.system(size: 8, weight: .heavy))
+                        .foregroundStyle(VaniScriptTheme.accent)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1.5)
+                        .background(Color.white.opacity(0.06))
+                        .clipShape(Capsule())
+                }
+
+                // Middle column: Details
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text(model.label)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(VaniScriptTheme.text0)
+
+                        if !meta.badge.isEmpty {
+                            Text(meta.badge)
+                                .font(.system(size: 8, weight: .semibold))
+                                .foregroundStyle(VaniScriptTheme.accent)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 0.5)
+                                .background(VaniScriptTheme.accent.opacity(0.12))
+                                .cornerRadius(4)
+                        }
+
+                        if isActive {
+                            Text("Active")
+                                .font(.system(size: 8, weight: .heavy))
+                                .foregroundStyle(Color(red: 10/255, green: 10/255, blue: 18/255))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 0.5)
+                                .background(VaniScriptTheme.green)
+                                .cornerRadius(4)
+                        }
+                    }
+
+                    Text(meta.description)
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .lineLimit(2)
+                        .padding(.bottom, 2)
+
+                    HStack(spacing: 12) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "internaldrive")
+                            Text(meta.size)
+                        }
+
+                        HStack(spacing: 4) {
+                            Image(systemName: "scope")
+                            RatingDotsView(count: meta.accuracy)
+                        }
+
+                        HStack(spacing: 4) {
+                            Image(systemName: "bolt")
+                            RatingDotsView(count: meta.speed)
+                        }
+                    }
+                    .font(.system(size: 10))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                }
+
+                Spacer()
+
+                // Right column: Actions
+                VStack(alignment: .trailing, spacing: 6) {
+                    if model.status == .downloading {
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text(model.progressLabel ?? "Downloading...")
+                                .font(.system(size: 10))
+                                .foregroundStyle(VaniScriptTheme.text2)
+                                .lineLimit(1)
+
+                            ProgressView(value: model.progress ?? 0.0, total: 1.0)
+                                .progressViewStyle(.linear)
+                                .tint(VaniScriptTheme.accent)
+                                .frame(width: 90)
+                        }
+                    } else if model.status != .downloaded {
+                        Button {
+                            download()
+                        } label: {
+                            Label("Download", systemImage: "arrow.down.circle")
+                                .frame(width: 90)
+                        }
+                        .buttonStyle(SettingsSmallButtonStyle(primary: true))
+
+                        HStack(spacing: 4) {
+                            Button("Locate") {
+                                locate()
+                            }
+                            .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                            .frame(width: 62)
+
+                            Button {
+                                if let url = URL(string: downloadUrl) {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            } label: {
+                                Image(systemName: "globe")
+                                    .font(.system(size: 11))
+                            }
+                            .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                            .frame(width: 24)
+                            .help("Open Hugging Face in Browser")
+                        }
+                    } else {
+                        Button {
+                            use()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
+                                Text(isActive ? "Active" : "Use")
+                            }
+                            .frame(width: 90)
+                        }
+                        .buttonStyle(SettingsSmallButtonStyle(primary: isActive))
+
+                        Button(role: .destructive) {
+                            remove()
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                                .frame(width: 90)
+                        }
+                        .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                        .foregroundStyle(VaniScriptTheme.red)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(Color.white.opacity(isActive ? 0.05 : 0.02))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(isActive ? VaniScriptTheme.accent.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+private struct GlossarySettingsRow: View {
+    let entry: GlossaryEntry
+    let edit: () -> Void
+    let delete: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(entry.source)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(VaniScriptTheme.text0)
+
+                    Text("→")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(VaniScriptTheme.accent)
+
+                    Text(entry.translation.isEmpty ? "No translation" : entry.translation)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(VaniScriptTheme.text1)
+                }
+
+                if !entry.variants.isEmpty {
+                    Text("Variants: " + entry.variants.joined(separator: ", "))
+                        .font(.system(size: 10.5))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer()
+
+            if let category = entry.category, !category.isEmpty {
+                Text(category)
+                    .font(.system(size: 9, weight: .heavy))
+                    .foregroundStyle(VaniScriptTheme.accent)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2.5)
+                    .background(VaniScriptTheme.accent.opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
+            Button(action: edit) {
+                Image(systemName: "pencil")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(VaniScriptTheme.accent)
+
+            Button(role: .destructive, action: delete) {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(VaniScriptTheme.red)
+        }
+        .padding(10)
+        .background(VaniScriptTheme.card)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+private struct SettingsPrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255))
+            .padding(.vertical, 9)
+            .background(configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+private struct SettingsSmallButtonStyle: ButtonStyle {
+    let primary: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(primary ? Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255) : VaniScriptTheme.text1)
+            .padding(.horizontal, 10)
+            .frame(height: 28)
+            .background(primary ? VaniScriptTheme.accent : Color.white.opacity(configuration.isPressed ? 0.1 : 0.06))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(primary ? Color.clear : Color.white.opacity(0.12), lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+private struct StatItem: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.system(size: 10))
+                .foregroundStyle(VaniScriptTheme.text2)
+            Text(value)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(VaniScriptTheme.text0)
+        }
+    }
+}
+
+private struct BudgetBar: View {
+    let title: String
+    let spent: Double
+    let limit: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 10))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                Spacer()
+                Text(String(format: "Spent $%.2f of $%.2f", spent, limit))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(spent > limit ? VaniScriptTheme.red : VaniScriptTheme.accent)
+            }
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.white.opacity(0.1))
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(spent > limit ? VaniScriptTheme.red : VaniScriptTheme.accent)
+                        .frame(width: geo.size.width * CGFloat(min(1.0, spent / limit)))
+                }
+            }
+            .frame(height: 6)
+        }
+        .padding(.top, 4)
+    }
+}
+
+enum GlossarySortMode: String, CaseIterable, Identifiable {
+    case newest = "Newest"
+    case oldest = "Oldest"
+    case alphabetical = "Alphabetical"
+
+    var id: String { self.rawValue }
+}
+
+private struct GlossaryEditSheet: View {
+    let entry: GlossaryEntry
+    let onSave: (GlossaryEntry) -> Void
+    let onCancel: () -> Void
+
+    @State private var source: String
+    @State private var translation: String
+    @State private var category: String
+    @State private var variantsString: String
+
+    init(entry: GlossaryEntry, onSave: @escaping (GlossaryEntry) -> Void, onCancel: @escaping () -> Void) {
+        self.entry = entry
+        self.onSave = onSave
+        self.onCancel = onCancel
+        _source = State(initialValue: entry.source)
+        _translation = State(initialValue: entry.translation)
+        _category = State(initialValue: entry.category ?? "")
+        _variantsString = State(initialValue: entry.variants.joined(separator: ", "))
+    }
+
+    var body: some View {
+        ZStack {
+            AppBackground()
+            VStack(spacing: 16) {
+                Text("Edit Glossary Entry")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(VaniScriptTheme.text0)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    TextInputRow(title: "Source Text", text: $source)
+                    TextInputRow(title: "Translation", text: $translation)
+                    TextInputRow(title: "Category", text: $category)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Variants (comma-separated list of spelling variations / incorrect spellings)")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(VaniScriptTheme.text2)
+
+                        TextEditor(text: $variantsString)
+                            .font(.system(size: 12))
+                            .foregroundStyle(VaniScriptTheme.text0)
+                            .padding(6)
+                            .frame(height: 100)
+                            .scrollContentBackground(.hidden)
+                            .background(VaniScriptTheme.input)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .padding(.top, 4)
+                }
+                .padding(.vertical, 8)
+
+                HStack(spacing: 12) {
+                    Button("Cancel") {
+                        onCancel()
+                    }
+                    .buttonStyle(SecondaryActionButtonStyle())
+
+                    Button("Save") {
+                        let parsedVariants = variantsString
+                            .split(separator: ",")
+                            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                            .filter { !$0.isEmpty }
+
+                        let updated = GlossaryEntry(
+                            id: entry.id,
+                            variants: parsedVariants,
+                            source: source.trimmingCharacters(in: .whitespacesAndNewlines),
+                            translation: translation.trimmingCharacters(in: .whitespacesAndNewlines),
+                            category: category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : category.trimmingCharacters(in: .whitespacesAndNewlines),
+                            translations: entry.translations,
+                            remember: entry.remember,
+                            createdAt: entry.createdAt,
+                            updatedAt: isoString(Date())
+                        )
+                        onSave(updated)
+                    }
+                    .buttonStyle(PrimaryActionButtonStyle())
+                    .disabled(source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+            .padding(24)
+            .frame(width: 540)
+            .glassPanel()
+            .padding(20)
+        }
+        .frame(width: 600, height: 480)
+    }
+
+    private func isoString(_ date: Date) -> String {
+        let formatter = ISO8601DateFormatter()
+        return formatter.string(from: date)
+    }
+}
+
+private struct CornerIconButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+            .frame(width: 32, height: 32)
+            .background(Color.white.opacity(configuration.isPressed ? 0.12 : 0.07))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}

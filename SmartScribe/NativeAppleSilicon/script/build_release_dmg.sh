@@ -18,10 +18,12 @@ APP_BINARY="$APP_MACOS/$APP_NAME"
 WORKER_NAME="NativeSmartScribePolishWorker"
 WORKER_BINARY="$APP_MACOS/$WORKER_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
+ENTITLEMENTS_FILE="$ROOT_DIR/script/release.entitlements"
 MLX_CHECKOUT="$ROOT_DIR/.build/checkouts/mlx-swift"
 MLX_METAL_BUILD_DIR="$ROOT_DIR/.build/mlx-metal"
 MLX_METALLIB_SOURCE="$MLX_METAL_BUILD_DIR/mlx/backend/metal/kernels/mlx.metallib"
 MLX_METALLIB_DESTINATION="$APP_MACOS/mlx.metallib"
+DEFAULT_DEVELOPER_ID_IDENTITY="Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)"
 DEFAULT_CODESIGN_IDENTITY="NativeSmartScribe Local Development"
 
 cd "$ROOT_DIR"
@@ -179,6 +181,12 @@ codesign_identity() {
   fi
 
   if /usr/bin/security find-identity -v -p codesigning 2>/dev/null \
+    | /usr/bin/grep -q "\"$DEFAULT_DEVELOPER_ID_IDENTITY\""; then
+    echo "$DEFAULT_DEVELOPER_ID_IDENTITY"
+    return
+  fi
+
+  if /usr/bin/security find-identity -v -p codesigning 2>/dev/null \
     | /usr/bin/grep -q "\"$DEFAULT_CODESIGN_IDENTITY\""; then
     echo "$DEFAULT_CODESIGN_IDENTITY"
     return
@@ -194,8 +202,30 @@ if [[ -z "$SIGN_IDENTITY" ]]; then
   SIGN_IDENTITY="-"
 fi
 
+codesign_release() {
+  local target="$1"
+  local entitlements="${2:-}"
+
+  if [[ "$SIGN_IDENTITY" == "-" ]]; then
+    if [[ -n "$entitlements" ]]; then
+      /usr/bin/codesign --force --sign - --entitlements "$entitlements" "$target"
+    else
+      /usr/bin/codesign --force --sign - "$target"
+    fi
+    return
+  fi
+
+  if [[ -n "$entitlements" ]]; then
+    /usr/bin/codesign --force --timestamp --options runtime --sign "$SIGN_IDENTITY" --entitlements "$entitlements" "$target"
+  else
+    /usr/bin/codesign --force --timestamp --options runtime --sign "$SIGN_IDENTITY" "$target"
+  fi
+}
+
 echo "=== Codesigning App Bundle ($SIGN_IDENTITY) ==="
-/usr/bin/codesign --force --deep --sign "$SIGN_IDENTITY" "$APP_BUNDLE"
+codesign_release "$WORKER_BINARY"
+codesign_release "$MLX_METALLIB_DESTINATION"
+codesign_release "$APP_BUNDLE" "$ENTITLEMENTS_FILE"
 
 echo "=== Creating DMG package ==="
 DMG_TEMP_DIR="$RELEASE_DIR/dmg_temp"
@@ -221,6 +251,11 @@ hdiutil convert "$DIST_DIR/temp.dmg" -format UDZO -imagekey zlib-level=9 -o "$OU
 # Clean up temporary images
 rm -f "$DIST_DIR/temp.dmg"
 rm -rf "$DMG_TEMP_DIR"
+
+if [[ "$SIGN_IDENTITY" != "-" ]]; then
+  echo "=== Codesigning DMG package ($SIGN_IDENTITY) ==="
+  /usr/bin/codesign --force --timestamp --sign "$SIGN_IDENTITY" "$OUTPUT_DMG"
+fi
 
 echo "=== DMG successfully created at: $OUTPUT_DMG ==="
 ls -lh "$OUTPUT_DMG"

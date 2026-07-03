@@ -30,7 +30,6 @@ SmartScribe/NativeAppleSilicon/.build/
 SmartScribe/NativeAppleSilicon/.swiftpm/
 SmartScribe/NativeAppleSilicon/dist/
 VaniScript/UserData/
-VaniScript/AppleSilicon/
 VaniScript/AudioEngine/
 *.part
 *.log
@@ -44,5 +43,23 @@ Chunker/
 KirtanPlugin/
 KirtanSplitter/
 MindOcean/
-VaniScript/
 ZerdaProject/
+
+# VaniScript is a mixed workspace: keep the native Apple Silicon source and
+# shared assets in this repository, while preserving Electron as its own nested
+# git project and keeping local user data/generated artifacts out of git.
+VaniScript/*
+!VaniScript/AppleSilicon/
+!VaniScript/AppleSilicon/**
+!VaniScript/Shared/
+!VaniScript/Shared/**
+VaniScript/AppleSilicon/**/.DS_Store
+VaniScript/AppleSilicon/Cuprum,Inter,Montserrat,Oswald,Unbounded/
+VaniScript/AppleSilicon/.build/
+VaniScript/AppleSilicon/.swiftpm/
+VaniScript/AppleSilicon/build/
+VaniScript/AppleSilicon/dist/
+VaniScript/AppleSilicon/DerivedData/
+VaniScript/Electron/
+VaniScript/UserData/
+VaniScript/AudioEngine/

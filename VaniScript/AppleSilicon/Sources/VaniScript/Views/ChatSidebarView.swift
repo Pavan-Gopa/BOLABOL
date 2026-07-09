@@ -57,12 +57,10 @@ struct ChatSidebarView: View {
 
     var body: some View {
         let micIcon = isRecordingDictation ? "stop.circle.fill" : "mic.fill"
-        let micColor = isRecordingDictation ? Color.red : Color.white
-        let micText = isRecordingDictation ? "Stop Recording" : "Dictate"
-        let bgCol = isRecordingDictation ? Color.red.opacity(0.2) : Color.white.opacity(0.1)
-        let borderCol = isRecordingDictation ? Color.red.opacity(0.4) : Color.white.opacity(0.12)
+        let micColor = isRecordingDictation ? Color.red : Color.white.opacity(0.6)
 
         return VStack(spacing: 0) {
+            Color.clear.frame(height: 38)
                 // Header
                 HStack {
                     Image(systemName: "sparkles")
@@ -219,8 +217,8 @@ struct ChatSidebarView: View {
                     }
                 }
 
-                // Input Field (Expanded TextEditor & Microphone Dictation)
-                VStack(spacing: 10) {
+                // Input Field (Minimalist TextEditor with Inline Mic & Send Buttons)
+                ZStack(alignment: .bottomTrailing) {
                     ZStack(alignment: .topLeading) {
                         if inputText.isEmpty {
                             Text("Message AI...")
@@ -235,7 +233,8 @@ struct ChatSidebarView: View {
                             .scrollContentBackground(.hidden)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .frame(height: 80)
+                            .padding(.bottom, 36) // Leave space for buttons at the bottom
+                            .frame(height: 100)
                             .background(Color.white.opacity(0.04))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
@@ -245,50 +244,34 @@ struct ChatSidebarView: View {
                             .disabled(isLoading)
                     }
                     
-                    HStack(spacing: 12) {
+                    HStack(spacing: 8) {
                         Button {
                             toggleDictation()
                         } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: micIcon)
-                                    .font(.system(size: 14))
-                                    .foregroundStyle(micColor)
-                                Text(micText)
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundStyle(.white)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(bgCol)
-                            .cornerRadius(6)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(borderCol, lineWidth: 1)
-                            )
+                            Image(systemName: micIcon)
+                                .font(.system(size: 14))
+                                .foregroundStyle(micColor)
+                                .frame(width: 28, height: 28)
+                                .background(isRecordingDictation ? Color.red.opacity(0.15) : Color.clear)
+                                .clipShape(Circle())
                         }
                         .buttonStyle(.plain)
                         .disabled(isLoading)
                         
-                        Spacer()
-                        
                         Button(action: sendMessage) {
                             Image(systemName: "paperplane.fill")
                                 .font(.system(size: 13))
-                                .foregroundStyle(.white)
-                                .frame(width: 32, height: 32)
-                                .background(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.white.opacity(0.1) : VaniScriptTheme.accent)
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                                .foregroundStyle(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.white.opacity(0.3) : VaniScriptTheme.accent)
+                                .frame(width: 28, height: 28)
                         }
                         .buttonStyle(.plain)
                         .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
                     }
+                    .padding(.trailing, 8)
+                    .padding(.bottom, 8)
                 }
                 .padding(16)
-                .background(Color.black.opacity(0.3))
-                .overlay(
-                    Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1),
-                    alignment: .top
-                )
+                .background(Color.black.opacity(0.15))
             }
             .frame(width: 380)
             .background(

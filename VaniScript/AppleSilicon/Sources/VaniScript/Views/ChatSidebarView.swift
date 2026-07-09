@@ -381,7 +381,7 @@ struct ChatSidebarView: View {
                     let requestBody = GeminiChatRequest(
                         contents: contents,
                         systemInstruction: GeminiSystemInstruction(
-                            parts: [GeminiChatPart(text: "You are the VaniScript AI Chat Assistant. Assist users by calling local tools to view state, edit translations, update subtitle styling, and structure vertical video shorts. You are also a highly creative translation expert; feel free to suggest beautiful literary translations, rephrase subtitles, fix grammar, explain timeline cues, and converse naturally in Russian or English. If the user provides a path to a screenshot/image, you can see and analyze it!")]
+                            parts: [GeminiChatPart(text: "You are the VaniScript AI Chat Assistant. Assist users by calling local tools to view state, edit translations, update subtitle styling, and structure vertical video shorts. You are also a highly creative translation expert; suggest beautiful literary translations, rephrase subtitles, fix grammar, explain timeline cues, and converse naturally. CRITICAL: You must always respond to the user in the language they write in! If the user writes or speaks in Russian, you MUST respond in fluent Russian. If they write in English, respond in English. Do not speak English when the user addresses you in Russian. If the user provides a path to a screenshot/image, you can see and analyze it!")]
                         ),
                         tools: [
                             GeminiChatTool(

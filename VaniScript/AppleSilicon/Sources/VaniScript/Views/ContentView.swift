@@ -25,6 +25,15 @@ struct ContentView: View {
                         Spacer()
 
                         Button {
+                            workflowStore.showChatSidebar.toggle()
+                        } label: {
+                            Image(systemName: "sparkles")
+                                .foregroundStyle(workflowStore.showChatSidebar ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+                        }
+                        .buttonStyle(CornerIconButtonStyle())
+                        .help("AI Assistant")
+
+                        Button {
                             workflowStore.startTour(for: workflowStore.workflow.screen.rawValue)
                         } label: {
                             Image(systemName: "questionmark.circle")
@@ -61,6 +70,11 @@ struct ContentView: View {
 
             if workflowStore.isProjectSidebarPresented {
                 ProjectSidebarView()
+                    .environmentObject(workflowStore)
+            }
+
+            if workflowStore.showChatSidebar {
+                ChatSidebarView()
                     .environmentObject(workflowStore)
             }
 

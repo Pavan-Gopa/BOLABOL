@@ -153,6 +153,15 @@ struct ReviewWorkspaceView: View {
                 .help("Search & Replace")
 
                 Button {
+                    store.showChatSidebar.toggle()
+                } label: {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(store.showChatSidebar ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+                }
+                .buttonStyle(ReviewIconButtonStyle())
+                .help("AI Assistant")
+
+                Button {
                     store.startTour(for: "review")
                 } label: {
                     Image(systemName: "questionmark.circle")

@@ -396,6 +396,40 @@ struct ChatSidebarView: View {
                                                 ]
                                             ]
                                         )
+                                    ),
+                                    GeminiToolDecl(
+                                        name: "update_cue_timestamps",
+                                        description: "Update the start and/or end timestamps of a specific cue (segment) inside a chunk",
+                                        parameters: GeminiToolParams(
+                                            type: "object",
+                                            properties: [
+                                                "chunkIndex": ["type": "number", "description": "Index of the chunk (0-based)"],
+                                                "side": ["type": "string", "description": "Side to update: 'original' or 'translated'"],
+                                                "cueIndex": ["type": "number", "description": "Index of the cue within the chunk (0-based)"],
+                                                "startSec": ["type": "number", "description": "New start time in seconds (optional)"],
+                                                "endSec": ["type": "number", "description": "New end time in seconds (optional)"]
+                                            ]
+                                        )
+                                    ),
+                                    GeminiToolDecl(
+                                        name: "align_translation_timings",
+                                        description: "Align the translation cue timestamps to perfectly match the original cues for a specific chunk",
+                                        parameters: GeminiToolParams(
+                                            type: "object",
+                                            properties: [
+                                                "chunkIndex": ["type": "number", "description": "Index of the chunk (0-based)"]
+                                            ]
+                                        )
+                                    ),
+                                    GeminiToolDecl(
+                                        name: "reprocess_chunk",
+                                        description: "Force-reprocess (re-transcribe and re-translate) a specific chunk from the source audio file",
+                                        parameters: GeminiToolParams(
+                                            type: "object",
+                                            properties: [
+                                                "chunkIndex": ["type": "number", "description": "Index of the chunk (0-based)"]
+                                            ]
+                                        )
                                     )
                                 ]
                             )

@@ -24,7 +24,7 @@ struct SmartScribeLogoView: View {
 
     private static func logoImage() -> NSImage? {
         guard
-            let url = Bundle.module.url(forResource: "New_Logo", withExtension: "svg"),
+            let url = Bundle.main.url(forResource: "New_Logo", withExtension: "svg"),
             let image = NSImage(contentsOf: url)
         else {
             return nil
@@ -34,4 +34,3 @@ struct SmartScribeLogoView: View {
         return image
     }
 }
-

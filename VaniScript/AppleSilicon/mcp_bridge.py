@@ -15,6 +15,7 @@ def sse_listener():
     global post_url
     while True:
         try:
+            post_url = None
             req = urllib.request.Request(f"{base_url}/sse")
             with urllib.request.urlopen(req) as response:
                 current_event = None
@@ -32,7 +33,7 @@ def sse_listener():
                             sys.stdout.write(data_val + "\n")
                             sys.stdout.flush()
         except Exception as e:
-            # Reconnect after a short delay
+            post_url = None
             time.sleep(2)
 
 # Start SSE listener in a background thread

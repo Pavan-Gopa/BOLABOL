@@ -36,6 +36,7 @@ enum SettingsDiskStore {
         // Merge latest Vaishnava starter glossary terms
         settings.glossary = StarterGlossary.mergeStarterGlossary(settings.glossary)
         settings.synchronizeLocalModelsWithDisk()
+        settings.normalizeMcpSettings()
         if settings != loadedSettings {
             try? save(settings, fileManager: fileManager)
         }

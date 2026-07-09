@@ -40,8 +40,9 @@ final class WorkflowStore: ObservableObject {
     @Published public var isTourActive = false
     @Published public var tourStepIndex = 0
     @Published public var tourLanguage = "en"
-    @Published public var selectedSettingsTab: SettingsTab = .apiKeys
+    @Published public var selectedSettingsTab: SettingsTab = .agents
     @Published public var activeTourScreen = ""
+    @Published public private(set) var mcpActiveClients: [McpActiveClient] = []
 
     @Published var outputFormat: OutputFormat = .txt
     @Published var viewMode: ReviewViewMode = .dual
@@ -139,6 +140,7 @@ final class WorkflowStore: ObservableObject {
         var loadedSettings = settings ?? SettingsDiskStore.load()
         loadedSettings.adaptGlossaryToTargetLanguage(targetLang: loadedSettings.defaultTargetLang)
         loadedSettings.synchronizeLocalModelsWithDisk()
+        loadedSettings.normalizeMcpSettings()
         self.workflow = .initial(settings: loadedSettings)
         self.projects = ProjectArchive.sortedRecent(projects ?? ProjectDiskStore.load())
         self.clock = clock
@@ -161,15 +163,7 @@ final class WorkflowStore: ObservableObject {
         activeTourScreen = screen
         isTourActive = true
         if screen == "settings" {
-            switch selectedSettingsTab {
-            case .apiKeys: tourStepIndex = 0
-            case .models: tourStepIndex = 1
-            case .appearance: tourStepIndex = 2
-            case .glossary: tourStepIndex = 3
-            case .chunking: tourStepIndex = 4
-            case .transcription: tourStepIndex = 5
-            case .prompts: tourStepIndex = 6
-            }
+            tourStepIndex = SettingsTab.alphabetized.firstIndex(of: selectedSettingsTab) ?? 0
         } else {
             tourStepIndex = 0
         }
@@ -220,16 +214,10 @@ final class WorkflowStore: ObservableObject {
     }
 
     private func updateSettingsTabForStep(_ step: Int) {
-        switch step {
-        case 0: selectedSettingsTab = .apiKeys
-        case 1: selectedSettingsTab = .models
-        case 2: selectedSettingsTab = .appearance
-        case 3: selectedSettingsTab = .glossary
-        case 4: selectedSettingsTab = .chunking
-        case 5: selectedSettingsTab = .transcription
-        case 6: selectedSettingsTab = .prompts
-        default: break
+        guard SettingsTab.alphabetized.indices.contains(step) else {
+            return
         }
+        selectedSettingsTab = SettingsTab.alphabetized[step]
     }
 
 
@@ -257,6 +245,19 @@ final class WorkflowStore: ObservableObject {
 
     var settings: AppSettings {
         workflow.settings
+    }
+
+    func configureMcpServer() {
+        McpServer.shared.configure(
+            store: self,
+            configuration: McpServerConfiguration(settings: workflow.settings)
+        )
+    }
+
+    func updateMcpActiveClients(_ clients: [McpActiveClient]) {
+        mcpActiveClients = clients.sorted {
+            $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+        }
     }
 
     var supportedTranslationLanguages: [String] {
@@ -2628,8 +2629,12 @@ final class WorkflowStore: ObservableObject {
         let previousSettings = workflow.settings
         mutate(&workflow.settings)
         workflow.settings.synchronizeLocalModelsWithDisk()
+        workflow.settings.normalizeMcpSettings()
         let transcriptionProviderChanged = workflow.settings.transcriptionProvider != previousSettings.transcriptionProvider
         let translationProviderChanged = workflow.settings.translationProvider != previousSettings.translationProvider
+        let mcpSettingsChanged = workflow.settings.mcpServerEnabled != previousSettings.mcpServerEnabled
+            || workflow.settings.mcpAllowMutatingTools != previousSettings.mcpAllowMutatingTools
+            || workflow.settings.mcpAccessToken != previousSettings.mcpAccessToken
         workflow.synchronizeProviderSelections(
             previousSettings: previousSettings,
             forceTranscriptionProvider: transcriptionProviderChanged,
@@ -2637,6 +2642,9 @@ final class WorkflowStore: ObservableObject {
         )
         persistSettings()
         refreshProviderSelections()
+        if mcpSettingsChanged {
+            configureMcpServer()
+        }
         if workflow.session != nil, transcriptionProviderChanged || translationProviderChanged {
             workflow.synchronizeActiveSessionProviders(
                 forceTranscriptionProvider: transcriptionProviderChanged,
@@ -3337,7 +3345,7 @@ final class WorkflowStore: ObservableObject {
         }
     }
 
-    public func executeMcpTool(name: String, arguments: [String: Any]) async throws -> [String: Any] {
+    public func executeMcpTool(name: String, arguments: [String: Any], allowMutatingTools: Bool = true) async throws -> [String: Any] {
         let getInt = { (val: Any?) -> Int? in
             if let doubleVal = val as? Double { return Int(doubleVal) }
             return val as? Int
@@ -3347,50 +3355,14 @@ final class WorkflowStore: ObservableObject {
             if let intVal = val as? Int { return Double(intVal) }
             return nil
         }
+
+        guard McpToolRegistry.isAllowed(name, allowMutatingTools: allowMutatingTools) else {
+            throw NSError(domain: "WorkflowStore", code: -5, userInfo: [NSLocalizedDescriptionKey: "Tool \(name) is not available in the current MCP policy"])
+        }
         
         switch name {
         case "get_project_state":
-            var result: [String: Any] = [:]
-            result["currentScreen"] = workflow.screen.rawValue
-            if let session = workflow.session {
-                var sessionInfo: [String: Any] = [:]
-                sessionInfo["targetLang"] = session.targetLang
-                
-                var chunksInfo: [[String: Any]] = []
-                for (idx, chunk) in session.chunks.enumerated() {
-                    chunksInfo.append([
-                        "index": idx,
-                        "original": chunk.original,
-                        "translated": chunk.translated,
-                        "approved": chunk.approved
-                    ])
-                }
-                sessionInfo["chunks"] = chunksInfo
-                result["session"] = sessionInfo
-            }
-            
-            // settings
-            var settingsInfo: [String: Any] = [:]
-            settingsInfo["geminiKey"] = workflow.settings.geminiKey
-            result["settings"] = settingsInfo
-            
-            // shorts plans
-            var plansInfo: [[String: Any]] = []
-            if let session = workflow.session, let plans = session.shortsPlans {
-                for plan in plans {
-                    plansInfo.append([
-                        "id": plan.id,
-                        "title": plan.title,
-                        "start": plan.start,
-                        "end": plan.end,
-                        "summary": plan.summary,
-                        "category": plan.category ?? "",
-                        "hook": plan.hook ?? ""
-                    ])
-                }
-            }
-            result["shortsPlans"] = plansInfo
-            return result
+            return McpProjectStateSnapshot.build(workflow: workflow)
             
         case "update_chunk_text":
             guard var session = workflow.session else {
@@ -3504,7 +3476,7 @@ final class WorkflowStore: ObservableObject {
                         "end": plan.end,
                         "summary": plan.summary,
                         "category": plan.category ?? "",
-                        "hook": plan.hook ?? ""
+                        "hook": plan.hook
                     ])
                 }
             }
@@ -3526,7 +3498,12 @@ final class WorkflowStore: ObservableObject {
             let startSecVal = getDouble(arguments["startSec"])
             let endSecVal = getDouble(arguments["endSec"])
             
-            if sideVal.lowercased() == "original" {
+            let side = sideVal.lowercased()
+            guard side == "original" || side == "translated" else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "side must be original or translated"])
+            }
+
+            if side == "original" {
                 var cues = session.chunks[chunkIndexVal].originalCues ?? []
                 guard cueIndexVal >= 0 && cueIndexVal < cues.count else {
                     throw NSError(domain: "WorkflowStore", code: -4, userInfo: [NSLocalizedDescriptionKey: "cueIndex out of bounds"])

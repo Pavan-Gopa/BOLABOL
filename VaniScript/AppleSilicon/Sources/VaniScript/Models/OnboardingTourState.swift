@@ -265,19 +265,19 @@ public struct TourSteps {
                     targetSelector: "settings-tab-0",
                     arrowCurveOffset: CGPoint(x: -20, y: 40),
                     bubblePlacement: .bottom,
-                    titleEN: "API Keys",
-                    descriptionEN: "Configure your cloud API keys for Google Gemini, OpenAI, or Anthropic. Cloud models offer maximum processing speed for transcription and translation.",
-                    titleRU: "Ключи API",
-                    descriptionRU: "Настройте ключи API для Google Gemini, OpenAI или Anthropic. Облачные модели обеспечивают максимальную скорость распознавания и перевода."
+                    titleEN: "Agents",
+                    descriptionEN: "Connect trusted MCP clients such as Codex, Claude, Cursor, and Antigravity to the local VaniScript server.",
+                    titleRU: "Агенты",
+                    descriptionRU: "Подключайте доверенные MCP-клиенты, такие как Codex, Claude, Cursor и Antigravity, к локальному серверу VaniScript."
                 ),
                 TourStep(
                     targetSelector: "settings-tab-1",
                     arrowCurveOffset: CGPoint(x: -20, y: 40),
                     bubblePlacement: .bottom,
-                    titleEN: "Local AI Models",
-                    descriptionEN: "Download offline Whisper models for speech recognition and MLX models for translation and text polishing. Once downloaded, VaniScript works 100% privately and offline.",
-                    titleRU: "Локальные модели AI",
-                    descriptionRU: "Загрузите оффлайн-модели Whisper для распознавания речи и модели MLX для перевода и полировки. Это позволит работать полностью локально и конфиденциально без интернета."
+                    titleEN: "API Keys",
+                    descriptionEN: "Configure your cloud API keys for Google Gemini, OpenAI, or Anthropic. Cloud models offer maximum processing speed for transcription and translation.",
+                    titleRU: "Ключи API",
+                    descriptionRU: "Настройте ключи API для Google Gemini, OpenAI или Anthropic. Облачные модели обеспечивают максимальную скорость распознавания и перевода."
                 ),
                 TourStep(
                     targetSelector: "settings-tab-2",
@@ -292,28 +292,28 @@ public struct TourSteps {
                     targetSelector: "settings-tab-3",
                     arrowCurveOffset: CGPoint(x: -20, y: 40),
                     bubblePlacement: .bottom,
-                    titleEN: "Custom Glossary",
-                    descriptionEN: "Add custom vocabulary terms and correct spelling variants (e.g. Sanskrit terms, abbreviations, names) to ensure consistent and accurate AI results.",
-                    titleRU: "Словарь терминов",
-                    descriptionRU: "Добавляйте сложные термины и варианты их правильного написания (например, санскритские слова, имена, аббревиатуры) для автокоррекции."
-                ),
-                TourStep(
-                    targetSelector: "settings-tab-4",
-                    arrowCurveOffset: CGPoint(x: -20, y: 40),
-                    bubblePlacement: .bottom,
                     titleEN: "Smart Chunking",
                     descriptionEN: "Configure audio slicing. Choose \"By Silence\" to naturally cut audio at natural speech pauses (recommended) or set fixed duration intervals.",
                     titleRU: "Нарезка аудио (Chunking)",
                     descriptionRU: "Настройте нарезку аудиофайла. Выберите \"By Silence\" для умной нарезки на естественных паузах (рекомендуется) или укажите фиксированный шаг."
                 ),
                 TourStep(
+                    targetSelector: "settings-tab-4",
+                    arrowCurveOffset: CGPoint(x: -20, y: 40),
+                    bubblePlacement: .bottom,
+                    titleEN: "Custom Glossary",
+                    descriptionEN: "Add custom vocabulary terms and correct spelling variants (e.g. Sanskrit terms, abbreviations, names) to ensure consistent and accurate AI results.",
+                    titleRU: "Словарь терминов",
+                    descriptionRU: "Добавляйте сложные термины и варианты их правильного написания (например, санскритские слова, имена, аббревиатуры) для автокоррекции."
+                ),
+                TourStep(
                     targetSelector: "settings-tab-5",
                     arrowCurveOffset: CGPoint(x: -20, y: 40),
                     bubblePlacement: .bottom,
-                    titleEN: "Language Defaults",
-                    descriptionEN: "Set the default source language of your recordings (or auto-detect) and select the default translation target language.",
-                    titleRU: "Языки по умолчанию",
-                    descriptionRU: "Задайте язык оригинала по умолчанию (или включите автоопределение) и выберите целевой язык для перевода."
+                    titleEN: "Local AI Models",
+                    descriptionEN: "Download offline Whisper models for speech recognition and MLX models for translation and text polishing. Once downloaded, VaniScript works 100% privately and offline.",
+                    titleRU: "Локальные модели AI",
+                    descriptionRU: "Загрузите оффлайн-модели Whisper для распознавания речи и модели MLX для перевода и полировки. Это позволит работать полностью локально и конфиденциально без интернета."
                 ),
                 TourStep(
                     targetSelector: "settings-tab-6",
@@ -323,6 +323,15 @@ public struct TourSteps {
                     descriptionEN: "Fine-tune system instructions sent to cloud and local MLX models for punctuation alignment, grammar polishing, translation, and summaries.",
                     titleRU: "Настройка промптов",
                     descriptionRU: "Отредактируйте системные инструкции (промпты) для ИИ при расстановке пунктуации, полировке грамматики, переводе и резюмировании."
+                ),
+                TourStep(
+                    targetSelector: "settings-tab-7",
+                    arrowCurveOffset: CGPoint(x: -20, y: 40),
+                    bubblePlacement: .bottom,
+                    titleEN: "Language Defaults",
+                    descriptionEN: "Set the default source language of your recordings (or auto-detect) and select the default translation target language.",
+                    titleRU: "Языки по умолчанию",
+                    descriptionRU: "Задайте язык оригинала по умолчанию (или включите автоопределение) и выберите целевой язык для перевода."
                 )
             ]
         case "visualEditor":

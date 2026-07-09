@@ -499,7 +499,11 @@ struct ContentView: View {
                     )
                 )
 
-                let markdown = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                let markdown = MarkdownGenerationPostProcessor.ensureVisibleMarkdown(
+                    result.text,
+                    sourceText: trimmed
+                )
+                .trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !markdown.isEmpty else {
                     noteStore.markPolishingFailed(
                         for: noteID,
@@ -510,7 +514,14 @@ struct ContentView: View {
                     return
                 }
 
-                noteStore.applyPolishingResult(for: noteID, variant: variant, result: result)
+                noteStore.applyPolishingResult(
+                    for: noteID,
+                    variant: variant,
+                    result: PolishingResult(
+                        text: markdown,
+                        diagnostics: result.diagnostics
+                    )
+                )
                 usageStatisticsStore.record(
                     modelID: result.diagnostics.backendName,
                     modelName: result.diagnostics.backendName,

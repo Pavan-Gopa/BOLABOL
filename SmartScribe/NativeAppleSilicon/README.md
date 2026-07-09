@@ -1,6 +1,7 @@
-# NativeSmartScribe
+# SmartScribe
 
-NativeSmartScribe is the macOS-only Swift rewrite of SmartScribe.
+SmartScribe is the macOS-only Swift app for transcription, polishing, translation,
+and direct hotkey insertion into the active macOS application.
 
 This app is intentionally separate from the existing Electron implementation at
 the repository root. The first goal is a native shell with clean architecture:

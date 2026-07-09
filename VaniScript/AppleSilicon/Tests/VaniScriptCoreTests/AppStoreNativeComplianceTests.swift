@@ -318,6 +318,8 @@ struct AppStoreNativeComplianceTests {
         #expect(packageSource.contains("resources: [.copy(\"Resources/Fonts\")]"))
         #expect(appSource.contains("NativeFontRegistry.registerVisualEditorFonts()"))
         #expect(registrySource.contains("CTFontManagerRegisterFontsForURL"))
+        #expect(!registrySource.contains("Bundle.module"))
+        #expect(registrySource.contains("Bundle.main.url(forResource: name, withExtension: \"ttf\", subdirectory: \"Fonts\")"))
         #expect(editorSource.contains(".font(.custom(resolvedSwiftUIFontName(style.fontFamily, bold: style.bold), size: fontSize).weight(fontWeight))"))
         #expect(compositorSource.contains("NativeFontRegistry.registerVisualEditorFonts()"))
 
@@ -1091,6 +1093,47 @@ struct AppStoreNativeComplianceTests {
         #expect(!scriptSource.contains("ffmpeg|yt-dlp"))
     }
 
+    @Test("native app bundle installs side by side with Electron edition")
+    func nativeAppBundleInstallsSideBySideWithElectronEdition() throws {
+        let runScriptSource = try String(
+            contentsOfFile: "script/build_and_run.sh",
+            encoding: .utf8
+        )
+        let releaseScriptSource = try String(
+            contentsOfFile: "script/build_release_dmg.sh",
+            encoding: .utf8
+        )
+
+        for scriptSource in [runScriptSource, releaseScriptSource] {
+            #expect(scriptSource.contains("APP_BUNDLE_NAME=\"VaniScript\""))
+            #expect(scriptSource.contains("APP_EXECUTABLE_NAME=\"VaniScript\""))
+            #expect(scriptSource.contains("APP_BUNDLE=\"$"))
+            #expect(scriptSource.contains("$APP_BUNDLE_NAME.app"))
+            #expect(scriptSource.contains("<string>$APP_EXECUTABLE_NAME</string>"))
+            #expect(scriptSource.contains("<string>$APP_BUNDLE_NAME</string>"))
+            #expect(scriptSource.contains("APPLE_SILICON_ASSETS_DIR=\"$ROOT_DIR/Assets\""))
+            #expect(scriptSource.contains("$APPLE_SILICON_ASSETS_DIR/AppIconAS.icns"))
+            #expect(scriptSource.contains("$APPLE_SILICON_ASSETS_DIR/AppIconAS.png"))
+        }
+        #expect(releaseScriptSource.contains("OUTPUT_DMG=\"$DIST_DIR/VaniScript.dmg\""))
+        #expect(!releaseScriptSource.contains("VaniScript-AS.dmg"))
+    }
+
+    @Test("native release DMG embeds Swift compatibility runtime for Macs without Xcode")
+    func nativeReleaseDmgEmbedsSwiftCompatibilityRuntime() throws {
+        let releaseScriptSource = try String(
+            contentsOfFile: "script/build_release_dmg.sh",
+            encoding: .utf8
+        )
+
+        #expect(releaseScriptSource.contains("APP_FRAMEWORKS=\"$APP_CONTENTS/Frameworks\""))
+        #expect(releaseScriptSource.contains("xcrun swift-stdlib-tool --print"))
+        #expect(releaseScriptSource.contains("cp \"$swift_library\" \"$APP_FRAMEWORKS/\""))
+        #expect(releaseScriptSource.contains("@executable_path/../Frameworks/libswiftCompatibilitySpan.dylib"))
+        #expect(releaseScriptSource.contains("install_name_tool -delete_rpath \"$xcode_swift62_rpath\""))
+        #expect(releaseScriptSource.contains("codesign_release \"$dylib\""))
+    }
+
     @Test("web media resolver remains hidden fallback only")
     func webMediaResolverRemainsHiddenFallbackOnly() throws {
         let settingsSource = try String(
@@ -1236,5 +1279,94 @@ struct AppStoreNativeComplianceTests {
         #expect(microphoneRecorderSource.contains("onLevels"))
         #expect(systemRecorderSource.contains("AudioSampleBufferLevels.levels"))
         #expect(microphoneRecorderSource.contains("AudioSampleBufferLevels.levels"))
+    }
+
+    @Test("MCP server is token gated and loopback only")
+    func mcpServerIsTokenGatedAndLoopbackOnly() throws {
+        let serverSource = try String(
+            contentsOfFile: "Sources/VaniScript/Services/McpServer.swift",
+            encoding: .utf8
+        )
+        let bridgeSource = try String(
+            contentsOfFile: "mcp_bridge.py",
+            encoding: .utf8
+        )
+        let instructions = try String(
+            contentsOfFile: "MCP_INSTRUCTIONS.md",
+            encoding: .utf8
+        )
+        let appSource = try String(
+            contentsOfFile: "Sources/VaniScript/App/VaniScriptApp.swift",
+            encoding: .utf8
+        )
+
+        #expect(serverSource.contains("Darwin.bind"))
+        #expect(serverSource.contains("Darwin.listen"))
+        #expect(serverSource.contains("inet_addr(\"127.0.0.1\")"))
+        #expect(serverSource.contains("attributes: .concurrent"))
+        #expect(serverSource.contains("configuration.isAuthorized(headers: request.headers, queryItems: request.queryItems)"))
+        #expect(serverSource.contains("McpToolRegistry"))
+        #expect(serverSource.contains("McpClientClassifier.profileID"))
+        #expect(serverSource.contains("McpActiveClient("))
+        #expect(serverSource.contains("store?.updateMcpActiveClients"))
+        #expect(serverSource.contains("monitorSseClient"))
+        #expect(serverSource.contains(".definitions(allowMutatingTools: configuration.allowMutatingTools)"))
+        #expect(serverSource.contains("store.executeMcpTool(name: name, arguments: args, allowMutatingTools: allowMutatingTools)"))
+        #expect(!serverSource.contains("Access-Control-Allow-Origin: *"))
+        #expect(bridgeSource.contains("VANISCRIPT_MCP_TOKEN"))
+        #expect(bridgeSource.contains("mcpAccessToken"))
+        #expect(instructions.contains("The server is disabled by default"))
+        #expect(!instructions.localizedCaseInsensitiveContains("Electron"))
+        #expect(appSource.components(separatedBy: "workflowStore.configureMcpServer()").count >= 3)
+    }
+
+    @Test("Settings exposes alphabetized MCP agent profiles")
+    func settingsExposesAlphabetizedMcpAgentProfiles() throws {
+        let settingsView = try String(
+            contentsOfFile: "Sources/VaniScript/Views/SettingsView.swift",
+            encoding: .utf8
+        )
+
+        let orderedTabMarkers = [
+            "Label(\"Agents\"",
+            "Label(\"API & Usage\"",
+            "Label(\"Appearance\"",
+            "Label(\"Chunking\"",
+            "Label(\"Glossary\"",
+            "Label(\"Models\"",
+            "Label(\"Prompts\"",
+            "Label(\"Transcription\"",
+        ]
+
+        var previousIndex = settingsView.startIndex
+        for marker in orderedTabMarkers {
+            guard let range = settingsView.range(of: marker) else {
+                Issue.record("Missing settings tab marker: \(marker)")
+                continue
+            }
+            #expect(range.lowerBound >= previousIndex)
+            previousIndex = range.lowerBound
+        }
+
+        #expect(settingsView.contains("McpAgentProfileCatalog.all"))
+        #expect(settingsView.contains("Set Active"))
+        #expect(settingsView.contains("Copy Setup"))
+        #expect(settingsView.contains("title: \"Status\""))
+        #expect(!settingsView.contains("Connection Status"))
+    }
+
+    @Test("Settings keeps MCP agent controls compact")
+    func settingsKeepsMcpAgentControlsCompact() throws {
+        let settingsView = try String(
+            contentsOfFile: "Sources/VaniScript/Views/SettingsView.swift",
+            encoding: .utf8
+        )
+
+        #expect(settingsView.contains("CompactMcpToggleCard("))
+        #expect(settingsView.contains("McpStatusSummaryTile("))
+        #expect(settingsView.contains("let mcpOverviewColumns"))
+        #expect(settingsView.contains("let activeTargetColumns"))
+        #expect(settingsView.contains("Text(activeClient?.displayName ?? \"Connected\")"))
+        #expect(!settingsView.contains("Text(activeClient?.displayName ?? state.label)"))
     }
 }

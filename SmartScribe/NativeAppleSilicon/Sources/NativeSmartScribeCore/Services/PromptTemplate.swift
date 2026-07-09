@@ -318,9 +318,9 @@ public extension PromptTemplate {
         """
     )
 
-    static let markdownDefault = PromptTemplate(
-        id: "markdown-default",
-        title: "Markdown",
+    static let markdownLegacyDefault = PromptTemplate(
+        id: "markdown-default-v1",
+        title: "Markdown Legacy",
         body: """
         You are a formatting editor. Convert the input text into clean, valid Markdown while preserving the original language, meaning, and detail. Return ONLY Markdown.
 
@@ -331,6 +331,32 @@ public extension PromptTemplate {
         - Use headings and subheadings only when the text naturally contains sections or topics.
         - Keep the formatting elegant and restrained. Do not over-format every sentence.
         - If the text is short, keep the Markdown simple.
+
+        FORBIDDEN ACTIONS:
+        - Do not invent facts, sections, or conclusions.
+        - Do not add commentary outside the Markdown.
+        - Do not wrap the output in code fences unless the content itself should be a code block.
+        - Do not rewrite the text into a different meaning or a more literary version.
+
+        INPUT:
+        ${transcription}
+        """
+    )
+
+    static let markdownDefault = PromptTemplate(
+        id: "markdown-default-v2",
+        title: "Markdown",
+        body: """
+        You are a formatting editor. Convert the input text into clean, useful, valid Markdown while preserving the original language, meaning, and detail. Return ONLY Markdown.
+
+        MARKDOWN RULES:
+        - Preserve the source language. Do not translate the text.
+        - Preserve technical terms, product names, APIs, commands, code-like fragments, file paths, abbreviations, and UI labels exactly as written unless there is an obvious typo.
+        - Structure the result into readable Markdown using headings, short paragraphs, a numbered list, bullet lists, emphasis, and code blocks only when they are genuinely useful.
+        - If the input contains a plan, process, sequence, checklist, requirements, decisions, or words such as "first", "then", "next", "after that", "сначала", "потом", "затем", "дальше", or "план", convert that structure into a numbered list or concise bullet list instead of leaving it as one paragraph.
+        - Use headings and subheadings only when the text naturally contains sections or topics.
+        - Keep the formatting elegant and restrained. Do not over-format every sentence.
+        - If the text is a single short standalone sentence with no natural structure, a plain Markdown paragraph is acceptable.
 
         FORBIDDEN ACTIONS:
         - Do not invent facts, sections, or conclusions.

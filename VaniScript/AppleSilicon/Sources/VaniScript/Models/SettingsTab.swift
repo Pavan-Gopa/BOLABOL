@@ -1,11 +1,23 @@
 import Foundation
 
 public enum SettingsTab: String, CaseIterable, Codable, Equatable, Sendable {
+    case agents
     case apiKeys
-    case models
     case appearance
-    case glossary
     case chunking
-    case transcription
+    case glossary
+    case models
     case prompts
+    case transcription
+
+    public static let alphabetized: [SettingsTab] = [
+        .agents,
+        .apiKeys,
+        .appearance,
+        .chunking,
+        .glossary,
+        .models,
+        .prompts,
+        .transcription,
+    ]
 }

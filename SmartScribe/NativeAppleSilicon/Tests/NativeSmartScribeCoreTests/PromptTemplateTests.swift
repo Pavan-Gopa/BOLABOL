@@ -74,6 +74,8 @@ func promptTemplateVariantTwoDefaultEmphasizesLongDictationRewriteAndRepeatRemov
 func promptTemplateMarkdownDefaultProducesStructuredMarkdown() {
     #expect(PromptTemplate.markdownDefault.body.contains("valid Markdown"))
     #expect(PromptTemplate.markdownDefault.body.contains("headings"))
+    #expect(PromptTemplate.markdownDefault.body.contains("numbered list"))
+    #expect(PromptTemplate.markdownDefault.body.contains("сначала"))
     #expect(PromptTemplate.markdownDefault.body.contains(PromptTemplate.transcriptionPlaceholder))
 }
 
@@ -252,6 +254,27 @@ func promptTemplateSettingsMigratesPromptImprovementVariantTwoTemplate() {
 
     #expect(migrated.variantOneBody == PromptTemplate.variantOneDefault.body)
     #expect(migrated.variantTwoBody == PromptTemplate.variantTwoDefault.body)
+}
+
+@Test
+func promptTemplateSettingsMigratesLegacyMarkdownDefault() {
+    let settings = PromptTemplateSettings(
+        markdownBody: PromptTemplate.markdownLegacyDefault.body
+    )
+
+    let migrated = settings.migratedToLatestDefaults()
+
+    #expect(migrated.markdownBody == PromptTemplate.markdownDefault.body)
+}
+
+@Test
+func promptTemplateSettingsKeepsCustomMarkdownBodyDuringMigration() {
+    let customMarkdown = "Custom markdown: \(PromptTemplate.transcriptionPlaceholder)"
+    let settings = PromptTemplateSettings(markdownBody: customMarkdown)
+
+    let migrated = settings.migratedToLatestDefaults()
+
+    #expect(migrated.markdownBody == customMarkdown)
 }
 
 @Test

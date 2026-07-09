@@ -18,14 +18,15 @@ struct UniversalArchitectureTests {
     @Test("keeps the Universal settings tabs")
     func settingsTabs() {
         #expect(UniversalSettingsTab.allCases.map(\.title) == [
+            "Agents",
             "API Keys",
-            "Models",
             "Appearance",
-            "Glossary",
             "Chunking",
-            "Transcription",
+            "Glossary",
+            "Models",
             "Prompts",
             "Statistics",
+            "Transcription",
         ])
     }
 

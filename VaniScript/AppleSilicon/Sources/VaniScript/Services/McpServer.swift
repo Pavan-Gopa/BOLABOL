@@ -1,204 +1,338 @@
+import Darwin
 import Foundation
-import Network
 import VaniScriptCore
 
 @MainActor
 final class McpServer: Sendable {
     static let shared = McpServer()
-    
-    // We wrap non-Sendable properties inside a main-actor synchronized state
-    private var listener: NWListener?
-    private weak var store: WorkflowStore?
-    private var connections = [UUID: NWConnection]()
-    private var sseClients = [UUID: NWConnection]()
-    
-    private init() {}
-    
-    func start(store: WorkflowStore) {
-        self.store = store
-        stop()
-        
-        do {
-            let port = NWEndpoint.Port(rawValue: 19790)!
-            let parameters = NWParameters.tcp
-            listener = try NWListener(using: parameters, on: port)
-            
-            listener?.stateUpdateHandler = { state in
-                switch state {
-                case .ready:
-                    print("MCP Swift Server listening on http://127.0.0.1:19790")
-                case .failed(let error):
-                    print("MCP Swift Server failed: \(error)")
-                default:
-                    break
-                }
+
+    private struct HTTPRequest: Sendable {
+        var method: String
+        var urlString: String
+        var path: String
+        var queryItems: [String: String]
+        var headers: [String: String]
+        var body: String
+    }
+
+    private struct SseClientSession: Sendable {
+        var socket: Int32
+        var profileID: String
+        var displayName: String
+        var connectedAt: Date
+        var lastSeenAt: Date
+    }
+
+    private enum RequestParseError: Error, Equatable, Sendable {
+        case incomplete
+        case invalidUTF8
+        case invalidRequestLine
+        case invalidContentLength
+
+        var message: String {
+            switch self {
+            case .incomplete: "Incomplete request"
+            case .invalidUTF8: "Invalid UTF-8"
+            case .invalidRequestLine: "Invalid request line"
+            case .invalidContentLength: "Invalid Content-Length"
             }
-            
-            listener?.newConnectionHandler = { [weak self] connection in
-                Task { @MainActor in
-                    self?.handleNewConnection(connection)
-                }
-            }
-            
-            listener?.start(queue: .global(qos: .userInitiated))
-        } catch {
-            print("Failed to start NWListener: \(error)")
         }
     }
-    
+
+    private weak var store: WorkflowStore?
+    private var configuration = McpServerConfiguration(settings: .defaults)
+    private var listenSocket: Int32 = -1
+    private var connections = [UUID: Int32]()
+    private var sseClients = [UUID: SseClientSession]()
+    private let serverQueue = DispatchQueue(label: "com.vaniscript.mcp.socket", qos: .userInitiated, attributes: .concurrent)
+
+    private init() {}
+
+    func configure(store: WorkflowStore, configuration: McpServerConfiguration) {
+        self.store = store
+        self.configuration = configuration
+        stop()
+
+        guard configuration.canStart else {
+            print("MCP Swift Server disabled. Enable it in VaniScript Settings and generate an access token to start.")
+            return
+        }
+
+        guard startSocketListener(port: configuration.port) else {
+            return
+        }
+        print("MCP Swift Server listening on http://127.0.0.1:\(configuration.port)")
+    }
+
     func stop() {
-        listener?.cancel()
-        listener = nil
-        for (_, conn) in connections {
-            conn.cancel()
+        if listenSocket >= 0 {
+            Darwin.shutdown(listenSocket, SHUT_RDWR)
+            Darwin.close(listenSocket)
+            listenSocket = -1
+        }
+
+        for socket in connections.values {
+            Darwin.shutdown(socket, SHUT_RDWR)
+            Darwin.close(socket)
         }
         connections.removeAll()
         sseClients.removeAll()
+        publishActiveClients()
     }
-    
-    private func handleNewConnection(_ connection: NWConnection) {
+
+    private func startSocketListener(port: UInt16) -> Bool {
+        let socketFD = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        guard socketFD >= 0 else {
+            print("MCP Swift Server failed to create socket: \(errno)")
+            return false
+        }
+
+        var reuse: Int32 = 1
+        setsockopt(socketFD, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout<Int32>.size))
+
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_port = port.bigEndian
+        address.sin_addr = in_addr(s_addr: inet_addr("127.0.0.1"))
+
+        let bindResult = withUnsafePointer(to: &address) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockaddrPointer in
+                Darwin.bind(socketFD, sockaddrPointer, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+
+        guard bindResult == 0 else {
+            print("MCP Swift Server failed to bind 127.0.0.1:\(port): \(errno)")
+            Darwin.close(socketFD)
+            return false
+        }
+
+        guard Darwin.listen(socketFD, SOMAXCONN) == 0 else {
+            print("MCP Swift Server failed to listen: \(errno)")
+            Darwin.close(socketFD)
+            return false
+        }
+
+        listenSocket = socketFD
+        serverQueue.async { [weak self] in
+            self?.acceptLoop(socketFD)
+        }
+        return true
+    }
+
+    nonisolated private func acceptLoop(_ socketFD: Int32) {
+        while true {
+            var clientAddress = sockaddr_storage()
+            var clientAddressLength = socklen_t(MemoryLayout<sockaddr_storage>.size)
+            let clientSocket = withUnsafeMutablePointer(to: &clientAddress) { pointer in
+                pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockaddrPointer in
+                    Darwin.accept(socketFD, sockaddrPointer, &clientAddressLength)
+                }
+            }
+
+            if clientSocket < 0 {
+                if errno == EBADF || errno == EINVAL {
+                    return
+                }
+                continue
+            }
+
+            Task { @MainActor [weak self] in
+                self?.handleAcceptedSocket(clientSocket)
+            }
+        }
+    }
+
+    private func handleAcceptedSocket(_ socket: Int32) {
         let id = UUID()
-        connections[id] = connection
-        connection.start(queue: .global(qos: .userInitiated))
-        
-        readRequest(id: id, connection: connection)
+        connections[id] = socket
+        serverQueue.async { [weak self] in
+            self?.readSocketRequest(id: id, socket: socket)
+        }
     }
-    
-    private func readRequest(id: UUID, connection: NWConnection) {
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, context, isComplete, error in
-            Task { @MainActor in
-                guard let self = self else { return }
-                if error != nil {
-                    self.closeConnection(id: id)
-                    return
+
+    nonisolated private func readSocketRequest(id: UUID, socket: Int32) {
+        var buffer = Data()
+        var chunk = [UInt8](repeating: 0, count: 65536)
+
+        while true {
+            let count = Darwin.read(socket, &chunk, chunk.count)
+            if count <= 0 {
+                Task { @MainActor [weak self] in
+                    self?.closeConnection(id: id)
                 }
-                
-                guard let data = data, !data.isEmpty else {
-                    if isComplete {
-                        self.closeConnection(id: id)
-                    } else {
-                        self.readRequest(id: id, connection: connection)
-                    }
-                    return
+                return
+            }
+
+            buffer.append(chunk, count: count)
+            switch Self.parseRequest(from: buffer) {
+            case .success(let request):
+                Task { @MainActor [weak self] in
+                    self?.processRequest(id: id, socket: socket, request: request)
                 }
-                
-                self.processRequest(id: id, connection: connection, data: data)
+                return
+            case .failure(.incomplete):
+                continue
+            case .failure(let error):
+                Task { @MainActor [weak self] in
+                    self?.sendHTTPResponse(socket: socket, statusCode: 400, statusText: "Bad Request", body: error.message)
+                    self?.closeConnection(id: id)
+                }
+                return
             }
         }
     }
-    
-    private func processRequest(id: UUID, connection: NWConnection, data: Data) {
-        guard let requestString = String(data: data, encoding: .utf8) else {
-            sendHTTPResponse(connection: connection, statusCode: 400, statusText: "Bad Request", body: "Invalid UTF-8")
-            closeConnection(id: id)
-            return
+
+    nonisolated private static func parseRequest(from buffer: Data) -> Result<HTTPRequest, RequestParseError> {
+        let delimiter = Data("\r\n\r\n".utf8)
+        guard let headerRange = buffer.range(of: delimiter) else {
+            return .failure(.incomplete)
         }
-        
-        let lines = requestString.components(separatedBy: "\r\n")
-        guard !lines.isEmpty else {
-            sendHTTPResponse(connection: connection, statusCode: 400, statusText: "Bad Request", body: "Empty Request")
-            closeConnection(id: id)
-            return
+
+        let headerData = buffer[..<headerRange.lowerBound]
+        guard let headerString = String(data: headerData, encoding: .utf8) else {
+            return .failure(.invalidUTF8)
         }
-        
-        let firstLineParts = lines[0].components(separatedBy: " ")
+
+        let headerLines = headerString.components(separatedBy: "\r\n")
+        guard let firstLine = headerLines.first else {
+            return .failure(.invalidRequestLine)
+        }
+        let firstLineParts = firstLine.split(separator: " ", maxSplits: 2).map(String.init)
         guard firstLineParts.count >= 2 else {
-            sendHTTPResponse(connection: connection, statusCode: 400, statusText: "Bad Request", body: "Invalid Request Line")
-            closeConnection(id: id)
-            return
+            return .failure(.invalidRequestLine)
         }
-        
-        let method = firstLineParts[0]
-        let urlString = firstLineParts[1]
-        
-        let path = urlString.components(separatedBy: "?").first ?? "/"
-        
-        if method == "OPTIONS" {
-            sendOptionsResponse(connection: connection)
-            closeConnection(id: id)
-            return
+
+        var headers: [String: String] = [:]
+        for line in headerLines.dropFirst() {
+            guard let colonIndex = line.firstIndex(of: ":") else { continue }
+            let key = line[..<colonIndex].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            let value = line[line.index(after: colonIndex)...].trimmingCharacters(in: .whitespacesAndNewlines)
+            headers[key] = value
         }
-        
-        if path == "/sse" && method == "GET" {
-            handleSseConnection(id: id, connection: connection)
-            return
-        }
-        
-        if path == "/message" && method == "POST" {
-            var sessionId = ""
-            if let queryRange = urlString.range(of: "?") {
-                let query = String(urlString[queryRange.upperBound...])
-                let pairs = query.components(separatedBy: "&")
-                for pair in pairs {
-                    let parts = pair.components(separatedBy: "=")
-                    if parts.count == 2 && parts[0] == "sessionId" {
-                        sessionId = parts[1]
-                    }
-                }
+
+        let contentLength: Int
+        if let rawLength = headers["content-length"] {
+            guard let parsedLength = Int(rawLength), parsedLength >= 0 else {
+                return .failure(.invalidContentLength)
             }
-            
-            guard let range = requestString.range(of: "\r\n\r\n") else {
-                sendHTTPResponse(connection: connection, statusCode: 400, statusText: "Bad Request", body: "No body delimiter")
+            contentLength = parsedLength
+        } else {
+            contentLength = 0
+        }
+
+        let bodyStart = headerRange.upperBound
+        let requiredLength = bodyStart + contentLength
+        guard buffer.count >= requiredLength else {
+            return .failure(.incomplete)
+        }
+
+        let bodyData = buffer[bodyStart..<requiredLength]
+        guard let body = String(data: bodyData, encoding: .utf8) else {
+            return .failure(.invalidUTF8)
+        }
+
+        let urlString = firstLineParts[1]
+        let path = urlString.components(separatedBy: "?").first ?? "/"
+        return .success(HTTPRequest(
+            method: firstLineParts[0],
+            urlString: urlString,
+            path: path,
+            queryItems: queryItems(from: urlString),
+            headers: headers,
+            body: body
+        ))
+    }
+
+    private func processRequest(id: UUID, socket: Int32, request: HTTPRequest) {
+        if request.method == "OPTIONS" {
+            sendOptionsResponse(socket: socket)
+            closeConnection(id: id)
+            return
+        }
+
+        if request.path == "/sse", request.method == "GET" {
+            guard configuration.isAuthorized(headers: request.headers, queryItems: request.queryItems) else {
+                sendHTTPResponse(socket: socket, statusCode: 401, statusText: "Unauthorized", body: "Unauthorized")
                 closeConnection(id: id)
                 return
             }
-            
-            let body = String(requestString[range.upperBound...])
-            handlePostMessage(connection: connection, sessionId: sessionId, body: body)
+            handleSseConnection(id: id, socket: socket, headers: request.headers)
+            return
+        }
+
+        if request.path == "/message", request.method == "POST" {
+            guard let sessionId = request.queryItems["sessionId"],
+                  let sseClientUUID = UUID(uuidString: sessionId),
+                  sseClients[sseClientUUID] != nil
+            else {
+                sendHTTPResponse(socket: socket, statusCode: 401, statusText: "Unauthorized", body: "Unauthorized")
+                closeConnection(id: id)
+                return
+            }
+
+            sendHTTPResponse(socket: socket, statusCode: 202, statusText: "Accepted", body: "")
+            handlePostMessage(sessionId: sessionId, body: request.body)
             closeConnection(id: id)
             return
         }
-        
-        sendHTTPResponse(connection: connection, statusCode: 404, statusText: "Not Found", body: "Not Found")
+
+        sendHTTPResponse(socket: socket, statusCode: 404, statusText: "Not Found", body: "Not Found")
         closeConnection(id: id)
     }
-    
-    private func handleSseConnection(id: UUID, connection: NWConnection) {
-        let headers = [
+
+    private func handleSseConnection(id: UUID, socket: Int32, headers: [String: String]) {
+        let responseHeaders = [
             "HTTP/1.1 200 OK",
             "Content-Type: text/event-stream",
             "Cache-Control: no-cache",
             "Connection: keep-alive",
-            "Access-Control-Allow-Origin: *",
-            "Access-Control-Allow-Methods: GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers: Content-Type",
-            "\r\n"
+            "\r\n",
         ].joined(separator: "\r\n")
-        
-        guard let headerData = headers.data(using: .utf8) else { return }
-        
-        connection.send(content: headerData, completion: .contentProcessed { [weak self] error in
-            Task { @MainActor in
-                if error != nil {
-                    self?.closeConnection(id: id)
-                    return
-                }
-                
-                self?.sseClients[id] = connection
-                
-                let event = "event: endpoint\ndata: /message?sessionId=\(id.uuidString)\n\n"
-                if let eventData = event.data(using: .utf8) {
-                    connection.send(content: eventData, completion: .contentProcessed({ _ in }))
-                }
-            }
-        })
-    }
-    
-    private func handlePostMessage(connection: NWConnection, sessionId: String, body: String) {
-        sendHTTPResponse(connection: connection, statusCode: 202, statusText: "Accepted", body: "")
-        
-        guard let sseClientUUID = UUID(uuidString: sessionId),
-              let sseConnection = sseClients[sseClientUUID] else {
-            return
+
+        sendRaw(socket: socket, string: responseHeaders)
+        registerSseClient(id: id, socket: socket, userAgent: headers["user-agent"])
+        sendRaw(socket: socket, string: "event: endpoint\ndata: /message?sessionId=\(id.uuidString)\n\n")
+
+        serverQueue.async { [weak self] in
+            self?.monitorSseClient(id: id, socket: socket)
         }
-        
-        guard let data = body.data(using: .utf8),
+    }
+
+    nonisolated private func monitorSseClient(id: UUID, socket: Int32) {
+        var byte = UInt8(0)
+        while true {
+            let count = Darwin.read(socket, &byte, 1)
+            if count <= 0 {
+                Task { @MainActor [weak self] in
+                    self?.closeConnection(id: id)
+                }
+                return
+            }
+        }
+    }
+
+    private func handlePostMessage(sessionId: String, body: String) {
+        guard let sseClientUUID = UUID(uuidString: sessionId),
+              let data = body.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let method = json["method"] as? String,
-              let requestId = json["id"] else {
+              let sseSocket = sseClients[sseClientUUID]?.socket
+        else {
             return
         }
-        
+
+        refreshSseClient(id: sseClientUUID, json: json)
+
+        if method == "notifications/initialized" {
+            return
+        }
+
+        guard let requestId = json["id"] else {
+            return
+        }
+
         if method == "initialize" {
             let response: [String: Any] = [
                 "jsonrpc": "2.0",
@@ -206,180 +340,212 @@ final class McpServer: Sendable {
                 "result": [
                     "protocolVersion": "2024-11-05",
                     "capabilities": [
-                        "tools": [:]
+                        "tools": [:],
                     ],
                     "serverInfo": [
                         "name": "vaniscript-swift-mcp",
-                        "version": "1.0.0"
-                    ]
-                ]
+                        "version": "1.0.0",
+                    ],
+                ],
             ]
-            sendSseMessage(connection: sseConnection, payload: response)
+            sendSseMessage(socket: sseSocket, payload: response)
             return
         }
-        
-        if method == "notifications/initialized" {
-            return
-        }
-        
+
         if method == "tools/list" {
             let response: [String: Any] = [
                 "jsonrpc": "2.0",
                 "id": requestId,
                 "result": [
-                    "tools": [
-                        [
-                            "name": "get_project_state",
-                            "description": "Get the active VaniScript project state (session, settings, screen, etc.)",
-                            "inputSchema": ["type": "object", "properties": [:]]
-                        ],
-                        [
-                            "name": "update_chunk_text",
-                            "description": "Update the transcription or translation text of a segment",
-                            "inputSchema": [
-                                "type": "object",
-                                "properties": [
-                                    "chunkIndex": ["type": "number", "description": "Index of the segment (0-based)"],
-                                    "original": ["type": "string", "description": "New original transcript text (optional)"],
-                                    "translated": ["type": "string", "description": "New translation text (optional)"]
-                                ],
-                                "required": ["chunkIndex"]
-                            ]
-                        ],
-                        [
-                            "name": "approve_chunk",
-                            "description": "Approve or revoke approval for a specific segment",
-                            "inputSchema": [
-                                "type": "object",
-                                "properties": [
-                                    "chunkIndex": ["type": "number", "description": "Index of the segment (0-based)"],
-                                    "approved": ["type": "boolean", "description": "True to approve, false to revoke"]
-                                ],
-                                "required": ["chunkIndex", "approved"]
-                            ]
-                        ],
-                        [
-                            "name": "get_subtitle_style",
-                            "description": "Get active subtitle style settings",
-                            "inputSchema": ["type": "object", "properties": [:]]
-                        ],
-                        [
-                            "name": "update_subtitle_style",
-                            "description": "Update the style properties for video subtitles",
-                            "inputSchema": [
-                                "type": "object",
-                                "properties": [
-                                    "stylePatch": [
-                                        "type": "object",
-                                        "description": "Partial patch for subtitle style parameters"
-                                    ]
-                                ],
-                                "required": ["stylePatch"]
-                            ]
-                        ],
-                        [
-                            "name": "get_shorts_plans",
-                            "description": "List all vertical shorts clip plans planned in timeline",
-                            "inputSchema": ["type": "object", "properties": [:]]
-                        ]
-                    ]
-                ]
+                    "tools": McpToolRegistry
+                        .definitions(allowMutatingTools: configuration.allowMutatingTools)
+                        .map(\.mcpDictionary),
+                ],
             ]
-            sendSseMessage(connection: sseConnection, payload: response)
+            sendSseMessage(socket: sseSocket, payload: response)
             return
         }
-        
+
         if method == "tools/call" {
             guard let params = json["params"] as? [String: Any],
-                  let toolName = params["name"] as? String else {
+                  let toolName = params["name"] as? String
+            else {
+                sendJsonRpcError(socket: sseSocket, requestId: requestId, code: -32602, message: "Missing tool name")
                 return
             }
-            
+
+            guard McpToolRegistry.isAllowed(toolName, allowMutatingTools: configuration.allowMutatingTools) else {
+                sendJsonRpcError(socket: sseSocket, requestId: requestId, code: -32601, message: "Tool is not available in the current MCP policy")
+                return
+            }
+
             let args = params["arguments"] as? [String: Any] ?? [:]
-            
+
             Task {
                 do {
-                    let result = try await executeToolOnMainActor(name: toolName, args: args)
+                    let result = try await executeToolOnMainActor(
+                        name: toolName,
+                        args: args,
+                        allowMutatingTools: configuration.allowMutatingTools
+                    )
                     let response: [String: Any] = [
                         "jsonrpc": "2.0",
                         "id": requestId,
                         "result": [
                             "content": [
-                                ["type": "text", "text": String(data: try JSONSerialization.data(withJSONObject: result, options: .prettyPrinted), encoding: .utf8) ?? "{}"]
-                            ]
-                        ]
+                                [
+                                    "type": "text",
+                                    "text": String(
+                                        data: try JSONSerialization.data(withJSONObject: result, options: .prettyPrinted),
+                                        encoding: .utf8
+                                    ) ?? "{}",
+                                ],
+                            ],
+                        ],
                     ]
-                    sendSseMessage(connection: sseConnection, payload: response)
+                    sendSseMessage(socket: sseSocket, payload: response)
                 } catch {
-                    let response: [String: Any] = [
-                        "jsonrpc": "2.0",
-                        "id": requestId,
-                        "error": [
-                            "code": -32603,
-                            "message": error.localizedDescription
-                        ]
-                    ]
-                    sendSseMessage(connection: sseConnection, payload: response)
+                    sendJsonRpcError(socket: sseSocket, requestId: requestId, code: -32603, message: error.localizedDescription)
                 }
             }
             return
         }
+
+        sendJsonRpcError(socket: sseSocket, requestId: requestId, code: -32601, message: "Unknown method")
     }
-    
-    private func executeToolOnMainActor(name: String, args: [String: Any]) async throws -> [String: Any] {
-        guard let store = self.store else {
+
+    private func executeToolOnMainActor(name: String, args: [String: Any], allowMutatingTools: Bool) async throws -> [String: Any] {
+        guard let store else {
             throw NSError(domain: "McpServer", code: -1, userInfo: [NSLocalizedDescriptionKey: "WorkflowStore is not initialized."])
         }
-        return try await store.executeMcpTool(name: name, arguments: args)
+        return try await store.executeMcpTool(name: name, arguments: args, allowMutatingTools: allowMutatingTools)
     }
-    
-    private func sendHTTPResponse(connection: NWConnection, statusCode: Int, statusText: String, body: String) {
+
+    private func sendHTTPResponse(socket: Int32, statusCode: Int, statusText: String, body: String) {
         let headers = [
             "HTTP/1.1 \(statusCode) \(statusText)",
-            "Content-Type: text/plain",
+            "Content-Type: text/plain; charset=utf-8",
             "Content-Length: \(body.utf8.count)",
-            "Access-Control-Allow-Origin: *",
             "Connection: close",
-            "\r\n"
+            "\r\n",
         ].joined(separator: "\r\n")
-        
-        let response = headers + body
-        if let responseData = response.data(using: .utf8) {
-            connection.send(content: responseData, completion: .contentProcessed({ _ in }))
-        }
+        sendRaw(socket: socket, string: headers + body)
     }
-    
-    private func sendOptionsResponse(connection: NWConnection) {
+
+    private func sendOptionsResponse(socket: Int32) {
         let headers = [
             "HTTP/1.1 204 No Content",
-            "Access-Control-Allow-Origin: *",
             "Access-Control-Allow-Methods: GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers: Content-Type",
+            "Access-Control-Allow-Headers: Authorization, X-VaniScript-MCP-Token, Content-Type",
             "Connection: close",
-            "\r\n"
+            "\r\n",
         ].joined(separator: "\r\n")
-        
-        if let responseData = headers.data(using: .utf8) {
-            connection.send(content: responseData, completion: .contentProcessed({ _ in }))
-        }
+        sendRaw(socket: socket, string: headers)
     }
-    
-    private func sendSseMessage(connection: NWConnection, payload: [String: Any]) {
+
+    private func sendJsonRpcError(socket: Int32, requestId: Any, code: Int, message: String) {
+        let response: [String: Any] = [
+            "jsonrpc": "2.0",
+            "id": requestId,
+            "error": [
+                "code": code,
+                "message": message,
+            ],
+        ]
+        sendSseMessage(socket: socket, payload: response)
+    }
+
+    private func sendSseMessage(socket: Int32, payload: [String: Any]) {
         guard let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []),
-              let jsonString = String(data: jsonData, encoding: .utf8) else {
+              let jsonString = String(data: jsonData, encoding: .utf8)
+        else {
             return
         }
-        
-        let message = "event: message\ndata: \(jsonString)\n\n"
-        if let data = message.data(using: .utf8) {
-            connection.send(content: data, completion: .contentProcessed({ _ in }))
+
+        sendRaw(socket: socket, string: "event: message\ndata: \(jsonString)\n\n")
+    }
+
+    private func sendRaw(socket: Int32, string: String) {
+        guard let data = string.data(using: .utf8) else { return }
+        data.withUnsafeBytes { rawBuffer in
+            guard let baseAddress = rawBuffer.baseAddress else { return }
+            var sent = 0
+            while sent < data.count {
+                let count = Darwin.write(socket, baseAddress.advanced(by: sent), data.count - sent)
+                if count <= 0 {
+                    return
+                }
+                sent += count
+            }
         }
     }
-    
+
     private func closeConnection(id: UUID) {
-        if let conn = connections.removeValue(forKey: id) {
-            conn.cancel()
+        if let socket = connections.removeValue(forKey: id) {
+            Darwin.shutdown(socket, SHUT_RDWR)
+            Darwin.close(socket)
         }
-        sseClients.removeValue(forKey: id)
+        if sseClients.removeValue(forKey: id) != nil {
+            publishActiveClients()
+        }
+    }
+
+    private func registerSseClient(id: UUID, socket: Int32, userAgent: String?) {
+        let profileID = McpClientClassifier.profileID(clientName: nil, userAgent: userAgent)
+        let displayName = profileID
+            .map { McpAgentProfileCatalog.profile(forRawID: $0).displayName }
+            ?? "MCP Client"
+        let now = Date()
+        sseClients[id] = SseClientSession(
+            socket: socket,
+            profileID: profileID ?? "unknown",
+            displayName: displayName,
+            connectedAt: now,
+            lastSeenAt: now
+        )
+        publishActiveClients()
+    }
+
+    private func refreshSseClient(id: UUID, json: [String: Any]) {
+        guard var session = sseClients[id] else { return }
+
+        let clientName = ((json["params"] as? [String: Any])?["clientInfo"] as? [String: Any])?["name"] as? String
+        if let profileID = McpClientClassifier.profileID(clientName: clientName, userAgent: nil) {
+            session.profileID = profileID
+            session.displayName = McpAgentProfileCatalog.profile(forRawID: profileID).displayName
+        } else if let clientName, !clientName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            session.displayName = clientName
+        }
+        session.lastSeenAt = Date()
+        sseClients[id] = session
+        publishActiveClients()
+    }
+
+    private func publishActiveClients() {
+        store?.updateMcpActiveClients(
+            sseClients.map { id, session in
+                McpActiveClient(
+                    id: id,
+                    profileID: session.profileID,
+                    displayName: session.displayName,
+                    connectedAt: session.connectedAt,
+                    lastSeenAt: session.lastSeenAt
+                )
+            }
+        )
+    }
+
+    nonisolated private static func queryItems(from urlString: String) -> [String: String] {
+        guard let queryRange = urlString.range(of: "?") else { return [:] }
+        let query = String(urlString[queryRange.upperBound...])
+        var output: [String: String] = [:]
+        for pair in query.split(separator: "&") {
+            let parts = pair.split(separator: "=", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { continue }
+            let key = parts[0].removingPercentEncoding ?? parts[0]
+            let value = parts[1].removingPercentEncoding ?? parts[1]
+            output[key] = value
+        }
+        return output
     }
 }

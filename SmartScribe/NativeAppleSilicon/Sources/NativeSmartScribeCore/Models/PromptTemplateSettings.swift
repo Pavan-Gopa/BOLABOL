@@ -337,7 +337,8 @@ public struct PromptTemplateSettings: Codable, Equatable, Sendable {
             migrated.activeVariantTwoSlot = .default
         }
 
-        if migrated.markdownBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if migrated.markdownBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || Self.normalizedPromptBody(migrated.markdownBody) == Self.normalizedPromptBody(PromptTemplate.markdownLegacyDefault.body) {
             migrated.markdownBody = PromptTemplate.markdownDefault.body
         }
 
@@ -370,6 +371,12 @@ public struct PromptTemplateSettings: Codable, Equatable, Sendable {
         ]
 
         return markers.contains { normalized.contains($0) }
+    }
+
+    private static func normalizedPromptBody(_ body: String) -> String {
+        body
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func resolvedBody(

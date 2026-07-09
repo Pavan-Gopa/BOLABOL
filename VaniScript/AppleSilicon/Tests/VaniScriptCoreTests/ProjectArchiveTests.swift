@@ -272,7 +272,7 @@ struct ProjectArchiveTests {
         #expect(session.availableTranslationLanguages == ["Russian"])
         #expect(session.chunks[0].translationVariant(for: "Russian")?.text == "Привет мир.")
 
-        let cues = try #require(session.chunks[0].translationCues(for: "Russian"))
+        let cues = session.chunks[0].translationCues(for: "Russian")
         #expect(cues.count == 1)
         #expect(cues[0].text == "Привет мир.")
     }

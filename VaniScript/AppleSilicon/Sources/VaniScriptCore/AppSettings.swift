@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 public enum Theme: String, Codable, CaseIterable, Equatable, Sendable {
     case dark
@@ -244,6 +245,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var completedOnboardingBuildID: String?
     public var mediaResolverEndpoint: String
     public var mediaResolverToken: String
+    public var mcpServerEnabled: Bool
+    public var mcpAllowMutatingTools: Bool
+    public var mcpAccessToken: String
+    public var mcpPreferredAgentID: String
     public var logLevel: LogLevel
 
     private enum CodingKeys: String, CodingKey {
@@ -255,6 +260,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case localAsrModels, localTranslationModels, promptPresets, usage, glossary, customCloudProviders
         case hasCompletedOnboarding, completedOnboardingBuildID
         case mediaResolverEndpoint, mediaResolverToken
+        case mcpServerEnabled, mcpAllowMutatingTools, mcpAccessToken, mcpPreferredAgentID
         case logLevel
     }
 
@@ -286,6 +292,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         completedOnboardingBuildID: String? = nil,
         mediaResolverEndpoint: String = "",
         mediaResolverToken: String = "",
+        mcpServerEnabled: Bool = false,
+        mcpAllowMutatingTools: Bool = false,
+        mcpAccessToken: String = "",
+        mcpPreferredAgentID: String = McpAgentProfileCatalog.defaultProfileID,
         logLevel: LogLevel = .info
     ) {
         self.geminiKey = geminiKey
@@ -315,6 +325,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.completedOnboardingBuildID = completedOnboardingBuildID
         self.mediaResolverEndpoint = mediaResolverEndpoint
         self.mediaResolverToken = mediaResolverToken
+        self.mcpServerEnabled = mcpServerEnabled
+        self.mcpAllowMutatingTools = mcpAllowMutatingTools
+        self.mcpAccessToken = mcpAccessToken
+        self.mcpPreferredAgentID = mcpPreferredAgentID
         self.logLevel = logLevel
     }
 
@@ -347,6 +361,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.completedOnboardingBuildID = try container.decodeIfPresent(String.self, forKey: .completedOnboardingBuildID)
         self.mediaResolverEndpoint = try container.decodeIfPresent(String.self, forKey: .mediaResolverEndpoint) ?? ""
         self.mediaResolverToken = try container.decodeIfPresent(String.self, forKey: .mediaResolverToken) ?? ""
+        self.mcpServerEnabled = try container.decodeIfPresent(Bool.self, forKey: .mcpServerEnabled) ?? false
+        self.mcpAllowMutatingTools = try container.decodeIfPresent(Bool.self, forKey: .mcpAllowMutatingTools) ?? false
+        self.mcpAccessToken = try container.decodeIfPresent(String.self, forKey: .mcpAccessToken) ?? ""
+        self.mcpPreferredAgentID = try container.decodeIfPresent(String.self, forKey: .mcpPreferredAgentID) ?? McpAgentProfileCatalog.defaultProfileID
         self.logLevel = try container.decodeIfPresent(LogLevel.self, forKey: .logLevel) ?? .info
     }
 
@@ -412,11 +430,38 @@ public struct AppSettings: Codable, Equatable, Sendable {
         glossary: StarterGlossary.entries,
         customCloudProviders: [],
         mediaResolverEndpoint: "",
-        mediaResolverToken: ""
+        mediaResolverToken: "",
+        mcpServerEnabled: false,
+        mcpAllowMutatingTools: false,
+        mcpAccessToken: "",
+        mcpPreferredAgentID: McpAgentProfileCatalog.defaultProfileID
     )
 }
 
 extension AppSettings {
+    public static func generateMcpAccessToken(byteCount: Int = 32) -> String {
+        var bytes = [UInt8](repeating: 0, count: max(16, byteCount))
+        let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        if status == errSecSuccess {
+            return bytes.map { String(format: "%02x", $0) }.joined()
+        }
+        return [UUID().uuidString, UUID().uuidString]
+            .joined()
+            .replacingOccurrences(of: "-", with: "")
+            .lowercased()
+    }
+
+    public mutating func normalizeMcpSettings(generateToken: () -> String = { AppSettings.generateMcpAccessToken() }) {
+        mcpAccessToken = mcpAccessToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        mcpPreferredAgentID = McpAgentProfileCatalog.normalizedProfileID(mcpPreferredAgentID)
+        if mcpServerEnabled, mcpAccessToken.isEmpty {
+            mcpAccessToken = generateToken()
+        }
+        if !mcpServerEnabled {
+            mcpAllowMutatingTools = false
+        }
+    }
+
     public mutating func adaptGlossaryToTargetLanguage(targetLang: String) {
         let isRussian = targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "russian"
         for i in 0..<glossary.count {

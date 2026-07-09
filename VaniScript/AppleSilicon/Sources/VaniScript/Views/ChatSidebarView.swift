@@ -341,29 +341,29 @@ struct ChatSidebarView: View {
         
         isLoading = true
         
-        let key = workflowStore.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        if key.isEmpty {
-            if McpServer.shared.hasActiveClients {
-                Task {
-                    do {
-                        let responseText = try await McpServer.shared.sampleMessage(prompt: text, history: messages.dropLast())
-                        await MainActor.run {
-                            self.messages.append(MessageItem(sender: "assistant", text: responseText))
-                            self.isLoading = false
-                        }
-                    } catch {
-                        await MainActor.run {
-                            self.messages.append(MessageItem(sender: "system", text: "MCP Agent Error: \(error.localizedDescription)"))
-                            self.isLoading = false
-                        }
+        if McpServer.shared.hasActiveClients {
+            Task {
+                do {
+                    let responseText = try await McpServer.shared.sampleMessage(prompt: text, history: messages.dropLast())
+                    await MainActor.run {
+                        self.messages.append(MessageItem(sender: "assistant", text: responseText))
+                        self.isLoading = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.messages.append(MessageItem(sender: "system", text: "MCP Agent Error: \(error.localizedDescription)"))
+                        self.isLoading = false
                     }
                 }
-                return
-            } else {
-                messages.append(MessageItem(sender: "system", text: "Error: Gemini Key is missing, and no active MCP agent is connected to handle the chat."))
-                isLoading = false
-                return
             }
+            return
+        }
+        
+        let key = workflowStore.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        if key.isEmpty {
+            messages.append(MessageItem(sender: "system", text: "Error: Gemini Key is missing, and no active MCP agent is connected to handle the chat."))
+            isLoading = false
+            return
         }
         
         Task {

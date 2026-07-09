@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import os
 import threading
 import urllib.request
 import urllib.error
@@ -11,12 +12,33 @@ base_url = f"http://127.0.0.1:{PORT}"
 
 post_url = None
 
+def get_access_token():
+    # 1. Try environment variable
+    token = os.environ.get("VANISCRIPT_MCP_TOKEN")
+    if token:
+        return token
+    # 2. Try reading settings.json from Application Support
+    try:
+        path = os.path.expanduser("~/Library/Application Support/VaniScript/settings.json")
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                data = json.load(f)
+                return data.get("mcpAccessToken", "")
+    except Exception:
+        pass
+    return ""
+
 def sse_listener():
     global post_url
     while True:
         try:
             post_url = None
-            req = urllib.request.Request(f"{base_url}/sse")
+            token = get_access_token()
+            headers = {}
+            if token:
+                headers["x-vaniscript-mcp-token"] = token
+            
+            req = urllib.request.Request(f"{base_url}/sse", headers=headers)
             with urllib.request.urlopen(req) as response:
                 current_event = None
                 for line_bytes in response:
@@ -49,10 +71,15 @@ for line in sys.stdin:
         time.sleep(0.1)
     
     try:
+        token = get_access_token()
+        headers = {'Content-Type': 'application/json'}
+        if token:
+            headers["x-vaniscript-mcp-token"] = token
+            
         req = urllib.request.Request(
             post_url,
             data=line.encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
+            headers=headers
         )
         with urllib.request.urlopen(req) as resp:
             resp.read() # Consume response

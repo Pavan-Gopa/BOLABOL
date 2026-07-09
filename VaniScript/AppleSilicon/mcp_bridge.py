@@ -13,11 +13,9 @@ base_url = f"http://127.0.0.1:{PORT}"
 post_url = None
 
 def get_access_token():
-    # 1. Try environment variable
     token = os.environ.get("VANISCRIPT_MCP_TOKEN")
     if token:
         return token
-    # 2. Try reading settings.json from Application Support
     try:
         path = os.path.expanduser("~/Library/Application Support/VaniScript/settings.json")
         if os.path.exists(path):
@@ -44,7 +42,7 @@ def sse_listener():
                 while True:
                     line_bytes = response.readline()
                     if not line_bytes:
-                        break # EOF
+                        break
                     line = line_bytes.decode('utf-8').strip()
                     if not line:
                         continue
@@ -57,7 +55,7 @@ def sse_listener():
                         elif current_event == "message" or current_event is None:
                             sys.stdout.write(data_val + "\n")
                             sys.stdout.flush()
-        except Exception as e:
+        except Exception:
             post_url = None
             time.sleep(2)
 
@@ -85,7 +83,7 @@ for line in sys.stdin:
             headers=headers
         )
         with urllib.request.urlopen(req) as resp:
-            resp.read() # Consume response
+            resp.read()
     except Exception as e:
         sys.stderr.write(f"Bridge error: {str(e)}\n")
         sys.stderr.flush()

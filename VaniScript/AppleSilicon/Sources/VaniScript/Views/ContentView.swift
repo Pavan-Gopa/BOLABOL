@@ -8,88 +8,92 @@ struct ContentView: View {
     @State private var onboardingFrames: [String: CGRect] = [:]
 
     var body: some View {
-        ZStack {
-            AppBackground()
-
-            VStack(spacing: 0) {
-                Color.clear
-                    .frame(height: workflowStore.workflow.screen == .review || workflowStore.workflow.screen == .visualEditor ? 0 : 38)
-
-                DetailRouterView()
-                    .environmentObject(workflowStore)
-            }
-
-            if workflowStore.workflow.screen != .review && workflowStore.workflow.screen != .visualEditor {
-                VStack {
-                    HStack(spacing: 8) {
-                        Spacer()
-
-                        Button {
-                            workflowStore.showChatSidebar.toggle()
-                        } label: {
-                            Image(systemName: "sparkles")
-                                .foregroundStyle(workflowStore.showChatSidebar ? VaniScriptTheme.accent : VaniScriptTheme.text2)
-                        }
-                        .buttonStyle(CornerIconButtonStyle())
-                        .help("AI Assistant")
-
-                        Button {
-                            workflowStore.startTour(for: workflowStore.workflow.screen.rawValue)
-                        } label: {
-                            Image(systemName: "questionmark.circle")
-                        }
-                        .buttonStyle(CornerIconButtonStyle())
-                        .help("Help Tour")
-
-                        Button {
-                            workflowStore.presentProjectSidebar()
-                        } label: {
-                            Image(systemName: "folder")
-                        }
-                        .buttonStyle(CornerIconButtonStyle())
-                        .help("Projects")
-
-                        Button {
-                            if workflowStore.isTourActive && workflowStore.activeTourScreen != "settings" {
-                                workflowStore.startTour(for: "settings")
-                            }
-                            openSettings()
-                        } label: {
-                            Image(systemName: "gearshape")
-                        }
-                        .buttonStyle(CornerIconButtonStyle())
-                        .help("Settings")
-                        .onboardingTarget("settings-btn")
-                    }
-                    .padding(.top, 10)
-                    .padding(.trailing, 16)
-
-                    Spacer()
-                }
-            }
-
-            if workflowStore.isProjectSidebarPresented {
-                ProjectSidebarView()
-                    .environmentObject(workflowStore)
-            }
-
+        HStack(spacing: 0) {
             if workflowStore.showChatSidebar {
                 ChatSidebarView()
                     .environmentObject(workflowStore)
+                    .transition(.move(edge: .leading))
             }
 
-            if workflowStore.isTourActive {
-                OnboardingTourView(
-                    screen: workflowStore.workflow.screen.rawValue,
-                    store: workflowStore,
-                    frames: onboardingFrames
-                )
+            ZStack {
+                AppBackground()
+
+                VStack(spacing: 0) {
+                    Color.clear
+                        .frame(height: workflowStore.workflow.screen == .review || workflowStore.workflow.screen == .visualEditor ? 0 : 38)
+
+                    DetailRouterView()
+                        .environmentObject(workflowStore)
+                }
+
+                if workflowStore.workflow.screen != .review && workflowStore.workflow.screen != .visualEditor {
+                    VStack {
+                        HStack(spacing: 8) {
+                            Spacer()
+
+                            Button {
+                                workflowStore.showChatSidebar.toggle()
+                            } label: {
+                                Image(systemName: "sparkles")
+                                    .foregroundStyle(workflowStore.showChatSidebar ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+                            }
+                            .buttonStyle(CornerIconButtonStyle())
+                            .help("AI Assistant")
+
+                            Button {
+                                workflowStore.startTour(for: workflowStore.workflow.screen.rawValue)
+                            } label: {
+                                Image(systemName: "questionmark.circle")
+                            }
+                            .buttonStyle(CornerIconButtonStyle())
+                            .help("Help Tour")
+
+                            Button {
+                                workflowStore.presentProjectSidebar()
+                            } label: {
+                                Image(systemName: "folder")
+                            }
+                            .buttonStyle(CornerIconButtonStyle())
+                            .help("Projects")
+
+                            Button {
+                                if workflowStore.isTourActive && workflowStore.activeTourScreen != "settings" {
+                                    workflowStore.startTour(for: "settings")
+                                }
+                                openSettings()
+                            } label: {
+                                Image(systemName: "gearshape")
+                            }
+                            .buttonStyle(CornerIconButtonStyle())
+                            .help("Settings")
+                            .onboardingTarget("settings-btn")
+                        }
+                        .padding(.top, 10)
+                        .padding(.trailing, 16)
+
+                        Spacer()
+                    }
+                }
+
+                if workflowStore.isProjectSidebarPresented {
+                    ProjectSidebarView()
+                        .environmentObject(workflowStore)
+                }
+
+                if workflowStore.isTourActive {
+                    OnboardingTourView(
+                        screen: workflowStore.workflow.screen.rawValue,
+                        store: workflowStore,
+                        frames: onboardingFrames
+                    )
+                }
             }
         }
         .coordinateSpace(name: "OnboardingSpace")
         .onPreferenceChange(OnboardingFramesPreferenceKey.self) { dict in
             onboardingFrames = dict
         }
+        .animation(.spring(response: 0.38, dampingFraction: 0.85), value: workflowStore.showChatSidebar)
         .animation(.spring(response: 0.38, dampingFraction: 0.85), value: workflowStore.isProjectSidebarPresented)
         .preferredColorScheme(workflowStore.settings.theme == .dark ? .dark : .light)
         .alert("Transcription Failed", isPresented: $workflowStore.isErrorAlertPresented) {

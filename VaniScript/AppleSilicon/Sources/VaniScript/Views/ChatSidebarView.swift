@@ -1,5 +1,6 @@
 import SwiftUI
 import VaniScriptCore
+import AVFoundation
 
 struct MessageItem: Identifiable, Equatable {
     let id = UUID()
@@ -7,6 +8,37 @@ struct MessageItem: Identifiable, Equatable {
     let text: String
     let timestamp = Date()
     var runningTool: String?
+}
+
+final class DictationRecorder: NSObject, AVAudioRecorderDelegate, @unchecked Sendable {
+    private var recorder: AVAudioRecorder?
+    let fileURL: URL
+    
+    init(fileURL: URL) {
+        self.fileURL = fileURL
+        super.init()
+    }
+    
+    func start() throws {
+        let settings: [String: Any] = [
+            AVFormatIDKey: Int(kAudioFormatLinearPCM),
+            AVSampleRateKey: 16000.0,
+            AVNumberOfChannelsKey: 1,
+            AVLinearPCMBitDepthKey: 16,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsFloatKey: false,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+        
+        recorder = try AVAudioRecorder(url: fileURL, settings: settings)
+        recorder?.delegate = self
+        recorder?.record()
+    }
+    
+    func stop() {
+        recorder?.stop()
+        recorder = nil
+    }
 }
 
 struct ChatSidebarView: View {
@@ -17,11 +49,20 @@ struct ChatSidebarView: View {
     @State private var inputText = ""
     @State private var isLoading = false
     @State private var activeToolName: String? = nil
+    
+    @State private var isRecordingDictation = false
+    @State private var dictationURL: URL? = nil
+    @State private var dictationRecorder: DictationRecorder? = nil
+    @State private var showNoModelWarning = false
 
     var body: some View {
-        HStack(spacing: 0) {
-            // Main Drawer Panel
-            VStack(spacing: 0) {
+        let micIcon = isRecordingDictation ? "stop.circle.fill" : "mic.fill"
+        let micColor = isRecordingDictation ? Color.red : Color.white
+        let micText = isRecordingDictation ? "Stop Recording" : "Dictate"
+        let bgCol = isRecordingDictation ? Color.red.opacity(0.2) : Color.white.opacity(0.1)
+        let borderCol = isRecordingDictation ? Color.red.opacity(0.4) : Color.white.opacity(0.12)
+
+        return VStack(spacing: 0) {
                 // Header
                 HStack {
                     Image(systemName: "sparkles")
@@ -55,6 +96,39 @@ struct ChatSidebarView: View {
                     Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1),
                     alignment: .bottom
                 )
+
+                if showNoModelWarning {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.yellow)
+                            Text("No Local Whisper Model Connected")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.white)
+                            Spacer()
+                            Button {
+                                showNoModelWarning = false
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.white.opacity(0.6))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        Text("To use voice dictation, please select and download a Whisper model in Settings -> ASR.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    .padding(12)
+                    .background(Color.yellow.opacity(0.15))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 10)
+                }
 
                 // Message List
                 ScrollViewReader { proxy in
@@ -145,30 +219,69 @@ struct ChatSidebarView: View {
                     }
                 }
 
-                // Input Field
-                HStack(spacing: 10) {
-                    TextField("Message AI...", text: $inputText, onCommit: sendMessage)
-                        .textFieldStyle(.plain)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color.white.opacity(0.04))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                        .disabled(isLoading)
-                    
-                    Button(action: sendMessage) {
-                        Image(systemName: "paperplane.fill")
+                // Input Field (Expanded TextEditor & Microphone Dictation)
+                VStack(spacing: 10) {
+                    ZStack(alignment: .topLeading) {
+                        if inputText.isEmpty {
+                            Text("Message AI...")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.white.opacity(0.4))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                        }
+                        
+                        TextEditor(text: $inputText)
                             .font(.system(size: 13))
-                            .foregroundStyle(.white)
-                            .frame(width: 32, height: 32)
-                            .background(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.white.opacity(0.1) : VaniScriptTheme.accent)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .scrollContentBackground(.hidden)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .frame(height: 80)
+                            .background(Color.white.opacity(0.04))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                            )
+                            .disabled(isLoading)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+                    
+                    HStack(spacing: 12) {
+                        Button {
+                            toggleDictation()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: micIcon)
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(micColor)
+                                Text(micText)
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(bgCol)
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(borderCol, lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isLoading)
+                        
+                        Spacer()
+                        
+                        Button(action: sendMessage) {
+                            Image(systemName: "paperplane.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.white)
+                                .frame(width: 32, height: 32)
+                                .background(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.white.opacity(0.1) : VaniScriptTheme.accent)
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+                    }
                 }
                 .padding(16)
                 .background(Color.black.opacity(0.3))
@@ -188,16 +301,10 @@ struct ChatSidebarView: View {
                 alignment: .trailing
             )
             .transition(.move(edge: .leading))
-            
-            // Backdrop dismissal trigger
-            Color.black.opacity(0.1)
-                .onTapGesture {
-                    withAnimation {
-                        workflowStore.showChatSidebar = false
-                    }
-                }
-        }
         .ignoresSafeArea()
+        .onAppear {
+            checkModelPresence()
+        }
     }
 
     private func sendMessage() {
@@ -369,6 +476,76 @@ struct ChatSidebarView: View {
                 await MainActor.run {
                     self.messages.append(MessageItem(sender: "system", text: "Error: \(error.localizedDescription)"))
                     self.isLoading = false
+                }
+            }
+        }
+    }
+
+    private func checkModelPresence() {
+        if NativeModelCatalog.activeWhisperKitModel(
+            settings: workflowStore.settings,
+            providerID: workflowStore.settings.transcriptionProvider
+        ) == nil {
+            showNoModelWarning = true
+        } else {
+            showNoModelWarning = false
+        }
+    }
+
+    private func toggleDictation() {
+        if isRecordingDictation {
+            dictationRecorder?.stop()
+            isRecordingDictation = false
+            
+            guard let url = dictationURL else { return }
+            
+            isLoading = true
+            inputText = "Transcribing voice dictation..."
+            
+            Task {
+                do {
+                    let text = try await workflowStore.transcribeDictation(url: url)
+                    await MainActor.run {
+                        self.inputText = text
+                        self.isLoading = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.inputText = ""
+                        self.messages.append(MessageItem(sender: "system", text: "Dictation failed: \(error.localizedDescription)"))
+                        self.isLoading = false
+                    }
+                }
+            }
+        } else {
+            if NativeModelCatalog.activeWhisperKitModel(
+                settings: workflowStore.settings,
+                providerID: workflowStore.settings.transcriptionProvider
+            ) == nil {
+                showNoModelWarning = true
+                return
+            }
+            
+            AVCaptureDevice.requestAccess(for: .audio) { granted in
+                guard granted else {
+                    Task { @MainActor in
+                        self.messages.append(MessageItem(sender: "system", text: "Microphone permission denied. Please enable microphone access in System Settings."))
+                    }
+                    return
+                }
+                
+                Task { @MainActor in
+                    do {
+                        let tempURL = FileManager.default.temporaryDirectory
+                            .appendingPathComponent("dictation_\(UUID().uuidString).wav")
+                        self.dictationURL = tempURL
+                        let rec = DictationRecorder(fileURL: tempURL)
+                        try rec.start()
+                        self.dictationRecorder = rec
+                        self.isRecordingDictation = true
+                    } catch {
+                        self.messages.append(MessageItem(sender: "system", text: "Failed to start recording: \(error.localizedDescription)"))
+                    }
                 }
             }
         }

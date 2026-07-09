@@ -1111,7 +1111,7 @@ private struct DualTimedReviewPane: View {
                                 Button {
                                     sendToAssistant(pair)
                                 } label: {
-                                    Label("Отправить ассистенту", systemImage: "sparkles")
+                                    Label("Send to Assistant", systemImage: "sparkles")
                                 }
                             }
                         }
@@ -1189,7 +1189,7 @@ private struct DualTimedReviewPane: View {
 
     private func sendToAssistant(_ pair: PairedCue) {
         let timeStr = formatLocalClock(pair.source.startSec) + " - " + formatLocalClock(pair.source.endSec)
-        let msg = "Посмотри сегмент (\(timeStr)):\n[EN]: \(pair.source.text)\n[RU]: \(pair.target.text)\n\n"
+        let msg = "Analyze segment (\(timeStr)):\n[EN]: \(pair.source.text)\n[RU]: \(pair.target.text)\n\n"
         store.chatInputText = msg
         withAnimation {
             store.showChatSidebar = true

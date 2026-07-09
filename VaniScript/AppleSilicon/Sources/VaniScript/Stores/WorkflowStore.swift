@@ -3510,6 +3510,124 @@ final class WorkflowStore: ObservableObject {
             }
             return ["plans": plansInfo]
             
+        case "update_cue_timestamps":
+            guard var session = workflow.session else {
+                throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
+            }
+            guard let chunkIndexVal = getInt(arguments["chunkIndex"]),
+                  let cueIndexVal = getInt(arguments["cueIndex"]),
+                  let sideVal = arguments["side"] as? String else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing parameters"])
+            }
+            guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
+                throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
+            }
+            
+            let startSecVal = getDouble(arguments["startSec"])
+            let endSecVal = getDouble(arguments["endSec"])
+            
+            if sideVal.lowercased() == "original" {
+                var cues = session.chunks[chunkIndexVal].originalCues ?? []
+                guard cueIndexVal >= 0 && cueIndexVal < cues.count else {
+                    throw NSError(domain: "WorkflowStore", code: -4, userInfo: [NSLocalizedDescriptionKey: "cueIndex out of bounds"])
+                }
+                if let start = startSecVal { cues[cueIndexVal].startSec = start }
+                if let end = endSecVal { cues[cueIndexVal].endSec = end }
+                session.chunks[chunkIndexVal].originalCues = cues
+            } else {
+                let lang = session.selectedTranslationLanguage ?? ""
+                var cues = session.chunks[chunkIndexVal].translationCues(for: lang)
+                if cues.isEmpty {
+                    let sourceCues = session.chunks[chunkIndexVal].originalCues ?? []
+                    cues = sourceCues.map { source in
+                        TranscriptCue(startSec: source.startSec, endSec: source.endSec, text: "")
+                    }
+                }
+                guard cueIndexVal >= 0 && cueIndexVal < cues.count else {
+                    throw NSError(domain: "WorkflowStore", code: -4, userInfo: [NSLocalizedDescriptionKey: "cueIndex out of bounds"])
+                }
+                if let start = startSecVal { cues[cueIndexVal].startSec = start }
+                if let end = endSecVal { cues[cueIndexVal].endSec = end }
+                
+                let translated = cues.map(\.text).joined(separator: "\n")
+                session.chunks[chunkIndexVal].translated = translated
+                session.chunks[chunkIndexVal].setTranslation(
+                    translated,
+                    language: lang,
+                    provider: session.translationProvider,
+                    updatedAt: isoString(clock()),
+                    cues: cues
+                )
+            }
+            
+            workflow.session = session
+            saveCurrentProject()
+            return ["success": true, "message": "Updated \(sideVal) cue \(cueIndexVal) timestamps"]
+            
+        case "align_translation_timings":
+            guard var session = workflow.session else {
+                throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
+            }
+            guard let chunkIndexVal = getInt(arguments["chunkIndex"]) else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing chunkIndex"])
+            }
+            guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
+                throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
+            }
+            
+            let lang = session.selectedTranslationLanguage ?? ""
+            let sourceCues = session.chunks[chunkIndexVal].originalCues ?? []
+            var targetCues = session.chunks[chunkIndexVal].translationCues(for: lang)
+            
+            if targetCues.isEmpty {
+                targetCues = sourceCues.map { source in
+                    TranscriptCue(startSec: source.startSec, endSec: source.endSec, text: "")
+                }
+            } else {
+                for i in 0..<min(sourceCues.count, targetCues.count) {
+                    targetCues[i].startSec = sourceCues[i].startSec
+                    targetCues[i].endSec = sourceCues[i].endSec
+                }
+            }
+            
+            let translated = targetCues.map(\.text).joined(separator: "\n")
+            session.chunks[chunkIndexVal].translated = translated
+            session.chunks[chunkIndexVal].setTranslation(
+                translated,
+                language: lang,
+                provider: session.translationProvider,
+                updatedAt: isoString(clock()),
+                cues: targetCues
+            )
+            
+            workflow.session = session
+            saveCurrentProject()
+            return ["success": true, "message": "Aligned translated cue timings with original cues for segment \(chunkIndexVal + 1)"]
+            
+        case "reprocess_chunk":
+            guard var session = workflow.session else {
+                throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
+            }
+            guard let chunkIndexVal = getInt(arguments["chunkIndex"]) else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing chunkIndex"])
+            }
+            guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
+                throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
+            }
+            
+            session.currentChunkIndex = chunkIndexVal
+            session.chunks[chunkIndexVal].approved = false
+            session.chunks[chunkIndexVal].status = .pending
+            
+            workflow.session = session
+            saveCurrentProject()
+            
+            await MainActor.run {
+                self.processCurrentChunkIfNeeded(force: true)
+            }
+            
+            return ["success": true, "message": "Triggered reprocessing (transcription & translation) for segment \(chunkIndexVal + 1)"]
+            
         default:
             throw NSError(domain: "WorkflowStore", code: -4, userInfo: [NSLocalizedDescriptionKey: "Unknown tool \(name)"])
         }

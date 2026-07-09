@@ -320,7 +320,21 @@ struct ChatSidebarView: View {
                 var contents: [GeminiChatContent] = []
                 for msg in messages {
                     if msg.sender == "user" {
-                        contents.append(GeminiChatContent(role: "user", parts: [GeminiChatPart(text: msg.text)]))
+                        var parts: [GeminiChatPart] = [GeminiChatPart(text: msg.text)]
+                        let imgPaths = self.extractImagePaths(from: msg.text)
+                        for path in imgPaths {
+                            var fullPath = path
+                            if path.hasPrefix("~") {
+                                fullPath = (path as NSString).expandingTildeInPath
+                            }
+                            if FileManager.default.fileExists(atPath: fullPath),
+                               let data = try? Data(contentsOf: URL(fileURLWithPath: fullPath)) {
+                                let base64 = data.base64EncodedString()
+                                let mime = fullPath.lowercased().hasSuffix(".png") ? "image/png" : "image/jpeg"
+                                parts.append(GeminiChatPart(inlineData: GeminiInlineData(mimeType: mime, data: base64)))
+                            }
+                        }
+                        contents.append(GeminiChatContent(role: "user", parts: parts))
                     } else if msg.sender == "assistant" {
                         contents.append(GeminiChatContent(role: "model", parts: [GeminiChatPart(text: msg.text)]))
                     }
@@ -333,7 +347,7 @@ struct ChatSidebarView: View {
                     let requestBody = GeminiChatRequest(
                         contents: contents,
                         systemInstruction: GeminiSystemInstruction(
-                            parts: [GeminiChatPart(text: "You are the VaniScript AI Chat Assistant. Assist users by calling local tools to view state, edit translations, update subtitle styling, and structure vertical video shorts. Confirm the success of executed tools clearly.")]
+                            parts: [GeminiChatPart(text: "You are the VaniScript AI Chat Assistant. Assist users by calling local tools to view state, edit translations, update subtitle styling, and structure vertical video shorts. You are also a highly creative translation expert; feel free to suggest beautiful literary translations, rephrase subtitles, fix grammar, explain timeline cues, and converse naturally in Russian or English. If the user provides a path to a screenshot/image, you can see and analyze it!")]
                         ),
                         tools: [
                             GeminiChatTool(
@@ -543,6 +557,46 @@ struct ChatSidebarView: View {
             }
         }
     }
+
+    private func extractImagePaths(from rawText: String) -> [String] {
+        var cleanText = rawText.replacingOccurrences(of: "file://", with: "")
+        var paths: [String] = []
+        let extensions = [".png", ".jpg", ".jpeg", ".webp"]
+        
+        for ext in extensions {
+            var searchRange = cleanText.startIndex..<cleanText.endIndex
+            while let range = cleanText.range(of: ext, options: .caseInsensitive, range: searchRange) {
+                let extEnd = range.upperBound
+                var pathStart: String.Index? = nil
+                
+                var current = range.lowerBound
+                var count = 0
+                while current > cleanText.startIndex && count < 500 {
+                    current = cleanText.index(before: current)
+                    count += 1
+                    let char = cleanText[current]
+                    if char == "/" || char == "~" {
+                        let candidate = String(cleanText[current..<extEnd])
+                        var fullPath = candidate
+                        if candidate.hasPrefix("~") {
+                            fullPath = (candidate as NSString).expandingTildeInPath
+                        }
+                        if FileManager.default.fileExists(atPath: fullPath) {
+                            pathStart = current
+                            break
+                        }
+                    }
+                }
+                
+                if let start = pathStart {
+                    paths.append(String(cleanText[start..<extEnd]))
+                }
+                
+                searchRange = extEnd..<cleanText.endIndex
+            }
+        }
+        return paths
+    }
 }
 
 // Codable API Structures for Gemini Function Calling
@@ -562,10 +616,16 @@ struct GeminiChatContent: Codable {
     let parts: [GeminiChatPart]
 }
 
+struct GeminiInlineData: Codable {
+    let mimeType: String
+    let data: String
+}
+
 struct GeminiChatPart: Codable {
     var text: String? = nil
     var functionCall: GeminiChatFunctionCall? = nil
     var functionResponse: GeminiChatFunctionResponse? = nil
+    var inlineData: GeminiInlineData? = nil
 }
 
 struct GeminiChatFunctionCall: Codable {

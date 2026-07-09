@@ -4,6 +4,7 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 import VaniScriptCore
+import WhisperKit
 
 enum RecordingMode: String, CaseIterable, Identifiable {
     case system
@@ -2645,9 +2646,19 @@ final class WorkflowStore: ObservableObject {
     }
 
     func reconcileLocalModelStates() {
-        workflow.settings.synchronizeLocalModelsWithDisk()
-        persistSettings()
-        refreshProviderSelections()
+        let currentSettings = self.workflow.settings
+        Task.detached(priority: .background) { [weak self] in
+            guard let self = self else { return }
+            var settingsCopy = currentSettings
+            settingsCopy.synchronizeLocalModelsWithDisk()
+            let synchronizedSettings = settingsCopy
+            
+            Task { @MainActor in
+                self.workflow.settings = synchronizedSettings
+                self.persistSettings()
+                self.refreshProviderSelections()
+            }
+        }
     }
 
     func locateLocalASRModel(id: String) {
@@ -3501,6 +3512,29 @@ final class WorkflowStore: ObservableObject {
         default:
             throw NSError(domain: "WorkflowStore", code: -4, userInfo: [NSLocalizedDescriptionKey: "Unknown tool \(name)"])
         }
+    }
+
+    public func transcribeDictation(url: URL) async throws -> String {
+        guard let model = NativeModelCatalog.activeWhisperKitModel(
+            settings: workflow.settings,
+            providerID: workflow.settings.transcriptionProvider
+        ) else {
+            throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No local Whisper model is selected. Please check Settings."])
+        }
+        
+        let config = WhisperKitConfig(
+            model: model.variant,
+            modelFolder: model.path,
+            verbose: false,
+            prewarm: true,
+            load: true,
+            download: false
+        )
+        let pipeline = try await WhisperKit(config)
+        let options = DecodingOptions()
+        let results = try await pipeline.transcribe(audioPath: url.path, decodeOptions: options)
+        let text = results.map { $0.text }.joined(separator: " ")
+        return text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
     }
 }
 

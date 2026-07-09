@@ -250,6 +250,15 @@ struct ClipVisualEditorWorkspace: View {
                 .buttonStyle(EditorIconButtonStyle(disabled: redoStack.isEmpty))
                 .disabled(redoStack.isEmpty)
                 .help("Redo")
+            Button {
+                store.showChatSidebar.toggle()
+            } label: {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(store.showChatSidebar ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+            }
+            .buttonStyle(EditorIconButtonStyle())
+            .help("AI Assistant")
+
             Button(action: { store.startTour(for: "visualEditor") }, label: { Image(systemName: "questionmark.circle") })
                 .buttonStyle(EditorIconButtonStyle())
                 .help("Help Tour")

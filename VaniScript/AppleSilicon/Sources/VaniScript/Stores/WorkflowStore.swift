@@ -3515,6 +3515,16 @@ final class WorkflowStore: ObservableObject {
     }
 
     public func transcribeDictation(url: URL) async throws -> String {
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: url.path) else {
+            throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Audio file not found."])
+        }
+        let attrs = try fileManager.attributesOfItem(atPath: url.path)
+        let size = attrs[.size] as? UInt64 ?? 0
+        guard size > 0 else {
+            throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Audio recording is empty (0 bytes)."])
+        }
+
         guard let model = NativeModelCatalog.activeWhisperKitModel(
             settings: workflow.settings,
             providerID: workflow.settings.transcriptionProvider
@@ -3522,15 +3532,7 @@ final class WorkflowStore: ObservableObject {
             throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No local Whisper model is selected. Please check Settings."])
         }
         
-        let config = WhisperKitConfig(
-            model: model.variant,
-            modelFolder: model.path,
-            verbose: false,
-            prewarm: true,
-            load: true,
-            download: false
-        )
-        let pipeline = try await WhisperKit(config)
+        let pipeline = try await processingPipeline.loadWhisperKit(model: model)
         let options = DecodingOptions()
         let results = try await pipeline.transcribe(audioPath: url.path, decodeOptions: options)
         let text = results.map { $0.text }.joined(separator: " ")

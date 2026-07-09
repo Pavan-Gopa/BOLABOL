@@ -472,7 +472,7 @@ actor NativeProcessingPipeline {
             : [TranscriptCue(startSec: chunk.startSec, endSec: chunk.endSec, text: clean)]
     }
 
-    private func loadWhisperKit(model: ActiveWhisperKitModel) async throws -> WhisperKit {
+    func loadWhisperKit(model: ActiveWhisperKitModel) async throws -> WhisperKit {
         if cachedWhisperKitModelID == model.id, let cached = cachedWhisperKit {
             return cached
         }

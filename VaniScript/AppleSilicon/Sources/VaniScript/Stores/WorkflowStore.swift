@@ -49,6 +49,7 @@ final class WorkflowStore: ObservableObject {
     @Published var projects: [ProjectRecord]
     @Published var isProjectSidebarPresented = false
     @Published var showChatSidebar = false
+    @Published var chatInputText = ""
     @Published var isLinkImporterPresented = false
     @Published var visualEditorDraft: VisualClipEditorDraft?
     @Published var linkImportURL = ""

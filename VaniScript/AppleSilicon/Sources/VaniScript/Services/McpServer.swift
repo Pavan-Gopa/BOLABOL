@@ -44,6 +44,12 @@ final class McpServer: Sendable {
     private var listenSocket: Int32 = -1
     private var connections = [UUID: Int32]()
     private var sseClients = [UUID: SseClientSession]()
+    private var pendingContinuations = [String: CheckedContinuation<String, Error>]()
+    
+    var hasActiveClients: Bool {
+        !sseClients.isEmpty
+    }
+    
     private let serverQueue = DispatchQueue(label: "com.vaniscript.mcp.socket", qos: .userInitiated, attributes: .concurrent)
 
     private init() {}
@@ -62,6 +68,78 @@ final class McpServer: Sendable {
             return
         }
         print("MCP Swift Server listening on http://127.0.0.1:\(configuration.port)")
+    }
+
+    func sendRequest(method: String, params: [String: Any]) async throws -> String {
+        guard let firstClient = sseClients.first else {
+            throw NSError(domain: "McpServer", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active MCP client connected"])
+        }
+        let requestId = UUID().uuidString
+        let payload: [String: Any] = [
+            "jsonrpc": "2.0",
+            "method": method,
+            "id": requestId,
+            "params": params
+        ]
+        
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []),
+              let jsonString = String(data: jsonData, encoding: .utf8)
+        else {
+            throw NSError(domain: "McpServer", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize request"])
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            pendingContinuations[requestId] = continuation
+            sendRaw(socket: firstClient.value.socket, string: "event: message\ndata: \(jsonString)\n\n")
+        }
+    }
+    
+    func sampleMessage(prompt: String, history: [MessageItem]) async throws -> String {
+        var mcpMessages: [[String: Any]] = []
+        for msg in history {
+            let role = msg.sender == "user" ? "user" : "assistant"
+            mcpMessages.append([
+                "role": role,
+                "content": [
+                    "type": "text",
+                    "text": msg.text
+                ]
+            ])
+        }
+        
+        if history.isEmpty || history.last?.text != prompt {
+            mcpMessages.append([
+                "role": "user",
+                "content": [
+                    "type": "text",
+                    "text": prompt
+                ]
+            ])
+        }
+        
+        let params: [String: Any] = [
+            "messages": mcpMessages,
+            "maxTokens": 1024
+        ]
+        
+        let responseStr = try await sendRequest(method: "sampling/createMessage", params: params)
+        guard let responseData = responseStr.data(using: .utf8),
+              let response = try? JSONSerialization.jsonObject(with: responseData, options: []) as? [String: Any]
+        else {
+            throw NSError(domain: "McpServer", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON response"])
+        }
+        
+        guard let contentArray = response["content"] as? [[String: Any]],
+              let firstContent = contentArray.first,
+              let text = firstContent["text"] as? String
+        else {
+            if let contentDict = response["content"] as? [String: Any],
+               let text = contentDict["text"] as? String {
+                return text
+            }
+            throw NSError(domain: "McpServer", code: -4, userInfo: [NSLocalizedDescriptionKey: "Invalid sampling response format"])
+        }
+        return text
     }
 
     func stop() {
@@ -317,13 +395,42 @@ final class McpServer: Sendable {
         guard let sseClientUUID = UUID(uuidString: sessionId),
               let data = body.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let method = json["method"] as? String,
               let sseSocket = sseClients[sseClientUUID]?.socket
         else {
             return
         }
 
         refreshSseClient(id: sseClientUUID, json: json)
+
+        // Handle JSON-RPC response from the client
+        if json["method"] == nil {
+            let reqIdStr: String
+            if let idInt = json["id"] as? Int {
+                reqIdStr = String(idInt)
+            } else if let idStr = json["id"] as? String {
+                reqIdStr = idStr
+            } else {
+                reqIdStr = ""
+            }
+            
+            if !reqIdStr.isEmpty, let continuation = pendingContinuations.removeValue(forKey: reqIdStr) {
+                if let error = json["error"] as? [String: Any] {
+                    let msg = error["message"] as? String ?? "Unknown error"
+                    continuation.resume(throwing: NSError(domain: "McpClient", code: -1, userInfo: [NSLocalizedDescriptionKey: msg]))
+                } else {
+                    let resultVal = json["result"] ?? [:]
+                    if let resultData = try? JSONSerialization.data(withJSONObject: resultVal, options: []),
+                       let resultStr = String(data: resultData, encoding: .utf8) {
+                        continuation.resume(returning: resultStr)
+                    } else {
+                        continuation.resume(returning: "{}")
+                    }
+                }
+            }
+            return
+        }
+
+        guard let method = json["method"] as? String else { return }
 
         if method == "notifications/initialized" {
             return

@@ -342,10 +342,28 @@ struct ChatSidebarView: View {
         isLoading = true
         
         let key = workflowStore.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !key.isEmpty else {
-            messages.append(MessageItem(sender: "system", text: "Error: Gemini Key is missing in Settings."))
-            isLoading = false
-            return
+        if key.isEmpty {
+            if McpServer.shared.hasActiveClients {
+                Task {
+                    do {
+                        let responseText = try await McpServer.shared.sampleMessage(prompt: text, history: messages.dropLast())
+                        await MainActor.run {
+                            self.messages.append(MessageItem(sender: "assistant", text: responseText))
+                            self.isLoading = false
+                        }
+                    } catch {
+                        await MainActor.run {
+                            self.messages.append(MessageItem(sender: "system", text: "MCP Agent Error: \(error.localizedDescription)"))
+                            self.isLoading = false
+                        }
+                    }
+                }
+                return
+            } else {
+                messages.append(MessageItem(sender: "system", text: "Error: Gemini Key is missing, and no active MCP agent is connected to handle the chat."))
+                isLoading = false
+                return
+            }
         }
         
         Task {

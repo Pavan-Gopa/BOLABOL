@@ -47,6 +47,7 @@ final class WorkflowStore: ObservableObject {
     @Published var statusMessage = ""
     @Published var projects: [ProjectRecord]
     @Published var isProjectSidebarPresented = false
+    @Published var showChatSidebar = false
     @Published var isLinkImporterPresented = false
     @Published var visualEditorDraft: VisualClipEditorDraft?
     @Published var linkImportURL = ""
@@ -3321,6 +3322,184 @@ final class WorkflowStore: ObservableObject {
                     self.isScanResultAlertPresented = true
                 }
             }
+        }
+    }
+
+    public func executeMcpTool(name: String, arguments: [String: Any]) async throws -> [String: Any] {
+        let getInt = { (val: Any?) -> Int? in
+            if let doubleVal = val as? Double { return Int(doubleVal) }
+            return val as? Int
+        }
+        let getDouble = { (val: Any?) -> Double? in
+            if let doubleVal = val as? Double { return doubleVal }
+            if let intVal = val as? Int { return Double(intVal) }
+            return nil
+        }
+        
+        switch name {
+        case "get_project_state":
+            var result: [String: Any] = [:]
+            result["currentScreen"] = workflow.screen.rawValue
+            if let session = workflow.session {
+                var sessionInfo: [String: Any] = [:]
+                sessionInfo["targetLang"] = session.targetLang
+                
+                var chunksInfo: [[String: Any]] = []
+                for (idx, chunk) in session.chunks.enumerated() {
+                    chunksInfo.append([
+                        "index": idx,
+                        "original": chunk.original,
+                        "translated": chunk.translated,
+                        "approved": chunk.approved
+                    ])
+                }
+                sessionInfo["chunks"] = chunksInfo
+                result["session"] = sessionInfo
+            }
+            
+            // settings
+            var settingsInfo: [String: Any] = [:]
+            settingsInfo["geminiKey"] = workflow.settings.geminiKey
+            result["settings"] = settingsInfo
+            
+            // shorts plans
+            var plansInfo: [[String: Any]] = []
+            if let session = workflow.session, let plans = session.shortsPlans {
+                for plan in plans {
+                    plansInfo.append([
+                        "id": plan.id,
+                        "title": plan.title,
+                        "start": plan.start,
+                        "end": plan.end,
+                        "summary": plan.summary,
+                        "category": plan.category ?? "",
+                        "hook": plan.hook ?? ""
+                    ])
+                }
+            }
+            result["shortsPlans"] = plansInfo
+            return result
+            
+        case "update_chunk_text":
+            guard var session = workflow.session else {
+                throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
+            }
+            guard let chunkIndexVal = getInt(arguments["chunkIndex"]) else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing or invalid chunkIndex"])
+            }
+            guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
+                throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
+            }
+            
+            if let original = arguments["original"] as? String {
+                session.chunks[chunkIndexVal].original = original
+            }
+            if let translated = arguments["translated"] as? String {
+                session.chunks[chunkIndexVal].translated = translated
+            }
+            
+            workflow.session = session
+            saveCurrentProject()
+            return ["success": true, "message": "Updated segment \(chunkIndexVal + 1) text"]
+            
+        case "approve_chunk":
+            guard var session = workflow.session else {
+                throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
+            }
+            guard let chunkIndexVal = getInt(arguments["chunkIndex"]),
+                  let approved = arguments["approved"] as? Bool else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing chunkIndex or approved"])
+            }
+            guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
+                throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
+            }
+            
+            session.chunks[chunkIndexVal].approved = approved
+            workflow.session = session
+            saveCurrentProject()
+            return ["success": true, "message": "Updated approval for segment \(chunkIndexVal + 1) to \(approved)"]
+            
+        case "get_subtitle_style":
+            if let session = workflow.session,
+               let plans = session.shortsPlans,
+               !plans.isEmpty,
+               let style = plans[0].subtitleStyle {
+                return [
+                    "fontFamily": style.fontFamily,
+                    "fontSize": style.fontSize,
+                    "textColor": style.textColor,
+                    "bold": style.bold
+                ]
+            }
+            return [:]
+            
+        case "update_subtitle_style":
+            guard var session = workflow.session,
+                  var plans = session.shortsPlans,
+                  !plans.isEmpty else {
+                throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active shorts plan to update style for"])
+            }
+            guard let stylePatch = arguments["stylePatch"] as? [String: Any] else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing stylePatch"])
+            }
+            
+            for idx in plans.indices {
+                var style = plans[idx].subtitleStyle ?? ShortsSubtitleStyle(
+                    fontFamily: "Outfit",
+                    fontSize: 24.0,
+                    bold: true,
+                    textTransform: .uppercase,
+                    textColor: "#ffffff",
+                    boxColor: "#000000",
+                    boxOpacity: 0.0,
+                    boxWidth: 0.0,
+                    boxHeight: 0.0,
+                    edgeBlur: 0.0,
+                    letterSpacing: 0.0,
+                    lineSpacing: 0.0,
+                    edgeSoftness: 0.0,
+                    outline: 0.0,
+                    shadow: 0.0
+                )
+                
+                if let fontFamily = stylePatch["fontFamily"] as? String {
+                    style.fontFamily = fontFamily
+                }
+                if let fontSize = getDouble(stylePatch["fontSize"]) {
+                    style.fontSize = fontSize
+                }
+                if let textColor = stylePatch["textColor"] as? String {
+                    style.textColor = textColor
+                }
+                if let bold = stylePatch["bold"] as? Bool {
+                    style.bold = bold
+                }
+                plans[idx].subtitleStyle = style
+            }
+            session.shortsPlans = plans
+            workflow.session = session
+            saveCurrentProject()
+            return ["success": true, "message": "Updated subtitle style for active shorts plans"]
+            
+        case "get_shorts_plans":
+            var plansInfo: [[String: Any]] = []
+            if let session = workflow.session, let plans = session.shortsPlans {
+                for plan in plans {
+                    plansInfo.append([
+                        "id": plan.id,
+                        "title": plan.title,
+                        "start": plan.start,
+                        "end": plan.end,
+                        "summary": plan.summary,
+                        "category": plan.category ?? "",
+                        "hook": plan.hook ?? ""
+                    ])
+                }
+            }
+            return ["plans": plansInfo]
+            
+        default:
+            throw NSError(domain: "WorkflowStore", code: -4, userInfo: [NSLocalizedDescriptionKey: "Unknown tool \(name)"])
         }
     }
 }

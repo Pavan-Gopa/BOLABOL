@@ -490,18 +490,21 @@ struct ChatSidebarView: View {
             guard let url = dictationURL else { return }
             
             isLoading = true
-            inputText = "Transcribing voice dictation..."
             
             Task {
                 do {
                     let text = try await workflowStore.transcribeDictation(url: url)
                     await MainActor.run {
-                        self.inputText = text
+                        let trimmed = self.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if trimmed.isEmpty {
+                            self.inputText = text
+                        } else {
+                            self.inputText = trimmed + " " + text
+                        }
                         self.isLoading = false
                     }
                 } catch {
                     await MainActor.run {
-                        self.inputText = ""
                         self.messages.append(MessageItem(sender: "system", text: "Dictation failed: \(error.localizedDescription)"))
                         self.isLoading = false
                     }

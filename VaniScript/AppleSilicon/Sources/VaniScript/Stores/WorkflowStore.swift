@@ -3532,8 +3532,38 @@ final class WorkflowStore: ObservableObject {
             throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No local Whisper model is selected. Please check Settings."])
         }
         
+        let defaultLang = workflow.settings.defaultSourceLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let langCode: String?
+        if defaultLang.hasPrefix("ru") {
+            langCode = "ru"
+        } else if defaultLang.hasPrefix("en") {
+            langCode = "en"
+        } else if defaultLang.hasPrefix("es") {
+            langCode = "es"
+        } else if defaultLang.hasPrefix("fr") {
+            langCode = "fr"
+        } else if defaultLang.hasPrefix("de") {
+            langCode = "de"
+        } else if defaultLang.hasPrefix("it") {
+            langCode = "it"
+        } else if defaultLang.hasPrefix("pt") {
+            langCode = "pt"
+        } else if defaultLang.hasPrefix("hi") {
+            langCode = "hi"
+        } else {
+            langCode = nil
+        }
+
         let pipeline = try await processingPipeline.loadWhisperKit(model: model)
-        let options = DecodingOptions()
+        let options = DecodingOptions(
+            verbose: false,
+            task: .transcribe,
+            language: langCode,
+            temperature: 0,
+            detectLanguage: langCode == nil,
+            skipSpecialTokens: true,
+            withoutTimestamps: true
+        )
         let results = try await pipeline.transcribe(audioPath: url.path, decodeOptions: options)
         let text = results.map { $0.text }.joined(separator: " ")
         return text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)

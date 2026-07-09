@@ -135,19 +135,36 @@ struct ChatSidebarView: View {
                                 HStack {
                                     if msg.sender == "user" {
                                         Spacer()
-                                        Text(msg.text)
-                                            .font(.system(size: 13.5))
-                                            .padding(.horizontal, 14)
-                                            .padding(.vertical, 10)
-                                            .background(
-                                                LinearGradient(
-                                                    colors: [VaniScriptTheme.accent, Color.orange],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
+                                        HStack(alignment: .bottom, spacing: 6) {
+                                            Button {
+                                                workflowStore.chatInputText = msg.text
+                                                NSPasteboard.general.clearContents()
+                                                NSPasteboard.general.setString(msg.text, forType: .string)
+                                            } label: {
+                                                Image(systemName: "doc.on.doc")
+                                                    .font(.system(size: 11))
+                                                    .foregroundStyle(.white.opacity(0.4))
+                                                    .frame(width: 22, height: 22)
+                                                    .background(Color.white.opacity(0.08))
+                                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                                            }
+                                            .buttonStyle(.plain)
+                                            .help("Copy message and paste into input field")
+
+                                            Text(msg.text)
+                                                .font(.system(size: 13.5))
+                                                .padding(.horizontal, 14)
+                                                .padding(.vertical, 10)
+                                                .background(
+                                                    LinearGradient(
+                                                        colors: [VaniScriptTheme.accent, Color.orange],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    )
                                                 )
-                                            )
-                                            .foregroundStyle(.white)
-                                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                                .foregroundStyle(.white)
+                                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        }
                                     } else if msg.sender == "system" {
                                         Text(msg.text)
                                             .font(.system(size: 12))
@@ -158,9 +175,27 @@ struct ChatSidebarView: View {
                                             .frame(maxWidth: .infinity, alignment: .center)
                                     } else {
                                         VStack(alignment: .leading, spacing: 6) {
-                                            Text(msg.text)
-                                                .font(.system(size: 13.5))
-                                                .foregroundStyle(.white.opacity(0.9))
+                                            HStack(alignment: .top, spacing: 10) {
+                                                Text(msg.text)
+                                                    .font(.system(size: 13.5))
+                                                    .foregroundStyle(.white.opacity(0.9))
+                                                
+                                                Spacer()
+                                                
+                                                Button {
+                                                    NSPasteboard.general.clearContents()
+                                                    NSPasteboard.general.setString(msg.text, forType: .string)
+                                                } label: {
+                                                    Image(systemName: "doc.on.doc")
+                                                        .font(.system(size: 10))
+                                                        .foregroundStyle(.white.opacity(0.35))
+                                                        .frame(width: 20, height: 20)
+                                                        .background(Color.white.opacity(0.06))
+                                                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                                                }
+                                                .buttonStyle(.plain)
+                                                .help("Copy to clipboard")
+                                            }
                                             
                                             if let tool = msg.runningTool {
                                                 HStack(spacing: 6) {
@@ -447,8 +482,16 @@ struct ChatSidebarView: View {
                     request.httpBody = try JSONEncoder().encode(requestBody)
                     
                     let (data, response) = try await URLSession.shared.data(for: request)
-                    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                        throw NSError(domain: "Gemini", code: -1, userInfo: [NSLocalizedDescriptionKey: "HTTP Request failed"])
+                    if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                        let errorMsg: String
+                        if let apiError = try? JSONDecoder().decode(GeminiApiErrorResponse.self, from: data),
+                           let msg = apiError.error?.message {
+                            errorMsg = "API Error \(httpResponse.statusCode): \(msg)"
+                        } else {
+                            let bodyStr = String(data: data, encoding: .utf8) ?? ""
+                            errorMsg = "HTTP Error \(httpResponse.statusCode): \(bodyStr.prefix(200))"
+                        }
+                        throw NSError(domain: "Gemini", code: -1, userInfo: [NSLocalizedDescriptionKey: errorMsg])
                     }
                     
                     let decoded = try JSONDecoder().decode(GeminiChatResponse.self, from: data)
@@ -776,4 +819,13 @@ struct MiniWaveformView: View {
             animate = true
         }
     }
+}
+
+struct GeminiApiErrorResponse: Decodable {
+    struct ErrorDetail: Decodable {
+        let code: Int?
+        let message: String?
+        let status: String?
+    }
+    let error: ErrorDetail?
 }

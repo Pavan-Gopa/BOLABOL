@@ -46,7 +46,6 @@ struct ChatSidebarView: View {
     @State private var messages: [MessageItem] = [
         MessageItem(sender: "assistant", text: "Hare Krsna! I am your VaniScript AI Assistant. How can I help you style subtitles, approve segments, or inspect project state today?")
     ]
-    @State private var inputText = ""
     @State private var isLoading = false
     @State private var activeToolName: String? = nil
     
@@ -220,7 +219,7 @@ struct ChatSidebarView: View {
                 // Input Field (Minimalist TextEditor with Inline Mic & Send Buttons)
                 ZStack(alignment: .bottomTrailing) {
                     ZStack(alignment: .topLeading) {
-                        if inputText.isEmpty {
+                        if workflowStore.chatInputText.isEmpty {
                             Text("Message AI...")
                                 .font(.system(size: 13))
                                 .foregroundStyle(.white.opacity(0.4))
@@ -228,7 +227,7 @@ struct ChatSidebarView: View {
                                 .padding(.vertical, 12)
                         }
                         
-                        TextEditor(text: $inputText)
+                        TextEditor(text: $workflowStore.chatInputText)
                             .font(.system(size: 13))
                             .tint(VaniScriptTheme.accent)
                             .foregroundStyle(.white)
@@ -268,11 +267,11 @@ struct ChatSidebarView: View {
                         Button(action: sendMessage) {
                             Image(systemName: "paperplane.fill")
                                 .font(.system(size: 13))
-                                .foregroundStyle(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.white.opacity(0.3) : VaniScriptTheme.accent)
+                                .foregroundStyle(workflowStore.chatInputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.white.opacity(0.3) : VaniScriptTheme.accent)
                                 .frame(width: 28, height: 28)
                         }
                         .buttonStyle(.plain)
-                        .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+                        .disabled(workflowStore.chatInputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
                     }
                     .padding(.trailing, 8)
                     .padding(.bottom, 8)
@@ -298,9 +297,9 @@ struct ChatSidebarView: View {
     }
 
     private func sendMessage() {
-        let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = workflowStore.chatInputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        inputText = ""
+        workflowStore.chatInputText = ""
         
         let userMessage = MessageItem(sender: "user", text: text)
         messages.append(userMessage)
@@ -509,11 +508,11 @@ struct ChatSidebarView: View {
                 do {
                     let text = try await workflowStore.transcribeDictation(url: url)
                     await MainActor.run {
-                        let trimmed = self.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let trimmed = self.workflowStore.chatInputText.trimmingCharacters(in: .whitespacesAndNewlines)
                         if trimmed.isEmpty {
-                            self.inputText = text
+                            self.workflowStore.chatInputText = text
                         } else {
-                            self.inputText = trimmed + " " + text
+                            self.workflowStore.chatInputText = trimmed + " " + text
                         }
                         self.isLoading = false
                     }

@@ -1107,6 +1107,13 @@ private struct DualTimedReviewPane: View {
                                 .frame(maxWidth: .infinity)
                             }
                             .id(pair.id)
+                            .contextMenu {
+                                Button {
+                                    sendToAssistant(pair)
+                                } label: {
+                                    Label("Отправить ассистенту", systemImage: "sparkles")
+                                }
+                            }
                         }
                     }
                     .padding(14)
@@ -1178,6 +1185,23 @@ private struct DualTimedReviewPane: View {
         .padding(.horizontal, 16)
         .padding(.top, 10)
         .padding(.bottom, 8)
+    }
+
+    private func sendToAssistant(_ pair: PairedCue) {
+        let timeStr = formatLocalClock(pair.source.startSec) + " - " + formatLocalClock(pair.source.endSec)
+        let msg = "Посмотри сегмент (\(timeStr)):\n[EN]: \(pair.source.text)\n[RU]: \(pair.target.text)\n\n"
+        store.chatInputText = msg
+        withAnimation {
+            store.showChatSidebar = true
+        }
+    }
+
+    private func formatLocalClock(_ seconds: Double) -> String {
+        let total = max(0, Int(seconds.rounded(.down)))
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let secs = total % 60
+        return String(format: "%02d:%02d:%02d", hours, minutes, secs)
     }
 
     private struct PairedCue: Identifiable {

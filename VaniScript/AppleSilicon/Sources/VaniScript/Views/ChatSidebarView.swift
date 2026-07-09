@@ -385,88 +385,9 @@ struct ChatSidebarView: View {
                         ),
                         tools: [
                             GeminiChatTool(
-                                functionDeclarations: [
-                                    GeminiToolDecl(
-                                        name: "get_project_state",
-                                        description: "Get the active VaniScript project state (session, settings, screen, etc.)",
-                                        parameters: GeminiToolParams(type: "object", properties: [:])
-                                    ),
-                                    GeminiToolDecl(
-                                        name: "update_chunk_text",
-                                        description: "Update the transcription or translation text of a segment",
-                                        parameters: GeminiToolParams(
-                                            type: "object",
-                                            properties: [
-                                                "chunkIndex": ["type": "number", "description": "Index of the segment (0-based)"],
-                                                "original": ["type": "string", "description": "New original transcript text (optional)"],
-                                                "translated": ["type": "string", "description": "New translation text (optional)"]
-                                            ]
-                                        )
-                                    ),
-                                    GeminiToolDecl(
-                                        name: "approve_chunk",
-                                        description: "Approve or revoke approval for a specific segment",
-                                        parameters: GeminiToolParams(
-                                            type: "object",
-                                            properties: [
-                                                "chunkIndex": ["type": "number", "description": "Index of the segment (0-based)"],
-                                                "approved": ["type": "boolean", "description": "True to approve, false to revoke"]
-                                            ]
-                                        )
-                                    ),
-                                    GeminiToolDecl(
-                                        name: "get_subtitle_style",
-                                        description: "Get active subtitle style settings",
-                                        parameters: GeminiToolParams(type: "object", properties: [:])
-                                    ),
-                                    GeminiToolDecl(
-                                        name: "update_subtitle_style",
-                                        description: "Update the style properties for video subtitles",
-                                        parameters: GeminiToolParams(
-                                            type: "object",
-                                            properties: [
-                                                "stylePatch": [
-                                                    "type": "object",
-                                                    "description": "Partial patch for subtitle style parameters"
-                                                ]
-                                            ]
-                                        )
-                                    ),
-                                    GeminiToolDecl(
-                                        name: "update_cue_timestamps",
-                                        description: "Update the start and/or end timestamps of a specific cue (segment) inside a chunk",
-                                        parameters: GeminiToolParams(
-                                            type: "object",
-                                            properties: [
-                                                "chunkIndex": ["type": "number", "description": "Index of the chunk (0-based)"],
-                                                "side": ["type": "string", "description": "Side to update: 'original' or 'translated'"],
-                                                "cueIndex": ["type": "number", "description": "Index of the cue within the chunk (0-based)"],
-                                                "startSec": ["type": "number", "description": "New start time in seconds (optional)"],
-                                                "endSec": ["type": "number", "description": "New end time in seconds (optional)"]
-                                            ]
-                                        )
-                                    ),
-                                    GeminiToolDecl(
-                                        name: "align_translation_timings",
-                                        description: "Align the translation cue timestamps to perfectly match the original cues for a specific chunk",
-                                        parameters: GeminiToolParams(
-                                            type: "object",
-                                            properties: [
-                                                "chunkIndex": ["type": "number", "description": "Index of the chunk (0-based)"]
-                                            ]
-                                        )
-                                    ),
-                                    GeminiToolDecl(
-                                        name: "reprocess_chunk",
-                                        description: "Force-reprocess (re-transcribe and re-translate) a specific chunk from the source audio file",
-                                        parameters: GeminiToolParams(
-                                            type: "object",
-                                            properties: [
-                                                "chunkIndex": ["type": "number", "description": "Index of the chunk (0-based)"]
-                                            ]
-                                        )
-                                    )
-                                ]
+                                functionDeclarations: McpToolRegistry
+                                    .definitions(allowMutatingTools: true)
+                                    .map { GeminiToolDecl(definition: $0) }
                             )
                         ],
                         generationConfig: GeminiChatGenConfig(temperature: 0.1)
@@ -727,6 +648,21 @@ struct GeminiToolDecl: Encodable {
     let name: String
     let description: String
     let parameters: GeminiToolParams
+
+    init(name: String, description: String, parameters: GeminiToolParams) {
+        self.name = name
+        self.description = description
+        self.parameters = parameters
+    }
+
+    init(definition: McpToolDefinition) {
+        let properties = definition.inputSchema["properties"] as? [String: Any] ?? [:]
+        self.init(
+            name: definition.name,
+            description: definition.description,
+            parameters: GeminiToolParams(type: "object", properties: properties)
+        )
+    }
 }
 
 struct GeminiToolParams: Encodable {

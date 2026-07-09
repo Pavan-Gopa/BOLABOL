@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="VaniScript"
+SWIFT_PRODUCT_NAME="VaniScript"
+APP_BUNDLE_NAME="VaniScript"
+APP_EXECUTABLE_NAME="VaniScript"
 BUNDLE_ID="com.vaniscript.apple-silicon"
 MIN_SYSTEM_VERSION="14.0"
 BUILD_ID="${VANISCRIPT_BUILD_ID:-$(date -u +%Y%m%d%H%M%S)}"
@@ -11,25 +13,28 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE_DIR="$(cd "$ROOT_DIR/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 RELEASE_DIR="$DIST_DIR/release"
-APP_BUNDLE="$RELEASE_DIR/$APP_NAME.app"
+APP_BUNDLE="$RELEASE_DIR/$APP_BUNDLE_NAME.app"
 APP_CONTENTS="$APP_BUNDLE/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
 APP_RESOURCES="$APP_CONTENTS/Resources"
+APP_FRAMEWORKS="$APP_CONTENTS/Frameworks"
 APP_MEDIA_BIN="$APP_RESOURCES/bin"
-APP_BINARY="$APP_MACOS/$APP_NAME"
+APP_BINARY="$APP_MACOS/$APP_EXECUTABLE_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 ENTITLEMENTS_FILE="$ROOT_DIR/script/release.entitlements"
 VENDOR_BIN="$ROOT_DIR/Vendor/bin"
+APPLE_SILICON_ASSETS_DIR="$ROOT_DIR/Assets"
 ELECTRON_ASSETS_DIR="${VANISCRIPT_ELECTRON_ASSETS_DIR:-$WORKSPACE_DIR/Electron/assets}"
 
 cd "$ROOT_DIR"
 
 echo "=== Cleaning up existing processes ==="
-pkill -x "$APP_NAME" >/dev/null 2>&1 || true
+pkill -x "$APP_EXECUTABLE_NAME" >/dev/null 2>&1 || true
+pkill -x "VaniScriptAS" >/dev/null 2>&1 || true
 
-echo "=== Building $APP_NAME in Release configuration ==="
-swift build -c release --arch arm64 --product "$APP_NAME"
-BUILD_BINARY="$(swift build -c release --arch arm64 --show-bin-path)/$APP_NAME"
+echo "=== Building $APP_BUNDLE_NAME in Release configuration ==="
+swift build -c release --arch arm64 --product "$SWIFT_PRODUCT_NAME"
+BUILD_BINARY="$(swift build -c release --arch arm64 --show-bin-path)/$SWIFT_PRODUCT_NAME"
 
 echo "=== Preparing Release App Bundle ==="
 rm -rf "$APP_BUNDLE"
@@ -61,8 +66,8 @@ copy_optional_asset() {
   fi
 }
 
-copy_required_asset "$ELECTRON_ASSETS_DIR/icon.icns" "$APP_RESOURCES/AppIcon.icns"
-copy_required_asset "$ELECTRON_ASSETS_DIR/icon.png" "$APP_RESOURCES/AppIcon.png"
+copy_required_asset "$APPLE_SILICON_ASSETS_DIR/AppIconAS.icns" "$APP_RESOURCES/AppIcon.icns"
+copy_required_asset "$APPLE_SILICON_ASSETS_DIR/AppIconAS.png" "$APP_RESOURCES/AppIcon.png"
 copy_required_asset "$WORKSPACE_DIR/Shared/VaniScript_Logo.svg" "$APP_RESOURCES/VaniScript_Logo.svg"
 copy_optional_asset "$WORKSPACE_DIR/Shared/VaniScript_Logo.png" "$APP_RESOURCES/VaniScript_Logo.png"
 copy_optional_asset "$WORKSPACE_DIR/Shared/New_Logo.svg" "$APP_RESOURCES/New_Logo.svg"
@@ -103,7 +108,7 @@ fi
 
 ARCHS="$(/usr/bin/lipo -archs "$APP_BINARY")"
 if [[ "$ARCHS" != "arm64" ]]; then
-  echo "error: $APP_NAME must be Apple Silicon only. Found architectures: $ARCHS" >&2
+  echo "error: $APP_BUNDLE_NAME must be Apple Silicon only. Found architectures: $ARCHS" >&2
   exit 1
 fi
 
@@ -113,13 +118,13 @@ cat >"$INFO_PLIST" <<PLIST
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key>
-  <string>$APP_NAME</string>
+  <string>$APP_EXECUTABLE_NAME</string>
   <key>CFBundleIdentifier</key>
   <string>$BUNDLE_ID</string>
   <key>CFBundleName</key>
-  <string>$APP_NAME</string>
+  <string>$APP_BUNDLE_NAME</string>
   <key>CFBundleDisplayName</key>
-  <string>$APP_NAME</string>
+  <string>$APP_BUNDLE_NAME</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -152,7 +157,7 @@ PLIST
 
 FORBIDDEN_PATTERN='python|node|node_modules|electron|chromium|llama|llamacpp'
 if (cd "$APP_BUNDLE" && /usr/bin/find . -print | /usr/bin/grep -Eiq "$FORBIDDEN_PATTERN"); then
-  echo "error: $APP_NAME.app contains non-native runtime artifacts:" >&2
+  echo "error: $APP_BUNDLE_NAME.app contains non-native runtime artifacts:" >&2
   (cd "$APP_BUNDLE" && /usr/bin/find . -print | /usr/bin/grep -Ei "$FORBIDDEN_PATTERN") >&2
   exit 1
 fi
@@ -199,6 +204,38 @@ codesign_release() {
   fi
 }
 
+embed_swift_runtime() {
+  local xcode_swift62_rpath="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx"
+  local framework_swift_library="@executable_path/../Frameworks/libswiftCompatibilitySpan.dylib"
+  local executable="$APP_BINARY"
+
+  echo "=== Embedding Swift runtime compatibility libraries ==="
+  mkdir -p "$APP_FRAMEWORKS"
+  while IFS= read -r swift_library; do
+    [[ -z "$swift_library" ]] && continue
+    cp "$swift_library" "$APP_FRAMEWORKS/"
+  done < <(xcrun swift-stdlib-tool --print \
+    --scan-executable "$executable" \
+    --platform macosx | sort -u)
+
+  if otool -L "$executable" | grep -q '@rpath/libswiftCompatibilitySpan.dylib'; then
+    install_name_tool \
+      -change '@rpath/libswiftCompatibilitySpan.dylib' \
+      "$framework_swift_library" \
+      "$executable"
+  fi
+
+  if otool -l "$executable" | grep -Fq "$xcode_swift62_rpath"; then
+    install_name_tool -delete_rpath "$xcode_swift62_rpath" "$executable"
+  fi
+
+  while IFS= read -r -d '' dylib; do
+    codesign_release "$dylib"
+  done < <(find "$APP_FRAMEWORKS" -type f -name '*.dylib' -print0)
+}
+
+embed_swift_runtime
+
 echo "=== Codesigning App Bundle ($SIGN_IDENTITY) ==="
 codesign_release "$APP_MEDIA_BIN/yt-dlp"
 codesign_release "$APP_MEDIA_BIN/ffmpeg"
@@ -220,10 +257,10 @@ mkdir -p "$DMG_TEMP_DIR"
 cp -R "$APP_BUNDLE" "$DMG_TEMP_DIR/"
 ln -s /Applications "$DMG_TEMP_DIR/Applications"
 
-OUTPUT_DMG="$DIST_DIR/VaniScript-AppleSilicon.dmg"
+OUTPUT_DMG="$DIST_DIR/VaniScript.dmg"
 rm -f "$OUTPUT_DMG" "$DIST_DIR/temp.dmg"
 
-hdiutil create -fs HFS+ -srcfolder "$DMG_TEMP_DIR" -volname "$APP_NAME" -format UDRW "$DIST_DIR/temp.dmg"
+hdiutil create -fs HFS+ -srcfolder "$DMG_TEMP_DIR" -volname "$APP_BUNDLE_NAME" -format UDRW "$DIST_DIR/temp.dmg"
 hdiutil convert "$DIST_DIR/temp.dmg" -format UDZO -imagekey zlib-level=9 -o "$OUTPUT_DMG"
 rm -f "$DIST_DIR/temp.dmg"
 rm -rf "$DMG_TEMP_DIR"

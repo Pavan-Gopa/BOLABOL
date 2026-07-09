@@ -25,33 +25,36 @@ public enum UniversalWorkflowScreen: String, CaseIterable, Codable, Equatable, S
 }
 
 public enum UniversalSettingsTab: String, CaseIterable, Codable, Equatable, Sendable {
+    case agents
     case apiKeys
-    case models
     case appearance
-    case glossary
     case chunking
-    case transcription
+    case glossary
+    case models
     case prompts
     case statistics
+    case transcription
 
     public var title: String {
         switch self {
+        case .agents:
+            "Agents"
         case .apiKeys:
             "API Keys"
-        case .models:
-            "Models"
         case .appearance:
             "Appearance"
-        case .glossary:
-            "Glossary"
         case .chunking:
             "Chunking"
-        case .transcription:
-            "Transcription"
+        case .glossary:
+            "Glossary"
+        case .models:
+            "Models"
         case .prompts:
             "Prompts"
         case .statistics:
             "Statistics"
+        case .transcription:
+            "Transcription"
         }
     }
 }

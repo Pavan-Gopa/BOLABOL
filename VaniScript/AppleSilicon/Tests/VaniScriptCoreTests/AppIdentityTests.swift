@@ -6,6 +6,8 @@ struct AppIdentityTests {
     @Test("uses the VaniScript Apple Silicon product identity")
     func productIdentity() {
         #expect(AppIdentity.displayName == "VaniScript")
+        #expect(AppIdentity.bundleName == "VaniScript")
+        #expect(AppIdentity.executableName == "VaniScript")
         #expect(AppIdentity.bundleIdentifier == "com.vaniscript.apple-silicon")
         #expect(AppIdentity.dataDirectoryName == "VaniScript")
         #expect(AppIdentity.minimumMacOSVersion == "14.0")

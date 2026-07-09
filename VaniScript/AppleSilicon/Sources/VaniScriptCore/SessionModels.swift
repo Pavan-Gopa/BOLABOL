@@ -1047,7 +1047,7 @@ public extension SessionState {
         }
     }
 
-    public static func reconstructCuesFromRawText(_ text: String, startSec: Double, endSec: Double) -> [TranscriptCue] {
+    static func reconstructCuesFromRawText(_ text: String, startSec: Double, endSec: Double) -> [TranscriptCue] {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return [] }
 
@@ -1135,7 +1135,7 @@ public extension SessionState {
     /// parseTimestampToSeconds / shouldOffsetRelativeTimestamps). Returns an
     /// empty array when the text carries no markers so callers can fall back to
     /// `reconstructCuesFromRawText`.
-    public static func reconstructCuesFromTimestampedText(_ text: String, startSec: Double, endSec: Double) -> [TranscriptCue] {
+    static func reconstructCuesFromTimestampedText(_ text: String, startSec: Double, endSec: Double) -> [TranscriptCue] {
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
         let trimmed = normalized.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return [] }
@@ -1183,7 +1183,7 @@ public extension SessionState {
     /// Removes inline `[mm:ss]` timestamp markers from text so they don't leak
     /// into the displayed transcript once structured cues (not markers) drive
     /// the karaoke highlighter.
-    public static func strippingInlineTimestampMarkers(_ text: String) -> String {
+    static func strippingInlineTimestampMarkers(_ text: String) -> String {
         let pattern = "\\[(?:(?:\\d+:)?\\d{1,5}:\\d{2}(?:[.,]\\d{1,3})?)\\]"
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
         let range = NSRange(location: 0, length: (text as NSString).length)
@@ -1229,7 +1229,7 @@ public extension SessionState {
         return allTimestampsBeforeChunk && timestampsFitInsideChunk
     }
 
-    public static func reconstructTranslationCues(from text: String, matching sourceCues: [TranscriptCue]) -> [TranscriptCue] {
+    static func reconstructTranslationCues(from text: String, matching sourceCues: [TranscriptCue]) -> [TranscriptCue] {
         guard !sourceCues.isEmpty else { return [] }
         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return [] }

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="NativeSmartScribe"
+SWIFT_PRODUCT_NAME="NativeSmartScribe"
+APP_NAME="SmartScribe"
 DISPLAY_NAME="SmartScribe"
 BUNDLE_ID="com.smartscribe.app"
 MIN_SYSTEM_VERSION="14.0"
@@ -14,6 +15,7 @@ APP_BUNDLE="$RELEASE_DIR/$APP_NAME.app"
 APP_CONTENTS="$APP_BUNDLE/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
 APP_RESOURCES="$APP_CONTENTS/Resources"
+APP_FRAMEWORKS="$APP_CONTENTS/Frameworks"
 APP_BINARY="$APP_MACOS/$APP_NAME"
 WORKER_NAME="NativeSmartScribePolishWorker"
 WORKER_BINARY="$APP_MACOS/$WORKER_NAME"
@@ -32,11 +34,12 @@ echo "=== Cleaning up existing processes ==="
 pkill -f "NativeSmartScribe/Models/Polishing/HuggingFace/Direct" >/dev/null 2>&1 || true
 pkill -x "$WORKER_NAME" >/dev/null 2>&1 || true
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
+pkill -x "$SWIFT_PRODUCT_NAME" >/dev/null 2>&1 || true
 
 echo "=== Building executable targets in Release configuration ==="
-swift build -c release --arch arm64 --product "$APP_NAME"
+swift build -c release --arch arm64 --product "$SWIFT_PRODUCT_NAME"
 swift build -c release --arch arm64 --product "$WORKER_NAME"
-BUILD_BINARY="$(swift build -c release --arch arm64 --show-bin-path)/$APP_NAME"
+BUILD_BINARY="$(swift build -c release --arch arm64 --show-bin-path)/$SWIFT_PRODUCT_NAME"
 BUILD_WORKER_BINARY="$(swift build -c release --arch arm64 --show-bin-path)/$WORKER_NAME"
 
 metal_toolchain_id() {
@@ -222,6 +225,41 @@ codesign_release() {
   fi
 }
 
+embed_swift_runtime() {
+  local xcode_swift62_rpath="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx"
+  local framework_swift_library="@executable_path/../Frameworks/libswiftCompatibilitySpan.dylib"
+  local executable
+
+  echo "=== Embedding Swift runtime compatibility libraries ==="
+  mkdir -p "$APP_FRAMEWORKS"
+  while IFS= read -r swift_library; do
+    [[ -z "$swift_library" ]] && continue
+    cp "$swift_library" "$APP_FRAMEWORKS/"
+  done < <(xcrun swift-stdlib-tool --print \
+    --scan-executable "$APP_BINARY" \
+    --scan-executable "$WORKER_BINARY" \
+    --platform macosx | sort -u)
+
+  for executable in "$APP_BINARY" "$WORKER_BINARY"; do
+    if otool -L "$executable" | grep -q '@rpath/libswiftCompatibilitySpan.dylib'; then
+      install_name_tool \
+        -change '@rpath/libswiftCompatibilitySpan.dylib' \
+        "$framework_swift_library" \
+        "$executable"
+    fi
+
+    if otool -l "$executable" | grep -Fq "$xcode_swift62_rpath"; then
+      install_name_tool -delete_rpath "$xcode_swift62_rpath" "$executable"
+    fi
+  done
+
+  while IFS= read -r -d '' dylib; do
+    codesign_release "$dylib"
+  done < <(find "$APP_FRAMEWORKS" -type f -name '*.dylib' -print0)
+}
+
+embed_swift_runtime
+
 echo "=== Codesigning App Bundle ($SIGN_IDENTITY) ==="
 codesign_release "$WORKER_BINARY"
 codesign_release "$MLX_METALLIB_DESTINATION"
@@ -239,7 +277,7 @@ cp -R "$APP_BUNDLE" "$DMG_TEMP_DIR/"
 ln -s /Applications "$DMG_TEMP_DIR/Applications"
 
 # Output DMG path
-OUTPUT_DMG="$DIST_DIR/NativeSmartScribe.dmg"
+OUTPUT_DMG="$DIST_DIR/SmartScribe.dmg"
 rm -f "$OUTPUT_DMG"
 
 echo "Creating raw DMG image..."

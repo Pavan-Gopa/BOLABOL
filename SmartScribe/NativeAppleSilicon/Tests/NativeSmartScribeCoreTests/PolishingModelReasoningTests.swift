@@ -42,3 +42,13 @@ func reasoningModelDetectedByReasoningKeywordInDescription() {
 func nonReasoningInstructModelNotFlagged() {
     #expect(!makeModel(displayName: "Qwen2.5-3B-Instruct-mlx-4Bit").isReasoningModel)
 }
+
+@Test
+func qwen35ModelsUseThinkingSuppressionControls() {
+    let model = makeModel(
+        displayName: "Qwen 3.5 2B 4-bit",
+        repositoryID: "mlx-community/Qwen3.5-2B-4bit"
+    )
+
+    #expect(PolishingModelPromptControl.needsThinkingSuppression(model))
+}

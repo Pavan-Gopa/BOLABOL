@@ -2,7 +2,8 @@
 set -euo pipefail
 
 MODE="${1:-run}"
-APP_NAME="NativeSmartScribe"
+SWIFT_PRODUCT_NAME="NativeSmartScribe"
+APP_NAME="SmartScribe"
 DISPLAY_NAME="SmartScribe"
 BUNDLE_ID="com.smartscribe.app"
 MIN_SYSTEM_VERSION="14.0"
@@ -29,9 +30,11 @@ cd "$ROOT_DIR"
 pkill -f "NativeSmartScribe/Models/Polishing/HuggingFace/Direct" >/dev/null 2>&1 || true
 pkill -x "$WORKER_NAME" >/dev/null 2>&1 || true
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
+pkill -x "$SWIFT_PRODUCT_NAME" >/dev/null 2>&1 || true
 
-swift build --arch arm64 --product "$APP_NAME" --product "$WORKER_NAME"
-BUILD_BINARY="$(swift build --arch arm64 --show-bin-path)/$APP_NAME"
+swift build --arch arm64 --product "$SWIFT_PRODUCT_NAME"
+swift build --arch arm64 --product "$WORKER_NAME"
+BUILD_BINARY="$(swift build --arch arm64 --show-bin-path)/$SWIFT_PRODUCT_NAME"
 BUILD_WORKER_BINARY="$(swift build --arch arm64 --show-bin-path)/$WORKER_NAME"
 
 metal_toolchain_id() {

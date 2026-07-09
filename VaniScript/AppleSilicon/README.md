@@ -1,7 +1,7 @@
-# VaniScript Apple Silicon
+# VaniScript
 
-VaniScript Apple Silicon is a separate native macOS application. It is not the
-Electron/Universal application and it does not modify `NativeSmartScribe`.
+VaniScript is the native Apple Silicon macOS application. It is not the
+Electron application and it does not modify SmartScribe.
 
 ## Direction
 

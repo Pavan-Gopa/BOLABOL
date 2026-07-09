@@ -241,7 +241,7 @@ struct GlossarySettingsView: View {
     }
 
     private func exportJSON() {
-        guard let url = savePanel(defaultName: "NativeSmartScribe-glossary.json") else { return }
+        guard let url = savePanel(defaultName: "SmartScribe-glossary.json") else { return }
         do {
             try glossaryStore.exportJSONData().write(to: url, options: .atomic)
             statusMessage = "JSON exported."
@@ -251,7 +251,7 @@ struct GlossarySettingsView: View {
     }
 
     private func exportCSV() {
-        guard let url = savePanel(defaultName: "NativeSmartScribe-glossary.csv") else { return }
+        guard let url = savePanel(defaultName: "SmartScribe-glossary.csv") else { return }
         do {
             try glossaryStore.exportCSVData().write(to: url, options: .atomic)
             statusMessage = "CSV exported."
@@ -424,12 +424,15 @@ private struct GlossaryLanguageSelector: View {
 
 private struct GlossaryEntryRow: View {
     @EnvironmentObject private var glossaryStore: GlossaryStore
+    let entry: GlossaryEntry
+
     @State private var draft: GlossaryEntry
     @State private var variantsText: String
     @State private var isShowingMergePicker = false
     @State private var mergeQuery = ""
 
     init(entry: GlossaryEntry) {
+        self.entry = entry
         _draft = State(initialValue: entry)
         _variantsText = State(initialValue: entry.variants.joined(separator: "; "))
     }
@@ -493,6 +496,9 @@ private struct GlossaryEntryRow: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(.separator.opacity(0.5))
         }
+        .onChange(of: entry) { _, newEntry in
+            syncDraft(with: newEntry)
+        }
     }
 
     private var categoryBinding: Binding<String> {
@@ -522,6 +528,11 @@ private struct GlossaryEntryRow: View {
         }
         draft.updatedAt = timestamp
         glossaryStore.upsert(draft)
+    }
+
+    private func syncDraft(with entry: GlossaryEntry) {
+        draft = entry
+        variantsText = entry.variants.joined(separator: "; ")
     }
 }
 

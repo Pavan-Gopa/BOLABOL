@@ -91,8 +91,18 @@ enum NativeFontRegistry {
     }
 
     private static func bundledFontURL(named name: String) -> URL? {
-        Bundle.module.url(forResource: name, withExtension: "ttf", subdirectory: "Fonts")
-            ?? Bundle.main.url(forResource: name, withExtension: "ttf", subdirectory: "Fonts")
-            ?? Bundle.main.url(forResource: name, withExtension: "ttf")
+        // Avoid the generated SwiftPM module bundle accessor here: a distributed
+        // executable can assert if that resource bundle is absent on a user's Mac.
+        if let url = Bundle.main.url(forResource: name, withExtension: "ttf", subdirectory: "Fonts") {
+            return url
+        }
+        if let url = Bundle.main.resourceURL?
+            .appendingPathComponent("Fonts", isDirectory: true)
+            .appendingPathComponent("\(name).ttf"),
+            FileManager.default.fileExists(atPath: url.path)
+        {
+            return url
+        }
+        return Bundle.main.url(forResource: name, withExtension: "ttf")
     }
 }

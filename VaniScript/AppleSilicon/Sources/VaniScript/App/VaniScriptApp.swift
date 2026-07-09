@@ -15,7 +15,7 @@ struct VaniScriptApp: App {
                 .task {
                     workflowStore.reconcileLocalModelStates()
                     workflowStore.startFirstRunOnboardingIfNeeded()
-                    McpServer.shared.start(store: workflowStore)
+                    workflowStore.configureMcpServer()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
                     workflowStore.reconcileLocalModelStates()
@@ -31,6 +31,7 @@ struct VaniScriptApp: App {
                 .frame(width: 760, height: 620)
                 .task {
                     workflowStore.reconcileLocalModelStates()
+                    workflowStore.configureMcpServer()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
                     workflowStore.reconcileLocalModelStates()

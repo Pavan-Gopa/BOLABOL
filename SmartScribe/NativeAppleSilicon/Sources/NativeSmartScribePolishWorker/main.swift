@@ -214,7 +214,7 @@ struct NativeSmartScribePolishWorker {
         // for models that do not recognise it; for those whose chat template
         // hard-starts <think>, (C) below gives them enough token headroom to
         // finish thinking and still emit the final answer.
-        if needsQwenThinkingTags(request.model) {
+        if PolishingModelPromptControl.needsThinkingSuppression(request.model) {
             userPrompt += "\n\n/no_think"
         }
 
@@ -302,7 +302,7 @@ struct NativeSmartScribePolishWorker {
     private static func modelPromptControlPrefix(
         for model: PolishingModelDescriptor
     ) -> String {
-        guard needsQwenThinkingTags(model) else { return "" }
+        guard PolishingModelPromptControl.needsThinkingSuppression(model) else { return "" }
         // Newer Qwen/Qwopus templates may intercept these tags and remove
         // them from context while switching the template to concise mode.
         return "<|think_off|>\n<|think_forget|>\n"
@@ -316,39 +316,11 @@ struct NativeSmartScribePolishWorker {
             "preserve_thinking": false
         ]
 
-        if isQwenLike(model) {
+        if PolishingModelPromptControl.isQwenLike(model) {
             context["thinking"] = false
         }
 
         return context
-    }
-
-    private static func needsQwenThinkingTags(_ model: PolishingModelDescriptor) -> Bool {
-        let searchable = searchableModelText(model)
-
-        return searchable.contains("qwopus")
-            || searchable.contains("qwen3.6")
-            || searchable.contains("qwen 3.6")
-            || searchable.contains("qwen-3.6")
-            || (searchable.contains("qwen") && searchable.contains("reasoning"))
-            || (searchable.contains("qwen") && searchable.contains("opus"))
-    }
-
-    private static func isQwenLike(_ model: PolishingModelDescriptor) -> Bool {
-        let searchable = searchableModelText(model)
-        return searchable.contains("qwen") || searchable.contains("qwopus")
-    }
-
-    private static func searchableModelText(_ model: PolishingModelDescriptor) -> String {
-        let searchable = [
-            model.displayName,
-            model.repositoryID,
-            model.description
-        ]
-            .joined(separator: " ")
-            .lowercased()
-
-        return searchable
     }
 }
 

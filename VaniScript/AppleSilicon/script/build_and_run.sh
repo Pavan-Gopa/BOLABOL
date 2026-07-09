@@ -2,7 +2,9 @@
 set -euo pipefail
 
 MODE="${1:-run}"
-APP_NAME="VaniScript"
+SWIFT_PRODUCT_NAME="VaniScript"
+APP_BUNDLE_NAME="VaniScript"
+APP_EXECUTABLE_NAME="VaniScript"
 BUNDLE_ID="com.vaniscript.apple-silicon"
 MIN_SYSTEM_VERSION="14.0"
 BUILD_ID="${VANISCRIPT_BUILD_ID:-$(date -u +%Y%m%d%H%M%S)}"
@@ -10,22 +12,24 @@ BUILD_ID="${VANISCRIPT_BUILD_ID:-$(date -u +%Y%m%d%H%M%S)}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE_DIR="$(cd "$ROOT_DIR/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
-APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
+APP_BUNDLE="$DIST_DIR/$APP_BUNDLE_NAME.app"
 APP_CONTENTS="$APP_BUNDLE/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
 APP_RESOURCES="$APP_CONTENTS/Resources"
 APP_MEDIA_BIN="$APP_BUNDLE/Contents/Resources/bin"
-APP_BINARY="$APP_MACOS/$APP_NAME"
+APP_BINARY="$APP_MACOS/$APP_EXECUTABLE_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 VENDOR_BIN="$ROOT_DIR/Vendor/bin"
+APPLE_SILICON_ASSETS_DIR="$ROOT_DIR/Assets"
 ELECTRON_ASSETS_DIR="${VANISCRIPT_ELECTRON_ASSETS_DIR:-$WORKSPACE_DIR/Electron/assets}"
 
 cd "$ROOT_DIR"
 
-pkill -x "$APP_NAME" >/dev/null 2>&1 || true
+pkill -x "$APP_EXECUTABLE_NAME" >/dev/null 2>&1 || true
+pkill -x "VaniScriptAS" >/dev/null 2>&1 || true
 
-swift build --arch arm64 --product "$APP_NAME"
-BUILD_BINARY="$(swift build --arch arm64 --show-bin-path)/$APP_NAME"
+swift build --arch arm64 --product "$SWIFT_PRODUCT_NAME"
+BUILD_BINARY="$(swift build --arch arm64 --show-bin-path)/$SWIFT_PRODUCT_NAME"
 
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_MACOS" "$APP_RESOURCES"
@@ -54,8 +58,8 @@ copy_optional_asset() {
   fi
 }
 
-copy_required_asset "$ELECTRON_ASSETS_DIR/icon.icns" "$APP_RESOURCES/AppIcon.icns"
-copy_required_asset "$ELECTRON_ASSETS_DIR/icon.png" "$APP_RESOURCES/AppIcon.png"
+copy_required_asset "$APPLE_SILICON_ASSETS_DIR/AppIconAS.icns" "$APP_RESOURCES/AppIcon.icns"
+copy_required_asset "$APPLE_SILICON_ASSETS_DIR/AppIconAS.png" "$APP_RESOURCES/AppIcon.png"
 copy_required_asset "$WORKSPACE_DIR/Shared/VaniScript_Logo.svg" "$APP_RESOURCES/VaniScript_Logo.svg"
 copy_optional_asset "$WORKSPACE_DIR/Shared/VaniScript_Logo.png" "$APP_RESOURCES/VaniScript_Logo.png"
 copy_optional_asset "$WORKSPACE_DIR/Shared/New_Logo.svg" "$APP_RESOURCES/New_Logo.svg"
@@ -99,7 +103,7 @@ fi
 
 ARCHS="$(/usr/bin/lipo -archs "$APP_BINARY")"
 if [[ "$ARCHS" != "arm64" ]]; then
-  echo "error: $APP_NAME must be Apple Silicon only. Found architectures: $ARCHS" >&2
+  echo "error: $APP_BUNDLE_NAME must be Apple Silicon only. Found architectures: $ARCHS" >&2
   exit 1
 fi
 
@@ -109,13 +113,13 @@ cat >"$INFO_PLIST" <<PLIST
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key>
-  <string>$APP_NAME</string>
+  <string>$APP_EXECUTABLE_NAME</string>
   <key>CFBundleIdentifier</key>
   <string>$BUNDLE_ID</string>
   <key>CFBundleName</key>
-  <string>$APP_NAME</string>
+  <string>$APP_BUNDLE_NAME</string>
   <key>CFBundleDisplayName</key>
-  <string>$APP_NAME</string>
+  <string>$APP_BUNDLE_NAME</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -148,7 +152,7 @@ PLIST
 
 FORBIDDEN_PATTERN='python|node|node_modules|electron|chromium|llama|llamacpp'
 if (cd "$APP_BUNDLE" && /usr/bin/find . -print | /usr/bin/grep -Eiq "$FORBIDDEN_PATTERN"); then
-  echo "error: $APP_NAME.app contains non-native runtime artifacts:" >&2
+  echo "error: $APP_BUNDLE_NAME.app contains non-native runtime artifacts:" >&2
   (cd "$APP_BUNDLE" && /usr/bin/find . -print | /usr/bin/grep -Ei "$FORBIDDEN_PATTERN") >&2
   exit 1
 fi
@@ -166,11 +170,11 @@ case "$MODE" in
   --verify|verify)
     open_app
     sleep 1
-    pgrep -x "$APP_NAME" >/dev/null
+    pgrep -x "$APP_EXECUTABLE_NAME" >/dev/null
     ;;
   --logs|logs)
     open_app
-    /usr/bin/log stream --info --style compact --predicate "process == \"$APP_NAME\""
+    /usr/bin/log stream --info --style compact --predicate "process == \"$APP_EXECUTABLE_NAME\""
     ;;
   *)
     echo "usage: $0 [run|--verify|--logs]" >&2

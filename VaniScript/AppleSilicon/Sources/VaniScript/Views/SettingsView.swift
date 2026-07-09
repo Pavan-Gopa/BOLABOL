@@ -22,6 +22,15 @@ struct SettingsView: View {
     @State private var customOutputCost = ""
     @State private var customBudgetLimit = ""
 
+    private let mcpOverviewColumns = [
+        GridItem(.flexible(minimum: 220), spacing: 10),
+        GridItem(.flexible(minimum: 220), spacing: 10),
+    ]
+    private let activeTargetColumns = [
+        GridItem(.flexible(minimum: 220), spacing: 10),
+        GridItem(.flexible(minimum: 220), spacing: 10),
+    ]
+
     var body: some View {
         ZStack {
             AppBackground()
@@ -29,34 +38,38 @@ struct SettingsView: View {
                 header
 
                 TabView(selection: $store.selectedSettingsTab) {
-                    apiKeysTab
+                    agentsTab
                         .onboardingTarget("settings-tab-0")
+                        .tabItem { Label("Agents", systemImage: "person.2.wave.2") }
+                        .tag(SettingsTab.agents)
+                    apiKeysTab
+                        .onboardingTarget("settings-tab-1")
                         .tabItem { Label("API & Usage", systemImage: "key.fill") }
                         .tag(SettingsTab.apiKeys)
-                    modelsTab
-                        .onboardingTarget("settings-tab-1")
-                        .tabItem { Label("Models", systemImage: "cpu") }
-                        .tag(SettingsTab.models)
                     appearanceTab
                         .onboardingTarget("settings-tab-2")
                         .tabItem { Label("Appearance", systemImage: "paintpalette") }
                         .tag(SettingsTab.appearance)
-                    glossaryTab
-                        .onboardingTarget("settings-tab-3")
-                        .tabItem { Label("Glossary", systemImage: "text.book.closed") }
-                        .tag(SettingsTab.glossary)
                     chunkingTab
-                        .onboardingTarget("settings-tab-4")
+                        .onboardingTarget("settings-tab-3")
                         .tabItem { Label("Chunking", systemImage: "scissors") }
                         .tag(SettingsTab.chunking)
-                    transcriptionTab
+                    glossaryTab
+                        .onboardingTarget("settings-tab-4")
+                        .tabItem { Label("Glossary", systemImage: "text.book.closed") }
+                        .tag(SettingsTab.glossary)
+                    modelsTab
                         .onboardingTarget("settings-tab-5")
-                        .tabItem { Label("Transcription", systemImage: "waveform.badge.mic") }
-                        .tag(SettingsTab.transcription)
+                        .tabItem { Label("Models", systemImage: "cpu") }
+                        .tag(SettingsTab.models)
                     promptsTab
                         .onboardingTarget("settings-tab-6")
                         .tabItem { Label("Prompts", systemImage: "doc.text") }
                         .tag(SettingsTab.prompts)
+                    transcriptionTab
+                        .onboardingTarget("settings-tab-7")
+                        .tabItem { Label("Transcription", systemImage: "waveform.badge.mic") }
+                        .tag(SettingsTab.transcription)
                 }
                 .tint(VaniScriptTheme.accent)
             }
@@ -79,17 +92,8 @@ struct SettingsView: View {
         .preferredColorScheme(store.settings.theme == .dark ? .dark : .light)
         .onChange(of: store.selectedSettingsTab) { _, newTab in
             if store.isTourActive && store.activeTourScreen == "settings" {
-                let stepIndex: Int
-                switch newTab {
-                case .apiKeys: stepIndex = 0
-                case .models: stepIndex = 1
-                case .appearance: stepIndex = 2
-                case .glossary: stepIndex = 3
-                case .chunking: stepIndex = 4
-                case .transcription: stepIndex = 5
-                case .prompts: stepIndex = 6
-                }
-                if store.tourStepIndex != stepIndex {
+                if let stepIndex = SettingsTab.alphabetized.firstIndex(of: newTab),
+                   store.tourStepIndex != stepIndex {
                     store.tourStepIndex = stepIndex
                 }
             }
@@ -135,6 +139,79 @@ struct SettingsView: View {
             .help("Help Tour")
         }
         .padding(.bottom, 12)
+    }
+
+    private var agentsTab: some View {
+        SettingsScroll {
+            mcpIntegrationSection
+
+            SettingsSection(title: "Active Target") {
+                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Label("Preferred Agent", systemImage: "person.crop.circle.badge.checkmark")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.text2)
+
+                        Picker("", selection: Binding(
+                            get: { store.settings.mcpPreferredAgentID },
+                            set: { value in
+                                store.updateSettings { settings in
+                                    settings.mcpPreferredAgentID = value
+                                }
+                            }
+                        )) {
+                            ForEach(McpAgentProfileCatalog.all) { profile in
+                                Text(profile.displayName).tag(profile.id.rawValue)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
+                    .background(Color.white.opacity(0.04))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                    McpStatusSummaryTile(
+                        title: "Status",
+                        value: mcpConnectionSummary,
+                        systemImage: "point.3.connected.trianglepath.dotted",
+                        tint: mcpConnectionColor
+                    )
+                }
+            }
+
+            SettingsSection(title: "Agent Profiles") {
+                VStack(spacing: 0) {
+                    ForEach(McpAgentProfileCatalog.all) { profile in
+                        McpAgentProfileRow(
+                            profile: profile,
+                            state: mcpConnectionState(for: profile),
+                            isPreferred: store.settings.mcpPreferredAgentID == profile.id.rawValue,
+                            activeClient: mcpActiveClient(for: profile),
+                            canCopySetup: store.settings.mcpServerEnabled && !store.settings.mcpAccessToken.isEmpty,
+                            setActive: {
+                                store.updateSettings { settings in
+                                    settings.mcpPreferredAgentID = profile.id.rawValue
+                                }
+                            },
+                            copySetup: {
+                                copyMcpSetup(for: profile)
+                            }
+                        )
+
+                        if profile.id != McpAgentProfileCatalog.all.last?.id {
+                            Divider()
+                                .background(Color.white.opacity(0.08))
+                                .padding(.leading, 44)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private var apiKeysTab: some View {
@@ -432,11 +509,75 @@ struct SettingsView: View {
         }
     }
 
+    private var mcpIntegrationSection: some View {
+        SettingsSection(title: "Local MCP Server") {
+            VStack(alignment: .leading, spacing: 10) {
+                LazyVGrid(columns: mcpOverviewColumns, alignment: .leading, spacing: 10) {
+                    CompactMcpToggleCard(
+                        title: "Enable MCP",
+                        subtitle: store.settings.mcpServerEnabled ? "Listening locally" : "Server disabled",
+                        systemImage: "network",
+                        isEnabled: true,
+                        isOn: Binding {
+                            store.settings.mcpServerEnabled
+                        } set: { value in
+                            store.updateSettings { settings in
+                                settings.mcpServerEnabled = value
+                            }
+                        }
+                    )
+
+                    CompactMcpToggleCard(
+                        title: "Allow Write Tools",
+                        subtitle: store.settings.mcpAllowMutatingTools ? "Mutating tools enabled" : "Read-only by default",
+                        systemImage: "pencil.and.outline",
+                        isEnabled: store.settings.mcpServerEnabled,
+                        isOn: Binding {
+                            store.settings.mcpAllowMutatingTools
+                        } set: { value in
+                            store.updateSettings { settings in
+                                settings.mcpAllowMutatingTools = value
+                            }
+                        }
+                    )
+                }
+
+                ReadOnlyRow(title: "Endpoint", value: "http://127.0.0.1:19790/sse")
+                SecureInputRow(title: "Access Token", text: binding(\.mcpAccessToken))
+                    .disabled(!store.settings.mcpServerEnabled)
+                    .opacity(store.settings.mcpServerEnabled ? 1 : 0.5)
+
+                HStack(spacing: 8) {
+                    Button {
+                        store.updateSettings { settings in
+                            settings.mcpAccessToken = AppSettings.generateMcpAccessToken()
+                        }
+                    } label: {
+                        Label("Regenerate Token", systemImage: "arrow.clockwise")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                    .disabled(!store.settings.mcpServerEnabled)
+
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(store.settings.mcpAccessToken, forType: .string)
+                    } label: {
+                        Label("Copy Token", systemImage: "doc.on.doc")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SettingsSmallButtonStyle(primary: store.settings.mcpServerEnabled))
+                    .disabled(!store.settings.mcpServerEnabled || store.settings.mcpAccessToken.isEmpty)
+                }
+            }
+        }
+    }
+
     private var modelsTab: some View {
         SettingsScroll {
             SettingsSection(title: "Scan Local Models") {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Already downloaded models in another version of VaniScript (e.g. VaniScript Electron) or stored in common system folders? Run a fast native scan to discover and automatically connect them.")
+                    Text("Already downloaded models in another VaniScript workspace or stored in common system folders? Run a fast native scan to discover and automatically connect them.")
                         .font(.subheadline)
                         .foregroundStyle(VaniScriptTheme.text2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1036,6 +1177,49 @@ struct SettingsView: View {
         }
     }
 
+    private var mcpConnectionSummary: String {
+        guard store.settings.mcpServerEnabled else {
+            return "Disabled"
+        }
+        let connected = store.mcpActiveClients
+            .filter { McpAgentProfileCatalog.normalizedProfileID($0.profileID) == $0.profileID }
+            .map(\.displayName)
+        guard !connected.isEmpty else {
+            return "Ready"
+        }
+        return "Connected: \(connected.joined(separator: ", "))"
+    }
+
+    private var mcpConnectionColor: Color {
+        guard store.settings.mcpServerEnabled else {
+            return VaniScriptTheme.red
+        }
+        return store.mcpActiveClients.isEmpty ? VaniScriptTheme.text2 : VaniScriptTheme.green
+    }
+
+    private func mcpConnectionState(for profile: McpAgentProfile) -> McpAgentConnectionState {
+        let isConnected = mcpActiveClient(for: profile) != nil
+        return McpAgentConnectionState.resolve(
+            isServerEnabled: store.settings.mcpServerEnabled,
+            isConnected: isConnected
+        )
+    }
+
+    private func mcpActiveClient(for profile: McpAgentProfile) -> McpActiveClient? {
+        store.mcpActiveClients.first { $0.profileID == profile.id.rawValue }
+    }
+
+    private func copyMcpSetup(for profile: McpAgentProfile) {
+        let setupText = McpAgentProfileCatalog.setupText(
+            for: profile.id,
+            accessToken: store.settings.mcpAccessToken,
+            bridgeScriptPath: McpAgentProfileCatalog.defaultBridgeScriptPath
+        )
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(setupText, forType: .string)
+        store.statusMessage = "\(profile.displayName) MCP setup copied."
+    }
+
     private func binding<Value>(_ keyPath: WritableKeyPath<AppSettings, Value>) -> Binding<Value> {
         Binding {
             store.settings[keyPath: keyPath]
@@ -1326,6 +1510,179 @@ private struct ReadOnlyRow: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .font(.system(size: 13))
+    }
+}
+
+private struct SettingsToggleRow: View {
+    let title: String
+    let systemImage: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            Label(title, systemImage: systemImage)
+                .foregroundStyle(VaniScriptTheme.text2)
+                .font(.system(size: 13, weight: .semibold))
+        }
+        .toggleStyle(.switch)
+        .tint(VaniScriptTheme.accent)
+        .padding(.horizontal, 12)
+        .frame(height: 36)
+        .background(Color.white.opacity(0.04))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+private struct CompactMcpToggleCard: View {
+    let title: String
+    let subtitle: String
+    let systemImage: String
+    let isEnabled: Bool
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(isEnabled ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+                .frame(width: 24, height: 24)
+                .background(Color.white.opacity(0.045))
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(VaniScriptTheme.text1)
+                Text(subtitle)
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .tint(VaniScriptTheme.accent)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
+        .background(Color.white.opacity(0.04))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.52)
+    }
+}
+
+private struct McpStatusSummaryTile: View {
+    let title: String
+    let value: String
+    let systemImage: String
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 24, height: 24)
+                .background(tint.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                Text(value)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(VaniScriptTheme.text0)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
+        .background(Color.white.opacity(0.04))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+private struct McpAgentProfileRow: View {
+    let profile: McpAgentProfile
+    let state: McpAgentConnectionState
+    let isPreferred: Bool
+    let activeClient: McpActiveClient?
+    let canCopySetup: Bool
+    let setActive: () -> Void
+    let copySetup: () -> Void
+
+    private var isConnected: Bool {
+        if case .connected = state {
+            return true
+        }
+        return false
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.white.opacity(0.05))
+                Image(systemName: profile.id.symbolName)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(VaniScriptTheme.accent)
+            }
+            .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(profile.displayName)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(VaniScriptTheme.text0)
+
+                Text(profile.detail)
+                    .font(.system(size: 11))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 12)
+
+            if isConnected {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(VaniScriptTheme.green)
+                        .frame(width: 8, height: 8)
+                    Text(activeClient?.displayName ?? "Connected")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(VaniScriptTheme.text1)
+                        .lineLimit(1)
+                }
+                .frame(width: 104, alignment: .leading)
+            } else {
+                Color.clear
+                    .frame(width: 104, height: 1)
+            }
+
+            Button(isPreferred ? "Active" : "Set Active") {
+                setActive()
+            }
+            .buttonStyle(SettingsSmallButtonStyle(primary: isPreferred))
+            .disabled(isPreferred)
+
+            Button("Copy Setup") {
+                copySetup()
+            }
+            .buttonStyle(SettingsSmallButtonStyle(primary: state != .disabled))
+            .disabled(!canCopySetup)
+        }
+        .padding(.vertical, 9)
     }
 }
 

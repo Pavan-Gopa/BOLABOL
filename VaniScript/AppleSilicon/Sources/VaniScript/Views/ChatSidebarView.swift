@@ -230,6 +230,8 @@ struct ChatSidebarView: View {
                         
                         TextEditor(text: $inputText)
                             .font(.system(size: 13))
+                            .tint(VaniScriptTheme.accent)
+                            .foregroundStyle(.white)
                             .scrollContentBackground(.hidden)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
@@ -245,6 +247,11 @@ struct ChatSidebarView: View {
                     }
                     
                     HStack(spacing: 8) {
+                        if isRecordingDictation {
+                            MiniWaveformView()
+                                .transition(.opacity)
+                        }
+
                         Button {
                             toggleDictation()
                         } label: {
@@ -648,6 +655,29 @@ struct AnyCodable: Codable {
             try container.encode(dict.mapValues { AnyCodable($0) })
         } else {
             try container.encodeNil()
+        }
+    }
+}
+
+struct MiniWaveformView: View {
+    @State private var animate = false
+    
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(0..<5) { index in
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(Color.red)
+                    .frame(width: 2, height: animate ? CGFloat.random(in: 4...16) : 4)
+                    .animation(
+                        .easeInOut(duration: Double.random(in: 0.25...0.45))
+                        .repeatForever(autoreverses: true),
+                        value: animate
+                    )
+            }
+        }
+        .frame(width: 18, height: 16)
+        .onAppear {
+            animate = true
         }
     }
 }

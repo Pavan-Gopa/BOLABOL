@@ -41,7 +41,10 @@ def sse_listener():
             req = urllib.request.Request(f"{base_url}/sse", headers=headers)
             with urllib.request.urlopen(req) as response:
                 current_event = None
-                for line_bytes in response:
+                while True:
+                    line_bytes = response.readline()
+                    if not line_bytes:
+                        break # EOF
                     line = line_bytes.decode('utf-8').strip()
                     if not line:
                         continue

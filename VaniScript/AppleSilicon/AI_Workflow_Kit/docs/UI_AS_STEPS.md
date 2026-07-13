@@ -68,14 +68,29 @@ Do **not** change crop/timeline/render logic — chrome only.
 ## U3 — App chrome (optional)
 
 ### Цель
-Sidebars / Settings / Chat density aligned with editor.
+Sidebars / Settings / Chat / **Export** density aligned with editor.
+
+### Требования
+1. Apply `VaniScriptTheme.Density` tokens to chrome spacing (padding, control heights, radii) on:
+   - Sidebars, main shell (`ContentView`)
+   - Settings
+   - Chat sidebar
+   - **Export workspace** (`ExportWorkspaceView`) — controls grid, cards, buttons, section spacing
+2. No export pipeline / shorts planner / render logic changes — chrome only.
+3. Apple Silicon only; no Electron visual pass.
 
 ### target_files
 - `Sources/VaniScript/Views/SidebarView.swift`
 - `Sources/VaniScript/Views/ContentView.swift`
 - `Sources/VaniScript/Views/SettingsView.swift`
 - `Sources/VaniScript/Views/ChatSidebarView.swift`
+- `Sources/VaniScript/Views/ExportWorkspaceView.swift`
 - `Sources/VaniScript/Theme/VaniScriptTheme.swift` (if needed)
+
+### Не делать
+- Electron redesign
+- MCP/Grok logic beyond spacing/chrome
+- Shorts render / export algorithm changes
 
 ---
 

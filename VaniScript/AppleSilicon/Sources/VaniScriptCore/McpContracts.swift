@@ -104,6 +104,7 @@ public enum McpClientProfileID: String, CaseIterable, Codable, Equatable, Sendab
     case claudeDesktop = "claude-desktop"
     case codex
     case cursor
+    case grok
 
     public var displayName: String {
         switch self {
@@ -117,6 +118,8 @@ public enum McpClientProfileID: String, CaseIterable, Codable, Equatable, Sendab
             "Codex"
         case .cursor:
             "Cursor"
+        case .grok:
+            "Grok"
         }
     }
 
@@ -132,6 +135,8 @@ public enum McpClientProfileID: String, CaseIterable, Codable, Equatable, Sendab
             "curlybraces"
         case .cursor:
             "cursorarrow"
+        case .grok:
+            "bubble.left.and.bubble.right"
         }
     }
 }
@@ -216,6 +221,9 @@ public enum McpClientClassifier {
         if combined.contains("cursor") {
             return McpClientProfileID.cursor.rawValue
         }
+        if combined.contains("grok") {
+            return McpClientProfileID.grok.rawValue
+        }
         if combined.contains("antigravity") || combined.contains("gemini") {
             return McpClientProfileID.antigravity.rawValue
         }
@@ -249,13 +257,19 @@ public enum McpAgentProfileCatalog {
                     detail: "Desktop Claude client via stdio bridge.",
                     setupActionTitle: "Copy Config"
                 )
-            case .codex:
-                McpAgentProfile(
-                    id: profile,
-                    detail: "Codex desktop via local bridge, or CLI via direct Streamable HTTP.",
-                    setupActionTitle: "Copy Command"
-                )
-            case .cursor:
+        case .codex:
+            McpAgentProfile(
+                id: profile,
+                detail: "Codex desktop via local bridge, or CLI via direct Streamable HTTP.",
+                setupActionTitle: "Copy Command"
+            )
+        case .grok:
+            McpAgentProfile(
+                id: profile,
+                detail: "Grok desktop via local bridge, or CLI via direct Streamable HTTP/SSE.",
+                setupActionTitle: "Copy Command"
+            )
+        case .cursor:
                 McpAgentProfile(
                     id: profile,
                     detail: "Cursor MCP client via native SSE or bridge config.",
@@ -324,6 +338,14 @@ public enum McpAgentProfileCatalog {
                 configPath: "~/.gemini/config/mcp_config.json",
                 bridgeScriptPath: bridgeScriptPath
             )
+        case .grok:
+            """
+            Recommended for Grok CLI (stdio bridge):
+            grok mcp add vaniscript --transport stdio -- python3 "\(bridgeScriptPath)"
+
+            Direct Streamable HTTP/SSE for a terminal Grok session:
+            grok mcp add vaniscript --transport sse --header "Authorization: Bearer \(accessToken)" --url \(endpoint)
+            """
         }
     }
 

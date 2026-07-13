@@ -195,3 +195,19 @@ Example:
 ```
 
 The bridge uses the local VaniScript settings token, so the app must be opened once after enabling MCP.
+
+## Grok
+
+Recommended for Grok CLI (stdio bridge):
+
+```bash
+grok mcp add vaniscript --transport stdio -- python3 "/Users/pavan/Documents/AI Projects/VaniScript/AppleSilicon/mcp_bridge.py"
+```
+
+Direct Streamable HTTP/SSE connection for a terminal Grok session with a bearer token:
+
+```bash
+grok mcp add vaniscript --transport sse --header "Authorization: Bearer <paste token from VaniScript Settings>" --url http://127.0.0.1:19790/sse
+```
+
+The bridge reads `VANISCRIPT_MCP_TOKEN` when provided; otherwise it reads the saved token from `~/Library/Application Support/VaniScript/settings.json`.

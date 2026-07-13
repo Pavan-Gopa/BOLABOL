@@ -2,22 +2,21 @@
 # Product scope: AI_Workflow_Kit/docs/GROK_MCP_STEPS.md
 # UI track waits until GROK_DONE: AI_Workflow_Kit/docs/UI_AS_STEPS.md
 
-current_step: G1
+current_step: G2
 step_description: >
-  External Grok MCP profile on Apple Silicon: McpClientProfileID.grok,
-  setupText (stdio bridge + SSE with Bearer), classifier, Settings Agents visibility,
-  MCP_INSTRUCTIONS Grok section, onboarding trusted-clients copy, tests.
-  Do NOT implement GrokAgentService, Chat multi-agent, Electron code, or UI density.
+  Grok agent support + output parser + unit tests (mirror CodexAgentSupport).
+  NEW GrokAgentSupport.swift: GrokChatModelCatalog (grok-4.5 + optional fast models),
+  GrokAgentRun, GrokAgentOutputParser for headless streaming-json/json.
+  Normalize model id / display helpers. Tests mirror CodexAgentSupportTests.
+  Do NOT implement process launch, ChatSidebar, Settings wiring, Electron, or UI density.
 
 target_files:
-  - Sources/VaniScriptCore/McpContracts.swift
-  - Sources/VaniScript/Views/SettingsView.swift
-  - Sources/VaniScript/Models/OnboardingTourState.swift
-  - MCP_INSTRUCTIONS.md
-  - Tests/VaniScriptCoreTests/McpSecurityContractTests.swift
+  - Sources/VaniScriptCore/GrokAgentSupport.swift
+  - Tests/VaniScriptCoreTests/GrokAgentSupportTests.swift
 
 completed_steps:
   - G0
+  - G1
 
 implementation:
   status: pending          # pending | in_progress | waiting_review | idle

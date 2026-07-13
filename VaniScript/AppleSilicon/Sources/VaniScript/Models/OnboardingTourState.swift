@@ -266,9 +266,9 @@ public struct TourSteps {
                     arrowCurveOffset: CGPoint(x: -20, y: 40),
                     bubblePlacement: .bottom,
                     titleEN: "Agents",
-                    descriptionEN: "Connect trusted MCP clients such as Codex, Claude, Cursor, and Antigravity to the local VaniScript server.",
+                    descriptionEN: "Connect trusted MCP clients such as Codex, Claude, Cursor, Grok, and Antigravity to the local VaniScript server.",
                     titleRU: "Агенты",
-                    descriptionRU: "Подключайте доверенные MCP-клиенты, такие как Codex, Claude, Cursor и Antigravity, к локальному серверу VaniScript."
+                    descriptionRU: "Подключайте доверенные MCP-клиенты, такие как Codex, Claude, Cursor, Grok и Antigravity, к локальному серверу VaniScript."
                 ),
                 TourStep(
                     targetSelector: "settings-tab-1",

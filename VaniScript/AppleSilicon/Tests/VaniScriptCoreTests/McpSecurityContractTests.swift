@@ -251,6 +251,7 @@ struct McpSecurityContractTests {
             "Claude Desktop",
             "Codex",
             "Cursor",
+            "Grok",
         ])
 
         let bridgePath = "/tmp/VaniScript/mcp_bridge.py"
@@ -273,6 +274,16 @@ struct McpSecurityContractTests {
         #expect(antigravitySetup.contains("~/.gemini/config/mcp_config.json"))
         #expect(antigravitySetup.contains(bridgePath))
         #expect(!antigravitySetup.contains(token))
+
+        let grokSetup = McpAgentProfileCatalog.setupText(
+            for: .grok,
+            accessToken: token,
+            bridgeScriptPath: bridgePath
+        )
+        #expect(grokSetup.contains("grok mcp add"))
+        #expect(grokSetup.contains("Authorization: Bearer \(token)"))
+        #expect(grokSetup.contains("http://127.0.0.1:19790/sse"))
+        #expect(grokSetup.contains(bridgePath))
     }
 
     @Test("client classifier maps known MCP clients")
@@ -281,6 +292,8 @@ struct McpSecurityContractTests {
         #expect(McpClientClassifier.profileID(clientName: "Claude Code", userAgent: nil) == McpClientProfileID.claudeCode.rawValue)
         #expect(McpClientClassifier.profileID(clientName: "Claude Desktop", userAgent: nil) == McpClientProfileID.claudeDesktop.rawValue)
         #expect(McpClientClassifier.profileID(clientName: nil, userAgent: "Cursor/1.0") == McpClientProfileID.cursor.rawValue)
+        #expect(McpClientClassifier.profileID(clientName: "Grok", userAgent: nil) == McpClientProfileID.grok.rawValue)
+        #expect(McpClientClassifier.profileID(clientName: nil, userAgent: "Grok/1.0") == McpClientProfileID.grok.rawValue)
         #expect(McpClientClassifier.profileID(clientName: "Gemini Developer Environment", userAgent: nil) == McpClientProfileID.antigravity.rawValue)
         #expect(McpClientClassifier.profileID(clientName: "Unknown Client", userAgent: nil) == nil)
     }

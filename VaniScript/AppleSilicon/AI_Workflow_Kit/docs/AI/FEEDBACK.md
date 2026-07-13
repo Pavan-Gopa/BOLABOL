@@ -1,17 +1,16 @@
-# FEEDBACK — track transition
+# FEEDBACK — UI_AS
 
-## GROK_MCP = DONE (G0–G6)
+## Track status
 
 | Step | Status | Tag |
 |------|--------|-----|
-| G0–G5 | DONE | `grok/G*-done` |
-| G6 | APPROVED (Gemini) — closing | `grok/G6-done` |
-| Track | **GROK_DONE** | `grok/GROK_DONE` |
+| GROK_MCP | DONE | `grok/GROK_DONE-done` |
+| U0 | APPROVED (Gemini) — closing | `ui/U0-done` |
+| U1 | open | `ui/pre-U1` |
 
-### G6 review summary
-- Acceptance checklist + DECISIONS only
-- 242 tests green; no product code in G6
+## U0 review summary
+- Density tokens enum in `VaniScriptTheme` (space/controlHeight/radius/hairlines)
+- No mass restyle; 242 tests green
 
-## Next track: UI_AS
-
-Await Hy3 on **U0** (theme density tokens). Electron visual redesign remains **out of scope**.
+## No pending review
+Await Hy3 on **U1**.

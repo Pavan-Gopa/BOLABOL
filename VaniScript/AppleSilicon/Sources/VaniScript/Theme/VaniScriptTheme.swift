@@ -15,6 +15,40 @@ enum VaniScriptTheme {
     static let red = Color.dynamic(light: Color(red: 220 / 255, green: 38 / 255, blue: 38 / 255), dark: Color(red: 1, green: 92 / 255, blue: 92 / 255))
 }
 
+extension VaniScriptTheme {
+    /// Density tokens for visual compaction (U0). Tokens only — no screen restyle yet.
+    /// Later steps (U1–U3) consume these for sliders, inspector, and app chrome.
+    /// Accent orange + glass aesthetic are intentionally preserved.
+    enum Density {
+        // MARK: Spacing scale (pt)
+        static let space4: CGFloat = 4
+        static let space6: CGFloat = 6
+        static let space8: CGFloat = 8
+        static let space12: CGFloat = 12
+
+        // MARK: Control heights (pt) — compact range 22–28
+        static let controlHeightSM: CGFloat = 22
+        static let controlHeightMD: CGFloat = 25
+        static let controlHeightLG: CGFloat = 28
+
+        // MARK: Corner radii (pt) — 8–12
+        static let radiusSM: CGFloat = 8
+        static let radiusMD: CGFloat = 10
+        static let radiusLG: CGFloat = 12
+
+        // MARK: Hairlines / muted borders
+        static let hairlineWidth: CGFloat = 1
+        static let hairline = Color.dynamic(
+            light: Color.black.opacity(0.10),
+            dark: Color.white.opacity(0.12)
+        )
+        static let mutedBorder = Color.dynamic(
+            light: Color.black.opacity(0.06),
+            dark: Color.white.opacity(0.08)
+        )
+    }
+}
+
 extension Color {
     static func dynamic(light: Color, dark: Color) -> Color {
         Color(nsColor: NSColor(name: nil) { appearance in

@@ -48,9 +48,10 @@ electron_git_root: "VaniScript/Electron"
 electron_remote: "https://github.com/Pavan-Gopa/VaniScript-Electron.git"
 
 checkpoint:
-  last_pre_tag: "grok/pre-G4"
-  last_post_tag: "grok/G3-done"
-  last_commit: "8587a7b"
+  last_pre_tag: "grok/pre-G5"
+  last_post_tag: "grok/G4-done"
+  last_commit: "73d7eb0"
+  monorepo_note: "Electron product commits go in nested VaniScript/Electron git"
 
 plan_files:
   - AI_Workflow_Kit/docs/GROK_MCP_STEPS.md

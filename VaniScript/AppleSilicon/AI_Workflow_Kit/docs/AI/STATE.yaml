@@ -41,9 +41,10 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "grok/pre-G5"
-  last_post_tag: "grok/G4-done"
-  last_commit: "73d7eb0"
+  last_pre_tag: "grok/pre-G6"
+  last_post_tag: "grok/G5-done"
+  last_commit: "3091d87"
+  electron_g5_commit: "9a6b870"
   electron_g5_tag: "grok/G5-done"
 
 plan_files:

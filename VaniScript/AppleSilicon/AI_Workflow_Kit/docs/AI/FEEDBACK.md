@@ -6,15 +6,17 @@
 |------|--------|-----|
 | G0 | DONE | `grok/G0-done` |
 | G1 | DONE | `grok/G1-done` |
-| G2 | APPROVED (Gemini) — closing | `grok/G2-done` |
-| G3 | open | `grok/pre-G3` |
+| G2 | DONE | `grok/G2-done` |
+| G3 | APPROVED (Gemini) — closing | `grok/G3-done` |
+| G4 | open | `grok/pre-G4` |
 
-## G2 review summary (Gemini)
+## G3 review summary (Gemini)
 
 - **APPROVED**
-- GrokAgentSupport + tests green on VaniScriptCore
-- No process launch / UI / Electron (correct)
+- GrokAgentService + AppSettings model fields
+- Isolation/token in env OK; no ChatSidebar (correct for G3)
+- VaniScriptCore 242 tests green
 
 ## No pending review
 
-Await Hy3 on **G3**.
+Await Hy3 on **G4**.

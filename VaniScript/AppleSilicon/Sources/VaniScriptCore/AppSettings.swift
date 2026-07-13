@@ -255,6 +255,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var mcpPreferredAgentID: String
     public var codexChatModelID: String
     public var codexChatReasoningEffort: String
+    public var grokChatModelID: String
+    public var grokChatReasoningEffort: String
     public var logLevel: LogLevel
 
     private enum CodingKeys: String, CodingKey {
@@ -270,6 +272,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case mcpAllowProcessingTools, mcpAllowFileTools, mcpAllowNetworkTools, mcpAllowDestructiveTools
         case mcpAccessToken, mcpPreferredAgentID
         case codexChatModelID, codexChatReasoningEffort
+        case grokChatModelID, grokChatReasoningEffort
         case logLevel
     }
 
@@ -311,6 +314,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         mcpPreferredAgentID: String = McpAgentProfileCatalog.defaultProfileID,
         codexChatModelID: String = CodexChatModelCatalog.defaultModelID,
         codexChatReasoningEffort: String = "medium",
+        grokChatModelID: String = GrokChatModelCatalog.defaultModelID,
+        grokChatReasoningEffort: String = "medium",
         logLevel: LogLevel = .info
     ) {
         self.geminiKey = geminiKey
@@ -350,6 +355,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.mcpPreferredAgentID = mcpPreferredAgentID
         self.codexChatModelID = codexChatModelID
         self.codexChatReasoningEffort = codexChatReasoningEffort
+        self.grokChatModelID = grokChatModelID
+        self.grokChatReasoningEffort = grokChatReasoningEffort
         self.logLevel = logLevel
     }
 
@@ -392,6 +399,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.mcpPreferredAgentID = try container.decodeIfPresent(String.self, forKey: .mcpPreferredAgentID) ?? McpAgentProfileCatalog.defaultProfileID
         self.codexChatModelID = try container.decodeIfPresent(String.self, forKey: .codexChatModelID) ?? CodexChatModelCatalog.defaultModelID
         self.codexChatReasoningEffort = try container.decodeIfPresent(String.self, forKey: .codexChatReasoningEffort) ?? "medium"
+        self.grokChatModelID = try container.decodeIfPresent(String.self, forKey: .grokChatModelID) ?? GrokChatModelCatalog.defaultModelID
+        self.grokChatReasoningEffort = try container.decodeIfPresent(String.self, forKey: .grokChatReasoningEffort) ?? "medium"
         self.logLevel = try container.decodeIfPresent(LogLevel.self, forKey: .logLevel) ?? .info
     }
 
@@ -467,7 +476,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
         mcpAccessToken: "",
         mcpPreferredAgentID: McpAgentProfileCatalog.defaultProfileID,
         codexChatModelID: CodexChatModelCatalog.defaultModelID,
-        codexChatReasoningEffort: "medium"
+        codexChatReasoningEffort: "medium",
+        grokChatModelID: GrokChatModelCatalog.defaultModelID,
+        grokChatReasoningEffort: "medium"
     )
 }
 
@@ -491,6 +502,11 @@ extension AppSettings {
         codexChatReasoningEffort = CodexChatModelCatalog.normalizedReasoningEffort(
             modelID: codexChatModelID,
             effort: codexChatReasoningEffort
+        )
+        grokChatModelID = GrokChatModelCatalog.normalizedModelID(grokChatModelID)
+        grokChatReasoningEffort = GrokChatModelCatalog.normalizedReasoningEffort(
+            modelID: grokChatModelID,
+            effort: grokChatReasoningEffort
         )
         if mcpServerEnabled, mcpAccessToken.isEmpty {
             mcpAccessToken = generateToken()

@@ -1,0 +1,48 @@
+# GROK_MCP track — orchestrated by Grok
+# Product scope: AI_Workflow_Kit/docs/GROK_MCP_STEPS.md
+# UI track waits until GROK_DONE: AI_Workflow_Kit/docs/UI_AS_STEPS.md
+
+current_step: G1
+step_description: >
+  External Grok MCP profile on Apple Silicon: McpClientProfileID.grok,
+  setupText (stdio bridge + SSE with Bearer), classifier, Settings Agents visibility,
+  MCP_INSTRUCTIONS Grok section, onboarding trusted-clients copy, tests.
+  Do NOT implement GrokAgentService, Chat multi-agent, Electron code, or UI density.
+
+target_files:
+  - Sources/VaniScriptCore/McpContracts.swift
+  - Sources/VaniScript/Views/SettingsView.swift
+  - Sources/VaniScript/Models/OnboardingTourState.swift
+  - MCP_INSTRUCTIONS.md
+  - Tests/VaniScriptCoreTests/McpSecurityContractTests.swift
+
+completed_steps:
+  - G0
+
+implementation:
+  status: pending          # pending | in_progress | waiting_review | idle
+  attempts: 0
+
+review:
+  status: pending          # pending | approved | changes_requested
+  last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
+
+next_actor: implementation # implementation | verification | orchestrator | human
+
+track: GROK_MCP
+prior_track: null
+
+working_roots:
+  - AppleSilicon
+
+checkpoint:
+  last_pre_tag: ""
+  last_post_tag: ""
+  last_commit: ""
+
+plan_files:
+  - AI_Workflow_Kit/docs/GROK_MCP_STEPS.md
+  - AI_Workflow_Kit/docs/UI_AS_STEPS.md
+  - AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
+  - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
+  - AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md

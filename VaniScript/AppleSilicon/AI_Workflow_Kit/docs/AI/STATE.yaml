@@ -45,9 +45,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "ui/pre-U2"
-  last_post_tag: "ui/U1-done"
-  last_commit: "9e875d0"
+  last_pre_tag: "ui/pre-U3"
+  last_post_tag: "ui/U2-done"
+  last_commit: "5d7097b"
 
 plan_files:
   - AI_Workflow_Kit/docs/UI_AS_STEPS.md

@@ -39,9 +39,10 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "grok/pre-G6"
-  last_post_tag: "grok/G5-done"
-  last_commit: "3091d87"
+  last_pre_tag: "ui/pre-U0"
+  last_post_tag: "grok/G6-done"
+  last_commit: "6cba9e0"
+  grok_track_tag: "grok/GROK_DONE-done"
 
 plan_files:
   - AI_Workflow_Kit/docs/UI_AS_STEPS.md

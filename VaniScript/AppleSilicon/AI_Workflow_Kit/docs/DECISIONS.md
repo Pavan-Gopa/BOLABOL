@@ -20,6 +20,12 @@
 - Checkpoint script scopes adds to `VaniScript/AppleSilicon/**` (and Electron when step says so).
 - If remote push is DISABLED, local commit+tag is still mandatory; human pushes when able.
 
+## D-2026-07-14 — GROK_MCP acceptance
+
+- G6 is doc-only (no product features). Smoke checklist lives in `GROK_MCP_ACCEPTANCE.md`.
+- Three accepted paths: (1) external Grok MCP via SSE — AS `19790`, Electron `19789`; (2) AS embedded chat for **Codex and Grok**; (3) Electron embedded Grok via the chat route selector + headless `grok` CLI.
+- Invariants unchanged: no silent MCP→API fallback; isolated `vaniscript_embedded` MCP; token in child env only; Codex/Grok parity.
+
 ## Open
 
 - (none yet)

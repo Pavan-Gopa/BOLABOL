@@ -1,21 +1,17 @@
-# FEEDBACK — GROK_MCP
+# FEEDBACK — track transition
 
-## Track status
+## GROK_MCP = DONE (G0–G6)
 
 | Step | Status | Tag |
 |------|--------|-----|
-| G0–G4 | DONE | monorepo `grok/G*-done` |
-| G5 | APPROVED (Gemini) — closing | Electron `grok/G5-done` + monorepo post |
-| G6 | open | `grok/pre-G6` |
+| G0–G5 | DONE | `grok/G*-done` |
+| G6 | APPROVED (Gemini) — closing | `grok/G6-done` |
+| Track | **GROK_DONE** | `grok/GROK_DONE` |
 
-## G5 review summary (Gemini)
+### G6 review summary
+- Acceptance checklist + DECISIONS only
+- 242 tests green; no product code in G6
 
-- **APPROVED**
-- Electron tsc + vite-build OK
-- Headless Grok CLI, MCP|API routes, port 19789
-- No silent fallback; no UI density redesign
-- Extra file `storage.ts` accepted as needed for G5 settings
+## Next track: UI_AS
 
-## No pending review
-
-Await Hy3 on **G6** (acceptance docs only).
+Await Hy3 on **U0** (theme density tokens). Electron visual redesign remains **out of scope**.

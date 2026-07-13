@@ -1,20 +1,16 @@
-# GROK_MCP track — orchestrated by Grok
-# Product scope: AI_Workflow_Kit/docs/GROK_MCP_STEPS.md
+# UI_AS track — orchestrated by Grok
+# Product scope: AI_Workflow_Kit/docs/UI_AS_STEPS.md
+# Prior track GROK_MCP closed (G0–G6).
 
-current_step: G6
+current_step: U0
 step_description: >
-  Acceptance smoke for GROK_MCP: short checklist (external grok mcp, embedded AS
-  chat Codex/Grok, Electron Grok path). Document in GROK_MCP_ACCEPTANCE.md and/or
-  DECISIONS.md. Minor MCP_INSTRUCTIONS gaps only. No new product features.
-  After approve → orchestrator sets GROK_DONE and may open UI_AS.
+  Density tokens in VaniScriptTheme: spacing scale (4/6/8/12), controlHeight (22–28),
+  radius (8–12), muted borders/hairlines as needed. No mass restyle of all screens yet —
+  tokens only for later U1–U3. Keep orange accent + glass aesthetic.
+  Apple Silicon only. Do NOT touch VisualClipEditor logic, Electron, or Grok code.
 
 target_files:
-  - AI_Workflow_Kit/docs/GROK_MCP_ACCEPTANCE.md
-  - AI_Workflow_Kit/docs/DECISIONS.md
-  - MCP_INSTRUCTIONS.md
-
-# Paths relative to VaniScript/AppleSilicon/
-# Optional: ../Electron/MCP_INSTRUCTIONS.md only if a gap is found (document in FEEDBACK)
+  - Sources/VaniScript/Theme/VaniScriptTheme.swift
 
 completed_steps:
   - G0
@@ -23,6 +19,8 @@ completed_steps:
   - G3
   - G4
   - G5
+  - G6
+  - GROK_DONE
 
 implementation:
   status: pending
@@ -34,8 +32,8 @@ review:
 
 next_actor: implementation
 
-track: GROK_MCP
-prior_track: null
+track: UI_AS
+prior_track: GROK_MCP
 
 working_roots:
   - AppleSilicon
@@ -44,12 +42,10 @@ checkpoint:
   last_pre_tag: "grok/pre-G6"
   last_post_tag: "grok/G5-done"
   last_commit: "3091d87"
-  electron_g5_commit: "9a6b870"
-  electron_g5_tag: "grok/G5-done"
 
 plan_files:
-  - AI_Workflow_Kit/docs/GROK_MCP_STEPS.md
   - AI_Workflow_Kit/docs/UI_AS_STEPS.md
+  - AI_Workflow_Kit/docs/GROK_MCP_STEPS.md
   - AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
   - AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md

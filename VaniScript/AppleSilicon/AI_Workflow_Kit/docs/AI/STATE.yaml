@@ -37,9 +37,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "grok/pre-G2"
-  last_post_tag: "grok/G1-done"
-  last_commit: "54882a2"
+  last_pre_tag: "grok/pre-G3"
+  last_post_tag: "grok/G2-done"
+  last_commit: "51cb99b"
 
 plan_files:
   - AI_Workflow_Kit/docs/GROK_MCP_STEPS.md

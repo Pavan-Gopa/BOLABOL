@@ -2,31 +2,33 @@
 # Product scope: AI_Workflow_Kit/docs/GROK_MCP_STEPS.md
 # UI track waits until GROK_DONE: AI_Workflow_Kit/docs/UI_AS_STEPS.md
 
-current_step: G2
+current_step: G3
 step_description: >
-  Grok agent support + output parser + unit tests (mirror CodexAgentSupport).
-  NEW GrokAgentSupport.swift: GrokChatModelCatalog (grok-4.5 + optional fast models),
-  GrokAgentRun, GrokAgentOutputParser for headless streaming-json/json.
-  Normalize model id / display helpers. Tests mirror CodexAgentSupportTests.
-  Do NOT implement process launch, ChatSidebar, Settings wiring, Electron, or UI density.
+  GrokAgentService (AS embedded): headless Grok CLI subprocess with isolated MCP
+  profile vaniscript_embedded (mirror CodexAgentService). Resolve grok binary paths,
+  workspace isolation, token only in child env, system prompt aligned with Codex
+  embedded rules, clear errors (MCP off / CLI missing / not logged in), no Gemini
+  fallback. Prefer model settings stubs from AppSettings only if required; full
+  ChatSidebar wiring is G4. Do NOT do Electron or UI density.
 
 target_files:
-  - Sources/VaniScriptCore/GrokAgentSupport.swift
-  - Tests/VaniScriptCoreTests/GrokAgentSupportTests.swift
+  - Sources/VaniScript/Services/GrokAgentService.swift
+  - Sources/VaniScriptCore/AppSettings.swift
 
 completed_steps:
   - G0
   - G1
+  - G2
 
 implementation:
-  status: pending          # pending | in_progress | waiting_review | idle
+  status: pending
   attempts: 0
 
 review:
-  status: pending          # pending | approved | changes_requested
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
-next_actor: implementation # implementation | verification | orchestrator | human
+next_actor: implementation
 
 track: GROK_MCP
 prior_track: null

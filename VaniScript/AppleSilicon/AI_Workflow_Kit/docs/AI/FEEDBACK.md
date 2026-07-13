@@ -5,17 +5,16 @@
 | Step | Status | Tag |
 |------|--------|-----|
 | G0 | DONE | `grok/G0-done` |
-| G1 | APPROVED (Gemini) — closed by Orchestrator | pending `grok/G1-done` |
-| G2 | open | — |
+| G1 | DONE | `grok/G1-done` |
+| G2 | APPROVED (Gemini) — closing | `grok/G2-done` |
+| G3 | open | `grok/pre-G3` |
 
-## G1 review summary (Gemini)
+## G2 review summary (Gemini)
 
 - **APPROVED**
-- VaniScriptCore builds; McpSecurityContractTests green
-- Grok profile, setupText, classifier, docs/onboarding, tests — in scope
-- No G2+ code
-- Note (pre-existing, not G1): app target may fail on `ChatSidebarView.swift` (`store` scope) from earlier commits — fix in G4 chat multi-agent if still present
+- GrokAgentSupport + tests green on VaniScriptCore
+- No process launch / UI / Electron (correct)
 
 ## No pending review
 
-Await Hy3 on **G2**.
+Await Hy3 on **G3**.

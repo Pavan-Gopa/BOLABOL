@@ -1295,6 +1295,18 @@ struct AppStoreNativeComplianceTests {
             contentsOfFile: "MCP_INSTRUCTIONS.md",
             encoding: .utf8
         )
+        let chatSource = try String(
+            contentsOfFile: "Sources/VaniScript/Views/ChatSidebarView.swift",
+            encoding: .utf8
+        )
+        let codexAgentSource = try String(
+            contentsOfFile: "Sources/VaniScript/Services/CodexAgentService.swift",
+            encoding: .utf8
+        )
+        let settingsStoreSource = try String(
+            contentsOfFile: "Sources/VaniScript/Services/SettingsDiskStore.swift",
+            encoding: .utf8
+        )
         let appSource = try String(
             contentsOfFile: "Sources/VaniScript/App/VaniScriptApp.swift",
             encoding: .utf8
@@ -1305,19 +1317,50 @@ struct AppStoreNativeComplianceTests {
         #expect(serverSource.contains("inet_addr(\"127.0.0.1\")"))
         #expect(serverSource.contains("attributes: .concurrent"))
         #expect(serverSource.contains("configuration.isAuthorized(headers: request.headers, queryItems: request.queryItems)"))
+        #expect(serverSource.contains("configuration.isAllowedOrigin(request.headers[\"origin\"])"))
+        #expect(serverSource.contains("request.path == \"/sse\""))
+        #expect(serverSource.contains("request.method == \"POST\""))
+        #expect(serverSource.contains("Mcp-Session-Id"))
+        #expect(serverSource.contains("streamableSessionTimeout"))
+        #expect(serverSource.contains("expireInactiveStreamableHttpSessions"))
         #expect(serverSource.contains("McpToolRegistry"))
         #expect(serverSource.contains("McpClientClassifier.profileID"))
         #expect(serverSource.contains("McpActiveClient("))
         #expect(serverSource.contains("store?.updateMcpActiveClients"))
         #expect(serverSource.contains("monitorSseClient"))
-        #expect(serverSource.contains(".definitions(allowMutatingTools: configuration.allowMutatingTools)"))
-        #expect(serverSource.contains("store.executeMcpTool(name: name, arguments: args, allowMutatingTools: allowMutatingTools)"))
+        #expect(serverSource.contains(".definitions(permissions: configuration.permissions)"))
+        #expect(serverSource.contains("store.executeMcpTool(name: name, arguments: args, permissions: permissions)"))
         #expect(!serverSource.contains("Access-Control-Allow-Origin: *"))
         #expect(bridgeSource.contains("VANISCRIPT_MCP_TOKEN"))
         #expect(bridgeSource.contains("mcpAccessToken"))
+        #expect(settingsStoreSource.contains("Int16(0o700)"))
+        #expect(settingsStoreSource.contains("Int16(0o600)"))
         #expect(instructions.contains("The server is disabled by default"))
         #expect(!instructions.localizedCaseInsensitiveContains("Electron"))
         #expect(appSource.components(separatedBy: "workflowStore.configureMcpServer()").count >= 3)
+        #expect(chatSource.contains("arguments: (call.args ?? [:]).mapValues(\\.value)"))
+        #expect(chatSource.contains("case mcp"))
+        #expect(chatSource.contains("case gemini"))
+        #expect(chatSource.contains("executeCodexRequest"))
+        #expect(!chatSource.contains("McpServer.shared.sampleMessage"))
+        #expect(!serverSource.contains("sampling/createMessage"))
+        #expect(codexAgentSource.contains("--ignore-user-config"))
+        #expect(codexAgentSource.contains("--sandbox\", \"read-only"))
+        #expect(codexAgentSource.contains("vaniscript_embedded"))
+        #expect(codexAgentSource.contains("default_tools_approval_mode=\\\"approve\\\""))
+        #expect(codexAgentSource.contains("VANISCRIPT_MCP_TOKEN"))
+        #expect(!codexAgentSource.contains("--dangerously-bypass-approvals-and-sandbox"))
+    }
+
+    @Test("startup model scan does not block the UI or MCP main actor")
+    func startupModelScanRunsOffMainActor() throws {
+        let storeSource = try String(
+            contentsOfFile: "Sources/VaniScript/Stores/WorkflowStore.swift",
+            encoding: .utf8
+        )
+
+        #expect(storeSource.contains("Task.detached(priority: .utility)"))
+        #expect(storeSource.contains("LocalModelScanner.scanForLocalModels()"))
     }
 
     @Test("Settings exposes alphabetized MCP agent profiles")

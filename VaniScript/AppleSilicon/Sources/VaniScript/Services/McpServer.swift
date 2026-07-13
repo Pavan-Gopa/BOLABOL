@@ -23,6 +23,13 @@ final class McpServer: Sendable {
         var lastSeenAt: Date
     }
 
+    private struct StreamableHttpSession: Sendable {
+        var profileID: String
+        var displayName: String
+        var connectedAt: Date
+        var lastSeenAt: Date
+    }
+
     private enum RequestParseError: Error, Equatable, Sendable {
         case incomplete
         case invalidUTF8
@@ -44,10 +51,11 @@ final class McpServer: Sendable {
     private var listenSocket: Int32 = -1
     private var connections = [UUID: Int32]()
     private var sseClients = [UUID: SseClientSession]()
-    private var pendingContinuations = [String: CheckedContinuation<String, Error>]()
+    private var streamableHttpSessions = [UUID: StreamableHttpSession]()
+    private let streamableSessionTimeout: TimeInterval = 120
     
     var hasActiveClients: Bool {
-        !sseClients.isEmpty
+        !sseClients.isEmpty || !streamableHttpSessions.isEmpty
     }
     
     private let serverQueue = DispatchQueue(label: "com.vaniscript.mcp.socket", qos: .userInitiated, attributes: .concurrent)
@@ -70,76 +78,10 @@ final class McpServer: Sendable {
         print("MCP Swift Server listening on http://127.0.0.1:\(configuration.port)")
     }
 
-    func sendRequest(method: String, params: [String: Any]) async throws -> String {
-        guard let firstClient = sseClients.first else {
-            throw NSError(domain: "McpServer", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active MCP client connected"])
-        }
-        let requestId = UUID().uuidString
-        let payload: [String: Any] = [
-            "jsonrpc": "2.0",
-            "method": method,
-            "id": requestId,
-            "params": params
-        ]
-        
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []),
-              let jsonString = String(data: jsonData, encoding: .utf8)
-        else {
-            throw NSError(domain: "McpServer", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize request"])
-        }
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            pendingContinuations[requestId] = continuation
-            sendRaw(socket: firstClient.value.socket, string: "event: message\ndata: \(jsonString)\n\n")
-        }
-    }
-    
-    func sampleMessage(prompt: String, history: [MessageItem]) async throws -> String {
-        var mcpMessages: [[String: Any]] = []
-        for msg in history {
-            let role = msg.sender == "user" ? "user" : "assistant"
-            mcpMessages.append([
-                "role": role,
-                "content": [
-                    "type": "text",
-                    "text": msg.text
-                ]
-            ])
-        }
-        
-        if history.isEmpty || history.last?.text != prompt {
-            mcpMessages.append([
-                "role": "user",
-                "content": [
-                    "type": "text",
-                    "text": prompt
-                ]
-            ])
-        }
-        
-        let params: [String: Any] = [
-            "messages": mcpMessages,
-            "maxTokens": 1024
-        ]
-        
-        let responseStr = try await sendRequest(method: "sampling/createMessage", params: params)
-        guard let responseData = responseStr.data(using: .utf8),
-              let response = try? JSONSerialization.jsonObject(with: responseData, options: []) as? [String: Any]
-        else {
-            throw NSError(domain: "McpServer", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON response"])
-        }
-        
-        guard let contentArray = response["content"] as? [[String: Any]],
-              let firstContent = contentArray.first,
-              let text = firstContent["text"] as? String
-        else {
-            if let contentDict = response["content"] as? [String: Any],
-               let text = contentDict["text"] as? String {
-                return text
-            }
-            throw NSError(domain: "McpServer", code: -4, userInfo: [NSLocalizedDescriptionKey: "Invalid sampling response format"])
-        }
-        return text
+    func hasActiveClient(preferredProfileID: String) -> Bool {
+        let normalizedProfileID = McpAgentProfileCatalog.normalizedProfileID(preferredProfileID)
+        return sseClients.values.contains { $0.profileID == normalizedProfileID }
+            || streamableHttpSessions.values.contains { $0.profileID == normalizedProfileID }
     }
 
     func stop() {
@@ -155,6 +97,7 @@ final class McpServer: Sendable {
         }
         connections.removeAll()
         sseClients.removeAll()
+        streamableHttpSessions.removeAll()
         publishActiveClients()
     }
 
@@ -324,24 +267,58 @@ final class McpServer: Sendable {
     }
 
     private func processRequest(id: UUID, socket: Int32, request: HTTPRequest) {
+        guard configuration.isAllowedOrigin(request.headers["origin"]) else {
+            sendHTTPResponse(socket: socket, statusCode: 403, statusText: "Forbidden", body: "Origin is not allowed")
+            closeConnection(id: id)
+            return
+        }
+
         if request.method == "OPTIONS" {
             sendOptionsResponse(socket: socket)
             closeConnection(id: id)
             return
         }
 
-        if request.path == "/sse", request.method == "GET" {
+        if request.path == "/sse" {
             guard configuration.isAuthorized(headers: request.headers, queryItems: request.queryItems) else {
                 sendHTTPResponse(socket: socket, statusCode: 401, statusText: "Unauthorized", body: "Unauthorized")
                 closeConnection(id: id)
                 return
             }
-            handleSseConnection(id: id, socket: socket, headers: request.headers)
+
+            if request.method == "GET" {
+                handleSseConnection(id: id, socket: socket, headers: request.headers)
+                return
+            }
+
+            if request.method == "POST" {
+                handleStreamableHttpRequest(id: id, socket: socket, request: request)
+                return
+            }
+
+            if request.method == "DELETE" {
+                guard let rawSessionID = request.headers["mcp-session-id"],
+                      let sessionID = UUID(uuidString: rawSessionID),
+                      streamableHttpSessions.removeValue(forKey: sessionID) != nil
+                else {
+                    sendHTTPResponse(socket: socket, statusCode: 404, statusText: "Not Found", body: "Unknown MCP session")
+                    closeConnection(id: id)
+                    return
+                }
+                publishActiveClients()
+                sendHTTPResponse(socket: socket, statusCode: 200, statusText: "OK", body: "")
+                closeConnection(id: id)
+                return
+            }
+
+            sendHTTPResponse(socket: socket, statusCode: 405, statusText: "Method Not Allowed", body: "Method Not Allowed")
+            closeConnection(id: id)
             return
         }
 
         if request.path == "/message", request.method == "POST" {
-            guard let sessionId = request.queryItems["sessionId"],
+            guard configuration.isAuthorized(headers: request.headers, queryItems: request.queryItems),
+                  let sessionId = request.queryItems["sessionId"],
                   let sseClientUUID = UUID(uuidString: sessionId),
                   sseClients[sseClientUUID] != nil
             else {
@@ -378,6 +355,118 @@ final class McpServer: Sendable {
         }
     }
 
+    private func handleStreamableHttpRequest(id: UUID, socket: Int32, request: HTTPRequest) {
+        guard let data = request.body.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let method = json["method"] as? String
+        else {
+            sendHTTPResponse(socket: socket, statusCode: 400, statusText: "Bad Request", body: "Invalid JSON-RPC request")
+            closeConnection(id: id)
+            return
+        }
+
+        if method == "initialize" {
+            let sessionID = UUID()
+            registerStreamableHttpSession(id: sessionID, json: json, userAgent: request.headers["user-agent"])
+            let requestedProtocolVersion = ((json["params"] as? [String: Any])?["protocolVersion"] as? String) ?? "2025-03-26"
+            let response: [String: Any] = [
+                "jsonrpc": "2.0",
+                "id": json["id"] ?? NSNull(),
+                "result": [
+                    "protocolVersion": requestedProtocolVersion,
+                    "capabilities": ["tools": ["listChanged": false]],
+                    "serverInfo": [
+                        "name": "vaniscript-swift-mcp",
+                        "version": "1.1.0",
+                    ],
+                ],
+            ]
+            sendJsonRpcHTTPResponse(
+                socket: socket,
+                payload: response,
+                additionalHeaders: ["Mcp-Session-Id: \(sessionID.uuidString)"]
+            )
+            closeConnection(id: id)
+            return
+        }
+
+        guard let rawSessionID = request.headers["mcp-session-id"],
+              let sessionID = UUID(uuidString: rawSessionID),
+              streamableHttpSessions[sessionID] != nil
+        else {
+            sendHTTPResponse(socket: socket, statusCode: 404, statusText: "Not Found", body: "Unknown MCP session")
+            closeConnection(id: id)
+            return
+        }
+
+        refreshStreamableHttpSession(id: sessionID, json: json, userAgent: request.headers["user-agent"])
+
+        if method == "notifications/initialized" {
+            sendHTTPResponse(socket: socket, statusCode: 202, statusText: "Accepted", body: "", contentType: "application/json")
+            closeConnection(id: id)
+            return
+        }
+
+        guard let requestID = json["id"] else {
+            sendHTTPResponse(socket: socket, statusCode: 202, statusText: "Accepted", body: "", contentType: "application/json")
+            closeConnection(id: id)
+            return
+        }
+
+        if method == "tools/list" {
+            let response: [String: Any] = [
+                "jsonrpc": "2.0",
+                "id": requestID,
+                "result": [
+                    "tools": McpToolRegistry
+                        .definitions(permissions: configuration.permissions)
+                        .map(\.mcpDictionary),
+                ],
+            ]
+            sendJsonRpcHTTPResponse(socket: socket, payload: response)
+            closeConnection(id: id)
+            return
+        }
+
+        if method == "tools/call" {
+            guard let params = json["params"] as? [String: Any],
+                  let toolName = params["name"] as? String
+            else {
+                sendJsonRpcHTTPError(socket: socket, requestID: requestID, code: -32602, message: "Missing tool name")
+                closeConnection(id: id)
+                return
+            }
+            guard McpToolRegistry.isAllowed(toolName, permissions: configuration.permissions) else {
+                sendJsonRpcHTTPError(socket: socket, requestID: requestID, code: -32601, message: "Tool is not available in the current MCP policy")
+                closeConnection(id: id)
+                return
+            }
+
+            let args = params["arguments"] as? [String: Any] ?? [:]
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                do {
+                    let result = try await self.executeToolOnMainActor(
+                        name: toolName,
+                        args: args,
+                        permissions: self.configuration.permissions
+                    )
+                    self.sendJsonRpcHTTPResponse(
+                        socket: socket,
+                        payload: self.toolCallResponse(requestID: requestID, result: result)
+                    )
+                } catch {
+                    self.sendJsonRpcHTTPError(socket: socket, requestID: requestID, code: -32603, message: error.localizedDescription)
+                }
+                self.closeConnection(id: id)
+            }
+            return
+        }
+
+        sendJsonRpcHTTPError(socket: socket, requestID: requestID, code: -32601, message: "Unknown method")
+        closeConnection(id: id)
+    }
+
     nonisolated private func monitorSseClient(id: UUID, socket: Int32) {
         var byte = UInt8(0)
         while true {
@@ -401,34 +490,6 @@ final class McpServer: Sendable {
         }
 
         refreshSseClient(id: sseClientUUID, json: json)
-
-        // Handle JSON-RPC response from the client
-        if json["method"] == nil {
-            let reqIdStr: String
-            if let idInt = json["id"] as? Int {
-                reqIdStr = String(idInt)
-            } else if let idStr = json["id"] as? String {
-                reqIdStr = idStr
-            } else {
-                reqIdStr = ""
-            }
-            
-            if !reqIdStr.isEmpty, let continuation = pendingContinuations.removeValue(forKey: reqIdStr) {
-                if let error = json["error"] as? [String: Any] {
-                    let msg = error["message"] as? String ?? "Unknown error"
-                    continuation.resume(throwing: NSError(domain: "McpClient", code: -1, userInfo: [NSLocalizedDescriptionKey: msg]))
-                } else {
-                    let resultVal = json["result"] ?? [:]
-                    if let resultData = try? JSONSerialization.data(withJSONObject: resultVal, options: []),
-                       let resultStr = String(data: resultData, encoding: .utf8) {
-                        continuation.resume(returning: resultStr)
-                    } else {
-                        continuation.resume(returning: "{}")
-                    }
-                }
-            }
-            return
-        }
 
         guard let method = json["method"] as? String else { return }
 
@@ -465,7 +526,7 @@ final class McpServer: Sendable {
                 "id": requestId,
                 "result": [
                     "tools": McpToolRegistry
-                        .definitions(allowMutatingTools: configuration.allowMutatingTools)
+                        .definitions(permissions: configuration.permissions)
                         .map(\.mcpDictionary),
                 ],
             ]
@@ -481,7 +542,7 @@ final class McpServer: Sendable {
                 return
             }
 
-            guard McpToolRegistry.isAllowed(toolName, allowMutatingTools: configuration.allowMutatingTools) else {
+            guard McpToolRegistry.isAllowed(toolName, permissions: configuration.permissions) else {
                 sendJsonRpcError(socket: sseSocket, requestId: requestId, code: -32601, message: "Tool is not available in the current MCP policy")
                 return
             }
@@ -493,7 +554,7 @@ final class McpServer: Sendable {
                     let result = try await executeToolOnMainActor(
                         name: toolName,
                         args: args,
-                        allowMutatingTools: configuration.allowMutatingTools
+                        permissions: configuration.permissions
                     )
                     let response: [String: Any] = [
                         "jsonrpc": "2.0",
@@ -521,29 +582,55 @@ final class McpServer: Sendable {
         sendJsonRpcError(socket: sseSocket, requestId: requestId, code: -32601, message: "Unknown method")
     }
 
-    private func executeToolOnMainActor(name: String, args: [String: Any], allowMutatingTools: Bool) async throws -> [String: Any] {
+    private func executeToolOnMainActor(name: String, args: [String: Any], permissions: McpPermissionSet) async throws -> [String: Any] {
         guard let store else {
             throw NSError(domain: "McpServer", code: -1, userInfo: [NSLocalizedDescriptionKey: "WorkflowStore is not initialized."])
         }
-        return try await store.executeMcpTool(name: name, arguments: args, allowMutatingTools: allowMutatingTools)
+        return try await store.executeMcpTool(name: name, arguments: args, permissions: permissions)
     }
 
-    private func sendHTTPResponse(socket: Int32, statusCode: Int, statusText: String, body: String) {
-        let headers = [
+    private func toolCallResponse(requestID: Any, result: [String: Any]) -> [String: Any] {
+        [
+            "jsonrpc": "2.0",
+            "id": requestID,
+            "result": [
+                "content": [
+                    [
+                        "type": "text",
+                        "text": String(
+                            data: (try? JSONSerialization.data(withJSONObject: result, options: .prettyPrinted)) ?? Data("{}".utf8),
+                            encoding: .utf8
+                        ) ?? "{}",
+                    ],
+                ],
+            ],
+        ]
+    }
+
+    private func sendHTTPResponse(
+        socket: Int32,
+        statusCode: Int,
+        statusText: String,
+        body: String,
+        contentType: String = "text/plain; charset=utf-8",
+        additionalHeaders: [String] = []
+    ) {
+        let headers = ([
             "HTTP/1.1 \(statusCode) \(statusText)",
-            "Content-Type: text/plain; charset=utf-8",
+            "Content-Type: \(contentType)",
             "Content-Length: \(body.utf8.count)",
+        ] + additionalHeaders + [
             "Connection: close",
             "\r\n",
-        ].joined(separator: "\r\n")
+        ]).joined(separator: "\r\n")
         sendRaw(socket: socket, string: headers + body)
     }
 
     private func sendOptionsResponse(socket: Int32) {
         let headers = [
             "HTTP/1.1 204 No Content",
-            "Access-Control-Allow-Methods: GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers: Authorization, X-VaniScript-MCP-Token, Content-Type",
+            "Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers: Authorization, X-VaniScript-MCP-Token, Content-Type, Mcp-Session-Id",
             "Connection: close",
             "\r\n",
         ].joined(separator: "\r\n")
@@ -560,6 +647,37 @@ final class McpServer: Sendable {
             ],
         ]
         sendSseMessage(socket: socket, payload: response)
+    }
+
+    private func sendJsonRpcHTTPError(socket: Int32, requestID: Any, code: Int, message: String) {
+        sendJsonRpcHTTPResponse(
+            socket: socket,
+            payload: [
+                "jsonrpc": "2.0",
+                "id": requestID,
+                "error": [
+                    "code": code,
+                    "message": message,
+                ],
+            ]
+        )
+    }
+
+    private func sendJsonRpcHTTPResponse(socket: Int32, payload: [String: Any], additionalHeaders: [String] = []) {
+        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []),
+              let body = String(data: data, encoding: .utf8)
+        else {
+            sendHTTPResponse(socket: socket, statusCode: 500, statusText: "Internal Server Error", body: "Failed to encode JSON-RPC response")
+            return
+        }
+        sendHTTPResponse(
+            socket: socket,
+            statusCode: 200,
+            statusText: "OK",
+            body: body,
+            contentType: "application/json",
+            additionalHeaders: additionalHeaders
+        )
     }
 
     private func sendSseMessage(socket: Int32, payload: [String: Any]) {
@@ -628,17 +746,78 @@ final class McpServer: Sendable {
         publishActiveClients()
     }
 
+    private func registerStreamableHttpSession(id: UUID, json: [String: Any], userAgent: String?) {
+        let clientName = ((json["params"] as? [String: Any])?["clientInfo"] as? [String: Any])?["name"] as? String
+        let profileID = McpClientClassifier.profileID(clientName: clientName, userAgent: userAgent)
+        let displayName = profileID
+            .map { McpAgentProfileCatalog.profile(forRawID: $0).displayName }
+            ?? clientName?.trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? "MCP Client"
+        let now = Date()
+        streamableHttpSessions[id] = StreamableHttpSession(
+            profileID: profileID ?? "unknown",
+            displayName: displayName,
+            connectedAt: now,
+            lastSeenAt: now
+        )
+        publishActiveClients()
+        scheduleStreamableSessionExpiry()
+    }
+
+    private func refreshStreamableHttpSession(id: UUID, json: [String: Any], userAgent: String?) {
+        guard var session = streamableHttpSessions[id] else { return }
+        let clientName = ((json["params"] as? [String: Any])?["clientInfo"] as? [String: Any])?["name"] as? String
+        if let profileID = McpClientClassifier.profileID(clientName: clientName, userAgent: userAgent) {
+            session.profileID = profileID
+            session.displayName = McpAgentProfileCatalog.profile(forRawID: profileID).displayName
+        }
+        session.lastSeenAt = Date()
+        streamableHttpSessions[id] = session
+        publishActiveClients()
+        scheduleStreamableSessionExpiry()
+    }
+
+    private func scheduleStreamableSessionExpiry() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: .seconds(self.streamableSessionTimeout))
+            self.expireInactiveStreamableHttpSessions()
+        }
+    }
+
+    private func expireInactiveStreamableHttpSessions() {
+        let cutoff = Date().addingTimeInterval(-streamableSessionTimeout)
+        let staleSessionIDs = streamableHttpSessions.compactMap { id, session in
+            session.lastSeenAt < cutoff ? id : nil
+        }
+        guard !staleSessionIDs.isEmpty else { return }
+        for sessionID in staleSessionIDs {
+            streamableHttpSessions.removeValue(forKey: sessionID)
+        }
+        publishActiveClients()
+    }
+
     private func publishActiveClients() {
+        let legacyClients = sseClients.map { id, session in
+            McpActiveClient(
+                id: id,
+                profileID: session.profileID,
+                displayName: session.displayName,
+                connectedAt: session.connectedAt,
+                lastSeenAt: session.lastSeenAt
+            )
+        }
+        let streamableClients = streamableHttpSessions.map { id, session in
+            McpActiveClient(
+                id: id,
+                profileID: session.profileID,
+                displayName: session.displayName,
+                connectedAt: session.connectedAt,
+                lastSeenAt: session.lastSeenAt
+            )
+        }
         store?.updateMcpActiveClients(
-            sseClients.map { id, session in
-                McpActiveClient(
-                    id: id,
-                    profileID: session.profileID,
-                    displayName: session.displayName,
-                    connectedAt: session.connectedAt,
-                    lastSeenAt: session.lastSeenAt
-                )
-            }
+            legacyClients + streamableClients
         )
     }
 

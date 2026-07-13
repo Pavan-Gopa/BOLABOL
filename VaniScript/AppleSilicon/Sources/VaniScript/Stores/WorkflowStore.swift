@@ -121,8 +121,14 @@ final class WorkflowStore: ObservableObject {
     private let shortsCloudEngine = CloudTextTranslationEngine()
     private let systemAudioRecorder = SystemAudioRecorder()
     private let microphoneAudioRecorder = MicrophoneAudioRecorder()
+    private let mcpConfirmationStore = McpConfirmationStore()
+    private let mcpJobManager = McpJobManager()
+    private let mcpAuditStore = McpAuditStore()
+    private let mcpRequestCache = McpRequestCache()
+    private let mcpExportStore = McpExportStore()
     private var visualEditorReturnScreen: UniversalWorkflowScreen = .export
     private var processingActivity: NSObjectProtocol?
+    private var processingTask: Task<Void, Never>?
     @Published private(set) var isProcessingSegment = false
     private var audioPlayer: AVPlayer?
     private var playbackObserver: Any?
@@ -2634,6 +2640,10 @@ final class WorkflowStore: ObservableObject {
         let translationProviderChanged = workflow.settings.translationProvider != previousSettings.translationProvider
         let mcpSettingsChanged = workflow.settings.mcpServerEnabled != previousSettings.mcpServerEnabled
             || workflow.settings.mcpAllowMutatingTools != previousSettings.mcpAllowMutatingTools
+            || workflow.settings.mcpAllowProcessingTools != previousSettings.mcpAllowProcessingTools
+            || workflow.settings.mcpAllowFileTools != previousSettings.mcpAllowFileTools
+            || workflow.settings.mcpAllowNetworkTools != previousSettings.mcpAllowNetworkTools
+            || workflow.settings.mcpAllowDestructiveTools != previousSettings.mcpAllowDestructiveTools
             || workflow.settings.mcpAccessToken != previousSettings.mcpAccessToken
         workflow.synchronizeProviderSelections(
             previousSettings: previousSettings,
@@ -3214,11 +3224,12 @@ final class WorkflowStore: ObservableObject {
         isProcessingSegment = true
         beginNativeProcessingActivity()
 
-        Task {
+        processingTask = Task {
             await processCurrentSession()
             await MainActor.run {
                 self.isProcessingSegment = false
                 self.endNativeProcessingActivity()
+                self.processingTask = nil
             }
         }
     }
@@ -3264,6 +3275,8 @@ final class WorkflowStore: ObservableObject {
             options: [.userInitiated, .idleSystemSleepDisabled, .suddenTerminationDisabled, .automaticTerminationDisabled],
             reason: "VaniScript native segment processing"
         )
+
+        guard !Task.isCancelled else { return }
     }
 
     private func endNativeProcessingActivity() {
@@ -3287,7 +3300,9 @@ final class WorkflowStore: ObservableObject {
         Task {
             try? await Task.sleep(nanoseconds: 800_000_000)
 
-            let found = LocalModelScanner.scanForLocalModels()
+            let found = await Task.detached(priority: .utility) {
+                LocalModelScanner.scanForLocalModels()
+            }.value
 
             await MainActor.run {
                 var updatedASR = 0
@@ -3345,34 +3360,2792 @@ final class WorkflowStore: ObservableObject {
         }
     }
 
-    public func executeMcpTool(name: String, arguments: [String: Any], allowMutatingTools: Bool = true) async throws -> [String: Any] {
+    private func startMcpTranslationJob(name: String, arguments: [String: Any]) throws -> [String: Any] {
+        guard let session = workflow.session else {
+            throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active VaniScript session"])
+        }
+        let currentRevision = McpProjectRevision.make(workflow: workflow)
+        guard let expectedRevision = arguments["expectedRevision"] as? String,
+              expectedRevision == currentRevision else {
+            throw NSError(domain: "WorkflowStore", code: -6, userInfo: [NSLocalizedDescriptionKey: "STALE_REVISION: Translation jobs require the latest projectRevision from a read tool."])
+        }
+        let requestedLanguage = (arguments["language"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let language = TranslationArchive.displayLanguage(
+            requestedLanguage?.isEmpty == false
+                ? requestedLanguage!
+                : (session.selectedTranslationLanguage ?? archiveTargetLanguage)
+        )
+        guard TranslationArchive.isRealLanguage(language) else {
+            throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Choose or provide a real target language"])
+        }
+
+        let jobID: String
+        switch name {
+        case "translate_chunk", "retry_chunk_translation":
+            let chunkIndex = try mcpChunkArrayIndex(arguments["chunkId"], session: session)
+            jobID = mcpJobManager.start(
+                kind: name,
+                message: "Translating segment \(session.chunks[chunkIndex].index + 1) to \(language)"
+            ) { [weak self] reporter in
+                guard let self else { throw CancellationError() }
+                reporter.update(progress: 0.05, stage: "Preparing translation")
+                let result = try await self.performMcpChunkTranslation(
+                    chunkIndex: chunkIndex,
+                    language: language,
+                    expectedRevision: currentRevision,
+                    reporter: reporter
+                )
+                reporter.update(progress: 1, stage: "Translation complete")
+                return result
+            }
+        case "translate_cue":
+            let chunkIndex = try mcpChunkArrayIndex(arguments["chunkId"], session: session)
+            let cueIndex = try mcpCueArrayIndex(arguments: arguments, chunk: session.chunks[chunkIndex], side: "original")
+            jobID = mcpJobManager.start(
+                kind: name,
+                message: "Translating cue \(cueIndex + 1) in segment \(session.chunks[chunkIndex].index + 1)"
+            ) { [weak self] reporter in
+                guard let self else { throw CancellationError() }
+                reporter.update(progress: 0.05, stage: "Preparing cue translation")
+                let result = try await self.performMcpCueTranslation(
+                    chunkIndex: chunkIndex,
+                    cueIndex: cueIndex,
+                    language: language,
+                    expectedRevision: currentRevision,
+                    reporter: reporter
+                )
+                reporter.update(progress: 1, stage: "Cue translation complete")
+                return result
+            }
+        case "translate_pending_chunks":
+            let onlyUntranslated = arguments["onlyUntranslated"] as? Bool ?? true
+            let indexes = session.chunks.indices.filter { index in
+                let sourceExists = !session.chunks[index].original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                return sourceExists && (!onlyUntranslated || session.chunks[index].translationText(for: language) == nil)
+            }
+            guard !indexes.isEmpty else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "No matching segments require translation"])
+            }
+            jobID = mcpJobManager.start(
+                kind: name,
+                message: "Translating \(indexes.count) segment(s) to \(language)"
+            ) { [weak self] reporter in
+                guard let self else { throw CancellationError() }
+                var revision = currentRevision
+                var translatedIDs = [String]()
+                for (position, chunkIndex) in indexes.enumerated() {
+                    try reporter.checkCancellation()
+                    reporter.update(
+                        progress: Double(position) / Double(indexes.count),
+                        stage: "Translating segment \(position + 1) of \(indexes.count)"
+                    )
+                    let result = try await self.performMcpChunkTranslation(
+                        chunkIndex: chunkIndex,
+                        language: language,
+                        expectedRevision: revision,
+                        reporter: reporter
+                    )
+                    translatedIDs.append(result["chunkId"] as? String ?? "")
+                    revision = McpProjectRevision.make(workflow: self.workflow)
+                }
+                reporter.update(progress: 1, stage: "Translation batch complete")
+                return ["translatedChunkIds": translatedIDs, "translatedCount": translatedIDs.count]
+            }
+        case "polish_translation":
+            let scope = ((arguments["scope"] as? String) ?? "chunk").lowercased()
+            guard ["cue", "chunk", "project"].contains(scope) else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "scope must be cue, chunk, or project"])
+            }
+            let indexes: [Int]
+            if scope == "project" {
+                indexes = session.chunks.indices.filter {
+                    session.chunks[$0].translationText(for: language) != nil
+                }
+            } else {
+                indexes = [try mcpChunkArrayIndex(arguments["chunkId"], session: session)]
+            }
+            guard !indexes.isEmpty else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "No translated text is available to polish"])
+            }
+            let cueIndex = scope == "cue"
+                ? try mcpCueArrayIndex(arguments: arguments, chunk: session.chunks[indexes[0]], side: "translated")
+                : nil
+            jobID = mcpJobManager.start(
+                kind: name,
+                message: "Polishing \(scope) translation in \(language)"
+            ) { [weak self] reporter in
+                guard let self else { throw CancellationError() }
+                var revision = currentRevision
+                var polishedIDs = [String]()
+                for (position, chunkIndex) in indexes.enumerated() {
+                    try reporter.checkCancellation()
+                    reporter.update(
+                        progress: Double(position) / Double(indexes.count),
+                        stage: "Polishing segment \(position + 1) of \(indexes.count)"
+                    )
+                    let result = try await self.performMcpTranslationPolish(
+                        chunkIndex: chunkIndex,
+                        cueIndex: cueIndex,
+                        language: language,
+                        expectedRevision: revision,
+                        reporter: reporter
+                    )
+                    polishedIDs.append(result["chunkId"] as? String ?? "")
+                    revision = McpProjectRevision.make(workflow: self.workflow)
+                }
+                reporter.update(progress: 1, stage: "Polish complete")
+                return ["polishedChunkIds": polishedIDs, "polishedCount": polishedIDs.count]
+            }
+        default:
+            throw NSError(domain: "WorkflowStore", code: -4, userInfo: [NSLocalizedDescriptionKey: "Unknown translation job tool \(name)"])
+        }
+
+        return [
+            "success": true,
+            "jobId": jobID,
+            "status": McpJobStatus.queued.rawValue,
+            "projectRevision": currentRevision,
+        ]
+    }
+
+    private func performMcpChunkTranslation(
+        chunkIndex: Int,
+        language: String,
+        expectedRevision: String,
+        reporter: McpJobReporter
+    ) async throws -> [String: Any] {
+        try reporter.checkCancellation()
+        guard McpProjectRevision.make(workflow: workflow) == expectedRevision,
+              let session = workflow.session,
+              session.chunks.indices.contains(chunkIndex) else {
+            throw NSError(domain: "WorkflowStore", code: -6, userInfo: [NSLocalizedDescriptionKey: "STALE_REVISION: Project changed before translation could start"])
+        }
+        let chunk = session.chunks[chunkIndex]
+        let source = chunk.original.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !source.isEmpty else {
+            throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "The selected segment has no source transcript"])
+        }
+        let cloudProvider = activeCloudTranslationProvider(for: session)
+        let model = cloudProvider == nil ? activeTranslationModel(for: session) : nil
+        guard cloudProvider != nil || model != nil else {
+            throw TranslationRoutingError.noTranslationProvider
+        }
+
+        reporter.update(progress: 0.2, stage: "Running translation model")
+        let translatedCues: [TranscriptCue]
+        let translated: String
+        let providerID: String
+        if let cloudProvider {
+            translatedCues = try await translateCurrentStoredCuesWithCloud(
+                chunk.originalCues ?? [],
+                targetLanguage: language,
+                metadata: session.metadata,
+                provider: cloudProvider
+            )
+            translated = translatedCues.isEmpty
+                ? try await reviewCloudEngine.translate(
+                    text: source,
+                    targetLang: language,
+                    metadata: session.metadata,
+                    glossary: workflow.settings.glossary,
+                    provider: cloudProvider,
+                    promptPresets: workflow.settings.promptPresets
+                )
+                : translatedCues.map(\.text).joined(separator: "\n")
+            providerID = cloudProvider.id
+        } else if let model {
+            translatedCues = try await translateCurrentStoredCues(
+                chunk.originalCues ?? [],
+                targetLanguage: language,
+                metadata: session.metadata,
+                model: model
+            )
+            translated = translatedCues.isEmpty
+                ? try await reviewMLXEngine.translate(
+                    text: source,
+                    targetLang: language,
+                    metadata: session.metadata,
+                    glossary: workflow.settings.glossary,
+                    model: model,
+                    promptPresets: workflow.settings.promptPresets
+                )
+                : translatedCues.map(\.text).joined(separator: "\n")
+            providerID = model.id
+        } else {
+            throw TranslationRoutingError.noTranslationProvider
+        }
+        try reporter.checkCancellation()
+        guard TranslationArchive.isUsableTranslationText(translated),
+              McpProjectRevision.make(workflow: workflow) == expectedRevision,
+              var latest = workflow.session,
+              latest.chunks.indices.contains(chunkIndex) else {
+            throw NSError(domain: "WorkflowStore", code: -6, userInfo: [NSLocalizedDescriptionKey: "Translation was empty or the project changed before it could be saved"])
+        }
+        latest.chunks[chunkIndex].translated = translated
+        latest.chunks[chunkIndex].setTranslation(
+            translated,
+            language: language,
+            provider: providerID,
+            updatedAt: isoString(clock()),
+            cues: translatedCues.isEmpty ? nil : translatedCues
+        )
+        latest.chunks[chunkIndex].status = .done
+        latest.setActiveTranslationLanguage(language)
+        workflow.session = latest
+        workflow.targetLang = language
+        archiveTargetLanguage = language
+        saveCurrentProject()
+        return [
+            "chunkId": McpEntityIdentifier.chunkID(latest.chunks[chunkIndex]),
+            "language": language,
+            "provider": providerID,
+            "projectRevision": McpProjectRevision.make(workflow: workflow),
+        ]
+    }
+
+    private func performMcpCueTranslation(
+        chunkIndex: Int,
+        cueIndex: Int,
+        language: String,
+        expectedRevision: String,
+        reporter: McpJobReporter
+    ) async throws -> [String: Any] {
+        try reporter.checkCancellation()
+        guard McpProjectRevision.make(workflow: workflow) == expectedRevision,
+              let session = workflow.session,
+              session.chunks.indices.contains(chunkIndex),
+              let sourceCues = session.chunks[chunkIndex].originalCues,
+              sourceCues.indices.contains(cueIndex) else {
+            throw NSError(domain: "WorkflowStore", code: -6, userInfo: [NSLocalizedDescriptionKey: "STALE_REVISION: Cue changed before translation could start"])
+        }
+        let sourceCue = sourceCues[cueIndex]
+        let cloudProvider = activeCloudTranslationProvider(for: session)
+        let model = cloudProvider == nil ? activeTranslationModel(for: session) : nil
+        let translated: String
+        let providerID: String
+        reporter.update(progress: 0.2, stage: "Running cue translation model")
+        if let cloudProvider {
+            translated = try await reviewCloudEngine.translate(
+                text: sourceCue.text,
+                targetLang: language,
+                metadata: session.metadata,
+                glossary: workflow.settings.glossary,
+                provider: cloudProvider,
+                promptPresets: workflow.settings.promptPresets
+            )
+            providerID = cloudProvider.id
+        } else if let model {
+            translated = try await reviewMLXEngine.translate(
+                text: sourceCue.text,
+                targetLang: language,
+                metadata: session.metadata,
+                glossary: workflow.settings.glossary,
+                model: model,
+                promptPresets: workflow.settings.promptPresets
+            )
+            providerID = model.id
+        } else {
+            throw TranslationRoutingError.noTranslationProvider
+        }
+        try reporter.checkCancellation()
+        guard TranslationArchive.isUsableTranslationText(translated),
+              McpProjectRevision.make(workflow: workflow) == expectedRevision,
+              var latest = workflow.session,
+              latest.chunks.indices.contains(chunkIndex) else {
+            throw NSError(domain: "WorkflowStore", code: -6, userInfo: [NSLocalizedDescriptionKey: "Cue translation was empty or the project changed before save"])
+        }
+        var targetCues = latest.chunks[chunkIndex].translationCues(for: language)
+        if targetCues.count != sourceCues.count {
+            targetCues = sourceCues.map { TranscriptCue(startSec: $0.startSec, endSec: $0.endSec, text: "") }
+        }
+        targetCues[cueIndex].text = translated
+        targetCues[cueIndex].words = NativeLLMPromptBuilder.approximateWords(for: translated, source: sourceCue)
+        let finalText = targetCues.map(\.text).joined(separator: "\n")
+        latest.chunks[chunkIndex].translated = finalText
+        latest.chunks[chunkIndex].setTranslation(
+            finalText,
+            language: language,
+            provider: providerID,
+            updatedAt: isoString(clock()),
+            cues: targetCues
+        )
+        latest.setActiveTranslationLanguage(language)
+        workflow.session = latest
+        workflow.targetLang = language
+        archiveTargetLanguage = language
+        saveCurrentProject()
+        return [
+            "chunkId": McpEntityIdentifier.chunkID(latest.chunks[chunkIndex]),
+            "cueId": McpEntityIdentifier.cueID(chunk: latest.chunks[chunkIndex], side: "translated", index: cueIndex),
+            "language": language,
+            "provider": providerID,
+        ]
+    }
+
+    private func performMcpTranslationPolish(
+        chunkIndex: Int,
+        cueIndex: Int?,
+        language: String,
+        expectedRevision: String,
+        reporter: McpJobReporter
+    ) async throws -> [String: Any] {
+        try reporter.checkCancellation()
+        guard McpProjectRevision.make(workflow: workflow) == expectedRevision,
+              let session = workflow.session,
+              session.chunks.indices.contains(chunkIndex),
+              let model = activeTranslationModel(for: session) else {
+            throw NSError(domain: "WorkflowStore", code: -6, userInfo: [NSLocalizedDescriptionKey: "Project changed or no downloaded MLX model is available for polishing"])
+        }
+        let chunk = session.chunks[chunkIndex]
+        var targetCues = chunk.translationCues(for: language)
+        let text: String
+        if let cueIndex {
+            guard targetCues.indices.contains(cueIndex) else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Translated cue is not available"])
+            }
+            text = targetCues[cueIndex].text
+        } else {
+            text = chunk.translationText(for: language) ?? chunk.translated
+        }
+        guard TranslationArchive.isUsableTranslationText(text) else {
+            throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "No usable translated text is available to polish"])
+        }
+        reporter.update(progress: 0.2, stage: "Running polish model")
+        let polished = try await reviewMLXEngine.polish(
+            text: text,
+            targetLang: language,
+            model: model,
+            lecturer: session.metadata.lecturer,
+            glossary: workflow.settings.glossary,
+            promptPresets: workflow.settings.promptPresets
+        )
+        try reporter.checkCancellation()
+        guard TranslationArchive.isUsableTranslationText(polished),
+              McpProjectRevision.make(workflow: workflow) == expectedRevision,
+              var latest = workflow.session else {
+            throw NSError(domain: "WorkflowStore", code: -6, userInfo: [NSLocalizedDescriptionKey: "Polish result was empty or the project changed before save"])
+        }
+        if let cueIndex {
+            targetCues[cueIndex].text = polished
+            targetCues[cueIndex].words = NativeLLMPromptBuilder.approximateWords(for: polished, source: targetCues[cueIndex])
+        } else {
+            targetCues = WorkflowStore.reconstructCues(from: polished, matching: chunk.originalCues ?? [])
+        }
+        let finalText = cueIndex == nil ? polished : targetCues.map(\.text).joined(separator: "\n")
+        latest.chunks[chunkIndex].translated = finalText
+        latest.chunks[chunkIndex].setTranslation(
+            finalText,
+            language: language,
+            provider: model.id,
+            updatedAt: isoString(clock()),
+            cues: targetCues.isEmpty ? nil : targetCues
+        )
+        latest.setActiveTranslationLanguage(language)
+        workflow.session = latest
+        workflow.targetLang = language
+        archiveTargetLanguage = language
+        saveCurrentProject()
+        return [
+            "chunkId": McpEntityIdentifier.chunkID(latest.chunks[chunkIndex]),
+            "language": language,
+            "scope": cueIndex == nil ? "chunk" : "cue",
+        ]
+    }
+
+    private func mcpChunkArrayIndex(_ rawValue: Any?, session: SessionState) throws -> Int {
+        guard let chunkID = rawValue as? String,
+              let stableIndex = McpEntityIdentifier.chunkIndex(from: chunkID),
+              let arrayIndex = session.chunks.firstIndex(where: { $0.index == stableIndex }) else {
+            throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Unknown or missing chunkId. Call list_chunks first."])
+        }
+        return arrayIndex
+    }
+
+    private func mcpCueArrayIndex(arguments: [String: Any], chunk: ChunkData, side: String) throws -> Int {
+        let cues = side == "original"
+            ? (chunk.originalCues ?? [])
+            : chunk.translationCues(for: arguments["language"] as? String ?? workflow.session?.selectedTranslationLanguage)
+        if let cueID = arguments["cueId"] as? String,
+           let index = cues.indices.first(where: {
+               McpEntityIdentifier.cueID(chunk: chunk, side: side, index: $0) == cueID
+           }) {
+            return index
+        }
+        if let cueIndex = McpToolArguments.wholeNumber(arguments["cueIndex"]), cues.indices.contains(cueIndex) {
+            return cueIndex
+        }
+        throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Unknown cue reference. Call get_chunk_cues first."])
+    }
+
+    private func executeMcpWorkspaceTool(
+        name: String,
+        arguments: [String: Any],
+        permissions: McpPermissionSet
+    ) async throws -> [String: Any]? {
+        switch name {
+        case "list_projects":
+            let cursor = max(0, McpToolArguments.wholeNumber(arguments["cursor"]) ?? 0)
+            let limit = max(1, min(100, McpToolArguments.wholeNumber(arguments["limit"]) ?? 30))
+            let sorted = ProjectArchive.sortedRecent(projects)
+            let page = Array(sorted.dropFirst(cursor).prefix(limit))
+            return [
+                "projects": page.map { mcpProjectSummary($0) },
+                "cursor": cursor,
+                "nextCursor": cursor + page.count,
+                "hasMore": cursor + page.count < sorted.count,
+                "total": sorted.count,
+                "activeProjectId": currentProjectID ?? "",
+            ]
+
+        case "get_project_summary":
+            guard let projectID = mcpString(arguments["projectId"]),
+                  let record = projects.first(where: { $0.id == projectID }) else {
+                throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown projectId")
+            }
+            return ["project": mcpProjectSummary(record), "isActive": currentProjectID == projectID]
+
+        case "open_project":
+            guard let projectID = mcpString(arguments["projectId"]),
+                  projects.contains(where: { $0.id == projectID }) else {
+                throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown projectId")
+            }
+            let screen = mcpString(arguments["screen"]) ?? "review"
+            var chunkIndex: Int?
+            if let chunkID = mcpString(arguments["chunkId"]), let stable = McpEntityIdentifier.chunkIndex(from: chunkID) {
+                chunkIndex = projects.first(where: { $0.id == projectID })?.session.chunks.firstIndex(where: { $0.index == stable })
+                if chunkIndex == nil { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown chunkId in project") }
+            }
+            // Open through the non-processing route, then select the requested workspace.
+            openProject(id: projectID, chunkIndex: chunkIndex, openExport: true)
+            workflow.screen = screen == "export" ? .export : .review
+            return [
+                "success": true,
+                "projectId": projectID,
+                "screen": workflow.screen.rawValue,
+                "projectRevision": McpProjectRevision.make(workflow: workflow),
+            ]
+
+        case "save_project":
+            guard currentProjectID != nil, workflow.session != nil else {
+                throw mcpError(-1, "NO_ACTIVE_PROJECT: No project is open")
+            }
+            saveCurrentProject()
+            return ["success": true, "projectId": currentProjectID ?? "", "message": "Project saved"]
+
+        case "reset_session":
+            let revision = McpProjectRevision.make(workflow: workflow)
+            let fingerprint = currentProjectID ?? "unsaved-session"
+            if arguments["dryRun"] as? Bool ?? true {
+                let token = mcpConfirmationStore.issue(
+                    operation: "reset_session",
+                    fingerprint: fingerprint,
+                    projectRevision: revision
+                )
+                return [
+                    "dryRun": true,
+                    "activeProjectId": currentProjectID ?? "",
+                    "hasUnsavedSession": workflow.session != nil,
+                    "confirmationToken": token,
+                    "confirmationExpiresInSec": 120,
+                ]
+            }
+            try consumeMcpConfirmation(
+                arguments: arguments,
+                operation: "reset_session",
+                fingerprint: fingerprint,
+                revision: revision
+            )
+            newSession()
+            return ["success": true, "message": "Session reset"]
+
+        case "get_source_media_info":
+            let requestedID = mcpString(arguments["projectId"])
+            let mediaInfo: SourceMediaInfo?
+            if let requestedID {
+                mediaInfo = projects.first(where: { $0.id == requestedID })?.session.sourceMediaInfo
+                    ?? sourceMediaInfo(for: requestedID)
+            } else {
+                mediaInfo = workflow.session?.sourceMediaInfo ?? workflow.sourceMediaInfo
+            }
+            guard let mediaInfo else {
+                throw mcpError(-3, "ENTITY_NOT_FOUND: Source media information is unavailable")
+            }
+            return ["media": mcpSourceMediaInfo(mediaInfo)]
+
+        case "delete_project":
+            guard let projectID = mcpString(arguments["projectId"]),
+                  let record = projects.first(where: { $0.id == projectID }) else {
+                throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown projectId")
+            }
+            let revision = McpProjectRevision.make(workflow: workflow)
+            if arguments["dryRun"] as? Bool ?? true {
+                let token = mcpConfirmationStore.issue(
+                    operation: "delete_project",
+                    fingerprint: projectID,
+                    projectRevision: revision
+                )
+                return [
+                    "dryRun": true,
+                    "project": mcpProjectSummary(record),
+                    "willCloseActiveProject": projectID == currentProjectID,
+                    "confirmationToken": token,
+                    "confirmationExpiresInSec": 120,
+                ]
+            }
+            try consumeMcpConfirmation(
+                arguments: arguments,
+                operation: "delete_project",
+                fingerprint: projectID,
+                revision: revision
+            )
+            deleteProject(id: projectID)
+            return ["success": true, "projectId": projectID, "message": "Project deleted"]
+
+        case "import_media_file":
+            return try await mcpImportMediaFile()
+
+        case "import_media_url":
+            return try startMcpMediaImportJob(arguments: arguments)
+
+        case "import_project_bundle":
+            return try mcpImportProjectBundle()
+
+        case "export_project_bundle":
+            return try mcpExportProjectBundle(arguments: arguments)
+
+        case "get_workflow_config":
+            return mcpWorkflowConfig()
+
+        case "update_workflow_config":
+            return try mcpUpdateWorkflowConfig(arguments: arguments)
+
+        case "start_processing":
+            return try startMcpProcessingJob(retryFailedOnly: false)
+
+        case "retry_failed_chunks":
+            return try startMcpProcessingJob(retryFailedOnly: true)
+
+        case "cancel_processing":
+            if let jobID = mcpString(arguments["jobId"]), mcpJobManager.cancel(id: jobID) {
+                return ["success": true, "jobId": jobID, "status": "cancelled"]
+            }
+            processingTask?.cancel()
+            processingTask = nil
+            exportTask?.cancel()
+            exportTask = nil
+            isProcessingSegment = false
+            endNativeProcessingActivity()
+            return ["success": true, "message": "Active UI processing was cancelled"]
+
+        case "select_chunk":
+            guard var session = workflow.session,
+                  let chunkID = mcpString(arguments["chunkId"]),
+                  let stableIndex = McpEntityIdentifier.chunkIndex(from: chunkID),
+                  let arrayIndex = session.chunks.firstIndex(where: { $0.index == stableIndex }) else {
+                throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown chunkId")
+            }
+            stopPlayback()
+            session.currentChunkIndex = arrayIndex
+            workflow.session = session
+            workflow.screen = .review
+            return ["success": true, "chunkId": chunkID, "displayNumber": arrayIndex + 1]
+
+        case "generate_shorts_plans":
+            return try startMcpShortsPlanningJob(arguments: arguments)
+
+        case "get_shorts_plan":
+            let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+            return ["plan": mcpShortsPlanDictionary(resolved.plan, index: resolved.index, rejected: false)]
+
+        case "create_shorts_plan":
+            return try mcpCreateShortsPlan(arguments: arguments)
+
+        case "update_shorts_plan":
+            return try mcpUpdateShortsPlan(arguments: arguments)
+
+        case "update_shorts_timing":
+            return try mcpUpdateShortsTiming(arguments: arguments)
+
+        case "remove_shorts_plan":
+            return try mcpRemoveShortsPlan(arguments: arguments)
+
+        case "list_rejected_shorts_plans":
+            let rejected = workflow.session?.shortsRejectedPlans ?? []
+            return ["plans": rejected.enumerated().map { mcpShortsPlanDictionary($0.element, index: $0.offset, rejected: true) }]
+
+        case "restore_shorts_plan":
+            return try mcpRestoreShortsPlan(arguments: arguments)
+
+        case "translate_shorts_plans":
+            return try startMcpShortsTranslationJob(arguments: arguments)
+
+        case "validate_shorts_plan":
+            let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+            return mcpValidateShortsPlan(resolved.plan)
+
+        case "open_visual_editor":
+            let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+            let language = ShortsIdeaDisplayLanguage(rawValue: mcpString(arguments["language"]) ?? "source") ?? .source
+            openVisualEditor(at: resolved.index, plan: resolved.plan, language: language)
+            return ["success": true, "planId": resolved.plan.id, "screen": workflow.screen.rawValue, "language": language.rawValue]
+
+        case "get_visual_editor_state":
+            let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+            return mcpVisualEditorState(plan: resolved.plan, index: resolved.index)
+
+        case "update_clip_details":
+            return try mcpUpdateShortsPlan(arguments: arguments)
+
+        case "update_clip_timing":
+            return try mcpUpdateShortsTiming(arguments: arguments)
+
+        case "manage_timeline_cut":
+            return try mcpManageTimelineCut(arguments: arguments, permissions: permissions)
+
+        case "manage_subtitle_segment":
+            return try mcpManageSubtitleSegment(arguments: arguments, permissions: permissions)
+
+        case "set_frame_keyframes":
+            return try mcpSetFrameKeyframes(arguments: arguments)
+
+        case "clear_frame_keyframes":
+            return try mcpClearFrameKeyframes(arguments: arguments)
+
+        case "update_visual_background":
+            return try mcpUpdateVisualBackground(arguments: arguments)
+
+        case "update_visual_subtitle_style":
+            return try mcpUpdateVisualSubtitleStyle(arguments: arguments)
+
+        case "update_visual_logo":
+            return try mcpUpdateVisualLogo(arguments: arguments, permissions: permissions)
+
+        case "update_intro_outro":
+            return try mcpUpdateIntroOutro(arguments: arguments, permissions: permissions)
+
+        case "set_visual_sync":
+            return try mcpSetVisualSync(arguments: arguments)
+
+        case "manage_text_track":
+            return try mcpManageTextTrack(arguments: arguments, permissions: permissions)
+
+        case "manage_text_block":
+            return try mcpManageTextBlock(arguments: arguments, permissions: permissions)
+
+        case "manage_audio_track":
+            return try mcpManageAudioTrack(arguments: arguments, permissions: permissions)
+
+        case "save_visual_editor":
+            let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+            saveCurrentProject()
+            return ["success": true, "planId": resolved.plan.id, "message": "Visual Editor state saved"]
+
+        case "get_safe_settings":
+            return mcpSafeSettings()
+
+        case "update_safe_settings":
+            return try mcpUpdateSafeSettings(arguments: arguments)
+
+        case "list_providers":
+            return mcpListProviders()
+
+        case "select_provider":
+            return try mcpSelectProvider(arguments: arguments)
+
+        case "list_prompt_presets":
+            return mcpListPromptPresets()
+
+        case "get_prompt":
+            return try mcpGetPrompt(arguments: arguments)
+
+        case "update_prompt":
+            return try mcpUpdatePrompt(arguments: arguments)
+
+        case "reset_prompt":
+            return try mcpResetPrompt(arguments: arguments)
+
+        case "get_model_status":
+            return mcpModelStatus()
+
+        case "scan_local_models":
+            scanForLocalModels()
+            return ["success": true, "message": "Local model scan started", "models": mcpModelStatus()["models"] ?? []]
+
+        case "download_model":
+            return try mcpDownloadModel(arguments: arguments)
+
+        case "locate_model":
+            return try mcpLocateModel(arguments: arguments)
+
+        case "remove_model":
+            return try mcpRemoveModel(arguments: arguments)
+
+        case "get_playback_state":
+            return mcpPlaybackState()
+
+        case "play_chunk":
+            if let chunkID = mcpString(arguments["chunkId"]) {
+                _ = try await executeMcpWorkspaceTool(name: "select_chunk", arguments: ["chunkId": chunkID], permissions: permissions)
+            }
+            guard let chunk = currentChunk else { throw mcpError(-1, "NO_ACTIVE_PROJECT: No selected segment") }
+            guard !chunk.filePath.isEmpty, FileManager.default.fileExists(atPath: chunk.filePath) else {
+                throw mcpError(-3, "Segment audio is unavailable. Use reprocess_chunk with Run Processing permission.")
+            }
+            startPlayback()
+            return mcpPlaybackState()
+
+        case "pause_playback":
+            pausePlayback()
+            return mcpPlaybackState()
+
+        case "seek_playback":
+            guard let position = mcpDouble(arguments["positionSec"]), position >= 0 else {
+                throw mcpError(-2, "positionSec must be a non-negative finite number")
+            }
+            seekCurrentChunk(to: position)
+            return mcpPlaybackState()
+
+        case "list_export_options":
+            return mcpExportOptions()
+
+        case "validate_export":
+            guard let kind = mcpString(arguments["kind"]) else { throw mcpError(-2, "kind is required") }
+            return try mcpValidateExport(kind: kind)
+
+        case "export_transcript":
+            return try mcpExportTranscript(arguments: arguments)
+
+        case "export_shorts_ideas":
+            return try mcpExportShortsIdeas(arguments: arguments)
+
+        case "export_shorts_videos":
+            return try startMcpShortsExportJob(arguments: arguments)
+
+        case "reveal_export":
+            guard let exportID = mcpString(arguments["exportId"]) else { throw mcpError(-2, "exportId is required") }
+            return try mcpExportStore.reveal(exportID: exportID)
+
+        default:
+            return nil
+        }
+    }
+
+    private func mcpImportMediaFile() async throws -> [String: Any] {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.allowedContentTypes = [.audio, .movie, .mpeg4Movie, .quickTimeMovie]
+        panel.message = "Choose audio or video to import for this MCP request"
+        guard panel.runModal() == .OK, let url = panel.url else {
+            throw mcpError(-9, "USER_CANCELLED: Media selection was cancelled")
+        }
+        guard MediaSource.kind(forPath: url.path) != .unknown else {
+            throw mcpError(-2, "VALIDATION_FAILED: Unsupported media file")
+        }
+        let duration = await MediaDurationReader.durationSeconds(for: url)
+        let info = await SourceMediaInspector.inspect(fileURL: url, durationSec: duration)
+        selectSource(url: url, duration: duration, sourceMediaInfo: info)
+        return ["success": true, "media": mcpSourceMediaInfo(info), "screen": workflow.screen.rawValue]
+    }
+
+    private func startMcpMediaImportJob(arguments: [String: Any]) throws -> [String: Any] {
+        guard let rawURL = mcpString(arguments["url"]), rawURL.count <= 4_096 else {
+            throw mcpError(-2, "url is required and must contain no more than 4,096 characters")
+        }
+        guard McpNetworkPolicy.validatedPublicMediaURL(rawURL) != nil,
+              MediaSource.isWebVideoOrAudioLink(rawURL) || MediaSource.directMediaURL(from: rawURL) != nil else {
+            throw mcpError(-2, "VALIDATION_FAILED: URL is not a supported media source")
+        }
+        let audioOnly = arguments["audioOnly"] as? Bool ?? false
+        let jobID = mcpJobManager.start(kind: "import_media_url", message: "Importing media URL") { [weak self] reporter in
+            guard let self else { throw self?.mcpError(-1, "VaniScript is unavailable") ?? NSError(domain: "VaniScriptMCP", code: -1) }
+            reporter.update(progress: 0.01, stage: "Validating URL")
+            let imported = try await DirectMediaImporter.importMediaWithMetadata(
+                from: rawURL,
+                resolverEndpoint: self.workflow.settings.mediaResolverEndpoint,
+                resolverToken: self.workflow.settings.mediaResolverToken,
+                audioOnly: audioOnly
+            ) { progress in
+                Task { @MainActor in reporter.update(progress: max(0.02, progress * 0.88), stage: "Downloading media") }
+            } onMessage: { message in
+                Task { @MainActor in reporter.update(progress: 0.05, stage: "Importing media", message: message) }
+            }
+            try reporter.checkCancellation()
+            reporter.update(progress: 0.9, stage: "Reading media metadata")
+            let duration = await MediaDurationReader.durationSeconds(for: imported.fileURL)
+            let info = await SourceMediaInspector.inspect(
+                fileURL: imported.fileURL,
+                originalURL: rawURL,
+                title: imported.title,
+                durationSec: duration
+            )
+            try reporter.checkCancellation()
+            self.selectSource(url: imported.fileURL, duration: duration, sourceMediaInfo: info)
+            if let title = imported.title?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty {
+                self.workflow.sourceFileName = title
+                self.workflow.metadata = MetadataExtractor.extract(fromFileName: title)
+            }
+            return ["media": self.mcpSourceMediaInfo(info), "screen": self.workflow.screen.rawValue]
+        }
+        return ["jobId": jobID, "status": "queued", "kind": "import_media_url"]
+    }
+
+    private func mcpImportProjectBundle() throws -> [String: Any] {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        let bundleType = UTType(filenameExtension: "vaniscript", conformingTo: .data) ?? .data
+        let libraryType = UTType(filenameExtension: "vaniscript-library", conformingTo: .data) ?? .data
+        panel.allowedContentTypes = [.json, bundleType, libraryType]
+        panel.message = "Choose a VaniScript project bundle to import for this MCP request"
+        guard panel.runModal() == .OK, let url = panel.url else {
+            throw mcpError(-9, "USER_CANCELLED: Project bundle selection was cancelled")
+        }
+        let destination = AppStoragePaths.applicationSupportDirectory()
+            .appendingPathComponent("Projects", isDirectory: true)
+        let imported = try ProjectBundleImporter.importBundle(fileURL: url, destinationDirectoryURL: destination)
+        mergeProjects(imported)
+        return ["success": true, "importedCount": imported.count, "projectIds": imported.map(\.id)]
+    }
+
+    private func mcpExportProjectBundle(arguments: [String: Any]) throws -> [String: Any] {
+        let projectID = mcpString(arguments["projectId"]) ?? currentProjectID
+        guard let projectID, let record = projects.first(where: { $0.id == projectID }) else {
+            throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown projectId and no active project")
+        }
+        let export = try mcpExportStore.makeDirectory(label: "project")
+        let stem = URL(fileURLWithPath: record.session.sourceFileName).deletingPathExtension().lastPathComponent
+            .replacingOccurrences(of: #"[^A-Za-z0-9А-Яа-я_-]+"#, with: "-", options: .regularExpression)
+        let file = export.url.appendingPathComponent(stem.isEmpty ? "VaniScript-Project" : stem).appendingPathExtension("vaniscript")
+        try ProjectBundleExporter.exportBundle(record: record, to: file)
+        return mcpExportStore.register(exportID: export.id, files: [file])
+    }
+
+    private func mcpWorkflowConfig() -> [String: Any] {
+        [
+            "sourceLanguage": workflow.sourceLang,
+            "targetLanguage": workflow.targetLang,
+            "transcriptionProvider": workflow.transcriptionProvider,
+            "translationProvider": workflow.translationProvider,
+            "formats": workflow.outputFormats.map { $0.rawValue.lowercased() },
+            "chunkDurationMin": workflow.settings.chunkDurationMin,
+            "sliceMode": workflow.settings.sliceMode.rawValue,
+            "silenceThresholdDb": workflow.settings.silenceThreshDb,
+            "minimumSilenceMs": workflow.settings.minSilenceMs,
+            "hasSource": !workflow.sourceFile.isEmpty,
+            "hasSession": workflow.session != nil,
+        ]
+    }
+
+    private func mcpUpdateWorkflowConfig(arguments: [String: Any]) throws -> [String: Any] {
+        if let source = mcpString(arguments["sourceLanguage"]) {
+            workflow.sourceLang = source
+        }
+        if let target = mcpString(arguments["targetLanguage"]) {
+            guard target.lowercased() == "same" || TranslationArchive.isRealLanguage(target) else {
+                throw mcpError(-2, "targetLanguage must be a real language or same")
+            }
+            workflow.updateTargetLanguage(target)
+            archiveTargetLanguage = target
+        }
+        if let provider = mcpString(arguments["transcriptionProvider"]) {
+            let available = ProviderRegistry.availableTranscriptionProviders(settings: workflow.settings)
+            guard available.contains(where: { $0.id == provider }) else {
+                throw mcpError(-10, "PROVIDER_NOT_READY: Transcription provider is unavailable")
+            }
+            workflow.transcriptionProvider = provider
+        }
+        if let provider = mcpString(arguments["translationProvider"]) {
+            let available = ProviderRegistry.availableTranslationProviders(
+                settings: workflow.settings,
+                targetLang: workflow.targetLang
+            ).providers
+            guard available.contains(where: { $0.id == provider }) else {
+                throw mcpError(-10, "PROVIDER_NOT_READY: Translation provider is unavailable")
+            }
+            workflow.translationProvider = provider
+        }
+        if let rawFormats = arguments["formats"] as? [String] {
+            let formats = try rawFormats.map { value -> OutputFormat in
+                switch value.lowercased() {
+                case "txt": return .txt
+                case "markdown": return .markdown
+                case "srt": return .srt
+                case "vtt": return .vtt
+                default: throw mcpError(-2, "Unsupported output format: \(value)")
+                }
+            }
+            guard !formats.isEmpty else { throw mcpError(-2, "formats may not be empty") }
+            workflow.outputFormats = formats.reduce(into: []) { result, format in
+                if !result.contains(format) { result.append(format) }
+            }
+        }
+        if let duration = McpToolArguments.wholeNumber(arguments["chunkDurationMin"]) {
+            guard (1...120).contains(duration) else { throw mcpError(-2, "chunkDurationMin must be between 1 and 120") }
+            workflow.settings.chunkDurationMin = duration
+        }
+        if let rawMode = mcpString(arguments["sliceMode"]), let mode = SliceMode(rawValue: rawMode) {
+            workflow.settings.sliceMode = mode
+        }
+        if var session = workflow.session {
+            session.sourceLang = workflow.sourceLang
+            session.targetLang = workflow.targetLang
+            session.transcriptionProvider = workflow.transcriptionProvider
+            session.translationProvider = workflow.translationProvider
+            session.outputFormats = workflow.outputFormats
+            workflow.session = session
+            saveCurrentProject()
+        }
+        persistSettings()
+        return ["success": true, "config": mcpWorkflowConfig()]
+    }
+
+    private func startMcpProcessingJob(retryFailedOnly: Bool) throws -> [String: Any] {
+        if workflow.session == nil {
+            guard !workflow.sourceFile.isEmpty else { throw mcpError(-1, "NO_ACTIVE_PROJECT: Import media first") }
+            workflow.startSession()
+            createProjectIfNeeded()
+            saveCurrentProject()
+        }
+        guard let session = workflow.session else { throw mcpError(-1, "NO_ACTIVE_PROJECT") }
+        let indexes: [Int]
+        if retryFailedOnly {
+            indexes = session.chunks.indices.filter { session.chunks[$0].status == .error }
+        } else {
+            let pending = session.chunks.indices.filter { session.chunks[$0].status != .done }
+            indexes = pending.isEmpty ? [session.currentChunkIndex] : Array(pending)
+        }
+        guard !indexes.isEmpty else { throw mcpError(-3, "No matching segments to process") }
+        let startingRevision = McpProjectRevision.make(workflow: workflow)
+        let kind = retryFailedOnly ? "retry_failed_chunks" : "start_processing"
+        let jobID = mcpJobManager.start(kind: kind, message: "Processing \(indexes.count) segment(s)") { [weak self] reporter in
+            guard let self else { throw NSError(domain: "VaniScriptMCP", code: -1) }
+            for (position, index) in indexes.enumerated() {
+                try reporter.checkCancellation()
+                guard var current = self.workflow.session, current.chunks.indices.contains(index) else {
+                    throw self.mcpError(-6, "Project changed while processing")
+                }
+                current.currentChunkIndex = index
+                self.workflow.session = current
+                self.workflow.screen = .processing
+                reporter.update(
+                    progress: Double(position) / Double(max(1, indexes.count)),
+                    stage: "Processing segment \(position + 1) / \(indexes.count)"
+                )
+                let processed = await self.processingPipeline.processCurrentChunk(
+                    session: current,
+                    settings: self.workflow.settings,
+                    projectId: self.currentProjectID
+                ) { message, progress in
+                    await MainActor.run {
+                        self.workflow.processingMessage = message
+                        self.workflow.processingProgress = progress
+                        reporter.update(
+                            progress: (Double(position) + progress) / Double(max(1, indexes.count)),
+                            stage: message
+                        )
+                    }
+                }
+                try reporter.checkCancellation()
+                self.workflow.session = processed
+                self.saveCurrentProject()
+                if processed.chunks.indices.contains(index), processed.chunks[index].status == .error {
+                    throw self.mcpError(-10, "Segment \(index + 1) processing failed")
+                }
+            }
+            self.workflow.screen = .review
+            let finalRevision = McpProjectRevision.make(workflow: self.workflow)
+            let change = self.mcpAuditStore.record(
+                toolName: kind,
+                requestID: nil,
+                previousRevision: startingRevision,
+                projectRevision: finalRevision
+            )
+            return [
+                "processedChunkIds": indexes.compactMap { index in
+                    self.workflow.session?.chunks.indices.contains(index) == true
+                        ? self.workflow.session.map { McpEntityIdentifier.chunkID($0.chunks[index]) } : nil
+                },
+                "changeSetId": change.id,
+                "projectRevision": finalRevision,
+            ]
+        }
+        return ["jobId": jobID, "status": "queued", "kind": kind, "segmentCount": indexes.count]
+    }
+
+    private func startMcpShortsPlanningJob(arguments: [String: Any]) throws -> [String: Any] {
+        guard let session = workflow.session else { throw mcpError(-1, "NO_ACTIVE_PROJECT: No project is open") }
+        let count = max(1, min(20, McpToolArguments.wholeNumber(arguments["count"]) ?? 5))
+        let minimum = max(10, min(300, McpToolArguments.wholeNumber(arguments["minDurationSec"]) ?? 30))
+        let maximum = max(10, min(300, McpToolArguments.wholeNumber(arguments["maxDurationSec"]) ?? 90))
+        guard minimum <= maximum else { throw mcpError(-2, "minDurationSec may not exceed maxDurationSec") }
+        let mode = ShortsPlanLanguageMode(rawValue: mcpString(arguments["mode"]) ?? "target")
+            ?? (session.selectedTranslationLanguage == nil ? .source : .target)
+        let transcript = shortsPlanningTranscript(for: session, mode: mode)
+        guard !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw mcpError(-3, "No transcript text is available for the requested Shorts mode")
+        }
+        let route: ShortsPlanRoute
+        if let cloud = activeCloudTranslationProvider(for: session) {
+            route = .cloud(cloud)
+        } else if let model = activeTranslationModel(for: session) {
+            route = .mlx(model)
+        } else {
+            throw mcpError(-10, "PROVIDER_NOT_READY: Configure a cloud provider or download an MLX model")
+        }
+        let outputLanguage = shortsOutputLanguage(for: session, mode: mode)
+        let excluded = (session.shortsPlans ?? []) + (session.shortsRejectedPlans ?? [])
+        let startingRevision = McpProjectRevision.make(workflow: workflow)
+        let jobID = mcpJobManager.start(kind: "generate_shorts_plans", message: "Finding Shorts/Reels moments with \(route.label)") { [weak self] reporter in
+            guard let self else { throw NSError(domain: "VaniScriptMCP", code: -1) }
+            reporter.update(progress: 0.05, stage: "Building planning prompt")
+            let plans: [ShortsClipPlan]
+            switch route {
+            case let .cloud(provider):
+                plans = try await self.shortsCloudEngine.planShorts(
+                    transcript: transcript,
+                    count: count,
+                    minDurationSec: minimum,
+                    maxDurationSec: maximum,
+                    outputLanguage: outputLanguage,
+                    speakerName: session.metadata.lecturer,
+                    mode: mode,
+                    existingClips: excluded,
+                    provider: provider
+                )
+            case let .mlx(model):
+                plans = try await self.shortsMLXEngine.planShorts(
+                    transcript: transcript,
+                    count: count,
+                    minDurationSec: minimum,
+                    maxDurationSec: maximum,
+                    outputLanguage: outputLanguage,
+                    speakerName: session.metadata.lecturer,
+                    mode: mode,
+                    existingClips: excluded,
+                    model: model
+                )
+            }
+            try reporter.checkCancellation()
+            reporter.update(progress: 0.9, stage: "Validating candidate ranges")
+            guard var latest = self.workflow.session else { throw self.mcpError(-6, "Project was closed during planning") }
+            let incoming = plans.map { plan -> ShortsClipPlan in
+                var copy = plan
+                copy.languageMode = mode
+                return copy
+            }
+            let appended = ShortsPlanner.appendNonOverlappingPlans(
+                existingPlans: latest.shortsPlans ?? [],
+                incomingPlans: incoming,
+                excludedPlans: latest.shortsRejectedPlans ?? []
+            )
+            latest.shortsPlans = appended.plans
+            latest.normalizeTranslationArchive()
+            self.workflow.session = latest
+            self.saveCurrentProject()
+            let revision = McpProjectRevision.make(workflow: self.workflow)
+            let change = self.mcpAuditStore.record(
+                toolName: "generate_shorts_plans",
+                requestID: nil,
+                previousRevision: startingRevision,
+                projectRevision: revision
+            )
+            let addedPlans = appended.addedIndexes.compactMap { appended.plans.indices.contains($0) ? appended.plans[$0] : nil }
+            return [
+                "addedPlans": addedPlans.enumerated().map { self.mcpShortsPlanDictionary($0.element, index: $0.offset, rejected: false) },
+                "addedCount": addedPlans.count,
+                "skippedOverlappingCount": appended.skippedOverlapping.count,
+                "changeSetId": change.id,
+                "projectRevision": revision,
+            ]
+        }
+        return ["jobId": jobID, "status": "queued", "kind": "generate_shorts_plans"]
+    }
+
+    private func mcpResolveShortsPlan(_ rawID: Any?, rejected: Bool) throws -> (index: Int, plan: ShortsClipPlan) {
+        guard let planID = mcpString(rawID), let session = workflow.session else {
+            throw mcpError(-1, "NO_ACTIVE_PROJECT: planId is required")
+        }
+        let plans = rejected ? (session.shortsRejectedPlans ?? []) : (session.shortsPlans ?? [])
+        guard let index = plans.firstIndex(where: { $0.id == planID }) else {
+            throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown planId")
+        }
+        return (index, plans[index])
+    }
+
+    private func mcpCreateShortsPlan(arguments: [String: Any]) throws -> [String: Any] {
+        guard var session = workflow.session else { throw mcpError(-1, "NO_ACTIVE_PROJECT: No project is open") }
+        guard let start = mcpDouble(arguments["startSec"]),
+              let end = mcpDouble(arguments["endSec"]),
+              let title = mcpString(arguments["title"]), title.count <= 500 else {
+            throw mcpError(-2, "startSec, endSec, and title are required")
+        }
+        let validation = ShortsPlanner.validateClip(startSec: start, endSec: end, minDurationSec: 10, maxDurationSec: 300)
+        guard validation.ok, session.durationSec <= 0 || end <= session.durationSec else {
+            throw mcpError(-2, validation.reason ?? "Clip range exceeds source duration")
+        }
+        var plan = ShortsClipPlan(
+            start: ShortsPlanner.secondsToShortsTimestamp(start),
+            end: ShortsPlanner.secondsToShortsTimestamp(end),
+            title: title,
+            summary: (arguments["summary"] as? String) ?? "",
+            hook: (arguments["hook"] as? String) ?? "",
+            category: (arguments["category"] as? String) ?? "clip",
+            captionText: arguments["captionText"] as? String,
+            languageMode: ShortsPlanLanguageMode(rawValue: mcpString(arguments["mode"]) ?? "source") ?? .source
+        )
+        plan.stableID = UUID().uuidString.lowercased()
+        let appended = ShortsPlanner.appendNonOverlappingPlans(
+            existingPlans: session.shortsPlans ?? [],
+            incomingPlans: [plan],
+            excludedPlans: session.shortsRejectedPlans ?? []
+        )
+        guard !appended.addedIndexes.isEmpty else { throw mcpError(-2, "Clip overlaps an active or rejected Shorts range") }
+        session.shortsPlans = appended.plans
+        workflow.session = session
+        saveCurrentProject()
+        return ["success": true, "plan": mcpShortsPlanDictionary(plan, index: appended.addedIndexes[0], rejected: false)]
+    }
+
+    private func mcpUpdateShortsPlan(arguments: [String: Any]) throws -> [String: Any] {
+        let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+        var session = try requireMcpSession()
+        var plans = session.shortsPlans ?? []
+        var plan = plans[resolved.index]
+        let language = ShortsIdeaDisplayLanguage(rawValue: mcpString(arguments["language"]) ?? "source") ?? .source
+        let title = arguments["title"] as? String
+        let summary = arguments["summary"] as? String
+        let hook = arguments["hook"] as? String
+        let category = arguments["category"] as? String
+        let caption = arguments["captionText"] as? String
+        guard title != nil || summary != nil || hook != nil || category != nil || caption != nil else {
+            throw mcpError(-2, "Provide at least one Shorts text field to update")
+        }
+        switch language {
+        case .source:
+            if let title { plan.sourceTitle = title; if plan.languageMode == .source { plan.title = title } }
+            if let summary { plan.sourceSummary = summary; if plan.languageMode == .source { plan.summary = summary } }
+            if let hook { plan.sourceHook = hook; if plan.languageMode == .source { plan.hook = hook } }
+            if let category { plan.sourceCategory = category; if plan.languageMode == .source { plan.category = category } }
+            if let caption { plan.sourceCaptionText = caption; if plan.languageMode == .source { plan.captionText = caption } }
+        case .target:
+            if let title { plan.targetTitle = title; plan.title = title }
+            if let summary { plan.targetSummary = summary; plan.summary = summary }
+            if let hook { plan.targetHook = hook; plan.hook = hook }
+            if let category { plan.targetCategory = category; plan.category = category }
+            if let caption { plan.targetCaptionText = caption; plan.captionText = caption }
+        }
+        plans[resolved.index] = plan
+        session.shortsPlans = plans
+        workflow.session = session
+        saveCurrentProject()
+        return ["success": true, "plan": mcpShortsPlanDictionary(plan, index: resolved.index, rejected: false)]
+    }
+
+    private func mcpUpdateShortsTiming(arguments: [String: Any]) throws -> [String: Any] {
+        let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+        guard let start = mcpDouble(arguments["startSec"]), let end = mcpDouble(arguments["endSec"]) else {
+            throw mcpError(-2, "startSec and endSec are required")
+        }
+        var session = try requireMcpSession()
+        let validation = ShortsPlanner.validateClip(startSec: start, endSec: end, minDurationSec: 10, maxDurationSec: 300)
+        guard validation.ok, session.durationSec <= 0 || end <= session.durationSec else {
+            throw mcpError(-2, validation.reason ?? "Clip range exceeds source duration")
+        }
+        var plans = session.shortsPlans ?? []
+        let candidate = ShortsPlanner.replacingClipRange(
+            plans[resolved.index],
+            start: ShortsPlanner.secondsToShortsTimestamp(start),
+            end: ShortsPlanner.secondsToShortsTimestamp(end)
+        )
+        let others = plans.enumerated().filter { $0.offset != resolved.index }.map(\.element)
+        let checked = ShortsPlanner.appendNonOverlappingPlans(
+            existingPlans: others,
+            incomingPlans: [candidate],
+            excludedPlans: session.shortsRejectedPlans ?? []
+        )
+        guard !checked.addedIndexes.isEmpty else { throw mcpError(-2, "Updated range overlaps another active or rejected plan") }
+        plans[resolved.index] = candidate
+        session.shortsPlans = plans
+        workflow.session = session
+        saveCurrentProject()
+        return ["success": true, "plan": mcpShortsPlanDictionary(candidate, index: resolved.index, rejected: false)]
+    }
+
+    private func mcpRemoveShortsPlan(arguments: [String: Any]) throws -> [String: Any] {
+        let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+        let revision = McpProjectRevision.make(workflow: workflow)
+        if arguments["dryRun"] as? Bool ?? true {
+            let token = mcpConfirmationStore.issue(
+                operation: "remove_shorts_plan",
+                fingerprint: resolved.plan.id,
+                projectRevision: revision
+            )
+            return [
+                "dryRun": true,
+                "plan": mcpShortsPlanDictionary(resolved.plan, index: resolved.index, rejected: false),
+                "confirmationToken": token,
+                "confirmationExpiresInSec": 120,
+            ]
+        }
+        try consumeMcpConfirmation(
+            arguments: arguments,
+            operation: "remove_shorts_plan",
+            fingerprint: resolved.plan.id,
+            revision: revision
+        )
+        removeShortsPlan(at: resolved.index)
+        return ["success": true, "planId": resolved.plan.id, "movedToRejected": true]
+    }
+
+    private func mcpRestoreShortsPlan(arguments: [String: Any]) throws -> [String: Any] {
+        let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: true)
+        var session = try requireMcpSession()
+        var rejected = session.shortsRejectedPlans ?? []
+        let remainingRejected = rejected.enumerated().filter { $0.offset != resolved.index }.map(\.element)
+        let appended = ShortsPlanner.appendNonOverlappingPlans(
+            existingPlans: session.shortsPlans ?? [],
+            incomingPlans: [resolved.plan],
+            excludedPlans: remainingRejected
+        )
+        guard !appended.addedIndexes.isEmpty else { throw mcpError(-2, "Rejected plan overlaps an active plan") }
+        rejected.remove(at: resolved.index)
+        session.shortsPlans = appended.plans
+        session.shortsRejectedPlans = rejected
+        workflow.session = session
+        saveCurrentProject()
+        return ["success": true, "plan": mcpShortsPlanDictionary(resolved.plan, index: appended.addedIndexes[0], rejected: false)]
+    }
+
+    private func startMcpShortsTranslationJob(arguments: [String: Any]) throws -> [String: Any] {
+        let session = try requireMcpSession()
+        guard let languageValue = mcpString(arguments["language"]) else { throw mcpError(-2, "language is required") }
+        let language = TranslationArchive.displayLanguage(languageValue)
+        guard TranslationArchive.isRealLanguage(language) else { throw mcpError(-2, "Provide a real target language") }
+        let planIDs = Set((arguments["planIds"] as? [String]) ?? [])
+        let allPlans = session.shortsPlans ?? []
+        let selectedIndexes = allPlans.indices.filter { planIDs.isEmpty || planIDs.contains(allPlans[$0].id) }
+        guard !selectedIndexes.isEmpty else { throw mcpError(-3, "No matching Shorts plans") }
+        let route: ShortsPlanRoute
+        if let cloud = activeCloudTranslationProvider(for: session) { route = .cloud(cloud) }
+        else if let model = activeTranslationModel(for: session) { route = .mlx(model) }
+        else { throw mcpError(-10, "PROVIDER_NOT_READY: Configure a cloud provider or MLX model") }
+        let startingRevision = McpProjectRevision.make(workflow: workflow)
+        let jobID = mcpJobManager.start(kind: "translate_shorts_plans", message: "Translating Shorts metadata to \(language)") { [weak self] reporter in
+            guard let self else { throw NSError(domain: "VaniScriptMCP", code: -1) }
+            for (position, index) in selectedIndexes.enumerated() {
+                try reporter.checkCancellation()
+                guard var latest = self.workflow.session,
+                      var plans = latest.shortsPlans,
+                      plans.indices.contains(index) else { throw self.mcpError(-6, "Project changed during Shorts translation") }
+                let translated: ShortsClipTranslation
+                switch route {
+                case let .cloud(provider):
+                    translated = try await self.shortsCloudEngine.translateShortsPlan(plans[index], targetLanguage: language, provider: provider)
+                case let .mlx(model):
+                    translated = try await self.shortsMLXEngine.translateShortsPlan(plans[index], targetLanguage: language, model: model)
+                }
+                plans[index].setTranslation(translated)
+                latest.shortsPlans = plans
+                latest.registerTranslationLanguage(language)
+                self.workflow.session = latest
+                self.saveCurrentProject()
+                reporter.update(
+                    progress: Double(position + 1) / Double(selectedIndexes.count),
+                    stage: "Translated plan \(position + 1) / \(selectedIndexes.count)"
+                )
+            }
+            let revision = McpProjectRevision.make(workflow: self.workflow)
+            let change = self.mcpAuditStore.record(
+                toolName: "translate_shorts_plans",
+                requestID: nil,
+                previousRevision: startingRevision,
+                projectRevision: revision
+            )
+            return [
+                "language": language,
+                "translatedPlanIds": selectedIndexes.compactMap { self.workflow.session?.shortsPlans?[$0].id },
+                "changeSetId": change.id,
+                "projectRevision": revision,
+            ]
+        }
+        return ["jobId": jobID, "status": "queued", "kind": "translate_shorts_plans", "planCount": selectedIndexes.count]
+    }
+
+    private func mcpValidateShortsPlan(_ plan: ShortsClipPlan) -> [String: Any] {
+        var issues: [[String: Any]] = []
+        let start = ShortsPlanner.parseTimestampToSeconds(plan.start)
+        let end = ShortsPlanner.parseTimestampToSeconds(plan.end)
+        let validation = ShortsPlanner.validateClip(startSec: start, endSec: end, minDurationSec: 10, maxDurationSec: 300)
+        if !validation.ok {
+            issues.append(["severity": "error", "code": "INVALID_DURATION", "message": validation.reason ?? "Invalid duration"])
+        }
+        if let duration = workflow.session?.durationSec, duration > 0, end > duration {
+            issues.append(["severity": "error", "code": "OUTSIDE_SOURCE", "message": "Plan ends after source media."])
+        }
+        if plan.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            issues.append(["severity": "error", "code": "EMPTY_TITLE", "message": "Title is empty."])
+        }
+        if (plan.captionText ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            issues.append(["severity": "warning", "code": "EMPTY_CAPTIONS", "message": "Caption text is empty."])
+        }
+        for (index, cut) in (plan.timelineCuts ?? []).enumerated() {
+            if cut.startSec < 0 || cut.endSec <= cut.startSec || cut.endSec > max(0, end - start) {
+                issues.append(["severity": "error", "code": "INVALID_CUT", "entityId": "cut-\(index)", "message": "Timeline cut is outside the clip."])
+            }
+        }
+        return [
+            "valid": !issues.contains { $0["severity"] as? String == "error" },
+            "planId": plan.id,
+            "durationSec": validation.durationSec,
+            "issues": issues,
+        ]
+    }
+
+    private func mcpShortsPlanDictionary(_ plan: ShortsClipPlan, index: Int, rejected: Bool) -> [String: Any] {
+        [
+            "id": plan.id,
+            "displayNumber": index + 1,
+            "arrayIndex": index,
+            "rejected": rejected,
+            "start": plan.start,
+            "end": plan.end,
+            "startSec": ShortsPlanner.parseTimestampToSeconds(plan.start),
+            "endSec": ShortsPlanner.parseTimestampToSeconds(plan.end),
+            "title": plan.title,
+            "summary": plan.summary,
+            "hook": plan.hook,
+            "category": plan.category ?? "",
+            "captionText": plan.captionText ?? "",
+            "languageMode": plan.languageMode?.rawValue ?? "",
+            "translationLanguages": plan.translationsByLanguage?.values.map(\.language).sorted() ?? [],
+            "visualEditor": [
+                "cutCount": plan.timelineCuts?.count ?? 0,
+                "sourceSubtitleCount": plan.sourceAlignment?.count ?? 0,
+                "targetSubtitleCount": plan.targetAlignment?.count ?? 0,
+                "sourceTextTrackCount": plan.sourceTextTracks?.count ?? 0,
+                "targetTextTrackCount": plan.targetTextTracks?.count ?? 0,
+                "sourceAudioTrackCount": plan.sourceAudioTracks?.count ?? 0,
+                "targetAudioTrackCount": plan.targetAudioTracks?.count ?? 0,
+                "syncEnabled": plan.syncEnabled ?? true,
+            ],
+        ]
+    }
+
+    // MARK: - MCP Visual Editor
+
+    private func mcpVisualLanguage(_ arguments: [String: Any]) -> ShortsIdeaDisplayLanguage {
+        ShortsIdeaDisplayLanguage(rawValue: mcpString(arguments["language"]) ?? "source") ?? .source
+    }
+
+    private func mcpRequireDestructivePermission(_ permissions: McpPermissionSet) throws {
+        guard permissions.allows(.destructive) else {
+            throw mcpError(-5, "DESTRUCTIVE_PERMISSION_REQUIRED: Enable Destructive Actions in Settings > Agents")
+        }
+    }
+
+    private func mcpMutateVisualPlan(
+        _ rawPlanID: Any?,
+        mutate: (inout ShortsClipPlan) throws -> Void
+    ) throws -> (index: Int, plan: ShortsClipPlan) {
+        let resolved = try mcpResolveShortsPlan(rawPlanID, rejected: false)
+        var updated = resolved.plan
+        try mutate(&updated)
+        updateShortsPlan(at: resolved.index) { $0 = updated }
+        refreshMcpVisualEditorDraft(index: resolved.index)
+        return (resolved.index, updated)
+    }
+
+    private func refreshMcpVisualEditorDraft(index: Int) {
+        guard let draft = visualEditorDraft, draft.index == index,
+              let session = workflow.session,
+              let plans = session.shortsPlans,
+              plans.indices.contains(index) else { return }
+        let plan = plans[index]
+        visualEditorDraft = VisualClipEditorDraft(index: index, plan: plan, language: draft.language, session: session)
+    }
+
+    private func mcpVisualEditorState(plan: ShortsClipPlan, index: Int) -> [String: Any] {
+        let duration = ShortsVisualEditorStateBuilder.clipDuration(plan)
+        let sourceSegments = ShortsVisualEditorStateBuilder.segments(for: plan, language: .source)
+        let targetSegments = ShortsVisualEditorStateBuilder.segments(for: plan, language: .target)
+        return [
+            "plan": mcpShortsPlanDictionary(plan, index: index, rejected: false),
+            "clipDurationSec": duration,
+            "timeline": [
+                "cuts": (plan.timelineCuts ?? []).map { ["cutId": $0.id, "startSec": $0.startSec, "endSec": $0.endSec] },
+                "trim": ["trimStartSec": plan.timelineTrim?.trimStartSec ?? 0, "trimEndSec": plan.timelineTrim?.trimEndSec ?? 0],
+            ],
+            "source": mcpVisualLanguageState(
+                segments: sourceSegments,
+                keyframes: plan.sourceFrameKeyframes ?? mcpBaseKeyframes(plan, language: .source),
+                logo: plan.sourceLogo ?? plan.logo,
+                textTracks: plan.sourceTextTracks ?? plan.textTracks ?? [],
+                audioTracks: plan.sourceAudioTracks ?? plan.audioTracks ?? [],
+                intro: plan.sourceIntro ?? plan.intro,
+                outro: plan.sourceOutro ?? plan.outro
+            ),
+            "target": mcpVisualLanguageState(
+                segments: targetSegments,
+                keyframes: plan.targetFrameKeyframes ?? mcpBaseKeyframes(plan, language: .target),
+                logo: plan.targetLogo ?? plan.logo,
+                textTracks: plan.targetTextTracks ?? plan.textTracks ?? [],
+                audioTracks: plan.targetAudioTracks ?? plan.audioTracks ?? [],
+                intro: plan.targetIntro ?? plan.intro,
+                outro: plan.targetOutro ?? plan.outro
+            ),
+            "background": mcpBackgroundDictionary(plan.backgroundSettings ?? .universalDefault),
+            "subtitleStyle": mcpSubtitleStyleDictionary(plan.subtitleStyle ?? .orangeImpact),
+            "syncEnabled": plan.syncEnabled ?? (plan.languageMode == .bilingual),
+            "assetPolicy": "MCP never accepts source paths. Add image, video, or audio assets through the Visual Editor file picker, then address the returned existing asset ID here.",
+        ]
+    }
+
+    private func mcpVisualLanguageState(
+        segments: [AlignedSubtitleSegment],
+        keyframes: [FrameKeyframe],
+        logo: LogoOverlaySettings?,
+        textTracks: [TextOverlayTrack],
+        audioTracks: [ExtraAudioTrack],
+        intro: IntroOutroOverlaySettings?,
+        outro: IntroOutroOverlaySettings?
+    ) -> [String: Any] {
+        [
+            "subtitleSegments": segments.map { segment in
+                ["segmentId": segment.id, "startSec": segment.start, "endSec": segment.end, "text": segment.text]
+            },
+            "frameKeyframes": keyframes.map { frame in
+                ["keyframeId": frame.id, "timeSec": frame.time, "x": frame.x, "y": frame.y, "zoom": frame.zoom, "backgroundColor": frame.backgroundColor ?? ""]
+            },
+            "logo": mcpLogoDictionary(logo),
+            "textTracks": textTracks.map(mcpTextTrackDictionary),
+            "audioTracks": audioTracks.map(mcpAudioTrackDictionary),
+            "intro": mcpOverlayDictionary(intro),
+            "outro": mcpOverlayDictionary(outro),
+        ]
+    }
+
+    private func mcpBaseKeyframes(_ plan: ShortsClipPlan, language: ShortsIdeaDisplayLanguage) -> [FrameKeyframe] {
+        [FrameKeyframe(
+            id: "frame_\(language.rawValue)_base",
+            time: 0,
+            x: 0,
+            y: 0,
+            zoom: 1,
+            backgroundColor: plan.backgroundSettings?.solidColor ?? "#000000"
+        )]
+    }
+
+    private func mcpLogoDictionary(_ logo: LogoOverlaySettings?) -> [String: Any] {
+        guard let logo else { return ["present": false] }
+        return ["present": true, "logoId": logo.id, "name": logo.name ?? "", "size": logo.size, "opacity": logo.opacity, "position": logo.position ?? "", "hidden": logo.hidden ?? false]
+    }
+
+    private func mcpOverlayDictionary(_ overlay: IntroOutroOverlaySettings?) -> [String: Any] {
+        guard let overlay else { return ["present": false] }
+        return ["present": true, "overlayId": overlay.id, "name": overlay.name ?? "", "duration": overlay.duration, "x": overlay.x, "y": overlay.y, "scale": overlay.scale, "animation": overlay.animation, "hidden": overlay.hidden ?? false, "speed": overlay.speed ?? 1, "transitionSec": overlay.transitionSec ?? 0]
+    }
+
+    private func mcpTextTrackDictionary(_ track: TextOverlayTrack) -> [String: Any] {
+        [
+            "trackId": track.id,
+            "name": track.name,
+            "hidden": track.hidden ?? false,
+            "muted": track.muted ?? false,
+            "blocks": track.blocks.map { ["blockId": $0.id, "startSec": $0.startSec, "endSec": $0.endSec, "text": $0.text, "hidden": $0.hidden ?? false] },
+        ]
+    }
+
+    private func mcpAudioTrackDictionary(_ track: ExtraAudioTrack) -> [String: Any] {
+        [
+            "audioTrackId": track.id,
+            "name": track.name,
+            "startSec": track.startSec,
+            "trimStartSec": track.trimStartSec,
+            "trimEndSec": track.trimEndSec,
+            "volume": track.volume,
+            "fadeInSec": track.fadeInSec,
+            "fadeOutSec": track.fadeOutSec,
+            "muted": track.muted ?? false,
+            "assetDurationSec": track.assetDuration ?? 0,
+        ]
+    }
+
+    private func mcpBackgroundDictionary(_ value: ShortsBackgroundSettings) -> [String: Any] {
+        [
+            "solidEnabled": value.solidEnabled, "solidColor": value.solidColor,
+            "blurEnabled": value.blurEnabled, "blurStrength": value.blurStrength, "blurScale": value.blurScale, "blurPanX": value.blurPanX ?? 0,
+            "gradientEnabled": value.gradientEnabled, "gradientType": value.gradientType, "gradientColorA": value.gradientColorA, "gradientColorB": value.gradientColorB, "gradientAngle": value.gradientAngle, "gradientOpacity": value.gradientOpacity,
+            "featherEnabled": value.featherEnabled, "featherTop": value.featherTop, "featherBottom": value.featherBottom, "featherLeft": value.featherLeft, "featherRight": value.featherRight,
+            "frameGuideColor": value.frameGuideColor, "frameGuideOpacity": value.frameGuideOpacity, "frameGuideBorderWidth": value.frameGuideBorderWidth, "frameGuideBlur": value.frameGuideBlur, "frameGuideBorderOpacity": value.frameGuideBorderOpacity,
+        ]
+    }
+
+    private func mcpSubtitleStyleDictionary(_ value: ShortsSubtitleStyle) -> [String: Any] {
+        ["fontFamily": value.fontFamily, "fontSize": value.fontSize, "bold": value.bold, "textTransform": value.textTransform.rawValue, "textColor": value.textColor, "boxColor": value.boxColor, "boxOpacity": value.boxOpacity, "boxWidth": value.boxWidth, "boxHeight": value.boxHeight, "outline": value.outline, "shadow": value.shadow]
+    }
+
+    private func mcpManageTimelineCut(arguments: [String: Any], permissions: McpPermissionSet) throws -> [String: Any] {
+        guard let action = mcpString(arguments["action"]) else { throw mcpError(-2, "action is required") }
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            let duration = ShortsVisualEditorStateBuilder.clipDuration(plan)
+            var cuts = plan.timelineCuts ?? []
+            switch action {
+            case "create":
+                let cut = try mcpTimelineCut(arguments: arguments, duration: duration)
+                guard !cuts.contains(where: { max($0.startSec, cut.startSec) < min($0.endSec, cut.endSec) }) else {
+                    throw mcpError(-2, "VALIDATION_FAILED: Timeline cuts may not overlap")
+                }
+                cuts.append(cut)
+            case "update":
+                guard let cutID = mcpString(arguments["cutId"]), let index = cuts.firstIndex(where: { $0.id == cutID }) else {
+                    throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown cutId")
+                }
+                var replacement = try mcpTimelineCut(arguments: arguments, duration: duration)
+                replacement.stableID = cuts[index].stableID ?? cutID
+                let otherCuts = cuts.enumerated().filter { $0.offset != index }.map(\.element)
+                guard !otherCuts.contains(where: { max($0.startSec, replacement.startSec) < min($0.endSec, replacement.endSec) }) else {
+                    throw mcpError(-2, "VALIDATION_FAILED: Timeline cuts may not overlap")
+                }
+                cuts[index] = replacement
+            case "delete":
+                try mcpRequireDestructivePermission(permissions)
+                guard let cutID = mcpString(arguments["cutId"]), let index = cuts.firstIndex(where: { $0.id == cutID }) else {
+                    throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown cutId")
+                }
+                cuts.remove(at: index)
+            default:
+                throw mcpError(-2, "action must be create, update, or delete")
+            }
+            plan.timelineCuts = cuts.sorted { $0.startSec < $1.startSec }
+        }
+        return ["success": true, "planId": updated.plan.id, "cuts": (updated.plan.timelineCuts ?? []).map { ["cutId": $0.id, "startSec": $0.startSec, "endSec": $0.endSec] }]
+    }
+
+    private func mcpTimelineCut(arguments: [String: Any], duration: Double) throws -> TimelineCut {
+        guard let start = mcpDouble(arguments["startSec"]), let end = mcpDouble(arguments["endSec"]), start >= 0, end > start, end <= duration else {
+            throw mcpError(-2, "VALIDATION_FAILED: startSec and endSec must define a cut inside the clip")
+        }
+        return TimelineCut(stableID: UUID().uuidString.lowercased(), startSec: start, endSec: end)
+    }
+
+    private func mcpManageSubtitleSegment(arguments: [String: Any], permissions: McpPermissionSet) throws -> [String: Any] {
+        guard let action = mcpString(arguments["action"]) else { throw mcpError(-2, "action is required") }
+        let language = mcpVisualLanguage(arguments)
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            let duration = ShortsVisualEditorStateBuilder.clipDuration(plan)
+            var segments = mcpSegments(for: plan, language: language)
+            switch action {
+            case "create":
+                guard let text = mcpString(arguments["text"]), text.count <= 4_000,
+                      let start = mcpDouble(arguments["startSec"]), let end = mcpDouble(arguments["endSec"]),
+                      start >= 0, end > start, end <= duration else {
+                    throw mcpError(-2, "VALIDATION_FAILED: text, startSec, and endSec must define a segment inside the clip")
+                }
+                let segment = AlignedSubtitleSegment(id: UUID().uuidString.lowercased(), start: start, end: end, text: text)
+                guard !segments.contains(where: { max($0.start, segment.start) < min($0.end, segment.end) }) else {
+                    throw mcpError(-2, "VALIDATION_FAILED: Subtitle segments may not overlap")
+                }
+                segments.append(AlignedSubtitleSegment(id: segment.id, start: start, end: end, text: text, words: ShortsVisualEditorStateBuilder.inferredWords(for: segment)))
+            case "update":
+                guard let segmentID = mcpString(arguments["segmentId"]), let index = segments.firstIndex(where: { $0.id == segmentID }) else {
+                    throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown segmentId")
+                }
+                let start = mcpDouble(arguments["startSec"]) ?? segments[index].start
+                let end = mcpDouble(arguments["endSec"]) ?? segments[index].end
+                let text = mcpString(arguments["text"]) ?? segments[index].text
+                guard text.count <= 4_000, start >= 0, end > start, end <= duration else {
+                    throw mcpError(-2, "VALIDATION_FAILED: Invalid subtitle segment")
+                }
+                let other = segments.enumerated().filter { $0.offset != index }.map(\.element)
+                guard !other.contains(where: { max($0.start, start) < min($0.end, end) }) else {
+                    throw mcpError(-2, "VALIDATION_FAILED: Subtitle segments may not overlap")
+                }
+                let base = AlignedSubtitleSegment(id: segmentID, start: start, end: end, text: text)
+                segments[index] = AlignedSubtitleSegment(id: base.id, start: base.start, end: base.end, text: base.text, words: ShortsVisualEditorStateBuilder.inferredWords(for: base))
+            case "split":
+                guard let segmentID = mcpString(arguments["segmentId"]), let index = segments.firstIndex(where: { $0.id == segmentID }),
+                      let split = mcpDouble(arguments["splitSec"]), split > segments[index].start + 0.25, split < segments[index].end - 0.25 else {
+                    throw mcpError(-2, "VALIDATION_FAILED: splitSec must lie inside an existing segment")
+                }
+                let original = segments.remove(at: index)
+                let words = original.text.split(whereSeparator: \.isWhitespace).map(String.init)
+                let pivot = max(1, words.count / 2)
+                let leftText = words.prefix(pivot).joined(separator: " ")
+                let rightText = words.dropFirst(pivot).joined(separator: " ")
+                let left = AlignedSubtitleSegment(id: original.id, start: original.start, end: split, text: leftText)
+                let right = AlignedSubtitleSegment(id: UUID().uuidString.lowercased(), start: split, end: original.end, text: rightText.isEmpty ? original.text : rightText)
+                segments += [AlignedSubtitleSegment(id: left.id, start: left.start, end: left.end, text: left.text, words: ShortsVisualEditorStateBuilder.inferredWords(for: left)), AlignedSubtitleSegment(id: right.id, start: right.start, end: right.end, text: right.text, words: ShortsVisualEditorStateBuilder.inferredWords(for: right))]
+            case "merge":
+                guard let firstID = mcpString(arguments["segmentId"]), let secondID = mcpString(arguments["secondSegmentId"]),
+                      let firstIndex = segments.firstIndex(where: { $0.id == firstID }), let secondIndex = segments.firstIndex(where: { $0.id == secondID }), firstIndex != secondIndex else {
+                    throw mcpError(-2, "VALIDATION_FAILED: segmentId and secondSegmentId must identify two segments")
+                }
+                let first = segments[firstIndex]
+                let second = segments[secondIndex]
+                let low = min(first.start, second.start)
+                let high = max(first.end, second.end)
+                let merged = AlignedSubtitleSegment(id: first.start <= second.start ? first.id : second.id, start: low, end: high, text: [first.text, second.text].joined(separator: " "))
+                segments.removeAll { $0.id == firstID || $0.id == secondID }
+                segments.append(AlignedSubtitleSegment(id: merged.id, start: merged.start, end: merged.end, text: merged.text, words: ShortsVisualEditorStateBuilder.inferredWords(for: merged)))
+            case "delete":
+                try mcpRequireDestructivePermission(permissions)
+                guard let segmentID = mcpString(arguments["segmentId"]), segments.contains(where: { $0.id == segmentID }) else {
+                    throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown segmentId")
+                }
+                segments.removeAll { $0.id == segmentID }
+            default:
+                throw mcpError(-2, "Unsupported subtitle action")
+            }
+            mcpSetSegments(segments.sorted { $0.start < $1.start }, on: &plan, language: language)
+        }
+        return ["success": true, "planId": updated.plan.id, "language": language.rawValue, "subtitleSegments": mcpSegments(for: updated.plan, language: language).map { ["segmentId": $0.id, "startSec": $0.start, "endSec": $0.end, "text": $0.text] }]
+    }
+
+    private func mcpSegments(for plan: ShortsClipPlan, language: ShortsIdeaDisplayLanguage) -> [AlignedSubtitleSegment] {
+        ShortsVisualEditorStateBuilder.segments(for: plan, language: language)
+    }
+
+    private func mcpSetSegments(_ segments: [AlignedSubtitleSegment], on plan: inout ShortsClipPlan, language: ShortsIdeaDisplayLanguage) {
+        switch language {
+        case .source: plan.sourceAlignment = segments
+        case .target: plan.targetAlignment = segments
+        }
+    }
+
+    private func mcpSetFrameKeyframes(arguments: [String: Any]) throws -> [String: Any] {
+        guard let rawFrames = arguments["keyframes"] as? [Any], !rawFrames.isEmpty, rawFrames.count <= 120 else {
+            throw mcpError(-2, "keyframes must contain 1 to 120 objects")
+        }
+        let language = mcpVisualLanguage(arguments)
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            let duration = ShortsVisualEditorStateBuilder.clipDuration(plan)
+            let frames = try rawFrames.map { raw -> FrameKeyframe in
+                guard let item = raw as? [String: Any],
+                      let time = mcpDouble(item["timeSec"] ?? item["time"]), time >= 0, time <= duration,
+                      let x = mcpDouble(item["x"]), (-100...100).contains(x),
+                      let y = mcpDouble(item["y"]), (-100...100).contains(y),
+                      let zoom = mcpDouble(item["zoom"]), (0.1...5).contains(zoom) else {
+                    throw mcpError(-2, "VALIDATION_FAILED: Each keyframe needs bounded timeSec, x, y, and zoom")
+                }
+                let color = try mcpOptionalHexColor(item["backgroundColor"])
+                return FrameKeyframe(id: mcpString(item["keyframeId"] ?? item["id"]) ?? UUID().uuidString.lowercased(), time: time, x: x, y: y, zoom: zoom, backgroundColor: color)
+            }.sorted { $0.time < $1.time }
+            guard Set(frames.map(\.id)).count == frames.count else {
+                throw mcpError(-2, "VALIDATION_FAILED: keyframe IDs must be unique")
+            }
+            switch language {
+            case .source: plan.sourceFrameKeyframes = frames
+            case .target: plan.targetFrameKeyframes = frames
+            }
+        }
+        let frames = language == .source ? updated.plan.sourceFrameKeyframes : updated.plan.targetFrameKeyframes
+        return ["success": true, "planId": updated.plan.id, "language": language.rawValue, "frameKeyframes": (frames ?? []).map { ["keyframeId": $0.id, "timeSec": $0.time, "x": $0.x, "y": $0.y, "zoom": $0.zoom, "backgroundColor": $0.backgroundColor ?? ""] }]
+    }
+
+    private func mcpClearFrameKeyframes(arguments: [String: Any]) throws -> [String: Any] {
+        let language = mcpVisualLanguage(arguments)
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            let base = mcpBaseKeyframes(plan, language: language)
+            switch language {
+            case .source: plan.sourceFrameKeyframes = base
+            case .target: plan.targetFrameKeyframes = base
+            }
+        }
+        return ["success": true, "planId": updated.plan.id, "language": language.rawValue, "message": "Frame keyframes reset to neutral base"]
+    }
+
+    private func mcpUpdateVisualBackground(arguments: [String: Any]) throws -> [String: Any] {
+        guard let patch = arguments["patch"] as? [String: Any], !patch.isEmpty else {
+            throw mcpError(-2, "patch must be a non-empty object")
+        }
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            var background = plan.backgroundSettings ?? .universalDefault
+            for (key, value) in patch {
+                switch key {
+                case "solidEnabled": background.solidEnabled = try mcpRequiredBool(value, key)
+                case "solidColor": background.solidColor = try mcpRequiredHexColor(value, key)
+                case "blurEnabled": background.blurEnabled = try mcpRequiredBool(value, key)
+                case "blurStrength": background.blurStrength = try mcpBoundedNumber(value, key, range: 0...100)
+                case "blurScale": background.blurScale = try mcpBoundedNumber(value, key, range: 0.1...4)
+                case "blurPanX": background.blurPanX = try mcpBoundedNumber(value, key, range: -100...100)
+                case "gradientEnabled": background.gradientEnabled = try mcpRequiredBool(value, key)
+                case "gradientType":
+                    guard let type = mcpString(value), ["linear", "radial"].contains(type) else { throw mcpError(-2, "gradientType must be linear or radial") }
+                    background.gradientType = type
+                case "gradientColorA": background.gradientColorA = try mcpRequiredHexColor(value, key)
+                case "gradientColorB": background.gradientColorB = try mcpRequiredHexColor(value, key)
+                case "gradientAngle": background.gradientAngle = try mcpBoundedNumber(value, key, range: 0...360)
+                case "gradientOpacity": background.gradientOpacity = try mcpBoundedNumber(value, key, range: 0...1)
+                case "featherEnabled": background.featherEnabled = try mcpRequiredBool(value, key)
+                case "featherTop": background.featherTop = try mcpBoundedNumber(value, key, range: 0...100)
+                case "featherBottom": background.featherBottom = try mcpBoundedNumber(value, key, range: 0...100)
+                case "featherLeft": background.featherLeft = try mcpBoundedNumber(value, key, range: 0...100)
+                case "featherRight": background.featherRight = try mcpBoundedNumber(value, key, range: 0...100)
+                case "frameGuideColor": background.frameGuideColor = try mcpRequiredHexColor(value, key)
+                case "frameGuideOpacity": background.frameGuideOpacity = try mcpBoundedNumber(value, key, range: 0...1)
+                case "frameGuideBorderWidth": background.frameGuideBorderWidth = try mcpBoundedNumber(value, key, range: 0...20)
+                case "frameGuideBlur": background.frameGuideBlur = try mcpBoundedNumber(value, key, range: 0...100)
+                case "frameGuideBorderOpacity": background.frameGuideBorderOpacity = try mcpBoundedNumber(value, key, range: 0...1)
+                default: throw mcpError(-2, "Unsupported background field: \(key)")
+                }
+            }
+            plan.backgroundSettings = background
+        }
+        return ["success": true, "planId": updated.plan.id, "background": mcpBackgroundDictionary(updated.plan.backgroundSettings ?? .universalDefault)]
+    }
+
+    private func mcpUpdateVisualSubtitleStyle(arguments: [String: Any]) throws -> [String: Any] {
+        guard let patch = arguments["patch"] as? [String: Any], !patch.isEmpty else {
+            throw mcpError(-2, "patch must be a non-empty object")
+        }
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            var style = plan.subtitleStyle ?? .orangeImpact
+            for (key, value) in patch {
+                switch key {
+                case "fontFamily":
+                    guard let font = mcpString(value), font.count <= 100 else { throw mcpError(-2, "fontFamily must be at most 100 characters") }
+                    style.fontFamily = font
+                case "fontSize": style.fontSize = try mcpBoundedNumber(value, key, range: 12...240)
+                case "bold": style.bold = try mcpRequiredBool(value, key)
+                case "textTransform":
+                    guard let transform = mcpString(value), let parsed = ShortsTextTransform(rawValue: transform) else { throw mcpError(-2, "textTransform must be none, uppercase, or title") }
+                    style.textTransform = parsed
+                case "textColor": style.textColor = try mcpRequiredHexColor(value, key)
+                case "boxColor": style.boxColor = try mcpRequiredHexColor(value, key)
+                case "boxOpacity": style.boxOpacity = try mcpBoundedNumber(value, key, range: 0...1)
+                case "boxWidth": style.boxWidth = try mcpBoundedNumber(value, key, range: 1...100)
+                case "boxHeight": style.boxHeight = try mcpBoundedNumber(value, key, range: 0...100)
+                case "edgeBlur": style.edgeBlur = try mcpBoundedNumber(value, key, range: 0...100)
+                case "letterSpacing": style.letterSpacing = try mcpBoundedNumber(value, key, range: -20...50)
+                case "lineSpacing": style.lineSpacing = try mcpBoundedNumber(value, key, range: 0.5...5)
+                case "edgeSoftness": style.edgeSoftness = try mcpBoundedNumber(value, key, range: 0...1)
+                case "outline": style.outline = try mcpBoundedNumber(value, key, range: 0...30)
+                case "outlineColor": style.outlineColor = try mcpRequiredHexColor(value, key)
+                case "outlineOpacity": style.outlineOpacity = try mcpBoundedNumber(value, key, range: 0...1)
+                case "shadow": style.shadow = try mcpBoundedNumber(value, key, range: 0...30)
+                case "shadowColor": style.shadowColor = try mcpRequiredHexColor(value, key)
+                case "shadowOpacity": style.shadowOpacity = try mcpBoundedNumber(value, key, range: 0...1)
+                case "shadowBlur": style.shadowBlur = try mcpBoundedNumber(value, key, range: 0...100)
+                case "shadowDistance": style.shadowDistance = try mcpBoundedNumber(value, key, range: 0...100)
+                case "shadowAngle": style.shadowAngle = try mcpBoundedNumber(value, key, range: 0...360)
+                case "subtitleBottomMargin": style.subtitleBottomMargin = try mcpBoundedNumber(value, key, range: 0...2_000)
+                default: throw mcpError(-2, "Unsupported subtitle style field: \(key)")
+                }
+            }
+            plan.subtitleStyle = style
+        }
+        return ["success": true, "planId": updated.plan.id, "subtitleStyle": mcpSubtitleStyleDictionary(updated.plan.subtitleStyle ?? .orangeImpact)]
+    }
+
+    private func mcpSetVisualSync(arguments: [String: Any]) throws -> [String: Any] {
+        guard let enabled = arguments["enabled"] as? Bool else { throw mcpError(-2, "enabled must be a boolean") }
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { $0.syncEnabled = enabled }
+        return ["success": true, "planId": updated.plan.id, "syncEnabled": enabled]
+    }
+
+    private func mcpUpdateVisualLogo(arguments: [String: Any], permissions: McpPermissionSet) throws -> [String: Any] {
+        guard let action = mcpString(arguments["action"]) else { throw mcpError(-2, "action is required") }
+        let language = mcpVisualLanguage(arguments)
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            var logo = mcpLogo(for: plan, language: language)
+            switch action {
+            case "update":
+                guard var existing = logo else {
+                    throw mcpError(-9, "ASSET_SELECTION_REQUIRED: Add a logo through the Visual Editor file picker before editing it through MCP")
+                }
+                if let logoID = mcpString(arguments["logoId"]), existing.id != logoID { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown logoId") }
+                if let size = mcpDouble(arguments["size"]), (0.05...5).contains(size) { existing.size = size }
+                else if arguments["size"] != nil { throw mcpError(-2, "size must be between 0.05 and 5") }
+                if let opacity = mcpDouble(arguments["opacity"]), (0...1).contains(opacity) { existing.opacity = opacity }
+                else if arguments["opacity"] != nil { throw mcpError(-2, "opacity must be between 0 and 1") }
+                if let position = mcpString(arguments["position"]), ["topLeft", "topRight", "bottomLeft", "bottomRight", "center"].contains(position) { existing.position = position }
+                else if arguments["position"] != nil { throw mcpError(-2, "position is invalid") }
+                if let hidden = arguments["hidden"] as? Bool { existing.hidden = hidden }
+                logo = existing
+            case "clear":
+                try mcpRequireDestructivePermission(permissions)
+                if let logoID = mcpString(arguments["logoId"]), logo?.id != logoID { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown logoId") }
+                logo = nil
+            default: throw mcpError(-2, "action must be update or clear")
+            }
+            mcpSetLogo(logo, on: &plan, language: language)
+        }
+        return ["success": true, "planId": updated.plan.id, "language": language.rawValue, "logo": mcpLogoDictionary(mcpLogo(for: updated.plan, language: language))]
+    }
+
+    private func mcpLogo(for plan: ShortsClipPlan, language: ShortsIdeaDisplayLanguage) -> LogoOverlaySettings? {
+        switch language {
+        case .source: plan.sourceLogo ?? plan.logo
+        case .target: plan.targetLogo ?? plan.logo
+        }
+    }
+
+    private func mcpSetLogo(_ logo: LogoOverlaySettings?, on plan: inout ShortsClipPlan, language: ShortsIdeaDisplayLanguage) {
+        switch language {
+        case .source: plan.sourceLogo = logo
+        case .target: plan.targetLogo = logo
+        }
+    }
+
+    private func mcpUpdateIntroOutro(arguments: [String: Any], permissions: McpPermissionSet) throws -> [String: Any] {
+        guard let kind = mcpString(arguments["kind"]), ["intro", "outro"].contains(kind),
+              let action = mcpString(arguments["action"]) else { throw mcpError(-2, "kind and action are required") }
+        let language = mcpVisualLanguage(arguments)
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            var overlay = mcpOverlay(for: plan, language: language, kind: kind)
+            switch action {
+            case "update":
+                guard var existing = overlay else {
+                    throw mcpError(-9, "ASSET_SELECTION_REQUIRED: Add the \(kind) asset through the Visual Editor file picker before editing it through MCP")
+                }
+                if let id = mcpString(arguments["overlayId"]), id != existing.id { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown overlayId") }
+                if let value = mcpDouble(arguments["duration"]), (0...30).contains(value) { existing.duration = value } else if arguments["duration"] != nil { throw mcpError(-2, "duration must be between 0 and 30 seconds") }
+                if let value = mcpDouble(arguments["x"]), (-100...100).contains(value) { existing.x = value } else if arguments["x"] != nil { throw mcpError(-2, "x must be between -100 and 100") }
+                if let value = mcpDouble(arguments["y"]), (-100...100).contains(value) { existing.y = value } else if arguments["y"] != nil { throw mcpError(-2, "y must be between -100 and 100") }
+                if let value = mcpDouble(arguments["scale"]), (0.05...5).contains(value) { existing.scale = value } else if arguments["scale"] != nil { throw mcpError(-2, "scale must be between 0.05 and 5") }
+                if let value = mcpString(arguments["animation"]), ["none", "fade", "slide", "zoom"].contains(value) { existing.animation = value } else if arguments["animation"] != nil { throw mcpError(-2, "animation is invalid") }
+                if let value = arguments["hidden"] as? Bool { existing.hidden = value }
+                if let value = mcpDouble(arguments["speed"]), (0.1...4).contains(value) { existing.speed = value } else if arguments["speed"] != nil { throw mcpError(-2, "speed must be between 0.1 and 4") }
+                if let value = mcpDouble(arguments["transitionSec"]), (0...10).contains(value) { existing.transitionSec = value } else if arguments["transitionSec"] != nil { throw mcpError(-2, "transitionSec must be between 0 and 10") }
+                overlay = existing
+            case "clear":
+                try mcpRequireDestructivePermission(permissions)
+                if let id = mcpString(arguments["overlayId"]), overlay?.id != id { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown overlayId") }
+                overlay = nil
+            default: throw mcpError(-2, "action must be update or clear")
+            }
+            mcpSetOverlay(overlay, on: &plan, language: language, kind: kind)
+        }
+        return ["success": true, "planId": updated.plan.id, "language": language.rawValue, "kind": kind, "overlay": mcpOverlayDictionary(mcpOverlay(for: updated.plan, language: language, kind: kind))]
+    }
+
+    private func mcpOverlay(for plan: ShortsClipPlan, language: ShortsIdeaDisplayLanguage, kind: String) -> IntroOutroOverlaySettings? {
+        switch (language, kind) {
+        case (.source, "intro"): plan.sourceIntro ?? plan.intro
+        case (.target, "intro"): plan.targetIntro ?? plan.intro
+        case (.source, "outro"): plan.sourceOutro ?? plan.outro
+        default: plan.targetOutro ?? plan.outro
+        }
+    }
+
+    private func mcpSetOverlay(_ overlay: IntroOutroOverlaySettings?, on plan: inout ShortsClipPlan, language: ShortsIdeaDisplayLanguage, kind: String) {
+        switch (language, kind) {
+        case (.source, "intro"): plan.sourceIntro = overlay
+        case (.target, "intro"): plan.targetIntro = overlay
+        case (.source, "outro"): plan.sourceOutro = overlay
+        default: plan.targetOutro = overlay
+        }
+    }
+
+    private func mcpManageTextTrack(arguments: [String: Any], permissions: McpPermissionSet) throws -> [String: Any] {
+        guard let action = mcpString(arguments["action"]) else { throw mcpError(-2, "action is required") }
+        let language = mcpVisualLanguage(arguments)
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            var tracks = mcpTextTracks(for: plan, language: language)
+            switch action {
+            case "create":
+                guard let name = mcpString(arguments["name"]), name.count <= 200 else { throw mcpError(-2, "name is required and must be at most 200 characters") }
+                tracks.append(TextOverlayTrack(id: UUID().uuidString.lowercased(), name: name, hidden: arguments["hidden"] as? Bool, muted: arguments["muted"] as? Bool, blocks: []))
+            case "update":
+                guard let id = mcpString(arguments["trackId"]), let index = tracks.firstIndex(where: { $0.id == id }) else { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown trackId") }
+                if let name = mcpString(arguments["name"]), name.count <= 200 { tracks[index].name = name } else if arguments["name"] != nil { throw mcpError(-2, "name must be at most 200 characters") }
+                if let hidden = arguments["hidden"] as? Bool { tracks[index].hidden = hidden }
+                if let muted = arguments["muted"] as? Bool { tracks[index].muted = muted }
+            case "delete":
+                try mcpRequireDestructivePermission(permissions)
+                guard let id = mcpString(arguments["trackId"]), tracks.contains(where: { $0.id == id }) else { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown trackId") }
+                tracks.removeAll { $0.id == id }
+            default: throw mcpError(-2, "action must be create, update, or delete")
+            }
+            mcpSetTextTracks(tracks, on: &plan, language: language)
+        }
+        return ["success": true, "planId": updated.plan.id, "language": language.rawValue, "textTracks": mcpTextTracks(for: updated.plan, language: language).map(mcpTextTrackDictionary)]
+    }
+
+    private func mcpTextTracks(for plan: ShortsClipPlan, language: ShortsIdeaDisplayLanguage) -> [TextOverlayTrack] {
+        switch language {
+        case .source: plan.sourceTextTracks ?? plan.textTracks ?? []
+        case .target: plan.targetTextTracks ?? plan.textTracks ?? []
+        }
+    }
+
+    private func mcpSetTextTracks(_ tracks: [TextOverlayTrack], on plan: inout ShortsClipPlan, language: ShortsIdeaDisplayLanguage) {
+        switch language {
+        case .source: plan.sourceTextTracks = tracks
+        case .target: plan.targetTextTracks = tracks
+        }
+    }
+
+    private func mcpManageTextBlock(arguments: [String: Any], permissions: McpPermissionSet) throws -> [String: Any] {
+        guard let action = mcpString(arguments["action"]), let trackID = mcpString(arguments["trackId"]) else {
+            throw mcpError(-2, "action and trackId are required")
+        }
+        let language = mcpVisualLanguage(arguments)
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            let duration = ShortsVisualEditorStateBuilder.clipDuration(plan)
+            var tracks = mcpTextTracks(for: plan, language: language)
+            guard let trackIndex = tracks.firstIndex(where: { $0.id == trackID }) else { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown trackId") }
+            switch action {
+            case "create":
+                guard let text = mcpString(arguments["text"]), text.count <= 4_000,
+                      let start = mcpDouble(arguments["startSec"]), let end = mcpDouble(arguments["endSec"]), start >= 0, end > start, end <= duration else {
+                    throw mcpError(-2, "VALIDATION_FAILED: text, startSec, and endSec are required inside the clip")
+                }
+                tracks[trackIndex].blocks.append(TextOverlayBlock(id: UUID().uuidString.lowercased(), startSec: start, endSec: end, text: text, hidden: arguments["hidden"] as? Bool))
+            case "update":
+                guard let blockID = mcpString(arguments["blockId"]), let blockIndex = tracks[trackIndex].blocks.firstIndex(where: { $0.id == blockID }) else { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown blockId") }
+                let start = mcpDouble(arguments["startSec"]) ?? tracks[trackIndex].blocks[blockIndex].startSec
+                let end = mcpDouble(arguments["endSec"]) ?? tracks[trackIndex].blocks[blockIndex].endSec
+                guard start >= 0, end > start, end <= duration else { throw mcpError(-2, "VALIDATION_FAILED: Text block must lie inside the clip") }
+                tracks[trackIndex].blocks[blockIndex].startSec = start
+                tracks[trackIndex].blocks[blockIndex].endSec = end
+                if let text = mcpString(arguments["text"]), text.count <= 4_000 { tracks[trackIndex].blocks[blockIndex].text = text } else if arguments["text"] != nil { throw mcpError(-2, "text must be at most 4,000 characters") }
+                if let hidden = arguments["hidden"] as? Bool { tracks[trackIndex].blocks[blockIndex].hidden = hidden }
+            case "delete":
+                try mcpRequireDestructivePermission(permissions)
+                guard let blockID = mcpString(arguments["blockId"]), tracks[trackIndex].blocks.contains(where: { $0.id == blockID }) else { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown blockId") }
+                tracks[trackIndex].blocks.removeAll { $0.id == blockID }
+            default: throw mcpError(-2, "action must be create, update, or delete")
+            }
+            tracks[trackIndex].blocks.sort { $0.startSec < $1.startSec }
+            mcpSetTextTracks(tracks, on: &plan, language: language)
+        }
+        return ["success": true, "planId": updated.plan.id, "language": language.rawValue, "textTracks": mcpTextTracks(for: updated.plan, language: language).map(mcpTextTrackDictionary)]
+    }
+
+    private func mcpManageAudioTrack(arguments: [String: Any], permissions: McpPermissionSet) throws -> [String: Any] {
+        guard let action = mcpString(arguments["action"]), let trackID = mcpString(arguments["audioTrackId"]) else {
+            throw mcpError(-2, "action and audioTrackId are required")
+        }
+        let language = mcpVisualLanguage(arguments)
+        let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+            var tracks = mcpAudioTracks(for: plan, language: language)
+            guard let index = tracks.firstIndex(where: { $0.id == trackID }) else { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown audioTrackId") }
+            switch action {
+            case "update":
+                if let name = mcpString(arguments["name"]), name.count <= 200 { tracks[index].name = name } else if arguments["name"] != nil { throw mcpError(-2, "name must be at most 200 characters") }
+                if let start = mcpDouble(arguments["startSec"]), start >= 0 { tracks[index].startSec = start } else if arguments["startSec"] != nil { throw mcpError(-2, "startSec must be non-negative") }
+                if let trim = mcpDouble(arguments["trimStartSec"]), trim >= 0 { tracks[index].trimStartSec = trim } else if arguments["trimStartSec"] != nil { throw mcpError(-2, "trimStartSec must be non-negative") }
+                if let trim = mcpDouble(arguments["trimEndSec"]), trim >= 0 { tracks[index].trimEndSec = trim } else if arguments["trimEndSec"] != nil { throw mcpError(-2, "trimEndSec must be non-negative") }
+                if let volume = mcpDouble(arguments["volume"]), (0...2).contains(volume) { tracks[index].volume = volume } else if arguments["volume"] != nil { throw mcpError(-2, "volume must be between 0 and 2") }
+                if let fade = mcpDouble(arguments["fadeInSec"]), (0...30).contains(fade) { tracks[index].fadeInSec = fade } else if arguments["fadeInSec"] != nil { throw mcpError(-2, "fadeInSec must be between 0 and 30") }
+                if let fade = mcpDouble(arguments["fadeOutSec"]), (0...30).contains(fade) { tracks[index].fadeOutSec = fade } else if arguments["fadeOutSec"] != nil { throw mcpError(-2, "fadeOutSec must be between 0 and 30") }
+                if let muted = arguments["muted"] as? Bool { tracks[index].muted = muted }
+            case "delete":
+                try mcpRequireDestructivePermission(permissions)
+                tracks.remove(at: index)
+            default: throw mcpError(-2, "action must be update or delete")
+            }
+            mcpSetAudioTracks(tracks, on: &plan, language: language)
+        }
+        return ["success": true, "planId": updated.plan.id, "language": language.rawValue, "audioTracks": mcpAudioTracks(for: updated.plan, language: language).map(mcpAudioTrackDictionary)]
+    }
+
+    private func mcpAudioTracks(for plan: ShortsClipPlan, language: ShortsIdeaDisplayLanguage) -> [ExtraAudioTrack] {
+        switch language {
+        case .source: plan.sourceAudioTracks ?? plan.audioTracks ?? []
+        case .target: plan.targetAudioTracks ?? plan.audioTracks ?? []
+        }
+    }
+
+    private func mcpSetAudioTracks(_ tracks: [ExtraAudioTrack], on plan: inout ShortsClipPlan, language: ShortsIdeaDisplayLanguage) {
+        switch language {
+        case .source: plan.sourceAudioTracks = tracks
+        case .target: plan.targetAudioTracks = tracks
+        }
+    }
+
+    private func mcpOptionalHexColor(_ value: Any?) throws -> String? {
+        guard value != nil else { return nil }
+        return try mcpRequiredHexColor(value, "backgroundColor")
+    }
+
+    private func mcpRequiredHexColor(_ value: Any?, _ key: String) throws -> String {
+        guard let color = mcpString(value), color.range(of: "^#[0-9A-Fa-f]{6}$", options: .regularExpression) != nil else {
+            throw mcpError(-2, "\(key) must be a #RRGGBB hex colour")
+        }
+        return color.uppercased()
+    }
+
+    private func mcpRequiredBool(_ value: Any, _ key: String) throws -> Bool {
+        guard let result = value as? Bool else { throw mcpError(-2, "\(key) must be a boolean") }
+        return result
+    }
+
+    private func mcpBoundedNumber(_ value: Any, _ key: String, range: ClosedRange<Double>) throws -> Double {
+        guard let number = mcpDouble(value), range.contains(number) else {
+            throw mcpError(-2, "\(key) must be between \(range.lowerBound) and \(range.upperBound)")
+        }
+        return number
+    }
+
+    // MARK: - MCP safe settings, providers, prompts, and models
+
+    private func mcpSafeSettings() -> [String: Any] {
+        let settings = workflow.settings
+        return [
+            "theme": settings.theme.rawValue,
+            "fontSize": settings.fontSize.rawValue,
+            "fontScale": settings.fontScale,
+            "fontFamily": settings.fontFamily.rawValue,
+            "defaultSourceLanguage": settings.defaultSourceLang,
+            "defaultTargetLanguage": settings.defaultTargetLang,
+            "chunkDurationMin": settings.chunkDurationMin,
+            "sliceMode": settings.sliceMode.rawValue,
+            "silenceThresholdDb": settings.silenceThreshDb,
+            "minimumSilenceMs": settings.minSilenceMs,
+            "onboardingCompleted": settings.hasCompletedOnboarding,
+            "permissions": McpPermissionSet(settings: settings).safeDictionary,
+            "secretPolicy": "API keys, resolver tokens, MCP tokens, model paths, and custom provider credentials are never returned or accepted by MCP.",
+        ]
+    }
+
+    private func mcpUpdateSafeSettings(arguments: [String: Any]) throws -> [String: Any] {
+        guard !arguments.isEmpty else { throw mcpError(-2, "Provide at least one safe setting to update") }
+        var updates = 0
+        updateSettings { settings in
+            if let value = mcpString(arguments["theme"]), let theme = Theme(rawValue: value) { settings.theme = theme; updates += 1 }
+            if let value = mcpString(arguments["fontSize"]), let size = FontSize(rawValue: value) { settings.fontSize = size; updates += 1 }
+            if let value = mcpDouble(arguments["fontScale"]), (0.8...1.8).contains(value) { settings.fontScale = value; updates += 1 }
+            if let value = mcpString(arguments["fontFamily"]), let family = FontFamily(rawValue: value) { settings.fontFamily = family; updates += 1 }
+            if let value = mcpString(arguments["defaultSourceLanguage"]), value.count <= 100 { settings.defaultSourceLang = value; updates += 1 }
+            if let value = mcpString(arguments["defaultTargetLanguage"]), value.count <= 100, value.lowercased() == "same" || TranslationArchive.isRealLanguage(value) { settings.defaultTargetLang = value; updates += 1 }
+            if let value = McpToolArguments.wholeNumber(arguments["chunkDurationMin"]), (1...120).contains(value) { settings.chunkDurationMin = value; updates += 1 }
+            if let value = mcpString(arguments["sliceMode"]), let mode = SliceMode(rawValue: value) { settings.sliceMode = mode; updates += 1 }
+            if let value = McpToolArguments.wholeNumber(arguments["silenceThresholdDb"]), (-80...0).contains(value) { settings.silenceThreshDb = value; updates += 1 }
+            if let value = McpToolArguments.wholeNumber(arguments["minimumSilenceMs"]), (0...10_000).contains(value) { settings.minSilenceMs = value; updates += 1 }
+        }
+        guard updates > 0 else { throw mcpError(-2, "VALIDATION_FAILED: No supported safe setting was supplied") }
+        return ["success": true, "updatedFieldCount": updates, "settings": mcpSafeSettings()]
+    }
+
+    private func mcpListProviders() -> [String: Any] {
+        let settings = workflow.settings
+        let transcription = ProviderRegistry.availableTranscriptionProviders(settings: settings).map(mcpProviderDictionary)
+        let translationAvailability = ProviderRegistry.availableTranslationProviders(settings: settings, targetLang: workflow.targetLang)
+        return [
+            "transcription": transcription,
+            "translationEnabled": translationAvailability.enabled,
+            "translation": translationAvailability.providers.map(mcpProviderDictionary),
+            "selected": ["transcriptionProvider": workflow.transcriptionProvider, "translationProvider": workflow.translationProvider],
+        ]
+    }
+
+    private func mcpProviderDictionary(_ option: ProviderOption) -> [String: Any] {
+        ["providerId": option.id, "label": option.label, "kind": option.kind.rawValue, "group": option.group.rawValue, "ready": true]
+    }
+
+    private func mcpSelectProvider(arguments: [String: Any]) throws -> [String: Any] {
+        guard let kind = mcpString(arguments["kind"]), let providerID = mcpString(arguments["providerId"]) else {
+            throw mcpError(-2, "kind and providerId are required")
+        }
+        switch kind {
+        case "transcription":
+            guard ProviderRegistry.availableTranscriptionProviders(settings: workflow.settings).contains(where: { $0.id == providerID }) else { throw mcpError(-10, "PROVIDER_NOT_READY: Transcription provider is unavailable") }
+            workflow.transcriptionProvider = providerID
+            updateSettings { $0.transcriptionProvider = providerID }
+            if var session = workflow.session { session.transcriptionProvider = providerID; workflow.session = session; saveCurrentProject() }
+        case "translation":
+            guard ProviderRegistry.availableTranslationProviders(settings: workflow.settings, targetLang: workflow.targetLang).providers.contains(where: { $0.id == providerID }) else { throw mcpError(-10, "PROVIDER_NOT_READY: Translation provider is unavailable") }
+            workflow.translationProvider = providerID
+            updateSettings { $0.translationProvider = providerID }
+            if var session = workflow.session { session.translationProvider = providerID; workflow.session = session; saveCurrentProject() }
+        default: throw mcpError(-2, "kind must be transcription or translation")
+        }
+        return ["success": true, "kind": kind, "providerId": providerID]
+    }
+
+    private func mcpListPromptPresets() -> [String: Any] {
+        ["prompts": DefaultPrompts.definitions.map { definition in
+            let preset = workflow.settings.promptPresets[definition.id] ?? DefaultPrompts.defaultPresets[definition.id] ?? PromptPresetSettings()
+            return ["promptId": definition.id, "label": definition.label, "stage": definition.stage, "description": definition.description, "variables": definition.variables, "activeSlot": preset.active, "customSlots": preset.custom.keys.sorted()]
+        }]
+    }
+
+    private func mcpGetPrompt(arguments: [String: Any]) throws -> [String: Any] {
+        guard let promptID = mcpString(arguments["promptId"]), let definition = DefaultPrompts.definition(id: promptID) else { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown promptId") }
+        let preset = workflow.settings.promptPresets[promptID] ?? DefaultPrompts.defaultPresets[promptID] ?? PromptPresetSettings()
+        let requested = mcpString(arguments["slot"]) ?? "active"
+        let slot = requested == "active" ? preset.active : requested
+        let text: String
+        if slot == "default" { text = definition.defaultText }
+        else if let custom = preset.custom[slot] { text = custom.isEmpty ? definition.defaultText : custom }
+        else { throw mcpError(-2, "slot must be default, active, custom1, custom2, or custom3") }
+        return ["promptId": promptID, "slot": slot, "activeSlot": preset.active, "label": definition.label, "variables": definition.variables, "text": text]
+    }
+
+    private func mcpUpdatePrompt(arguments: [String: Any]) throws -> [String: Any] {
+        guard let promptID = mcpString(arguments["promptId"]), DefaultPrompts.definition(id: promptID) != nil,
+              let slot = mcpString(arguments["slot"]), ["custom1", "custom2", "custom3"].contains(slot),
+              let text = arguments["text"] as? String, (1...20_000).contains(text.count) else {
+            throw mcpError(-2, "promptId, custom slot, and text (1-20,000 characters) are required")
+        }
+        let activate = arguments["activate"] as? Bool ?? false
+        updateSettings { settings in
+            var preset = settings.promptPresets[promptID] ?? PromptPresetSettings()
+            preset.custom[slot] = text
+            if activate { preset.active = slot }
+            settings.promptPresets[promptID] = preset
+        }
+        return try mcpGetPrompt(arguments: ["promptId": promptID, "slot": slot])
+    }
+
+    private func mcpResetPrompt(arguments: [String: Any]) throws -> [String: Any] {
+        guard let promptID = mcpString(arguments["promptId"]), DefaultPrompts.definition(id: promptID) != nil else { throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown promptId") }
+        let slot = mcpString(arguments["slot"]) ?? "active"
+        guard ["active", "custom1", "custom2", "custom3"].contains(slot) else { throw mcpError(-2, "slot must be active, custom1, custom2, or custom3") }
+        updateSettings { settings in
+            var preset = settings.promptPresets[promptID] ?? PromptPresetSettings()
+            if slot == "active" { preset.active = "default" } else { preset.custom[slot] = ""; if preset.active == slot { preset.active = "default" } }
+            settings.promptPresets[promptID] = preset
+        }
+        return try mcpGetPrompt(arguments: ["promptId": promptID, "slot": "active"])
+    }
+
+    private func mcpModelStatus() -> [String: Any] {
+        let settings = workflow.settings
+        let asr = settings.localAsrModels.keys.sorted().compactMap { id in settings.localAsrModels[id].map { mcpModelDictionary(id: id, model: $0, kind: "transcription") } }
+        let translation = settings.localTranslationModels.keys.sorted().compactMap { id in settings.localTranslationModels[id].map { mcpModelDictionary(id: id, model: $0, kind: "translation") } }
+        return ["models": asr + translation]
+    }
+
+    private func mcpModelDictionary(id: String, model: LocalModelState, kind: String) -> [String: Any] {
+        [
+            "modelId": id,
+            "label": model.label,
+            "kind": kind,
+            "runtime": model.runtime.rawValue,
+            "status": model.status.rawValue,
+            "progress": model.progress ?? 0,
+            "progressLabel": model.progressLabel ?? "",
+            "hasError": model.error?.isEmpty == false,
+            "isConfigured": model.status == .downloaded,
+        ]
+    }
+
+    private func mcpModelReference(_ id: String) -> (isTranslation: Bool, model: LocalModelState)? {
+        if let model = workflow.settings.localTranslationModels[id] { return (true, model) }
+        if let model = workflow.settings.localAsrModels[id] { return (false, model) }
+        return nil
+    }
+
+    private func mcpDownloadModel(arguments: [String: Any]) throws -> [String: Any] {
+        guard let modelID = mcpString(arguments["modelId"]), let reference = mcpModelReference(modelID) else {
+            throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown modelId")
+        }
+        guard reference.model.status != .downloading else { throw mcpError(-4, "JOB_ALREADY_RUNNING: This model is already downloading") }
+        let isTranslation = reference.isTranslation
+        let jobID = mcpJobManager.start(kind: "download_model", message: "Downloading \(reference.model.label)", cancellable: false) { [weak self] reporter in
+            guard let self else { throw NSError(domain: "VaniScriptMCP", code: -1) }
+            self.updateSettings { settings in
+                if isTranslation, var model = settings.localTranslationModels[modelID] {
+                    model.status = .downloading; model.progress = 0; model.progressLabel = "Initializing..."; model.error = nil; settings.localTranslationModels[modelID] = model
+                } else if !isTranslation, var model = settings.localAsrModels[modelID] {
+                    model.status = .downloading; model.progress = 0; model.progressLabel = "Initializing..."; model.error = nil; settings.localAsrModels[modelID] = model
+                }
+            }
+            let path: String = try await withCheckedThrowingContinuation { continuation in
+                ModelDownloadManager.shared.downloadModel(id: modelID) { progress, label in
+                    Task { @MainActor in
+                        reporter.update(progress: progress, stage: label)
+                        self.updateSettings { settings in
+                            if isTranslation, var model = settings.localTranslationModels[modelID] { model.progress = progress; model.progressLabel = label; settings.localTranslationModels[modelID] = model }
+                            else if !isTranslation, var model = settings.localAsrModels[modelID] { model.progress = progress; model.progressLabel = label; settings.localAsrModels[modelID] = model }
+                        }
+                    }
+                } onComplete: { path in
+                    continuation.resume(returning: path)
+                } onFailure: { error in
+                    continuation.resume(throwing: error)
+                }
+            }
+            self.updateSettings { settings in
+                if isTranslation, var model = settings.localTranslationModels[modelID] {
+                    model.status = .downloaded; model.path = path; model.progress = 1; model.progressLabel = "Done"; model.error = nil; settings.localTranslationModels[modelID] = model
+                } else if !isTranslation, var model = settings.localAsrModels[modelID] {
+                    model.status = .downloaded; model.path = path; model.progress = 1; model.progressLabel = "Done"; model.error = nil; settings.localAsrModels[modelID] = model
+                }
+            }
+            guard let final = self.mcpModelReference(modelID)?.model else { throw self.mcpError(-6, "Model settings changed during download") }
+            return ["model": self.mcpModelDictionary(id: modelID, model: final, kind: isTranslation ? "translation" : "transcription")]
+        }
+        return ["jobId": jobID, "status": "queued", "kind": "download_model", "modelId": modelID, "cancellable": false]
+    }
+
+    private func mcpLocateModel(arguments: [String: Any]) throws -> [String: Any] {
+        guard let modelID = mcpString(arguments["modelId"]), let reference = mcpModelReference(modelID) else {
+            throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown modelId")
+        }
+        let runtime: SharedModelRuntime = reference.isTranslation ? .mlx : .whisperkit
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = true
+        panel.directoryURL = try? LocalModelPickerDefaults.directory(for: runtime)
+        panel.message = "Choose the local model file or folder requested by VaniScript"
+        guard panel.runModal() == .OK, let url = panel.url else { throw mcpError(-9, "USER_CANCELLED: Model selection was cancelled") }
+        let valid = reference.isTranslation
+            ? LocalModelVerification.verifyTranslationModelPath(url.path, modelID: modelID)
+            : LocalModelVerification.verifyModelPath(url.path, isWhisper: true)
+        guard valid else { throw mcpError(-2, "VALIDATION_FAILED: The selected location is not a valid \(reference.model.label) model") }
+        updateSettings { settings in
+            if reference.isTranslation, var model = settings.localTranslationModels[modelID] {
+                model.status = .downloaded; model.path = url.path; model.progress = 1; model.progressLabel = "Located"; model.error = nil; settings.localTranslationModels[modelID] = model
+            } else if !reference.isTranslation, var model = settings.localAsrModels[modelID] {
+                model.status = .downloaded; model.path = url.path; model.progress = 1; model.progressLabel = "Located"; model.error = nil; settings.localAsrModels[modelID] = model
+            }
+        }
+        guard let updated = mcpModelReference(modelID)?.model else { throw mcpError(-6, "Model settings changed during selection") }
+        return ["success": true, "model": mcpModelDictionary(id: modelID, model: updated, kind: reference.isTranslation ? "translation" : "transcription")]
+    }
+
+    private func mcpRemoveModel(arguments: [String: Any]) throws -> [String: Any] {
+        guard let modelID = mcpString(arguments["modelId"]), let reference = mcpModelReference(modelID) else {
+            throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown modelId")
+        }
+        let revision = McpProjectRevision.make(workflow: workflow)
+        if arguments["dryRun"] as? Bool ?? true {
+            let token = mcpConfirmationStore.issue(operation: "remove_model", fingerprint: modelID, projectRevision: revision)
+            return ["dryRun": true, "model": mcpModelDictionary(id: modelID, model: reference.model, kind: reference.isTranslation ? "translation" : "transcription"), "effect": "Removes only VaniScript's model reference; no arbitrary file is deleted.", "confirmationToken": token, "confirmationExpiresInSec": 120]
+        }
+        try consumeMcpConfirmation(arguments: arguments, operation: "remove_model", fingerprint: modelID, revision: revision)
+        if reference.isTranslation { removeLocalTranslationModel(id: modelID) } else { removeLocalASRModel(id: modelID) }
+        return ["success": true, "modelId": modelID, "message": "Model reference removed from VaniScript settings"]
+    }
+
+    private func requireMcpSession() throws -> SessionState {
+        guard let session = workflow.session else { throw mcpError(-1, "NO_ACTIVE_PROJECT: No project is open") }
+        return session
+    }
+
+    private func mcpPlaybackState() -> [String: Any] {
+        [
+            "isPlaying": isPlayingCurrentChunk,
+            "positionSec": playbackTime,
+            "absolutePositionSec": currentPlaybackAbsoluteTime,
+            "durationSec": currentChunk?.durationSec ?? 0,
+            "chunkId": currentChunk.map(McpEntityIdentifier.chunkID) ?? "",
+            "screen": workflow.screen.rawValue,
+        ]
+    }
+
+    private func mcpExportOptions() -> [String: Any] {
+        let hasPlans = !(workflow.session?.shortsPlans?.isEmpty ?? true)
+        let hasVideo = workflow.session?.sourceMediaInfo?.kind == .video
+            || workflow.session?.sourceFile.map { MediaSource.kind(forPath: $0) == .video } == true
+        return [
+            "transcript": [
+                "available": workflow.session != nil,
+                "sides": ["original", "translated"],
+                "formats": ["txt", "markdown", "srt", "vtt"],
+            ],
+            "shortsIdeas": ["available": hasPlans, "languages": ["source", "target"]],
+            "shortsVideos": [
+                "available": hasPlans && hasVideo,
+                "formats": ["mp4", "mov"],
+                "resolutions": ["source", "1080p", "720p"],
+                "frameRates": ["source", "30", "25", "24"],
+            ],
+            "destinationPolicy": "Files are written only to VaniScript/MCP Exports and returned by exportId.",
+        ]
+    }
+
+    private func mcpValidateExport(kind: String) throws -> [String: Any] {
+        guard let session = workflow.session else { throw mcpError(-1, "NO_ACTIVE_PROJECT: No project is open") }
+        var issues: [[String: Any]] = []
+        switch kind {
+        case "transcript":
+            if session.chunks.isEmpty {
+                issues.append(["severity": "error", "code": "NO_CHUNKS", "message": "The project has no segments."])
+            }
+            if session.chunks.allSatisfy({ $0.original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+                issues.append(["severity": "error", "code": "EMPTY_TRANSCRIPT", "message": "The project has no transcript text."])
+            }
+        case "shortsIdeas":
+            if session.shortsPlans?.isEmpty ?? true {
+                issues.append(["severity": "error", "code": "NO_SHORTS_PLANS", "message": "Create Shorts plans first."])
+            }
+        case "shortsVideos":
+            if session.shortsPlans?.isEmpty ?? true {
+                issues.append(["severity": "error", "code": "NO_SHORTS_PLANS", "message": "Create Shorts plans first."])
+            }
+            guard let source = session.sourceFile, FileManager.default.fileExists(atPath: source) else {
+                issues.append(["severity": "error", "code": "SOURCE_MEDIA_MISSING", "message": "Original source video is unavailable."])
+                return ["valid": false, "kind": kind, "issues": issues]
+            }
+            if MediaSource.kind(forPath: source) != .video {
+                issues.append(["severity": "error", "code": "VIDEO_REQUIRED", "message": "Shorts video export requires video source media."])
+            }
+        default:
+            throw mcpError(-2, "kind must be transcript, shortsIdeas, or shortsVideos")
+        }
+        return [
+            "valid": !issues.contains { $0["severity"] as? String == "error" },
+            "kind": kind,
+            "issues": issues,
+        ]
+    }
+
+    private func mcpExportTranscript(arguments: [String: Any]) throws -> [String: Any] {
+        guard let session = workflow.session else { throw mcpError(-1, "NO_ACTIVE_PROJECT: No project is open") }
+        guard let rawSide = mcpString(arguments["side"]), let side = TranscriptSide(rawValue: rawSide) else {
+            throw mcpError(-2, "side must be original or translated")
+        }
+        guard let rawFormat = mcpString(arguments["format"]) else { throw mcpError(-2, "format is required") }
+        let format: OutputFormat
+        switch rawFormat.lowercased() {
+        case "txt": format = .txt
+        case "markdown": format = .markdown
+        case "srt": format = .srt
+        case "vtt": format = .vtt
+        default: throw mcpError(-2, "Unsupported transcript format")
+        }
+        let language = side == .translated ? mcpString(arguments["language"]) ?? session.selectedTranslationLanguage : nil
+        if side == .translated, language == nil {
+            throw mcpError(-2, "No translated language is selected")
+        }
+        let content = TranscriptExportBuilder.build(side: side, format: format, session: session, language: language)
+        guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw mcpError(-3, "Export content is empty")
+        }
+        let export = try mcpExportStore.makeDirectory(label: "transcript")
+        let file = export.url.appendingPathComponent(
+            TranscriptExportBuilder.defaultFileName(side: side, format: format, session: session, language: language)
+        )
+        try content.write(to: file, atomically: true, encoding: .utf8)
+        return mcpExportStore.register(exportID: export.id, files: [file])
+    }
+
+    private func mcpExportShortsIdeas(arguments: [String: Any]) throws -> [String: Any] {
+        guard let session = workflow.session, let plans = session.shortsPlans, !plans.isEmpty else {
+            throw mcpError(-3, "No Shorts plans are available")
+        }
+        let requestedIDs = Set((arguments["planIds"] as? [String]) ?? [])
+        let selected = requestedIDs.isEmpty ? plans : plans.filter { requestedIDs.contains($0.id) }
+        guard !selected.isEmpty else { throw mcpError(-3, "No matching planIds") }
+        let language = ShortsIdeaDisplayLanguage(rawValue: mcpString(arguments["language"]) ?? "source") ?? .source
+        let json = try ShortsIdeasExporter.renderJSON(plans: selected, displayLanguage: language)
+        let text = ShortsIdeasExporter.renderText(plans: selected, displayLanguage: language)
+        let export = try mcpExportStore.makeDirectory(label: "shorts-ideas")
+        let jsonFile = export.url.appendingPathComponent("shorts-ideas.json")
+        let textFile = export.url.appendingPathComponent("shorts-ideas.txt")
+        try json.write(to: jsonFile, atomically: true, encoding: .utf8)
+        try text.write(to: textFile, atomically: true, encoding: .utf8)
+        return mcpExportStore.register(exportID: export.id, files: [jsonFile, textFile])
+    }
+
+    private func startMcpShortsExportJob(arguments: [String: Any]) throws -> [String: Any] {
+        guard let session = workflow.session,
+              let sourcePath = session.sourceFile,
+              FileManager.default.fileExists(atPath: sourcePath),
+              let plans = session.shortsPlans,
+              !plans.isEmpty else {
+            throw mcpError(-3, "Export requires source video and Shorts plans")
+        }
+        guard MediaSource.kind(forPath: sourcePath) == .video else {
+            throw mcpError(-2, "Shorts video export requires video source media")
+        }
+        let requestedIDs = Set((arguments["planIds"] as? [String]) ?? [])
+        let selected = plans.enumerated().filter { requestedIDs.isEmpty || requestedIDs.contains($0.element.id) }
+        guard !selected.isEmpty else { throw mcpError(-3, "No matching planIds") }
+        let language = ShortsIdeaDisplayLanguage(rawValue: mcpString(arguments["language"]) ?? "source") ?? .source
+        let format = mcpString(arguments["format"]) ?? "mp4"
+        let resolutionValue = mcpString(arguments["resolution"]) ?? "source"
+        let resolution = resolutionValue == "source" ? "Source-based" : resolutionValue
+        let frameRateValue = mcpString(arguments["frameRate"]) ?? "source"
+        let frameRate = frameRateValue == "source" ? "Source-based" : frameRateValue
+        let export = try mcpExportStore.makeDirectory(label: "shorts-videos")
+        let jobs = selected.map {
+            NativeShortsVideoRenderJob(planIndex: $0.offset, plan: $0.element, language: language)
+        }
+        let jobID = mcpJobManager.start(kind: "export_shorts_videos", message: "Rendering \(jobs.count) Shorts video(s)") { [weak self] reporter in
+            guard let self else { throw NSError(domain: "VaniScriptMCP", code: -1) }
+            let files = try await NativeShortsVideoRenderer.export(
+                sourceURL: URL(fileURLWithPath: sourcePath),
+                jobs: jobs,
+                directory: export.url,
+                options: NativeShortsExportOptions(
+                    format: format,
+                    resolutionPreset: resolution,
+                    frameRatePreset: frameRate,
+                    language: language
+                )
+            ) { progress, stage, _ in
+                Task { @MainActor in reporter.update(progress: progress, stage: stage) }
+            }
+            try reporter.checkCancellation()
+            return self.mcpExportStore.register(exportID: export.id, files: files)
+        }
+        return [
+            "jobId": jobID,
+            "status": "queued",
+            "kind": "export_shorts_videos",
+            "exportId": export.id,
+            "clipCount": jobs.count,
+        ]
+    }
+
+    private func mcpDouble(_ value: Any?) -> Double? {
+        if let value = value as? Double, value.isFinite { return value }
+        if let value = value as? Int { return Double(value) }
+        if let value = value as? NSNumber, CFGetTypeID(value) != CFBooleanGetTypeID(), value.doubleValue.isFinite {
+            return value.doubleValue
+        }
+        return nil
+    }
+
+    private func mcpProjectSummary(_ record: ProjectRecord) -> [String: Any] {
+        let summary = record.summary
+        return [
+            "id": summary.id,
+            "name": summary.name,
+            "sourceFileName": summary.sourceFileName,
+            "createdAt": summary.createdAt,
+            "updatedAt": summary.updatedAt,
+            "currentChunkId": record.session.chunks.indices.contains(summary.currentIndex)
+                ? McpEntityIdentifier.chunkID(record.session.chunks[summary.currentIndex]) : "",
+            "totalChunks": summary.totalChunks,
+            "approvedChunks": summary.approvedChunks,
+            "completedChunks": summary.completedChunks,
+            "targetLanguage": summary.targetLang,
+            "shortsPlanCount": record.session.shortsPlans?.count ?? 0,
+            "sourceMediaAvailable": record.session.sourceFile.map(FileManager.default.fileExists(atPath:)) ?? false,
+        ]
+    }
+
+    private func mcpSourceMediaInfo(_ info: SourceMediaInfo) -> [String: Any] {
+        var result: [String: Any] = [
+            "fileName": info.fileName,
+            "title": info.title ?? info.fileName,
+            "kind": info.kind.rawValue,
+            "fileAvailable": FileManager.default.fileExists(atPath: info.filePath),
+            "quality": info.qualityLabel,
+        ]
+        if let value = info.durationSec { result["durationSec"] = value }
+        if let value = info.fileSizeBytes { result["fileSizeBytes"] = value }
+        if let value = info.width { result["width"] = value }
+        if let value = info.height { result["height"] = value }
+        if let value = info.frameRate { result["frameRate"] = value }
+        if let value = info.videoCodec { result["videoCodec"] = value }
+        if let value = info.audioCodec { result["audioCodec"] = value }
+        if let value = info.container { result["container"] = value }
+        if let value = info.audioSampleRateHz { result["audioSampleRateHz"] = value }
+        if let value = info.audioChannelCount { result["audioChannelCount"] = value }
+        if let value = info.originalURL { result["sourceWasImportedFromURL"] = !value.isEmpty }
+        return result
+    }
+
+    private func consumeMcpConfirmation(
+        arguments: [String: Any],
+        operation: String,
+        fingerprint: String,
+        revision: String
+    ) throws {
+        guard mcpString(arguments["expectedRevision"]) == revision else {
+            throw mcpError(-6, "STALE_REVISION: Use the projectRevision returned with the preview")
+        }
+        guard let token = mcpString(arguments["confirmationToken"]),
+              mcpConfirmationStore.consume(
+                token: token,
+                operation: operation,
+                fingerprint: fingerprint,
+                projectRevision: revision
+              ) else {
+            throw mcpError(-7, "CONFIRMATION_REQUIRED: Run dryRun=true and use its unexpired confirmationToken")
+        }
+    }
+
+    private func mcpString(_ value: Any?) -> String? {
+        guard let value = value as? String else { return nil }
+        let clean = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return clean.isEmpty ? nil : clean
+    }
+
+    private func mcpError(_ code: Int, _ message: String) -> NSError {
+        NSError(domain: "VaniScriptMCP", code: code, userInfo: [NSLocalizedDescriptionKey: message])
+    }
+
+    public func executeMcpTool(
+        name: String,
+        arguments: [String: Any],
+        allowMutatingTools: Bool = true
+    ) async throws -> [String: Any] {
+        try await executeMcpTool(
+            name: name,
+            arguments: arguments,
+            permissions: McpPermissionSet(allowed: allowMutatingTools ? Set(McpToolAccess.allCases) : [.read])
+        )
+    }
+
+    public func executeMcpTool(
+        name: String,
+        arguments: [String: Any],
+        permissions: McpPermissionSet
+    ) async throws -> [String: Any] {
+        guard let definition = McpToolRegistry.definition(named: name),
+              McpToolRegistry.isAllowed(name, permissions: permissions) else {
+            throw NSError(domain: "WorkflowStore", code: -5, userInfo: [NSLocalizedDescriptionKey: "Tool \(name) is not available in the current MCP policy"])
+        }
+        let requestID = arguments["requestId"] as? String
+        if let requestID, requestID.count > 128 {
+            throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "requestId must contain no more than 128 characters"])
+        }
+        let fingerprint = McpRequestCache.fingerprint(arguments: arguments)
+        if definition.access != .read,
+           let requestID,
+           let replay = try mcpRequestCache.result(requestID: requestID, toolName: name, fingerprint: fingerprint) {
+            return replay
+        }
+
+        let previousRevision = McpProjectRevision.make(workflow: workflow)
+        var result = try await executeMcpToolImpl(name: name, arguments: arguments, permissions: permissions)
+        let projectRevision = McpProjectRevision.make(workflow: workflow)
+        if definition.access != .read, projectRevision != previousRevision {
+            let change = mcpAuditStore.record(
+                toolName: name,
+                requestID: requestID,
+                previousRevision: previousRevision,
+                projectRevision: projectRevision
+            )
+            result["changeSetId"] = change.id
+            result["projectRevision"] = projectRevision
+        }
+        if definition.access != .read, let requestID {
+            mcpRequestCache.store(requestID: requestID, toolName: name, fingerprint: fingerprint, result: result)
+        }
+        return result
+    }
+
+    private func executeMcpToolImpl(
+        name: String,
+        arguments: [String: Any],
+        permissions: McpPermissionSet
+    ) async throws -> [String: Any] {
         let getInt = { (val: Any?) -> Int? in
-            if let doubleVal = val as? Double { return Int(doubleVal) }
-            return val as? Int
+            McpToolArguments.wholeNumber(val)
         }
         let getDouble = { (val: Any?) -> Double? in
-            if let doubleVal = val as? Double { return doubleVal }
+            if let doubleVal = val as? Double, doubleVal.isFinite { return doubleVal }
             if let intVal = val as? Int { return Double(intVal) }
             return nil
         }
+        let chunkIndexHelp = { (session: SessionState) -> String in
+            let currentIndex = max(0, min(session.currentChunkIndex, max(0, session.chunks.count - 1)))
+            return "Missing or invalid chunk reference. Call list_chunks and pass its stable chunkId. Legacy visible Chunk \(currentIndex + 1) uses chunkIndex \(currentIndex)."
+        }
+        let resolveChunkIndex = { (arguments: [String: Any], session: SessionState) -> Int? in
+            if let rawID = arguments["chunkId"] as? String,
+               let stableIndex = McpEntityIdentifier.chunkIndex(from: rawID) {
+                return session.chunks.firstIndex { $0.index == stableIndex }
+            }
+            return getInt(arguments["chunkIndex"])
+        }
+        let mutationResult = { (message: String, workflow: WorkflowState) -> [String: Any] in
+            [
+                "success": true,
+                "message": message,
+                "projectRevision": McpProjectRevision.make(workflow: workflow),
+            ]
+        }
 
-        guard McpToolRegistry.isAllowed(name, allowMutatingTools: allowMutatingTools) else {
+        guard McpToolRegistry.isAllowed(name, permissions: permissions) else {
             throw NSError(domain: "WorkflowStore", code: -5, userInfo: [NSLocalizedDescriptionKey: "Tool \(name) is not available in the current MCP policy"])
+        }
+
+        if McpToolRegistry.definition(named: name)?.access != .read,
+           let rawExpectedRevision = arguments["expectedRevision"] {
+            guard let expectedRevision = rawExpectedRevision as? String else {
+                throw NSError(
+                    domain: "WorkflowStore",
+                    code: -2,
+                    userInfo: [NSLocalizedDescriptionKey: "expectedRevision must be a string returned by a VaniScript read tool"]
+                )
+            }
+            let currentRevision = McpProjectRevision.make(workflow: workflow)
+            guard expectedRevision == currentRevision else {
+                throw NSError(
+                    domain: "WorkflowStore",
+                    code: -6,
+                    userInfo: [NSLocalizedDescriptionKey: "STALE_REVISION: The project changed after the agent read it. Read the affected state again. Current revision: \(currentRevision)"]
+                )
+            }
+        }
+
+        if name == "list_jobs" {
+            let limit = max(1, min(100, getInt(arguments["limit"]) ?? 20))
+            return ["jobs": mcpJobManager.list(limit: limit)]
+        }
+        if name == "get_change_history" {
+            let cursor = max(0, getInt(arguments["cursor"]) ?? 0)
+            let limit = max(1, min(100, getInt(arguments["limit"]) ?? 50))
+            return mcpAuditStore.list(cursor: cursor, limit: limit)
+        }
+        if name == "get_job" {
+            guard let jobID = arguments["jobId"] as? String,
+                  let job = mcpJobManager.get(id: jobID) else {
+                throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Unknown jobId"])
+            }
+            return job
+        }
+        if name == "cancel_job" {
+            guard let jobID = arguments["jobId"] as? String,
+                  mcpJobManager.cancel(id: jobID) else {
+                throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Job is unknown, finished, or not cancellable"])
+            }
+            return ["success": true, "jobId": jobID, "status": McpJobStatus.cancelled.rawValue]
+        }
+
+        if let workspaceResult = try await executeMcpWorkspaceTool(name: name, arguments: arguments, permissions: permissions) {
+            var result = workspaceResult
+            result["projectRevision"] = McpProjectRevision.make(workflow: workflow)
+            return result
+        }
+
+        if McpReadToolService.supportedToolNames.contains(name) {
+            var result = try McpReadToolService.execute(
+                name: name,
+                arguments: arguments,
+                workflow: workflow,
+                permissions: permissions
+            )
+            result["projectRevision"] = McpProjectRevision.make(workflow: workflow)
+            return result
+        }
+
+        if [
+            "translate_chunk",
+            "translate_cue",
+            "translate_pending_chunks",
+            "retry_chunk_translation",
+            "polish_translation",
+        ].contains(name) {
+            return try startMcpTranslationJob(name: name, arguments: arguments)
+        }
+
+        if McpGlossaryToolService.supportedToolNames.contains(name) {
+            let mutation = try McpGlossaryToolService.execute(
+                name: name,
+                arguments: arguments,
+                workflow: workflow,
+                confirmationStore: mcpConfirmationStore
+            )
+            if mutation.workflow != workflow {
+                workflow = mutation.workflow
+                statusMessage = mutation.message
+                persistSettings()
+                saveCurrentProject()
+            }
+            var result = mutation.details
+            result["success"] = true
+            result["message"] = mutation.message
+            result["projectRevision"] = McpProjectRevision.make(workflow: workflow)
+            return result
+        }
+
+        if McpTranscriptToolService.supportedToolNames.contains(name) {
+            let mutation = try McpTranscriptToolService.execute(
+                name: name,
+                arguments: arguments,
+                workflow: workflow,
+                confirmationStore: mcpConfirmationStore
+            )
+            if mutation.workflow != workflow {
+                workflow = mutation.workflow
+                statusMessage = mutation.message
+                saveCurrentProject()
+            }
+            var result = mutation.details
+            result["success"] = true
+            result["message"] = mutation.message
+            result["projectRevision"] = McpProjectRevision.make(workflow: workflow)
+            return result
         }
         
         switch name {
         case "get_project_state":
             return McpProjectStateSnapshot.build(workflow: workflow)
+
+        case "select_translation_language":
+            guard var session = workflow.session,
+                  let rawLanguage = arguments["language"] as? String else {
+                throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session or language is missing"])
+            }
+            let language = TranslationArchive.displayLanguage(rawLanguage)
+            let availableKeys = Set((session.availableTranslationLanguages ?? []).map(TranslationArchive.languageKey))
+            guard availableKeys.contains(TranslationArchive.languageKey(language)) else {
+                throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Translation language is not available. Call add_translation_language first."])
+            }
+            session.setActiveTranslationLanguage(language)
+            workflow.session = session
+            workflow.targetLang = language
+            archiveTargetLanguage = language
+            saveCurrentProject()
+            return mutationResult("Selected \(language) translation", workflow)
+
+        case "add_translation_language":
+            guard var session = workflow.session,
+                  let rawLanguage = arguments["language"] as? String else {
+                throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session or language is missing"])
+            }
+            let language = TranslationArchive.displayLanguage(rawLanguage)
+            guard TranslationArchive.isRealLanguage(language) else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Provide a real translation language"])
+            }
+            session.registerTranslationLanguage(language)
+            session.setActiveTranslationLanguage(language)
+            workflow.session = session
+            workflow.targetLang = language
+            archiveTargetLanguage = language
+            saveCurrentProject()
+            return mutationResult("Added and selected \(language) translation", workflow)
+
+        case "remove_translation_language":
+            guard var session = workflow.session,
+                  let rawLanguage = arguments["language"] as? String else {
+                throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session or language is missing"])
+            }
+            let language = TranslationArchive.displayLanguage(rawLanguage)
+            let languageKey = TranslationArchive.languageKey(language)
+            let existing = session.availableTranslationLanguages ?? []
+            guard existing.contains(where: { TranslationArchive.languageKey($0) == languageKey }) else {
+                throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Translation language is not present in the project"])
+            }
+            session.availableTranslationLanguages = existing.filter { TranslationArchive.languageKey($0) != languageKey }
+            for index in session.chunks.indices {
+                session.chunks[index].translationsByLanguage?[languageKey] = nil
+            }
+            if session.activeTranslationLanguage.map(TranslationArchive.languageKey) == languageKey
+                || TranslationArchive.languageKey(session.targetLang) == languageKey {
+                session.activeTranslationLanguage = nil
+                if let fallback = session.availableTranslationLanguages?.first {
+                    session.setActiveTranslationLanguage(fallback)
+                    workflow.targetLang = fallback
+                    archiveTargetLanguage = fallback
+                } else {
+                    session.targetLang = "same"
+                    workflow.targetLang = "same"
+                    for index in session.chunks.indices {
+                        session.chunks[index].translated = ""
+                    }
+                }
+            }
+            workflow.session = session
+            saveCurrentProject()
+            return mutationResult("Removed \(language) translation", workflow)
             
         case "update_chunk_text":
             guard var session = workflow.session else {
                 throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
             }
-            guard let chunkIndexVal = getInt(arguments["chunkIndex"]) else {
-                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing or invalid chunkIndex"])
+            guard let chunkIndexVal = resolveChunkIndex(arguments, session) else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: chunkIndexHelp(session)])
             }
             guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
                 throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
+            }
+            guard arguments["original"] is String || arguments["translated"] is String else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Provide original and/or translated text to update"])
             }
             
             if let original = arguments["original"] as? String {
@@ -3380,19 +6153,27 @@ final class WorkflowStore: ObservableObject {
             }
             if let translated = arguments["translated"] as? String {
                 session.chunks[chunkIndexVal].translated = translated
+                if let lang = session.selectedTranslationLanguage {
+                    session.chunks[chunkIndexVal].setTranslation(
+                        translated,
+                        language: lang,
+                        provider: session.translationProvider,
+                        updatedAt: isoString(clock())
+                    )
+                }
             }
             
             workflow.session = session
             saveCurrentProject()
-            return ["success": true, "message": "Updated segment \(chunkIndexVal + 1) text"]
+            return mutationResult("Updated segment \(chunkIndexVal + 1) text", workflow)
             
         case "approve_chunk":
             guard var session = workflow.session else {
                 throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
             }
-            guard let chunkIndexVal = getInt(arguments["chunkIndex"]),
+            guard let chunkIndexVal = resolveChunkIndex(arguments, session),
                   let approved = arguments["approved"] as? Bool else {
-                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing chunkIndex or approved"])
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "\(chunkIndexHelp(session)) The approved value must be a boolean."])
             }
             guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
                 throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
@@ -3401,7 +6182,7 @@ final class WorkflowStore: ObservableObject {
             session.chunks[chunkIndexVal].approved = approved
             workflow.session = session
             saveCurrentProject()
-            return ["success": true, "message": "Updated approval for segment \(chunkIndexVal + 1) to \(approved)"]
+            return mutationResult("Updated approval for segment \(chunkIndexVal + 1) to \(approved)", workflow)
             
         case "get_subtitle_style":
             if let session = workflow.session,
@@ -3463,7 +6244,7 @@ final class WorkflowStore: ObservableObject {
             session.shortsPlans = plans
             workflow.session = session
             saveCurrentProject()
-            return ["success": true, "message": "Updated subtitle style for active shorts plans"]
+            return mutationResult("Updated subtitle style for active shorts plans", workflow)
             
         case "get_shorts_plans":
             var plansInfo: [[String: Any]] = []
@@ -3486,10 +6267,10 @@ final class WorkflowStore: ObservableObject {
             guard var session = workflow.session else {
                 throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
             }
-            guard let chunkIndexVal = getInt(arguments["chunkIndex"]),
+            guard let chunkIndexVal = resolveChunkIndex(arguments, session),
                   let cueIndexVal = getInt(arguments["cueIndex"]),
                   let sideVal = arguments["side"] as? String else {
-                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing parameters"])
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "\(chunkIndexHelp(session)) cueIndex must be a zero-based number and side must be original or translated."])
             }
             guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
                 throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
@@ -3539,14 +6320,14 @@ final class WorkflowStore: ObservableObject {
             
             workflow.session = session
             saveCurrentProject()
-            return ["success": true, "message": "Updated \(sideVal) cue \(cueIndexVal) timestamps"]
+            return mutationResult("Updated \(sideVal) cue \(cueIndexVal) timestamps", workflow)
             
         case "align_translation_timings":
             guard var session = workflow.session else {
                 throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
             }
-            guard let chunkIndexVal = getInt(arguments["chunkIndex"]) else {
-                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing chunkIndex"])
+            guard let chunkIndexVal = resolveChunkIndex(arguments, session) else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: chunkIndexHelp(session)])
             }
             guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
                 throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
@@ -3579,14 +6360,14 @@ final class WorkflowStore: ObservableObject {
             
             workflow.session = session
             saveCurrentProject()
-            return ["success": true, "message": "Aligned translated cue timings with original cues for segment \(chunkIndexVal + 1)"]
+            return mutationResult("Aligned translated cue timings with original cues for segment \(chunkIndexVal + 1)", workflow)
             
         case "reprocess_chunk":
             guard var session = workflow.session else {
                 throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No active session"])
             }
-            guard let chunkIndexVal = getInt(arguments["chunkIndex"]) else {
-                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing chunkIndex"])
+            guard let chunkIndexVal = resolveChunkIndex(arguments, session) else {
+                throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: chunkIndexHelp(session)])
             }
             guard chunkIndexVal >= 0 && chunkIndexVal < session.chunks.count else {
                 throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "chunkIndex out of bounds"])
@@ -3603,7 +6384,7 @@ final class WorkflowStore: ObservableObject {
                 self.processCurrentChunkIfNeeded(force: true)
             }
             
-            return ["success": true, "message": "Triggered reprocessing (transcription & translation) for segment \(chunkIndexVal + 1)"]
+            return mutationResult("Triggered reprocessing (transcription & translation) for segment \(chunkIndexVal + 1)", workflow)
             
         default:
             throw NSError(domain: "WorkflowStore", code: -4, userInfo: [NSLocalizedDescriptionKey: "Unknown tool \(name)"])

@@ -47,9 +47,18 @@ enum SettingsDiskStore {
     static func save(_ settings: AppSettings, fileManager: FileManager = .default) throws {
         let directory = AppStoragePaths.applicationSupportDirectory(fileManager: fileManager)
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        try fileManager.setAttributes(
+            [.posixPermissions: NSNumber(value: Int16(0o700))],
+            ofItemAtPath: directory.path
+        )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(settings)
-        try data.write(to: AppStoragePaths.settingsURL(fileManager: fileManager), options: .atomic)
+        let settingsURL = AppStoragePaths.settingsURL(fileManager: fileManager)
+        try data.write(to: settingsURL, options: .atomic)
+        try fileManager.setAttributes(
+            [.posixPermissions: NSNumber(value: Int16(0o600))],
+            ofItemAtPath: settingsURL.path
+        )
     }
 }

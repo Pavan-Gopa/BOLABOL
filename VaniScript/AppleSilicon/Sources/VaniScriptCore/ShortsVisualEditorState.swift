@@ -49,12 +49,25 @@ public struct FrameKeyframe: Codable, Equatable, Identifiable, Sendable {
 }
 
 public struct TimelineCut: Codable, Equatable, Sendable {
+    /// Persisted when a project is saved so MCP can address a cut without relying on its array position.
+    public var stableID: String?
     public var startSec: Double
     public var endSec: Double
 
-    public init(startSec: Double, endSec: Double) {
+    public var id: String {
+        stableID ?? "legacy-\(startSec)-\(endSec)"
+    }
+
+    public init(stableID: String? = nil, startSec: Double, endSec: Double) {
+        self.stableID = stableID
         self.startSec = startSec
         self.endSec = endSec
+    }
+
+    // A cut's identity is deliberately excluded from visual equivalence. Existing editor tests and
+    // render plans compare the time ranges; IDs are only an MCP addressing capability.
+    public static func == (lhs: TimelineCut, rhs: TimelineCut) -> Bool {
+        lhs.startSec == rhs.startSec && lhs.endSec == rhs.endSec
     }
 }
 

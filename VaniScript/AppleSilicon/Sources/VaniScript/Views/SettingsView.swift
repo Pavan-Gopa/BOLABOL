@@ -212,6 +212,73 @@ struct SettingsView: View {
                 }
             }
 
+            SettingsSection(title: "Embedded Grok Chat") {
+                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Label("Chat Model", systemImage: "cpu")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.text2)
+
+                        Picker("", selection: Binding(
+                            get: { store.settings.grokChatModelID },
+                            set: { modelID in
+                                guard let option = GrokChatModelCatalog.option(id: modelID) else { return }
+                                store.updateSettings { settings in
+                                    settings.grokChatModelID = option.id
+                                    settings.grokChatReasoningEffort = option.defaultReasoningEffort
+                                }
+                            }
+                        )) {
+                            ForEach(GrokChatModelCatalog.options) { option in
+                                Text(option.displayName).tag(option.id)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
+                    .background(Color.white.opacity(0.04))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 7) {
+                        Label("Reasoning", systemImage: "brain")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.text2)
+
+                        let selectedGrokModelID = GrokChatModelCatalog.normalizedModelID(store.settings.grokChatModelID)
+                        let selectedGrokModel = GrokChatModelCatalog.option(id: selectedGrokModelID) ?? GrokChatModelCatalog.options[0]
+                        Picker("", selection: Binding(
+                            get: { store.settings.grokChatReasoningEffort },
+                            set: { effort in
+                                store.updateSettings { settings in
+                                    settings.grokChatReasoningEffort = GrokChatModelCatalog.normalizedReasoningEffort(
+                                        modelID: selectedGrokModel.id,
+                                        effort: effort
+                                    )
+                                }
+                            }
+                        )) {
+                            ForEach(selectedGrokModel.reasoningEfforts, id: \.self) { effort in
+                                Text(effort.capitalized).tag(effort)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
+                    .background(Color.white.opacity(0.04))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+            }
+
             SettingsSection(title: "Active Target") {
                 LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: 10) {
                     VStack(alignment: .leading, spacing: 7) {

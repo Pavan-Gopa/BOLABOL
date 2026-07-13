@@ -4,19 +4,22 @@
 
 | Step | Status | Tag |
 |------|--------|-----|
-| G0 | DONE | `grok/G0-done` |
-| G1 | DONE | `grok/G1-done` |
-| G2 | DONE | `grok/G2-done` |
-| G3 | APPROVED (Gemini) — closing | `grok/G3-done` |
-| G4 | open | `grok/pre-G4` |
+| G0–G3 | DONE | `grok/G*-done` |
+| G4 | APPROVED (Gemini) — closing | `grok/G4-done` |
+| G5 | open | `grok/pre-G5` (AS monorepo) + Electron nested git |
 
-## G3 review summary (Gemini)
+## G4 review summary (Gemini)
 
 - **APPROVED**
-- GrokAgentService + AppSettings model fields
-- Isolation/token in env OK; no ChatSidebar (correct for G3)
-- VaniScriptCore 242 tests green
+- Full VaniScript + VaniScriptCore build green; 242 tests
+- Chat multi-agent Codex/Grok; model menu; Settings Grok section
+- Fixed ChatSidebar `store` → `workflowStore`
+- No silent MCP→API fallback
+
+## Note for G5
+
+`VaniScript/Electron` is a **nested git repo** (not in monorepo). Hy3 commits product code there. Orchestrator tags monorepo kit STATE; also request Electron commit on G5 post.
 
 ## No pending review
 
-Await Hy3 on **G4**.
+Await Hy3 on **G5**.

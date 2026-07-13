@@ -83,10 +83,10 @@ struct ChatSidebarView: View {
                     .labelsHidden()
                     .pickerStyle(.segmented)
                     .frame(width: 116)
-                    .help("MCP uses the embedded Codex agent. The API route is used only when selected explicitly.")
+                    .help("MCP uses the embedded agent (Codex or Grok) selected in Settings > Agents. The API route is used only when selected explicitly.")
 
                     if chatRouteRaw == ChatRoute.mcp.rawValue {
-                        codexModelMenu
+                        agentModelMenu
                     }
                     
                     Spacer()
@@ -373,20 +373,35 @@ struct ChatSidebarView: View {
             return
         }
 
-        guard workflowStore.settings.mcpPreferredAgentID == McpClientProfileID.codex.rawValue else {
+        let preferredAgentID = workflowStore.settings.mcpPreferredAgentID
+        guard preferredAgentID == McpClientProfileID.codex.rawValue
+                || preferredAgentID == McpClientProfileID.grok.rawValue else {
             messages.append(MessageItem(
                 sender: "system",
-                text: "The MCP chat route is powered by Codex. Select Codex in Settings > Agents, then send the message again."
+                text: "The MCP chat route is powered by Codex or Grok. Select one of them in Settings > Agents, then send the message again."
             ))
             isLoading = false
             return
         }
 
-        let history = messages.map { message in
-            CodexChatHistoryItem(sender: message.sender, text: message.text)
+        if preferredAgentID == McpClientProfileID.grok.rawValue {
+            let history = messages.map { GrokChatHistoryItem(sender: $0.sender, text: $0.text) }
+            Task {
+                await executeGrokRequest(history: history)
+            }
+        } else {
+            let history = messages.map { CodexChatHistoryItem(sender: $0.sender, text: $0.text) }
+            Task {
+                await executeCodexRequest(history: history)
+            }
         }
-        Task {
-            await executeCodexRequest(history: history)
+    }
+
+    private var agentModelMenu: some View {
+        if workflowStore.settings.mcpPreferredAgentID == McpClientProfileID.grok.rawValue {
+            AnyView(grokModelMenu)
+        } else {
+            AnyView(codexModelMenu)
         }
     }
 
@@ -399,32 +414,32 @@ struct ChatSidebarView: View {
                     } label: {
                         Label(
                             option.displayName,
-                            systemImage: store.settings.codexChatModelID == option.id ? "checkmark" : "cpu"
+                            systemImage: workflowStore.settings.codexChatModelID == option.id ? "checkmark" : "cpu"
                         )
                     }
                 }
             }
 
             Section("Reasoning") {
-                let selectedModelID = CodexChatModelCatalog.normalizedModelID(store.settings.codexChatModelID)
+                let selectedModelID = CodexChatModelCatalog.normalizedModelID(workflowStore.settings.codexChatModelID)
                 let selectedModel = CodexChatModelCatalog.option(id: selectedModelID) ?? CodexChatModelCatalog.options[0]
                 ForEach(selectedModel.reasoningEfforts, id: \.self) { effort in
                     Button {
-                        store.updateSettings { settings in
+                        workflowStore.updateSettings { settings in
                             settings.codexChatReasoningEffort = effort
                         }
                     } label: {
                         Label(
                             effort.capitalized,
-                            systemImage: store.settings.codexChatReasoningEffort == effort ? "checkmark" : "brain"
+                            systemImage: workflowStore.settings.codexChatReasoningEffort == effort ? "checkmark" : "brain"
                         )
                     }
                 }
             }
         } label: {
             Text(CodexChatModelCatalog.displayLabel(
-                modelID: store.settings.codexChatModelID,
-                effort: store.settings.codexChatReasoningEffort
+                modelID: workflowStore.settings.codexChatModelID,
+                effort: workflowStore.settings.codexChatReasoningEffort
             ))
             .font(.system(size: 10, weight: .semibold))
             .foregroundStyle(VaniScriptTheme.accent)
@@ -436,16 +451,87 @@ struct ChatSidebarView: View {
         .help("Choose the Codex model and reasoning level for the next MCP chat request")
     }
 
+    private var grokModelMenu: some View {
+        Menu {
+            Section("Grok Model") {
+                ForEach(GrokChatModelCatalog.options) { option in
+                    Button {
+                        selectGrokModel(option)
+                    } label: {
+                        Label(
+                            option.displayName,
+                            systemImage: workflowStore.settings.grokChatModelID == option.id ? "checkmark" : "cpu"
+                        )
+                    }
+                }
+            }
+
+            Section("Reasoning") {
+                let selectedModelID = GrokChatModelCatalog.normalizedModelID(workflowStore.settings.grokChatModelID)
+                let selectedModel = GrokChatModelCatalog.option(id: selectedModelID) ?? GrokChatModelCatalog.options[0]
+                ForEach(selectedModel.reasoningEfforts, id: \.self) { effort in
+                    Button {
+                        workflowStore.updateSettings { settings in
+                            settings.grokChatReasoningEffort = effort
+                        }
+                    } label: {
+                        Label(
+                            effort.capitalized,
+                            systemImage: workflowStore.settings.grokChatReasoningEffort == effort ? "checkmark" : "brain"
+                        )
+                    }
+                }
+            }
+        } label: {
+            Text(GrokChatModelCatalog.displayLabel(
+                modelID: workflowStore.settings.grokChatModelID,
+                effort: workflowStore.settings.grokChatReasoningEffort
+            ))
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(VaniScriptTheme.accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize(horizontal: true, vertical: false)
+        .help("Choose the Grok model and reasoning level for the next MCP chat request")
+    }
+
     private func selectCodexModel(_ option: CodexChatModelOption) {
-        store.updateSettings { settings in
+        workflowStore.updateSettings { settings in
             settings.codexChatModelID = option.id
             settings.codexChatReasoningEffort = option.defaultReasoningEffort
+        }
+    }
+
+    private func selectGrokModel(_ option: GrokChatModelOption) {
+        workflowStore.updateSettings { settings in
+            settings.grokChatModelID = option.id
+            settings.grokChatReasoningEffort = option.defaultReasoningEffort
         }
     }
 
     private func executeCodexRequest(history: [CodexChatHistoryItem]) async {
         do {
             let response = try await CodexAgentService.send(
+                history: history,
+                settings: workflowStore.settings
+            )
+            await MainActor.run {
+                self.messages.append(MessageItem(sender: "assistant", text: response.text))
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.messages.append(MessageItem(sender: "system", text: error.localizedDescription))
+                self.isLoading = false
+            }
+        }
+    }
+
+    private func executeGrokRequest(history: [GrokChatHistoryItem]) async {
+        do {
+            let response = try await GrokAgentService.send(
                 history: history,
                 settings: workflowStore.settings
             )

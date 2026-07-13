@@ -1,27 +1,32 @@
 # GROK_MCP track — orchestrated by Grok
 # Product scope: AI_Workflow_Kit/docs/GROK_MCP_STEPS.md
-# UI track waits until GROK_DONE: AI_Workflow_Kit/docs/UI_AS_STEPS.md
 
-current_step: G4
+current_step: G5
 step_description: >
-  Chat multi-agent (AS): MCP chat route works for Codex AND Grok based on
-  preferred agent. Remove hard gate mcpPreferredAgentID == codex only; allow grok.
-  Model menu for Grok when agent is Grok; persist grokChatModelID / effort.
-  Help text for active agent. Codex path unchanged. No silent API fallback.
-  Fix pre-existing ChatSidebar compile issues if they block the agent switch.
-  Do NOT do Electron or UI density redesign.
+  Electron Grok (functional only, NO visual redesign). MCP_INSTRUCTIONS Grok section
+  port 19789. Chat MCP|API routes; MCP + Grok = headless Grok CLI via main process IPC;
+  tools via existing onMcpCallTool/executeMcpTool. API route remains Gemini when
+  selected; no silent fallback. Minimal chrome only for route/agent switch.
+  WORKING ROOT: VaniScript/Electron (NESTED git). Do not redesign UI density.
 
 target_files:
-  - Sources/VaniScript/Views/ChatSidebarView.swift
-  - Sources/VaniScriptCore/AppSettings.swift
-  - Sources/VaniScript/Views/SettingsView.swift
-  - Sources/VaniScript/Services/GrokAgentService.swift
+  - MCP_INSTRUCTIONS.md
+  - electron/main.js
+  - electron/preload.js
+  - src/components/ChatSidebar.tsx
+  - src/App.tsx
+  - src/types.ts
+
+# Paths above are relative to VaniScript/Electron/
+# Optional monorepo kit note only (orchestrator may update):
+# - ../AppleSilicon/AI_Workflow_Kit/docs/* after step if needed
 
 completed_steps:
   - G0
   - G1
   - G2
   - G3
+  - G4
 
 implementation:
   status: pending
@@ -37,7 +42,10 @@ track: GROK_MCP
 prior_track: null
 
 working_roots:
-  - AppleSilicon
+  - Electron
+
+electron_git_root: "VaniScript/Electron"
+electron_remote: "https://github.com/Pavan-Gopa/VaniScript-Electron.git"
 
 checkpoint:
   last_pre_tag: "grok/pre-G4"

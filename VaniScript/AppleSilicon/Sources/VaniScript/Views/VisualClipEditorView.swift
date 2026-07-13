@@ -4394,23 +4394,25 @@ private struct SliderRow: View {
     var onEditingChanged: (Bool) -> Void = { _ in }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: VaniScriptTheme.Density.space6) {
             Text(title.uppercased())
                 .font(.system(size: 9, weight: .heavy))
                 .foregroundStyle(VaniScriptTheme.text2)
-                .frame(width: 76, alignment: .leading)
+                .frame(width: 70, alignment: .leading)
             Slider(
                 value: Binding(get: { value }, set: { value = $0; onChange() }),
                 in: range,
                 step: step,
                 onEditingChanged: onEditingChanged
             )
+                .controlSize(.small)
                 .tint(VaniScriptTheme.accent)
             Text(label)
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .font(.system(size: 9, weight: .semibold, design: .monospaced))
                 .foregroundStyle(VaniScriptTheme.accent)
-                .frame(width: 48, alignment: .trailing)
+                .frame(width: 44, alignment: .trailing)
         }
+        .frame(height: VaniScriptTheme.Density.controlHeightSM)
     }
 
     private var label: String {

@@ -1,25 +1,20 @@
 # GROK_MCP track — orchestrated by Grok
 # Product scope: AI_Workflow_Kit/docs/GROK_MCP_STEPS.md
 
-current_step: G5
+current_step: G6
 step_description: >
-  Electron Grok (functional only, NO visual redesign). MCP_INSTRUCTIONS Grok section
-  port 19789. Chat MCP|API routes; MCP + Grok = headless Grok CLI via main process IPC;
-  tools via existing onMcpCallTool/executeMcpTool. API route remains Gemini when
-  selected; no silent fallback. Minimal chrome only for route/agent switch.
-  WORKING ROOT: VaniScript/Electron (NESTED git). Do not redesign UI density.
+  Acceptance smoke for GROK_MCP: short checklist (external grok mcp, embedded AS
+  chat Codex/Grok, Electron Grok path). Document in GROK_MCP_ACCEPTANCE.md and/or
+  DECISIONS.md. Minor MCP_INSTRUCTIONS gaps only. No new product features.
+  After approve → orchestrator sets GROK_DONE and may open UI_AS.
 
 target_files:
+  - AI_Workflow_Kit/docs/GROK_MCP_ACCEPTANCE.md
+  - AI_Workflow_Kit/docs/DECISIONS.md
   - MCP_INSTRUCTIONS.md
-  - electron/main.js
-  - electron/preload.js
-  - src/components/ChatSidebar.tsx
-  - src/App.tsx
-  - src/types.ts
 
-# Paths above are relative to VaniScript/Electron/
-# Optional monorepo kit note only (orchestrator may update):
-# - ../AppleSilicon/AI_Workflow_Kit/docs/* after step if needed
+# Paths relative to VaniScript/AppleSilicon/
+# Optional: ../Electron/MCP_INSTRUCTIONS.md only if a gap is found (document in FEEDBACK)
 
 completed_steps:
   - G0
@@ -27,6 +22,7 @@ completed_steps:
   - G2
   - G3
   - G4
+  - G5
 
 implementation:
   status: pending
@@ -42,16 +38,13 @@ track: GROK_MCP
 prior_track: null
 
 working_roots:
-  - Electron
-
-electron_git_root: "VaniScript/Electron"
-electron_remote: "https://github.com/Pavan-Gopa/VaniScript-Electron.git"
+  - AppleSilicon
 
 checkpoint:
   last_pre_tag: "grok/pre-G5"
   last_post_tag: "grok/G4-done"
   last_commit: "73d7eb0"
-  monorepo_note: "Electron product commits go in nested VaniScript/Electron git"
+  electron_g5_tag: "grok/G5-done"
 
 plan_files:
   - AI_Workflow_Kit/docs/GROK_MCP_STEPS.md

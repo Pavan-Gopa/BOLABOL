@@ -1,12 +1,12 @@
 # UI_AS track — orchestrated by Grok
 # Product scope: AI_Workflow_Kit/docs/UI_AS_STEPS.md
 
-current_step: U1
+current_step: U2
 step_description: >
-  Compact SliderRow / OptionalSliderRow in VisualClipEditorView: thinner track,
-  smaller thumb, label+value inline, use VaniScriptTheme.Density tokens from U0.
-  Touch only slider component chrome — not timeline engine, crop, export, or Electron.
-  Apple Silicon only.
+  VisualClipEditor inspector/toolbar density: less padding, quieter tabs, denser
+  inspector chrome using Density tokens. Do NOT change crop/timeline/render logic,
+  export, or Electron. Preserve light/dark, 9:16 preview, hotkeys.
+  Apple Silicon only. Visual acceptance after review when possible.
 
 target_files:
   - Sources/VaniScript/Views/VisualClipEditorView.swift
@@ -22,6 +22,7 @@ completed_steps:
   - G6
   - GROK_DONE
   - U0
+  - U1
 
 implementation:
   status: pending

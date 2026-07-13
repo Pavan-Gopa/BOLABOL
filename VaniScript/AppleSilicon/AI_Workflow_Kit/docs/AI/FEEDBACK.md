@@ -4,16 +4,14 @@
 
 | Step | Status | Tag |
 |------|--------|-----|
-| U0 | DONE | `ui/U0-done` |
-| U1 | APPROVED (Gemini) — closing | `ui/U1-done` |
-| U2 | open | `ui/pre-U2` |
+| U0–U1 | DONE | `ui/U*-done` |
+| U2 | APPROVED (Gemini) — closing | `ui/U2-done` |
+| U3 | open (optional app chrome) | `ui/pre-U3` |
 
-## U1 review summary
-- Compact SliderRow/OptionalSliderRow via Density tokens + controlSize.small
-- Timeline/export untouched; tests green
-
-## Note
-U2 has orchestrator **visual gate** after Gemini APPROVED when practical.
+## U2 review summary
+- Inspector/toolbar density via Density tokens
+- Logic/export/timeline untouched; 242 tests green
+- **Visual gate (orchestrator):** code-level PASS (padding-only chrome). Live app 9:16/light-dark — human smoke when convenient (`GROK` track acceptance style).
 
 ## No pending review
-Await Hy3 on **U2**.
+Await Hy3 on **U3** (or human can request skip → UI_DONE).

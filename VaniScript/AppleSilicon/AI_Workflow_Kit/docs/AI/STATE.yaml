@@ -1,15 +1,18 @@
 # UI_AS track — orchestrated by Grok
 # Product scope: AI_Workflow_Kit/docs/UI_AS_STEPS.md
 
-current_step: U2
+current_step: U3
 step_description: >
-  VisualClipEditor inspector/toolbar density: less padding, quieter tabs, denser
-  inspector chrome using Density tokens. Do NOT change crop/timeline/render logic,
-  export, or Electron. Preserve light/dark, 9:16 preview, hotkeys.
-  Apple Silicon only. Visual acceptance after review when possible.
+  Optional app chrome density: Sidebars / Settings / Chat aligned with editor Density
+  tokens. Apple Silicon only. Do NOT redesign Electron. Do NOT change Grok/MCP logic
+  beyond spacing/chrome. Keep accent + glass. Minimal diffs; skip screens that already
+  look dense enough.
 
 target_files:
-  - Sources/VaniScript/Views/VisualClipEditorView.swift
+  - Sources/VaniScript/Views/SidebarView.swift
+  - Sources/VaniScript/Views/ContentView.swift
+  - Sources/VaniScript/Views/SettingsView.swift
+  - Sources/VaniScript/Views/ChatSidebarView.swift
   - Sources/VaniScript/Theme/VaniScriptTheme.swift
 
 completed_steps:
@@ -23,6 +26,7 @@ completed_steps:
   - GROK_DONE
   - U0
   - U1
+  - U2
 
 implementation:
   status: pending

@@ -1270,7 +1270,7 @@ struct ClipVisualEditorWorkspace: View {
     }
 
     private var inspector: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: VaniScriptTheme.Density.space8) {
             HStack(spacing: 0) {
                 ForEach(EditorInspectorTab.allCases, id: \.self) { tab in
                     Button {
@@ -1284,9 +1284,9 @@ struct ClipVisualEditorWorkspace: View {
                     .help(tab.tooltip)
                 }
             }
-            .padding(4)
+            .padding(VaniScriptTheme.Density.space4)
             .background(Color.dynamic(light: Color.black.opacity(0.045), dark: Color.white.opacity(0.045)))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
 
             ScrollView {
                 switch inspectorTab {
@@ -1301,14 +1301,14 @@ struct ClipVisualEditorWorkspace: View {
                 }
             }
         }
-        .padding(12)
+        .padding(VaniScriptTheme.Density.space8)
         .background(Color.dynamic(light: Color.white, dark: Color(red: 13 / 255, green: 17 / 255, blue: 34 / 255)))
         .overlay(Rectangle().fill(Color.dynamic(light: Color.black.opacity(0.08), dark: Color.white.opacity(0.08))).frame(width: 1), alignment: .leading)
     }
 
     private var styleInspector: some View {
         let b = activeStyleBinding
-        return VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
             InspectorTitle("Style", subtitle: "Subtitles and each text overlay track can have its own style.")
 
             styleTabSelector
@@ -1356,7 +1356,7 @@ struct ClipVisualEditorWorkspace: View {
     }
 
     private var frameInspector: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
             InspectorTitle("Frame animation", subtitle: "Adjust the frame, then add a point. Transitions between points are smooth.")
             ColorTextRow(title: "Border color", value: $backgroundSettings.frameGuideColor)
             SliderRow(title: "Dim", value: $backgroundSettings.frameGuideOpacity, range: 0...1, step: 0.05, percent: true)
@@ -1406,7 +1406,7 @@ struct ClipVisualEditorWorkspace: View {
     }
 
     private var backgroundInspector: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
             InspectorTitle("Background settings", subtitle: "Layer multiple background effects. Toggle each mode independently.")
             Toggle("Solid color", isOn: $backgroundSettings.solidEnabled)
                 .toggleStyle(.checkbox)
@@ -1443,7 +1443,7 @@ struct ClipVisualEditorWorkspace: View {
     }
 
     private var layersInspector: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
             InspectorTitle("Layers", subtitle: "Logo, intro/outro graphics, extra text tracks, and extra audio match the desktop VaniScript editor.")
             logoLayerEditor
             introOutroLayerEditor(title: "Intro Graphic", type: .intro)
@@ -4371,7 +4371,7 @@ private struct InspectorTitle: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space4) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .heavy))
                 .foregroundStyle(VaniScriptTheme.text0)
@@ -4449,7 +4449,7 @@ private struct ColorTextRow: View {
     @Binding var value: String
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: VaniScriptTheme.Density.space6) {
             Text(title.uppercased())
                 .font(.system(size: 9, weight: .heavy))
                 .foregroundStyle(VaniScriptTheme.text2)
@@ -4485,7 +4485,7 @@ private struct PickerRow: View {
     let options: [String]
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: VaniScriptTheme.Density.space6) {
             Text(title.uppercased())
                 .font(.system(size: 9, weight: .heavy))
                 .foregroundStyle(VaniScriptTheme.text2)
@@ -4521,10 +4521,10 @@ private struct LayerRow: View {
             }
             Spacer()
         }
-        .padding(10)
+        .padding(VaniScriptTheme.Density.space8)
         .background(Color.dynamic(light: Color.black.opacity(0.035), dark: Color.white.opacity(0.035)))
-        .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.dynamic(light: Color.black.opacity(0.09), dark: Color.white.opacity(0.09)), lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(Color.dynamic(light: Color.black.opacity(0.09), dark: Color.white.opacity(0.09)), lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
@@ -4552,10 +4552,10 @@ private struct LayerEditorCard<Content: View>: View {
             }
             content
         }
-        .padding(10)
+        .padding(VaniScriptTheme.Density.space8)
         .background(Color.dynamic(light: Color.black.opacity(0.035), dark: Color.white.opacity(0.035)))
-        .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.dynamic(light: Color.black.opacity(0.09), dark: Color.white.opacity(0.09)), lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(Color.dynamic(light: Color.black.opacity(0.09), dark: Color.white.opacity(0.09)), lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
@@ -4594,7 +4594,7 @@ private struct EditorPrimaryButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 12, weight: .heavy))
             .foregroundStyle(isSaved ? Color.white : Color.black)
-            .frame(width: 125, height: 30)
+            .frame(width: 125, height: VaniScriptTheme.Density.controlHeightLG)
             .background(isSaved ? VaniScriptTheme.green : (configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent))
             .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
     }
@@ -4607,8 +4607,8 @@ private struct EditorToolbarButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(active ? VaniScriptTheme.accent : VaniScriptTheme.text1)
-            .padding(.horizontal, 10)
-            .frame(height: 28)
+            .padding(.horizontal, VaniScriptTheme.Density.space8)
+            .frame(height: VaniScriptTheme.Density.controlHeightMD)
             .background(active ? VaniScriptTheme.accent.opacity(0.12) : Color.dynamic(light: Color.black.opacity(configuration.isPressed ? 0.08 : 0.03), dark: Color.white.opacity(configuration.isPressed ? 0.1 : 0.04)))
             .overlay(RoundedRectangle(cornerRadius: 7).stroke(active ? VaniScriptTheme.accent.opacity(0.55) : Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
@@ -4635,7 +4635,7 @@ private struct EditorIconButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 13, weight: .heavy))
             .foregroundStyle(disabled ? VaniScriptTheme.text2.opacity(0.55) : VaniScriptTheme.text1)
-            .frame(width: 30, height: 30)
+            .frame(width: VaniScriptTheme.Density.controlHeightLG, height: VaniScriptTheme.Density.controlHeightLG)
             .background(Color.dynamic(light: Color.black.opacity(configuration.isPressed ? 0.08 : 0.03), dark: Color.white.opacity(configuration.isPressed ? 0.09 : 0.04)))
             .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.dynamic(light: Color.black.opacity(0.1), dark: Color.white.opacity(0.1)), lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
@@ -4650,7 +4650,7 @@ private struct EditorSegmentButtonStyle: ButtonStyle {
             .font(.system(size: 11, weight: .heavy))
             .foregroundStyle(active ? Color.black : VaniScriptTheme.text2)
             .padding(.horizontal, 14)
-            .frame(height: 26)
+            .frame(height: VaniScriptTheme.Density.controlHeightSM)
             .background(active ? VaniScriptTheme.accent : Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
@@ -4661,12 +4661,12 @@ private struct InspectorTabButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 11, weight: .heavy))
+            .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(active ? Color.black : VaniScriptTheme.text2)
             .frame(maxWidth: .infinity)
-            .frame(height: 26)
+            .frame(height: VaniScriptTheme.Density.controlHeightSM)
             .background(active ? VaniScriptTheme.accent : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 

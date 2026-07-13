@@ -145,6 +145,73 @@ struct SettingsView: View {
         SettingsScroll {
             mcpIntegrationSection
 
+            SettingsSection(title: "Embedded Codex Chat") {
+                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Label("Chat Model", systemImage: "cpu")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.text2)
+
+                        Picker("", selection: Binding(
+                            get: { store.settings.codexChatModelID },
+                            set: { modelID in
+                                guard let option = CodexChatModelCatalog.option(id: modelID) else { return }
+                                store.updateSettings { settings in
+                                    settings.codexChatModelID = option.id
+                                    settings.codexChatReasoningEffort = option.defaultReasoningEffort
+                                }
+                            }
+                        )) {
+                            ForEach(CodexChatModelCatalog.options) { option in
+                                Text(option.displayName).tag(option.id)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
+                    .background(Color.white.opacity(0.04))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 7) {
+                        Label("Reasoning", systemImage: "brain")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.text2)
+
+                        let selectedModelID = CodexChatModelCatalog.normalizedModelID(store.settings.codexChatModelID)
+                        let selectedModel = CodexChatModelCatalog.option(id: selectedModelID) ?? CodexChatModelCatalog.options[0]
+                        Picker("", selection: Binding(
+                            get: { store.settings.codexChatReasoningEffort },
+                            set: { effort in
+                                store.updateSettings { settings in
+                                    settings.codexChatReasoningEffort = CodexChatModelCatalog.normalizedReasoningEffort(
+                                        modelID: selectedModel.id,
+                                        effort: effort
+                                    )
+                                }
+                            }
+                        )) {
+                            ForEach(selectedModel.reasoningEfforts, id: \.self) { effort in
+                                Text(effort.capitalized).tag(effort)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
+                    .background(Color.white.opacity(0.04))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+            }
+
             SettingsSection(title: "Active Target") {
                 LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: 10) {
                     VStack(alignment: .leading, spacing: 7) {
@@ -528,8 +595,8 @@ struct SettingsView: View {
                     )
 
                     CompactMcpToggleCard(
-                        title: "Allow Write Tools",
-                        subtitle: store.settings.mcpAllowMutatingTools ? "Mutating tools enabled" : "Read-only by default",
+                        title: "Edit Project",
+                        subtitle: store.settings.mcpAllowMutatingTools ? "Text and settings" : "Read-only",
                         systemImage: "pencil.and.outline",
                         isEnabled: store.settings.mcpServerEnabled,
                         isOn: Binding {
@@ -537,6 +604,62 @@ struct SettingsView: View {
                         } set: { value in
                             store.updateSettings { settings in
                                 settings.mcpAllowMutatingTools = value
+                            }
+                        }
+                    )
+
+                    CompactMcpToggleCard(
+                        title: "Run Processing",
+                        subtitle: store.settings.mcpAllowProcessingTools ? "AI and media jobs" : "Blocked",
+                        systemImage: "gearshape.2",
+                        isEnabled: store.settings.mcpServerEnabled,
+                        isOn: Binding {
+                            store.settings.mcpAllowProcessingTools
+                        } set: { value in
+                            store.updateSettings { settings in
+                                settings.mcpAllowProcessingTools = value
+                            }
+                        }
+                    )
+
+                    CompactMcpToggleCard(
+                        title: "Files & Export",
+                        subtitle: store.settings.mcpAllowFileTools ? "Approved locations" : "Blocked",
+                        systemImage: "folder",
+                        isEnabled: store.settings.mcpServerEnabled,
+                        isOn: Binding {
+                            store.settings.mcpAllowFileTools
+                        } set: { value in
+                            store.updateSettings { settings in
+                                settings.mcpAllowFileTools = value
+                            }
+                        }
+                    )
+
+                    CompactMcpToggleCard(
+                        title: "Network & Models",
+                        subtitle: store.settings.mcpAllowNetworkTools ? "Downloads enabled" : "Blocked",
+                        systemImage: "network",
+                        isEnabled: store.settings.mcpServerEnabled,
+                        isOn: Binding {
+                            store.settings.mcpAllowNetworkTools
+                        } set: { value in
+                            store.updateSettings { settings in
+                                settings.mcpAllowNetworkTools = value
+                            }
+                        }
+                    )
+
+                    CompactMcpToggleCard(
+                        title: "Destructive Actions",
+                        subtitle: store.settings.mcpAllowDestructiveTools ? "Confirmation required" : "Blocked",
+                        systemImage: "trash",
+                        isEnabled: store.settings.mcpServerEnabled,
+                        isOn: Binding {
+                            store.settings.mcpAllowDestructiveTools
+                        } set: { value in
+                            store.updateSettings { settings in
+                                settings.mcpAllowDestructiveTools = value
                             }
                         }
                     )

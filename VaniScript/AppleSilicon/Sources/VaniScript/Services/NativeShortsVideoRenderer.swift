@@ -336,6 +336,7 @@ enum NativeShortsVideoRenderer {
         if preset.contains("4K") { return CGSize(width: 2160, height: 3840) }
         if preset.contains("2K") { return CGSize(width: 1440, height: 2560) }
         if preset.contains("1080") || preset.contains("Full HD") { return CGSize(width: 1080, height: 1920) }
+        if preset.contains("720") || preset.contains("HD") { return CGSize(width: 720, height: 1280) }
         if preset.contains("Source-based") {
             return CGSize(width: max(1, sourceSize.width.rounded()), height: max(1, sourceSize.height.rounded()))
         }

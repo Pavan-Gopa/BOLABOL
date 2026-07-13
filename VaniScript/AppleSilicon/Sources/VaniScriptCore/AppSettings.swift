@@ -247,8 +247,14 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var mediaResolverToken: String
     public var mcpServerEnabled: Bool
     public var mcpAllowMutatingTools: Bool
+    public var mcpAllowProcessingTools: Bool
+    public var mcpAllowFileTools: Bool
+    public var mcpAllowNetworkTools: Bool
+    public var mcpAllowDestructiveTools: Bool
     public var mcpAccessToken: String
     public var mcpPreferredAgentID: String
+    public var codexChatModelID: String
+    public var codexChatReasoningEffort: String
     public var logLevel: LogLevel
 
     private enum CodingKeys: String, CodingKey {
@@ -260,7 +266,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case localAsrModels, localTranslationModels, promptPresets, usage, glossary, customCloudProviders
         case hasCompletedOnboarding, completedOnboardingBuildID
         case mediaResolverEndpoint, mediaResolverToken
-        case mcpServerEnabled, mcpAllowMutatingTools, mcpAccessToken, mcpPreferredAgentID
+        case mcpServerEnabled, mcpAllowMutatingTools
+        case mcpAllowProcessingTools, mcpAllowFileTools, mcpAllowNetworkTools, mcpAllowDestructiveTools
+        case mcpAccessToken, mcpPreferredAgentID
+        case codexChatModelID, codexChatReasoningEffort
         case logLevel
     }
 
@@ -294,8 +303,14 @@ public struct AppSettings: Codable, Equatable, Sendable {
         mediaResolverToken: String = "",
         mcpServerEnabled: Bool = false,
         mcpAllowMutatingTools: Bool = false,
+        mcpAllowProcessingTools: Bool = false,
+        mcpAllowFileTools: Bool = false,
+        mcpAllowNetworkTools: Bool = false,
+        mcpAllowDestructiveTools: Bool = false,
         mcpAccessToken: String = "",
         mcpPreferredAgentID: String = McpAgentProfileCatalog.defaultProfileID,
+        codexChatModelID: String = CodexChatModelCatalog.defaultModelID,
+        codexChatReasoningEffort: String = "medium",
         logLevel: LogLevel = .info
     ) {
         self.geminiKey = geminiKey
@@ -327,8 +342,14 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.mediaResolverToken = mediaResolverToken
         self.mcpServerEnabled = mcpServerEnabled
         self.mcpAllowMutatingTools = mcpAllowMutatingTools
+        self.mcpAllowProcessingTools = mcpAllowProcessingTools
+        self.mcpAllowFileTools = mcpAllowFileTools
+        self.mcpAllowNetworkTools = mcpAllowNetworkTools
+        self.mcpAllowDestructiveTools = mcpAllowDestructiveTools
         self.mcpAccessToken = mcpAccessToken
         self.mcpPreferredAgentID = mcpPreferredAgentID
+        self.codexChatModelID = codexChatModelID
+        self.codexChatReasoningEffort = codexChatReasoningEffort
         self.logLevel = logLevel
     }
 
@@ -363,8 +384,14 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.mediaResolverToken = try container.decodeIfPresent(String.self, forKey: .mediaResolverToken) ?? ""
         self.mcpServerEnabled = try container.decodeIfPresent(Bool.self, forKey: .mcpServerEnabled) ?? false
         self.mcpAllowMutatingTools = try container.decodeIfPresent(Bool.self, forKey: .mcpAllowMutatingTools) ?? false
+        self.mcpAllowProcessingTools = try container.decodeIfPresent(Bool.self, forKey: .mcpAllowProcessingTools) ?? false
+        self.mcpAllowFileTools = try container.decodeIfPresent(Bool.self, forKey: .mcpAllowFileTools) ?? false
+        self.mcpAllowNetworkTools = try container.decodeIfPresent(Bool.self, forKey: .mcpAllowNetworkTools) ?? false
+        self.mcpAllowDestructiveTools = try container.decodeIfPresent(Bool.self, forKey: .mcpAllowDestructiveTools) ?? false
         self.mcpAccessToken = try container.decodeIfPresent(String.self, forKey: .mcpAccessToken) ?? ""
         self.mcpPreferredAgentID = try container.decodeIfPresent(String.self, forKey: .mcpPreferredAgentID) ?? McpAgentProfileCatalog.defaultProfileID
+        self.codexChatModelID = try container.decodeIfPresent(String.self, forKey: .codexChatModelID) ?? CodexChatModelCatalog.defaultModelID
+        self.codexChatReasoningEffort = try container.decodeIfPresent(String.self, forKey: .codexChatReasoningEffort) ?? "medium"
         self.logLevel = try container.decodeIfPresent(LogLevel.self, forKey: .logLevel) ?? .info
     }
 
@@ -433,8 +460,14 @@ public struct AppSettings: Codable, Equatable, Sendable {
         mediaResolverToken: "",
         mcpServerEnabled: false,
         mcpAllowMutatingTools: false,
+        mcpAllowProcessingTools: false,
+        mcpAllowFileTools: false,
+        mcpAllowNetworkTools: false,
+        mcpAllowDestructiveTools: false,
         mcpAccessToken: "",
-        mcpPreferredAgentID: McpAgentProfileCatalog.defaultProfileID
+        mcpPreferredAgentID: McpAgentProfileCatalog.defaultProfileID,
+        codexChatModelID: CodexChatModelCatalog.defaultModelID,
+        codexChatReasoningEffort: "medium"
     )
 }
 
@@ -454,11 +487,20 @@ extension AppSettings {
     public mutating func normalizeMcpSettings(generateToken: () -> String = { AppSettings.generateMcpAccessToken() }) {
         mcpAccessToken = mcpAccessToken.trimmingCharacters(in: .whitespacesAndNewlines)
         mcpPreferredAgentID = McpAgentProfileCatalog.normalizedProfileID(mcpPreferredAgentID)
+        codexChatModelID = CodexChatModelCatalog.normalizedModelID(codexChatModelID)
+        codexChatReasoningEffort = CodexChatModelCatalog.normalizedReasoningEffort(
+            modelID: codexChatModelID,
+            effort: codexChatReasoningEffort
+        )
         if mcpServerEnabled, mcpAccessToken.isEmpty {
             mcpAccessToken = generateToken()
         }
         if !mcpServerEnabled {
             mcpAllowMutatingTools = false
+            mcpAllowProcessingTools = false
+            mcpAllowFileTools = false
+            mcpAllowNetworkTools = false
+            mcpAllowDestructiveTools = false
         }
     }
 

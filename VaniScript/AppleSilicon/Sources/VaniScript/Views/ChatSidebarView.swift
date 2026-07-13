@@ -41,6 +41,11 @@ final class DictationRecorder: NSObject, AVAudioRecorderDelegate, @unchecked Sen
     }
 }
 
+private enum ChatRoute: String {
+    case mcp
+    case gemini
+}
+
 struct ChatSidebarView: View {
     @EnvironmentObject private var workflowStore: WorkflowStore
     @State private var messages: [MessageItem] = [
@@ -53,6 +58,7 @@ struct ChatSidebarView: View {
     @State private var dictationURL: URL? = nil
     @State private var dictationRecorder: DictationRecorder? = nil
     @State private var showNoModelWarning = false
+    @AppStorage("vaniscript.chat.route") private var chatRouteRaw = ChatRoute.mcp.rawValue
 
     var body: some View {
         let micIcon = isRecordingDictation ? "stop.circle.fill" : "mic.fill"
@@ -69,6 +75,19 @@ struct ChatSidebarView: View {
                     Text("AI Assistant")
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
+
+                    Picker("Chat route", selection: $chatRouteRaw) {
+                        Text("MCP").tag(ChatRoute.mcp.rawValue)
+                        Text("API").tag(ChatRoute.gemini.rawValue)
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: 116)
+                    .help("MCP uses the embedded Codex agent. The API route is used only when selected explicitly.")
+
+                    if chatRouteRaw == ChatRoute.mcp.rawValue {
+                        codexModelMenu
+                    }
                     
                     Spacer()
                     
@@ -340,39 +359,105 @@ struct ChatSidebarView: View {
         messages.append(userMessage)
         
         isLoading = true
-        
-        if McpServer.shared.hasActiveClients {
+
+        if chatRouteRaw == ChatRoute.gemini.rawValue {
+            let key = workflowStore.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !key.isEmpty else {
+                messages.append(MessageItem(sender: "system", text: "API mode requires an API key in Settings."))
+                isLoading = false
+                return
+            }
             Task {
-                do {
-                    let responseText = try await McpServer.shared.sampleMessage(prompt: text, history: messages.dropLast())
-                    await MainActor.run {
-                        self.messages.append(MessageItem(sender: "assistant", text: responseText))
-                        self.isLoading = false
-                    }
-                } catch {
-                    let key = workflowStore.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !key.isEmpty {
-                        await executeGeminiRequest(text: text, key: key)
-                    } else {
-                        await MainActor.run {
-                            self.messages.append(MessageItem(sender: "system", text: "MCP Agent Error: \(error.localizedDescription)"))
-                            self.isLoading = false
-                        }
-                    }
-                }
+                await executeGeminiRequest(text: text, key: key)
             }
             return
         }
-        
-        let key = workflowStore.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        if key.isEmpty {
-            messages.append(MessageItem(sender: "system", text: "Error: Gemini Key is missing, and no active MCP agent is connected to handle the chat."))
+
+        guard workflowStore.settings.mcpPreferredAgentID == McpClientProfileID.codex.rawValue else {
+            messages.append(MessageItem(
+                sender: "system",
+                text: "The MCP chat route is powered by Codex. Select Codex in Settings > Agents, then send the message again."
+            ))
             isLoading = false
             return
         }
-        
+
+        let history = messages.map { message in
+            CodexChatHistoryItem(sender: message.sender, text: message.text)
+        }
         Task {
-            await executeGeminiRequest(text: text, key: key)
+            await executeCodexRequest(history: history)
+        }
+    }
+
+    private var codexModelMenu: some View {
+        Menu {
+            Section("Codex Model") {
+                ForEach(CodexChatModelCatalog.options) { option in
+                    Button {
+                        selectCodexModel(option)
+                    } label: {
+                        Label(
+                            option.displayName,
+                            systemImage: store.settings.codexChatModelID == option.id ? "checkmark" : "cpu"
+                        )
+                    }
+                }
+            }
+
+            Section("Reasoning") {
+                let selectedModelID = CodexChatModelCatalog.normalizedModelID(store.settings.codexChatModelID)
+                let selectedModel = CodexChatModelCatalog.option(id: selectedModelID) ?? CodexChatModelCatalog.options[0]
+                ForEach(selectedModel.reasoningEfforts, id: \.self) { effort in
+                    Button {
+                        store.updateSettings { settings in
+                            settings.codexChatReasoningEffort = effort
+                        }
+                    } label: {
+                        Label(
+                            effort.capitalized,
+                            systemImage: store.settings.codexChatReasoningEffort == effort ? "checkmark" : "brain"
+                        )
+                    }
+                }
+            }
+        } label: {
+            Text(CodexChatModelCatalog.displayLabel(
+                modelID: store.settings.codexChatModelID,
+                effort: store.settings.codexChatReasoningEffort
+            ))
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(VaniScriptTheme.accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize(horizontal: true, vertical: false)
+        .help("Choose the Codex model and reasoning level for the next MCP chat request")
+    }
+
+    private func selectCodexModel(_ option: CodexChatModelOption) {
+        store.updateSettings { settings in
+            settings.codexChatModelID = option.id
+            settings.codexChatReasoningEffort = option.defaultReasoningEffort
+        }
+    }
+
+    private func executeCodexRequest(history: [CodexChatHistoryItem]) async {
+        do {
+            let response = try await CodexAgentService.send(
+                history: history,
+                settings: workflowStore.settings
+            )
+            await MainActor.run {
+                self.messages.append(MessageItem(sender: "assistant", text: response.text))
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.messages.append(MessageItem(sender: "system", text: error.localizedDescription))
+                self.isLoading = false
+            }
         }
     }
 
@@ -409,7 +494,7 @@ struct ChatSidebarView: View {
                 let requestBody = GeminiChatRequest(
                     contents: contents,
                     systemInstruction: GeminiSystemInstruction(
-                        parts: [GeminiChatPart(text: "You are the VaniScript AI Chat Assistant. Assist users by calling local tools to view state, edit translations, update subtitle styling, and structure vertical video shorts. You are also a highly creative translation expert; suggest beautiful literary translations, rephrase subtitles, fix grammar, explain timeline cues, and converse naturally. CRITICAL: You must always respond to the user in the language they write in! If the user writes or speaks in Russian, you MUST respond in fluent Russian. If they write in English, respond in English. Do not speak English when the user addresses you in Russian. If the user provides a path to a screenshot/image, you can see and analyze it!")]
+                        parts: [GeminiChatPart(text: "You are the VaniScript AI Chat Assistant. Assist users by calling local tools to view state, edit translations, update subtitle styling, and structure vertical video shorts. Before any chunk or cue edit, call get_project_state and pass the exact numeric session.chunks[].index. Chunk indexes are zero-based: visible Chunk 5 requires chunkIndex 4. Never invent argument names such as chatindex. You are also a highly creative translation expert; suggest beautiful literary translations, rephrase subtitles, fix grammar, explain timeline cues, and converse naturally. CRITICAL: You must always respond to the user in the language they write in! If the user writes or speaks in Russian, you MUST respond in fluent Russian. If they write in English, respond in English. Do not speak English when the user addresses you in Russian. If the user provides a path to a screenshot/image, you can see and analyze it!")]
                     ),
                     tools: [
                         GeminiChatTool(
@@ -472,7 +557,10 @@ struct ChatSidebarView: View {
                     
                     let result: [String: Any]
                     do {
-                        result = try await workflowStore.executeMcpTool(name: call.name, arguments: call.args ?? [:])
+                        result = try await workflowStore.executeMcpTool(
+                            name: call.name,
+                            arguments: (call.args ?? [:]).mapValues(\.value)
+                        )
                     } catch {
                         result = ["error": error.localizedDescription]
                     }

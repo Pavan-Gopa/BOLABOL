@@ -317,8 +317,9 @@ public struct ShortsClipTranslation: Codable, Equatable, Sendable {
 }
 
 public struct ShortsClipPlan: Codable, Equatable, Identifiable, Sendable {
-    public var id: String { "\(start)-\(end)-\(title)" }
+    public var id: String { stableID ?? "legacy-\(start)-\(end)-\(title)" }
 
+    public var stableID: String? = nil
     public var start: String
     public var end: String
     public var title: String
@@ -365,6 +366,7 @@ public struct ShortsClipPlan: Codable, Equatable, Identifiable, Sendable {
     public var targetOutro: IntroOutroOverlaySettings? = nil
 
     public init(
+        stableID: String? = UUID().uuidString.lowercased(),
         start: String,
         end: String,
         title: String,
@@ -410,6 +412,7 @@ public struct ShortsClipPlan: Codable, Equatable, Identifiable, Sendable {
         sourceOutro: IntroOutroOverlaySettings? = nil,
         targetOutro: IntroOutroOverlaySettings? = nil
     ) {
+        self.stableID = stableID
         self.start = start
         self.end = end
         self.title = title
@@ -952,6 +955,30 @@ public extension SessionState {
 
     mutating func normalizeTranslationArchive() {
         extractMetadataFromCuesIfNeeded()
+        if shortsPlans != nil {
+            for index in shortsPlans!.indices {
+                if shortsPlans![index].stableID == nil {
+                    shortsPlans![index].stableID = UUID().uuidString.lowercased()
+                }
+                if shortsPlans![index].timelineCuts != nil {
+                    for cutIndex in shortsPlans![index].timelineCuts!.indices where shortsPlans![index].timelineCuts![cutIndex].stableID == nil {
+                        shortsPlans![index].timelineCuts![cutIndex].stableID = UUID().uuidString.lowercased()
+                    }
+                }
+            }
+        }
+        if shortsRejectedPlans != nil {
+            for index in shortsRejectedPlans!.indices {
+                if shortsRejectedPlans![index].stableID == nil {
+                    shortsRejectedPlans![index].stableID = UUID().uuidString.lowercased()
+                }
+                if shortsRejectedPlans![index].timelineCuts != nil {
+                    for cutIndex in shortsRejectedPlans![index].timelineCuts!.indices where shortsRejectedPlans![index].timelineCuts![cutIndex].stableID == nil {
+                        shortsRejectedPlans![index].timelineCuts![cutIndex].stableID = UUID().uuidString.lowercased()
+                    }
+                }
+            }
+        }
         let legacyLanguage = TranslationArchive.displayLanguage(targetLang)
         if TranslationArchive.isRealLanguage(legacyLanguage) {
             targetLang = legacyLanguage

@@ -4,6 +4,22 @@ import Testing
 
 @Suite("Universal Shorts/Reels planner")
 struct ShortsPlannerTests {
+    @Test("Shorts plan identity remains stable when editable fields change")
+    func stablePlanIdentity() {
+        var plan = ShortsClipPlan(
+            stableID: "plan-1",
+            start: "00:10",
+            end: "00:50",
+            title: "Original",
+            summary: "Summary",
+            hook: "Hook"
+        )
+        let id = plan.id
+        plan.title = "Updated"
+        plan.start = "00:12"
+        #expect(plan.id == id)
+    }
+
     @Test("builds bilingual planning prompt")
     func buildsBilingualPrompt() {
         let prompt = ShortsPlanner.buildPrompt(

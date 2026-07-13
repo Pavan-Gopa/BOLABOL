@@ -137,6 +137,21 @@ actor CloudTextTranslationEngine {
         return try ShortsPlanner.parsePlanResponse(raw)
     }
 
+    func translateShortsPlan(
+        _ plan: ShortsClipPlan,
+        targetLanguage: String,
+        provider: ActiveCloudTranslationProvider
+    ) async throws -> ShortsClipTranslation {
+        let prompt = ShortsPlanner.buildTranslationPrompt(plan: plan, targetLanguage: targetLanguage)
+        let raw = try await generate(prompt: prompt, provider: provider, maxOutputTokens: 2_048)
+        return try ShortsPlanner.parseTranslationResponse(
+            raw,
+            language: targetLanguage,
+            provider: provider.id,
+            updatedAt: ISO8601DateFormatter().string(from: Date())
+        )
+    }
+
     private func generate(
         prompt: String,
         provider: ActiveCloudTranslationProvider,

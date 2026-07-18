@@ -78,7 +78,10 @@ enum GrokAgentService {
 
         let process = Process()
         process.executableURL = executableURL
+        // --trust is required: project-scoped MCP under GrokAgentWorkspace is otherwise
+        // blocked ("folder untrusted / repo-local server not started").
         process.arguments = [
+            "--trust",
             "--prompt-file", promptFileURL.path(percentEncoded: false),
             "--output-format", "streaming-json",
             "--model", modelID,

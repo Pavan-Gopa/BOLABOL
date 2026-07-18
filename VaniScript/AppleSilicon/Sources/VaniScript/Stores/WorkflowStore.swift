@@ -5136,7 +5136,9 @@ final class WorkflowStore: ObservableObject {
                     "language": language.rawValue,
                     "preview": true,
                     "changedCount": changedCount,
-                    "segmentCount": snap.segments.count,
+                    "inputSegmentCount": segments.count,
+                    "outputSegmentCount": snap.segments.count,
+                    "preservedAllText": snap.preservedAllText,
                     "changes": snap.changes.map(mcpSpeechSnapChangeDictionary),
                     "subtitleSegments": snap.segments.map {
                         ["segmentId": $0.id, "startSec": $0.start, "endSec": $0.end, "text": $0.text]
@@ -5153,6 +5155,13 @@ final class WorkflowStore: ObservableObject {
                         clipDurationSec: range.durationSec,
                         padSec: params.padSec
                     )
+                    // Hard guarantee: never write a result that drops caption text.
+                    guard snap.preservedAllText else {
+                        throw mcpError(
+                            -2,
+                            "SAFETY_ABORT: snap would not preserve all subtitle text; no changes applied for \(language.rawValue)"
+                        )
+                    }
                     let changedCount = snap.changes.filter(\.changed).count
                     anyChanged = anyChanged || changedCount > 0
                     mcpSetSegments(snap.segments, on: &plan, language: language)
@@ -5160,7 +5169,9 @@ final class WorkflowStore: ObservableObject {
                         "language": language.rawValue,
                         "preview": false,
                         "changedCount": changedCount,
-                        "segmentCount": snap.segments.count,
+                        "inputSegmentCount": segments.count,
+                        "outputSegmentCount": snap.segments.count,
+                        "preservedAllText": snap.preservedAllText,
                         "changes": snap.changes.map(mcpSpeechSnapChangeDictionary),
                         "subtitleSegments": snap.segments.map {
                             ["segmentId": $0.id, "startSec": $0.start, "endSec": $0.end, "text": $0.text]

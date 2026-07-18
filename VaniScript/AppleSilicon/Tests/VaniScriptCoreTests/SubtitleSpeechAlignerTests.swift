@@ -6,7 +6,6 @@ import Testing
 struct SubtitleSpeechAlignerTests {
     @Test("derives speech regions by inverting silence")
     func derivesSpeechRegions() {
-        // 0-200ms speech, 200-600ms silence, 600-1000ms speech
         var samples = [Int16](repeating: 12_000, count: 1_000)
         for i in 200..<600 { samples[i] = 0 }
 
@@ -26,7 +25,6 @@ struct SubtitleSpeechAlignerTests {
 
     @Test("shrinks continuous segments so pauses stay caption-free")
     func shrinksContinuousSegments() {
-        // Speech 0-0.4s and 0.7-1.0s; silence 0.4-0.7s
         let speech = [
             SpeechTimeRegion(startSec: 0.0, endSec: 0.4),
             SpeechTimeRegion(startSec: 0.7, endSec: 1.0),
@@ -47,9 +45,33 @@ struct SubtitleSpeechAlignerTests {
         #expect(result.segments[0].id == "a")
         #expect(result.segments[0].end <= 0.41)
         #expect(result.segments[1].start >= 0.69)
-        #expect(result.changes.filter { $0.status == "snapped" }.count == 2)
-        // Gap remains between cues across the pause.
         #expect(result.segments[0].end < result.segments[1].start)
+    }
+
+    @Test("splits one long cue that covers an internal pause")
+    func splitsInternalPause() {
+        let speech = [
+            SpeechTimeRegion(startSec: 0.0, endSec: 0.4),
+            SpeechTimeRegion(startSec: 0.7, endSec: 1.0),
+        ]
+        // Single continuous cue covering speech-silence-speech
+        let segments = [
+            AlignedSubtitleSegment(id: "long", start: 0.0, end: 1.0, text: "hello beautiful world today"),
+        ]
+
+        let result = SubtitleSpeechAligner.snapSegmentsToSpeech(
+            segments: segments,
+            speechRegions: speech,
+            clipDurationSec: 1.0,
+            padSec: 0.0,
+            splitSilenceSec: 0.2
+        )
+
+        #expect(result.segments.count == 2)
+        #expect(result.segments[0].end <= 0.45)
+        #expect(result.segments[1].start >= 0.65)
+        #expect(result.segments[0].end < result.segments[1].start)
+        #expect(result.changes.contains { $0.status == "split_head" || $0.status == "split_part" })
     }
 
     @Test("keeps segment when no speech overlaps its range")

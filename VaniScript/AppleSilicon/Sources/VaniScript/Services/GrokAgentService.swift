@@ -88,7 +88,8 @@ enum GrokAgentService {
             "--reasoning-effort", reasoningEffort,
             "--cwd", workspaceURL.path(percentEncoded: false),
             "--always-approve",
-            "--max-turns", "16",
+            // Tool-using turns (analyze + snap + state reads) easily exceed 16.
+            "--max-turns", "64",
             "--no-subagents",
             "--permission-mode", "bypassPermissions",
         ]

@@ -5038,8 +5038,10 @@ final class WorkflowStore: ObservableObject {
     }
 
     private func mcpSpeechAnalysisParams(arguments: [String: Any]) -> (thresholdDb: Double, minSilenceMs: Int, padSec: Double) {
-        let threshold = mcpDouble(arguments["silenceThresholdDb"]) ?? Double(workflow.settings.silenceThreshDb)
-        let minSilence = McpToolArguments.wholeNumber(arguments["minSilenceMs"]) ?? workflow.settings.minSilenceMs
+        // Subtitle snap needs more sensitive pause detection than chunk slicing.
+        // Chunk defaults (e.g. -16 dB / 400ms) miss short mid-caption silences.
+        let threshold = mcpDouble(arguments["silenceThresholdDb"]) ?? -28
+        let minSilence = McpToolArguments.wholeNumber(arguments["minSilenceMs"]) ?? 180
         let pad = mcpDouble(arguments["padSec"]) ?? SubtitleSpeechAligner.defaultPadSec
         return (
             thresholdDb: min(0, max(-80, threshold)),

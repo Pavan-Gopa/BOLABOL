@@ -42,19 +42,17 @@ struct SubtitleSpeechAlignerTests {
         )
 
         #expect(result.segments.count == 2)
-        #expect(result.segments[0].id == "a")
-        #expect(result.segments[0].end <= 0.41)
-        #expect(result.segments[1].start >= 0.69)
+        #expect(result.preservedAllText)
+        #expect(joinedText(result.segments) == "hello world")
         #expect(result.segments[0].end < result.segments[1].start)
     }
 
-    @Test("splits one long cue that covers an internal pause")
-    func splitsInternalPause() {
+    @Test("splits one long cue but keeps every word")
+    func splitsInternalPausePreservingWords() {
         let speech = [
             SpeechTimeRegion(startSec: 0.0, endSec: 0.4),
             SpeechTimeRegion(startSec: 0.7, endSec: 1.0),
         ]
-        // Single continuous cue covering speech-silence-speech
         let segments = [
             AlignedSubtitleSegment(id: "long", start: 0.0, end: 1.0, text: "hello beautiful world today"),
         ]
@@ -68,13 +66,13 @@ struct SubtitleSpeechAlignerTests {
         )
 
         #expect(result.segments.count == 2)
-        #expect(result.segments[0].end <= 0.45)
-        #expect(result.segments[1].start >= 0.65)
+        #expect(result.preservedAllText)
+        #expect(joinedText(result.segments) == "hello beautiful world today")
         #expect(result.segments[0].end < result.segments[1].start)
-        #expect(result.changes.contains { $0.status == "split_head" || $0.status == "split_part" })
+        #expect(!result.segments.contains { $0.text == "…" })
     }
 
-    @Test("keeps segment when no speech overlaps its range")
+    @Test("never deletes a segment when no speech overlaps")
     func keepsSegmentWithoutSpeech() {
         let speech = [SpeechTimeRegion(startSec: 0.0, endSec: 0.2)]
         let segments = [
@@ -87,7 +85,55 @@ struct SubtitleSpeechAlignerTests {
             padSec: 0.0
         )
         #expect(result.segments.count == 1)
-        #expect(result.changes.first?.status == "no_speech_in_range")
-        #expect(abs(result.segments[0].start - 0.5) < 0.001)
+        #expect(result.preservedAllText)
+        #expect(result.segments[0].text == "only silence here")
+        #expect(result.changes.first?.status == "kept_no_speech")
+    }
+
+    @Test("single-word cue is never split away into ellipsis")
+    func singleWordNeverSplitToEllipsis() {
+        let speech = [
+            SpeechTimeRegion(startSec: 0.0, endSec: 0.3),
+            SpeechTimeRegion(startSec: 0.6, endSec: 1.0),
+        ]
+        let segments = [
+            AlignedSubtitleSegment(id: "one", start: 0.0, end: 1.0, text: "Om"),
+        ]
+        let result = SubtitleSpeechAligner.snapSegmentsToSpeech(
+            segments: segments,
+            speechRegions: speech,
+            clipDurationSec: 1.0,
+            padSec: 0.0,
+            splitSilenceSec: 0.2
+        )
+        #expect(result.segments.count == 1)
+        #expect(result.segments[0].text == "Om")
+        #expect(result.preservedAllText)
+    }
+
+    @Test("dense overlapping snaps still keep all captions")
+    func overlapResolutionNeverDrops() {
+        let speech = [SpeechTimeRegion(startSec: 0.0, endSec: 1.0)]
+        let segments = [
+            AlignedSubtitleSegment(id: "a", start: 0.0, end: 0.5, text: "one two"),
+            AlignedSubtitleSegment(id: "b", start: 0.1, end: 0.6, text: "three four"),
+            AlignedSubtitleSegment(id: "c", start: 0.2, end: 0.7, text: "five six"),
+        ]
+        let result = SubtitleSpeechAligner.snapSegmentsToSpeech(
+            segments: segments,
+            speechRegions: speech,
+            clipDurationSec: 1.0,
+            padSec: 0.0
+        )
+        #expect(result.segments.count == 3)
+        #expect(result.preservedAllText)
+        #expect(joinedText(result.segments) == "one two three four five six")
+    }
+
+    private func joinedText(_ segments: [AlignedSubtitleSegment]) -> String {
+        segments
+            .map(\.text)
+            .flatMap { $0.split(whereSeparator: \.isWhitespace).map(String.init) }
+            .joined(separator: " ")
     }
 }

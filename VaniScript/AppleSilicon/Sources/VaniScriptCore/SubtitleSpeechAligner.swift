@@ -49,23 +49,32 @@ public struct SubtitleSpeechSnapResult: Equatable, Sendable {
     public var segments: [AlignedSubtitleSegment]
     public var changes: [SubtitleSpeechSnapChange]
     public var speechRegions: [SpeechTimeRegion]
+    /// Concatenated original texts vs output — must match (whitespace-normalized).
+    public var preservedAllText: Bool
 
     public init(
         segments: [AlignedSubtitleSegment],
         changes: [SubtitleSpeechSnapChange],
-        speechRegions: [SpeechTimeRegion]
+        speechRegions: [SpeechTimeRegion],
+        preservedAllText: Bool
     ) {
         self.segments = segments
         self.changes = changes
         self.speechRegions = speechRegions
+        self.preservedAllText = preservedAllText
     }
 }
 
-/// Shrinks (and splits) subtitle segment bounds to speech energy so pauses stay caption-free.
+/// Adjusts subtitle timings to speech energy **without deleting caption text**.
+///
+/// Guarantees:
+/// 1. Every input segment produces ≥1 output segment.
+/// 2. All words from every input segment appear in the output (no dropped lines).
+/// 3. Overlap resolution never discards a segment — only shifts bounds.
 public enum SubtitleSpeechAligner {
     public static let defaultPadSec = 0.04
     public static let minSegmentDurationSec = 0.10
-    /// Minimum internal silence (sec) that causes a segment to split into multiple cues.
+    /// Minimum internal silence (sec) that may split a cue into multiple pieces.
     public static let defaultSplitSilenceSec = 0.25
 
     public static func speechRegions(
@@ -88,10 +97,6 @@ public enum SubtitleSpeechAligner {
         }
     }
 
-    /// Align segments to speech:
-    /// - shrink bounds to speech inside the original range;
-    /// - **split** a segment when it covers multiple speech islands separated by silence
-    ///   (so mid-cue pauses no longer show captions).
     public static func snapSegmentsToSpeech(
         segments: [AlignedSubtitleSegment],
         speechRegions: [SpeechTimeRegion],
@@ -107,12 +112,18 @@ public enum SubtitleSpeechAligner {
             .filter { $0.endSec > $0.startSec }
             .sorted { $0.startSec < $1.startSec }
 
+        let inputNormalized = normalizeWhitespace(
+            segments.map(\.text).joined(separator: " ")
+        )
+
         var changes: [SubtitleSpeechSnapChange] = []
         var snapped: [AlignedSubtitleSegment] = []
 
         for segment in segments.sorted(by: { $0.start < $1.start }) {
             let oldStart = max(0, min(duration, segment.start))
-            let oldEnd = max(oldStart, min(duration, segment.end))
+            let oldEnd = max(oldStart + minSegmentDurationSec * 0.5, min(duration, segment.end))
+            let originalText = segment.text
+
             let overlaps = speech
                 .filter { $0.startSec < oldEnd && $0.endSec > oldStart }
                 .map { island in
@@ -121,42 +132,92 @@ public enum SubtitleSpeechAligner {
                         endSec: min(oldEnd, island.endSec)
                     )
                 }
-                .filter { $0.endSec - $0.startSec >= minSegmentDurationSec * 0.5 }
+                .filter { $0.endSec > $0.startSec }
 
+            // No usable speech → keep original text and original (or minimally valid) timing.
             guard !overlaps.isEmpty else {
-                let unchanged = makeSegment(
+                let kept = makeSegment(
                     id: segment.id,
                     start: oldStart,
                     end: max(oldStart + minSegmentDurationSec, oldEnd),
-                    text: segment.text
+                    text: originalText
                 )
-                snapped.append(unchanged)
+                snapped.append(kept)
                 changes.append(
                     SubtitleSpeechSnapChange(
                         segmentId: segment.id,
-                        text: segment.text,
+                        text: originalText,
                         oldStartSec: oldStart,
                         oldEndSec: oldEnd,
-                        newStartSec: unchanged.start,
-                        newEndSec: unchanged.end,
-                        status: "no_speech_in_range"
+                        newStartSec: kept.start,
+                        newEndSec: kept.end,
+                        status: "kept_no_speech"
                     )
                 )
                 continue
             }
 
-            // Merge adjacent speech islands separated by tiny gaps (< splitSilenceSec).
-            let islands = mergeCloseIslands(overlaps, maxGapSec: minSplitGap)
-            let wordPieces = distributeText(segment.text, across: islands.count)
+            var islands = mergeCloseIslands(overlaps, maxGapSec: minSplitGap)
+
+            // Never create more pieces than we have words — otherwise text would be lost/duplicated.
+            let words = tokenizeWords(originalText)
+            if words.count > 0, islands.count > words.count {
+                islands = mergeToCount(islands, targetCount: words.count)
+            }
+            // Single-word (or empty) cues: never split — only shrink to first…last speech span.
+            if words.count <= 1 {
+                islands = [
+                    SpeechTimeRegion(
+                        startSec: islands.first!.startSec,
+                        endSec: islands.last!.endSec
+                    )
+                ]
+            }
+
+            let wordPieces = distributeTextPreservingAllWords(originalText, across: islands.count)
+            guard wordPieces.count == islands.count,
+                  normalizeWhitespace(wordPieces.joined(separator: " "))
+                    == normalizeWhitespace(originalText)
+                    || originalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            else {
+                // Fall back: keep full text, shrink timing only for this cue.
+                if let first = islands.first, let last = islands.last {
+                    var newStart = max(oldStart, first.startSec - pad)
+                    var newEnd = min(oldEnd, last.endSec + pad)
+                    if newEnd - newStart < minSegmentDurationSec {
+                        newStart = oldStart
+                        newEnd = oldEnd
+                    }
+                    let kept = makeSegment(id: segment.id, start: newStart, end: newEnd, text: originalText)
+                    snapped.append(kept)
+                    changes.append(
+                        SubtitleSpeechSnapChange(
+                            segmentId: segment.id,
+                            text: originalText,
+                            oldStartSec: oldStart,
+                            oldEndSec: oldEnd,
+                            newStartSec: kept.start,
+                            newEndSec: kept.end,
+                            status: "snapped_safe"
+                        )
+                    )
+                }
+                continue
+            }
 
             for (index, island) in islands.enumerated() {
                 var newStart = max(oldStart, island.startSec - pad)
                 var newEnd = min(oldEnd, island.endSec + pad)
                 if newEnd - newStart < minSegmentDurationSec {
                     let mid = (island.startSec + island.endSec) / 2
-                    newStart = max(oldStart, mid - minSegmentDurationSec / 2)
-                    newEnd = min(oldEnd, newStart + minSegmentDurationSec)
+                    newStart = max(0, mid - minSegmentDurationSec / 2)
+                    newEnd = min(duration, newStart + minSegmentDurationSec)
+                    if newEnd <= newStart {
+                        newStart = oldStart
+                        newEnd = max(oldStart + minSegmentDurationSec, oldEnd)
+                    }
                 }
+
                 let pieceID = index == 0
                     ? segment.id
                     : "\(segment.id)_s\(index)_\(Int((newStart * 1000).rounded()))"
@@ -186,12 +247,82 @@ public enum SubtitleSpeechAligner {
             }
         }
 
-        snapped = resolveOverlaps(snapped, clipDurationSec: duration)
+        // Never drop segments when resolving overlaps.
+        snapped = resolveOverlapsPreservingAll(snapped, clipDurationSec: duration)
+
+        let outputNormalized = normalizeWhitespace(
+            snapped.map(\.text).joined(separator: " ")
+        )
+        let preserved = outputNormalized == inputNormalized
+            || inputNormalized.isEmpty
+
+        // Safety net: if anything went wrong with text, fall back to timing-only shrink
+        // without splits so every original cue (full text) is restored.
+        if !preserved {
+            return snapTimingOnly(
+                segments: segments,
+                speech: speech,
+                clipDurationSec: duration,
+                padSec: pad
+            )
+        }
 
         return SubtitleSpeechSnapResult(
             segments: snapped,
             changes: changes,
-            speechRegions: speech
+            speechRegions: speech,
+            preservedAllText: true
+        )
+    }
+
+    /// Timing-only path: one output per input, full original text always kept.
+    private static func snapTimingOnly(
+        segments: [AlignedSubtitleSegment],
+        speech: [SpeechTimeRegion],
+        clipDurationSec: Double,
+        padSec: Double
+    ) -> SubtitleSpeechSnapResult {
+        var changes: [SubtitleSpeechSnapChange] = []
+        var snapped: [AlignedSubtitleSegment] = []
+
+        for segment in segments.sorted(by: { $0.start < $1.start }) {
+            let oldStart = max(0, min(clipDurationSec, segment.start))
+            let oldEnd = max(oldStart, min(clipDurationSec, segment.end))
+            let overlaps = speech.filter { $0.startSec < oldEnd && $0.endSec > oldStart }
+
+            var newStart = oldStart
+            var newEnd = oldEnd
+            if let first = overlaps.first, let last = overlaps.last {
+                newStart = max(oldStart, first.startSec - padSec)
+                newEnd = min(oldEnd, last.endSec + padSec)
+                if newEnd - newStart < minSegmentDurationSec {
+                    newStart = oldStart
+                    newEnd = oldEnd
+                }
+            }
+
+            let kept = makeSegment(id: segment.id, start: newStart, end: newEnd, text: segment.text)
+            snapped.append(kept)
+            changes.append(
+                SubtitleSpeechSnapChange(
+                    segmentId: segment.id,
+                    text: segment.text,
+                    oldStartSec: oldStart,
+                    oldEndSec: oldEnd,
+                    newStartSec: kept.start,
+                    newEndSec: kept.end,
+                    status: overlaps.isEmpty ? "kept_no_speech" : (kept.changed(from: oldStart, oldEnd) ? "snapped" : "unchanged")
+                )
+            )
+        }
+
+        snapped = resolveOverlapsPreservingAll(snapped, clipDurationSec: clipDurationSec)
+
+        return SubtitleSpeechSnapResult(
+            segments: snapped,
+            changes: changes,
+            speechRegions: speech,
+            preservedAllText: true
         )
     }
 
@@ -213,29 +344,70 @@ public enum SubtitleSpeechAligner {
         return result
     }
 
-    private static func distributeText(_ text: String, across count: Int) -> [String] {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard count > 1 else { return [trimmed] }
-        let words = trimmed.split(whereSeparator: \.isWhitespace).map(String.init)
-        guard words.count >= count else {
-            // Not enough words to split cleanly — keep full text on first island, minimal on rest.
-            return (0..<count).map { $0 == 0 ? trimmed : "…" }
+    /// Merge neighboring islands until count ≤ targetCount (preserves total coverage).
+    private static func mergeToCount(
+        _ islands: [SpeechTimeRegion],
+        targetCount: Int
+    ) -> [SpeechTimeRegion] {
+        guard targetCount > 0, islands.count > targetCount else { return islands }
+        var current = islands
+        while current.count > targetCount {
+            // Merge the pair with the smallest gap.
+            var bestIndex = 0
+            var bestGap = Double.greatestFiniteMagnitude
+            for i in 0..<(current.count - 1) {
+                let gap = current[i + 1].startSec - current[i].endSec
+                if gap < bestGap {
+                    bestGap = gap
+                    bestIndex = i
+                }
+            }
+            let merged = SpeechTimeRegion(
+                startSec: current[bestIndex].startSec,
+                endSec: current[bestIndex + 1].endSec
+            )
+            current.replaceSubrange(bestIndex...(bestIndex + 1), with: [merged])
         }
-        let base = words.count / count
-        let remainder = words.count % count
+        return current
+    }
+
+    private static func tokenizeWords(_ text: String) -> [String] {
+        text.split(whereSeparator: \.isWhitespace).map(String.init).filter { !$0.isEmpty }
+    }
+
+    private static func normalizeWhitespace(_ text: String) -> String {
+        tokenizeWords(text).joined(separator: " ")
+    }
+
+    /// Splits words across pieces; **every word appears exactly once** in order.
+    private static func distributeTextPreservingAllWords(_ text: String, across count: Int) -> [String] {
+        let words = tokenizeWords(text)
+        guard count > 1 else { return [words.joined(separator: " ")] }
+        guard !words.isEmpty else { return Array(repeating: "", count: count) }
+
+        let pieceCount = min(count, words.count)
+        // If caller asked for more pieces than words, they should have merged islands already.
+        // Still safe: put one word per first N pieces.
+        let base = words.count / pieceCount
+        let remainder = words.count % pieceCount
         var pieces: [String] = []
         var cursor = 0
-        for index in 0..<count {
+        for index in 0..<pieceCount {
             let take = base + (index < remainder ? 1 : 0)
             let slice = words[cursor..<(cursor + take)]
             pieces.append(slice.joined(separator: " "))
             cursor += take
         }
+        // Pad if count > pieceCount (should not happen after mergeToCount).
+        while pieces.count < count {
+            pieces.append("")
+        }
         return pieces
     }
 
     private static func makeSegment(id: String, start: Double, end: Double, text: String) -> AlignedSubtitleSegment {
-        let base = AlignedSubtitleSegment(id: id, start: start, end: end, text: text)
+        let safeEnd = max(start + 0.05, end)
+        let base = AlignedSubtitleSegment(id: id, start: start, end: safeEnd, text: text)
         return AlignedSubtitleSegment(
             id: base.id,
             start: base.start,
@@ -245,22 +417,46 @@ public enum SubtitleSpeechAligner {
         )
     }
 
-    private static func resolveOverlaps(
+    /// Resolves overlaps **without dropping any segment**.
+    private static func resolveOverlapsPreservingAll(
         _ segments: [AlignedSubtitleSegment],
         clipDurationSec: Double
     ) -> [AlignedSubtitleSegment] {
-        var result: [AlignedSubtitleSegment] = []
-        for segment in segments.sorted(by: { $0.start < $1.start }) {
-            var start = max(0, segment.start)
-            let end = max(start, min(clipDurationSec, segment.end))
-            if let previous = result.last, start < previous.end {
-                start = previous.end
-                if end - start < minSegmentDurationSec {
-                    continue
+        let ordered = segments.sorted { $0.start < $1.start }
+        guard !ordered.isEmpty else { return [] }
+
+        var starts = ordered.map { max(0, min(clipDurationSec, $0.start)) }
+        var ends = ordered.map { max(0, min(clipDurationSec, $0.end)) }
+
+        for i in 0..<ordered.count {
+            if ends[i] <= starts[i] {
+                ends[i] = min(clipDurationSec, starts[i] + minSegmentDurationSec)
+            }
+        }
+
+        for i in 1..<ordered.count {
+            if starts[i] < ends[i - 1] {
+                // Prefer a small gap rather than deleting either cue.
+                let gapPoint = (ends[i - 1] + starts[i]) / 2
+                ends[i - 1] = max(starts[i - 1] + 0.05, gapPoint - 0.02)
+                starts[i] = min(ends[i] - 0.05, gapPoint + 0.02)
+                if starts[i] >= ends[i] {
+                    ends[i] = min(clipDurationSec, starts[i] + minSegmentDurationSec)
+                }
+                if ends[i - 1] <= starts[i - 1] {
+                    ends[i - 1] = starts[i - 1] + 0.05
                 }
             }
-            result.append(makeSegment(id: segment.id, start: start, end: end, text: segment.text))
         }
-        return result
+
+        return ordered.indices.map { i in
+            makeSegment(id: ordered[i].id, start: starts[i], end: ends[i], text: ordered[i].text)
+        }
+    }
+}
+
+private extension AlignedSubtitleSegment {
+    func changed(from oldStart: Double, _ oldEnd: Double) -> Bool {
+        abs(start - oldStart) > 0.001 || abs(end - oldEnd) > 0.001
     }
 }

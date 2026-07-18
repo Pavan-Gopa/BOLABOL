@@ -77,6 +77,32 @@ public enum McpExpandedToolCatalog {
         tool("update_clip_timing", "Update the Visual Editor clip range in absolute source seconds.", .edit, props: ["planId": string, "startSec": number(min: 0), "endSec": number(min: 0), "expectedRevision": revision], required: ["planId", "startSec", "endSec"]),
         tool("manage_timeline_cut", "Create, update, or delete a stable timeline cut inside a Shorts clip.", .edit, props: ["planId": string, "action": enumString(["create", "update", "delete"]), "cutId": string, "startSec": number(min: 0), "endSec": number(min: 0), "expectedRevision": revision], required: ["planId", "action"]),
         tool("manage_subtitle_segment", "Create, update, split, merge, or delete an aligned subtitle segment.", .edit, props: ["planId": string, "language": enumString(["source", "target"]), "action": enumString(["create", "update", "split", "merge", "delete"]), "segmentId": string, "secondSegmentId": string, "startSec": number(min: 0), "endSec": number(min: 0), "splitSec": number(min: 0), "text": string, "expectedRevision": revision], required: ["planId", "action"]),
+        tool(
+            "analyze_clip_speech_regions",
+            "Analyze source-media energy for one Shorts clip and return speech/silence intervals (clip-relative seconds). Uses the same silence energy model as chunk slicing.",
+            .read,
+            props: [
+                "planId": string,
+                "silenceThresholdDb": number(min: -80),
+                "minSilenceMs": integer(min: 0, max: 10_000),
+            ],
+            required: ["planId"]
+        ),
+        tool(
+            "snap_subtitle_segments_to_speech",
+            "Shrink Visual Editor subtitle segments to speech energy so pauses stay caption-free. Does not invent new cues. Set preview=true to inspect the diff without writing. After apply, the open Visual Editor draft is refreshed when possible.",
+            .edit,
+            props: [
+                "planId": string,
+                "language": enumString(["source", "target", "both"]),
+                "preview": boolean,
+                "silenceThresholdDb": number(min: -80),
+                "minSilenceMs": integer(min: 0, max: 10_000),
+                "padSec": number(min: 0),
+                "expectedRevision": revision,
+            ],
+            required: ["planId"]
+        ),
         tool("set_frame_keyframes", "Replace a language frame-keyframe sequence with bounded positions and zoom levels.", .edit, props: ["planId": string, "language": enumString(["source", "target"]), "keyframes": array(object, max: 120), "expectedRevision": revision], required: ["planId", "keyframes"]),
         tool("clear_frame_keyframes", "Reset a language frame sequence to the safe neutral base keyframe.", .edit, props: ["planId": string, "language": enumString(["source", "target"]), "expectedRevision": revision], required: ["planId"]),
         tool("update_visual_background", "Patch validated Visual Editor background settings; colours must be hex values.", .edit, props: ["planId": string, "patch": object, "expectedRevision": revision], required: ["planId", "patch"]),

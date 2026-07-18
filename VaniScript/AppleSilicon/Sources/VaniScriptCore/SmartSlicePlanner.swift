@@ -108,6 +108,46 @@ public enum SmartSlicePlanner {
         cutPointsMs.map { Double($0) / 1_000 }
     }
 
+    /// Silence intervals in the energy profile (milliseconds, same timeline as `posMs`).
+    public static func silenceRegions(
+        profile: [AudioEnergyWindow],
+        thresholdDb: Double,
+        minSilenceMs: Int
+    ) -> [(startMs: Int, endMs: Int)] {
+        findSilenceRegions(profile: profile, thresholdDb: thresholdDb, minSilenceMs: minSilenceMs)
+            .map { (startMs: $0.startMs, endMs: $0.endMs) }
+    }
+
+    /// Speech intervals complementary to silence within `[0, totalDurationMs]`.
+    public static func speechRegions(
+        profile: [AudioEnergyWindow],
+        totalDurationMs: Int,
+        thresholdDb: Double,
+        minSilenceMs: Int
+    ) -> [(startMs: Int, endMs: Int)] {
+        guard totalDurationMs > 0 else { return [] }
+        let silence = findSilenceRegions(
+            profile: profile,
+            thresholdDb: thresholdDb,
+            minSilenceMs: minSilenceMs
+        ).sorted { $0.startMs < $1.startMs }
+
+        var speech: [(startMs: Int, endMs: Int)] = []
+        var cursor = 0
+        for region in silence {
+            let start = max(0, region.startMs)
+            let end = min(totalDurationMs, region.endMs)
+            if start > cursor {
+                speech.append((startMs: cursor, endMs: start))
+            }
+            cursor = max(cursor, end)
+        }
+        if cursor < totalDurationMs {
+            speech.append((startMs: cursor, endMs: totalDurationMs))
+        }
+        return speech.filter { $0.endMs > $0.startMs }
+    }
+
     private struct SilenceRegion {
         var startMs: Int
         var endMs: Int

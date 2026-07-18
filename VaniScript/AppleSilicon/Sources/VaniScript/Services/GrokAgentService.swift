@@ -35,13 +35,14 @@ enum GrokAgentError: LocalizedError, Sendable {
     }
 }
 
-/// Embedded Grok chat, mirroring `CodexAgentService`.
+/// Embedded Grok chat, mirroring `CodexAgentService` intent with **Grok CLI** flags.
 ///
-/// Launches the locally installed `grok` CLI headless against an isolated `vaniscript_embedded`
-/// MCP profile. The VaniScript access token lives only in the child process environment
-/// (`VANISCRIPT_MCP_TOKEN`); the workspace is an isolated, owner-only directory so the user's
-/// global Grok configuration and other MCP servers are never inherited. There is **no** silent
-/// fallback to Gemini or any other provider.
+/// Important CLI differences from Codex:
+/// - `-p` / `--single` requires the prompt as the **next argument** (not stdin).
+/// - There is no `--ignore-user-config` / `-c` / `exec`; isolation uses an ephemeral
+///   project `.grok/config.toml` under `GrokAgentWorkspace` plus `--cwd`.
+/// - Access token is only in the child env and referenced as `${VANISCRIPT_MCP_TOKEN}`
+///   in the project MCP headers (never written as a raw secret into durable user config).
 enum GrokAgentService {
     private static let embeddedServerID = "vaniscript_embedded"
     private static let accessTokenEnvironmentKey = "VANISCRIPT_MCP_TOKEN"
@@ -59,42 +60,41 @@ enum GrokAgentService {
         }
 
         let workspaceURL = try embeddedWorkspaceURL()
+        try writeIsolatedProjectConfig(
+            workspaceURL: workspaceURL,
+            port: Int(mcpConfiguration.port)
+        )
+
         let modelID = GrokChatModelCatalog.normalizedModelID(settings.grokChatModelID)
         let reasoningEffort = GrokChatModelCatalog.normalizedReasoningEffort(
             modelID: modelID,
             effort: settings.grokChatReasoningEffort
         )
-        let endpoint = "http://127.0.0.1:\(mcpConfiguration.port)/sse"
-
-        // NOTE: the exact `grok` CLI flag set is provisional; confirm against `grok --help`
-        // and adjust. The isolation contract below is intentional and must be preserved:
-        // ignore the user's global config, run read-only, and expose only the isolated
-        // `vaniscript_embedded` MCP server with the token supplied via environment only.
-        let configOverride = "mcp_servers.\(embeddedServerID)={url=\"\(endpoint)\", bearer_token_env_var=\"\(accessTokenEnvironmentKey)\", default_tools_approval_mode=\"approve\", required=true}"
         let prompt = prompt(for: history)
+
+        // Prefer --prompt-file for long system+history prompts (avoids argv edge cases).
+        let promptFileURL = workspaceURL.appendingPathComponent("embedded-prompt.txt")
+        try prompt.write(to: promptFileURL, atomically: true, encoding: .utf8)
 
         let process = Process()
         process.executableURL = executableURL
         process.arguments = [
-            "-p",
+            "--prompt-file", promptFileURL.path(percentEncoded: false),
             "--output-format", "streaming-json",
-            "--ephemeral",
             "--model", modelID,
-            "--ignore-user-config",
-            "--sandbox", "read-only",
-            "-c", "approval_policy=\"never\"",
-            "-c", "model_reasoning_effort=\"\(reasoningEffort)\"",
-            "-c", configOverride,
-            "-C", workspaceURL.path(percentEncoded: false),
-            "-",
+            "--reasoning-effort", reasoningEffort,
+            "--cwd", workspaceURL.path(percentEncoded: false),
+            "--always-approve",
+            "--max-turns", "16",
+            "--no-subagents",
+            "--permission-mode", "bypassPermissions",
         ]
         process.currentDirectoryURL = workspaceURL
         process.environment = grokEnvironment(accessToken: mcpConfiguration.accessToken)
 
-        let input = Pipe()
         let output = Pipe()
         let errors = Pipe()
-        process.standardInput = input
+        process.standardInput = FileHandle.nullDevice
         process.standardOutput = output
         process.standardError = errors
 
@@ -116,8 +116,6 @@ enum GrokAgentService {
             }
             do {
                 try process.run()
-                input.fileHandleForWriting.write(Data(prompt.utf8))
-                input.fileHandleForWriting.closeFile()
             } catch {
                 outputTask.cancel()
                 errorTask.cancel()
@@ -127,6 +125,9 @@ enum GrokAgentService {
 
         _ = try? await outputTask.value
         _ = try? await errorTask.value
+
+        // Best-effort cleanup of the prompt file (may contain conversation text).
+        try? FileManager.default.removeItem(at: promptFileURL)
 
         let run = await collector.run()
         if let message = run.errorMessage, !message.isEmpty {
@@ -155,7 +156,6 @@ enum GrokAgentService {
         if let found = candidates.first(where: { fileManager.isExecutableFile(atPath: $0.path(percentEncoded: false)) }) {
             return found
         }
-        // Fall back to a PATH lookup so a `grok` installed elsewhere on PATH is still resolved.
         let pathLookup = Process()
         pathLookup.executableURL = URL(fileURLWithPath: "/bin/sh")
         pathLookup.arguments = ["-c", "command -v grok"]
@@ -168,7 +168,7 @@ enum GrokAgentService {
             if pathLookup.terminationStatus == 0,
                let data = try? out.fileHandleForReading.readToEnd(),
                let resolved = String(data: data, encoding: .utf8)?
-               .trimmingCharacters(in: .whitespacesAndNewlines),
+                .trimmingCharacters(in: .whitespacesAndNewlines),
                !resolved.isEmpty,
                fileManager.isExecutableFile(atPath: resolved) {
                 return URL(fileURLWithPath: resolved)
@@ -188,6 +188,32 @@ enum GrokAgentService {
             ofItemAtPath: directory.path(percentEncoded: false)
         )
         return directory
+    }
+
+    /// Writes project-scoped Grok config so the embedded run prefers `vaniscript_embedded`.
+    /// Token is referenced via env substitution — never inlined as a raw secret.
+    private static func writeIsolatedProjectConfig(workspaceURL: URL, port: Int) throws {
+        let grokDir = workspaceURL.appendingPathComponent(".grok", isDirectory: true)
+        try FileManager.default.createDirectory(at: grokDir, withIntermediateDirectories: true)
+        let endpoint = "http://127.0.0.1:\(port)/sse"
+        let config = """
+        # Generated by VaniScript embedded Grok chat. Do not put secrets here.
+        # Token is supplied only via process env \(accessTokenEnvironmentKey).
+
+        [plugins]
+        enabled = []
+
+        [mcp_servers.\(embeddedServerID)]
+        url = "\(endpoint)"
+        enabled = true
+        headers = { "Authorization" = "Bearer ${\(accessTokenEnvironmentKey)}" }
+        """
+        let configURL = grokDir.appendingPathComponent("config.toml")
+        try config.write(to: configURL, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: NSNumber(value: Int16(0o600))],
+            ofItemAtPath: configURL.path(percentEncoded: false)
+        )
     }
 
     private static func grokEnvironment(accessToken: String) -> [String: String] {
@@ -212,7 +238,7 @@ enum GrokAgentService {
         return """
         You are the embedded VaniScript text assistant. Reply directly in this VaniScript chat panel.
 
-        Use only the MCP server named \(embeddedServerID) for VaniScript project information and actions. Do not use shell commands, files, browser, computer-use, web, skills, plugins, or any other MCP server. The Grok shell remains read-only and is not part of this workflow.
+        Use only the MCP server named \(embeddedServerID) for VaniScript project information and actions. Do not use shell commands, files, browser, computer-use, web, skills, plugins, or any other MCP server.
 
         For questions about how to use VaniScript, its screens, features, buttons, settings, or workflows, always call search_help in the language of the user's latest message before answering. If the question depends on where the user currently is or what should happen next, also call get_contextual_help. For a beginner asking where to start, call get_onboarding_checklist. Use the exact English button and screen labels returned by the help tools, explain the clicks step by step in the user's language, and never invent controls that are not present in the built-in guide.
 

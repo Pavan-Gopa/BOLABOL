@@ -4005,6 +4005,12 @@ final class WorkflowStore: ObservableObject {
         case "manage_subtitle_segment":
             return try mcpManageSubtitleSegment(arguments: arguments, permissions: permissions)
 
+        case "analyze_clip_speech_regions":
+            return try await mcpAnalyzeClipSpeechRegions(arguments: arguments)
+
+        case "snap_subtitle_segments_to_speech":
+            return try await mcpSnapSubtitleSegmentsToSpeech(arguments: arguments)
+
         case "set_frame_keyframes":
             return try mcpSetFrameKeyframes(arguments: arguments)
 
@@ -5011,6 +5017,193 @@ final class WorkflowStore: ObservableObject {
         case .source: plan.sourceAlignment = segments
         case .target: plan.targetAlignment = segments
         }
+    }
+
+    private func mcpClipSourceURL() throws -> URL {
+        guard let session = workflow.session,
+              let sourcePath = session.sourceFile, !sourcePath.isEmpty,
+              FileManager.default.fileExists(atPath: sourcePath) else {
+            throw mcpError(-1, "NO_SOURCE_MEDIA: Active project has no local source media file for audio analysis")
+        }
+        return URL(fileURLWithPath: sourcePath)
+    }
+
+    private func mcpClipAbsoluteRange(_ plan: ShortsClipPlan) throws -> (startSec: Double, endSec: Double, durationSec: Double) {
+        let start = ShortsPlanner.parseTimestampToSeconds(plan.start)
+        let end = ShortsPlanner.parseTimestampToSeconds(plan.end)
+        guard end > start else {
+            throw mcpError(-2, "VALIDATION_FAILED: plan start/end must define a positive clip duration")
+        }
+        return (start, end, end - start)
+    }
+
+    private func mcpSpeechAnalysisParams(arguments: [String: Any]) -> (thresholdDb: Double, minSilenceMs: Int, padSec: Double) {
+        let threshold = mcpDouble(arguments["silenceThresholdDb"]) ?? Double(workflow.settings.silenceThreshDb)
+        let minSilence = McpToolArguments.wholeNumber(arguments["minSilenceMs"]) ?? workflow.settings.minSilenceMs
+        let pad = mcpDouble(arguments["padSec"]) ?? SubtitleSpeechAligner.defaultPadSec
+        return (
+            thresholdDb: min(0, max(-80, threshold)),
+            minSilenceMs: min(10_000, max(0, minSilence)),
+            padSec: min(0.5, max(0, pad))
+        )
+    }
+
+    private func mcpAnalyzeClipSpeechRegions(arguments: [String: Any]) async throws -> [String: Any] {
+        let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+        let range = try mcpClipAbsoluteRange(resolved.plan)
+        let sourceURL = try mcpClipSourceURL()
+        let params = mcpSpeechAnalysisParams(arguments: arguments)
+
+        let profile = try await SmartAudioAnalyzer.energyProfile(
+            sourceURL: sourceURL,
+            startSec: range.startSec,
+            endSec: range.endSec
+        )
+        let speech = SubtitleSpeechAligner.speechRegions(
+            profile: profile,
+            clipDurationSec: range.durationSec,
+            thresholdDb: params.thresholdDb,
+            minSilenceMs: params.minSilenceMs
+        )
+        let silenceMs = SmartSlicePlanner.silenceRegions(
+            profile: profile,
+            thresholdDb: params.thresholdDb,
+            minSilenceMs: params.minSilenceMs
+        )
+
+        return [
+            "success": true,
+            "planId": resolved.plan.id,
+            "clipStartSec": range.startSec,
+            "clipEndSec": range.endSec,
+            "clipDurationSec": range.durationSec,
+            "silenceThresholdDb": params.thresholdDb,
+            "minSilenceMs": params.minSilenceMs,
+            "energyWindowCount": profile.count,
+            "speechRegions": speech.map { ["startSec": $0.startSec, "endSec": $0.endSec] },
+            "silenceRegions": silenceMs.map {
+                ["startSec": Double($0.startMs) / 1_000, "endSec": Double($0.endMs) / 1_000]
+            },
+        ]
+    }
+
+    private func mcpSnapSubtitleSegmentsToSpeech(arguments: [String: Any]) async throws -> [String: Any] {
+        let resolved = try mcpResolveShortsPlan(arguments["planId"], rejected: false)
+        let range = try mcpClipAbsoluteRange(resolved.plan)
+        let sourceURL = try mcpClipSourceURL()
+        let params = mcpSpeechAnalysisParams(arguments: arguments)
+        let preview = (arguments["preview"] as? Bool) ?? false
+
+        let languageToken = (mcpString(arguments["language"]) ?? "both").lowercased()
+        let languages: [ShortsIdeaDisplayLanguage]
+        switch languageToken {
+        case "source": languages = [.source]
+        case "target": languages = [.target]
+        case "both", "": languages = [.source, .target]
+        default:
+            throw mcpError(-2, "VALIDATION_FAILED: language must be source, target, or both")
+        }
+
+        let profile = try await SmartAudioAnalyzer.energyProfile(
+            sourceURL: sourceURL,
+            startSec: range.startSec,
+            endSec: range.endSec
+        )
+        let speech = SubtitleSpeechAligner.speechRegions(
+            profile: profile,
+            clipDurationSec: range.durationSec,
+            thresholdDb: params.thresholdDb,
+            minSilenceMs: params.minSilenceMs
+        )
+
+        var languageResults: [[String: Any]] = []
+        var anyChanged = false
+
+        if preview {
+            for language in languages {
+                let segments = mcpSegments(for: resolved.plan, language: language)
+                let snap = SubtitleSpeechAligner.snapSegmentsToSpeech(
+                    segments: segments,
+                    speechRegions: speech,
+                    clipDurationSec: range.durationSec,
+                    padSec: params.padSec
+                )
+                let changedCount = snap.changes.filter(\.changed).count
+                anyChanged = anyChanged || changedCount > 0
+                languageResults.append([
+                    "language": language.rawValue,
+                    "preview": true,
+                    "changedCount": changedCount,
+                    "segmentCount": snap.segments.count,
+                    "changes": snap.changes.map(mcpSpeechSnapChangeDictionary),
+                    "subtitleSegments": snap.segments.map {
+                        ["segmentId": $0.id, "startSec": $0.start, "endSec": $0.end, "text": $0.text]
+                    },
+                ])
+            }
+        } else {
+            let updated = try mcpMutateVisualPlan(arguments["planId"]) { plan in
+                for language in languages {
+                    let segments = mcpSegments(for: plan, language: language)
+                    let snap = SubtitleSpeechAligner.snapSegmentsToSpeech(
+                        segments: segments,
+                        speechRegions: speech,
+                        clipDurationSec: range.durationSec,
+                        padSec: params.padSec
+                    )
+                    let changedCount = snap.changes.filter(\.changed).count
+                    anyChanged = anyChanged || changedCount > 0
+                    mcpSetSegments(snap.segments, on: &plan, language: language)
+                    languageResults.append([
+                        "language": language.rawValue,
+                        "preview": false,
+                        "changedCount": changedCount,
+                        "segmentCount": snap.segments.count,
+                        "changes": snap.changes.map(mcpSpeechSnapChangeDictionary),
+                        "subtitleSegments": snap.segments.map {
+                            ["segmentId": $0.id, "startSec": $0.start, "endSec": $0.end, "text": $0.text]
+                        },
+                    ])
+                }
+            }
+            saveCurrentProject()
+            languageResults = languageResults.map { row in
+                var copy = row
+                copy["planId"] = updated.plan.id
+                return copy
+            }
+        }
+
+        return [
+            "success": true,
+            "planId": resolved.plan.id,
+            "preview": preview,
+            "applied": !preview,
+            "anyChanged": anyChanged,
+            "silenceThresholdDb": params.thresholdDb,
+            "minSilenceMs": params.minSilenceMs,
+            "padSec": params.padSec,
+            "speechRegions": speech.map { ["startSec": $0.startSec, "endSec": $0.endSec] },
+            "languages": languageResults,
+            "message": preview
+                ? "Preview only — call again with preview=false to apply."
+                : (anyChanged
+                    ? "Subtitle segments snapped to speech. Open or refresh Visual Editor if the draft was already open."
+                    : "No segment bounds changed."),
+        ]
+    }
+
+    private func mcpSpeechSnapChangeDictionary(_ change: SubtitleSpeechSnapChange) -> [String: Any] {
+        [
+            "segmentId": change.segmentId,
+            "text": change.text,
+            "oldStartSec": change.oldStartSec,
+            "oldEndSec": change.oldEndSec,
+            "newStartSec": change.newStartSec,
+            "newEndSec": change.newEndSec,
+            "status": change.status,
+            "changed": change.changed,
+        ]
     }
 
     private func mcpSetFrameKeyframes(arguments: [String: Any]) throws -> [String: Any] {

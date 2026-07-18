@@ -34,10 +34,40 @@ enum SmartAudioAnalyzer {
         )
     }
 
+    /// Energy windows for a media range. `posMs` is **relative to `startSec`** (clip-local).
+    static func energyProfile(
+        sourceURL: URL,
+        startSec: Double,
+        endSec: Double
+    ) async throws -> [AudioEnergyWindow] {
+        try await Task.detached(priority: .utility) {
+            try readEnergyProfile(from: sourceURL, startSec: startSec, endSec: endSec)
+        }.value
+    }
+
     private static func readEnergyProfile(from sourceURL: URL) throws -> [AudioEnergyWindow] {
+        try readEnergyProfile(from: sourceURL, startSec: 0, endSec: .greatestFiniteMagnitude)
+    }
+
+    private static func readEnergyProfile(
+        from sourceURL: URL,
+        startSec: Double,
+        endSec: Double
+    ) throws -> [AudioEnergyWindow] {
         let file = try AVAudioFile(forReading: sourceURL)
         let sampleRate = file.processingFormat.sampleRate
         guard sampleRate > 0 else { return [] }
+
+        let startFrame = max(0, AVAudioFramePosition((max(0, startSec) * sampleRate).rounded(.down)))
+        let endFrame: AVAudioFramePosition = {
+            if endSec.isFinite, endSec > 0 {
+                return min(file.length, AVAudioFramePosition((endSec * sampleRate).rounded(.up)))
+            }
+            return file.length
+        }()
+        guard endFrame > startFrame else { return [] }
+
+        file.framePosition = startFrame
 
         let windowFrames = max(1, Int((Double(SmartSlicePlanner.energyWindowMs) / 1_000) * sampleRate))
         let bufferFrameCapacity: AVAudioFrameCount = 8_192
@@ -49,13 +79,13 @@ enum SmartAudioAnalyzer {
         }
 
         var profile: [AudioEnergyWindow] = []
-        var absoluteFrame: AVAudioFramePosition = 0
-        var currentWindowStartFrame: AVAudioFramePosition = 0
+        var absoluteFrame = startFrame
+        var currentWindowStartFrame = startFrame
         var currentWindowCount = 0
         var currentWindowSumSquares = 0.0
 
-        while file.framePosition < file.length {
-            let remaining = file.length - file.framePosition
+        while file.framePosition < endFrame {
+            let remaining = endFrame - file.framePosition
             let framesToRead = AVAudioFrameCount(min(Int64(bufferFrameCapacity), remaining))
             try file.read(into: buffer, frameCount: framesToRead)
             guard buffer.frameLength > 0 else { break }
@@ -79,6 +109,7 @@ enum SmartAudioAnalyzer {
                 if currentWindowCount >= windowFrames {
                     profile.append(makeWindow(
                         startFrame: currentWindowStartFrame,
+                        rangeStartFrame: startFrame,
                         sampleRate: sampleRate,
                         sumSquares: currentWindowSumSquares,
                         sampleCount: currentWindowCount
@@ -92,6 +123,7 @@ enum SmartAudioAnalyzer {
         if currentWindowCount > 0 {
             profile.append(makeWindow(
                 startFrame: currentWindowStartFrame,
+                rangeStartFrame: startFrame,
                 sampleRate: sampleRate,
                 sumSquares: currentWindowSumSquares,
                 sampleCount: currentWindowCount
@@ -103,13 +135,15 @@ enum SmartAudioAnalyzer {
 
     private static func makeWindow(
         startFrame: AVAudioFramePosition,
+        rangeStartFrame: AVAudioFramePosition,
         sampleRate: Double,
         sumSquares: Double,
         sampleCount: Int
     ) -> AudioEnergyWindow {
         let rms = sqrt(sumSquares / Double(max(1, sampleCount)))
         let dbfs = rms > 0 ? 20 * log10(rms) : -119
-        let posMs = Int((Double(startFrame) / sampleRate) * 1_000)
-        return AudioEnergyWindow(posMs: posMs, dbfs: dbfs)
+        // Clip-local timeline: 0ms at range start.
+        let posMs = Int((Double(startFrame - rangeStartFrame) / sampleRate) * 1_000)
+        return AudioEnergyWindow(posMs: max(0, posMs), dbfs: dbfs)
     }
 }

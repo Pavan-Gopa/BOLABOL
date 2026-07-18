@@ -26,35 +26,27 @@ public struct GrokChatModelOption: Equatable, Identifiable, Sendable {
 }
 
 public enum GrokChatModelCatalog {
+    /// Only IDs returned by `grok models` for the signed-in account may appear here.
     public static let grok45ID = "grok-4.5"
-    public static let grok45FastID = "grok-4.5-fast"
-    public static let grok45ComposerID = "grok-4.5-composer"
     public static let defaultModelID = grok45ID
+
+    /// Historical / invented IDs that must never be passed to the CLI.
+    private static let retiredAliases: Set<String> = [
+        "grok-4.5-fast",
+        "grok-4.5-composer",
+        "grok-composer-2.5-fast",
+        "grok-4-fast",
+        "grok-4",
+    ]
 
     public static let options: [GrokChatModelOption] = [
         GrokChatModelOption(
             id: grok45ID,
             displayName: "Grok 4.5",
             shortName: "Grok",
-            description: "Default Grok agent for everyday VaniScript work.",
+            description: "Default Grok agent for VaniScript embedded chat (CLI `grok models`).",
             reasoningEfforts: ["low", "medium", "high"],
             defaultReasoningEffort: "medium"
-        ),
-        GrokChatModelOption(
-            id: grok45FastID,
-            displayName: "Grok 4.5 Fast",
-            shortName: "Fast",
-            description: "Cost-efficient Grok agent for quick edits and lookups.",
-            reasoningEfforts: ["low", "medium", "high"],
-            defaultReasoningEffort: "low"
-        ),
-        GrokChatModelOption(
-            id: grok45ComposerID,
-            displayName: "Grok 4.5 Composer",
-            shortName: "Composer",
-            description: "Frontier Grok agent for complex technical and research tasks.",
-            reasoningEfforts: ["low", "medium", "high"],
-            defaultReasoningEffort: "high"
         ),
     ]
 
@@ -63,7 +55,11 @@ public enum GrokChatModelCatalog {
     }
 
     public static func normalizedModelID(_ id: String) -> String {
-        option(id: id) == nil ? defaultModelID : id
+        let trimmed = id.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || retiredAliases.contains(trimmed) {
+            return defaultModelID
+        }
+        return option(id: trimmed) == nil ? defaultModelID : trimmed
     }
 
     public static func normalizedReasoningEffort(modelID: String, effort: String) -> String {

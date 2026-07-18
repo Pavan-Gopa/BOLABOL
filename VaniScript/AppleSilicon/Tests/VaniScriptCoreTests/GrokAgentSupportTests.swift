@@ -8,18 +8,25 @@ struct GrokAgentSupportTests {
     func normalizesEmbeddedChatModelSelection() {
         #expect(GrokChatModelCatalog.defaultModelID == "grok-4.5")
         #expect(GrokChatModelCatalog.normalizedModelID("unknown-model") == "grok-4.5")
+        // Retired / invented IDs must never reach the CLI.
+        #expect(GrokChatModelCatalog.normalizedModelID("grok-4.5-fast") == "grok-4.5")
+        #expect(GrokChatModelCatalog.normalizedModelID("grok-4.5-composer") == "grok-4.5")
         #expect(GrokChatModelCatalog.normalizedReasoningEffort(
-            modelID: "grok-4.5-composer",
+            modelID: "grok-4.5",
             effort: "high"
         ) == "high")
         #expect(GrokChatModelCatalog.normalizedReasoningEffort(
             modelID: "grok-4.5-fast",
             effort: "ultra"
-        ) == "low")
+        ) == "medium")
         #expect(GrokChatModelCatalog.displayLabel(
             modelID: "grok-4.5",
             effort: "high"
         ) == "Grok · High")
+        #expect(GrokChatModelCatalog.displayLabel(
+            modelID: "grok-4.5-fast",
+            effort: "low"
+        ) == "Grok · Low")
     }
 
     @Test("parses live Grok Build streaming-json text events")

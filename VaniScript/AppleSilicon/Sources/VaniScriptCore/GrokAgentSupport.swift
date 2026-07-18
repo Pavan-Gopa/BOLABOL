@@ -98,8 +98,13 @@ public struct GrokAgentRun: Equatable, Sendable {
 }
 
 /// Parses headless `grok` CLI output emitted with `--output-format streaming-json` / `json`.
-/// The event schema below is fixture-based and mirrors the Codex agent event contract; confirm
-/// against real `grok` CLI output and extend the `switch` when the live schema is captured.
+///
+/// Live Grok Build schema (captured from CLI):
+/// - `{"type":"thought","data":"..."}` — reasoning tokens (ignored for chat text)
+/// - `{"type":"text","data":"..."}` — assistant reply chunks (concatenated)
+/// - `{"type":"end","sessionId":"...","stopReason":"..."}` — completion
+///
+/// Legacy/Codex-like branches are kept for fixtures and forward compatibility.
 public enum GrokAgentOutputParser {
     public static func parse(jsonLines data: Data) -> GrokAgentRun {
         guard let output = String(data: data, encoding: .utf8) else {
@@ -110,31 +115,75 @@ public enum GrokAgentOutputParser {
         var responseText: String?
         var toolNames = [String]()
         var errorMessage: String?
+        var sawJSON = false
 
         for line in output.split(whereSeparator: \.isNewline) {
-            guard let lineData = line.data(using: .utf8),
-                  let event = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
-                  let eventType = event["type"] as? String
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            guard let lineData = trimmed.data(using: .utf8),
+                  let event = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any]
             else {
                 continue
             }
+            sawJSON = true
+
+            let eventType = (event["type"] as? String) ?? ""
 
             switch eventType {
+            case "text":
+                // Live Grok: {"type":"text","data":"pong"}
+                if let chunk = event["data"] as? String {
+                    responseText = (responseText ?? "") + chunk
+                } else if let chunk = event["text"] as? String {
+                    responseText = (responseText ?? "") + chunk
+                }
+            case "content":
+                // Legacy fixture: {"type":"content","text":"..."}
+                if let chunk = event["text"] as? String {
+                    responseText = (responseText ?? "") + chunk
+                } else if let chunk = event["data"] as? String {
+                    responseText = (responseText ?? "") + chunk
+                }
+            case "end":
+                if let sessionID = event["sessionId"] as? String {
+                    runID = sessionID
+                } else if let requestID = event["requestId"] as? String {
+                    runID = requestID
+                }
             case "message_start":
                 runID = event["id"] as? String ?? runID
-            case "content":
-                if let text = event["text"] as? String {
-                    responseText = (responseText ?? "") + text
-                }
-            case "tool_call":
-                if let toolName = event["name"] as? String,
-                   !toolNames.contains(toolName) {
+            case "tool_call", "tool_use", "mcp_tool_call":
+                if let toolName = event["name"] as? String, !toolNames.contains(toolName) {
+                    toolNames.append(toolName)
+                } else if let tool = event["tool"] as? String, !toolNames.contains(tool) {
+                    toolNames.append(tool)
+                } else if let data = event["data"] as? [String: Any],
+                          let toolName = data["name"] as? String,
+                          !toolNames.contains(toolName) {
                     toolNames.append(toolName)
                 }
             case "error":
-                errorMessage = event["message"] as? String ?? errorMessage
+                if let message = event["message"] as? String {
+                    errorMessage = message
+                } else if let message = event["data"] as? String {
+                    errorMessage = message
+                }
+            case "thought":
+                // Ignore reasoning stream for the chat panel.
+                break
             default:
-                continue
+                // Some dialects emit assistant text without a typed event.
+                if let chunk = event["text"] as? String, !chunk.isEmpty {
+                    responseText = (responseText ?? "") + chunk
+                }
+            }
+        }
+
+        // Fallback: plain non-JSON stdout (e.g. --output-format plain).
+        if !sawJSON {
+            let plain = output.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !plain.isEmpty {
+                responseText = plain
             }
         }
 

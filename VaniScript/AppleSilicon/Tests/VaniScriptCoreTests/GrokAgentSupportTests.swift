@@ -22,8 +22,25 @@ struct GrokAgentSupportTests {
         ) == "Grok · High")
     }
 
-    @Test("parses a successful MCP-backed Grok response")
-    func parsesSuccessfulRun() {
+    @Test("parses live Grok Build streaming-json text events")
+    func parsesLiveStreamingJSON() {
+        let output = """
+        {"type":"thought","data":"The"}
+        {"type":"thought","data":" user"}
+        {"type":"text","data":"pong"}
+        {"type":"end","stopReason":"EndTurn","sessionId":"019f76a9-7675-7161-9c2d-1a7efaabe8bd","requestId":"85abeb1f-d49a-4d0a-9c29-df83d5de51d0"}
+        """
+
+        let run = GrokAgentOutputParser.parse(jsonLines: Data(output.utf8))
+
+        #expect(run.runID == "019f76a9-7675-7161-9c2d-1a7efaabe8bd")
+        #expect(run.responseText == "pong")
+        #expect(run.toolNames.isEmpty)
+        #expect(run.errorMessage == nil)
+    }
+
+    @Test("parses a successful MCP-backed Grok response (legacy fixture)")
+    func parsesSuccessfulRunLegacy() {
         let output = """
         {"type":"message_start","id":"run-123"}
         {"type":"tool_call","name":"get_project_state"}
@@ -60,12 +77,19 @@ struct GrokAgentSupportTests {
     func ignoresMalformedLines() {
         let output = """
         Grok diagnostic output
-        {"type":"content","text":"Ready."}
+        {"type":"text","data":"Ready."}
         """
 
         let run = GrokAgentOutputParser.parse(jsonLines: Data(output.utf8))
 
         #expect(run.responseText == "Ready.")
+        #expect(run.errorMessage == nil)
+    }
+
+    @Test("falls back to plain non-JSON stdout")
+    func plainStdoutFallback() {
+        let run = GrokAgentOutputParser.parse(jsonLines: Data("OK\n".utf8))
+        #expect(run.responseText == "OK")
         #expect(run.errorMessage == nil)
     }
 }

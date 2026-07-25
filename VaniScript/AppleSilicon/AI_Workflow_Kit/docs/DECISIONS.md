@@ -91,3 +91,27 @@
 ## Open
 
 - ~~Qwen CLI binary/auth/MCP-флаги/streaming-формат/model id — верифицировать на Q1.~~ **DONE (D-2026-07-25 Q1)**
+
+## D-2026-07-25-Q5 — External Qwen MCP access (doc-only)
+
+- **Тип:** DOC-ONLY. Никаких изменений кода (Swift/JS/TS/Python не трогаем). `[high]`
+- **Суть:** Документирован подключение **внешнего** Qwen CLI (запущенного вручную в
+  терминале, не embedded) к VaniScript MCP server и использование его tools.
+- **SSE endpoint:** `http://127.0.0.1:19789/sse` (Electron build). Native AS build — `19790`
+  (см. Security Model в `AppleSilicon/MCP_INSTRUCTIONS.md`). `[high]`
+- **Auth:** Bearer token (тот же, что у embedded чата) в заголовке `Authorization`:
+  `Bearer <YOUR_TOKEN>`. Сервер также принимает `x-vaniscript-mcp-token`. `[high]`
+- **No CORS changes needed:** сервер биндится на loopback и отвергает non-loopback `Origin`;
+  localhost-клиенты работают как есть. `[high]`
+- **Доки обновлены:** `AppleSilicon/MCP_INSTRUCTIONS.md` (секция «External Qwen CLI») и
+  `Electron/MCP_INSTRUCTIONS.md` (секция «7. Qwen (external CLI)»). Оба варианта:
+  `qwen mcp add ... --transport sse --header "Authorization: Bearer <token>" --scope project --trust`
+  и эквивалентный `.qwen/settings.json`. `[high]`
+- **Smoke (static, без запуска Qwen):** endpoint `19789/sse` присутствует в
+  `Electron/electron/main.js` (`.listen(19789, '127.0.0.1')`); Bearer-auth middleware
+  `isMcpAuthorized` проверяет `authorization` header (`bearer ` + token); CORS разрешает
+  только loopback origins. `[high]`
+- **Out of scope:** embedded chat (done Q2/Q4), новые tools/scopes, изменение логики MCP
+  server, изменение CORS. `[high]`
+
+

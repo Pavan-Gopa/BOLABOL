@@ -72,7 +72,7 @@ working_roots:
 checkpoint:
   last_pre_tag: "qwen/pre-Q6"
   last_post_tag: "qwen/Q6-done"
-  last_commit: "PENDING"
+  last_commit: "5ec4d28"
 
 plan_files:
   - AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md

@@ -257,6 +257,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var codexChatReasoningEffort: String
     public var grokChatModelID: String
     public var grokChatReasoningEffort: String
+    public var qwenChatModelID: String // Q2: no reasoning-effort — Qwen CLI has no such flag
     public var logLevel: LogLevel
 
     private enum CodingKeys: String, CodingKey {
@@ -273,6 +274,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case mcpAccessToken, mcpPreferredAgentID
         case codexChatModelID, codexChatReasoningEffort
         case grokChatModelID, grokChatReasoningEffort
+        case qwenChatModelID
         case logLevel
     }
 
@@ -316,6 +318,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         codexChatReasoningEffort: String = "medium",
         grokChatModelID: String = GrokChatModelCatalog.defaultModelID,
         grokChatReasoningEffort: String = "medium",
+        qwenChatModelID: String = QwenChatModelCatalog.defaultModelID,
         logLevel: LogLevel = .info
     ) {
         self.geminiKey = geminiKey
@@ -357,6 +360,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.codexChatReasoningEffort = codexChatReasoningEffort
         self.grokChatModelID = grokChatModelID
         self.grokChatReasoningEffort = grokChatReasoningEffort
+        self.qwenChatModelID = qwenChatModelID
         self.logLevel = logLevel
     }
 
@@ -401,6 +405,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.codexChatReasoningEffort = try container.decodeIfPresent(String.self, forKey: .codexChatReasoningEffort) ?? "medium"
         self.grokChatModelID = try container.decodeIfPresent(String.self, forKey: .grokChatModelID) ?? GrokChatModelCatalog.defaultModelID
         self.grokChatReasoningEffort = try container.decodeIfPresent(String.self, forKey: .grokChatReasoningEffort) ?? "medium"
+        self.qwenChatModelID = try container.decodeIfPresent(String.self, forKey: .qwenChatModelID) ?? QwenChatModelCatalog.defaultModelID
         self.logLevel = try container.decodeIfPresent(LogLevel.self, forKey: .logLevel) ?? .info
     }
 
@@ -478,7 +483,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         codexChatModelID: CodexChatModelCatalog.defaultModelID,
         codexChatReasoningEffort: "medium",
         grokChatModelID: GrokChatModelCatalog.defaultModelID,
-        grokChatReasoningEffort: "medium"
+        grokChatReasoningEffort: "medium",
+        qwenChatModelID: QwenChatModelCatalog.defaultModelID
     )
 }
 
@@ -508,6 +514,7 @@ extension AppSettings {
             modelID: grokChatModelID,
             effort: grokChatReasoningEffort
         )
+        qwenChatModelID = QwenChatModelCatalog.normalizedModelID(qwenChatModelID)
         if mcpServerEnabled, mcpAccessToken.isEmpty {
             mcpAccessToken = generateToken()
         }

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "description": "VaniScript QA suite manifest. Order matters: build gates first, then MCP smoke, then per-step delta scripts. QA engineer adds N scripts per run (not just one).",
+  "scripts": [
+    {
+      "path": "build_gate_as.sh",
+      "kind": "build-gate",
+      "area": "AppleSilicon build/test",
+      "enabled": true,
+      "note": "swift test (fallback swift build). Must be green every QA run."
+    },
+    {
+      "path": "build_gate_electron.sh",
+      "kind": "build-gate",
+      "area": "Electron compile",
+      "enabled": true,
+      "note": "npm run compile. Skips gracefully if node_modules absent (reports SKIP, not FAIL)."
+    },
+    {
+      "path": "mcp_smoke_as.sh",
+      "kind": "mcp-smoke",
+      "area": "MCP server SSE :19790 + tools",
+      "enabled": true,
+      "note": "Black-box: start mcp_bridge.py, probe SSE, list tools, stop. No-fallback / isolation invariants."
+    }
+  ]
+}

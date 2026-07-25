@@ -5,10 +5,11 @@
 ## Перед работой прочитай (в таком порядке)
 
 1. `AI_Workflow_Kit/docs/PROJECT_CONTEXT.md`
-2. `AI_Workflow_Kit/docs/AI/STATE.yaml` — **обязательно** `current_step`, `step_description`, `target_files`
-3. `GROK_MCP_STEPS.md` **или** `UI_AS_STEPS.md` — секция **только** текущего шага
+2. `AI_Workflow_Kit/docs/AI/STATE.yaml` — **обязательно** `current_step`, `step_description`, `target_files`, `coder_brief`
+3. `QWEN_MCP_STEPS.md` / `GROK_MCP_STEPS.md` / `UI_AS_STEPS.md` — секция **только** текущего шага (+ `QWEN_ARCHITECTURE.md` для Q-трека)
 4. `AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md`
 5. Если `review.status == changes_requested` — весь `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+6. **Graphify first** для ориентации вне `target_files`: `graphify explain "<symbol>" --graph "$GRAPH"` (`$GRAPH` см. в `STATE.yaml`/ORCHESTRATOR).
 
 Working directory for AS work:
 
@@ -35,7 +36,7 @@ swift build
 ## Когда человек говорит «твоя очередь» / «реализуй шаг» / вставляет kick-промпт
 
 1. Прочитай STATE + step card.
-2. **Проверь pre-checkpoint:** tag `grok/pre-<step>` или `ui/pre-<step>` должен существовать  
+2. **Проверь pre-checkpoint:** tag `grok/pre-<step>`, `ui/pre-<step>` или `qwen/pre-<step>` должен существовать  
    (`./AI_Workflow_Kit/script/checkpoint.sh list`).  
    Если tag **нет** — **остановись** и скажи: «сначала checkpoint pre». Не пиши код поверх незафиксированной базы.
 3. Реализуй требования.
@@ -51,6 +52,19 @@ swift build
 - Не ставь `review.status` сам.
 - Не инкрементируй `current_step` сам.
 - Не правь файлы вне `target_files` (если критично — остановись и попроси оркестратора расширить список).
-- Не удаляй и не перезаписывай tags `grok/*` / `ui/*`.
+- Не удаляй и не перезаписывай tags `grok/*` / `ui/*` / `qwen/*`.
 - Не `git reset --hard` без явной просьбы человека.
 - Не silent fallback MCP chat → API.
+- Не пиши код без essential comments (TEAM_CONTRACT § Comments).
+
+## Токены (Graphify first)
+
+Перед bulk-grep / чтением многих файлов вне `target_files`:
+
+```bash
+GRAPH="/Users/pavan/Documents/AI Projects/VaniScript/graphify-out/graph.json"
+graphify explain "<symbol>" --graph "$GRAPH"
+graphify path "ChatSidebarView" "McpToolRegistry" --graph "$GRAPH"
+```
+
+Не дампить дерево без graphify. Rebuild (если граф устарел): `./AI_Workflow_Kit/script/graphify_rebuild.sh`.

@@ -105,8 +105,8 @@ struct ChatSidebarView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
+                .padding(.horizontal, VaniScriptTheme.Density.space12)
+                .padding(.vertical, VaniScriptTheme.Density.space8)
                 .background(Color.black.opacity(0.2))
                 .overlay(
                     Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1),
@@ -135,21 +135,21 @@ struct ChatSidebarView: View {
                             .font(.system(size: 11))
                             .foregroundStyle(.white.opacity(0.7))
                     }
-                    .padding(12)
+                    .padding(VaniScriptTheme.Density.space8)
                     .background(Color.yellow.opacity(0.15))
-                    .cornerRadius(8)
+                    .cornerRadius(VaniScriptTheme.Density.radiusSM)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM)
                             .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
                     )
-                    .padding(.horizontal, 16)
-                    .padding(.top, 10)
+                    .padding(.horizontal, VaniScriptTheme.Density.space12)
+                    .padding(.top, VaniScriptTheme.Density.space8)
                 }
 
                 // Message List
                 ScrollViewReader { proxy in
                     ScrollView {
-                        VStack(spacing: 16) {
+                        VStack(spacing: VaniScriptTheme.Density.space8) {
                             ForEach(messages) { msg in
                                 HStack {
                                     if msg.sender == "user" {
@@ -172,8 +172,8 @@ struct ChatSidebarView: View {
 
                                             Text(msg.text)
                                                 .font(.system(size: 13.5))
-                                                .padding(.horizontal, 14)
-                                                .padding(.vertical, 10)
+                                                .padding(.horizontal, VaniScriptTheme.Density.space12)
+                                                .padding(.vertical, VaniScriptTheme.Density.space8)
                                                 .background(
                                                     LinearGradient(
                                                         colors: [VaniScriptTheme.accent, Color.orange],
@@ -182,19 +182,19 @@ struct ChatSidebarView: View {
                                                     )
                                                 )
                                                 .foregroundStyle(.white)
-                                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                                .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
                                         }
                                     } else if msg.sender == "system" {
                                         Text(msg.text)
                                             .font(.system(size: 12))
                                             .foregroundStyle(Color.red.opacity(0.8))
-                                            .padding(10)
+                                            .padding(VaniScriptTheme.Density.space8)
                                             .background(Color.red.opacity(0.1))
-                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM))
                                             .frame(maxWidth: .infinity, alignment: .center)
                                     } else {
                                         VStack(alignment: .leading, spacing: 6) {
-                                            HStack(alignment: .top, spacing: 10) {
+                                            HStack(alignment: .top, spacing: VaniScriptTheme.Density.space8) {
                                                 Text(msg.text)
                                                     .font(.system(size: 13.5))
                                                     .foregroundStyle(.white.opacity(0.9))
@@ -230,12 +230,12 @@ struct ChatSidebarView: View {
                                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                                             }
                                         }
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 10)
+                                        .padding(.horizontal, VaniScriptTheme.Density.space12)
+                                        .padding(.vertical, VaniScriptTheme.Density.space8)
                                         .background(Color.white.opacity(0.06))
-                                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                            RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous)
                                                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
                                         )
                                         Spacer()
@@ -251,15 +251,15 @@ struct ChatSidebarView: View {
                                         Circle().fill(Color.white.opacity(0.5)).frame(width: 6, height: 6)
                                         Circle().fill(Color.white.opacity(0.5)).frame(width: 6, height: 6)
                                     }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, VaniScriptTheme.Density.space12)
+                                    .padding(.vertical, VaniScriptTheme.Density.space8)
                                     .background(Color.white.opacity(0.06))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD))
                                     Spacer()
                                 }
                             }
                         }
-                        .padding(20)
+                        .padding(VaniScriptTheme.Density.space12)
                     }
                     .onChange(of: messages) { _ in
                         if let last = messages.last {
@@ -277,8 +277,8 @@ struct ChatSidebarView: View {
                             Text("Message AI...")
                                 .font(.system(size: 13))
                                 .foregroundStyle(.white.opacity(0.4))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
+                                .padding(.horizontal, VaniScriptTheme.Density.space12)
+                                .padding(.vertical, VaniScriptTheme.Density.space8)
                         }
                         
                         TextEditor(text: $workflowStore.chatInputText)
@@ -286,14 +286,14 @@ struct ChatSidebarView: View {
                             .tint(VaniScriptTheme.accent)
                             .foregroundStyle(.white)
                             .scrollContentBackground(.hidden)
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, VaniScriptTheme.Density.space8)
                             .padding(.vertical, 8)
                             .padding(.bottom, 36) // Leave space for buttons at the bottom
                             .frame(height: 100)
                             .background(Color.white.opacity(0.04))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM)
                                     .stroke(Color.white.opacity(0.12), lineWidth: 1)
                             )
                             .disabled(isLoading)
@@ -330,7 +330,7 @@ struct ChatSidebarView: View {
                     .padding(.trailing, 8)
                     .padding(.bottom, 8)
                 }
-                .padding(16)
+                .padding(VaniScriptTheme.Density.space12)
                 .background(Color.black.opacity(0.15))
             }
             .frame(width: 380)
@@ -375,16 +375,23 @@ struct ChatSidebarView: View {
 
         let preferredAgentID = workflowStore.settings.mcpPreferredAgentID
         guard preferredAgentID == McpClientProfileID.codex.rawValue
-                || preferredAgentID == McpClientProfileID.grok.rawValue else {
+                || preferredAgentID == McpClientProfileID.grok.rawValue
+                || preferredAgentID == McpClientProfileID.qwen.rawValue else {
             messages.append(MessageItem(
                 sender: "system",
-                text: "The MCP chat route is powered by Codex or Grok. Select one of them in Settings > Agents, then send the message again."
+                text: "The MCP chat route is powered by Codex, Grok, or Qwen. Select one of them in Settings > Agents, then send the message again."
             ))
             isLoading = false
             return
         }
 
-        if preferredAgentID == McpClientProfileID.grok.rawValue {
+        if preferredAgentID == McpClientProfileID.qwen.rawValue {
+            // Q2: embedded Qwen route (plain chat; MCP tools arrive in Q3).
+            let history = messages.map { QwenChatHistoryItem(sender: $0.sender, text: $0.text) }
+            Task {
+                await executeQwenRequest(history: history)
+            }
+        } else if preferredAgentID == McpClientProfileID.grok.rawValue {
             let history = messages.map { GrokChatHistoryItem(sender: $0.sender, text: $0.text) }
             Task {
                 await executeGrokRequest(history: history)
@@ -398,7 +405,9 @@ struct ChatSidebarView: View {
     }
 
     private var agentModelMenu: some View {
-        if workflowStore.settings.mcpPreferredAgentID == McpClientProfileID.grok.rawValue {
+        if workflowStore.settings.mcpPreferredAgentID == McpClientProfileID.qwen.rawValue {
+            AnyView(qwenModelMenu)
+        } else if workflowStore.settings.mcpPreferredAgentID == McpClientProfileID.grok.rawValue {
             AnyView(grokModelMenu)
         } else {
             AnyView(codexModelMenu)
@@ -497,6 +506,35 @@ struct ChatSidebarView: View {
         .help("Choose the Grok model and reasoning level for the next MCP chat request")
     }
 
+    // Q2: Qwen menu has no reasoning section — the Qwen CLI has no such flag.
+    private var qwenModelMenu: some View {
+        Menu {
+            Section("Qwen Model") {
+                ForEach(QwenChatModelCatalog.options) { option in
+                    Button {
+                        selectQwenModel(option)
+                    } label: {
+                        Label(
+                            option.displayName,
+                            systemImage: workflowStore.settings.qwenChatModelID == option.id ? "checkmark" : "cpu"
+                        )
+                    }
+                }
+            }
+        } label: {
+            Text(QwenChatModelCatalog.displayLabel(
+                modelID: workflowStore.settings.qwenChatModelID
+            ))
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(VaniScriptTheme.accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize(horizontal: true, vertical: false)
+        .help("Choose the Qwen model for the next MCP chat request")
+    }
+
     private func selectCodexModel(_ option: CodexChatModelOption) {
         workflowStore.updateSettings { settings in
             settings.codexChatModelID = option.id
@@ -532,6 +570,30 @@ struct ChatSidebarView: View {
     private func executeGrokRequest(history: [GrokChatHistoryItem]) async {
         do {
             let response = try await GrokAgentService.send(
+                history: history,
+                settings: workflowStore.settings
+            )
+            await MainActor.run {
+                self.messages.append(MessageItem(sender: "assistant", text: response.text))
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.messages.append(MessageItem(sender: "system", text: error.localizedDescription))
+                self.isLoading = false
+            }
+        }
+    }
+
+    private func selectQwenModel(_ option: QwenChatModelOption) {
+        workflowStore.updateSettings { settings in
+            settings.qwenChatModelID = option.id
+        }
+    }
+
+    private func executeQwenRequest(history: [QwenChatHistoryItem]) async {
+        do {
+            let response = try await QwenAgentService.send(
                 history: history,
                 settings: workflowStore.settings
             )

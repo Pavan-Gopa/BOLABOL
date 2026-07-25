@@ -261,7 +261,7 @@ qwen mcp add vaniscript http://127.0.0.1:19789/sse \
 }
 ```
 
-> **Port note:** the example above uses `19789` (the Electron build). The native Apple
+> **Port note:** the example above uses `19789` (the desktop web build). The native Apple
 > Silicon app listens on `19790` — see the Security Model section. Always copy the exact
 > port shown in VaniScript **Settings → MCP** for your build. The auth model, CORS policy,
 > and tool catalog are identical across both builds.
@@ -280,7 +280,7 @@ exposing secrets. Representative tools include:
 - `apply_glossary` — apply a confirmed glossary entry to a chunk or the project.
 - `update_chunk_text`, `approve_chunk`, `update_subtitle_style`, `create_shorts_plan`,
   `set_background_settings`, `trigger_render`, and many more (the native app exposes the
-  full 120-tool catalog; the Electron build exposes the same tools over its SSE port).
+  full 120-tool catalog; the desktop web build exposes the same tools over its SSE port).
 
 Every mutation can accept `expectedRevision` (to avoid overwriting a newer user change) and
 `requestId` (for idempotent retries). Long-running work returns a `jobId`; follow it with

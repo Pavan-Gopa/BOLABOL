@@ -361,11 +361,11 @@ public enum McpAgentProfileCatalog {
             grok mcp add vaniscript --transport sse --header "Authorization: Bearer \(accessToken)" --url \(endpoint)
             """
         case .qwen:
-            // Q2: token via env only — the setup command must not inline the secret.
+            // Q3: token via env only — the setup command must not inline the secret.
             """
             Recommended for Qwen Code CLI (SSE):
             export VANISCRIPT_MCP_TOKEN="\(accessToken)"
-            qwen mcp add vaniscript --transport sse --header "Authorization: Bearer $VANISCRIPT_MCP_TOKEN" \(endpoint)
+            qwen mcp add vaniscript \(endpoint) --transport sse --header "Authorization: Bearer $VANISCRIPT_MCP_TOKEN" --scope project --trust
             """
         }
     }

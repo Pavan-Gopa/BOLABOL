@@ -29,7 +29,7 @@ struct ExportWorkspaceView: View {
         if let session = store.session {
             ZStack {
                 ScrollView {
-                    VStack(spacing: 20) {
+                    VStack(spacing: VaniScriptTheme.Density.space12) {
                         VStack(alignment: .leading, spacing: 20) {
                             exportHeader(session: session)
                             documentExportSection(session: session)
@@ -51,7 +51,7 @@ struct ExportWorkspaceView: View {
                         .glassPanel()
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(32)
+                    .padding(VaniScriptTheme.Density.space12)
                 }
                 .sheet(item: $detailsDraft) { draft in
                     ClipDetailsSheet(
@@ -180,7 +180,7 @@ struct ExportWorkspaceView: View {
             }
 
             ShortsStepSection(number: 1, title: "Find short moments") {
-                VStack(spacing: 16) {
+                VStack(spacing: VaniScriptTheme.Density.space8) {
                     HStack(spacing: 14) {
                         ShortsSlider(
                             title: "Number of clips",
@@ -556,7 +556,7 @@ private struct ShortsStepSection<Content: View, Trailing: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
             HStack {
                 HStack(spacing: 10) {
                     Text("\(number)")
@@ -574,10 +574,10 @@ private struct ShortsStepSection<Content: View, Trailing: View>: View {
             }
             content
         }
-        .padding(18)
+        .padding(VaniScriptTheme.Density.space12)
         .background(Color.dynamic(light: Color.black.opacity(0.02), dark: Color.white.opacity(0.035)))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.dynamic(light: Color.black.opacity(0.1), dark: Color.white.opacity(0.12)), lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(Color.dynamic(light: Color.black.opacity(0.1), dark: Color.white.opacity(0.12)), lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
@@ -683,10 +683,10 @@ private struct ShortsPlanCard: View {
         .padding(14)
         .background(selected ? Color.dynamic(light: VaniScriptTheme.accent.opacity(0.15), dark: Color(red: 55 / 255, green: 45 / 255, blue: 44 / 255).opacity(0.76)) : Color.dynamic(light: Color.white, dark: Color.white.opacity(0.03)))
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM)
                 .stroke(selected ? VaniScriptTheme.accent.opacity(0.9) : Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 
     private func clipDurationLabel(_ plan: ShortsClipPlan) -> String {
@@ -725,7 +725,7 @@ private struct ClipDetailsSheet: View {
 
     var body: some View {
         let fields = ShortsIdeasExporter.displayFields(for: plan, language: displayLanguage)
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Clip details")
@@ -774,7 +774,7 @@ private struct ClipDetailsSheet: View {
                     .buttonStyle(ExportPrimaryButtonStyle())
             }
         }
-        .padding(24)
+        .padding(VaniScriptTheme.Density.space12)
         .frame(width: 880, height: 720)
         .background(VaniScriptTheme.card)
     }
@@ -827,7 +827,7 @@ private struct ReplaceClipSheet: View {
             maxDurationSec: 300
         )
 
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space12) {
             Text("Replace Clip")
                 .font(.system(size: 20, weight: .heavy))
                 .foregroundStyle(VaniScriptTheme.text0)
@@ -861,7 +861,7 @@ private struct ReplaceClipSheet: View {
                 .disabled(!validation.ok || isBusy)
             }
         }
-        .padding(24)
+        .padding(VaniScriptTheme.Density.space12)
         .frame(width: 560)
         .background(VaniScriptTheme.card)
     }
@@ -905,7 +905,7 @@ private struct LegacyClipVisualEditorSheet: View {
         let timelineMax = max(endSec + 60, 60)
         let isValidRange = endSec > startSec && (endSec - startSec) <= 300
 
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Visual Clip Editor")
@@ -923,13 +923,13 @@ private struct LegacyClipVisualEditorSheet: View {
                 .disabled(player == nil)
             }
 
-            HStack(alignment: .top, spacing: 18) {
+            HStack(alignment: .top, spacing: VaniScriptTheme.Density.space12) {
                 VStack(alignment: .leading, spacing: 14) {
                     ZStack {
                         if let player {
                             NativeAVPlayerView(player: player)
                                 .frame(height: 360)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
                         } else {
                             VStack(spacing: 10) {
                                 Image(systemName: "video.slash")
@@ -940,7 +940,7 @@ private struct LegacyClipVisualEditorSheet: View {
                             .foregroundStyle(VaniScriptTheme.text2)
                             .frame(maxWidth: .infinity, minHeight: 360)
                             .background(Color.black.opacity(0.28))
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
                         }
                     }
 
@@ -1002,7 +1002,7 @@ private struct LegacyClipVisualEditorSheet: View {
                 .disabled(!isValidRange)
             }
         }
-        .padding(24)
+        .padding(VaniScriptTheme.Density.space12)
         .frame(width: 1040, height: 760)
         .background(VaniScriptTheme.card)
         .onDisappear {
@@ -1203,10 +1203,10 @@ private struct ExportPrimaryButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255))
-            .padding(.vertical, 10)
-            .padding(.horizontal, 14)
+            .padding(.vertical, VaniScriptTheme.Density.space8)
+            .padding(.horizontal, VaniScriptTheme.Density.space12)
             .background(configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
             .opacity(configuration.isPressed ? 0.9 : 1)
     }
 }
@@ -1216,11 +1216,11 @@ private struct ExportSecondaryButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(VaniScriptTheme.text1)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 14)
+            .padding(.vertical, VaniScriptTheme.Density.space8)
+            .padding(.horizontal, VaniScriptTheme.Density.space12)
             .background(Color.dynamic(light: Color.black.opacity(configuration.isPressed ? 0.08 : 0.02), dark: Color.white.opacity(configuration.isPressed ? 0.09 : 0.02)))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.2)), lineWidth: 1))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.2)), lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
@@ -1229,11 +1229,11 @@ private struct ReviewBackButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(VaniScriptTheme.text1)
-            .padding(.horizontal, 12)
-            .frame(height: 30)
+            .padding(.horizontal, VaniScriptTheme.Density.space12)
+            .frame(height: VaniScriptTheme.Density.controlHeightMD)
             .background(Color.dynamic(light: Color.black.opacity(configuration.isPressed ? 0.12 : 0.07), dark: Color.white.opacity(configuration.isPressed ? 0.12 : 0.07)))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
@@ -1244,10 +1244,10 @@ private struct TogglePillStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 12, weight: .heavy))
             .foregroundStyle(active ? Color.black : VaniScriptTheme.text2)
-            .padding(.horizontal, 14)
-            .frame(height: 28)
+            .padding(.horizontal, VaniScriptTheme.Density.space12)
+            .frame(height: VaniScriptTheme.Density.controlHeightMD)
             .background(active ? VaniScriptTheme.accent : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
             .opacity(configuration.isPressed ? 0.85 : 1)
     }
 }
@@ -1315,7 +1315,7 @@ struct ExportProgressModalView: View {
     @EnvironmentObject private var store: WorkflowStore
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: VaniScriptTheme.Density.space12) {
             if let completionState = store.exportCompletionState {
                 switch completionState {
                 case .success:
@@ -1389,7 +1389,7 @@ struct ExportProgressModalView: View {
                 .frame(height: 8)
             }
 
-            HStack(spacing: 20) {
+            HStack(spacing: VaniScriptTheme.Density.space12) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Current Clip")
                         .font(.system(size: 11, weight: .bold))
@@ -1498,7 +1498,7 @@ struct ExportProgressModalView: View {
                 .buttonStyle(ExportSecondaryButtonStyle())
             }
         }
-        .padding(28)
+        .padding(VaniScriptTheme.Density.space12)
         .frame(width: 440)
         .background(VaniScriptTheme.card)
         .overlay(

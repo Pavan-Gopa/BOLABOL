@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "description": "VaniScript QA suite manifest. Order matters: build gates first, then MCP smoke, then per-step delta scripts. QA engineer adds N scripts per run (not just one).",
+  "version": 2,
+  "description": "VaniScript QA suite manifest. Order: build gates first, then MCP smoke, then Q7 doc-only delta, then the swift-test regression gate. QA engineer adds N scripts per run (not just one).",
   "scripts": [
     {
       "path": "build_gate_as.sh",
@@ -14,14 +14,99 @@
       "kind": "build-gate",
       "area": "Electron compile",
       "enabled": true,
-      "note": "npm run compile. Skips gracefully if node_modules absent (reports SKIP, not FAIL)."
+      "note": "npm run compile (tsc --noEmit). Skips gracefully if node_modules absent (reports SKIP, not FAIL)."
     },
     {
       "path": "mcp_smoke_as.sh",
       "kind": "mcp-smoke",
-      "area": "MCP server SSE :19790 + tools",
+      "area": "MCP server SSE :19790 + contracts",
       "enabled": true,
-      "note": "Black-box: start mcp_bridge.py, probe SSE, list tools, stop. No-fallback / isolation invariants."
+      "note": "Deterministic STATIC smoke: mcp_bridge.py binds PORT 19790 + SSE; McpContracts defaultEndpoint 19790. No live probe (keeps suite idempotent/non-flaky)."
+    },
+    {
+      "path": "q7_acceptance_all_checked.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 acceptance checklist",
+      "enabled": true,
+      "note": "QWEN_MCP_ACCEPTANCE.md: all [x], no [ ], verdict 'ИТОГ: [PASS]'."
+    },
+    {
+      "path": "q7_acceptance_3_surfaces.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 acceptance checklist",
+      "enabled": true,
+      "note": "Acceptance documents 3 surfaces: External Qwen MCP, Apple Silicon embedded, Electron embedded."
+    },
+    {
+      "path": "q7_acceptance_real_paths.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 acceptance checklist",
+      "enabled": true,
+      "note": "Acceptance filled with real values: 19790, 19789, qwen3.8-max-preview, /Users/pavan/.local/bin/qwen."
+    },
+    {
+      "path": "q7_acceptance_invariants.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 acceptance checklist",
+      "enabled": true,
+      "note": "Acceptance restates invariants: no silent fallback, token, vaniscript_embedded, Codex/Grok."
+    },
+    {
+      "path": "q7_readme_qwen_provider.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 README",
+      "enabled": true,
+      "note": "README.md lists Qwen as a provider (- **Qwen** bullet)."
+    },
+    {
+      "path": "q7_readme_no_rewrite.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 README",
+      "enabled": true,
+      "note": "README.md original sections preserved: Direction, Local Run (extend, not rewrite)."
+    },
+    {
+      "path": "q7_mcp_instructions_qwen.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 MCP_INSTRUCTIONS",
+      "enabled": true,
+      "note": "MCP_INSTRUCTIONS.md Qwen section current: External Qwen CLI, 19790, 19789."
+    },
+    {
+      "path": "q7_mcp_instructions_no_electron.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 MCP_INSTRUCTIONS / BUG-002",
+      "enabled": true,
+      "note": "BUG-002 invariant: grep -ci electron MCP_INSTRUCTIONS.md == 0."
+    },
+    {
+      "path": "q7_decisions_adr_done.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 DECISIONS",
+      "enabled": true,
+      "note": "DECISIONS.md records QWEN_MCP track complete + QWEN_DONE."
+    },
+    {
+      "path": "q7_decisions_adr_format.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 DECISIONS",
+      "enabled": true,
+      "note": "ADR id format D-2026-07-26-Q7 (or equivalent D-<date>-Q7)."
+    },
+    {
+      "path": "q7_doc_only_no_code.sh",
+      "kind": "q7-doc-delta",
+      "area": "Q7 doc-only gate",
+      "enabled": true,
+      "note": "Pending diff under AppleSilicon/ has no .swift/.js/.ts/.py code (doc-only). Adapted: qwen/pre-Q7 ref absent, Q7 edits are uncommitted -> inspect git diff HEAD scoped to AppleSilicon."
+    },
+    {
+      "path": "q7_swift_test_green.sh",
+      "kind": "q7-regression",
+      "area": "Q7 swift test regression",
+      "enabled": true,
+      "note": "swift test: 0 failures, non-empty run; soft-warn if executed count < 267."
     }
   ]
 }
+

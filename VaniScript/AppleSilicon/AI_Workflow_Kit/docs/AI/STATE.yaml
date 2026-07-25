@@ -1,30 +1,28 @@
 # QWEN_MCP track — orchestrated by Cline
 # Product scope: AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md
 
-current_step: Q4
+current_step: Q5
 step_description: >
-  Electron embedded Qwen chat (parity с Grok). main.js: resolveQwenExecutable,
-  ensureQwenWorkspace, writeQwenProjectConfig (.qwen/settings.json with
-  ${VANISCRIPT_MCP_TOKEN} env substitution), buildQwenPrompt, extractQwenStreamingText
-  (assistant/result NDJSON), ipcMain.handle('qwen:chat') — spawn -p/-o stream-json/-m,
-  token only in child env. preload.js: qwenChat, onQwenChunk, onQwenError, onQwenDone.
-  types.ts: chatRoute 'qwen', chatQwenModel, qwen electronAPI types.
-  ChatSidebar.tsx: «MCP · Qwen» option, handleSendQwen (mirror handleSendGrok).
-  App.tsx: handleChatConfigChange extended for 'qwen', chatQwenModel prop.
-  Commit 2840d5f in Electron repo.
+  External Qwen MCP access (doc-only). AppleSilicon/MCP_INSTRUCTIONS.md: секция
+  «External Qwen CLI» — qwen mcp add ... --transport sse --header "Authorization:
+  Bearer <token>" --scope project --trust + эквивалентный .qwen/settings.json.
+  Electron/MCP_INSTRUCTIONS.md: секция «7. Qwen (external CLI)» — endpoint
+  http://127.0.0.1:19789/sse. Smoke (static): endpoint 19789/sse в main.js,
+  Bearer-auth middleware isMcpAuthorized, CORS loopback-only. ADR D-2026-07-25-Q5.
+  Commit 50ebb06.
 
 target_files:
-  - Electron/electron/main.js                                  # Q4: qwen:chat IPC handler
-  - Electron/electron/preload.js                               # Q4: qwen IPC bridge
-  - Electron/src/types.ts                                      # Q4: chatRoute 'qwen', qwen types
-  - Electron/src/components/ChatSidebar.tsx                    # Q4: MCP · Qwen route + handleSendQwen
-  - Electron/src/App.tsx                                       # Q4: handleChatConfigChange + chatQwenModel
+  - AppleSilicon/MCP_INSTRUCTIONS.md                           # Q5: External Qwen CLI section
+  - Electron/MCP_INSTRUCTIONS.md                               # Q5: Qwen external CLI section
+  - AppleSilicon/AI_Workflow_Kit/docs/DECISIONS.md             # Q5: ADR D-2026-07-25-Q5
+  - AppleSilicon/AI_Workflow_Kit/docs/AI/FEEDBACK.md           # Q5: APPROVED (doc-only)
 
 coder_brief: >
-  Q4 DONE (commit 2840d5f in Electron repo).
-  Next: Q5 — External Qwen MCP access (doc + smoke).
-  Document external Qwen client config for VaniScript MCP SSE server.
-  No product code changes — doc-only + smoke test.
+  Q5 DONE (commit 50ebb06, doc-only).
+  Next: Q6 — Qwen API provider in VaniScriptCore (in-app, no CLI).
+  OpenAI-compatible API via DashScope/Bailian endpoint.
+  QwenApiProvider.swift: chat completion, streaming, model catalog.
+  No MCP changes. No Electron changes.
 
 completed_steps:
   - G0
@@ -44,6 +42,7 @@ completed_steps:
   - Q2
   - Q3
   - Q4
+  - Q5
 
 implementation:
   status: done
@@ -69,9 +68,9 @@ working_roots:
   - Electron
 
 checkpoint:
-  last_pre_tag: "qwen/pre-Q4"
-  last_post_tag: "qwen/Q4-done"
-  last_commit: "2840d5f"
+  last_pre_tag: "qwen/pre-Q5"
+  last_post_tag: "qwen/Q5-done"
+  last_commit: "50ebb06"
 
 plan_files:
   - AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md

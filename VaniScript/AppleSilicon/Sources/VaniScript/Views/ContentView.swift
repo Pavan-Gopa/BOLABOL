@@ -68,8 +68,8 @@ struct ContentView: View {
                             .help("Settings")
                             .onboardingTarget("settings-btn")
                         }
-                        .padding(.top, 10)
-                        .padding(.trailing, 16)
+                        .padding(.top, VaniScriptTheme.Density.space8)
+                        .padding(.trailing, VaniScriptTheme.Density.space12)
 
                         Spacer()
                     }
@@ -114,12 +114,12 @@ private struct CornerIconButtonStyle: ButtonStyle {
         configuration.label
             .font(.system(size: 15, weight: .semibold))
             .foregroundStyle(configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text2)
-            .frame(width: 32, height: 32)
+            .frame(width: VaniScriptTheme.Density.controlHeightLG, height: VaniScriptTheme.Density.controlHeightLG)
             .background(Color.white.opacity(configuration.isPressed ? 0.12 : 0.07))
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous)
                     .stroke(Color.white.opacity(0.1), lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }

@@ -23,12 +23,12 @@ struct SettingsView: View {
     @State private var customBudgetLimit = ""
 
     private let mcpOverviewColumns = [
-        GridItem(.flexible(minimum: 220), spacing: 10),
-        GridItem(.flexible(minimum: 220), spacing: 10),
+        GridItem(.flexible(minimum: 220), spacing: VaniScriptTheme.Density.space8),
+        GridItem(.flexible(minimum: 220), spacing: VaniScriptTheme.Density.space8),
     ]
     private let activeTargetColumns = [
-        GridItem(.flexible(minimum: 220), spacing: 10),
-        GridItem(.flexible(minimum: 220), spacing: 10),
+        GridItem(.flexible(minimum: 220), spacing: VaniScriptTheme.Density.space8),
+        GridItem(.flexible(minimum: 220), spacing: VaniScriptTheme.Density.space8),
     ]
 
     var body: some View {
@@ -73,9 +73,9 @@ struct SettingsView: View {
                 }
                 .tint(VaniScriptTheme.accent)
             }
-            .padding(18)
+            .padding(VaniScriptTheme.Density.space12)
             .glassPanel()
-            .padding(20)
+            .padding(VaniScriptTheme.Density.space12)
 
             if store.isTourActive {
                 OnboardingTourView(
@@ -118,7 +118,7 @@ struct SettingsView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: VaniScriptTheme.Density.space8) {
             VaniScriptLogoMark(size: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text("VaniScript Settings")
@@ -146,8 +146,8 @@ struct SettingsView: View {
             mcpIntegrationSection
 
             SettingsSection(title: "Embedded Codex Chat") {
-                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 7) {
+                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                    VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space6) {
                         Label("Chat Model", systemImage: "cpu")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(VaniScriptTheme.text2)
@@ -175,9 +175,9 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
                     .background(Color.white.opacity(0.04))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
 
-                    VStack(alignment: .leading, spacing: 7) {
+                    VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space6) {
                         Label("Reasoning", systemImage: "brain")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(VaniScriptTheme.text2)
@@ -208,13 +208,13 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
                     .background(Color.white.opacity(0.04))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
                 }
             }
 
             SettingsSection(title: "Embedded Grok Chat") {
-                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 7) {
+                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                    VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space6) {
                         Label("Chat Model", systemImage: "cpu")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(VaniScriptTheme.text2)
@@ -242,9 +242,9 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
                     .background(Color.white.opacity(0.04))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
 
-                    VStack(alignment: .leading, spacing: 7) {
+                    VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space6) {
                         Label("Reasoning", systemImage: "brain")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(VaniScriptTheme.text2)
@@ -275,13 +275,47 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
                     .background(Color.white.opacity(0.04))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
+                }
+            }
+
+            // Q2: Qwen section has no reasoning picker — the Qwen CLI has no such flag.
+            SettingsSection(title: "Embedded Qwen Chat") {
+                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                    VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space6) {
+                        Label("Chat Model", systemImage: "cpu")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.text2)
+
+                        Picker("", selection: Binding(
+                            get: { store.settings.qwenChatModelID },
+                            set: { modelID in
+                                guard let option = QwenChatModelCatalog.option(id: modelID) else { return }
+                                store.updateSettings { settings in
+                                    settings.qwenChatModelID = option.id
+                                }
+                            }
+                        )) {
+                            ForEach(QwenChatModelCatalog.options) { option in
+                                Text(option.displayName).tag(option.id)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
+                    .background(Color.white.opacity(0.04))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
                 }
             }
 
             SettingsSection(title: "Active Target") {
-                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 7) {
+                LazyVGrid(columns: activeTargetColumns, alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                    VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space6) {
                         Label("Preferred Agent", systemImage: "person.crop.circle.badge.checkmark")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(VaniScriptTheme.text2)
@@ -307,7 +341,7 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
                     .background(Color.white.opacity(0.04))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
 
                     McpStatusSummaryTile(
                         title: "Status",
@@ -374,7 +408,7 @@ struct SettingsView: View {
                     }
                 }
             )) {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
                     Text("Gemini API key for cloud transcription, translation, and editing.")
                         .font(.system(size: 11))
                         .foregroundStyle(VaniScriptTheme.text2)
@@ -441,7 +475,7 @@ struct SettingsView: View {
                     }
                 }
             )) {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
                     Text("OpenAI API key for cloud transcription, translation, and editing.")
                         .font(.system(size: 11))
                         .foregroundStyle(VaniScriptTheme.text2)
@@ -485,7 +519,7 @@ struct SettingsView: View {
             }
 
             SettingsSection(title: "Anthropic") {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
                     Text("Anthropic API key for cloud text polishing and editing.")
                         .font(.system(size: 11))
                         .foregroundStyle(VaniScriptTheme.text2)
@@ -497,7 +531,7 @@ struct SettingsView: View {
             }
 
             SettingsSection(title: "Custom Cloud Providers") {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
                     if store.settings.customCloudProviders.isEmpty {
                         Text("No custom cloud providers configured.")
                             .font(.system(size: 12))
@@ -568,7 +602,7 @@ struct SettingsView: View {
             }
 
             SettingsSection(title: "Cloud Usage Statistics") {
-                VStack(spacing: 16) {
+                VStack(spacing: VaniScriptTheme.Density.space8) {
                     let defaultProviders = ["gemini", "openai", "anthropic"]
                     let allProviders = defaultProviders + store.settings.customCloudProviders.map { $0.label }
 
@@ -597,7 +631,7 @@ struct SettingsView: View {
                                         .foregroundStyle(VaniScriptTheme.green)
                                 }
 
-                                HStack(spacing: 20) {
+                                HStack(spacing: VaniScriptTheme.Density.space12) {
                                     StatItem(title: "Sessions", value: "\(stats.sessions)")
                                     StatItem(title: "Audio Time", value: String(format: "%.1f m", stats.audioMinutes))
                                     StatItem(title: "Input Tokens", value: formatTokens(stats.inputTokens))
@@ -645,8 +679,8 @@ struct SettingsView: View {
 
     private var mcpIntegrationSection: some View {
         SettingsSection(title: "Local MCP Server") {
-            VStack(alignment: .leading, spacing: 10) {
-                LazyVGrid(columns: mcpOverviewColumns, alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                LazyVGrid(columns: mcpOverviewColumns, alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
                     CompactMcpToggleCard(
                         title: "Enable MCP",
                         subtitle: store.settings.mcpServerEnabled ? "Listening locally" : "Server disabled",
@@ -766,14 +800,14 @@ struct SettingsView: View {
     private var modelsTab: some View {
         SettingsScroll {
             SettingsSection(title: "Scan Local Models") {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
                     Text("Already downloaded models in another VaniScript workspace or stored in common system folders? Run a fast native scan to discover and automatically connect them.")
                         .font(.subheadline)
                         .foregroundStyle(VaniScriptTheme.text2)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if store.isScanning {
-                        HStack(spacing: 12) {
+                        HStack(spacing: VaniScriptTheme.Density.space8) {
                             ProgressView()
                                 .controlSize(.small)
                             Text("Scanning system folders for Whisper and MLX models...")
@@ -873,7 +907,7 @@ struct SettingsView: View {
             SettingsSection(title: "System Diagnostics & Logs") {
                 PickerRow(title: "Log Level", selection: binding(\.logLevel), values: LogLevel.allCases)
 
-                HStack(spacing: 12) {
+                HStack(spacing: VaniScriptTheme.Density.space8) {
                     Button {
                         store.exportSystemLogs()
                     } label: {
@@ -932,7 +966,7 @@ struct SettingsView: View {
     private var glossaryTab: some View {
         SettingsScroll {
             SettingsSection(title: "Active Glossary Language") {
-                HStack(spacing: 12) {
+                HStack(spacing: VaniScriptTheme.Density.space8) {
                     Text("Select Target Language:")
                         .foregroundStyle(VaniScriptTheme.text2)
                         .font(.system(size: 13))
@@ -987,7 +1021,7 @@ struct SettingsView: View {
             }
 
             SettingsSection(title: "Glossary Backup") {
-                HStack(spacing: 12) {
+                HStack(spacing: VaniScriptTheme.Density.space8) {
                     Button {
                         importGlossaryJSON()
                     } label: {
@@ -1007,7 +1041,7 @@ struct SettingsView: View {
             }
 
             SettingsSection(title: "Terms") {
-                VStack(spacing: 10) {
+                VStack(spacing: VaniScriptTheme.Density.space8) {
                     HStack(spacing: 8) {
                         HStack {
                             Image(systemName: "magnifyingglass")
@@ -1027,7 +1061,7 @@ struct SettingsView: View {
                             }
                         }
                         .padding(.horizontal, 8)
-                        .frame(height: 28)
+                        .frame(height: VaniScriptTheme.Density.controlHeightMD)
                         .background(VaniScriptTheme.input)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
 
@@ -1096,7 +1130,7 @@ struct SettingsView: View {
             }
 
             SettingsSection(title: "Default Engines") {
-                HStack(spacing: 12) {
+                HStack(spacing: VaniScriptTheme.Density.space8) {
                     Text("Default Transcription Engine")
                         .foregroundStyle(VaniScriptTheme.text2)
                         .font(.system(size: 13))
@@ -1111,7 +1145,7 @@ struct SettingsView: View {
                     .pickerStyle(.menu)
                 }
 
-                HStack(spacing: 12) {
+                HStack(spacing: VaniScriptTheme.Density.space8) {
                     Text("Default Translation Engine")
                         .foregroundStyle(VaniScriptTheme.text2)
                         .font(.system(size: 13))
@@ -1130,7 +1164,7 @@ struct SettingsView: View {
     }
 
     private var promptsTab: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: VaniScriptTheme.Density.space8) {
             promptsSidebar
 
             Divider()
@@ -1143,7 +1177,7 @@ struct SettingsView: View {
 
     private var promptsSidebar: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space12) {
                 let stages = ["Transcription", "Translation", "Editing", "Shorts & Reels", "Export"]
                 ForEach(stages, id: \.self) { stage in
                     let stageDefs = DefaultPrompts.definitions.filter { $0.stage == stage }
@@ -1184,7 +1218,7 @@ struct SettingsView: View {
     }
 
     private var promptEditor: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
             if let def = DefaultPrompts.definitions.first(where: { $0.id == selectedPromptId }) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(def.label)
@@ -1219,7 +1253,7 @@ struct SettingsView: View {
 
                 let activePreset = store.settings.promptPresets[selectedPromptId] ?? PromptPresetSettings()
 
-                HStack(spacing: 12) {
+                HStack(spacing: VaniScriptTheme.Density.space8) {
                     Text("Slot")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(VaniScriptTheme.text2)
@@ -1520,7 +1554,7 @@ private struct SettingsScroll<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space12) {
                 content
             }
             .padding(.top, 10)
@@ -1536,7 +1570,7 @@ private struct SettingsSection<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
             HStack {
                 Text(title)
                     .font(.system(size: 12, weight: .heavy))
@@ -1554,7 +1588,7 @@ private struct SettingsSection<Content: View>: View {
         .padding(14)
         .background(Color.white.opacity(0.035))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.09), lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
     }
 }
 
@@ -1573,10 +1607,10 @@ private struct SettingsRow: View {
         }
         .font(.system(size: 13))
         .padding(.horizontal, 12)
-        .frame(height: 36)
+        .frame(height: VaniScriptTheme.Density.controlHeightLG)
         .background(Color.white.opacity(0.04))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
@@ -1717,10 +1751,10 @@ private struct SettingsToggleRow: View {
         .toggleStyle(.switch)
         .tint(VaniScriptTheme.accent)
         .padding(.horizontal, 12)
-        .frame(height: 36)
+        .frame(height: VaniScriptTheme.Density.controlHeightLG)
         .background(Color.white.opacity(0.04))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
@@ -1732,7 +1766,7 @@ private struct CompactMcpToggleCard: View {
     @Binding var isOn: Bool
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: VaniScriptTheme.Density.space8) {
             Image(systemName: systemImage)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(isEnabled ? VaniScriptTheme.accent : VaniScriptTheme.text2)
@@ -1762,7 +1796,7 @@ private struct CompactMcpToggleCard: View {
         .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
         .background(Color.white.opacity(0.04))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.52)
     }
@@ -1775,7 +1809,7 @@ private struct McpStatusSummaryTile: View {
     let tint: Color
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: VaniScriptTheme.Density.space8) {
             Image(systemName: systemImage)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(tint)
@@ -1800,7 +1834,7 @@ private struct McpStatusSummaryTile: View {
         .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
         .background(Color.white.opacity(0.04))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
@@ -1821,7 +1855,7 @@ private struct McpAgentProfileRow: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: VaniScriptTheme.Density.space8) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(Color.white.opacity(0.05))
@@ -2071,8 +2105,8 @@ private struct ModelSettingsRow: View {
     var body: some View {
         let meta = getModelMeta(id: id)
 
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 12) {
+        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+            HStack(alignment: .top, spacing: VaniScriptTheme.Density.space8) {
                 // Left column: Icon & Compute badge
                 VStack(spacing: 6) {
                     Image(systemName: model.runtime == .whisper ? "waveform" : "brain")
@@ -2125,7 +2159,7 @@ private struct ModelSettingsRow: View {
                         .lineLimit(2)
                         .padding(.bottom, 2)
 
-                    HStack(spacing: 12) {
+                    HStack(spacing: VaniScriptTheme.Density.space8) {
                         HStack(spacing: 4) {
                             Image(systemName: "internaldrive")
                             Text(meta.size)
@@ -2216,7 +2250,7 @@ private struct ModelSettingsRow: View {
         .padding(12)
         .background(Color.white.opacity(isActive ? 0.05 : 0.02))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(isActive ? VaniScriptTheme.accent.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
     }
 }
 
@@ -2226,7 +2260,7 @@ private struct GlossarySettingsRow: View {
     let delete: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: VaniScriptTheme.Density.space8) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(entry.source)
@@ -2277,7 +2311,7 @@ private struct GlossarySettingsRow: View {
         .padding(10)
         .background(VaniScriptTheme.card)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
@@ -2300,7 +2334,7 @@ private struct SettingsSmallButtonStyle: ButtonStyle {
             .font(.system(size: 11, weight: .bold))
             .foregroundStyle(primary ? Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255) : VaniScriptTheme.text1)
             .padding(.horizontal, 10)
-            .frame(height: 28)
+            .frame(height: VaniScriptTheme.Density.controlHeightMD)
             .background(primary ? VaniScriptTheme.accent : Color.white.opacity(configuration.isPressed ? 0.1 : 0.06))
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(primary ? Color.clear : Color.white.opacity(0.12), lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -2386,12 +2420,12 @@ private struct GlossaryEditSheet: View {
     var body: some View {
         ZStack {
             AppBackground()
-            VStack(spacing: 16) {
+            VStack(spacing: VaniScriptTheme.Density.space8) {
                 Text("Edit Glossary Entry")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(VaniScriptTheme.text0)
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
                     TextInputRow(title: "Source Text", text: $source)
                     TextInputRow(title: "Translation", text: $translation)
                     TextInputRow(title: "Category", text: $category)
@@ -2415,7 +2449,7 @@ private struct GlossaryEditSheet: View {
                 }
                 .padding(.vertical, 8)
 
-                HStack(spacing: 12) {
+                HStack(spacing: VaniScriptTheme.Density.space8) {
                     Button("Cancel") {
                         onCancel()
                     }
@@ -2444,10 +2478,10 @@ private struct GlossaryEditSheet: View {
                     .disabled(source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .padding(24)
+            .padding(VaniScriptTheme.Density.space12)
             .frame(width: 540)
             .glassPanel()
-            .padding(20)
+            .padding(VaniScriptTheme.Density.space12)
         }
         .frame(width: 600, height: 480)
     }

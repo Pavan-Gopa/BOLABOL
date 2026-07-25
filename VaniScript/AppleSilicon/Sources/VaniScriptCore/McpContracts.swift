@@ -105,6 +105,7 @@ public enum McpClientProfileID: String, CaseIterable, Codable, Equatable, Sendab
     case codex
     case cursor
     case grok
+    case qwen // Q2: embedded Qwen chat provider
 
     public var displayName: String {
         switch self {
@@ -120,6 +121,8 @@ public enum McpClientProfileID: String, CaseIterable, Codable, Equatable, Sendab
             "Cursor"
         case .grok:
             "Grok"
+        case .qwen:
+            "Qwen"
         }
     }
 
@@ -137,6 +140,8 @@ public enum McpClientProfileID: String, CaseIterable, Codable, Equatable, Sendab
             "cursorarrow"
         case .grok:
             "bubble.left.and.bubble.right"
+        case .qwen:
+            "brain.head.profile"
         }
     }
 }
@@ -224,6 +229,9 @@ public enum McpClientClassifier {
         if combined.contains("grok") {
             return McpClientProfileID.grok.rawValue
         }
+        if combined.contains("qwen") {
+            return McpClientProfileID.qwen.rawValue
+        }
         if combined.contains("antigravity") || combined.contains("gemini") {
             return McpClientProfileID.antigravity.rawValue
         }
@@ -267,6 +275,12 @@ public enum McpAgentProfileCatalog {
             McpAgentProfile(
                 id: profile,
                 detail: "Grok desktop via local bridge, or CLI via direct Streamable HTTP/SSE.",
+                setupActionTitle: "Copy Command"
+            )
+        case .qwen:
+            McpAgentProfile(
+                id: profile,
+                detail: "Qwen Code CLI as embedded chat; MCP tools arrive in a later step.",
                 setupActionTitle: "Copy Command"
             )
         case .cursor:
@@ -345,6 +359,13 @@ public enum McpAgentProfileCatalog {
 
             Direct Streamable HTTP/SSE for a terminal Grok session:
             grok mcp add vaniscript --transport sse --header "Authorization: Bearer \(accessToken)" --url \(endpoint)
+            """
+        case .qwen:
+            // Q2: token via env only — the setup command must not inline the secret.
+            """
+            Recommended for Qwen Code CLI (SSE):
+            export VANISCRIPT_MCP_TOKEN="\(accessToken)"
+            qwen mcp add vaniscript --transport sse --header "Authorization: Bearer $VANISCRIPT_MCP_TOKEN" \(endpoint)
             """
         }
     }

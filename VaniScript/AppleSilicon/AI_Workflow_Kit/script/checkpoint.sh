@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Git checkpoints for GROK_MCP (G0–G6) and UI_AS (U0–U3).
+# Git checkpoints for GROK_MCP (G0–G6), UI_AS (U0–U3) and QWEN_MCP (Q0–Q7).
 # Scoped to VaniScript paths — never git add -A on the whole AI Projects monorepo.
 #
 # Usage:
 #   ./AI_Workflow_Kit/script/checkpoint.sh pre G1
 #   ./AI_Workflow_Kit/script/checkpoint.sh post G1 "short description"
+#   ./AI_Workflow_Kit/script/checkpoint.sh pre Q1
+#   ./AI_Workflow_Kit/script/checkpoint.sh post Q1 "short description"
 #   ./AI_Workflow_Kit/script/checkpoint.sh list
 #   ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post G1
 set -euo pipefail
@@ -33,8 +35,11 @@ resolve_step() {
   elif [[ "$step" =~ ^U[0-3]$|^UI_DONE$ ]]; then
     TRACK_PREFIX="ui"
     TRACK_LABEL="UI_AS"
+  elif [[ "$step" =~ ^Q[0-7]$|^QWEN_DONE$ ]]; then
+    TRACK_PREFIX="qwen"
+    TRACK_LABEL="QWEN_MCP"
   else
-    die "step must be G0..G6, GROK_DONE, U0..U3, or UI_DONE; got: ${step:-empty}"
+    die "step must be G0..G6, GROK_DONE, U0..U3, UI_DONE, Q0..Q7, or QWEN_DONE; got: ${step:-empty}"
   fi
 }
 
@@ -137,6 +142,8 @@ cmd_list() {
   git tag -l 'grok/*' --sort=creatordate
   echo "=== ui/* tags ==="
   git tag -l 'ui/*' --sort=creatordate
+  echo "=== qwen/* tags ==="
+  git tag -l 'qwen/*' --sort=creatordate
   echo "=== recent commits ==="
   git log --oneline --decorate -15
 }
@@ -162,8 +169,8 @@ cmd_rollback() {
 usage() {
   cat <<'EOF'
 Usage:
-  ./AI_Workflow_Kit/script/checkpoint.sh pre <G0..G6|U0..U3>
-  ./AI_Workflow_Kit/script/checkpoint.sh post <G0..G6|U0..U3> [description]
+  ./AI_Workflow_Kit/script/checkpoint.sh pre <G0..G6|U0..U3|Q0..Q7>
+  ./AI_Workflow_Kit/script/checkpoint.sh post <G0..G6|U0..U3|Q0..Q7> [description]
   ./AI_Workflow_Kit/script/checkpoint.sh list
   ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post <step>
 

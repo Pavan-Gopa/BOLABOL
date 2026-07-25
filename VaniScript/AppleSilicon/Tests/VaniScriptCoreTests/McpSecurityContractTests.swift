@@ -87,7 +87,9 @@ struct McpSecurityContractTests {
         let readOnlyTools = McpToolRegistry.definitions(allowMutatingTools: false).map(\.name)
         let allTools = McpToolRegistry.definitions(allowMutatingTools: true).map(\.name)
 
-        #expect(allTools.count == 120)
+        // Pre-existing drift fixed alongside Q2: the committed catalog already
+        // ships 122 tools (incl. analyze_clip_speech_regions); Q2 adds none.
+        #expect(allTools.count == 122)
 
         #expect(readOnlyTools == [
             "get_project_state",
@@ -122,6 +124,7 @@ struct McpSecurityContractTests {
             "list_rejected_shorts_plans",
             "validate_shorts_plan",
             "get_visual_editor_state",
+            "analyze_clip_speech_regions",
             "get_playback_state",
             "list_export_options",
             "validate_export",
@@ -252,6 +255,7 @@ struct McpSecurityContractTests {
             "Codex",
             "Cursor",
             "Grok",
+            "Qwen", // Q2: embedded Qwen provider added to the profile catalog
         ])
 
         let bridgePath = "/tmp/VaniScript/mcp_bridge.py"

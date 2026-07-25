@@ -1,32 +1,30 @@
 # QWEN_MCP track — orchestrated by Cline
 # Product scope: AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md
 
-current_step: Q3
+current_step: Q4
 step_description: >
-  MCP wiring: Qwen → vaniscript_embedded (tools). QwenProvider generates
-  ephemeral MCP config (temp dir), token in env only, no silent fallback.
-  Qwen in chat calls VaniScript tools (definitions/glossary/apply).
-  Apple Silicon only. Electron MCP is Q4.
+  Electron embedded Qwen chat (parity с Grok). main.js: resolveQwenExecutable,
+  ensureQwenWorkspace, writeQwenProjectConfig (.qwen/settings.json with
+  ${VANISCRIPT_MCP_TOKEN} env substitution), buildQwenPrompt, extractQwenStreamingText
+  (assistant/result NDJSON), ipcMain.handle('qwen:chat') — spawn -p/-o stream-json/-m,
+  token only in child env. preload.js: qwenChat, onQwenChunk, onQwenError, onQwenDone.
+  types.ts: chatRoute 'qwen', chatQwenModel, qwen electronAPI types.
+  ChatSidebar.tsx: «MCP · Qwen» option, handleSendQwen (mirror handleSendGrok).
+  App.tsx: handleChatConfigChange extended for 'qwen', chatQwenModel prop.
+  Commit 2840d5f in Electron repo.
 
 target_files:
-  - Sources/VaniScript/Services/QwenAgentService.swift       # NEW
-  - Sources/VaniScriptCore/QwenAgentSupport.swift            # NEW
-  - Sources/VaniScriptCore/McpContracts.swift                # add .qwen to McpClientProfileID
-  - Sources/VaniScriptCore/AppSettings.swift                 # add qwenChatModelID, qwenChatReasoningEffort
-  - Sources/VaniScript/Views/ChatSidebarView.swift           # route selector .qwen + qwenModelMenu
-  - Sources/VaniScript/Views/SettingsView.swift              # Qwen agent option in Agents tab
-  - Tests/VaniScriptCoreTests/QwenAgentSupportTests.swift    # NEW
-  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  - Electron/electron/main.js                                  # Q4: qwen:chat IPC handler
+  - Electron/electron/preload.js                               # Q4: qwen IPC bridge
+  - Electron/src/types.ts                                      # Q4: chatRoute 'qwen', qwen types
+  - Electron/src/components/ChatSidebar.tsx                    # Q4: MCP · Qwen route + handleSendQwen
+  - Electron/src/App.tsx                                       # Q4: handleChatConfigChange + chatQwenModel
 
 coder_brief: >
-  Mirror GrokAgentService/GrokAgentSupport pattern for Qwen CLI.
-  Binary: /Users/pavan/.local/bin/qwen (v0.20.0).
-  Streaming: -o stream-json → NDJSON (assistant.message.content[].text).
-  Model: qwen3.8-max-preview via -m flag.
-  Auth: token in child env only (DASHSCOPE_API_KEY / BAILIAN_TOKEN_PLAN_API_KEY).
-  MCP isolation: qwen mcp add vaniscript_embedded <sse-url> --transport sse
-    --header "Authorization: Bearer $VANISCRIPT_MCP_TOKEN" --scope project --trust.
-  See DECISIONS.md D-2026-07-25 Q1 Discovery for full details.
+  Q4 DONE (commit 2840d5f in Electron repo).
+  Next: Q5 — External Qwen MCP access (doc + smoke).
+  Document external Qwen client config for VaniScript MCP SSE server.
+  No product code changes — doc-only + smoke test.
 
 completed_steps:
   - G0
@@ -44,9 +42,11 @@ completed_steps:
   - UI_DONE
   - Q1
   - Q2
+  - Q3
+  - Q4
 
 implementation:
-  status: waiting_review
+  status: done
   attempts: 1
 
 review:
@@ -66,11 +66,12 @@ prior_track: UI_AS
 
 working_roots:
   - AppleSilicon
+  - Electron
 
 checkpoint:
-  last_pre_tag: "qwen/pre-Q3"
-  last_post_tag: "qwen/Q3-done"
-  last_commit: "684e336"
+  last_pre_tag: "qwen/pre-Q4"
+  last_post_tag: "qwen/Q4-done"
+  last_commit: "2840d5f"
 
 plan_files:
   - AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md

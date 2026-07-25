@@ -47,6 +47,17 @@ SCRIPTS=(
     "qwen_no_reasoning.sh"
     "qwen_cli_flags.sh"
     "qwen_workspace_isolation.sh"
+    # F. Q5 Delta (doc-only, source-level, instant)
+    "q5_mcp_instructions_section.sh"
+    "q5_endpoint_electron.sh"
+    "q5_endpoint_as.sh"
+    "q5_auth_bearer.sh"
+    "q5_auth_alt_header.sh"
+    "q5_cors_loopback.sh"
+    "q5_decisions_adr.sh"
+    "q5_doc_only_no_code.sh"
+    "q5_qwen_settings_format.sh"
+    "q5_no_fallback_doc.sh"
     # G. Regression (source-level, instant)
     "electron_grok_embedded.sh"
     "electron_mcp_cors.sh"

@@ -1,14 +1,12 @@
 # QWEN_MCP track — orchestrated by Cline
 # Product scope: AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md
 
-current_step: Q2
+current_step: Q3
 step_description: >
-  QwenProvider skeleton + embedded chat (Apple Silicon). Add QwenProvider
-  (CLI subprocess, Codex/Grok pattern) to VaniScriptCore and connect it to
-  the route selector in ChatSidebarView as .qwen. Chat with Qwen works in AS.
-  MCP tools wiring is Q3 — this step is plain chat only.
-  Apple Silicon only. Do NOT touch Electron. Do NOT change MCP server logic.
-  Minimal diffs. Well-commented code per TEAM_CONTRACT § Comments.
+  MCP wiring: Qwen → vaniscript_embedded (tools). QwenProvider generates
+  ephemeral MCP config (temp dir), token in env only, no silent fallback.
+  Qwen in chat calls VaniScript tools (definitions/glossary/apply).
+  Apple Silicon only. Electron MCP is Q4.
 
 target_files:
   - Sources/VaniScript/Services/QwenAgentService.swift       # NEW
@@ -45,6 +43,7 @@ completed_steps:
   - U3
   - UI_DONE
   - Q1
+  - Q2
 
 implementation:
   status: waiting_review
@@ -69,9 +68,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "qwen/pre-Q2"
-  last_post_tag: "qwen/Q2-done"
-  last_commit: "6df644c"
+  last_pre_tag: "qwen/pre-Q3"
+  last_post_tag: "qwen/Q3-done"
+  last_commit: "684e336"
 
 plan_files:
   - AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md

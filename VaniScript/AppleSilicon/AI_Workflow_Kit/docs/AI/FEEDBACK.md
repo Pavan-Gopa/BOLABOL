@@ -104,3 +104,49 @@ Env substitution `${VANISCRIPT_MCP_TOKEN}` сохраняется дословн
 
 **ИТОГОВЫЙ СТАТУС:** APPROVED (doc-only)
 
+---
+
+## Q5 — Independent Review (Verification Engineer)
+
+**СТАТУС:** APPROVED (doc-only)
+
+### Проверено
+1. **Соответствие требованиям Q5:**
+   - `AppleSilicon/MCP_INSTRUCTIONS.md`: секция «External Qwen CLI» присутствует и корректно задокументирована.
+   - `Electron/MCP_INSTRUCTIONS.md`: секция «7. Qwen (external CLI)» присутствует и содержит применимый snippet.
+   - Config snippets: добавлены оба формата (команда `qwen mcp add ...` и `.qwen/settings.json`).
+   - Порты: четко указаны 19789 (Electron) и 19790 (Apple Silicon).
+2. **Точность документации (smoke-проверка по коду):**
+   - SSE endpoint `http://127.0.0.1:19789/sse` подтвержден в `Electron/electron/main.js` (строка 3311: `listen(19789, '127.0.0.1')`).
+   - Bearer auth middleware `isMcpAuthorized` подтвержден в `Electron/electron/main.js` (строка 3021: проверка `authorization` и `x-vaniscript-mcp-token`).
+   - Loopback CORS `isLoopbackOrigin` подтвержден в `Electron/electron/main.js` (строка 3034: фильтрация `Origin`).
+   - SSE endpoint `:19790` подтвержден в `AppleSilicon/MCP_INSTRUCTIONS.md` (раздел Security Model).
+3. **Безопасность:**
+   - Секреты/токены не захардкожены (используется плейсхолдер `<YOUR_TOKEN>`).
+   - Нет любых изменений исходного кода (diff включает строго документацию).
+   - Инварианты QWEN_MCP сохранены (изолированный project scope, токен в env/config).
+4. **ADR (DECISIONS.md):**
+   - Запись `D-2026-07-25-Q5` создана.
+   - Указан тип `DOC-ONLY`.
+   - Описаны архитектурные детали подключения и результаты статической smoke-проверки.
+5. **Качество документации:**
+   - Секции `MCP_INSTRUCTIONS.md` написаны на английском языке.
+   - Записи ADR и FEEDBACK ведутся на русском языке.
+6. **target_files соблюдены:**
+   - Изменения ограничены файлами `AppleSilicon/MCP_INSTRUCTIONS.md`, `Electron/MCP_INSTRUCTIONS.md`, `AppleSilicon/AI_Workflow_Kit/docs/DECISIONS.md`, `AppleSilicon/AI_Workflow_Kit/docs/AI/FEEDBACK.md`, `AppleSilicon/AI_Workflow_Kit/docs/AI/STATE.yaml`.
+
+### Smoke-верификация по коду
+- **Endpoint:** `Electron/electron/main.js:3311` (`mcpHttpServer.listen(19789, '127.0.0.1', ...)`).
+- **Auth:** `Electron/electron/main.js:3021` (`isMcpAuthorized(req)` — проверка `Authorization: Bearer` и `x-vaniscript-mcp-token`).
+- **CORS:** `Electron/electron/main.js:3034` (`isLoopbackOrigin(origin)` — разрешение только loopback `127.0.0.1`, `::1`, `localhost`).
+
+### Безопасность
+- Использован `<YOUR_TOKEN>` placeholder, отсутствуют реальные токены/ключи.
+- Кодовая база Swift/JS/TS не изменена.
+
+### Замечания
+- Замечаний нет. Документация исчерпывающая и полная.
+
+**ИТОГОВЫЙ СТАТУС:** APPROVED
+
+

@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-background: #051424;
+  --color-on-background: #D4E4FA;
+  --color-secondary: #44E2CD;
+  --color-on-secondary: #003731;
+  --color-tertiary: #CEBDFF;
+  --color-on-surface: #D4E4FA;
+  --color-on-surface-variant: #C4C7C7;
+  --color-surface-container-high: #1C2B3C;
+}
+
+@layer base {
+  body {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}

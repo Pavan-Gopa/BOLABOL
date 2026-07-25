@@ -1,0 +1,44 @@
+# MVP Performance track — orchestrated by Grok
+# Source of truth: docs/MVP_STEPS.md + root implementation_plan.md
+
+current_step: MVP_DONE
+step_description: >
+  MVP_PERF complete. All steps M0–M4 approved.
+  No active implementation task. Optional next work = Post-MVP backlog B1–B5
+  in implementation_plan.md / MVP_STEPS.md (only if human requests).
+
+target_files: []
+
+completed_steps:
+  - ARCH_1
+  - ARCH_2
+  - ARCH_3
+  - ARCH_4
+  - ARCH_5
+  - ARCH_6
+  - ARCH_7
+  - ARCH_8
+  - ARCH_9
+  - ARCH_10
+  - M0
+  - M1
+  - M2
+  - M3
+  - M4
+
+implementation:
+  status: idle             # pending | in_progress | waiting_review | idle
+  attempts: 0
+
+review:
+  status: approved         # last MVP step M4 was approved
+  last_feedback_file: "docs/AI/FEEDBACK.md"
+
+next_actor: human          # implementation | verification | orchestrator | human
+
+track: MVP_PERF
+plan_files:
+  - implementation_plan.md
+  - docs/MVP_STEPS.md
+  - docs/PROJECT_CONTEXT.md
+  - docs/AI/TEAM_CONTRACT.md

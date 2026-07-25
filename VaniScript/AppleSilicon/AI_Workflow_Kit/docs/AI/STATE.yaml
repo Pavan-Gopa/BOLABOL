@@ -1,21 +1,34 @@
-# UI_AS track — orchestrated by Grok
-# Product scope: AI_Workflow_Kit/docs/UI_AS_STEPS.md
+# QWEN_MCP track — orchestrated by Cline
+# Product scope: AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md
 
-current_step: U3
+current_step: Q2
 step_description: >
-  Optional app chrome density: Sidebars / Settings / Chat / Export workspace aligned
-  with editor Density tokens. Include ExportWorkspaceView (controls grid, cards,
-  buttons, section spacing) — chrome only, no export pipeline changes.
-  Apple Silicon only. Do NOT redesign Electron. Do NOT change Grok/MCP logic
-  beyond spacing/chrome. Keep accent + glass. Minimal diffs.
+  QwenProvider skeleton + embedded chat (Apple Silicon). Add QwenProvider
+  (CLI subprocess, Codex/Grok pattern) to VaniScriptCore and connect it to
+  the route selector in ChatSidebarView as .qwen. Chat with Qwen works in AS.
+  MCP tools wiring is Q3 — this step is plain chat only.
+  Apple Silicon only. Do NOT touch Electron. Do NOT change MCP server logic.
+  Minimal diffs. Well-commented code per TEAM_CONTRACT § Comments.
 
 target_files:
-  - Sources/VaniScript/Views/SidebarView.swift
-  - Sources/VaniScript/Views/ContentView.swift
-  - Sources/VaniScript/Views/SettingsView.swift
-  - Sources/VaniScript/Views/ChatSidebarView.swift
-  - Sources/VaniScript/Views/ExportWorkspaceView.swift
-  - Sources/VaniScript/Theme/VaniScriptTheme.swift
+  - Sources/VaniScript/Services/QwenAgentService.swift       # NEW
+  - Sources/VaniScriptCore/QwenAgentSupport.swift            # NEW
+  - Sources/VaniScriptCore/McpContracts.swift                # add .qwen to McpClientProfileID
+  - Sources/VaniScriptCore/AppSettings.swift                 # add qwenChatModelID, qwenChatReasoningEffort
+  - Sources/VaniScript/Views/ChatSidebarView.swift           # route selector .qwen + qwenModelMenu
+  - Sources/VaniScript/Views/SettingsView.swift              # Qwen agent option in Agents tab
+  - Tests/VaniScriptCoreTests/QwenAgentSupportTests.swift    # NEW
+  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
+
+coder_brief: >
+  Mirror GrokAgentService/GrokAgentSupport pattern for Qwen CLI.
+  Binary: /Users/pavan/.local/bin/qwen (v0.20.0).
+  Streaming: -o stream-json → NDJSON (assistant.message.content[].text).
+  Model: qwen3.8-max-preview via -m flag.
+  Auth: token in child env only (DASHSCOPE_API_KEY / BAILIAN_TOKEN_PLAN_API_KEY).
+  MCP isolation: qwen mcp add vaniscript_embedded <sse-url> --transport sse
+    --header "Authorization: Bearer $VANISCRIPT_MCP_TOKEN" --scope project --trust.
+  See DECISIONS.md D-2026-07-25 Q1 Discovery for full details.
 
 completed_steps:
   - G0
@@ -29,6 +42,9 @@ completed_steps:
   - U0
   - U1
   - U2
+  - U3
+  - UI_DONE
+  - Q1
 
 implementation:
   status: pending
@@ -38,21 +54,29 @@ review:
   status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
+qa:
+  status: green
+  last_report: ""
+  suite: ""
+  bugs_open: 0
+
 next_actor: implementation
 
-track: UI_AS
-prior_track: GROK_MCP
+track: QWEN_MCP
+prior_track: UI_AS
 
 working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "ui/pre-U3"
-  last_post_tag: "ui/U2-done"
-  last_commit: "5d7097b"
+  last_pre_tag: "qwen/pre-Q2"
+  last_post_tag: "ui/U3-done"
+  last_commit: "271f85d"
 
 plan_files:
-  - AI_Workflow_Kit/docs/UI_AS_STEPS.md
+  - AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md
+  - AI_Workflow_Kit/docs/QWEN_ARCHITECTURE.md
   - AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
   - AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md
+  - AI_Workflow_Kit/docs/DECISIONS.md

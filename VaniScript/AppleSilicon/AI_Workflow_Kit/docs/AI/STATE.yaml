@@ -48,11 +48,11 @@ completed_steps:
   - Q6
 
 implementation:
-  status: pending
-  attempts: 0
+  status: waiting_review
+  attempts: 1
 
 review:
-  status: pending
+  status: approved
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
@@ -61,7 +61,7 @@ qa:
   suite: "62 scripts (62 PASS / 0 FAIL) — Q6 final"
   bugs_open: 0
 
-next_actor: coder
+next_actor: orchestrator
 
 track: QWEN_MCP
 prior_track: UI_AS

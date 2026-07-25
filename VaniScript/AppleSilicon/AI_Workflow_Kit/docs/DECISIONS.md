@@ -114,4 +114,19 @@
 - **Out of scope:** embedded chat (done Q2/Q4), новые tools/scopes, изменение логики MCP
   server, изменение CORS. `[high]`
 
+## D-2026-07-26-Q7 — QWEN_MCP track complete
+
+- **Тип:** DOC-ONLY. Финальный ADR трека QWEN_MCP.
+- **Итог:** Все 3 поверхности Qwen-доступа реализованы и задокументированы:
+  1. External Qwen MCP (SSE) — Q5
+  2. Apple Silicon embedded Qwen chat — Q2/Q3/Q6
+  3. Electron embedded Qwen chat — Q4
+  + In-app API (VaniScriptCore) — Q6
+- **Шаги:** Q1 (discovery) → Q2 (AS skeleton) → Q3 (MCP wiring) →
+  Q4 (Electron) → Q5 (external) → Q6 (API hardening) → Q7 (doc/acceptance).
+- **Тесты:** 267 unit tests, 62 QA scripts, 0 bugs open.
+- **Инварианты соблюдены:** no silent fallback, token env-only,
+  vaniscript_embedded isolated, Codex/Grok parity.
+- **Статус:** QWEN_MCP → QWEN_DONE.
+
 

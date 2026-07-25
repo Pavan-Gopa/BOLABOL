@@ -25,7 +25,11 @@ if ! command -v python3 &>/dev/null; then
 fi
 
 # Read enabled scripts (relative to QA/scripts/) in manifest order.
-mapfile -t SCRIPTS < <(python3 - "$MANIFEST" <<'PY'
+# Portable to macOS bash 3.2 (no `mapfile`); consume python output via a read loop.
+SCRIPTS=()
+while IFS= read -r _line; do
+  [[ -n "$_line" ]] && SCRIPTS+=("$_line")
+done < <(python3 - "$MANIFEST" <<'PY'
 import json, sys
 m = json.load(open(sys.argv[1]))
 for s in m.get("scripts", []):

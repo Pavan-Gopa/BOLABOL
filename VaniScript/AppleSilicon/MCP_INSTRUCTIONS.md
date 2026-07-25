@@ -4,6 +4,13 @@ VaniScript can expose a local Model Context Protocol server for trusted AI tools
 
 The server is disabled by default. Enable it in **VaniScript Settings -> Agents -> Local MCP Server**.
 
+VaniScript also ships **embedded AI provider chats** (Codex, Grok, and Qwen) that run the
+provider CLI as a subprocess and reach these same MCP tools through the isolated
+`vaniscript_embedded` server. The embedded chat is wired automatically; the
+[External Qwen CLI](#external-qwen-cli) section below covers connecting a Qwen CLI that you
+launch yourself. For programmatic (non-UI) use, the in-app API lives in
+`QwenStreamingProvider` (`VaniScriptCore`) with streaming, cancel, and typed errors.
+
 ## Security Model
 
 - Endpoint: `http://127.0.0.1:19790/sse`

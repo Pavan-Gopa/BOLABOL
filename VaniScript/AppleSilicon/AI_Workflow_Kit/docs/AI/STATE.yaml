@@ -56,8 +56,8 @@ review:
 
 qa:
   status: green
-  last_report: ""
-  suite: ""
+  last_report: "QA/BUG_REPORT.md"
+  suite: "37 scripts (37 PASS / 0 FAIL)"
   bugs_open: 0
 
 next_actor: orchestrator

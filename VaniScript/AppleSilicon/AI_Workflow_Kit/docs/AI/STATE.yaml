@@ -70,8 +70,8 @@ working_roots:
 
 checkpoint:
   last_pre_tag: "qwen/pre-Q2"
-  last_post_tag: "ui/U3-done"
-  last_commit: "271f85d"
+  last_post_tag: "qwen/Q2-done"
+  last_commit: "6df644c"
 
 plan_files:
   - AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md

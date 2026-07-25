@@ -63,3 +63,44 @@ Env substitution `${VANISCRIPT_MCP_TOKEN}` сохраняется дословн
 - Token только в env дочернего процесса; в argv и в `settings.json` — только `${VANISCRIPT_MCP_TOKEN}`.
 - No silent fallback: `.mcpUnavailable` при `mcpConfiguration.canStart == false`.
 - Изоляция: project-scope MCP в 0o700 workspace, единственный разрешённый server — `vaniscript_embedded`.
+
+---
+
+## Q5 — External Qwen MCP access (doc-only)
+
+**СТАТУС:** DONE — doc-only, no code changes. QA gate green (37/37 PASS, nothing broken).
+
+### Что сделано
+- `AppleSilicon/MCP_INSTRUCTIONS.md`: добавлена секция **«External Qwen CLI»** с двумя
+  вариантами подключения внешнего Qwen CLI к VaniScript MCP server (`qwen mcp add ...`
+  project scope + эквивалентный `.qwen/settings.json`), пояснением про токен из
+  Settings → MCP, требование запущенного приложения, списком доступных tools
+  (`get_project_state`, `get_subtitle_style`, `get_shorts_plans`, `apply_subtitle_edits`,
+  `apply_glossary`, и др.) и security-заметками. Указана портовая разница (19789 Electron /
+  19790 AS).
+- `Electron/MCP_INSTRUCTIONS.md`: добавлена секция **«7. Qwen (external CLI)»** с тем же
+  примером, адаптированным под Electron-сборку (endpoint `http://127.0.0.1:19789/sse`).
+- `DECISIONS.md`: добавлена запись **D-2026-07-25-Q5** (doc-only, SSE endpoint, Bearer auth,
+  no CORS changes, smoke-результаты).
+
+### Smoke-проверка (статическая, без запуска Qwen)
+- **Endpoint:** `http://127.0.0.1:19789/sse` присутствует в `Electron/electron/main.js`
+  (`.listen(19789, '127.0.0.1')`, лог «MCP HTTP/SSE Server listening on .../sse»). `[high]`
+- **Auth:** Bearer-token middleware `isMcpAuthorized` проверяет `authorization` header
+  (`bearer ` + `mcpAccessToken`); также принимается `x-vaniscript-mcp-token`. `[high]`
+- **CORS:** разрешены только loopback origins (`isLoopbackOrigin`); нативные MCP-клиенты без
+  `Origin` → fallback `'*'`. localhost работает без изменений CORS. `[high]`
+
+### Безопасность и контракты
+- Нет изменений кода — инварианты QWEN_MCP сохранены: no silent MCP→API fallback, изолированный
+  project-scope MCP config, токен только в env/config клиента (не инлайн в публичную команду).
+- Токен в примерах задокументирован как `<YOUR_TOKEN>` placeholder — никаких реальных секретов
+  в документацию не попало.
+
+### Комментарии
+- Доки — на английском (согласно правилам шага); ADR и FEEDBACK — на русском (формат программы).
+- Верификация: `grep -c 'qwen'` и `grep -c '19789'` по `AppleSilicon/MCP_INSTRUCTIONS.md` > 0;
+  `bash QA/run_all.sh` → 37/37 PASS.
+
+**ИТОГОВЫЙ СТАТУС:** APPROVED (doc-only)
+

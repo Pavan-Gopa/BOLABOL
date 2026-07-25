@@ -1,30 +1,17 @@
 # QWEN_MCP track — orchestrated by Cline
 # Product scope: AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md
 
-current_step: Q7
+current_step: QWEN_DONE
 step_description: >
-  Doc-only + acceptance smoke. Финальная документация и acceptance-прогон по
-  QWEN_MCP_ACCEPTANCE.md. Без product фич — только доки + smoke-чеклист.
-  QWEN_MCP_ACCEPTANCE.md заполнен реальными путями/командами (по факту Q1–Q6).
-  README / MCP_INSTRUCTIONS обновлены: Qwen как провайдер (AS + Electron + external).
-  Smoke-прогон всех трёх поверхностей (embedded AS, embedded Electron, external MCP).
-  ADR «QWEN_MCP done» в DECISIONS.md.
+  Трек QWEN_MCP завершён. Все 7 шагов (Q1–Q7) выполнены.
+  3 поверхности: External Qwen MCP (:19790), AS embedded chat, Electron embedded.
+  QA: 15/15 GREEN. BUG-001/002/003 CLOSED. 267 тестов green.
+  Следующий трек: по решению Human.
 
-target_files:
-  - AI_Workflow_Kit/docs/QWEN_MCP_ACCEPTANCE.md   # Q7: заполнить реальными путями
-  - AppleSilicon/README.md                         # Q7: Qwen как провайдер
-  - AppleSilicon/MCP_INSTRUCTIONS.md               # Q7: актуализация Qwen-секции
-  - AI_Workflow_Kit/docs/DECISIONS.md              # Q7: ADR «QWEN_MCP done»
-  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
+target_files: []
 
 coder_brief: >
-  Q7 — Doc-only + acceptance smoke. БЕЗ product-кода (Swift/JS/TS/Python не трогаем).
-  1. QWEN_MCP_ACCEPTANCE.md: заполнить все чекбоксы реальными путями/командами по факту Q1–Q6.
-  2. README.md: добавить Qwen как провайдера (AS + external).
-  3. MCP_INSTRUCTIONS.md: актуализировать Qwen-секцию (embedded + external).
-  4. DECISIONS.md: ADR «QWEN_MCP done» — итог трека, все 3 поверхности.
-  5. Smoke: статическая проверка (grep/файлы) что все 3 поверхности на месте.
-  Никаких изменений кода. Только документация.
+  Трек QWEN_MCP завершён. Новых заданий нет. Ждём следующий трек от Human.
 
 completed_steps:
   - G0
@@ -46,9 +33,11 @@ completed_steps:
   - Q4
   - Q5
   - Q6
+  - Q7
+  - QWEN_DONE
 
 implementation:
-  status: waiting_review
+  status: done
   attempts: 1
 
 review:
@@ -56,12 +45,12 @@ review:
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: pending
+  status: green
   last_report: "QA/REPORT.md"
-  suite: "62 scripts (62 PASS / 0 FAIL) — Q6 final"
+  suite: "15 scripts (15 PASS / 0 FAIL) — Q7 final"
   bugs_open: 0
 
-next_actor: orchestrator
+next_actor: human
 
 track: QWEN_MCP
 prior_track: UI_AS
@@ -70,9 +59,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "qwen/pre-Q6"
-  last_post_tag: "qwen/Q6-done"
-  last_commit: "5ec4d28"
+  last_pre_tag: "qwen/pre-Q7"
+  last_post_tag: "qwen/Q7-done"
+  last_commit: "ff4b8b0"
 
 plan_files:
   - AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md

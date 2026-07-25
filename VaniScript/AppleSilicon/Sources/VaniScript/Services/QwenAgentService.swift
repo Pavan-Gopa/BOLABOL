@@ -9,11 +9,6 @@ import VaniScriptCore
 // via `${VANISCRIPT_MCP_TOKEN}` substitution in an ephemeral project `.qwen/settings.json`;
 // isolation comes from project-scoped MCP config under an 0o700 workspace.
 
-struct QwenChatHistoryItem: Sendable {
-    let sender: String
-    let text: String
-}
-
 struct QwenAgentResponse: Sendable {
     let text: String
     let runID: String?
@@ -148,7 +143,7 @@ enum QwenAgentService {
         )
     }
 
-    private static func qwenExecutableURL(fileManager: FileManager = .default) -> URL? {
+    static func qwenExecutableURL(fileManager: FileManager = .default) -> URL? {
         let candidates = [
             URL(fileURLWithPath: NSString("~/.local/bin/qwen").expandingTildeInPath),
             URL(fileURLWithPath: "/usr/local/bin/qwen"),
@@ -180,7 +175,7 @@ enum QwenAgentService {
         return nil
     }
 
-    private static func embeddedWorkspaceURL(fileManager: FileManager = .default) throws -> URL {
+    static func embeddedWorkspaceURL(fileManager: FileManager = .default) throws -> URL {
         let directory = AppStoragePaths.applicationSupportDirectory(fileManager: fileManager)
             .appendingPathComponent("QwenAgentWorkspace", isDirectory: true)
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -194,7 +189,7 @@ enum QwenAgentService {
     /// Writes project-scoped Qwen MCP config so the embedded run uses `vaniscript_embedded`.
     /// Token is referenced via `${VANISCRIPT_MCP_TOKEN}` env substitution — never inlined
     /// as a raw secret. Qwen Code CLI reads `.qwen/settings.json` from the project cwd.
-    private static func writeIsolatedMcpConfig(workspaceURL: URL, port: Int) throws {
+    static func writeIsolatedMcpConfig(workspaceURL: URL, port: Int) throws {
         let qwenDir = workspaceURL.appendingPathComponent(".qwen", isDirectory: true)
         try FileManager.default.createDirectory(at: qwenDir, withIntermediateDirectories: true)
         let settingsURL = qwenDir.appendingPathComponent("settings.json")
@@ -206,7 +201,7 @@ enum QwenAgentService {
         )
     }
 
-    private static func qwenEnvironment(accessToken: String) -> [String: String] {
+    static func qwenEnvironment(accessToken: String) -> [String: String] {
         var environment = ProcessInfo.processInfo.environment
         // Q3: token is exported for MCP; the CLI substitutes it into the project config's
         // Authorization header at runtime, and it never appears in argv or on-disk files.
@@ -216,7 +211,7 @@ enum QwenAgentService {
         return environment
     }
 
-    private static func prompt(for history: [QwenChatHistoryItem]) -> String {
+    static func prompt(for history: [QwenChatHistoryItem]) -> String {
         let conversation = history
             .filter { $0.sender == "user" || $0.sender == "assistant" }
             .suffix(12)

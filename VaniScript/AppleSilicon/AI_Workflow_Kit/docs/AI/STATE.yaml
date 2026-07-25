@@ -1,28 +1,30 @@
 # QWEN_MCP track — orchestrated by Cline
 # Product scope: AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md
 
-current_step: Q5
+current_step: Q7
 step_description: >
-  External Qwen MCP access (doc-only). AppleSilicon/MCP_INSTRUCTIONS.md: секция
-  «External Qwen CLI» — qwen mcp add ... --transport sse --header "Authorization:
-  Bearer <token>" --scope project --trust + эквивалентный .qwen/settings.json.
-  Electron/MCP_INSTRUCTIONS.md: секция «7. Qwen (external CLI)» — endpoint
-  http://127.0.0.1:19789/sse. Smoke (static): endpoint 19789/sse в main.js,
-  Bearer-auth middleware isMcpAuthorized, CORS loopback-only. ADR D-2026-07-25-Q5.
-  Commit 50ebb06.
+  Doc-only + acceptance smoke. Финальная документация и acceptance-прогон по
+  QWEN_MCP_ACCEPTANCE.md. Без product фич — только доки + smoke-чеклист.
+  QWEN_MCP_ACCEPTANCE.md заполнен реальными путями/командами (по факту Q1–Q6).
+  README / MCP_INSTRUCTIONS обновлены: Qwen как провайдер (AS + Electron + external).
+  Smoke-прогон всех трёх поверхностей (embedded AS, embedded Electron, external MCP).
+  ADR «QWEN_MCP done» в DECISIONS.md.
 
 target_files:
-  - AppleSilicon/MCP_INSTRUCTIONS.md                           # Q5: External Qwen CLI section
-  - Electron/MCP_INSTRUCTIONS.md                               # Q5: Qwen external CLI section
-  - AppleSilicon/AI_Workflow_Kit/docs/DECISIONS.md             # Q5: ADR D-2026-07-25-Q5
-  - AppleSilicon/AI_Workflow_Kit/docs/AI/FEEDBACK.md           # Q5: APPROVED (doc-only)
+  - AI_Workflow_Kit/docs/QWEN_MCP_ACCEPTANCE.md   # Q7: заполнить реальными путями
+  - AppleSilicon/README.md                         # Q7: Qwen как провайдер
+  - AppleSilicon/MCP_INSTRUCTIONS.md               # Q7: актуализация Qwen-секции
+  - AI_Workflow_Kit/docs/DECISIONS.md              # Q7: ADR «QWEN_MCP done»
+  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 
 coder_brief: >
-  Q5 DONE (commit 50ebb06, doc-only).
-  Next: Q6 — Qwen API provider in VaniScriptCore (in-app, no CLI).
-  OpenAI-compatible API via DashScope/Bailian endpoint.
-  QwenApiProvider.swift: chat completion, streaming, model catalog.
-  No MCP changes. No Electron changes.
+  Q7 — Doc-only + acceptance smoke. БЕЗ product-кода (Swift/JS/TS/Python не трогаем).
+  1. QWEN_MCP_ACCEPTANCE.md: заполнить все чекбоксы реальными путями/командами по факту Q1–Q6.
+  2. README.md: добавить Qwen как провайдера (AS + external).
+  3. MCP_INSTRUCTIONS.md: актуализировать Qwen-секцию (embedded + external).
+  4. DECISIONS.md: ADR «QWEN_MCP done» — итог трека, все 3 поверхности.
+  5. Smoke: статическая проверка (grep/файлы) что все 3 поверхности на месте.
+  Никаких изменений кода. Только документация.
 
 completed_steps:
   - G0
@@ -43,34 +45,34 @@ completed_steps:
   - Q3
   - Q4
   - Q5
+  - Q6
 
 implementation:
-  status: done
-  attempts: 1
+  status: pending
+  attempts: 0
 
 review:
-  status: approved
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: green
-  last_report: "QA/BUG_REPORT.md"
-  suite: "37 scripts (37 PASS / 0 FAIL)"
+  status: pending
+  last_report: "QA/REPORT.md"
+  suite: "62 scripts (62 PASS / 0 FAIL) — Q6 final"
   bugs_open: 0
 
-next_actor: orchestrator
+next_actor: coder
 
 track: QWEN_MCP
 prior_track: UI_AS
 
 working_roots:
   - AppleSilicon
-  - Electron
 
 checkpoint:
-  last_pre_tag: "qwen/pre-Q5"
-  last_post_tag: "qwen/Q5-done"
-  last_commit: "50ebb06"
+  last_pre_tag: "qwen/pre-Q6"
+  last_post_tag: "qwen/Q6-done"
+  last_commit: "PENDING"
 
 plan_files:
   - AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md

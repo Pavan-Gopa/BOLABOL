@@ -58,6 +58,21 @@ SCRIPTS=(
     "q5_doc_only_no_code.sh"
     "q5_qwen_settings_format.sh"
     "q5_no_fallback_doc.sh"
+    # H. Q6 Delta — in-app API hardening (source-level, instant)
+    "q6_streaming_api_surface.sh"
+    "q6_error_cases.sh"
+    "q6_cancel_sigterm.sh"
+    "q6_no_zombie.sh"
+    "q6_oslock_async_safe.sh"
+    "q6_ndjson_parser.sh"
+    "q6_token_env_only.sh"
+    "q6_no_silent_fallback.sh"
+    "q6_history_item_public.sh"
+    "q6_helpers_internal.sh"
+    "q6_login_detection.sh"
+    "q6_done_exactly_once.sh"
+    "q6_no_ui_changes.sh"
+    "q6_bug002_electron.sh"
     # G. Regression (source-level, instant)
     "electron_grok_embedded.sh"
     "electron_mcp_cors.sh"
@@ -71,6 +86,8 @@ SCRIPTS=(
     "provider_codex_tests.sh"
     "provider_grok_tests.sh"
     "provider_qwen_tests.sh"
+    # H. Q6 Delta (swift test)
+    "q6_test_coverage.sh"
     # D. Settings (swift test)
     "settings_decode.sh"
     # E. Security (swift test)

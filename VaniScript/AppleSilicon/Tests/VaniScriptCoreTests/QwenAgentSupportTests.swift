@@ -90,4 +90,61 @@ struct QwenAgentSupportTests {
         #expect(run.responseText == "OK")
         #expect(run.errorMessage == nil)
     }
+
+    // Q6: streaming / cancel / error tests
+
+    @Test("QwenChatChunk text kind is equatable")
+    func chatChunkTextEquatable() {
+        let a = QwenChatChunk(kind: .text("hello"))
+        let b = QwenChatChunk(kind: .text("hello"))
+        let c = QwenChatChunk(kind: .text("world"))
+        #expect(a == b)
+        #expect(a != c)
+    }
+
+    @Test("QwenChatChunk done kind carries run")
+    func chatChunkDoneCarriesRun() {
+        let run = QwenAgentRun(runID: "sess-1", responseText: "Hi", toolNames: [], errorMessage: nil)
+        let chunk = QwenChatChunk(kind: .done(run))
+        if case .done(let r) = chunk.kind {
+            #expect(r.runID == "sess-1")
+            #expect(r.responseText == "Hi")
+        } else {
+            Issue.record("Expected .done kind")
+        }
+    }
+
+    @Test("QwenChatError descriptions are non-empty")
+    func chatErrorDescriptions() {
+        let errors: [QwenChatError] = [.cliMissing, .notLoggedIn, .mcpUnavailable, .cancelled, .upstream("x")]
+        for error in errors {
+            #expect(error.errorDescription != nil)
+            #expect(!error.errorDescription!.isEmpty)
+        }
+    }
+
+    @Test("QwenChatError upstream carries message")
+    func chatErrorUpstreamMessage() {
+        let error = QwenChatError.upstream("quota exceeded")
+        #expect(error.errorDescription?.contains("quota exceeded") == true)
+    }
+
+    @Test("QwenChatHistoryItem is equatable and sendable")
+    func chatHistoryItemEquatable() {
+        let a = QwenChatHistoryItem(sender: "user", text: "hello")
+        let b = QwenChatHistoryItem(sender: "user", text: "hello")
+        let c = QwenChatHistoryItem(sender: "assistant", text: "hi")
+        #expect(a == b)
+        #expect(a != c)
+    }
+
+    @Test("QwenStreamingProvider cancel is idempotent and safe without active process")
+    func cancelIdempotentNoProcess() {
+        let provider = QwenStreamingProvider()
+        // Q6: cancel before any send() must not crash.
+        provider.cancel()
+        provider.cancel()
+        // No assertion needed — absence of crash is the test.
+    }
+
 }

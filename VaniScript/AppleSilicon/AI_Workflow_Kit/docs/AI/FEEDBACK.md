@@ -37,3 +37,29 @@
 ---
 
 **ИТОГОВЫЙ СТАТУС:** APPROVED
+
+---
+
+## Q3 — MCP wiring: Qwen → vaniscript_embedded (tools)
+
+**СТАТУС:** DONE — `swift test` green (261 tests, 40 suites).
+
+### Что сделано
+- `QwenAgentService.swift`: убран `--safe-mode`; добавлен `writeIsolatedMcpConfig(workspaceURL:port:)`,
+  вызываемый в `send()` до spawn; prompt теперь содержит MCP tool-инструкции (mirror Grok);
+  best-effort cleanup эфемерного `.qwen/` конфига после сессии; role header/комментарии Q2 → Q3.
+- `QwenMcpConfig.swift` (NEW, VaniScriptCore): чистый билдер `.qwen/settings.json` —
+  server `vaniscript_embedded`, SSE `http://127.0.0.1:<port>/sse`, header
+  `Authorization: Bearer ${VANISCRIPT_MCP_TOKEN}`, `trust: true`. Тестируемый без spawn.
+- `McpContracts.swift`: обновлён qwen `setupText` (SSE + `--scope project --trust`, token via env).
+- Тесты: `QwenMcpConfigTests.swift` (NEW) — server name/URL/port, token via env only (no secret inlined),
+  валидный JSON и no silent fallback инварианты.
+
+### Формат конфига Qwen CLI (verified)
+`qwen mcp add ... --scope project` пишет `.qwen/settings.json` с ключом `mcpServers`.
+Env substitution `${VANISCRIPT_MCP_TOKEN}` сохраняется дословно → секрет не попадает в файл.
+
+### Безопасность
+- Token только в env дочернего процесса; в argv и в `settings.json` — только `${VANISCRIPT_MCP_TOKEN}`.
+- No silent fallback: `.mcpUnavailable` при `mcpConfiguration.canStart == false`.
+- Изоляция: project-scope MCP в 0o700 workspace, единственный разрешённый server — `vaniscript_embedded`.

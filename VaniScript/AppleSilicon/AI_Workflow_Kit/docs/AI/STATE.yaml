@@ -2,31 +2,34 @@
 # Product scope: AI_Workflow_Kit/docs/API_USAGE_STEPS.md
 # Architecture: AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
 
-current_step: A4
+current_step: A5
 step_description: >
-  Валидация ключа (бейдж Checking/Valid/Invalid) + автоподтягивание моделей.
-  CloudKeyValidator + CloudModelCatalog; в карточке провайдера бейдж и dropdown
-  моделей (editable combo + Retry). Модель → settings; resolve() Gemini/OpenAI
-  читает settings (дефолт = старый хардкод). Unit-тесты парсеров на моках.
+  Полноценная интеграция Qwen / OpenRouter / Ollama Cloud: из заглушек A3 в
+  рабочие провайдеры (ключ → валидация/модели A4 → Translation + Transcribing
+  где supportsTranscription). ProviderRegistry + resolve + engine routing.
+  Тумблер Transcribing честно по capabilities. Usage record для новых id.
+  Unit-тесты resolve/routing (мок). ADR endpoints.
 
 target_files:
-  - Sources/VaniScriptCore/CloudKeyValidator.swift
-  - Sources/VaniScriptCore/CloudModelCatalog.swift
-  - Sources/VaniScript/Views/SettingsView.swift
+  - Sources/VaniScriptCore/ProviderRegistry.swift
   - Sources/VaniScript/Services/CloudAudioTranscriptionEngine.swift
   - Sources/VaniScript/Services/CloudTextTranslationEngine.swift
-  - Tests/VaniScriptCoreTests/CloudModelCatalogTests.swift
-  - Tests/VaniScriptCoreTests/CloudKeyValidatorTests.swift
+  - Sources/VaniScript/Views/SettingsView.swift
+  - Tests/VaniScriptCoreTests/ProviderRegistryCloudTests.swift
+  - Tests/VaniScriptCoreTests/CloudProviderRoutingTests.swift
+  - AI_Workflow_Kit/docs/DECISIONS.md
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 
 coder_brief: >
-  A4 — key validation badge + model catalog. NEW CloudKeyValidator (idle/checking/
-  valid/invalid, per-provider strategy §9.1, debounce). NEW CloudModelCatalog
-  listModels + session cache §9.2. ProviderCardView (in SettingsView.swift A3) —
-  badge; on valid → load models → Picker/editable combo + Retry; selection →
-  settings.*Model. ActiveCloud*Provider.resolve() uses settings model for
-  Gemini/OpenAI (default = old hardcode). Unit tests with mocked JSON. No A5
-  engine routing for qwen/openrouter/ollama. No A6 stats. Graphify first.
+  A5 — Qwen/OpenRouter/Ollama Cloud full integration. ProviderRegistry cloud
+  options when key present. ActiveCloud*Provider.resolve for new providers
+  (base URL + settings model + key). Engines: OpenAI-compatible for Qwen
+  (DashScope compatible-mode) / OpenRouter; Ollama Cloud Bearer + /api or /v1
+  per A1 discovery. UI: remove coming-soon stubs; toggles by
+  capabilities.supportsTranscription; CloudKeyModelRow for new providers.
+  UsageRecorder path for new providerIds. Optional: wire transcription usage
+  via NativeProcessingPipeline if still missing (A2 defer). Unit tests mock
+  only. ADR in DECISIONS. No A6 stats UI, no A7 balance. Graphify first.
 
 completed_steps:
   - G0
@@ -53,25 +56,23 @@ completed_steps:
   - A1
   - A2
   - A3
+  - A4
 
 implementation:
-  status: approved
-  attempts: 1
+  status: pending
+  attempts: 0
 
 review:
-  status: approved
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: pending
+  status: green
   last_report: "QA/REPORT.md"
-  suite: "awaiting A4 full suite (prior A3: 60 PASS / 0 FAIL)"
+  suite: "A4: 81 PASS / 0 FAIL; 21 a4-* scripts; swift 308/44 GREEN"
   bugs_open: 0
-  note: >
-    A4 Gemini APPROVED. Anthropic ReadOnly + whisper-1 transcription OK scope.
-    Post-tag apiusage/A4-done only after QA green.
 
-next_actor: qa
+next_actor: implementation
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -81,8 +82,8 @@ working_roots:
 
 checkpoint:
   last_pre_tag: "apiusage/pre-A4"
-  last_post_tag: "apiusage/A3-done"
-  last_commit: "428fa32"
+  last_post_tag: "apiusage/A4-done"
+  last_commit: "1507177"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

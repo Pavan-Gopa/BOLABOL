@@ -341,3 +341,23 @@
   (+ suite `CloudBalanceService (A7)`: парсеры credits/key, маппинг per-key cap, Ollama
   plan, guard `.estimated`/`.none` no-fetch, quiet fallback, TTL cache, force refresh).
 
+
+## D-2026-07-26-A8 — API_USAGE done (doc-only acceptance)
+
+- **Status:** Implemented (awaiting verification). Закрывает трек `API_USAGE` (A1–A8).
+- **Context:** Все product-фичи трека закрыты на A1–A7 (каталог/данные, запись usage,
+  dropdown+карточки, валидация+модели, интеграция Qwen/OpenRouter/Ollama Cloud,
+  статистика UI, реальный баланс). A8 — финальная документация + acceptance smoke,
+  без изменений product-кода (как GROK_MCP G6 / QWEN_MCP Q7).
+- **Decision:**
+  1. **`API_USAGE_ACCEPTANCE.md` (NEW):** чеклист по 5 поверхностям вкладки
+     «API & Usage» с реальными путями/командами по факту A1–A7; smoke-команды;
+     регрессионная секция; итог [PASS].
+  2. **`AppleSilicon/README.md`:** новая секция «Cloud Providers & the API & Usage
+     tab» — провайдеры в порядке каталога (вкл. Qwen/OpenRouter/Ollama Cloud),
+     5 поверхностей, honesty-принципы (§14.5/§14.6), ссылка на ACCEPTANCE.
+  3. Product-код (Swift/JS/TS) не тронут — diff только в docs (target_files A8).
+- **Smoke (A8):** `swift build` green; `swift test` — **331 tests / 47 suites PASS**
+  (без сети/реальных ключей — моки). Инварианты §14 соблюдены; QA A7: 133 PASS /
+  0 FAIL, bugs_open: 0.
+- **Outcome:** после approve Verifier → `API_USAGE_DONE`, tag `apiusage/A8-done`.

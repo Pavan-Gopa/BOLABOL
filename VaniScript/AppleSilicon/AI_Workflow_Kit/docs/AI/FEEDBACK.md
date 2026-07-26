@@ -1,5 +1,36 @@
 # Verification Report (Verification Engineer)
 
+Проверяемый шаг: **A8 — Doc-only + acceptance smoke**
+Требования шага: `API_USAGE_STEPS.md` (§A8), `API_USAGE_ARCHITECTURE.md` (§14)
+ADR: `DECISIONS.md` → `D-2026-07-26-A8`
+Роль: Verification Engineer (Gemini 3.6 Flash)
+
+---
+
+### 1. Сборка и тесты
+- **Собирается и проходит ли тестовый прогон проект после изменений?**
+  Да. `swift build` прошёл успешно (`Build complete!`). `swift test` выполнен успешно — **331 tests в 47 suites PASS** (0 failures).
+
+### 2. Логика и соответствие требованиям A8
+- **Acceptance Checklist (5 поверхностей):**
+  Создан новый файл `API_USAGE_ACCEPTANCE.md` с детальным чеклистом по всем 5 поверхностям вкладки «API & Usage» с реальными путями (`CloudProviderCatalog`, `CloudKeyValidator`, `CloudModelCatalog`, `UsageRecorder`, `UsageStatisticsView`, `CloudBalanceService`, `SettingsView`), смоук-командами и регрессионной секцией.
+- **Обновление README (Apple Silicon):**
+  В `AppleSilicon/README.md` добавлена подробная секция «Cloud Providers & the API & Usage tab», описывающая порядок провайдеров каталога, 5 поверхностей вкладки и принципы честности.
+- **ADR в DECISIONS.md:**
+  Добавлен ADR `D-2026-07-26-A8` («API_USAGE done»), фиксирующий завершение трека API_USAGE (A1–A8).
+- **Инварианты и Scope:**
+  - Product-код (Swift/JS/TS) **строго не тронут** (проверено через `git status`, dirty-файлы исключительно в `docs/` и `README.md`).
+  - Все инварианты §14 соблюдены (AppSettings decode migration-safe, Codex/Grok/Qwen/MCP/локальные модели не затрагивались).
+  - QA-контур: QA waived for A8 (doc-only).
+
+---
+
+**ИТОГОВЫЙ СТАТУС:** [APPROVED]
+
+---
+
+# Verification Report (Verification Engineer)
+
 Проверяемый шаг: **A7 — Реальный баланс (адаптер, OpenRouter first)**
 Требования шага: `API_USAGE_STEPS.md` (§A7), `API_USAGE_ARCHITECTURE.md` (§11, §14)
 ADR: `DECISIONS.md` → `D-2026-07-26-A7`
@@ -520,3 +551,33 @@ ADR: `DECISIONS.md` → `D-2026-07-26-A7`.
 
 **next_actor: orchestrator**
 
+
+---
+
+# A8 — Doc-only + acceptance smoke — Coder handoff
+
+Роль: Implementation Engineer (Coder). Шаг: **A8** (DOC-ONLY).
+Требования: `API_USAGE_STEPS.md` (§A8), `API_USAGE_ARCHITECTURE.md` (§14).
+ADR: `DECISIONS.md` → `D-2026-07-26-A8`.
+
+## Что сделано (только target_files, все — markdown)
+
+1. **`AI_Workflow_Kit/docs/API_USAGE_ACCEPTANCE.md` (NEW):** acceptance-чеклист по
+   5 поверхностям (dropdown A3; карточка+валидация+модели A3/A4; запись usage A2/A5;
+   статистика UI A6; реальный баланс A7) с реальными путями (`CloudProviderCatalog`,
+   `CloudKeyValidator`, `CloudModelCatalog`, `UsageRecorder`, `UsageStatisticsView`,
+   `CloudBalanceService`, `SettingsView`) и smoke-командами. Регрессия + итог [PASS].
+2. **`README.md` (Apple Silicon, MODIFY):** секция «Cloud Providers & the API &
+   Usage tab» — Qwen/OpenRouter/Ollama Cloud, 5 поверхностей, honesty-инварианты,
+   ссылка на ACCEPTANCE.
+3. **`DECISIONS.md`:** ADR `D-2026-07-26-A8` («API_USAGE done»).
+4. Product-код (Swift/JS/TS) **не тронут** — проверено `git status` (docs-only diff).
+
+## Smoke
+
+- `swift build` — OK (Build complete).
+- `swift test` — **331 tests / 47 suites GREEN**, 0 failures (без сети/ключей — моки).
+- Ручной UI-чеклист описан в ACCEPTANCE (прогон без реальных ключей).
+- Инварианты §14: соблюдены (doc-only, decode/движки/MCP не тронуты, ключей в доках нет).
+
+**next_actor: orchestrator**

@@ -10,6 +10,7 @@
 | **GROK_MCP** | G1 → G6 → GROK_DONE | `GROK_MCP_STEPS.md` |
 | **UI_AS** | U0 → U3 → UI_DONE | `UI_AS_STEPS.md` |
 | **QWEN_MCP** | Q1 → Q7 → QWEN_DONE | `QWEN_MCP_STEPS.md` (+ `QWEN_ARCHITECTURE.md`) |
+| **API_USAGE** | A1 → A8 → API_USAGE_DONE | `API_USAGE_STEPS.md` (+ `API_USAGE_ARCHITECTURE.md`) |
 
 Scaffold kit (`AI_Workflow_Kit/**`) — bootstrap оркестратора; **product code** всегда Hy3.
 

@@ -129,4 +129,66 @@
   vaniscript_embedded isolated, Codex/Grok parity.
 - **Статус:** QWEN_MCP → QWEN_DONE.
 
+## D-2026-07-26-API_USAGE — Реорганизация вкладки «API & Usage» (Apple Silicon)
+
+- **Контекст:** Вкладка `API & Usage` (SettingsView → `apiKeysTab`) в Apple Silicon
+  версии недоделана относительно Electron-эталона. Подтверждено в коде:
+  (1) все провайдерские карточки (Gemini/OpenAI/Anthropic/Custom) развёрнуты всегда —
+  нет единого выбора провайдера; (2) «Text Model» — `ReadOnlyRow` с захардкоженными
+  значениями (`gemini-2.5-flash`, `gpt-4o-mini / whisper-1`, `claude-3-5-sonnet`) в
+  `ActiveCloud*Provider.resolve()`; (3) **статистика пустая, т.к. `settings.usage`
+  нигде не пишется** — движки `CloudAudioTranscriptionEngine`/`CloudTextTranslationEngine`
+  не парсят token-счётчики из API-ответов и не вызывают запись (в Electron есть
+  `trackUsage()` в `src/services/storage.ts`, в Swift аналога нет); (4) отсутствуют
+  cloud-провайдеры Qwen / OpenRouter / Ollama Cloud; (5) нет реального баланса
+  (нет даже в Electron — там локальная оценка по токенам).
+- **Решение:** Новый трек **API_USAGE** (A1–A8 → `API_USAGE_DONE`), **только Apple Silicon**.
+  1. **Единый dropdown провайдеров** в фиксированном порядке (утверждён Human):
+     `Google Gemini → OpenAI → Anthropic → Qwen → OpenRouter → Ollama Cloud → Custom`.
+     Карточка настроек показывается **только для выбранного** провайдера (снижение
+     когнитивной нагрузки — требование Human «чем проще, тем лучше»).
+  2. **Карточка провайдера:** ключ + кнопка **Get API Key** (существующий `ApiKeyInputRow`)
+     + **бейдж валидности** (Checking / Valid / Invalid) + **автоподтягивание моделей**
+     в dropdown (после валидного ключа) + выбор модели + бюджет. Новая фича, улучшает
+     и Swift, и Electron.
+  3. **Запись usage** (чинит пустую статистику): парсинг token-счётчиков из ответов
+     Gemini (`usageMetadata.promptTokenCount/candidatesTokenCount`) и OpenAI-compatible
+     (`usage.prompt_tokens/completion_tokens`), возврат из движков, запись в
+     `settings.usage` через `WorkflowStore` (аналог Electron `trackUsage`).
+  4. **Статистика по эталону Electron** (`SettingsModal.tsx` tab 7): Last Transaction
+     Details (с бейджем модели) + сводка Transcribing / Translation-Editing → модель +
+     per-model карточки (`N transactions · Prompt · Completion · Total · Audio min ·
+     Estimated spent · Estimated remaining`) + дисклеймер «Cost is an estimate…» +
+     Reset Statistics.
+  5. **Реальный баланс — адаптером, только где провайдер отдаёт** (OpenRouter:
+     `GET /api/v1/credits` + `GET /api/v1/key`). Где не отдаёт — локальная estimated
+     spent (как сейчас). Ollama Cloud — плановые лимиты (биллинг по GPU-времени, не $).
+  6. **Custom** = существующий `CustomCloudProvider` (механизм полон), просто перенос
+     в новый dropdown-поток.
+- **Альтернативы (отвергнуты):**
+  - *Оставить развёрнутые карточки* — отвергнуто: когнитивная нагрузка, требование Human.
+  - *Локальный сервер (автодетект Ollama/LM Studio/llama.cpp, «установи Ollama»)* —
+    **отвергнуто явно (Human):** уход от любых локальных установок внешних программ.
+    Всё облачное = облачные API-ключи. Локальные модели = только встроенные рекомендованные
+    (WhisperKit/MLX), скачиваются кнопкой внутри приложения — **вне скоупа этого трека**.
+    Ollama в dropdown = **только облако** (`https://ollama.com`, мастер-ключ, `/api/tags`).
+  - *Реальный баланс для всех провайдеров* — отвергнуто: не все отдают (Anthropic/Gemini
+    не дают $-баланс по ключу); честно показываем estimate там, где реального нет.
+  - *LightLLM и подобные self-hosted* — отвергнуто: требуют установки/администрирования,
+    противоречит требованию простоты.
+- **Риски / ограничения:**
+  - Qwen/OpenRouter/Ollama имеют разные аудио-возможности → тумблер «Use for Transcribing»
+    показывается **честно** только где реально есть аудио-модель; иначе только Translation.
+  - Ollama Cloud биллинг по GPU-времени в рамках плана (Free/Pro/Max), сессионные/недельные
+    лимиты — «$-баланс как в OpenRouter» для него невозможен, не вводим в заблуждение.
+  - Migration: новые поля settings через `decodeIfPresent` (не ломаем существующий decode).
+  - Endpoints новых провайдеров (Qwen DashScope OpenAI-compatible, OpenRouter, Ollama Cloud)
+    верифицируются на A1/A5; до тех пор теги `[med]`.
+- **Точность:** структура и точки интеграции `[high]` (подтверждено в коде);
+  endpoints/возможности новых провайдеров `[med]` (верификация на A1/A5);
+  точные model id и формат баланса `[med]`.
+- **Компаньон-доки:** `API_USAGE_ARCHITECTURE.md` (спек), `API_USAGE_STEPS.md` (A1–A8).
+- **Scope guard:** только Apple Silicon (`Sources/**`, `Tests/**`); Electron не трогаем
+  (parity-улучшение Swift-side, Electron redesign вне программы — DECISIONS D-2026-07-13).
+
 

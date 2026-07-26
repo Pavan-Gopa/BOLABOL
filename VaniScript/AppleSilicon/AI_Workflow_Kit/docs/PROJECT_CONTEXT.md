@@ -17,8 +17,10 @@ Workspace root: `AI Projects/` (multi-project). **Do not** put app source in wor
 |-------|-------|------|
 | **GROK_MCP** | G1 → G6 → `GROK_DONE` | Grok as external MCP client + embedded chat (mirror Codex on AS; Electron functional) |
 | **UI_AS** | U0 → U3 → `UI_DONE` | Density / visual polish **Apple Silicon only** (after GROK_DONE) |
+| **QWEN_MCP** | Q1 → Q7 → `QWEN_DONE` | Qwen 3.8 Max-Preview as first-class AI provider (3 surfaces) |
+| **API_USAGE** | A1 → A8 → `API_USAGE_DONE` | API & Usage tab reorg + new cloud providers (AS only) |
 
-Plans: `AI_Workflow_Kit/docs/GROK_MCP_STEPS.md`, `UI_AS_STEPS.md`.  
+Plans: `AI_Workflow_Kit/docs/GROK_MCP_STEPS.md`, `UI_AS_STEPS.md`, `QWEN_MCP_STEPS.md`, `API_USAGE_STEPS.md`.  
 State of truth: `AI_Workflow_Kit/docs/AI/STATE.yaml`.
 
 ## Architecture notes (relevant)

@@ -15,7 +15,7 @@ if [[ -f "$STATE_FILE" ]]; then
 fi
 
 a7_or_later=0
-if [[ "$current_step" =~ ^A([7-9]|[1-9][0-9]+)$ ]] || [[ "$current_step" == "A7" || "$current_step" == "A8" ]]; then
+if [[ "$current_step" =~ ^A([7-9]|[1-9][0-9]+)$ ]] || [[ "$current_step" == "A7" || "$current_step" == "A8" || "$current_step" == "API_USAGE_DONE" ]]; then
   a7_or_later=1
 fi
 

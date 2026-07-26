@@ -410,6 +410,16 @@ Area → script → asserts. Column **new this run** marks scripts added in the 
 | `a6_no_a7_balance.sh` | step-aware: pre-A7 strict (no balance service); A7+ balance half N/A → assert `CloudBalanceRow` reuse + no direct `URLSession` in UsageStatisticsView |
 | `a5_no_a6_stats_no_a7_balance.sh` | already step-aware (verified PASS at A7): stats half N/A on A6+; balance half OK on A7+ |
 
+> **Terminal-state maintenance (re-validation at current_step = API_USAGE_DONE):**
+> the track advanced past A8 to its terminal API_USAGE_DONE state, which the original
+> A-digit step detectors (A7 / A8 / A9-plus literals) did not recognise. Four scripts
+> were extended to also treat API_USAGE_DONE as ">= A6 / >= A7" (QA maintenance, not a
+> product bug; product code untouched):
+> - `a5_no_a6_stats_no_a7_balance.sh` (a6_or_later detector + two A7+ allowances)
+> - `a6_no_a7_balance.sh` (a7_or_later detector)
+> - `a6_state_yaml_a6.sh` (soft N/A past A6)
+> - `a7_state_yaml_a7.sh` (soft N/A past A7)
+
 ---
 
 ## Gap Hunt Checklist (A7)
@@ -436,6 +446,7 @@ Area → script → asserts. Column **new this run** marks scripts added in the 
 - [x] A1–A6 scripts still enabled (step-aware where needed) → full `run_all.sh`
 - [x] `a6_no_a7_balance` inverted to step-aware for A7+ (QA maintenance, not product bug)
 - [x] `a5_no_a6_stats_no_a7_balance` already step-aware (verified PASS at A7)
+- [x] Terminal-state fix: a5/a6 no-balance + a6/a7 state_yaml now recognise API_USAGE_DONE as >=A6/>=A7 (re-run GREEN 133/0)
 
 **N/A (with reason):**
 - Interactive UI click-through of Refresh / balance row — **N/A (static QA)**: no XCUITest harness; logic covered via `CloudBalanceServiceTests` mocked-network e2e.

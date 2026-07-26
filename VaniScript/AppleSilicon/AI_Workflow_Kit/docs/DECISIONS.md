@@ -192,3 +192,31 @@
   (parity-улучшение Swift-side, Electron redesign вне программы — DECISIONS D-2026-07-13).
 
 
+
+## D-2026-07-26-A1 — API_USAGE A1: data-model foundation + endpoint discovery
+
+- **Status:** Implemented (awaiting verification).
+- **Context:** Первый шаг трека API_USAGE. Нужен единый источник правды о cloud-провайдерах
+  и migration-safe расширение модели данных под новых провайдеров и per-model статистику,
+  без изменения UI/движков.
+- **Decision:**
+  1. Новый `Sources/VaniScriptCore/CloudProviderCatalog.swift`: `CloudProviderDescriptor`
+     (id, label, getApiKeyURL, modelsEndpoint, capabilities, defaultTextModel,
+     defaultAudioModel, balanceKind) + фиксированный порядок
+     `[gemini, openai, anthropic, qwen, openrouter, ollama-cloud, custom]` + `providerDisplayName(_:)`.
+     Вспомогательные типы: `ModelsEndpoint`, `CloudProviderCapabilities`, `BalanceKind`.
+  2. `AppSettings`: новые поля §6.3 (`geminiTextModel`/`openaiTextModel` с дефолтом текущего
+     хардкода; `qwen*`/`openrouter*`/`ollamaCloud*` ключи/модели/бюджеты). Все через
+     `decodeIfPresent` — старые settings читаются без миграции.
+  3. `ProviderUsage`: `lastModel`, `lastTransactionAt` (опциональны, `decodeIfPresent`;
+     добавлен явный `init(from:)` для явного контракта миграции).
+  4. Unit-тест `AppSettingsCloudFieldsTests`: legacy-decode → дефолты; round-trip; порядок каталога.
+- **Endpoint discovery (A1, curl без ключей):**
+  - OpenRouter `GET /api/v1/models` → HTTP 200; `GET /api/v1/key` → HTTP 401 (жив, нужен Bearer).
+  - Ollama Cloud `GET https://ollama.com/api/tags` → HTTP 200.
+  - Qwen DashScope `GET .../compatible-mode/v1/models` (intl + cn) → HTTP 401 (жив, нужен Bearer).
+  - Теги `[med]`→`[high]` обновлены в `API_USAGE_ARCHITECTURE.md` §7/§9.
+- **Out of scope (A1):** UI, запись usage (A2), валидация/списки моделей (A4), баланс (A7),
+  движки. Точные model id / аудио-capabilities новых провайдеров уточняются на A5 (пока
+  дефолты-заглушки в каталоге).
+- **Verification:** `swift build` + `swift test` — 273 tests, 41 suites, GREEN.

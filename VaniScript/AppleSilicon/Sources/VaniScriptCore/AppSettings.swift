@@ -167,6 +167,12 @@ public struct ProviderUsage: Codable, Equatable, Sendable {
     public var lastUsed: String
     public var lastInputTokens: Int?
     public var lastOutputTokens: Int?
+    // A1 (§6.1): per-model statistics support. Optional + decodeIfPresent so old
+    // settings files decode without migration (nil = never recorded).
+    /// Model id of the last recorded transaction (for the "Last Transaction" badge).
+    public var lastModel: String?
+    /// ISO-8601 timestamp of the last transaction (used to sort the latest entry).
+    public var lastTransactionAt: String?
 
     public init(
         sessions: Int = 0,
@@ -175,7 +181,9 @@ public struct ProviderUsage: Codable, Equatable, Sendable {
         audioMinutes: Double = 0,
         lastUsed: String = "",
         lastInputTokens: Int? = nil,
-        lastOutputTokens: Int? = nil
+        lastOutputTokens: Int? = nil,
+        lastModel: String? = nil,
+        lastTransactionAt: String? = nil
     ) {
         self.sessions = sessions
         self.inputTokens = inputTokens
@@ -184,6 +192,30 @@ public struct ProviderUsage: Codable, Equatable, Sendable {
         self.lastUsed = lastUsed
         self.lastInputTokens = lastInputTokens
         self.lastOutputTokens = lastOutputTokens
+        self.lastModel = lastModel
+        self.lastTransactionAt = lastTransactionAt
+    }
+
+    // Explicit decoder so new optional fields are migration-safe (decodeIfPresent).
+    // The synthesized decoder would already tolerate missing optionals, but we make
+    // the contract explicit per invariant §14.1 (old settings must keep decoding).
+    private enum CodingKeys: String, CodingKey {
+        case sessions, inputTokens, outputTokens, audioMinutes, lastUsed
+        case lastInputTokens, lastOutputTokens
+        case lastModel, lastTransactionAt
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.sessions = try container.decodeIfPresent(Int.self, forKey: .sessions) ?? 0
+        self.inputTokens = try container.decodeIfPresent(Int.self, forKey: .inputTokens) ?? 0
+        self.outputTokens = try container.decodeIfPresent(Int.self, forKey: .outputTokens) ?? 0
+        self.audioMinutes = try container.decodeIfPresent(Double.self, forKey: .audioMinutes) ?? 0
+        self.lastUsed = try container.decodeIfPresent(String.self, forKey: .lastUsed) ?? ""
+        self.lastInputTokens = try container.decodeIfPresent(Int.self, forKey: .lastInputTokens)
+        self.lastOutputTokens = try container.decodeIfPresent(Int.self, forKey: .lastOutputTokens)
+        self.lastModel = try container.decodeIfPresent(String.self, forKey: .lastModel)
+        self.lastTransactionAt = try container.decodeIfPresent(String.self, forKey: .lastTransactionAt)
     }
 }
 public struct CustomCloudProvider: Codable, Equatable, Identifiable, Sendable {
@@ -223,6 +255,21 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var anthropicKey: String
     public var geminiBudgetUsd: Double
     public var openaiBudgetUsd: Double
+    // A1 (§6.3): selected text models for existing providers. Defaults mirror the
+    // current engine hardcode so behavior is unchanged if the user never picks one.
+    public var geminiTextModel: String
+    public var openaiTextModel: String
+    // A1 (§6.3): new cloud providers (Qwen / OpenRouter / Ollama Cloud). Keys + selected
+    // model + budget. All optional-on-decode (decodeIfPresent) → migration-safe.
+    public var qwenApiKey: String
+    public var qwenCloudModel: String
+    public var qwenBudgetUsd: Double
+    public var openrouterApiKey: String
+    public var openrouterModel: String
+    public var openrouterBudgetUsd: Double
+    public var ollamaCloudApiKey: String
+    public var ollamaCloudModel: String
+    public var ollamaCloudBaseUrl: String
     public var theme: Theme
     public var fontSize: FontSize
     public var fontScale: Double
@@ -263,6 +310,11 @@ public struct AppSettings: Codable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case geminiKey, openaiKey, anthropicKey
         case geminiBudgetUsd, openaiBudgetUsd
+        // A1 (§6.3): selected models for existing providers + new cloud providers.
+        case geminiTextModel, openaiTextModel
+        case qwenApiKey, qwenCloudModel, qwenBudgetUsd
+        case openrouterApiKey, openrouterModel, openrouterBudgetUsd
+        case ollamaCloudApiKey, ollamaCloudModel, ollamaCloudBaseUrl
         case theme, fontSize, fontScale, fontFamily
         case chunkDurationMin, sliceMode, silenceThreshDb, minSilenceMs
         case defaultSourceLang, transcriptionProvider, translationProvider, defaultTargetLang
@@ -284,6 +336,17 @@ public struct AppSettings: Codable, Equatable, Sendable {
         anthropicKey: String,
         geminiBudgetUsd: Double,
         openaiBudgetUsd: Double,
+        geminiTextModel: String = "gemini-2.5-flash",
+        openaiTextModel: String = "gpt-4o-mini",
+        qwenApiKey: String = "",
+        qwenCloudModel: String = "",
+        qwenBudgetUsd: Double = 0,
+        openrouterApiKey: String = "",
+        openrouterModel: String = "",
+        openrouterBudgetUsd: Double = 0,
+        ollamaCloudApiKey: String = "",
+        ollamaCloudModel: String = "",
+        ollamaCloudBaseUrl: String = "https://ollama.com",
         theme: Theme,
         fontSize: FontSize,
         fontScale: Double,
@@ -326,6 +389,17 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.anthropicKey = anthropicKey
         self.geminiBudgetUsd = geminiBudgetUsd
         self.openaiBudgetUsd = openaiBudgetUsd
+        self.geminiTextModel = geminiTextModel
+        self.openaiTextModel = openaiTextModel
+        self.qwenApiKey = qwenApiKey
+        self.qwenCloudModel = qwenCloudModel
+        self.qwenBudgetUsd = qwenBudgetUsd
+        self.openrouterApiKey = openrouterApiKey
+        self.openrouterModel = openrouterModel
+        self.openrouterBudgetUsd = openrouterBudgetUsd
+        self.ollamaCloudApiKey = ollamaCloudApiKey
+        self.ollamaCloudModel = ollamaCloudModel
+        self.ollamaCloudBaseUrl = ollamaCloudBaseUrl
         self.theme = theme
         self.fontSize = fontSize
         self.fontScale = fontScale
@@ -371,6 +445,20 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.anthropicKey = try container.decodeIfPresent(String.self, forKey: .anthropicKey) ?? ""
         self.geminiBudgetUsd = try container.decodeIfPresent(Double.self, forKey: .geminiBudgetUsd) ?? 0
         self.openaiBudgetUsd = try container.decodeIfPresent(Double.self, forKey: .openaiBudgetUsd) ?? 0
+        // A1 (§6.3/§6.4): migration-safe decode of new cloud-provider fields. Old
+        // settings without these keys fall back to defaults (existing hardcode for
+        // gemini/openai text models; empty/zero for the new providers).
+        self.geminiTextModel = try container.decodeIfPresent(String.self, forKey: .geminiTextModel) ?? "gemini-2.5-flash"
+        self.openaiTextModel = try container.decodeIfPresent(String.self, forKey: .openaiTextModel) ?? "gpt-4o-mini"
+        self.qwenApiKey = try container.decodeIfPresent(String.self, forKey: .qwenApiKey) ?? ""
+        self.qwenCloudModel = try container.decodeIfPresent(String.self, forKey: .qwenCloudModel) ?? ""
+        self.qwenBudgetUsd = try container.decodeIfPresent(Double.self, forKey: .qwenBudgetUsd) ?? 0
+        self.openrouterApiKey = try container.decodeIfPresent(String.self, forKey: .openrouterApiKey) ?? ""
+        self.openrouterModel = try container.decodeIfPresent(String.self, forKey: .openrouterModel) ?? ""
+        self.openrouterBudgetUsd = try container.decodeIfPresent(Double.self, forKey: .openrouterBudgetUsd) ?? 0
+        self.ollamaCloudApiKey = try container.decodeIfPresent(String.self, forKey: .ollamaCloudApiKey) ?? ""
+        self.ollamaCloudModel = try container.decodeIfPresent(String.self, forKey: .ollamaCloudModel) ?? ""
+        self.ollamaCloudBaseUrl = try container.decodeIfPresent(String.self, forKey: .ollamaCloudBaseUrl) ?? "https://ollama.com"
         self.theme = try container.decodeIfPresent(Theme.self, forKey: .theme) ?? .dark
         self.fontSize = try container.decodeIfPresent(FontSize.self, forKey: .fontSize) ?? .md
         self.fontScale = try container.decodeIfPresent(Double.self, forKey: .fontScale) ?? 1

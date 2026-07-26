@@ -178,7 +178,12 @@ Human показывает **per model** (карточки `qwen3.7-max`, `qwen3
 Каждое новое поле: `case` в `CodingKeys`, параметр `init` с дефолтом, присваивание,
 `decodeIfPresent` в `init(from:)`. Существующий encode/decode не меняется. `[high]`
 
-## 7. Каталог облачных провайдеров (`CloudProviderCatalog`) `[med]`
+## 7. Каталог облачных провайдеров (`CloudProviderCatalog`) `[high]`
+
+> A1: реализован `Sources/VaniScriptCore/CloudProviderCatalog.swift` с фиксированным
+> порядком `[gemini, openai, anthropic, qwen, openrouter, ollama-cloud, custom]`,
+> `CloudProviderDescriptor` и `providerDisplayName(_:)`. Endpoints новых провайдеров
+> верифицированы (см. §9). Точные model id / capabilities аудио уточняются на A5.
 
 Новый тип в `VaniScriptCore` — единый источник правды о провайдерах для UI и движков.
 Убирает хардкод из `resolve()` и `SettingsView`.
@@ -254,9 +259,13 @@ struct CloudProviderDescriptor {
 - Gemini: `GET https://generativelanguage.googleapis.com/v1beta/models?key=…` → 200 = valid.
 - OpenAI: `GET https://api.openai.com/v1/models` + `Authorization: Bearer …` → 200.
 - Anthropic: `GET https://api.anthropic.com/v1/models` + `x-api-key` + `anthropic-version`.
-- Qwen: OpenAI-compatible `GET {dashscope}/compatible-mode/v1/models` + Bearer.
-- OpenRouter: `GET https://openrouter.ai/api/v1/models` + Bearer (или `/api/v1/key`).
-- Ollama Cloud: `GET https://ollama.com/api/tags` + `Authorization: Bearer …`.
+- Qwen: OpenAI-compatible `GET {dashscope}/compatible-mode/v1/models` + Bearer. `[high]`
+  (A1 verified: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models` и
+  `https://dashscope.aliyuncs.com/compatible-mode/v1/models` → HTTP 401 без ключа = endpoint жив, требует Bearer.)
+- OpenRouter: `GET https://openrouter.ai/api/v1/models` + Bearer (или `/api/v1/key`). `[high]`
+  (A1 verified: `/api/v1/models` → HTTP 200; `/api/v1/key` → HTTP 401 без ключа.)
+- Ollama Cloud: `GET https://ollama.com/api/tags` + `Authorization: Bearer …`. `[high]`
+  (A1 verified: `https://ollama.com/api/tags` → HTTP 200.)
 
 Валидация запускается по потере фокуса/паузе ввода ключа (debounce), не на каждый символ.
 Бейдж в UI: серый `Checking…`, зелёный `● Valid`, красный `● Invalid`. `[high]` (UX),

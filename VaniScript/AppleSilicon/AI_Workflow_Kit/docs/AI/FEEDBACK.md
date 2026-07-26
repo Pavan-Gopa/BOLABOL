@@ -1,5 +1,45 @@
 # Verification Report (Verification Engineer)
 
+Проверяемый шаг: **A5 — Полноценная интеграция Qwen / OpenRouter / Ollama Cloud**
+Требования шага: `API_USAGE_STEPS.md` (§A5), `API_USAGE_ARCHITECTURE.md` (§7, §14)
+Роль: Verification Engineer (Gemini 3.6 Flash)
+
+---
+
+### 1. Сборка и тесты
+- **Собирается и проходит ли тестовый прогон проект после изменений?**
+  Да. `swift test` выполнен успешно — **320 tests в 46 suites PASS** (проведен самостоятельный прогон, +12 новых unit-тестов в `ProviderRegistryCloudTests` и `CloudProviderRoutingTests`).
+
+### 2. Логика и соответствие требованиям A5
+- **Маршрутизация и endpoints:**
+  Создан `CloudChatRouter` (`CloudChatRoute`) в `VaniScriptCore` для изоляции логики построения URL/заголовков и тестов без сети/ключей. Endpoints:
+  - Qwen: DashScope compatible-mode (`/compatible-mode/v1/chat/completions`) + Bearer.
+  - OpenRouter: `/api/v1/chat/completions` + Bearer.
+  - Ollama Cloud: `{base}/v1/chat/completions` (OpenAI-compatible) + Bearer, с нормализацией base URL.
+- **ProviderRegistry и доступность:**
+  Опции перевода (`qwen`, `openrouter`, `ollama-cloud`) отдаются при наличии непустого ключа в `AppSettings`. Опции транскрипции фильтруются честно на основе `capabilities.supportsTranscription` (для всех трех провайдеров сейчас `false`, поэтому опции транскрипции не добавляются).
+- **Движки перевода и транскрипции:**
+  `CloudTextTranslationEngine` рефакторен с выносом общей логики в `generateOpenAICompatible`, извлекающей токены через `UsageRecorder.parseOpenAIUsage`. `CloudAudioTranscriptionEngine` намеренно оставлен без новых кейсов (честная индикация, отсутствие мертвых кейсов).
+- **Интерфейс пользователя (SettingsView):**
+  Заглушка "coming soon" заменена на `cloudProviderCard` с полями ключа (`ApiKeyInputRow`), выбора модели (`CloudKeyModelRow` из A4), слайдера бюджета (Qwen/OpenRouter), Base URL (Ollama) и честными тумблерами. Тумблер Transcribing отключен с поясняющим подсказкой/текстом (`supportsTranscription == false`).
+- **Соблюдение инвариантов и рамок шага (Scope):**
+  - Отсутствуют переработка UI статистики (A6) и реальный баланс (A7).
+  - Использованы только разрешенные `target_files` (с переносом `CloudChatRouter` в `ProviderRegistry.swift` для тестируемости).
+  - API-ключи передаются только в заголовках, отсутствуют в исходном коде и логах.
+  - Codex / Grok / embedded Qwen / MCP сервер не затронуты и проходят все тесты.
+  - Оговорки кодера (transcription pipeline deferral, catalog base url for Ollama models) обоснованы и приняты.
+
+### 3. Качество кода и комментарии
+- Все новые и измененные файлы содержат подробные role-headers, why-комментарии и пояснения к логике маршрутизации в соответствии с `TEAM_CONTRACT.md` § Comments.
+
+---
+
+**ИТОГОВЫЙ СТАТУС:** [APPROVED]
+
+---
+
+# Verification Report (Verification Engineer)
+
 Проверяемый шаг: **A4 — Валидация ключа (бейдж) + автоподтягивание моделей**
 Требования шага: `API_USAGE_STEPS.md` (§A4), `API_USAGE_ARCHITECTURE.md` (§9, §14)
 Роль: Verification Engineer (Gemini 3.6 Flash)
@@ -260,3 +300,43 @@ pipeline — предложено на A5/A6). Запись переводов �
 ---
 
 **ИТОГОВЫЙ СТАТУС:** [APPROVED]
+
+---
+
+# HANDOFF — A5 (Coder → Orchestrator)
+
+**Step:** A5 — Полноценная интеграция Qwen / OpenRouter / Ollama Cloud.
+**Status:** IMPLEMENTED, `swift test` GREEN — 320 tests / 46 suites (было 308/44).
+
+## Что сделано
+1. **`ProviderRegistry.swift`:** translation-опции `qwen`/`openrouter`/`ollama-cloud`
+   при сохранённом ключе (паттерн gemini/gpt); transcription — data-driven по
+   `capabilities.supportsTranscription` (честно: сегодня опций нет). Новый core-слой
+   **`CloudChatRouter`/`CloudChatRoute`** (endpoint+headers+model+key) — в Core ради
+   тестируемости из VaniScriptCoreTests (единственный test target).
+2. **`CloudTextTranslationEngine.swift`:** `resolve` default-кейс → CloudChatRouter;
+   `generateOpenAI` рефакторен в общий `generateOpenAICompatible(url:headers:)`
+   (gpt-cloud 1:1). Qwen=DashScope compatible-mode `/v1/chat/completions`,
+   OpenRouter=`/api/v1/chat/completions`, Ollama Cloud=`{base}/v1/chat/completions`.
+   Usage через `parseOpenAIUsage` (A2) работает для всех трёх автоматически.
+3. **Usage ids:** engine/registry ids = catalog ids → `normalizedUsageProviderId`
+   пропускает без remap; WorkflowStore НЕ трогался (вне target_files).
+4. **`CloudAudioTranscriptionEngine.swift`:** намеренно без новых кейсов (why-коммент):
+   у всех трёх `supportsTranscription == false` — честная индикация, без мёртвого кода.
+5. **`SettingsView.swift`:** "coming soon" заменён на generic `cloudProviderCard`:
+   ApiKeyInputRow + CloudKeyModelRow (валидация+модели A4) + budget slider
+   (Qwen/OpenRouter) + Base URL (Ollama) + toggles. Transcribing — disabled +
+   tooltip + поясняющий текст; Translation доступен всем при ключе.
+6. **Тесты (моки, без сети/ключей):** `ProviderRegistryCloudTests` (5) +
+   `CloudProviderRoutingTests` (7): gating по ключу, honest transcription, URL/headers,
+   model fallback/override, base-URL нормализация, nil-mapping.
+7. **ADR `D-2026-07-26-A5`** в DECISIONS.md (endpoints/capabilities/ids решения).
+
+## Замечания для ревью
+- Transcription usage pipeline (A2 defer) остаётся deferred: новые провайдеры не
+  транскрибируют, `NativeProcessingPipeline` вне target_files A5.
+- CloudKeyModelRow для Ollama использует дефолтный base каталога (https://ollama.com)
+  для списка моделей — как в A4; кастомный base влияет на chat-endpoint (router).
+- target_files соблюдены строго; ключи только в headers, не в логах/исходниках.
+
+**next_actor: orchestrator**

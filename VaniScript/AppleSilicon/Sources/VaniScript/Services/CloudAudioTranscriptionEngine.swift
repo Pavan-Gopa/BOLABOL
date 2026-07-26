@@ -33,6 +33,12 @@ struct ActiveCloudTranscriptionProvider: Equatable, Sendable {
                 apiKey: key
             )
         default:
+            // A5: intentionally NO resolve cases for Qwen / OpenRouter / Ollama Cloud.
+            // Their CloudProviderCatalog capabilities honestly report
+            // `supportsTranscription == false` (no verified audio endpoint), so
+            // ProviderRegistry never offers them for transcription and resolving them
+            // here would be dead/dishonest code. When a provider's audio API is
+            // verified, flip the catalog flag and add the case here (§14 honesty).
             return nil
         }
     }

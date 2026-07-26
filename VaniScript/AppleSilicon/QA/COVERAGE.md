@@ -246,3 +246,69 @@ Area → script → asserts. Column **new this run** marks scripts added in the 
 - `a4_swift_test_green.sh` / `a2_swift_test_green.sh` / `build_gate_as.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
 
 ---
+
+## A5 — Qwen / OpenRouter / Ollama Cloud full integration
+
+| Area | Script | Asserts | New this run |
+|---|---|---|---|
+| Translation gating | `a5_registry_translation_gating.sh` | key-present → options; tests empty/whitespace/present | **yes** |
+| No transcription options | `a5_registry_no_transcription.sh` | supportsTranscription=false for three; registry gate | **yes** |
+| Router endpoints | `a5_cloud_chat_router_endpoints.sh` | DashScope/OpenRouter/Ollama /v1 + Bearer | **yes** |
+| Model fallback | `a5_cloud_chat_router_model_fallback.sh` | settings override vs default; blank key → nil | **yes** |
+| Translation engine | `a5_translation_engine_routing.sh` | CloudChatRouter resolve; generateOpenAICompatible; parseOpenAIUsage | **yes** |
+| Transcription honest | `a5_transcription_no_new_cases.sh` | no qwen/openrouter/ollama resolve cases | **yes** |
+| Settings card | `a5_settings_cloud_provider_card.sh` | cloudProviderCard for three (stub retired) | **yes** |
+| Settings fields | `a5_settings_key_model_budget_baseurl.sh` | CloudKeyModelRow; budget Qwen/OR; Base URL Ollama | **yes** |
+| Transcribing UX | `a5_settings_transcribing_disabled.sh` | disabled+tooltip; Translation when key | **yes** |
+| Unit tests | `a5_tests_present.sh` | ProviderRegistryCloudTests + CloudProviderRoutingTests | **yes** |
+| ADR | `a5_decisions_adr.sh` | D-2026-07-26-A5 endpoints/capabilities/ids | **yes** |
+| FEEDBACK | `a5_feedback_approved.sh` | A5 `[APPROVED]` + handoff claims | **yes** |
+| STATE.yaml | `a5_state_yaml_a5.sh` | `current_step: A5`; implementation+review approved | **yes** |
+| Out of scope | `a5_no_a6_stats_no_a7_balance.sh` | stats section intact; no CloudBalanceService | **yes** |
+| No secrets | `a5_no_keys_in_source.sh` | no sk-/AIza/ghp_/xox- in A5 sources/tests | **yes** |
+| Verifier scope OK | `a5_verifier_scope_ok.sh` | pipeline usage deferred; Ollama list base catalog | **yes** |
+| swift test gate | `a5_swift_test_green.sh` | green; soft-warn <320; ENV-ONLY soft-pass | **yes** |
+
+### A3/A4 regression adaptations (this run)
+
+| Script | Change |
+|---|---|
+| `a3_coming_soon_stub.sh` | A5+ accepts `cloudProviderCard` + explicit qwen/openrouter/ollama cases |
+| `a3_no_a5_engine_routing.sh` | step-aware N/A when `current_step` ≥ A5 |
+| `a4_no_a5_engine_routing.sh` | step-aware N/A when `current_step` ≥ A5 |
+| `a4_state_yaml_a4.sh` | step-aware N/A when not A4 |
+| `a4_feedback_approved.sh` | historical A4 APPROVED search when step > A4 |
+| `a4_anthropic_readonly_whisper_ok.sh` | slice only `anthropicCard` body (ignore A5 MARK comment mentioning CloudKeyModelRow) |
+
+---
+
+## Gap Hunt Checklist (A5)
+
+**A5 delta (every item closed):**
+- [x] Registry translation gating empty/non-empty key → `a5_registry_translation_gating`
+- [x] No transcription registry entries (supportsTranscription false) → `a5_registry_no_transcription`
+- [x] Router URL/headers per provider (no real network) → `a5_cloud_chat_router_endpoints`
+- [x] Model fallback vs settings override → `a5_cloud_chat_router_model_fallback`
+- [x] Translation engine shared path + usage → `a5_translation_engine_routing`
+- [x] Transcription engine no dead cases → `a5_transcription_no_new_cases`
+- [x] Settings cloudProviderCard / CloudKeyModelRow / budget / base URL / toggles → `a5_settings_*`
+- [x] Tests present → `a5_tests_present`, `a5_swift_test_green`
+- [x] ADR + FEEDBACK + STATE → `a5_decisions_adr`, `a5_feedback_approved`, `a5_state_yaml_a5`
+- [x] No A6 stats rewrite; no A7 balance → `a5_no_a6_stats_no_a7_balance`
+- [x] No API keys in source → `a5_no_keys_in_source`
+- [x] Verifier OK (pipeline defer, Ollama list base) → `a5_verifier_scope_ok`
+
+**Regression:**
+- [x] A1–A4 scripts still enabled (step-aware where needed) → full `run_all.sh`
+- [x] A3 coming-soon / no-A5-routing adapted for A5 product state
+
+**N/A (with reason):**
+- Real network calls to Qwen/OpenRouter/Ollama — **N/A (static QA + unit mocks)**; router pure functions + mocked catalog/validator tests.
+- Transcription audio for new providers — **N/A (honest capabilities false)**; asserted via `a5_transcription_no_new_cases` + registry gate.
+- A6 stats UI rewrite / A7 balance service — **N/A (out of scope A5)**; negative scripts assert absence.
+- NativeProcessingPipeline transcription usage wiring — **N/A (DEFERRED, Verifier OK)**; asserted via `a5_verifier_scope_ok`.
+
+**Env-only handling:**
+- `a5_swift_test_green.sh` / prior swift gates / `build_gate_as.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
+
+---

@@ -2,29 +2,29 @@
 # Product scope: AI_Workflow_Kit/docs/API_USAGE_STEPS.md
 # Architecture: AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
 
-current_step: A1
+current_step: A2
 step_description: >
-  Discovery + data model (фундамент). CloudProviderCatalog (фиксированный порядок
-  провайдеров), расширения AppSettings/ProviderUsage (qwen/openrouter/ollama ключи,
-  модели, бюджеты; lastModel/lastTransactionAt). Верификация endpoints новых
-  провайдеров. Unit-тест decode старых settings → дефолты. UI и движки НЕ меняем.
+  Запись использования (чинит пустую статистику). Парсинг token-счётчиков из
+  API-ответов (Gemini usageMetadata, OpenAI-compatible usage), возврат из движков,
+  UsageRecorder → settings.usage через WorkflowStore. Best-effort (не фейлит
+  транскрипцию/перевод). Unit-тесты на мок-данных.
 
 target_files:
-  - Sources/VaniScriptCore/CloudProviderCatalog.swift
-  - Sources/VaniScriptCore/AppSettings.swift
-  - Tests/VaniScriptCoreTests/AppSettingsCloudFieldsTests.swift
+  - Sources/VaniScriptCore/UsageRecorder.swift
+  - Sources/VaniScriptCore/CloudAudioTranscriptionEngine.swift
+  - Sources/VaniScriptCore/CloudTextTranslationEngine.swift
+  - Sources/VaniScript/Stores/WorkflowStore.swift
+  - Tests/VaniScriptCoreTests/UsageRecorderTests.swift
   - AI_Workflow_Kit/docs/DECISIONS.md
-  - AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 
 coder_brief: >
-  A1 — фундамент трека API_USAGE. Создай CloudProviderCatalog.swift (дескрипторы
-  провайдеров, фиксированный порядок gemini→openai→anthropic→qwen→openrouter→
-  ollama-cloud→custom). Расширь AppSettings (новые ключи/модели/бюджеты через
-  decodeIfPresent) и ProviderUsage (lastModel, lastTransactionAt). Unit-тест:
-  decode старых settings без новых полей → дефолты; round-trip. Верифицируй
-  endpoints (curl/доки) и обнови теги [med]→[high] в API_USAGE_ARCHITECTURE.md.
-  UI и движки НЕ трогай. Graphify first.
+  A2 — запись usage (чинит пустую статистику). Создай UsageRecorder (парсинг
+  token-счётчиков: Gemini usageMetadata.promptTokenCount/candidatesTokenCount,
+  OpenAI-compatible usage.prompt_tokens/completion_tokens). Движки возвращают
+  токены → WorkflowStore вызывает UsageRecorder → settings.usage. Best-effort:
+  ошибка записи НЕ фейлит транскрипцию/перевод. Unit-тесты на мок-данных.
+  UI НЕ трогай. Graphify first.
 
 completed_steps:
   - G0
@@ -48,22 +48,23 @@ completed_steps:
   - Q6
   - Q7
   - QWEN_DONE
+  - A1
 
 implementation:
-  status: waiting_review
-  attempts: 1
+  status: pending
+  attempts: 0
 
 review:
-  status: approved
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: pending
-  last_report: ""
-  suite: ""
+  status: green
+  last_report: "QA/BUG_REPORT.md"
+  suite: "20 scripts (17 PASS / 3 FAIL — env-only, A1 delta 5/5 PASS)"
   bugs_open: 0
 
-next_actor: orchestrator
+next_actor: implementation
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -73,8 +74,8 @@ working_roots:
 
 checkpoint:
   last_pre_tag: "apiusage/pre-A1"
-  last_post_tag: "qwen/Q7-done"
-  last_commit: "185ca34"
+  last_post_tag: "apiusage/A1-done"
+  last_commit: "6b3a48f"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

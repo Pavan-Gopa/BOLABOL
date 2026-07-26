@@ -53,11 +53,11 @@ completed_steps:
   - A7
 
 implementation:
-  status: pending
-  attempts: 0
+  status: waiting_review
+  attempts: 1
 
 review:
-  status: pending
+  status: approved
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
@@ -67,7 +67,7 @@ qa:
   bugs_open: 0
   note: "A7 closed. A8 is DOC-ONLY — QA waived after Verifier APPROVED."
 
-next_actor: implementation
+next_actor: orchestrator
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -76,9 +76,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "apiusage/pre-A7"
+  last_pre_tag: "apiusage/pre-A8"
   last_post_tag: "apiusage/A7-done"
-  last_commit: "9cc1c6a"
+  last_commit: "b5f9548"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

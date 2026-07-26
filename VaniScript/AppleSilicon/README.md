@@ -31,6 +31,35 @@ Provider access surfaces:
 - **In-app API** — `QwenStreamingProvider` in `VaniScriptCore` (streaming,
   cancel, typed errors) usable programmatically without UI.
 
+## Cloud Providers & the API & Usage tab
+
+Settings → **API & Usage** manages cloud API providers (track `API_USAGE`,
+Apple Silicon only). Supported providers, in catalog order
+(`CloudProviderCatalog`): **Gemini, OpenAI, Anthropic, Qwen (DashScope),
+OpenRouter, Ollama Cloud, Custom**.
+
+The tab has five surfaces:
+
+1. **Provider dropdown** — fixed catalog order, single source of truth.
+2. **Provider card** — API key input with live key validation and model list
+   (`CloudKeyValidator` / `CloudModelCatalog`), budget slider (Qwen/OpenRouter),
+   Base URL (Ollama Cloud). The Transcribing toggle is honestly disabled for
+   providers without audio capability.
+3. **Usage recording** — token usage is recorded best-effort per
+   `provider:model` (`UsageRecorder`); recording failures never break
+   transcription or translation.
+4. **Usage statistics** — last transaction, active providers summary, and
+   per-model cards (tokens, audio minutes, estimated spent/remaining) in
+   `UsageStatisticsView`. Costs are estimates; provider billing can differ.
+5. **Real balance** — shown only where the provider exposes it
+   (`CloudBalanceService`): OpenRouter credits ("$X remaining / $Y limit"),
+   Ollama Cloud plan label. All other providers show honest estimates only —
+   no fake "$" figures.
+
+Keys live only in settings (never in sources, logs, or git). Old settings
+decode without migration. Acceptance checklist:
+`AI_Workflow_Kit/docs/API_USAGE_ACCEPTANCE.md`.
+
 ## Local Run
 
 ```bash

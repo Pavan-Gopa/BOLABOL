@@ -172,3 +172,77 @@ Area → script → asserts. Column **new this run** marks scripts added in the 
 - `a3_swift_build_green.sh` / `build_gate_as.sh` / `a2_swift_test_green.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
 
 ---
+
+## A4 — Key validation + auto model catalog
+
+| Area | Script | Asserts | New this run |
+|---|---|---|---|
+| Status map | `a4_key_validator_status_map.sh` | idle/checking/valid/invalid; 2xx→valid, 401/403→invalid, 429→valid, other→invalid | **yes** |
+| Empty / custom | `a4_key_validator_empty_custom.sh` | empty key → idle; custom listing-unsupported → valid without network | **yes** |
+| listRequest reuse | `a4_key_validator_uses_list_request.sh` | validate via `CloudModelCatalog.listRequest` + fetcher + status map | **yes** |
+| Parsers | `a4_catalog_parsers.sh` | OpenAI `data[].id`, Gemini strip `models/`, Ollama `models[].name`, Anthropic shared | **yes** |
+| Dedup | `a4_catalog_dedup.sh` | Set/seen de-dupe + empty drop; unit test | **yes** |
+| listRequest auth | `a4_catalog_list_request_auth.sh` | Gemini `?key=`, Bearer, Anthropic `x-api-key`, Ollama `/api/tags` | **yes** |
+| Cache fingerprint | `a4_catalog_session_cache_fingerprint.sh` | session cache + `keyFingerprint` (hashValue) + invalidate; no raw key | **yes** |
+| Injectable fetcher | `a4_catalog_fetcher_injectable.sh` | `CloudHTTPFetcher` on catalog + validator; tests mock | **yes** |
+| CloudKeyModelRow UI | `a4_settings_cloud_key_model_row.sh` | badge Checking/Valid/Invalid + Picker/editable+Retry | **yes** |
+| Settings writes | `a4_settings_writes_text_models.sh` | `geminiTextModel` / `openaiTextModel` bindings + fallbacks | **yes** |
+| Debounce | `a4_settings_debounce.sh` | `.task(id: apiKey)` + 500ms; core timer-free | **yes** |
+| Transcription resolve | `a4_transcription_resolve_gemini_settings.sh` | Gemini from settings; whisper-1 deferred OK | **yes** |
+| Translation resolve | `a4_translation_resolve_settings_fallback.sh` | gemini/openai settings + hardcode fallbacks | **yes** |
+| Tests present | `a4_tests_present.sh` | CloudKeyValidatorTests (9) + CloudModelCatalogTests (12) | **yes** |
+| No secrets | `a4_no_keys_in_source.sh` | no sk-/AIza/ghp_/xox- in A4 sources/tests | **yes** |
+| No A5 routing | `a4_no_a5_engine_routing.sh` | no qwen/openrouter/ollama engine cases | **yes** |
+| No A6 stats rewrite | `a4_no_a6_stats_rewrite.sh` | Cloud Usage Statistics section still present | **yes** |
+| Verifier scope OK | `a4_anthropic_readonly_whisper_ok.sh` | Anthropic ReadOnly + whisper-1 — not bugs | **yes** |
+| FEEDBACK | `a4_feedback_approved.sh` | A4 `[APPROVED]` + handoff claims | **yes** |
+| STATE.yaml | `a4_state_yaml_a4.sh` | `current_step: A4`; implementation+review approved | **yes** |
+| swift test gate | `a4_swift_test_green.sh` | green; soft-warn <308; ENV-ONLY soft-pass | **yes** |
+
+### A3 regression adaptations (this run)
+
+| Script | Change |
+|---|---|
+| `a3_no_a4_validation_or_model_net.sh` | step-aware N/A when `current_step` ≥ A4 |
+| `a3_gemini_openai_parity.sh` | A4+ accepts `CloudKeyModelRow` + text-model bindings |
+| `a3_state_yaml_a3.sh` | step-aware N/A when not A3 |
+| `a3_feedback_approved.sh` | historical A3 APPROVED search when step > A3 |
+
+---
+
+## Gap Hunt Checklist (A4)
+
+**A4 delta (every item closed):**
+- [x] HTTP status map: 2xx valid, 401/403 invalid, 429 valid, other invalid → `a4_key_validator_status_map`
+- [x] empty key → idle; custom → valid without network → `a4_key_validator_empty_custom`
+- [x] validate via listRequest → `a4_key_validator_uses_list_request`
+- [x] parsers: models/ strip Gemini; data[].id OpenAI; Ollama models[].name; Anthropic shared → `a4_catalog_parsers`
+- [x] dedup + empties → `a4_catalog_dedup`
+- [x] listRequest auth shapes → `a4_catalog_list_request_auth`
+- [x] cache invalidates on key change (fingerprint) → `a4_catalog_session_cache_fingerprint`
+- [x] CloudHTTPFetcher injectable → `a4_catalog_fetcher_injectable`
+- [x] CloudKeyModelRow badge + Picker/editable+Retry; debounce → `a4_settings_*`
+- [x] writes geminiTextModel / openaiTextModel → `a4_settings_writes_text_models`
+- [x] resolve Gemini from settings; whisper-1 OK deferred → `a4_transcription_resolve_gemini_settings`, `a4_anthropic_readonly_whisper_ok`
+- [x] resolve translation settings + hardcode fallback → `a4_translation_resolve_settings_fallback`
+- [x] tests present → `a4_tests_present`, `a4_swift_test_green`
+- [x] no sk-/AIza keys in source → `a4_no_keys_in_source`
+- [x] no A5 qwen/openrouter/ollama engine routing → `a4_no_a5_engine_routing`
+- [x] no A6 stats section rewrite → `a4_no_a6_stats_rewrite`
+- [x] FEEDBACK APPROVED + STATE A4 → `a4_feedback_approved`, `a4_state_yaml_a4`
+
+**Regression:**
+- [x] A1 scripts still enabled → `a1_*` (5)
+- [x] A2 scripts still enabled → `a2_*` (20)
+- [x] A3 scripts still enabled (step-aware where needed) → `a3_*` (21)
+- [x] Full suite (build gates, MCP smoke, Q7, swift test) re-run via `run_all.sh`
+
+**N/A (with reason):**
+- Anthropic CloudKeyModelRow / settings field — **N/A (Verifier OK)**: Anthropic stays ReadOnly; no engine routing for Anthropic text model in A4. Asserted via `a4_anthropic_readonly_whisper_ok`.
+- OpenAI transcription using `openaiTextModel` — **N/A (Verifier OK)**: whisper-1 is audio model; deferred to A5 audio-picker. Asserted via `a4_transcription_resolve_gemini_settings` + `a4_anthropic_readonly_whisper_ok`.
+- Interactive UI click-through of validation badge — **N/A (static QA)**: suite is source/structure + unit tests with mocked HTTP.
+
+**Env-only handling:**
+- `a4_swift_test_green.sh` / `a2_swift_test_green.sh` / `build_gate_as.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
+
+---

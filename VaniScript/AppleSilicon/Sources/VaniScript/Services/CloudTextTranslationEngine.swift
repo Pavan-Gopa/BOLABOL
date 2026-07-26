@@ -16,7 +16,9 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
             return ActiveCloudTranslationProvider(
                 id: "gemini-cloud",
                 label: "Gemini Cloud",
-                model: "gemini-2.5-flash",
+                // A4 (§9.2): use the user-selected model; fall back to the previous
+                // hardcode when settings is empty so legacy behavior is unchanged.
+                model: Self.resolvedModel(settings.geminiTextModel, fallback: "gemini-2.5-flash"),
                 apiKey: key
             )
         case "gpt-cloud":
@@ -25,12 +27,20 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
             return ActiveCloudTranslationProvider(
                 id: "gpt-cloud",
                 label: "GPT Cloud",
-                model: "gpt-4o-mini",
+                // A4 (§9.2): user-selected OpenAI model, hardcode fallback.
+                model: Self.resolvedModel(settings.openaiTextModel, fallback: "gpt-4o-mini"),
                 apiKey: key
             )
         default:
             return nil
         }
+    }
+
+    // A4: trim the settings value and fall back to the engine's previous hardcode when
+    // the user never picked a model (migration-safe: empty settings → old behavior).
+    private static func resolvedModel(_ configured: String, fallback: String) -> String {
+        let trimmed = configured.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? fallback : trimmed
     }
 }
 

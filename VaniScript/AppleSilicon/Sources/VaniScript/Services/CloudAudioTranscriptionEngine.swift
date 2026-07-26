@@ -15,7 +15,9 @@ struct ActiveCloudTranscriptionProvider: Equatable, Sendable {
             return ActiveCloudTranscriptionProvider(
                 id: "gemini-cloud",
                 label: "Gemini Cloud",
-                model: "gemini-2.5-flash",
+                // A4 (§9.2): Gemini transcription uses the user-selected text model
+                // (same generateContent endpoint); hardcode fallback for empty settings.
+                model: Self.resolvedModel(settings.geminiTextModel, fallback: "gemini-2.5-flash"),
                 apiKey: key
             )
         case "gpt-cloud":
@@ -24,12 +26,22 @@ struct ActiveCloudTranscriptionProvider: Equatable, Sendable {
             return ActiveCloudTranscriptionProvider(
                 id: "gpt-cloud",
                 label: "GPT Cloud",
+                // A4: OpenAI transcription is a dedicated audio model (whisper-1); it is
+                // not the settings *text* model, so the audio hardcode stays until an
+                // audio-model picker lands (A5).
                 model: "whisper-1",
                 apiKey: key
             )
         default:
             return nil
         }
+    }
+
+    // A4: trim the settings value and fall back to the engine's previous hardcode when
+    // the user never picked a model (migration-safe: empty settings → old behavior).
+    private static func resolvedModel(_ configured: String, fallback: String) -> String {
+        let trimmed = configured.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? fallback : trimmed
     }
 }
 

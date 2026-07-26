@@ -1,5 +1,102 @@
 # Verification Report (Verification Engineer)
 
+Проверяемый шаг: **A4 — Валидация ключа (бейдж) + автоподтягивание моделей**
+Требования шага: `API_USAGE_STEPS.md` (§A4), `API_USAGE_ARCHITECTURE.md` (§9, §14)
+Роль: Verification Engineer (Gemini 3.6 Flash)
+
+---
+
+### 1. Сборка и тесты
+- **Собирается и проходит ли тестовый прогон проект после изменений?**
+  Да. `swift test` выполнен успешно — **308 tests в 44 suites PASS** (включая 15 тестов в `CloudModelCatalog parsers (A4)` и 9 тестов в `CloudKeyValidator (A4)`).
+
+### 2. Логика и соответствие требованиям A4
+- **Бейдж валидности ключа:**
+  Реализован `CloudKeyValidator` со статусами `.idle`, `.checking`, `.valid`, `.invalid(reason)`. В UI (`CloudKeyModelRow`) корректно отображаются бейджи Checking, ● Valid, ● Invalid (с `help(reason)` подсказкой).
+- **Автоподтягивание и каталог моделей:**
+  Реализован `CloudModelCatalog` (actor) с чистыми парсерами для OpenAI/Gemini/Ollama/Anthropic endpoints, фильтрацией пустых значений и дедупликацией. В UI при валидном ключе загружается `Picker` моделей; при ошибке/пустом списке или по кнопке `square.and.pencil` включается editable combo (`TextField` + кнопка `Retry`).
+- **Безопасность и хэширование:**
+  Кэш моделей сессионный (`cache[cacheKey]`), ключ кэша формируется через `keyFingerprint` (`String(key.hashValue, radix: 16)`). Исходный API-ключ не персистится и не логгируется.
+- **Запись в AppSettings и fallback:**
+  Выбранные модели сохраняются в `settings.geminiTextModel` и `settings.openaiTextModel`. Метод `resolve()` в `ActiveCloudTranscriptionProvider` и `ActiveCloudTranslationProvider` использует выбранную модель, а при пустом значении корректно возвращает прежний захардкоженный дефолт (`gemini-2.5-flash` / `gpt-4o-mini`).
+- **Соблюдение инвариантов и рамок шага (Scope):**
+  - Отсутствует роутинг движков для Qwen/OpenRouter/Ollama (A5).
+  - Секция статистики не перерабатывалась (A6).
+  - Изменения строго в рамках `target_files` (с допустимым in-file helper `CloudKeyModelRow` внутри `SettingsView.swift`).
+  - Оговорки кодера (OpenAI transcription на whisper-1, Anthropic read-only) полностью обоснованы и приняты.
+
+### 3. Качество кода и комментарии
+- Все новые и измененные файлы содержат подробные role-headers, why-комментарии и пояснения к асинхронной логике / кэшированию в соответствии с `TEAM_CONTRACT.md` § Comments.
+
+---
+
+**ИТОГОВЫЙ СТАТУС:** [APPROVED]
+
+---
+
+# Implementation Handoff → Verification (A4)
+
+Шаг: **A4 — Валидация ключа (бейдж) + автоподтягивание моделей**. Роль: Implementation Engineer (Coder).
+Статус: `implementation.status = waiting_review`, `next_actor = orchestrator`. Pre-tag `apiusage/pre-A4` подтверждён.
+
+**Проверка (green):**
+- `swift build` → `Build complete!` (0 ошибок).
+- `swift test` → **308 tests в 44 suites PASS**, включая новые suites
+  `CloudModelCatalog parsers (A4)` и `CloudKeyValidator (A4)`.
+
+**Что сделано (target_files):**
+- `Sources/VaniScriptCore/CloudModelCatalog.swift` (NEW):
+  - `CloudModel` (id), `CloudModelCatalog` actor с `listModels(descriptor:apiKey:baseURL:useCache:)`.
+  - In-memory session cache (не персистится); ключ кэша = provider id + необратимый
+    хэш ключа + baseURL → секрет не хранится (§14.3), смена ключа сбрасывает кэш.
+  - Чистые публичные парсеры `parse(data:endpoint:provider:)` для OpenAI-compatible
+    (`data[].id`), Gemini (`models[].name`, strip `models/`), Ollama (`models[].name`),
+    Anthropic (`data[].id`); де-дуп с сохранением порядка + фильтр пустых.
+  - Публичный `listRequest(descriptor:apiKey:baseURL:)` — строит per-provider запрос
+    (Gemini `?key=`, OpenAI/Qwen/OpenRouter Bearer, Anthropic `x-api-key`+version,
+    Ollama `{base}/api/tags` Bearer); custom/none → nil.
+  - Сеть инъектируется через `CloudHTTPFetcher` (default `CloudHTTP.live` на URLSession)
+    → тесты гоняют парсеры/actor на моках без реальной сети.
+- `Sources/VaniScriptCore/CloudKeyValidator.swift` (NEW):
+  - `CloudKeyValidationStatus` = `idle/checking/valid/invalid(reason)`.
+  - `validate(descriptor:apiKey:baseURL:)` переиспользует `listRequest` (успешный
+    models-list == valid ключ, §9.1); пустой ключ → `.idle`; провайдеры без листинга
+    (custom) → `.valid`; сетевые ошибки → `.invalid` (не бросает).
+  - Чистый `status(forHTTPStatus:)`: 2xx→valid, 401/403→invalid, 429→valid (throttle),
+    прочее non-2xx→invalid(HTTP code). Debounce живёт в UI (task cancellation).
+- `Sources/VaniScript/Views/SettingsView.swift` (MODIFY):
+  - Новый file-private `CloudKeyModelRow` заменил `ReadOnlyRow "Text Model"` в
+    Gemini/OpenAI карточках: бейдж Checking/● Valid/● Invalid + при valid автозагрузка
+    моделей → `Picker` (с сохранением уже выбранного id) + кнопка ручного ввода;
+    при ошибке/пустом списке → editable combo (free-text) + `Retry`.
+  - Валидация/загрузка в `.task(id: apiKey)` с 500ms debounce (отмена задачи = дедуп).
+  - Выбор пишется в `settings.geminiTextModel` / `settings.openaiTextModel` через
+    существующий `binding(_:)`. Anthropic оставлен на `ReadOnlyRow` (нет settings-поля
+    и engine-роутинга для него — вне scope A4; см. ниже).
+- `Sources/VaniScript/Services/CloudAudioTranscriptionEngine.swift` (MODIFY):
+  - `resolve()` Gemini использует `settings.geminiTextModel` (fallback = старый хардкод
+    `gemini-2.5-flash`). OpenAI транскрипция — это whisper-1 (audio-модель, не text),
+    хардкод оставлен до A5 (audio-picker).
+- `Sources/VaniScript/Services/CloudTextTranslationEngine.swift` (MODIFY):
+  - `resolve()` Gemini/OpenAI используют settings-модели (fallback = `gemini-2.5-flash`
+    / `gpt-4o-mini`) через `resolvedModel(_:fallback:)`.
+- `Tests/VaniScriptCoreTests/CloudModelCatalogTests.swift` (NEW): парсеры (OpenAI/
+  Gemini/Ollama), де-дуп, ошибки, request-builder (auth per provider), actor listModels
+  на моке + кэш-хит, non-2xx → throw.
+- `Tests/VaniScriptCoreTests/CloudKeyValidatorTests.swift` (NEW): маппинг статусов +
+  async validate (idle/valid/invalid/network-error/custom) на моке.
+
+**Инварианты (§14):** AppSettings decode не менялся (модели уже добавлены в A1,
+migration-safe); Codex/Grok/Qwen/MCP не затронуты; ключей в source/логах нет
+(кэш-ключ — необратимый хэш); дефолт модели = старый хардкод при пустых settings.
+
+**Out of scope (не делалось):** A5 (qwen/openrouter/ollama engine routing), A6 (stats UI),
+A7 (balance). Anthropic model picker (нет settings-поля/движка) — вне A4.
+
+---
+
+# Verification Report (Verification Engineer)
+
 Проверяемый шаг: **A3 — UI reorg: единый dropdown провайдеров + условные карточки**
 Требования шага: `API_USAGE_STEPS.md` (§A3), `API_USAGE_ARCHITECTURE.md` (§7, §14)
 Роль: Verification Engineer (Gemini 3.6 Flash)

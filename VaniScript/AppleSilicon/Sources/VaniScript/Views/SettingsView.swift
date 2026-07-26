@@ -1659,6 +1659,16 @@ private struct ProviderCardView: View {
                     SliderRow(title: "\(descriptor.label) Budget", value: binding(budgetPath), range: 0...200, format: "$%.0f")
                 }
 
+                // A7 (§11): real balance row — only for providers whose API exposes one
+                // (OpenRouter USD, Ollama plan). `.estimated`/`.none` providers render
+                // nothing here (their card keeps local Estimated spent only; no fake $).
+                if descriptor.balanceKind == .openrouterCredits || descriptor.balanceKind == .ollamaPlan {
+                    CloudBalanceRow(
+                        descriptor: descriptor,
+                        apiKey: apiKeyPath.map { store.settings[keyPath: $0] } ?? ""
+                    )
+                }
+
                 cloudProviderToggles(
                     engineID: engineID,
                     isTranscription: isTranscription,
@@ -1866,6 +1876,90 @@ private struct ReadOnlyRow: View {
         .font(.system(size: 13))
     }
 }
+
+// A7 (§11): real-balance row for a cloud provider. Shared between the provider cards
+// (SettingsView) and UsageStatisticsView, so it is `internal` (module-visible), not
+// `private`. Honesty rules baked in:
+//   - Only fetches for `.openrouterCredits` / `.ollamaPlan`; any other kind renders
+//     nothing and never touches the network.
+//   - OpenRouter → "$X remaining / $Y limit"; Ollama → plan label. No fake "$".
+//   - Error / no data → quiet: shows a subtle "estimated only" hint, never a crash.
+// Lazy: loads in `.task(id: apiKey)`; Refresh forces a cache-bypassing reload.
+struct CloudBalanceRow: View {
+    let descriptor: CloudProviderDescriptor
+    let apiKey: String
+
+    @State private var info: BalanceInfo = .unavailable
+    @State private var isLoading = false
+    // One session-scoped service instance (in-memory TTL cache; nothing persisted).
+    @State private var service = CloudBalanceService()
+
+    private var trimmedKey: String { apiKey.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 8) {
+            Text("Balance")
+                .foregroundStyle(VaniScriptTheme.text2)
+                .frame(width: 140, alignment: .leading)
+
+            HStack(spacing: 8) {
+                Text(displayText)
+                    .foregroundStyle(VaniScriptTheme.text1)
+                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+
+                if isLoading {
+                    ProgressView().controlSize(.small)
+                }
+
+                Spacer(minLength: 0)
+
+                Button {
+                    Task { await load(force: true) }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                .disabled(isLoading)
+                .help("Refresh balance")
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .font(.system(size: 13))
+        .task(id: apiKey) {
+            await load(force: false)
+        }
+    }
+
+    /// Human-readable balance line by `BalanceInfo` case (§11 wording).
+    private var displayText: String {
+        switch info {
+        case let .usd(remaining, total):
+            if let total {
+                return "\(Self.usd(remaining)) remaining / \(Self.usd(total)) limit"
+            }
+            return "\(Self.usd(remaining)) remaining"
+        case let .planLimits(label, detail):
+            return detail.isEmpty ? label : "\(label) — \(detail)"
+        case .unavailable:
+            // Quiet fallback: no real number, so point the user at Estimated spent.
+            return "Estimated only"
+        }
+    }
+
+    private func load(force: Bool) async {
+        isLoading = true
+        defer { isLoading = false }
+        let result = await service.balance(for: descriptor, apiKey: trimmedKey, force: force)
+        guard !Task.isCancelled else { return }
+        info = result
+    }
+
+    /// Format a USD amount with two decimals (never fabricates precision).
+    static func usd(_ value: Double) -> String {
+        String(format: "$%.2f", value)
+    }
+}
+
 
 // A4 (§9): validity badge + model dropdown for a cloud provider.
 //

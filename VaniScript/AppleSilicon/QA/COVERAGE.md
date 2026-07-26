@@ -1,6 +1,6 @@
 # QA COVERAGE — VaniScript
 
-Area → script → asserts. Column **new this run** marks scripts added in the current QA cycle (A3 unless noted).
+Area → script → asserts. Column **new this run** marks scripts added in the current QA cycle (A7 unless noted).
 
 ## Build gates & MCP smoke
 
@@ -376,5 +376,73 @@ Area → script → asserts. Column **new this run** marks scripts added in the 
 
 **Env-only handling:**
 - `a6_swift_test_green.sh` / prior swift gates / `build_gate_as.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
+
+---
+
+## A7 — Real balance adapter (OpenRouter first)
+
+| Area | Script | Asserts | New this run |
+|---|---|---|---|
+| Service present | `a7_balance_service_present.sh` | CloudBalanceService.swift: `public actor` + `BalanceProvider` + OpenRouter/Ollama providers + A7 markers | **yes** |
+| BalanceInfo | `a7_balance_info_cases.sh` | `.usd(remaining:total:)` / `.planLimits(label:detail:)` / `.unavailable`, Equatable+Sendable | **yes** |
+| OpenRouter parsers | `a7_openrouter_parsers.sh` | GET `/api/v1/credits` + `/api/v1/key` (Bearer); pure `parseCredits`/`parseKey`; typed `unparsableResponse` | **yes** |
+| OpenRouter mapping | `a7_openrouter_mapping.sh` | remaining = credits−usage; per-key cap `min(accountRemaining,keyRemaining)`; total = `keyLimit ?? credits` | **yes** |
+| Ollama plan | `a7_ollama_plan_based.sh` | `.planLimits("Plan-based (GPU time)")`, never a `.usd` (no fake $) | **yes** |
+| Honesty guard | `a7_honesty_guard_no_fetch.sh` | `.none`/`.estimated` → nil provider → `.unavailable` no-fetch; empty OpenRouter key no-fetch | **yes** |
+| Quiet fallback | `a7_quiet_fallback.sh` | `CloudBalanceError` typed; balance() do/catch → `.unavailable`; non-2xx → `.requestFailed` | **yes** |
+| TTL cache | `a7_ttl_cache_force.sh` | TTL=60s in-memory per provider id; `force` bypass; `invalidate()`; session-only (no persistence) | **yes** |
+| Injected fetcher | `a7_http_fetcher_injected.sh` | network only via injected `CloudHTTPFetcher` (A4 reuse); no direct `URLSession` in service | **yes** |
+| Catalog kinds | `a7_catalog_balance_kinds.sh` | openrouter=`.openrouterCredits`, ollama=`.ollamaPlan`, gemini/openai/anthropic/qwen/custom=`.estimated` | **yes** |
+| Settings row | `a7_settings_balance_row.sh` | `CloudBalanceRow` module-visible; gated to real kinds; `.usd`/`.planLimits`/`Estimated only`; lazy `.task(id:)`+Refresh | **yes** |
+| Stats section | `a7_usage_stats_real_balance.sh` | `realBalanceSection` reuses `CloudBalanceRow`; gated by kind + configured (non-empty) key | **yes** |
+| No fake $ | `a7_no_fake_usd_estimated.sh` | no fake $ for `.estimated`; A6 disclaimer intact; balance gated to real kinds | **yes** |
+| Tests present | `a7_tests_present.sh` | `@Suite("CloudBalanceService (A7)")`: parsers/cap/Ollama/guard/quiet/cache/force on mocked network | **yes** |
+| No secrets | `a7_no_keys_in_source.sh` | no sk-/AIza/ghp_/xox- in A7 sources/tests (§14.7) | **yes** |
+| ADR | `a7_adr_present.sh` | `D-2026-07-26-A7` with OpenRouter shapes + honesty rules + 331 tests | **yes** |
+| FEEDBACK | `a7_feedback_approved.sh` | FEEDBACK A7 `[APPROVED]` + handoff claims | **yes** |
+| STATE.yaml | `a7_state_yaml_a7.sh` | `current_step: A7`; implementation+review approved; target_files mention CloudBalanceService | **yes** |
+| swift test gate | `a7_swift_test_green.sh` | green; soft-warn <331; ENV-ONLY soft-pass | **yes** |
+
+### A6 regression adaptation (this run)
+
+| Script | Change |
+|---|---|
+| `a6_no_a7_balance.sh` | step-aware: pre-A7 strict (no balance service); A7+ balance half N/A → assert `CloudBalanceRow` reuse + no direct `URLSession` in UsageStatisticsView |
+| `a5_no_a6_stats_no_a7_balance.sh` | already step-aware (verified PASS at A7): stats half N/A on A6+; balance half OK on A7+ |
+
+---
+
+## Gap Hunt Checklist (A7)
+
+**A7 delta (every item closed):**
+- [x] CloudBalanceService actor + BalanceProvider + BalanceInfo cases → `a7_balance_service_present`, `a7_balance_info_cases`
+- [x] OpenRouter credits+key parsers (Bearer, typed errors) → `a7_openrouter_parsers`
+- [x] OpenRouter mapping: credits−usage, per-key `min()` cap (never over-report), total = keyLimit ?? credits → `a7_openrouter_mapping`
+- [x] Ollama plan-based label, never a fake $ → `a7_ollama_plan_based`
+- [x] Honesty guard: `.none`/`.estimated` no-fetch; empty key no-fetch → `a7_honesty_guard_no_fetch`
+- [x] Quiet fallback: errors → `.unavailable`, no crash → `a7_quiet_fallback`
+- [x] TTL=60s cache + force bypass + invalidate + session-only → `a7_ttl_cache_force`
+- [x] Network only via injected `CloudHTTPFetcher` (no direct URLSession) → `a7_http_fetcher_injected`
+- [x] Catalog balanceKind mapping (real vs estimated) → `a7_catalog_balance_kinds`
+- [x] SettingsView CloudBalanceRow gated + module-visible + lazy/Refresh → `a7_settings_balance_row`
+- [x] UsageStatisticsView realBalanceSection reuses row, kind+key gated → `a7_usage_stats_real_balance`
+- [x] No fake $ for estimated providers; A6 estimated path intact → `a7_no_fake_usd_estimated`
+- [x] Unit tests present (mocked network) → `a7_tests_present`
+- [x] No keys in source → `a7_no_keys_in_source`
+- [x] ADR + FEEDBACK APPROVED + STATE A7 → `a7_adr_present`, `a7_feedback_approved`, `a7_state_yaml_a7`
+- [x] swift test green (331+) → `a7_swift_test_green` (+ `build_gate_as`)
+
+**Regression:**
+- [x] A1–A6 scripts still enabled (step-aware where needed) → full `run_all.sh`
+- [x] `a6_no_a7_balance` inverted to step-aware for A7+ (QA maintenance, not product bug)
+- [x] `a5_no_a6_stats_no_a7_balance` already step-aware (verified PASS at A7)
+
+**N/A (with reason):**
+- Interactive UI click-through of Refresh / balance row — **N/A (static QA)**: no XCUITest harness; logic covered via `CloudBalanceServiceTests` mocked-network e2e.
+- Live OpenRouter/Ollama network calls — **N/A (no keys in QA)**: parsers/service exercised on mocked JSON; honesty guard asserts no-fetch for estimated providers.
+- Balance for Gemini/Anthropic/Qwen — **N/A (out of scope A7)**: no API; asserted estimated-only via `a7_no_fake_usd_estimated` + `a7_catalog_balance_kinds`.
+
+**Env-only handling:**
+- `a7_swift_test_green.sh` / `build_gate_as.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
 
 ---

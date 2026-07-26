@@ -1,5 +1,46 @@
 # Verification Report (Verification Engineer)
 
+Проверяемый шаг: **A7 — Реальный баланс (адаптер, OpenRouter first)**
+Требования шага: `API_USAGE_STEPS.md` (§A7), `API_USAGE_ARCHITECTURE.md` (§11, §14)
+ADR: `DECISIONS.md` → `D-2026-07-26-A7`
+Роль: Verification Engineer (Gemini 3.6 Flash)
+
+---
+
+### 1. Сборка и тесты
+- **Собирается и проходит ли тестовый прогон проект после изменений?**
+  Да. `swift test` выполнен успешно — **331 tests в 47 suites PASS** (включая новую suite `CloudBalanceService (A7)`).
+
+### 2. Логика и соответствие требованиям A7
+- **CloudBalanceService & Adapter Pattern:**
+  Создан `CloudBalanceService.swift` в `VaniScriptCore` с типом `BalanceInfo` (`.usd`, `.planLimits`, `.unavailable`), протоколом `BalanceProvider` и мокируемым `CloudHTTPFetcher`.
+- **OpenRouter & Ollama Cloud:**
+  - `OpenRouterBalanceProvider`: извлекает `/api/v1/credits` и `/api/v1/key`, вычисляет remaining = credits − usage, корректно учитывает per-key cap (`min(accountRemaining, keyRemaining)`), отображает «$X remaining / $Y limit».
+  - `OllamaCloudBalanceProvider`: честно возвращает `.planLimits(label: "Plan-based (GPU time)", detail: "")` без создания фейковых сумок с «$».
+- **Инварианты честности (§11 / §14):**
+  - Провайдеры с `.none` / `.estimated` (Gemini, OpenAI, Anthropic, Qwen, Custom) **не совершают сетевых запросов** и не показывают реальный баланс.
+  - Ошибки сети/парсинга дают тихий fallback в `.unavailable` (без крашей и без алертов), переключая UI на локальную оценку `Estimated spent`.
+  - Отсутствуют фейковые суррогатные цены «$» для сервисов без API баланса.
+- **UI Интеграция:**
+  - `CloudBalanceRow` в `SettingsView.swift` рендерит строку баланса с обновлением (Refresh) и индикатором загрузки только для провайдеров с `balanceKind ∈ {.openrouterCredits, .ollamaPlan}`.
+  - `UsageStatisticsView.swift` переиспользует `CloudBalanceRow` в `realBalanceSection` при наличии ключа.
+  - Кэширование с TTL (60s) в акторе `CloudBalanceService` предотвращает спам API.
+- **Соблюдение target_files и инвариантов:**
+  - Изменения строго ограничены разрешёнными `target_files`.
+  - Ключи API не логгируются и не зашиты в коде.
+  - Codex / Grok / MCP server и существующие тесты не сломаны.
+
+### 3. Качество кода и комментарии
+- Модули снабжены подробными role-headers, маркерами шага A7 и пояснениями к логике кэширования и quiet fallback в соответствии с `TEAM_CONTRACT.md` § Comments.
+
+---
+
+**ИТОГОВЫЙ СТАТУС:** [APPROVED]
+
+---
+
+# Verification Report (Verification Engineer)
+
 Проверяемый шаг: **A6 — Статистика использования (UI, эталон Electron tab 7)**
 Требования шага: `API_USAGE_STEPS.md` (§A6), `API_USAGE_ARCHITECTURE.md` (§10, §14)
 Роль: Verification Engineer (Gemini 3.6 Flash)
@@ -430,3 +471,52 @@ pipeline — предложено на A5/A6). Запись переводов �
   provider name сохранён.
 
 **next_actor: orchestrator**
+
+---
+
+# A7 — Реальный баланс (адаптер, OpenRouter first) — Coder handoff
+
+Роль: Implementation Engineer (Coder). Шаг: **A7**.
+Требования: `API_USAGE_STEPS.md` (§A7), `API_USAGE_ARCHITECTURE.md` (§11, §14).
+ADR: `DECISIONS.md` → `D-2026-07-26-A7`.
+
+## Что сделано (только target_files)
+
+1. **`Sources/VaniScriptCore/CloudBalanceService.swift` (NEW):**
+   - `BalanceInfo` = `.usd(remaining:total:)` / `.planLimits(label:detail:)` /
+     `.unavailable`; protocol `BalanceProvider`.
+   - `OpenRouterBalanceProvider`: `GET /api/v1/credits` + `GET /api/v1/key` (Bearer),
+     чистые парсеры `parseCredits`/`parseKey` + `balance(creditsData:keyData:)`.
+     remaining = credits − usage, per-key cap через `min(...)`; total = key.limit ?? credits.
+   - `OllamaCloudBalanceProvider`: честная подпись «Plan-based (GPU time)» (нет $-API).
+   - `CloudBalanceService` (actor): роутинг по `balanceKind`, short-TTL кэш (60s),
+     `force` (Refresh) обходит кэш. `.none`/`.estimated` → провайдер nil → `.unavailable`
+     БЕЗ сети. Любая ошибка → тихий `.unavailable`. Сеть через инжектируемый `CloudHTTPFetcher`.
+2. **`Sources/VaniScript/Views/SettingsView.swift` (MODIFY):**
+   - `CloudBalanceRow` (module-visible) — строка баланса + Refresh + ProgressView;
+     `.usd` → «$X remaining / $Y limit», `.planLimits` → label(+detail), `.unavailable`
+     → «Estimated only». Lazy `.task(id: apiKey)`.
+   - `cloudProviderCard` рендерит строку только при `balanceKind ∈ {openrouterCredits,
+     ollamaPlan}`. Для Gemini/OpenAI/Anthropic/Qwen/Custom строки нет (не запрашиваем).
+3. **`Sources/VaniScript/Views/UsageStatisticsView.swift` (MODIFY):**
+   - `realBalanceSection` — переиспользует `CloudBalanceRow` для провайдеров с реальным
+     балансом и заданным ключом. Estimated-карточки (A6) не тронуты; никаких фейковых «$».
+4. **`Tests/VaniScriptCoreTests/CloudBalanceServiceTests.swift` (NEW):** парсеры
+   credits/key (+null), маппинг per-key cap, Ollama plan, guard `.estimated`/`.none`
+   no-fetch, empty-key no-fetch, e2e через мок + кэш, quiet fallback (HTTP 401),
+   force refresh обходит кэш. Сеть — мок.
+5. **`DECISIONS.md`:** ADR `D-2026-07-26-A7` с фактическими формами ответов OpenRouter.
+
+## Инварианты (§14)
+- AppSettings decode не тронут (новых полей нет) → migration-safe.
+- Codex/Grok/Qwen chat/MCP не тронуты.
+- Ключей в исходниках/логах нет; сеть только через инжектируемый fetcher.
+- Нет фейковых «$» для провайдеров без API (Gemini/Anthropic/Qwen → Estimated only).
+- Lazy load + TTL cache + quiet fallback.
+
+## Проверка
+- `swift build` — OK.
+- `swift test` — **331 tests / 47 suites GREEN** (+ suite `CloudBalanceService (A7)`).
+
+**next_actor: orchestrator**
+

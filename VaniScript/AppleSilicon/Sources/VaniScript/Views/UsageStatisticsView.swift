@@ -34,6 +34,11 @@ struct UsageStatisticsView: View {
             // A6: active provider summary (Electron "api-active-summary" card).
             activeProvidersSummary
 
+            // A7 (§11): real balance for providers whose API exposes one (OpenRouter
+            // USD, Ollama plan). Providers without a balance API are intentionally
+            // absent here — their spend is the Estimated cards below, no fake "$".
+            realBalanceSection
+
             if sortedUsageEntries.isEmpty {
                 Text("No usage recorded yet.")
                     .font(.system(size: 13))
@@ -116,6 +121,52 @@ struct UsageStatisticsView: View {
         .background(Color.white.opacity(0.025))
         .cornerRadius(10)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.06), lineWidth: 1))
+    }
+
+    // A7 (§11): providers with a real balance API and a configured key. Only these
+    // render a live balance row; everything else stays on Estimated spend (no fake $).
+    private var realBalanceProviders: [CloudProviderDescriptor] {
+        CloudProviderCatalog.providers.filter { descriptor in
+            let realKind = descriptor.balanceKind == .openrouterCredits
+                || descriptor.balanceKind == .ollamaPlan
+            guard realKind else { return false }
+            // OpenRouter needs a key; Ollama's plan label is shown once a key is set too,
+            // so both gate on a configured key (avoids fetching for unused providers).
+            return !apiKey(forProviderID: descriptor.id).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+    }
+
+    @ViewBuilder
+    private var realBalanceSection: some View {
+        let providers = realBalanceProviders
+        if !providers.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(providers) { descriptor in
+                    HStack {
+                        Text(descriptor.label)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.text1)
+                            .frame(width: 120, alignment: .leading)
+                        // A7: reuse the shared balance row (lazy fetch + Refresh + quiet
+                        // fallback). Defined in SettingsView (module-visible).
+                        CloudBalanceRow(descriptor: descriptor, apiKey: apiKey(forProviderID: descriptor.id))
+                    }
+                }
+            }
+            .padding(12)
+            .background(Color.white.opacity(0.025))
+            .cornerRadius(10)
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.06), lineWidth: 1))
+        }
+    }
+
+    /// API key for a real-balance provider id (only the providers we actually fetch for).
+    private func apiKey(forProviderID id: String) -> String {
+        switch id {
+        case CloudProviderCatalog.openrouterID: return store.settings.openrouterApiKey
+        case CloudProviderCatalog.ollamaCloudID: return store.settings.ollamaCloudApiKey
+        default: return ""
+        }
     }
 
     private var activeProvidersSummary: some View {

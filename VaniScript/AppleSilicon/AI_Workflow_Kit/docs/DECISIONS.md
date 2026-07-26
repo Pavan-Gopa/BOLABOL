@@ -299,3 +299,45 @@
 - **Out of scope (A5):** stats UI (A6), реальный баланс (A7), локальные модели, MCP.
 - **Verification:** `swift build` + `swift test` — 320 tests, 46 suites, GREEN
   (+12 новых: `ProviderRegistryCloudTests`, `CloudProviderRoutingTests`).
+
+---
+
+## D-2026-07-26-A7 — Real balance adapter (OpenRouter first)
+
+- **Context:** §11 — показывать реальный баланс/лимиты только там, где провайдер их
+  отдаёт; иначе честный Estimated spent без фейковых «$». Ленивая загрузка + кэш +
+  тихий fallback.
+- **Decision:**
+  1. **`CloudBalanceService` (NEW, VaniScriptCore, actor):** protocol `BalanceProvider`
+     `{ func fetchBalance(apiKey:) async throws -> BalanceInfo }`; enum
+     `BalanceInfo` = `.usd(remaining:total:)` / `.planLimits(label:detail:)` / `.unavailable`.
+     Сеть инжектится через `CloudHTTPFetcher` (reuse из CloudModelCatalog A4) → парсеры
+     тестируются на моках, без реальных запросов/ключей.
+  2. **OpenRouter (`.openrouterCredits`) — фактические формы ответа (verified A7):**
+     - `GET https://openrouter.ai/api/v1/credits` (Bearer) →
+       `{ "data": { "total_credits": Double, "total_usage": Double } }`.
+     - `GET https://openrouter.ai/api/v1/key` (Bearer) →
+       `{ "data": { "limit": Double?, "limit_remaining": Double?, "usage": Double,
+       "is_free_tier": Bool, ... } }` (`limit`/`limit_remaining` = null → безлимитный ключ).
+     - Маппинг: `accountRemaining = total_credits − total_usage`; если у ключа задан
+       per-key cap, берём `min(accountRemaining, limit_remaining)` (никогда не завышаем
+       остаток). `total` = `limit` ключа, иначе `total_credits`. Показ: «$X remaining /
+       $Y limit» (как Cline CLI).
+  3. **Ollama Cloud (`.ollamaPlan`):** публичного $-/plan-эндпоинта баланса нет →
+     честная подпись «Plan-based (GPU time)» (никаких фейковых «$»). Если API
+     впоследствии отдаст plan-лимиты — прокидываются в `.planLimits(detail:)`.
+  4. **Honesty guard:** для `.none`/`.estimated` (Gemini/OpenAI/Anthropic/Qwen/Custom)
+     сервис ВООБЩЕ не ходит в сеть и возвращает `.unavailable` (провайдер-маппинг = nil).
+     Любая сетевая/парс-ошибка → тихий `.unavailable` (без crash, UI на Estimated).
+  5. **Кэш:** in-memory TTL (default 60s) по provider id; Refresh (`force: true`)
+     обходит кэш. Session-only, ничего не персистится, ключи не логируются.
+  6. **UI:** `CloudBalanceRow` (module-visible, в SettingsView) — строка баланса +
+     Refresh + ProgressView; рендерится только для real-balance kinds. Provider cards
+     (`cloudProviderCard`) и `UsageStatisticsView` (секция `realBalanceSection`, только
+     провайдеры с ключом) переиспользуют её.
+- **Out of scope (A7):** баланс для Gemini/Anthropic/Qwen (нет API) — только Estimated;
+  запись usage (A2), stats layout (A6), A8 docs/acceptance.
+- **Verification:** `swift build` OK; `swift test` — 331 tests / 47 suites GREEN
+  (+ suite `CloudBalanceService (A7)`: парсеры credits/key, маппинг per-key cap, Ollama
+  plan, guard `.estimated`/`.none` no-fetch, quiet fallback, TTL cache, force refresh).
+

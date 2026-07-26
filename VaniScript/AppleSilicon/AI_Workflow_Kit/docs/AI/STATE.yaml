@@ -2,28 +2,31 @@
 # Product scope: AI_Workflow_Kit/docs/API_USAGE_STEPS.md
 # Architecture: AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
 
-current_step: A3
+current_step: A4
 step_description: >
-  UI reorg: единый dropdown провайдеров + условные карточки. Заменить
-  всегда-развёрнутые секции Gemini/OpenAI/Anthropic/Custom на один Picker
-  Provider (CloudProviderCatalog.orderedDescriptors) и рендер только карточки
-  выбранного провайдера. Gemini/OpenAI/Anthropic — ключ/бюджет/тумблеры 1:1;
-  Qwen/OpenRouter/Ollama — заглушка «ключ + скоро»; Custom — существующий список.
-  Статистику не ломать (A6). UI only.
+  Валидация ключа (бейдж Checking/Valid/Invalid) + автоподтягивание моделей.
+  CloudKeyValidator + CloudModelCatalog; в карточке провайдера бейдж и dropdown
+  моделей (editable combo + Retry). Модель → settings; resolve() Gemini/OpenAI
+  читает settings (дефолт = старый хардкод). Unit-тесты парсеров на моках.
 
 target_files:
+  - Sources/VaniScriptCore/CloudKeyValidator.swift
+  - Sources/VaniScriptCore/CloudModelCatalog.swift
   - Sources/VaniScript/Views/SettingsView.swift
-  - Sources/VaniScript/Views/ProviderCardView.swift
+  - Sources/VaniScript/Services/CloudAudioTranscriptionEngine.swift
+  - Sources/VaniScript/Services/CloudTextTranslationEngine.swift
+  - Tests/VaniScriptCoreTests/CloudModelCatalogTests.swift
+  - Tests/VaniScriptCoreTests/CloudKeyValidatorTests.swift
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 
 coder_brief: >
-  A3 — UI reorg apiKeysTab. Один @State selectedProviderId (default gemini) +
-  Picker по CloudProviderCatalog.orderedDescriptors. ProviderCardView: карточка
-  по descriptor + ключ/бюджет/тумблеры (ApiKeyInputRow, SliderRow, бейджи).
-  Gemini/OpenAI/Anthropic — поведение 1:1, модель пока ReadOnlyRow (A4).
-  Qwen/OpenRouter/Ollama — заглушка ключ+скоро (A5). Custom — customCloudProviders
-  без смены механизма. Секцию статистики не трогать. Settings save 1:1.
-  Движки/usage/MCP не трогать. Graphify first.
+  A4 — key validation badge + model catalog. NEW CloudKeyValidator (idle/checking/
+  valid/invalid, per-provider strategy §9.1, debounce). NEW CloudModelCatalog
+  listModels + session cache §9.2. ProviderCardView (in SettingsView.swift A3) —
+  badge; on valid → load models → Picker/editable combo + Retry; selection →
+  settings.*Model. ActiveCloud*Provider.resolve() uses settings model for
+  Gemini/OpenAI (default = old hardcode). Unit tests with mocked JSON. No A5
+  engine routing for qwen/openrouter/ollama. No A6 stats. Graphify first.
 
 completed_steps:
   - G0
@@ -49,27 +52,23 @@ completed_steps:
   - QWEN_DONE
   - A1
   - A2
+  - A3
 
 implementation:
-  status: approved
-  attempts: 1
+  status: pending
+  attempts: 0
 
 review:
-  status: approved
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
   status: green
   last_report: "QA/REPORT.md"
-  suite: "A3 full suite: 60 PASS / 0 FAIL (21 new a3-* scripts)"
+  suite: "A3: 60 PASS / 0 FAIL; 21 a3-* scripts; swift 287/42 GREEN"
   bugs_open: 0
-  note: >
-    A3 QA GREEN. 60/60 scripts PASS incl. A1+A2 regression, build gates,
-    MCP smoke, Q7 (step-aware N/A for doc-only), 21 a3-* gap-hunt scripts.
-    swift test 287/42 GREEN; swift build green. Ready for post-tag
-    apiusage/A3-done (orchestrator only).
 
-next_actor: orchestrator
+next_actor: implementation
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -79,8 +78,8 @@ working_roots:
 
 checkpoint:
   last_pre_tag: "apiusage/pre-A3"
-  last_post_tag: "apiusage/A2-done"
-  last_commit: "b9c6710"
+  last_post_tag: "apiusage/A3-done"
+  last_commit: "976808b"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

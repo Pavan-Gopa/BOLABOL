@@ -47,35 +47,25 @@ Area → script → asserts. Column **new this run** marks scripts added in the 
 | Doc-only gate | `q7_doc_only_no_code.sh` | pending diff under AppleSilicon/ has no `.swift/.js/.ts/.py` code | **yes** |
 | swift test regression | `q7_swift_test_green.sh` | 0 failures, non-empty run; soft-warn if count < 267 | **yes** |
 
+## A1 — Discovery + data model
+
+| Area | Script | Asserts | New this run |
+|---|---|---|---|
+| Provider Catalog fixed order | `a1_catalog_fixed_order.sh` | providerOrder contains 7 IDs in exact order | **yes** |
+| AppSettings decodeIfPresent | `a1_appsettings_decode_if_present.sh` | all new A1 fields use decodeIfPresent | **yes** |
+| ProviderUsage decodeIfPresent | `a1_provider_usage_decode_if_present.sh` | lastModel and lastTransactionAt use decodeIfPresent | **yes** |
+| Catalog no network | `a1_catalog_no_network.sh` | No URLSession/URLRequest/.fetch in CloudProviderCatalog | **yes** |
+| AppSettings defaults | `a1_appsettings_defaults.sh` | geminiTextModel and openaiTextModel defaults are correct | **yes** |
+
 ---
 
-## Gap Hunt Checklist (Q7)
+## Gap Hunt Checklist (A1)
 
-**Q7 delta:**
-- [x] ACCEPTANCE.md: all boxes `[x]`, verdict PASS → `q7_acceptance_all_checked.sh`
-- [x] ACCEPTANCE.md: 3 surfaces described → `q7_acceptance_3_surfaces.sh`
-- [x] ACCEPTANCE.md: real values (19790, 19789, qwen binary, model) → `q7_acceptance_real_paths.sh`
-- [x] ACCEPTANCE.md: invariants mentioned → `q7_acceptance_invariants.sh`
-- [x] README.md: Qwen as provider → `q7_readme_qwen_provider.sh`
-- [x] README.md: original content not deleted → `q7_readme_no_rewrite.sh`
-- [x] MCP_INSTRUCTIONS.md: Qwen section current → `q7_mcp_instructions_qwen.sh`
-- [x] MCP_INSTRUCTIONS.md: no "Electron" (BUG-002) → `q7_mcp_instructions_no_electron.sh`
-- [x] DECISIONS.md: ADR QWEN_MCP done → `q7_decisions_adr_done.sh` + `q7_decisions_adr_format.sh`
-- [x] Doc-only: no code changes in diff → `q7_doc_only_no_code.sh`
-- [x] swift test green → `q7_swift_test_green.sh` (+ `build_gate_as.sh`)
+**A1 delta:**
+- [x] Happy path (models exist, decode properly, order is correct) → `a1_catalog_fixed_order.sh`, `a1_appsettings_defaults.sh`
+- [x] Error / invalid input / backward compat (decodeIfPresent) → `a1_appsettings_decode_if_present.sh`, `a1_provider_usage_decode_if_present.sh`
+- [x] Isolation (no network in catalog) → `a1_catalog_no_network.sh`
+- [x] swift test green → `build_gate_as.sh`
 
 **Full regression (prior scripts):**
-- [x] Re-run all prior scripts — N/A-as-stated / reason: the brief and STATE.yaml claim
-  "62 scripts (47 old + 15 Q6)", but **only `build_gate_as.sh` existed on disk** and the
-  manifest referenced two more (`build_gate_electron.sh`, `mcp_smoke_as.sh`) that were
-  **missing** (running the old manifest would have produced 2 false MISSING→FAIL). We cannot
-  re-run scripts that do not exist. Action taken: implemented the 2 phantom infra scripts so
-  the declared suite is real, kept `build_gate_as.sh`, and added the 12 Q7 delta scripts.
-  Current real suite = **15 scripts**. Discrepancy recorded in QA/REPORT.md as a state-integrity
-  observation (not a product-code bug).
-
-## Notes / adaptations
-- `qwen/pre-Q7` git ref does not exist; Q7 edits are **uncommitted** working-tree changes.
-  `q7_doc_only_no_code.sh` therefore inspects `git diff HEAD` scoped to `AppleSilicon/`.
-- `mcp_smoke_as.sh` is a deterministic **static** smoke (no live SSE probe) to keep the suite
-  idempotent and non-flaky per QA rules.
+- [x] Re-run all prior scripts — keeping all Q7 scripts enabled in manifest.json to prevent regressions.

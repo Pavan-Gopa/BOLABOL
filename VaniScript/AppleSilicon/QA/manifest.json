@@ -106,6 +106,41 @@
       "area": "Q7 swift test regression",
       "enabled": true,
       "note": "swift test: 0 failures, non-empty run; soft-warn if executed count < 267."
+    },
+    {
+      "path": "a1_catalog_fixed_order.sh",
+      "kind": "a1-delta",
+      "area": "CloudProviderCatalog",
+      "enabled": true,
+      "note": "A1 validation: providerOrder fixed order."
+    },
+    {
+      "path": "a1_appsettings_decode_if_present.sh",
+      "kind": "a1-delta",
+      "area": "AppSettings",
+      "enabled": true,
+      "note": "A1 validation: new fields use decodeIfPresent."
+    },
+    {
+      "path": "a1_provider_usage_decode_if_present.sh",
+      "kind": "a1-delta",
+      "area": "ProviderUsage",
+      "enabled": true,
+      "note": "A1 validation: new fields use decodeIfPresent."
+    },
+    {
+      "path": "a1_catalog_no_network.sh",
+      "kind": "a1-delta",
+      "area": "CloudProviderCatalog",
+      "enabled": true,
+      "note": "A1 validation: no network calls in catalog."
+    },
+    {
+      "path": "a1_appsettings_defaults.sh",
+      "kind": "a1-delta",
+      "area": "AppSettings",
+      "enabled": true,
+      "note": "A1 validation: text model defaults."
     }
   ]
 }

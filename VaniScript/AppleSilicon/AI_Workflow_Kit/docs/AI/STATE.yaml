@@ -1,19 +1,24 @@
-# API_USAGE track — COMPLETE
-# Product scope: AI_Workflow_Kit/docs/API_USAGE_STEPS.md
-# Architecture: AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
-# Acceptance: AI_Workflow_Kit/docs/API_USAGE_ACCEPTANCE.md
+# CLOUD_PROVIDER_STABILIZATION track — ACTIVE
+# Product scope: AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_STEPS.md
+# Architecture: AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_ARCHITECTURE.md
+# Acceptance: AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_ACCEPTANCE.md
 
-current_step: API_USAGE_DONE
+current_step: CPS-01
 step_description: >
-  Трек API_USAGE завершён (A1–A8). Все product-шаги approved + QA green;
-  A8 doc-only approved (QA waived). Acceptance checklist, README и ADR
-  «API_USAGE done» на месте.
+  Evidence gate: воспроизвести OBS-002 (OpenRouter/generic Use for Translation
+  no-op), зафиксировать точный source-level root cause и проверить актуальные
+  контракты Qwen endpoint profiles, embedded Qwen auth/model и OpenRouter audio.
+  Product-код на этом шаге не изменяется.
 
-target_files: []
+target_files:
+  - AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_ACCEPTANCE.md
+  - AI_Workflow_Kit/docs/DECISIONS.md
 
 coder_brief: >
-  Track complete. No open coding step. Next program step is outside API_USAGE
-  unless Orchestrator/Human open a new track.
+  Выполни только диагностический CPS-01 из CLOUD_PROVIDER_STABILIZATION_STEPS.md.
+  Собери black-box evidence на свежей native-сборке, установи точную причину
+  OBS-002, проверь drift-prone provider contracts и запиши доказательства только
+  в target_files. Не меняй Swift/JS/TS/Python, QA scripts или STATE.yaml.
 
 completed_steps:
   - G0
@@ -48,38 +53,37 @@ completed_steps:
   - API_USAGE_DONE
 
 implementation:
-  status: done
+  status: pending
   attempts: 0
 
 review:
-  status: approved
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: green
+  status: waived
   last_report: "QA/REPORT.md"
-  suite: "A7 last coding QA: 133 PASS / 0 FAIL; A8 doc-only QA waived"
+  suite: "CPS-01 is diagnostic/doc-only; no product change. Existing baseline: 133 PASS / 0 FAIL."
   bugs_open: 0
-  note: "API_USAGE track complete. All surfaces accepted."
+  note: "CPS-01 evidence is validated by Reviewer; product QA gate starts on coding steps."
 
-next_actor: none
+next_actor: implementation
 
-track: API_USAGE
-prior_track: QWEN_MCP
-track_status: DONE
+track: CLOUD_PROVIDER_STABILIZATION
+prior_track: API_USAGE
+track_status: IN_PROGRESS
 
 working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "apiusage/pre-A8"
+  last_pre_tag: "cloud-provider-stabilization/pre-CPS-01"
   last_post_tag: "apiusage/A8-done"
-  last_commit: "34b212e"
+  last_commit: "496d0a1"
 
 plan_files:
-  - AI_Workflow_Kit/docs/API_USAGE_STEPS.md
-  - AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
-  - AI_Workflow_Kit/docs/API_USAGE_ACCEPTANCE.md
+  - AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_STEPS.md
+  - AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_ARCHITECTURE.md
   - AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
   - AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md

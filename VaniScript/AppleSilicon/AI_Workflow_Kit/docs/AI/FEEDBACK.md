@@ -1,5 +1,43 @@
 # Verification Report (Verification Engineer)
 
+Проверяемый шаг: **A6 — Статистика использования (UI, эталон Electron tab 7)**
+Требования шага: `API_USAGE_STEPS.md` (§A6), `API_USAGE_ARCHITECTURE.md` (§10, §14)
+Роль: Verification Engineer (Gemini 3.6 Flash)
+
+---
+
+### 1. Сборка и тесты
+- **Собирается и проходит ли тестовый прогон проект после изменений?**
+  Да. `swift build` прошёл успешно. `swift test` выполнен успешно — **320 tests в 46 suites PASS** (за 0.122 сек).
+
+### 2. Логика и соответствие требованиям A6
+- **Компонент UsageStatisticsView:**
+  Создан новый `UsageStatisticsView.swift` в `Sources/VaniScript/Views/`, реализующий вкладку статистики в парадигме Electron `SettingsModal.tsx` tab 7:
+  1. **Last Transaction Details:** Отображает запись с максимальным `lastTransactionAt` (ISO-8601), бейдж `lastModel` (с fallback на название провайдера), а также метрики `Prompt tokens`, `Completion tokens`, `Total tokens`.
+  2. **Active Providers Summary:** Сводка `Transcribing` и `Translation / Editing` отображает человекочитаемые имена активных провайдеров через `CloudProviderCatalog.providerDisplayName` с нормализацией legacy engine ID (`gemini-cloud` → Gemini, `gpt-cloud` → OpenAI) и поддержкой локальных движков.
+  3. **Per-model Cards:** Карточки генерируются по каждому ключу `providerId:model` из `settings.usage`. Каждая карточка содержит бейдж `N transactions`, сетку из 6 метрик (`Prompt / input tokens`, `Completion tokens`, `Total tokens`, `Audio min`, `Estimated spent`, `Estimated remaining`).
+  4. **Точный Дисклеймер:** Текст `Cost is an estimate based on locally counted text tokens; provider billing can differ.` соответствует эталонной строке из Electron **точь-в-точь**.
+  5. **Reset Statistics:** Кнопка сброса выполняет `settings.usage = [:]`, очищая всю сохраненную статистику.
+  6. **Empty State:** При отсутствии записей отображается «No usage recorded yet.».
+- **Интеграция в SettingsView:**
+  Старая секция «Cloud Usage Statistics» и мёртвые функции/типы (`estimateCost`, `formatTokens`, `StatItem`, `BudgetBar`) удалены из `SettingsView.swift`. В `apiKeysTab` корректно подключён `UsageStatisticsView()`. Секция выбора провайдера (`apiKeysTab`) и карточки провайдеров (`ProviderCardView`) сохранены без нарушения их работоспособности.
+- **Инварианты и Scope:**
+  - Изменения затрагивают исключительно UI (UI only): логика движков, `ProviderRegistry`, `UsageRecorder` и `AppSettings` не менялись.
+  - Сетевые вызовы реального баланса отсутствуют (отложено до A7).
+  - Изменения ограничены разрешёнными `target_files` (`SettingsView.swift`, `UsageStatisticsView.swift`, `FEEDBACK.md`).
+  - Оговорки кодера в HANDOFF (QA скрипты старой секции устарели by design; бейдж lastModel как superset) проверены и признаны корректными.
+
+### 3. Качество кода и комментарии
+- `UsageStatisticsView.swift` снабжен подробным role header, ссылками на эталон Electron tab 7 и маркерами `// A6:` в соответствии с `TEAM_CONTRACT.md` § Comments.
+
+---
+
+**ИТОГОВЫЙ СТАТУС:** [APPROVED]
+
+---
+
+# Verification Report (Verification Engineer)
+
 Проверяемый шаг: **A5 — Полноценная интеграция Qwen / OpenRouter / Ollama Cloud**
 Требования шага: `API_USAGE_STEPS.md` (§A5), `API_USAGE_ARCHITECTURE.md` (§7, §14)
 Роль: Verification Engineer (Gemini 3.6 Flash)
@@ -338,5 +376,57 @@ pipeline — предложено на A5/A6). Запись переводов �
 - CloudKeyModelRow для Ollama использует дефолтный base каталога (https://ollama.com)
   для списка моделей — как в A4; кастомный base влияет на chat-endpoint (router).
 - target_files соблюдены строго; ключи только в headers, не в логах/исходниках.
+
+**next_actor: orchestrator**
+
+---
+
+# HANDOFF — A6 (Coder → Orchestrator)
+
+**Step:** A6 — Статистика использования (UI, эталон Electron tab 7).
+**Status:** IMPLEMENTED, `swift build` GREEN, `swift test` GREEN — 320 tests / 46 suites.
+
+## Что сделано
+1. **`Sources/VaniScript/Views/UsageStatisticsView.swift` (NEW):** секция статистики
+   в парадигме Electron SettingsModal.tsx tab 7 («Cloud API Usage»):
+   - **Last Transaction Details** — запись с максимальным `lastTransactionAt`
+     (ISO-8601, сортируется лексикографически), бейдж `lastModel` (fallback —
+     display name провайдера), ячейки Prompt / Completion / Total tokens
+     (`lastInputTokens` / `lastOutputTokens`).
+   - **Summary-карточка:** Transcribing / Translation & Editing — display name
+     активных провайдеров. Legacy engine ids нормализуются (`gemini-cloud`→gemini,
+     `gpt-cloud`→openai), локальные движки — «Local Whisper (Core ML)» / «Local MLX»,
+     остальные — `CloudProviderCatalog.providerDisplayName` (A5 ids = catalog ids).
+   - **Per-model карточки** по каждому ключу `settings.usage`
+     (`providerId:model`, UsageRecorder.usageKey): заголовок «Provider · model»,
+     бейдж «N transactions», грид 6 метрик — Prompt/input, Completion, Total,
+     Audio min, Estimated spent (estimateCost), Estimated remaining
+     (`max(0, budget − spent)` или «—» при budget == 0). Порядок: новые сверху.
+   - **Дисклеймер EXACT:** «Cost is an estimate based on locally counted text
+     tokens; provider billing can differ.» (на каждой карточке, как в Electron).
+   - **Reset Statistics** → `settings.usage = [:]` (прежнее поведение сброса).
+   - Пустое состояние: «No usage recorded yet.»
+2. **`SettingsView.swift`:** старая секция «Cloud Usage Statistics» удалена и
+   заменена на `UsageStatisticsView()` в `apiKeysTab`; ставшие мёртвыми приватные
+   `estimateCost`/`formatTokens` и `StatItem`/`BudgetBar` удалены (A6-комментарии
+   оставлены на местах). Остальной apiKeysTab (A3 dropdown/карточки) не тронут.
+3. **Pricing:** локальные ставки gemini/openai/anthropic и custom-провайдеров
+   перенесены 1:1 из старого `estimateCost`; qwen/openrouter/ollama без локального
+   прайса → $0.0000 (real balance — A7). Budget lookup: gemini/openai/qwen/openrouter
+   BudgetUsd + `budgetLimitUsd` кастомных провайдеров.
+
+## Инварианты (§14)
+- UI only: engines/registry/UsageRecorder/AppSettings не тронуты; decode не менялся.
+- Данные только из `settings.usage` (A2/A5); никакой network/real balance (A7).
+- Нет ключей в исходниках; Codex/Grok/Qwen/MCP не тронуты.
+- Comments: role header + why-notes, `// A6:` маркеры.
+
+## Замечания для ревью / QA
+- QA-скрипты `a3_stats_section_unchanged.sh` / `a4_no_a6_stats_rewrite.sh` проверяют
+  наличие старой секции «Cloud Usage Statistics» — теперь устарели by design
+  (A6 её заменяет), потребуют обновления манифеста QA.
+- Бейдж Last Transaction показывает `lastModel` (у нас есть per-model данные),
+  Electron показывал provider name — считаю это superset эталона; fallback на
+  provider name сохранён.
 
 **next_actor: orchestrator**

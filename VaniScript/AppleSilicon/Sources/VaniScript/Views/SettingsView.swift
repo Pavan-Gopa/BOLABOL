@@ -407,79 +407,10 @@ struct SettingsView: View {
                 ProviderCardView(descriptor: descriptor)
             }
 
-            SettingsSection(title: "Cloud Usage Statistics") {
-                VStack(spacing: VaniScriptTheme.Density.space8) {
-                    let defaultProviders = ["gemini", "openai", "anthropic"]
-                    let allProviders = defaultProviders + store.settings.customCloudProviders.map { $0.label }
-
-                    ForEach(allProviders, id: \.self) { provider in
-                        let stats = store.settings.usage[provider.lowercased()] ?? ProviderUsage()
-                        let cost = estimateCost(provider: provider, input: stats.inputTokens, output: stats.outputTokens)
-
-                        let isConfigured: Bool = {
-                            switch provider.lowercased() {
-                            case "gemini": return !store.settings.geminiKey.isEmpty
-                            case "openai": return !store.settings.openaiKey.isEmpty
-                            case "anthropic": return !store.settings.anthropicKey.isEmpty
-                            default: return true
-                            }
-                        }()
-
-                        if isConfigured || stats.sessions > 0 {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text(provider)
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundStyle(VaniScriptTheme.accent)
-                                    Spacer()
-                                    Text(String(format: "$%.4f", cost))
-                                        .font(.system(size: 13, weight: .bold, design: .monospaced))
-                                        .foregroundStyle(VaniScriptTheme.green)
-                                }
-
-                                HStack(spacing: VaniScriptTheme.Density.space12) {
-                                    StatItem(title: "Sessions", value: "\(stats.sessions)")
-                                    StatItem(title: "Audio Time", value: String(format: "%.1f m", stats.audioMinutes))
-                                    StatItem(title: "Input Tokens", value: formatTokens(stats.inputTokens))
-                                    StatItem(title: "Output Tokens", value: formatTokens(stats.outputTokens))
-                                }
-                                .padding(.vertical, 4)
-
-                                let budgetLimit: Double = {
-                                    switch provider.lowercased() {
-                                    case "gemini": return store.settings.geminiBudgetUsd
-                                    case "openai": return store.settings.openaiBudgetUsd
-                                    default:
-                                        if let custom = store.settings.customCloudProviders.first(where: { $0.label.lowercased() == provider.lowercased() }) {
-                                            return custom.budgetLimitUsd
-                                        }
-                                        return 0.0
-                                    }
-                                }()
-
-                                if budgetLimit > 0 {
-                                    BudgetBar(title: "\(provider) Budget Limit", spent: cost, limit: budgetLimit)
-                                }
-                            }
-                            .padding(12)
-                            .background(Color.white.opacity(0.025))
-                            .cornerRadius(10)
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.06), lineWidth: 1))
-                        }
-                    }
-
-                    Button(role: .destructive) {
-                        store.updateSettings { settings in
-                            settings.usage = [:]
-                        }
-                    } label: {
-                        Label("Reset All Statistics", systemImage: "trash")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(SettingsPrimaryButtonStyle())
-                    .padding(.top, 8)
-                }
-            }
+            // A6: usage statistics rebuilt to Electron tab 7 parity — the old
+            // "Cloud Usage Statistics" section is replaced by UsageStatisticsView
+            // (per-model cards from settings.usage, last transaction, disclaimer).
+            UsageStatisticsView()
         }
     }
 
@@ -1256,31 +1187,8 @@ struct SettingsView: View {
         customBudgetLimit = ""
     }
 
-    private func estimateCost(provider: String, input: Int, output: Int) -> Double {
-        switch provider.lowercased() {
-        case "gemini":
-            return (Double(input) * 0.000002) + (Double(output) * 0.000008)
-        case "openai":
-            return (Double(input) * 0.0000025) + (Double(output) * 0.000010)
-        case "anthropic":
-            return (Double(input) * 0.000003) + (Double(output) * 0.000015)
-        default:
-            if let custom = store.settings.customCloudProviders.first(where: { $0.label.lowercased() == provider.lowercased() || $0.id == provider }) {
-                return (Double(input) * (custom.inputCostPerMillion / 1_000_000.0)) + (Double(output) * (custom.outputCostPerMillion / 1_000_000.0))
-            }
-            return 0.0
-        }
-    }
-
-    private func formatTokens(_ count: Int) -> String {
-        if count >= 1_000_000 {
-            return String(format: "%.2fM", Double(count) / 1_000_000.0)
-        } else if count >= 1_000 {
-            return String(format: "%.1fK", Double(count) / 1_000.0)
-        } else {
-            return "\(count)"
-        }
-    }
+    // A6: estimateCost/formatTokens moved into UsageStatisticsView (per-usage-key
+    // pricing); the old "Cloud Usage Statistics" section that used them is gone.
 
     private var mcpConnectionSummary: String {
         guard store.settings.mcpServerEnabled else {
@@ -2747,53 +2655,8 @@ private struct SettingsSmallButtonStyle: ButtonStyle {
     }
 }
 
-private struct StatItem: View {
-    let title: String
-    let value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.system(size: 10))
-                .foregroundStyle(VaniScriptTheme.text2)
-            Text(value)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(VaniScriptTheme.text0)
-        }
-    }
-}
-
-private struct BudgetBar: View {
-    let title: String
-    let spent: Double
-    let limit: Double
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(title)
-                    .font(.system(size: 10))
-                    .foregroundStyle(VaniScriptTheme.text2)
-                Spacer()
-                Text(String(format: "Spent $%.2f of $%.2f", spent, limit))
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(spent > limit ? VaniScriptTheme.red : VaniScriptTheme.accent)
-            }
-
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.white.opacity(0.1))
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(spent > limit ? VaniScriptTheme.red : VaniScriptTheme.accent)
-                        .frame(width: geo.size.width * CGFloat(min(1.0, spent / limit)))
-                }
-            }
-            .frame(height: 6)
-        }
-        .padding(.top, 4)
-    }
-}
+// A6: StatItem/BudgetBar removed — superseded by UsageStatCell/usage cards in
+// UsageStatisticsView (Electron tab 7 parity).
 
 enum GlossarySortMode: String, CaseIterable, Identifiable {
     case newest = "Newest"

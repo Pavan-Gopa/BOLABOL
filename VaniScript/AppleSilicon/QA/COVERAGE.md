@@ -312,3 +312,69 @@ Area → script → asserts. Column **new this run** marks scripts added in the 
 - `a5_swift_test_green.sh` / prior swift gates / `build_gate_as.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
 
 ---
+
+## A6 — Usage statistics UI (Electron tab 7)
+
+| Area | Script | Asserts | New this run |
+|---|---|---|---|
+| View present | `a6_usage_statistics_view_present.sh` | UsageStatisticsView.swift + struct + A6 markers | **yes** |
+| Settings wiring | `a6_settings_wired.sh` | UsageStatisticsView() in apiKeysTab; old section gone | **yes** |
+| Last Transaction | `a6_last_transaction.sh` | max lastTransactionAt, lastModel, Prompt/Completion/Total | **yes** |
+| Active summary | `a6_active_providers_summary.sh` | Transcribing/Translation + providerDisplayName + legacy ids | **yes** |
+| Per-model cards | `a6_per_model_cards.sh` | N transactions, 6 metrics, estimateCost, remaining | **yes** |
+| Disclaimer | `a6_disclaimer_exact.sh` | exact Electron disclaimer string | **yes** |
+| Reset + empty | `a6_reset_and_empty_state.sh` | usage = [:]; «No usage recorded yet.» | **yes** |
+| Old section gone | `a6_old_section_removed.sh` | no Cloud Usage Statistics SettingsSection; no StatItem/BudgetBar/estimateCost | **yes** |
+| Title | `a6_cloud_api_usage_title.sh` | Cloud API Usage section title | **yes** |
+| No A7 | `a6_no_a7_balance.sh` | no CloudBalanceService; no network in UsageStatisticsView | **yes** |
+| UI-only scope | `a6_ui_only_scope.sh` | engines/registry/UsageRecorder not redefined in view | **yes** |
+| Provider cards | `a6_provider_cards_intact.sh` | ProviderCardView + cloud cards intact | **yes** |
+| No secrets | `a6_no_keys_in_source.sh` | no sk-/AIza in A6 sources | **yes** |
+| FEEDBACK | `a6_feedback_approved.sh` | A6 `[APPROVED]` + handoff claims | **yes** |
+| STATE.yaml | `a6_state_yaml_a6.sh` | `current_step: A6`; implementation+review approved | **yes** |
+| swift test gate | `a6_swift_test_green.sh` | green; soft-warn <320; ENV-ONLY soft-pass | **yes** |
+
+### A3/A4/A5 regression adaptations (this run)
+
+| Script | Change |
+|---|---|
+| `a3_stats_section_unchanged.sh` | A6+ expects UsageStatisticsView; old section retired by design |
+| `a3_api_keys_tab_structure.sh` | A6+ stats slot = UsageStatisticsView() after provider card |
+| `a4_no_a6_stats_rewrite.sh` | step-aware N/A when `current_step` ≥ A6 |
+| `a5_no_a6_stats_no_a7_balance.sh` | stats half N/A on A6+; still enforce no A7 balance |
+| `a5_state_yaml_a5.sh` | step-aware N/A when not A5 |
+| `a5_feedback_approved.sh` | historical A5 APPROVED when step > A5 |
+
+---
+
+## Gap Hunt Checklist (A6)
+
+**A6 delta (every item closed):**
+- [x] UsageStatisticsView present + wired in apiKeysTab → `a6_usage_statistics_view_present`, `a6_settings_wired`
+- [x] Last Transaction (max lastTransactionAt, lastModel badge, Prompt/Completion/Total) → `a6_last_transaction`
+- [x] Summary Transcribing / Translation + legacy id normalize → `a6_active_providers_summary`
+- [x] Per-model cards: N transactions, 6 metrics, estimateCost, remaining vs budget → `a6_per_model_cards`
+- [x] Exact disclaimer string → `a6_disclaimer_exact`
+- [x] Reset → usage = [:]; empty state → `a6_reset_and_empty_state`
+- [x] Old «Cloud Usage Statistics» + dead StatItem/BudgetBar/estimateCost removed → `a6_old_section_removed`, `a6_cloud_api_usage_title`
+- [x] Provider cards intact → `a6_provider_cards_intact`
+- [x] No A7 balance network → `a6_no_a7_balance`
+- [x] UI only (no engines/registry/UsageRecorder rewrite) → `a6_ui_only_scope`
+- [x] No keys in source → `a6_no_keys_in_source`
+- [x] FEEDBACK APPROVED + STATE A6 → `a6_feedback_approved`, `a6_state_yaml_a6`
+- [x] swift test green (320+) → `a6_swift_test_green` (+ `build_gate_as`)
+
+**Regression:**
+- [x] A1–A5 scripts still enabled (step-aware where needed) → full `run_all.sh`
+- [x] Old stats-unchanged asserts inverted/N/A for A6+ → a3/a4/a5 adaptations above
+
+**N/A (with reason):**
+- Interactive UI click-through of Reset / empty state — **N/A (static QA)**: suite is source/structure based; no XCUITest harness.
+- A7 real balance / network credits — **N/A (out of scope A6)**; negative script `a6_no_a7_balance`.
+- Engine/UsageRecorder changes — **N/A (UI only)**; asserted via `a6_ui_only_scope`.
+- lastModel badge as Electron superset — **N/A (Verifier OK)**: prefers lastModel with provider-name fallback; asserted via `a6_last_transaction`.
+
+**Env-only handling:**
+- `a6_swift_test_green.sh` / prior swift gates / `build_gate_as.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
+
+---

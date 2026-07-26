@@ -2,29 +2,28 @@
 # Product scope: AI_Workflow_Kit/docs/API_USAGE_STEPS.md
 # Architecture: AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
 
-current_step: A2
+current_step: A3
 step_description: >
-  Запись использования (чинит пустую статистику). Парсинг token-счётчиков из
-  API-ответов (Gemini usageMetadata, OpenAI-compatible usage), возврат из движков,
-  UsageRecorder → settings.usage через WorkflowStore. Best-effort (не фейлит
-  транскрипцию/перевод). Unit-тесты на мок-данных.
+  UI reorg: единый dropdown провайдеров + условные карточки. Заменить
+  всегда-развёрнутые секции Gemini/OpenAI/Anthropic/Custom на один Picker
+  Provider (CloudProviderCatalog.orderedDescriptors) и рендер только карточки
+  выбранного провайдера. Gemini/OpenAI/Anthropic — ключ/бюджет/тумблеры 1:1;
+  Qwen/OpenRouter/Ollama — заглушка «ключ + скоро»; Custom — существующий список.
+  Статистику не ломать (A6). UI only.
 
 target_files:
-  - Sources/VaniScriptCore/UsageRecorder.swift
-  - Sources/VaniScriptCore/CloudAudioTranscriptionEngine.swift
-  - Sources/VaniScriptCore/CloudTextTranslationEngine.swift
-  - Sources/VaniScript/Stores/WorkflowStore.swift
-  - Tests/VaniScriptCoreTests/UsageRecorderTests.swift
-  - AI_Workflow_Kit/docs/DECISIONS.md
+  - Sources/VaniScript/Views/SettingsView.swift
+  - Sources/VaniScript/Views/ProviderCardView.swift
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 
 coder_brief: >
-  A2 — запись usage (чинит пустую статистику). Создай UsageRecorder (парсинг
-  token-счётчиков: Gemini usageMetadata.promptTokenCount/candidatesTokenCount,
-  OpenAI-compatible usage.prompt_tokens/completion_tokens). Движки возвращают
-  токены → WorkflowStore вызывает UsageRecorder → settings.usage. Best-effort:
-  ошибка записи НЕ фейлит транскрипцию/перевод. Unit-тесты на мок-данных.
-  UI НЕ трогай. Graphify first.
+  A3 — UI reorg apiKeysTab. Один @State selectedProviderId (default gemini) +
+  Picker по CloudProviderCatalog.orderedDescriptors. ProviderCardView: карточка
+  по descriptor + ключ/бюджет/тумблеры (ApiKeyInputRow, SliderRow, бейджи).
+  Gemini/OpenAI/Anthropic — поведение 1:1, модель пока ReadOnlyRow (A4).
+  Qwen/OpenRouter/Ollama — заглушка ключ+скоро (A5). Custom — customCloudProviders
+  без смены механизма. Секцию статистики не трогать. Settings save 1:1.
+  Движки/usage/MCP не трогать. Graphify first.
 
 completed_steps:
   - G0
@@ -49,25 +48,23 @@ completed_steps:
   - Q7
   - QWEN_DONE
   - A1
+  - A2
 
 implementation:
-  status: approved
-  attempts: 1
+  status: pending
+  attempts: 0
 
 review:
-  status: approved
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: pending
-  last_report: "QA/BUG_REPORT.md"
-  suite: "awaiting A2 full suite (prior A1: 20 scripts, 17 PASS / 3 FAIL env-only)"
+  status: green
+  last_report: "QA/REPORT.md"
+  suite: "A2: 39 scripts PASS / 0 FAIL; swift test 287/42 GREEN; bugs_open 0"
   bugs_open: 0
-  note: >
-    A2 Gemini APPROVED. Transcription→settings.usage via NativeProcessingPipeline
-    deferred to A5/A6 (scope OK). Post-tag apiusage/A2-done only after QA green.
 
-next_actor: qa
+next_actor: implementation
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -77,8 +74,8 @@ working_roots:
 
 checkpoint:
   last_pre_tag: "apiusage/pre-A2"
-  last_post_tag: "apiusage/A1-done"
-  last_commit: "7a477f0"
+  last_post_tag: "apiusage/A2-done"
+  last_commit: "ebf49bf"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

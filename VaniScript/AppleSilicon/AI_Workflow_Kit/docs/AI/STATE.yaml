@@ -2,31 +2,25 @@
 # Product scope: AI_Workflow_Kit/docs/API_USAGE_STEPS.md
 # Architecture: AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
 
-current_step: A7
+current_step: A8
 step_description: >
-  Реальный баланс (адаптер, OpenRouter first). CloudBalanceService: BalanceInfo
-  (.usd / .planLimits / .unavailable). OpenRouter credits+key → USD; Ollama Cloud
-  plan limits or «Plan-based (GPU time)». UI: balance row by balanceKind + Refresh;
-  short TTL cache; quiet fallback to estimated. No fake $ for .none/.estimated.
-  Unit-тесты парсеров на моках. ADR.
+  Doc-only + acceptance smoke. Финальная документация API_USAGE: ACCEPTANCE
+  чеклист по 5 поверхностям, README AS обновлён (новые провайдеры + вкладка
+  API & Usage), smoke build/test, ADR «API_USAGE done». Без product-фич.
 
 target_files:
-  - Sources/VaniScriptCore/CloudBalanceService.swift
-  - Sources/VaniScript/Views/SettingsView.swift
-  - Sources/VaniScript/Views/UsageStatisticsView.swift
-  - Tests/VaniScriptCoreTests/CloudBalanceServiceTests.swift
+  - AI_Workflow_Kit/docs/API_USAGE_ACCEPTANCE.md
+  - README.md
   - AI_Workflow_Kit/docs/DECISIONS.md
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 
 coder_brief: >
-  A7 — real balance adapter. NEW CloudBalanceService (BalanceProvider protocol,
-  BalanceInfo .usd/.planLimits/.unavailable §11). OpenRouter GET /api/v1/credits
-  + /api/v1/key Bearer → remaining/limit USD. Ollama Cloud plan limits if API
-  returns else label «Plan-based (GPU time)». Provider cards (in SettingsView)
-  + UsageStatisticsView: balance row by balanceKind, Refresh, short TTL cache,
-  error → estimated fallback. Never fetch/show for .none/.estimated providers
-  (Gemini/Anthropic/Qwen). Unit tests mock parsers. ADR. No A8 docs yet.
-  Graphify first. ProviderCardView is in-file SettingsView (A3).
+  A8 — DOC-ONLY. Создай API_USAGE_ACCEPTANCE.md (чеклист 5 поверхностей:
+  dropdown, карточка+валидация+модели, запись usage, статистика, баланс) с
+  реальными путями/командами по факту A1–A7. Обнови README Apple Silicon:
+  Qwen/OpenRouter/Ollama Cloud + вкладка API & Usage. Smoke: swift build +
+  swift test green; ручной UI-чеклист (без реальных ключей). ADR «API_USAGE done»
+  в DECISIONS.md. Product-код НЕ трогать. Graphify first.
 
 completed_steps:
   - G0
@@ -56,26 +50,24 @@ completed_steps:
   - A4
   - A5
   - A6
+  - A7
 
 implementation:
-  status: approved
-  attempts: 1
+  status: pending
+  attempts: 0
 
 review:
-  status: approved
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: pending
+  status: green
   last_report: "QA/REPORT.md"
-  suite: "awaiting A7 full suite (prior A6: 114 PASS / 0 FAIL)"
+  suite: "A7: 133 PASS / 0 FAIL; 19 a7-* scripts; swift 331/47 GREEN"
   bugs_open: 0
-  note: >
-    A7 Gemini APPROVED. Step-aware: scripts asserting «no A7 balance» (a6_no_a7_balance,
-    a5_no_a6_stats_no_a7_balance) need update for current_step A7+. Post-tag
-    apiusage/A7-done only after QA green.
+  note: "A7 closed. A8 is DOC-ONLY — QA waived after Verifier APPROVED."
 
-next_actor: qa
+next_actor: implementation
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -85,8 +77,8 @@ working_roots:
 
 checkpoint:
   last_pre_tag: "apiusage/pre-A7"
-  last_post_tag: "apiusage/A6-done"
-  last_commit: "55507e9"
+  last_post_tag: "apiusage/A7-done"
+  last_commit: "9cc1c6a"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

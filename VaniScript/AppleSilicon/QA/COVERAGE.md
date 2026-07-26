@@ -1,6 +1,6 @@
 # QA COVERAGE — VaniScript
 
-Area → script → asserts. Column **new this run** marks scripts added in the Q7 cycle.
+Area → script → asserts. Column **new this run** marks scripts added in the current QA cycle (A3 unless noted).
 
 ## Build gates & MCP smoke
 
@@ -107,5 +107,68 @@ Area → script → asserts. Column **new this run** marks scripts added in the 
 
 **Env-only handling:**
 - `a2_swift_test_green.sh` (and `build_gate_as.sh`) can hit a sandbox "Operation not permitted" (clang ModuleCache) before any test runs. That is reported as **ENV-ONLY** (warn, exit 0), not a product FAIL — matching the accepted A1 env-only disposition.
+
+---
+
+## A3 — UI reorg: provider dropdown + cards
+
+| Area | Script | Asserts | New this run |
+|---|---|---|---|
+| selectedProviderId default | `a3_selected_provider_default.sh` | `@State selectedProviderId = CloudProviderCatalog.geminiID` | **yes** |
+| Picker catalog order | `a3_picker_uses_catalog.sh` | `ForEach(CloudProviderCatalog.providers)` + Picker selection binding | **yes** |
+| Single card at a time | `a3_single_card_at_a_time.sh` | Custom branch + 1× `ProviderCardView(descriptor:)`; no always-expanded Gemini/OpenAI/Anthropic sections | **yes** |
+| apiKeysTab structure | `a3_api_keys_tab_structure.sh` | Cloud Provider → conditional card → Cloud Usage Statistics order | **yes** |
+| Custom path | `a3_custom_path_intact.sh` | `customProvidersSection`, add/remove, gated by `customID` | **yes** |
+| ProviderCardView location | `a3_provider_card_location.sh` | in-file SettingsView OR own file (Verifier OK) | **yes** |
+| Engine ids 1:1 | `a3_engine_ids_preserved.sh` | `gemini-cloud` / `gpt-cloud` / `coreml-whisperkit` / `mlx-native` | **yes** |
+| Gemini/OpenAI parity | `a3_gemini_openai_parity.sh` | key + ReadOnlyRow + budget Slider + Transcribing/Translation toggles | **yes** |
+| Anthropic card | `a3_anthropic_card.sh` | Anthropic Key + ReadOnlyRow Text Model | **yes** |
+| Coming-soon stub | `a3_coming_soon_stub.sh` | default → `comingSoonCard` for Qwen/OpenRouter/Ollama | **yes** |
+| Stub key fields | `a3_stub_key_fields.sh` | `qwenApiKey` / `openrouterApiKey` / `ollamaCloudApiKey` | **yes** |
+| getApiKeyURL SSOT | `a3_get_api_key_url_descriptor.sh` | `urlString: descriptor.getApiKeyURL` | **yes** |
+| Stats section | `a3_stats_section_unchanged.sh` | "Cloud Usage Statistics" + Reset/StatItem/BudgetBar still present | **yes** |
+| No A4 | `a3_no_a4_validation_or_model_net.sh` | no CloudKeyValidator/CloudModelCatalog; ReadOnlyRow models; no URLSession in card | **yes** |
+| No A5 routing | `a3_no_a5_engine_routing.sh` | no transcription/translation assign to qwen/openrouter/ollama | **yes** |
+| Catalog IDs | `a3_switch_covers_catalog_ids.sh` | all catalog ID constants used; A1 order intact | **yes** |
+| UI-only scope | `a3_scope_no_engine_usage_changes.sh` | no A5 cases in `normalizedUsageProviderId` | **yes** |
+| No secrets | `a3_no_hardcoded_api_keys.sh` | no sk-/AIza/ghp_/xox- literals in SettingsView | **yes** |
+| FEEDBACK APPROVED | `a3_feedback_approved.sh` | A3 `[APPROVED]` + handoff claims | **yes** |
+| STATE.yaml | `a3_state_yaml_a3.sh` | `current_step: A3`; implementation+review approved | **yes** |
+| swift build | `a3_swift_build_green.sh` | `swift build` green; ENV-ONLY soft-pass | **yes** |
+
+---
+
+## Gap Hunt Checklist (A3)
+
+**A3 delta (every item closed):**
+- [x] Picker uses catalog order (not hardcoded gemini/openai only) → `a3_picker_uses_catalog`, `a3_switch_covers_catalog_ids`
+- [x] Only one provider card rendered at a time → `a3_single_card_at_a_time`, `a3_api_keys_tab_structure`
+- [x] Custom path still has add/remove → `a3_custom_path_intact`
+- [x] Engine ids preserved: gemini-cloud / gpt-cloud / coreml-whisperkit / mlx-native → `a3_engine_ids_preserved`, `a3_gemini_openai_parity`
+- [x] Stub providers write keys to correct AppSettings fields → `a3_stub_key_fields`, `a3_coming_soon_stub`
+- [x] getApiKeyURL from descriptor → `a3_get_api_key_url_descriptor`
+- [x] Stats section still present (not deleted) → `a3_stats_section_unchanged`
+- [x] No A4 validation badge / model dropdown network code → `a3_no_a4_validation_or_model_net`
+- [x] No A5 engine routing for qwen/openrouter/ollama → `a3_no_a5_engine_routing`, `a3_scope_no_engine_usage_changes`
+- [x] selectedProviderId default gemini → `a3_selected_provider_default`
+- [x] Gemini/OpenAI/Anthropic card parity → `a3_gemini_openai_parity`, `a3_anthropic_card`
+- [x] ProviderCardView in-file OK → `a3_provider_card_location`
+- [x] FEEDBACK [APPROVED] + STATE A3 → `a3_feedback_approved`, `a3_state_yaml_a3`
+- [x] swift build green → `a3_swift_build_green` (+ `build_gate_as`)
+- [x] No secrets in SettingsView → `a3_no_hardcoded_api_keys`
+
+**Regression:**
+- [x] A1 catalog scripts still enabled → `a1_*` (5)
+- [x] A2 usage scripts still enabled → `a2_*` (20)
+- [x] Full suite (build gates, MCP smoke, Q7 doc-delta, swift test) re-run via `run_all.sh`
+- [x] Step-aware `q7_doc_only_no_code` N/A for code step A3 (existing script)
+
+**N/A (with reason):**
+- Separate `ProviderCardView.swift` file — **N/A**: optional per STEPS; Verifier APPROVED in-file helper. Asserted via `a3_provider_card_location` (either location OK).
+- Interactive UI click-through of Picker — **N/A (static QA)**: suite is grep/structure based; no XCUITest harness in track. Runtime behavior covered indirectly by structure + build gates.
+- A4 key validation / A5 engines / A6 stats rebuild — **N/A (out of scope A3)**; negative scripts assert absence.
+
+**Env-only handling:**
+- `a3_swift_build_green.sh` / `build_gate_as.sh` / `a2_swift_test_green.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
 
 ---

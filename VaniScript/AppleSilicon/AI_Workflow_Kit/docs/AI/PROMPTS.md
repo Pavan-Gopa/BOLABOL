@@ -49,9 +49,10 @@ swift test
 
 Обнови STATE.yaml:
   implementation.status: waiting_review
-  next_actor: verification
+  next_actor: orchestrator
 
-Коротко человеку: что сделано + «зови Gemini на ревью».
+Коротко человеку: что сделано + «Готово. Скажи оркестратору: статус»
+(НЕ «зови Gemini» — Kick ревьюеру выдаёт только Orchestrator).
 ```
 
 ---
@@ -86,7 +87,7 @@ cd "/Users/pavan/Documents/AI Projects/VaniScript/AppleSilicon"
     review.status: approved  ИЛИ  changes_requested
     next_actor: orchestrator
 - Итог: APPROVED или CHANGES_REQUESTED.
-- Человеку: «ревью готово, зови оркестратора».
+- Человеку: «Готово. Скажи оркестратору: статус» (не зови Coder/QA сам).
 
 Если CHANGES_REQUESTED — нумерованный список: файл + конкретный фикс.
 ```
@@ -96,7 +97,7 @@ cd "/Users/pavan/Documents/AI Projects/VaniScript/AppleSilicon"
 ## Hy3 — short kick (any later step)
 
 ```text
-Hy3 / Implementation Engineer. cd VaniScript/AppleSilicon. Читай STATE.yaml + карточку current_step + TEAM_CONTRACT + IMPLEMENTATION_ENGINEER. Код только target_files. Проверь pre-tag. После: swift test/build, implementation.status=waiting_review, next_actor=verification. Не трогай review/current_step.
+Hy3 / Implementation Engineer. cd VaniScript/AppleSilicon. Читай STATE.yaml + карточку current_step + TEAM_CONTRACT + IMPLEMENTATION_ENGINEER. Код только target_files. Проверь pre-tag. После: swift test/build, implementation.status=waiting_review, next_actor=orchestrator. Не трогай review/current_step. Human: «Готово. Скажи оркестратору: статус» (НЕ «зови Gemini»).
 ```
 
 ---
@@ -104,14 +105,15 @@ Hy3 / Implementation Engineer. cd VaniScript/AppleSilicon. Читай STATE.yaml
 ## Gemini — short kick (any later step)
 
 ```text
-Gemini Verification. cd VaniScript/AppleSilicon. Читай STATE + карточку шага + target_files + REVIEW_TEMPLATE. Код не пиши. FEEDBACK.md + review.status + next_actor=orchestrator. APPROVED или CHANGES_REQUESTED с конкретным списком.
+Gemini Verification. cd VaniScript/AppleSilicon. Читай STATE + карточку шага + target_files + REVIEW_TEMPLATE. Код не пиши. FEEDBACK.md + review.status + next_actor=orchestrator. APPROVED или CHANGES_REQUESTED. Human: «Готово. Скажи оркестратору: статус».
 ```
 
 ---
 
-## Human → Grok
+## Human → Orchestrator (единственная точка входа)
 
-- `приступай` / `зови оркестратора` / `статус` / `следующий шаг` / `retry`
+- `статус` / `приступай` / `зови оркестратора` / `следующий шаг` / `retry`
+- Orchestrator выдаёт Kick → Human вставляет в **новое окно** нужного агента.
 
 ---
 

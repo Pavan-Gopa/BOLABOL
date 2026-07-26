@@ -1,3 +1,82 @@
+# Verification Report (Verification Engineer)
+
+Проверяемый шаг: **A3 — UI reorg: единый dropdown провайдеров + условные карточки**
+Требования шага: `API_USAGE_STEPS.md` (§A3), `API_USAGE_ARCHITECTURE.md` (§7, §14)
+Роль: Verification Engineer (Gemini 3.6 Flash)
+
+---
+
+### 1. Сборка и интеграция
+- **Собирается ли проект после этих изменений?**
+  Да. `swift build` выполнен успешно (`Build complete! (12.66s)`).
+- **Соблюдены ли инварианты §14 (Codex/Grok/Qwen, MCP server, AppSettings decode)?**
+  Да. Не затрагивались Codex/Grok/Qwen, MCP server и `AppSettings` decode. Статистика в секции «Cloud Usage Statistics» оставлена без изменений (территория A6).
+
+### 2. Логика и соответствие требованиям A3
+- **Выполнены ли все требования текущего шага?**
+  Да:
+  1. `apiKeysTab`: Вся секция реорганизована под единый `Picker` провайдера (`selectedProviderId` со значением по умолчанию `CloudProviderCatalog.geminiID`).
+  2. Порядок провайдеров берется из `CloudProviderCatalog.providers` (фиксированный порядок каталога A1).
+  3. Для `Custom` отображается `customProvidersSection` (существующий механизм добавления/удаления провайдеров 1:1).
+  4. Для остальных провайдеров рендерится карточка `ProviderCardView(descriptor:)`.
+  5. Gemini/OpenAI/Anthropic: ключи, бюджет и тумблеры привязки к транскрипции/переводу работают 1:1 с сохраненным поведением. Выбор модели отображается как `ReadOnlyRow`.
+  6. Qwen / OpenRouter / Ollama Cloud: реализована заглушка «ключ + coming soon note» с записью ключей в соответствующие поля `AppSettings` (`qwenApiKey`, `openrouterApiKey`, `ollamaCloudApiKey`).
+- **Соблюдены ли target_files?**
+  Да. Изменения выполнены строго в `Sources/VaniScript/Views/SettingsView.swift` (включая in-file helper `ProviderCardView`) и документации `FEEDBACK.md` / `STATE.yaml`. Изменения out-of-scope (A4/A5/A6) отсутствуют.
+
+### 3. Комментарии и читаемость
+- Все добавленные компоненты (`ProviderCardView`, `customProvidersSection`) снабжены роли/why-комментариями и соответствуют TEAM_CONTRACT.
+
+---
+
+**ИТОГОВЫЙ СТАТУС:** [APPROVED]
+
+---
+
+# Implementation Handoff → Verification (A3)
+
+Шаг: **A3 — UI reorg: единый dropdown провайдеров + условные карточки**. Роль: Implementation Engineer (Coder).
+Статус: `implementation.status = waiting_review`, `next_actor = verification`. Pre-tag `apiusage/pre-A3` подтверждён.
+
+**Что сделано (target_files):**
+- `Sources/VaniScript/Views/SettingsView.swift` (MODIFY):
+  - Добавлен `@State private var selectedProviderId = CloudProviderCatalog.geminiID`.
+  - `apiKeysTab`: всегда-развёрнутые секции Gemini/OpenAI/Anthropic/Custom заменены на
+    одну секцию «Cloud Provider» с `Picker` по `CloudProviderCatalog.providers`
+    (фиксированный порядок каталога) + условный рендер: `Custom` → `customProvidersSection`,
+    иначе → `ProviderCardView(descriptor:)`.
+  - Секция «Cloud Usage Statistics» (территория A6) оставлена **без изменений**.
+  - Логика Custom-провайдеров (список + форма добавления + `addCustomProvider()`) вынесена
+    1:1 в новый computed var `customProvidersSection` (механизм не менялся).
+- `ProviderCardView` реализован **внутри SettingsView.swift** (разрешено брифом
+  «или внутри SettingsView») — отдельный файл не создавался, т.к. карточка
+  переиспользует file-private строки (`ApiKeyInputRow`, `ReadOnlyRow`, `SliderRow`,
+  `SettingsSection`, `SettingsSmallButtonStyle`), которые остаются private.
+  - Gemini/OpenAI: ключ + `ReadOnlyRow` модели (dropdown → A4) + `SliderRow` бюджета +
+    тумблеры Transcribing/Translation и бейджи — поведение **1:1** (те же engine-id
+    `gemini-cloud`/`gpt-cloud`/`coreml-whisperkit`/`mlx-native`, те же budget keyPath).
+  - Anthropic: ключ + `ReadOnlyRow` модели — 1:1.
+  - Qwen/OpenRouter/Ollama Cloud: заглушка «ключ + coming soon» (ключи пишутся в
+    существующие `qwenApiKey`/`openrouterApiKey`/`ollamaCloudApiKey`; полное — A5).
+  - «Get API Key» URL теперь берётся из `descriptor.getApiKeyURL` (single source of
+    truth каталога A1).
+
+**Verify:** `swift build` → **Build complete!** (только pre-existing deprecation warnings
+в несвязанном `VisualClipEditorView.swift`).
+
+**Инварианты §14:** `AppSettings` decode не тронут (migration-safe); Codex/Grok/Qwen/MCP/
+локальные модели не тронуты; изменения только в UI `apiKeysTab`; нет ключей/токенов в
+исходниках/логах; buildable. Diff только в target_files (`SettingsView.swift` + этот
+FEEDBACK).
+
+**Out of scope (не делал):** валидация ключа / dropdown моделей (A4); логика новых
+провайдеров в движках (A5); статистика UI (A6); UsageRecorder / cloud engines / WorkflowStore.
+`review.status` / `current_step` / post-tag не трогал.
+
+Готово. Скажи оркестратору: **статус** (Kick ревьюеру выдаёт только Orchestrator).
+
+---
+
 # Implementation Handoff → Verification (A2)
 
 Шаг: **A2 — Запись использования (чинит пустую статистику)**. Роль: Implementation Engineer (Hy3).

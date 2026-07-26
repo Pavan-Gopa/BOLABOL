@@ -43,9 +43,10 @@ swift build
 4. Прогони verify.
 5. Обнови `STATE.yaml`:
    - `implementation.status: waiting_review`
-   - `next_actor: verification`
+   - `next_actor: orchestrator`  ← hub; **не** `verification`
 6. **Не** делай `post` commit/tag сам (это после approve у Orchestrator).
-7. Сообщи человеку: что сделано + «зови Gemini на ревью».
+7. Сообщи человеку: что сделано + **«Готово. Скажи оркестратору: статус»**.
+   ⛔ Не говори «зови Gemini / ревью / QA» — следующий Kick выдаёт **только** Orchestrator.
 
 ## Не делай
 

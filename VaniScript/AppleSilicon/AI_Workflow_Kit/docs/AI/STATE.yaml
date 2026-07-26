@@ -51,20 +51,25 @@ completed_steps:
   - A2
 
 implementation:
-  status: pending
-  attempts: 0
+  status: approved
+  attempts: 1
 
 review:
-  status: pending
+  status: approved
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
   status: green
   last_report: "QA/REPORT.md"
-  suite: "A2: 39 scripts PASS / 0 FAIL; swift test 287/42 GREEN; bugs_open 0"
+  suite: "A3 full suite: 60 PASS / 0 FAIL (21 new a3-* scripts)"
   bugs_open: 0
+  note: >
+    A3 QA GREEN. 60/60 scripts PASS incl. A1+A2 regression, build gates,
+    MCP smoke, Q7 (step-aware N/A for doc-only), 21 a3-* gap-hunt scripts.
+    swift test 287/42 GREEN; swift build green. Ready for post-tag
+    apiusage/A3-done (orchestrator only).
 
-next_actor: implementation
+next_actor: orchestrator
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -73,9 +78,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "apiusage/pre-A2"
+  last_pre_tag: "apiusage/pre-A3"
   last_post_tag: "apiusage/A2-done"
-  last_commit: "ebf49bf"
+  last_commit: "b9c6710"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

@@ -41,10 +41,14 @@ Qwen) встраиваются как CLI subprocess (Codex pattern). Локал
   graphify query|explain|path --graph "/Users/pavan/Documents/AI Projects/VaniScript/graphify-out/graph.json"
   НЕ дампить дерево без graphify. НЕ читать весь репо.
 
-## Сдача
-1. Заполни FEEDBACK.md §1-4 (build/commands, step compliance, invariants, comments).
-2. Поставь implementation.status: waiting_review, next_actor: verification.
-3. Скажи Human: «зови ревью».
+## Сдача (hub = Orchestrator)
+1. Заполни FEEDBACK.md (handoff: что сделано, verify, invariants).
+2. STATE.yaml:
+   - `implementation.status: waiting_review`
+   - `next_actor: orchestrator`   ← НЕ verification / НЕ «зови Gemini»
+3. Human **только**: «Готово. Скажи оркестратору: статус»
+   ⛔ Запрещено: «зови ревью», «зови Gemini», «зови QA», «зови Hy3».
+   Ревьюер получит Kick **от оркестратора**, не от тебя.
 ```
 
 ---
@@ -77,7 +81,8 @@ Qwen) встраиваются как CLI subprocess (Codex pattern). Локал
   # Electron (если шаг трогал): cd ../Electron && npm run compile
 
 ### Сдача
-Заполни FEEDBACK.md §1-4, implementation.status: waiting_review → «зови ревью».
+FEEDBACK.md + implementation.status: waiting_review + next_actor: orchestrator
+→ «Готово. Скажи оркестратору: статус» (НЕ «зови Gemini»).
 ```
 
 ---
@@ -116,5 +121,6 @@ Qwen) встраиваются как CLI subprocess (Codex pattern). Локал
   swift test    # green, включая QwenProviderTests
 
 ### Сдача
-FEEDBACK.md §1-4, waiting_review → «зови ревью».
+FEEDBACK.md + waiting_review + next_actor: orchestrator
+→ «Готово. Скажи оркестратору: статус» (НЕ «зови Gemini»).
 ```

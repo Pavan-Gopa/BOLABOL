@@ -1,97 +1,116 @@
-# QA REPORT — VaniScript (API_USAGE / A2 — Запись использования)
+# QA REPORT — VaniScript (API_USAGE / A3 — UI reorg: dropdown + cards)
 
 - **Дата:** 2026-07-26
-- **Трек/шаг:** API_USAGE / **A2** (usage recording — чинит пустую статистику)
-- **Suite:** 39 скриптов → **39 PASS / 0 FAIL** → **GREEN**
-- **Новых скриптов в этом прогоне:** 19 (категория `a2-delta` / `a2-regression`)
-- **swift test:** **287 тестов / 42 suites, 0 failures** (GREEN; ENV-ONLY не сработал)
+- **Трек/шаг:** API_USAGE / **A3** (единый dropdown провайдеров + условные карточки)
+- **Suite:** 60 скриптов → **60 PASS / 0 FAIL** → **GREEN**
+- **Новых скриптов в этом прогоне:** **21** (категория `a3-delta` / `a3-regression`)
+- **swift test:** **287 тестов / 42 suites, 0 failures** (GREEN)
+- **swift build:** **Build complete!** (GREEN)
 - **Bugs open:** 0
-- **Вердикт:** **GREEN** — A2 готов к post-tag `apiusage/A2-done`.
+- **Вердикт:** **GREEN** — A3 готов к post-tag `apiusage/A3-done`.
 
 ---
 
 ## Результат полного re-run (`QA/run_all.sh`)
 
-После фикса устаревшего QA-гейта (см. §«QA-script maintenance») выполнен ПОЛНЫЙ re-run
-всего manifest (39 скриптов, без сжатия): `PASS: 39   FAIL: 0` → `RESULT: GREEN`.
+Полный re-run всего manifest (60 скриптов, без сжатия):
 
-### Новые A2-скрипты (19, все PASS)
+```
+PASS: 60   FAIL: 0
+RESULT: GREEN
+```
+
+Команда:
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/VaniScript/AppleSilicon"
+QA/run_all.sh
+```
+
+### Новые A3-скрипты (21, все PASS)
 
 | # | Скрипт | Что проверено | Результат |
 |---|---|---|---|
-| 1 | `a2_usagerecorder_purity.sh` | `UsageRecorder` — pure non-throwing enum, Foundation-only, нет I/O/UI | PASS |
-| 2 | `a2_tokenusage_type.sh` | `TokenUsage` public struct Equatable+Sendable, isEmpty, `+` | PASS |
-| 3 | `a2_record_aggregation.sh` | инкремент sessions/input/output/audio + все last* | PASS |
-| 4 | `a2_record_per_model_key.sh` | ключ `providerId:model` (§6.2), blank-model fallback | PASS |
-| 5 | `a2_record_besteffort_noop.sh` | no-op при nil/empty delta + no audio (§14.4) | PASS |
-| 6 | `a2_parser_gemini.sh` | usageMetadata.prompt/candidatesTokenCount, nil on empty | PASS |
-| 7 | `a2_parser_openai.sh` | usage.prompt_tokens/completion_tokens (snake_case) | PASS |
-| 8 | `a2_parsers_lenient_nil.sh` | `try?` x2, missing block→nil, non-throwing | PASS |
-| 9 | `a2_transcription_result_usage.sh` | result.usage: TokenUsage? из Gemini+OpenAI | PASS |
-| 10 | `a2_translation_accumulator.sh` | actor accumulator + takeLastUsage() defer-reset | PASS |
-| 11 | `a2_workflowstore_record.sh` | takeLastUsage→guard→updateSettings→record, **8 call sites** | PASS |
-| 12 | `a2_workflowstore_normalized_id.sh` | gemini-cloud→gemini, gpt-cloud→openai, default | PASS |
-| 13 | `a2_workflowstore_besteffort.sh` | async non-throwing, early-return, §14.4 | PASS |
-| 14 | `a2_tests_present.sh` | @Suite("UsageRecorder (A2)"), @testable, ровно 14 @Test | PASS |
-| 15 | `a2_tests_coverage_areas.sh` | 14 именованных тестов покрывают все risk-areas | PASS |
-| 16 | `a2_decisions_adr.sh` | ADR D-2026-07-26-A2 (§14.4, scope note, 287 tests) | PASS |
-| 17 | `a2_no_keys_in_source.sh` | нет sk-/AIza/ghp_/xox- литералов (§14.7) | PASS |
-| 18 | `a2_appsettings_usage_migration_safe.sh` | usage decodeIfPresent??[:]; last* optional (§14.1+A1) | PASS |
-| 19 | `a2_swift_test_green.sh` | swift test green, 0 failures, 287 тестов | PASS |
+| 1 | `a3_selected_provider_default.sh` | `@State selectedProviderId = CloudProviderCatalog.geminiID` | PASS |
+| 2 | `a3_picker_uses_catalog.sh` | `ForEach(CloudProviderCatalog.providers)` + Picker binding | PASS |
+| 3 | `a3_single_card_at_a_time.sh` | 1× `ProviderCardView(descriptor:)`; no always-expanded sections | PASS |
+| 4 | `a3_api_keys_tab_structure.sh` | Cloud Provider → conditional card → Cloud Usage Statistics | PASS |
+| 5 | `a3_custom_path_intact.sh` | `customProvidersSection` add/remove, gated by `customID` | PASS |
+| 6 | `a3_provider_card_location.sh` | ProviderCardView in SettingsView (in-file OK) | PASS |
+| 7 | `a3_engine_ids_preserved.sh` | `gemini-cloud` / `gpt-cloud` / `coreml-whisperkit` / `mlx-native` | PASS |
+| 8 | `a3_gemini_openai_parity.sh` | key + ReadOnlyRow + budget Slider + Transcribing/Translation | PASS |
+| 9 | `a3_anthropic_card.sh` | Anthropic Key + ReadOnlyRow Text Model | PASS |
+| 10 | `a3_coming_soon_stub.sh` | default → `comingSoonCard` for Qwen/OpenRouter/Ollama | PASS |
+| 11 | `a3_stub_key_fields.sh` | `qwenApiKey` / `openrouterApiKey` / `ollamaCloudApiKey` | PASS |
+| 12 | `a3_get_api_key_url_descriptor.sh` | `urlString: descriptor.getApiKeyURL` (4 call sites) | PASS |
+| 13 | `a3_stats_section_unchanged.sh` | Cloud Usage Statistics + Reset/StatItem/BudgetBar intact | PASS |
+| 14 | `a3_no_a4_validation_or_model_net.sh` | no CloudKeyValidator/CloudModelCatalog/URLSession in card | PASS |
+| 15 | `a3_no_a5_engine_routing.sh` | no transcription/translation assign to qwen/openrouter/ollama | PASS |
+| 16 | `a3_switch_covers_catalog_ids.sh` | all catalog IDs referenced; A1 fixed order intact | PASS |
+| 17 | `a3_scope_no_engine_usage_changes.sh` | no A5 cases in WorkflowStore normalizedUsageProviderId | PASS |
+| 18 | `a3_no_hardcoded_api_keys.sh` | no sk-/AIza/ghp_/xox- literals (§14.7) | PASS |
+| 19 | `a3_feedback_approved.sh` | FEEDBACK A3 `[APPROVED]` + handoff claims | PASS |
+| 20 | `a3_state_yaml_a3.sh` | `current_step: A3`; implementation+review approved | PASS |
+| 21 | `a3_swift_build_green.sh` | `swift build` green | PASS |
 
 ### Регрессия (все prior-скрипты re-run green)
-- **A1 (5):** catalog fixed order, AppSettings decodeIfPresent, ProviderUsage decodeIfPresent,
-  catalog no-network, AppSettings defaults — **все PASS**.
-- **Build gates:** `build_gate_as.sh` (swift test green), `build_gate_electron.sh` (tsc --noEmit) — PASS.
+
+- **Build gates:** `build_gate_as.sh` (swift test 287/42), `build_gate_electron.sh` (tsc --noEmit) — PASS.
 - **MCP smoke:** `mcp_smoke_as.sh` (:19790 + SSE + McpContracts) — PASS.
-- **Q7 doc-delta (12) + q7_swift_test_green** — PASS.
+- **Q7 doc-delta (12)** — PASS; `q7_doc_only_no_code` step-aware N/A for code step A3 — PASS.
+- **Q7 / A2 swift test gates** — PASS (287 tests, 0 failures).
+- **A1 (5):** catalog order, decodeIfPresent, defaults, no-network — PASS.
+- **A2 (20):** UsageRecorder purity/parsers/record/WorkflowStore/tests/ADR/keys — PASS.
 
-## Gap hunt: закрыт (см. QA/COVERAGE.md §A2)
+## Gap hunt: закрыт (см. QA/COVERAGE.md §A3)
 
-Закрыты ВСЕ пункты чеклиста A2: increment/per-model key/last*/no-op nil-delta; Gemini vs
-OpenAI парсеры; missing usage→nil + op succeeds (best-effort); normalizedUsageProviderId;
-движки возвращают TokenUsage; WorkflowStore пишет settings.usage; swift test green;
-нет ключей в source (§14.7); AppSettings decode migration-safe (§14.1); ADR записан.
+Закрыты ВСЕ пункты чеклиста A3:
+
+- Picker uses catalog order (not hardcoded gemini/openai only)
+- Only one provider card rendered at a time
+- Custom path still has add/remove custom providers
+- Engine ids preserved: gemini-cloud / gpt-cloud / coreml-whisperkit / mlx-native
+- Stub providers write keys to correct AppSettings fields
+- getApiKeyURL from descriptor
+- Stats section still present (not deleted)
+- No A4 validation badge / model dropdown network code
+- No A5 engine routing for qwen/openrouter/ollama
+- selectedProviderId default gemini; Gemini/OpenAI/Anthropic card parity
+- ProviderCardView in-file OK; FEEDBACK [APPROVED]; swift build green
+- No secrets in SettingsView
 
 **N/A (с обоснованием):**
-- `Tests/VaniScriptTests/CloudUsageParsingTests.swift` (в STEPS §A2 target_files) — **N/A**:
-  отдельным файлом не создан, парсерное покрытие консолидировано в `UsageRecorderTests`
-  (parsesGeminiUsage/parsesOpenAIUsage/missing→nil/malformed→nil), что Verifier явно одобрил
-  (FEEDBACK §2, ADR D-2026-07-26-A2). Проверено через `a2_tests_coverage_areas`. Не баг.
-- Проводка транскрипции → `settings.usage` через `NativeProcessingPipeline` — **N/A (DEFERRED
-  to A5/A6)** по принятому Verifier scope note. Suite assert'ит, что движок ВОЗВРАЩАЕТ usage
-  (`a2_transcription_result_usage`) и translation-путь ПИШЕТ (`a2_workflowstore_record`), и НЕ
-  фейлится на отложенной pipeline-проводке.
+
+- Separate `ProviderCardView.swift` — **N/A**: optional per STEPS; Verifier APPROVED in-file helper (`a3_provider_card_location`).
+- Interactive UI click-through of Picker — **N/A (static QA)**: suite is structure/grep based; no XCUITest harness in track.
+- A4 key validation / A5 engines / A6 stats rebuild — **N/A (out of scope A3)**; negative scripts assert absence.
 
 ## Подтверждённые инварианты (§14)
-- **§14.1** decode AppSettings не сломан: `usage` через `decodeIfPresent ?? [:]`, last* optional ✓
-- **§14.2** Codex/Grok/Qwen/MCP/локальные модели не тронуты (diff только в A2 target_files) ✓
-- **§14.4** best-effort: парсеры non-throwing, record no-op без сигнала, store async non-throwing ✓
-- **§14.7** нет ключей/токенов в исходниках и тестах ✓
+
+- **§14.1** AppSettings decode not touched by A3 (UI only) ✓
+- **§14.2** Codex/Grok/Qwen/MCP/local models not broken; engine routing for new providers deferred A5 ✓
+- **§14.7** no keys/tokens in SettingsView source ✓
 - **§14.8** buildable/testable: swift build + swift test 287/42 GREEN ✓
-- **§14.9** diff только в target_files шага ✓
+- **§14.9** product delta scoped to SettingsView UI + FEEDBACK/STATE docs ✓
 
-## QA-script maintenance (не product-баг)
-- `q7_doc_only_no_code.sh` в первом прогоне дал FAIL: это step-scoped гейт Q7 (doc-only шаг —
-  «в diff нет .swift»), а текущий шаг **A2 — code step**, легитимно правящий одобренные
-  target_files (`CloudAudioTranscriptionEngine.swift`, `CloudTextTranslationEngine.swift`,
-  `WorkflowStore.swift`, + новый `UsageRecorder.swift`). Это **staleness QA-скрипта, не дефект
-  продукта**. Скрипт сделан **step-aware**: enforce doc-only только для doc-only шагов
-  (Q5/Q7/A8 по `STATE.yaml current_step`), для code-шагов — N/A (PASS). Guard сохранён для
-  будущих doc-only шагов. После фикса — ПОЛНЫЙ re-run → GREEN.
+## Product surface (asserted, not modified)
 
-## Bugs found this run: 0
-Новых product-багов не обнаружено. A2 implementation (APPROVED Verifier) полностью подтверждён
-на уровне source-asserts и swift test.
+- `Sources/VaniScript/Views/SettingsView.swift`
+  - `@State selectedProviderId` default `geminiID`
+  - `apiKeysTab`: single Picker over `CloudProviderCatalog.providers`
+  - Custom → `customProvidersSection`; else `ProviderCardView(descriptor:)`
+  - ProviderCardView in-file (file-private helpers)
+  - Gemini/OpenAI: key + ReadOnlyRow model + budget Slider + toggles 1:1
+  - Anthropic: key + ReadOnlyRow model
+  - Qwen/OpenRouter/Ollama: key + coming soon → correct AppSettings fields
+  - «Cloud Usage Statistics» UNCHANGED (A6)
 
-## Замечания (не product-баги, для прозрачности)
-- N1: `a2_workflowstore_record.sh` насчитал **8** call sites `recordCloudTranslationUsage`
-  (review + shorts cloud paths) — больше заявленных ≥4, покрытие шире.
-- N2: `a2_swift_test_green.sh` имеет ENV-ONLY masking (sandbox ModuleCache «Operation not
-  permitted» → warn/exit 0, не product FAIL). В этом прогоне swift test прошёл реально,
-  ENV-ONLY не срабатывал (0 раз).
+## Handoff
+
+- **next_actor:** orchestrator
+- **Recommendation:** post-tag `apiusage/A3-done`; advance track to A4 when ready.
+- **Bugs:** none opened this run. Historical `QA/BUG_REPORT.md` remains A1-stale; current status is this REPORT.
 
 ---
 
-**Вердикт: GREEN — 39/39 PASS, 0 bugs open, swift test 287/42 GREEN. Зови оркестратора**
-(переход API_USAGE A2 → post-tag `apiusage/A2-done`, далее A3).
+**Готово. QA green. Скажи оркестратору: статус**

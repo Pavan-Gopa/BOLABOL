@@ -1579,7 +1579,14 @@ private struct ProviderCardView: View {
                     .padding(.bottom, 2)
 
                 ApiKeyInputRow(title: "Gemini Key", text: binding(\.geminiKey), urlString: descriptor.getApiKeyURL)
-                ReadOnlyRow(title: "Text Model", value: "gemini-2.5-flash")
+                // A4 (§9): key-validity badge + auto-loaded model dropdown (editable
+                // combo + Retry on failure). Replaces the old read-only "Text Model" row.
+                CloudKeyModelRow(
+                    descriptor: descriptor,
+                    apiKey: store.settings.geminiKey,
+                    selectedModel: binding(\.geminiTextModel),
+                    fallbackModel: "gemini-2.5-flash"
+                )
                 SliderRow(title: "Gemini Budget", value: binding(\.geminiBudgetUsd), range: 0...200, format: "$%.0f")
 
                 HStack(spacing: 8) {
@@ -1633,7 +1640,14 @@ private struct ProviderCardView: View {
                     .padding(.bottom, 2)
 
                 ApiKeyInputRow(title: "OpenAI Key", text: binding(\.openaiKey), urlString: descriptor.getApiKeyURL)
-                ReadOnlyRow(title: "Text Model", value: "gpt-4o-mini / whisper-1")
+                // A4 (§9): validity badge + model dropdown for the OpenAI *text* model.
+                // (Transcription still uses whisper-1 — audio-model picker is A5.)
+                CloudKeyModelRow(
+                    descriptor: descriptor,
+                    apiKey: store.settings.openaiKey,
+                    selectedModel: binding(\.openaiTextModel),
+                    fallbackModel: "gpt-4o-mini"
+                )
                 SliderRow(title: "OpenAI Budget", value: binding(\.openaiBudgetUsd), range: 0...200, format: "$%.0f")
 
                 HStack(spacing: 8) {
@@ -1811,6 +1825,190 @@ private struct ReadOnlyRow: View {
         .font(.system(size: 13))
     }
 }
+
+// A4 (§9): validity badge + model dropdown for a cloud provider.
+//
+// Responsibilities:
+//   - Debounced key validation on key change (via CloudKeyValidator) → Checking/Valid/
+//     Invalid badge.
+//   - On a valid key, auto-load the provider's model list (CloudModelCatalog). Success →
+//     Picker; failure/empty → editable combo (free-text model id) + Retry button (§9.2).
+//   - Writes the chosen model id into settings via `selectedModel` binding.
+//
+// Concurrency: all async work runs in `.task(id: apiKey)`, which SwiftUI cancels and
+// restarts whenever the key changes — that cancellation *is* our debounce/dedupe, so
+// no manual timer bookkeeping is needed. Services are session-scoped @State (the
+// catalog caches in memory only; nothing persisted, no keys logged).
+private struct CloudKeyModelRow: View {
+    let descriptor: CloudProviderDescriptor
+    let apiKey: String
+    @Binding var selectedModel: String
+    let fallbackModel: String
+
+    @State private var status: CloudKeyValidationStatus = .idle
+    @State private var models: [CloudModel] = []
+    @State private var isLoadingModels = false
+    @State private var loadFailed = false
+    // User forced free-text entry even though a list is available (advanced users).
+    @State private var manualEntry = false
+
+    // Session-scoped services (constructed once; @State preserves the first instance).
+    @State private var validator = CloudKeyValidator()
+    @State private var catalog = CloudModelCatalog()
+
+    private var trimmedKey: String { apiKey.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var showsCombo: Bool { manualEntry || loadFailed || models.isEmpty }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 8) {
+            Text("Text Model")
+                .foregroundStyle(VaniScriptTheme.text2)
+                .frame(width: 140, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 6) {
+                validationBadge
+                modelControl
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .font(.system(size: 13))
+        .task(id: apiKey) {
+            await runValidationAndLoad()
+        }
+    }
+
+    // MARK: - Badge
+
+    @ViewBuilder
+    private var validationBadge: some View {
+        switch status {
+        case .idle:
+            EmptyView()
+        case .checking:
+            badge(text: "Checking…", color: VaniScriptTheme.text2)
+        case .valid:
+            badge(text: "● Valid", color: VaniScriptTheme.green)
+        case let .invalid(reason):
+            badge(text: "● Invalid", color: VaniScriptTheme.red)
+                .help(reason)
+        }
+    }
+
+    private func badge(text: String, color: Color) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(color)
+    }
+
+    // MARK: - Model control (Picker or editable combo + Retry)
+
+    @ViewBuilder
+    private var modelControl: some View {
+        if showsCombo {
+            // Editable combo: free-text model id + Retry (auto-load failed/empty, or
+            // the user opted into manual entry).
+            HStack(spacing: 6) {
+                TextField(fallbackModel, text: $selectedModel)
+                    .textFieldStyle(.plain)
+                    .foregroundStyle(VaniScriptTheme.text0)
+                    .padding(.horizontal, 10)
+                    .frame(height: 34)
+                    .background(VaniScriptTheme.input)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                Button {
+                    manualEntry = false
+                    Task { await loadModels(force: true) }
+                } label: {
+                    HStack(spacing: 4) {
+                        if isLoadingModels {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        Text("Retry")
+                    }
+                }
+                .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                .disabled(trimmedKey.isEmpty || isLoadingModels)
+            }
+        } else {
+            HStack(spacing: 6) {
+                Picker("", selection: $selectedModel) {
+                    // Keep the current selection visible even if it isn't in the fetched
+                    // list (e.g. a previously saved custom id).
+                    if !selectedModel.isEmpty && !models.contains(where: { $0.id == selectedModel }) {
+                        Text(selectedModel).tag(selectedModel)
+                    }
+                    ForEach(models) { model in
+                        Text(model.id).tag(model.id)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Escape hatch to type a model id manually.
+                Button {
+                    manualEntry = true
+                } label: {
+                    Image(systemName: "square.and.pencil")
+                }
+                .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                .help("Enter a model id manually")
+            }
+        }
+    }
+
+    // MARK: - Async validation + load
+
+    private func runValidationAndLoad() async {
+        guard !trimmedKey.isEmpty else {
+            status = .idle
+            models = []
+            loadFailed = false
+            return
+        }
+        status = .checking
+        // Debounce: wait for typing to pause. If the key changes, SwiftUI cancels this
+        // task (throwing CancellationError) and starts a fresh one — newest wins.
+        do {
+            try await Task.sleep(nanoseconds: 500_000_000)
+        } catch {
+            return
+        }
+        let result = await validator.validate(descriptor: descriptor, apiKey: trimmedKey)
+        guard !Task.isCancelled else { return }
+        status = result
+        if case .valid = result {
+            await loadModels(force: false)
+        } else {
+            models = []
+            loadFailed = false
+        }
+    }
+
+    private func loadModels(force: Bool) async {
+        guard !trimmedKey.isEmpty else { return }
+        isLoadingModels = true
+        defer { isLoadingModels = false }
+        do {
+            let fetched = try await catalog.listModels(descriptor: descriptor, apiKey: trimmedKey, useCache: !force)
+            guard !Task.isCancelled else { return }
+            models = fetched
+            loadFailed = fetched.isEmpty
+            // Default the selection to the fallback when nothing valid is chosen yet.
+            if selectedModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                selectedModel = fetched.first(where: { $0.id == fallbackModel })?.id ?? fetched.first?.id ?? fallbackModel
+            }
+        } catch {
+            guard !Task.isCancelled else { return }
+            models = []
+            loadFailed = true
+        }
+    }
+}
+
 
 private struct SettingsToggleRow: View {
     let title: String

@@ -1,22 +1,21 @@
-# QA REPORT — VaniScript (API_USAGE / A3 — UI reorg: dropdown + cards)
+# QA REPORT — VaniScript (API_USAGE / A4 — Key validation + model catalog)
 
 - **Дата:** 2026-07-26
-- **Трек/шаг:** API_USAGE / **A3** (единый dropdown провайдеров + условные карточки)
-- **Suite:** 60 скриптов → **60 PASS / 0 FAIL** → **GREEN**
-- **Новых скриптов в этом прогоне:** **21** (категория `a3-delta` / `a3-regression`)
-- **swift test:** **287 тестов / 42 suites, 0 failures** (GREEN)
+- **Трек/шаг:** API_USAGE / **A4** (валидация ключа + автоподтягивание моделей)
+- **Suite:** 81 скриптов → **81 PASS / 0 FAIL** → **GREEN**
+- **Новых скриптов в этом прогоне:** **21** (категория `a4-delta` / `a4-regression`)
+- **Адаптации A3 (step-aware):** **4** (`a3_no_a4_*`, `a3_gemini_openai_parity`, `a3_state_yaml_a3`, `a3_feedback_approved`)
+- **swift test:** **308 tests / 44 suites, 0 failures** (GREEN)
 - **swift build:** **Build complete!** (GREEN)
 - **Bugs open:** 0
-- **Вердикт:** **GREEN** — A3 готов к post-tag `apiusage/A3-done`.
+- **Вердикт:** **GREEN** — A4 готов к post-tag `apiusage/A4-done`.
 
 ---
 
 ## Результат полного re-run (`QA/run_all.sh`)
 
-Полный re-run всего manifest (60 скриптов, без сжатия):
-
 ```
-PASS: 60   FAIL: 0
+PASS: 81   FAIL: 0
 RESULT: GREEN
 ```
 
@@ -27,90 +26,65 @@ cd "/Users/pavan/Documents/AI Projects/VaniScript/AppleSilicon"
 QA/run_all.sh
 ```
 
-### Новые A3-скрипты (21, все PASS)
+### Новые A4-скрипты (21, все PASS)
 
 | # | Скрипт | Что проверено | Результат |
 |---|---|---|---|
-| 1 | `a3_selected_provider_default.sh` | `@State selectedProviderId = CloudProviderCatalog.geminiID` | PASS |
-| 2 | `a3_picker_uses_catalog.sh` | `ForEach(CloudProviderCatalog.providers)` + Picker binding | PASS |
-| 3 | `a3_single_card_at_a_time.sh` | 1× `ProviderCardView(descriptor:)`; no always-expanded sections | PASS |
-| 4 | `a3_api_keys_tab_structure.sh` | Cloud Provider → conditional card → Cloud Usage Statistics | PASS |
-| 5 | `a3_custom_path_intact.sh` | `customProvidersSection` add/remove, gated by `customID` | PASS |
-| 6 | `a3_provider_card_location.sh` | ProviderCardView in SettingsView (in-file OK) | PASS |
-| 7 | `a3_engine_ids_preserved.sh` | `gemini-cloud` / `gpt-cloud` / `coreml-whisperkit` / `mlx-native` | PASS |
-| 8 | `a3_gemini_openai_parity.sh` | key + ReadOnlyRow + budget Slider + Transcribing/Translation | PASS |
-| 9 | `a3_anthropic_card.sh` | Anthropic Key + ReadOnlyRow Text Model | PASS |
-| 10 | `a3_coming_soon_stub.sh` | default → `comingSoonCard` for Qwen/OpenRouter/Ollama | PASS |
-| 11 | `a3_stub_key_fields.sh` | `qwenApiKey` / `openrouterApiKey` / `ollamaCloudApiKey` | PASS |
-| 12 | `a3_get_api_key_url_descriptor.sh` | `urlString: descriptor.getApiKeyURL` (4 call sites) | PASS |
-| 13 | `a3_stats_section_unchanged.sh` | Cloud Usage Statistics + Reset/StatItem/BudgetBar intact | PASS |
-| 14 | `a3_no_a4_validation_or_model_net.sh` | no CloudKeyValidator/CloudModelCatalog/URLSession in card | PASS |
-| 15 | `a3_no_a5_engine_routing.sh` | no transcription/translation assign to qwen/openrouter/ollama | PASS |
-| 16 | `a3_switch_covers_catalog_ids.sh` | all catalog IDs referenced; A1 fixed order intact | PASS |
-| 17 | `a3_scope_no_engine_usage_changes.sh` | no A5 cases in WorkflowStore normalizedUsageProviderId | PASS |
-| 18 | `a3_no_hardcoded_api_keys.sh` | no sk-/AIza/ghp_/xox- literals (§14.7) | PASS |
-| 19 | `a3_feedback_approved.sh` | FEEDBACK A3 `[APPROVED]` + handoff claims | PASS |
-| 20 | `a3_state_yaml_a3.sh` | `current_step: A3`; implementation+review approved | PASS |
-| 21 | `a3_swift_build_green.sh` | `swift build` green | PASS |
+| 1 | `a4_key_validator_status_map.sh` | idle/checking/valid/invalid; 2xx/401/403/429/other | PASS |
+| 2 | `a4_key_validator_empty_custom.sh` | empty → idle; custom → valid без сети | PASS |
+| 3 | `a4_key_validator_uses_list_request.sh` | validate via `listRequest` + fetcher | PASS |
+| 4 | `a4_catalog_parsers.sh` | OpenAI/Gemini/Ollama(+Anthropic shared) parsers + tests | PASS |
+| 5 | `a4_catalog_dedup.sh` | de-dupe + empty drop | PASS |
+| 6 | `a4_catalog_list_request_auth.sh` | Gemini `?key=`, Bearer, Anthropic x-api-key, Ollama tags | PASS |
+| 7 | `a4_catalog_session_cache_fingerprint.sh` | session cache + keyFingerprint + invalidate | PASS |
+| 8 | `a4_catalog_fetcher_injectable.sh` | CloudHTTPFetcher injectable; tests mock | PASS |
+| 9 | `a4_settings_cloud_key_model_row.sh` | badge + Picker/editable+Retry | PASS |
+| 10 | `a4_settings_writes_text_models.sh` | geminiTextModel / openaiTextModel bindings | PASS |
+| 11 | `a4_settings_debounce.sh` | `.task(id:)` + 500ms; core timer-free | PASS |
+| 12 | `a4_transcription_resolve_gemini_settings.sh` | Gemini from settings; whisper-1 deferred | PASS |
+| 13 | `a4_translation_resolve_settings_fallback.sh` | settings + hardcode fallbacks | PASS |
+| 14 | `a4_tests_present.sh` | 9 + 12 @Test; A4 suites | PASS |
+| 15 | `a4_no_keys_in_source.sh` | no sk-/AIza secrets §14.7 | PASS |
+| 16 | `a4_no_a5_engine_routing.sh` | no qwen/openrouter/ollama engine routing | PASS |
+| 17 | `a4_no_a6_stats_rewrite.sh` | Cloud Usage Statistics intact | PASS |
+| 18 | `a4_anthropic_readonly_whisper_ok.sh` | Anthropic ReadOnly + whisper-1 OK (not bugs) | PASS |
+| 19 | `a4_feedback_approved.sh` | FEEDBACK A4 [APPROVED] | PASS |
+| 20 | `a4_state_yaml_a4.sh` | current_step A4; impl+review approved | PASS |
+| 21 | `a4_swift_test_green.sh` | 308 tests / 0 failures | PASS |
 
 ### Регрессия (все prior-скрипты re-run green)
 
-- **Build gates:** `build_gate_as.sh` (swift test 287/42), `build_gate_electron.sh` (tsc --noEmit) — PASS.
+- **Build gates:** `build_gate_as.sh` (swift test 308/44), `build_gate_electron.sh` (tsc --noEmit) — PASS.
 - **MCP smoke:** `mcp_smoke_as.sh` (:19790 + SSE + McpContracts) — PASS.
-- **Q7 doc-delta (12)** — PASS; `q7_doc_only_no_code` step-aware N/A for code step A3 — PASS.
-- **Q7 / A2 swift test gates** — PASS (287 tests, 0 failures).
+- **Q7 doc-delta (12)** — PASS; `q7_doc_only_no_code` step-aware N/A for code step A4 — PASS.
+- **Q7 / A2 / A4 swift test gates** — PASS (308 tests, 0 failures).
 - **A1 (5):** catalog order, decodeIfPresent, defaults, no-network — PASS.
 - **A2 (20):** UsageRecorder purity/parsers/record/WorkflowStore/tests/ADR/keys — PASS.
+- **A3 (21):** UI reorg; step-aware N/A for A3-only negative gates; Gemini/OpenAI parity accepts CloudKeyModelRow on A4 — PASS.
 
-## Gap hunt: закрыт (см. QA/COVERAGE.md §A3)
+## Gap hunt: закрыт (см. QA/COVERAGE.md §A4)
 
-Закрыты ВСЕ пункты чеклиста A3:
+Закрыты ВСЕ пункты чеклиста A4:
 
-- Picker uses catalog order (not hardcoded gemini/openai only)
-- Only one provider card rendered at a time
-- Custom path still has add/remove custom providers
-- Engine ids preserved: gemini-cloud / gpt-cloud / coreml-whisperkit / mlx-native
-- Stub providers write keys to correct AppSettings fields
-- getApiKeyURL from descriptor
-- Stats section still present (not deleted)
-- No A4 validation badge / model dropdown network code
-- No A5 engine routing for qwen/openrouter/ollama
-- selectedProviderId default gemini; Gemini/OpenAI/Anthropic card parity
-- ProviderCardView in-file OK; FEEDBACK [APPROVED]; swift build green
-- No secrets in SettingsView
+- HTTP status map 2xx/401/403/429/other
+- empty key → idle; custom → valid without network
+- validate via listRequest; parsers OpenAI/Gemini/Ollama/Anthropic; dedup
+- session cache + key fingerprint (no raw secret); injectable CloudHTTPFetcher
+- CloudKeyModelRow badge + Picker/editable+Retry; debounce; writes text models
+- transcription/translation resolve settings + hardcode fallbacks
+- whisper-1 + Anthropic ReadOnly — Verifier scope OK (not product bugs)
+- no A5 engine routing; no A6 stats rewrite; no secrets in source
+- unit tests present; swift test 308 green; A1+A2+A3 regression PASS
 
-**N/A (с обоснованием):**
+## Scope notes (Verifier-accepted, not FAIL)
 
-- Separate `ProviderCardView.swift` — **N/A**: optional per STEPS; Verifier APPROVED in-file helper (`a3_provider_card_location`).
-- Interactive UI click-through of Picker — **N/A (static QA)**: suite is structure/grep based; no XCUITest harness in track.
-- A4 key validation / A5 engines / A6 stats rebuild — **N/A (out of scope A3)**; negative scripts assert absence.
+| Item | Disposition |
+|---|---|
+| Anthropic Text Model stays `ReadOnlyRow` | OK — no settings field / engine routing in A4 |
+| OpenAI transcription hardcode `whisper-1` | OK — audio model; deferred to A5 audio-picker |
+| No qwen/openrouter/ollama engine routing | Correctly out of A4 (A5) |
+| Stats section not rewritten | Correctly out of A4 (A6) |
 
-## Подтверждённые инварианты (§14)
+## Graphify
 
-- **§14.1** AppSettings decode not touched by A3 (UI only) ✓
-- **§14.2** Codex/Grok/Qwen/MCP/local models not broken; engine routing for new providers deferred A5 ✓
-- **§14.7** no keys/tokens in SettingsView source ✓
-- **§14.8** buildable/testable: swift build + swift test 287/42 GREEN ✓
-- **§14.9** product delta scoped to SettingsView UI + FEEDBACK/STATE docs ✓
-
-## Product surface (asserted, not modified)
-
-- `Sources/VaniScript/Views/SettingsView.swift`
-  - `@State selectedProviderId` default `geminiID`
-  - `apiKeysTab`: single Picker over `CloudProviderCatalog.providers`
-  - Custom → `customProvidersSection`; else `ProviderCardView(descriptor:)`
-  - ProviderCardView in-file (file-private helpers)
-  - Gemini/OpenAI: key + ReadOnlyRow model + budget Slider + toggles 1:1
-  - Anthropic: key + ReadOnlyRow model
-  - Qwen/OpenRouter/Ollama: key + coming soon → correct AppSettings fields
-  - «Cloud Usage Statistics» UNCHANGED (A6)
-
-## Handoff
-
-- **next_actor:** orchestrator
-- **Recommendation:** post-tag `apiusage/A3-done`; advance track to A4 when ready.
-- **Bugs:** none opened this run. Historical `QA/BUG_REPORT.md` remains A1-stale; current status is this REPORT.
-
----
-
-**Готово. QA green. Скажи оркестратору: статус**
+- Query first against `graphify-out/graph.json` (graph predates A4 nodes; source assert used as ground truth for new files).

@@ -361,3 +361,54 @@
   (без сети/реальных ключей — моки). Инварианты §14 соблюдены; QA A7: 133 PASS /
   0 FAIL, bugs_open: 0.
 - **Outcome:** после approve Verifier → `API_USAGE_DONE`, tag `apiusage/A8-done`.
+
+
+## D-2026-07-27-CLOUD_PROVIDER_STABILIZATION — Endpoint profiles, model capabilities and role policy
+
+- **Status:** Architecture accepted for planning; implementation not started.
+- **Context:** После закрытия `API_USAGE` Human предоставил native UI evidence
+  (`OBS-001…OBS-005`):
+  1. Qwen Token Plan key не проходит validation;
+  2. generic `Use for Translation` наблюдается как no-op;
+  3. OpenRouter transcription заблокирован provider-wide, хотя audio support
+     зависит от выбранной модели/route;
+  4. model picker не показывает context и input/output price;
+  5. Anthropic/Custom присутствуют в Settings, но не имеют полного workflow routing.
+- **Decision:**
+  1. Новый ограниченный Apple Silicon track:
+     `CLOUD_PROVIDER_STABILIZATION`.
+  2. Credential kind, billing plan и region становятся first-class
+     `CloudEndpointProfile`. Один resolver обслуживает key validation, model
+     discovery и runtime URLs. Для Qwen минимальный подтверждённый набор:
+     Pay-as-you-go International и Token Plan Singapore.
+  3. Human’s requirement «универсально» означает: один выбранный Qwen
+     credential/profile доступен API translation/editing и embedded Qwen CLI.
+     Provider secret передаётся child process только через environment; MCP token,
+     config, tools, scopes и no-silent-fallback invariant не меняются.
+  4. `CloudModel` расширяется до source-attributed model descriptor с optional
+     context, price, modalities и transcription route kind. Неизвестные значения
+     не подменяются нулями. Token Plan Credits не маркируются как PAYG USD.
+  5. Provider-wide `supportsTranscription` больше не является достаточным
+     основанием. Settings, `ProviderRegistry`, workflow synchronization и runtime
+     preflight используют одну pure `ProviderRolePolicy`.
+  6. UI может включить роль только если policy подтверждает credential/profile,
+     selected/effective model и реализованный executable route. Disabled role
+     остаётся видимой с точной причиной.
+  7. Anthropic получает нативный Messages API translation adapter; Custom —
+     ограниченный явно выбранным OpenAI-compatible text protocol. Audio для них
+     не заявляется.
+  8. OpenRouter transcription добавляется только per-model через подтверждённый
+     dedicated STT или audio-input text-output route.
+  9. Существующие `UsageRecorder`, `CloudBalanceService`, provider/usage ids и
+     migration-safe settings сохраняются; они не создаются заново.
+- **Supersedes narrow API_USAGE assumptions:**
+  - D-2026-07-26-A5 пункт «OpenRouter не даёт STT endpoint» больше не считается
+    актуальным provider-wide утверждением.
+  - Один общий DashScope endpoint недостаточен для всех Qwen key/billing profiles.
+  - Наличие provider в Settings не считается доказательством runtime integration.
+- **Evidence gate:** точный source-level root cause `OBS-002` остаётся `UNKNOWN`;
+  CPS-01 обязан перевести его в `VERIFIED` до product fix.
+- **Scope guard:** Apple Silicon only; Electron, MCP protocol/scopes, local
+  WhisperKit/MLX, Codex/Grok, usage aggregation и balance вне трека.
+- **Documents:** `CLOUD_PROVIDER_STABILIZATION_ARCHITECTURE.md`,
+  `CLOUD_PROVIDER_STABILIZATION_STEPS.md`.

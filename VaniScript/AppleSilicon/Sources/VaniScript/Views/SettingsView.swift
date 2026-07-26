@@ -22,6 +22,10 @@ struct SettingsView: View {
     @State private var customOutputCost = ""
     @State private var customBudgetLimit = ""
 
+    // A3: currently selected cloud provider for the API & Usage dropdown (fixed
+    // catalog order). Defaults to Gemini to preserve the previous top section.
+    @State private var selectedProviderId = CloudProviderCatalog.geminiID
+
     private let mcpOverviewColumns = [
         GridItem(.flexible(minimum: 220), spacing: VaniScriptTheme.Density.space8),
         GridItem(.flexible(minimum: 220), spacing: VaniScriptTheme.Density.space8),
@@ -384,221 +388,23 @@ struct SettingsView: View {
 
     private var apiKeysTab: some View {
         SettingsScroll {
-            let geminiIsTranscription = store.settings.transcriptionProvider == "gemini-cloud"
-            let geminiIsTranslation = store.settings.translationProvider == "gemini-cloud"
-            SettingsSection(title: "Google Gemini", headerAccessory: AnyView(
-                HStack(spacing: 4) {
-                    if geminiIsTranscription {
-                        Text("Transcribing")
-                            .font(.system(size: 8, weight: .heavy))
-                            .foregroundStyle(Color.dynamic(light: .white, dark: Color(red: 10/255, green: 10/255, blue: 18/255)))
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(VaniScriptTheme.green)
-                            .cornerRadius(4)
-                    }
-                    if geminiIsTranslation {
-                        Text("Translation")
-                            .font(.system(size: 8, weight: .heavy))
-                            .foregroundStyle(Color.dynamic(light: .white, dark: Color(red: 10/255, green: 10/255, blue: 18/255)))
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(VaniScriptTheme.green)
-                            .cornerRadius(4)
+            // A3: single Provider dropdown (fixed catalog order) + only the selected card.
+            SettingsSection(title: "Cloud Provider") {
+                Picker("Provider", selection: $selectedProviderId) {
+                    ForEach(CloudProviderCatalog.providers) { descriptor in
+                        Text(descriptor.label).tag(descriptor.id)
                     }
                 }
-            )) {
-                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
-                    Text("Gemini API key for cloud transcription, translation, and editing.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(VaniScriptTheme.text2)
-                        .padding(.bottom, 2)
-
-                    ApiKeyInputRow(title: "Gemini Key", text: binding(\.geminiKey), urlString: "https://aistudio.google.com/app/apikey")
-                    ReadOnlyRow(title: "Text Model", value: "gemini-2.5-flash")
-                    SliderRow(title: "Gemini Budget", value: binding(\.geminiBudgetUsd), range: 0...200, format: "$%.0f")
-
-                    HStack(spacing: 8) {
-                        let hasKey = !store.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-
-                        Button {
-                            store.updateSettings { settings in
-                                settings.transcriptionProvider = geminiIsTranscription ? "coreml-whisperkit" : "gemini-cloud"
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: geminiIsTranscription ? "checkmark.circle.fill" : "circle")
-                                Text(geminiIsTranscription ? "Used for Transcribing" : "Use for Transcribing")
-                            }
-                        }
-                        .buttonStyle(SettingsSmallButtonStyle(primary: geminiIsTranscription))
-                        .disabled(!hasKey)
-
-                        Button {
-                            store.updateSettings { settings in
-                                settings.translationProvider = geminiIsTranslation ? "mlx-native" : "gemini-cloud"
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: geminiIsTranslation ? "checkmark.circle.fill" : "circle")
-                                Text(geminiIsTranslation ? "Used for Translation" : "Use for Translation")
-                            }
-                        }
-                        .buttonStyle(SettingsSmallButtonStyle(primary: geminiIsTranslation))
-                        .disabled(!hasKey)
-                    }
-                    .padding(.top, 4)
-                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .tint(VaniScriptTheme.accent)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            let openaiIsTranscription = store.settings.transcriptionProvider == "gpt-cloud"
-            let openaiIsTranslation = store.settings.translationProvider == "gpt-cloud"
-            SettingsSection(title: "OpenAI", headerAccessory: AnyView(
-                HStack(spacing: 4) {
-                    if openaiIsTranscription {
-                        Text("Transcribing")
-                            .font(.system(size: 8, weight: .heavy))
-                            .foregroundStyle(Color.dynamic(light: .white, dark: Color(red: 10/255, green: 10/255, blue: 18/255)))
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(VaniScriptTheme.green)
-                            .cornerRadius(4)
-                    }
-                    if openaiIsTranslation {
-                        Text("Translation")
-                            .font(.system(size: 8, weight: .heavy))
-                            .foregroundStyle(Color.dynamic(light: .white, dark: Color(red: 10/255, green: 10/255, blue: 18/255)))
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(VaniScriptTheme.green)
-                            .cornerRadius(4)
-                    }
-                }
-            )) {
-                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
-                    Text("OpenAI API key for cloud transcription, translation, and editing.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(VaniScriptTheme.text2)
-                        .padding(.bottom, 2)
-
-                    ApiKeyInputRow(title: "OpenAI Key", text: binding(\.openaiKey), urlString: "https://platform.openai.com/api-keys")
-                    ReadOnlyRow(title: "Text Model", value: "gpt-4o-mini / whisper-1")
-                    SliderRow(title: "OpenAI Budget", value: binding(\.openaiBudgetUsd), range: 0...200, format: "$%.0f")
-
-                    HStack(spacing: 8) {
-                        let hasKey = !store.settings.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-
-                        Button {
-                            store.updateSettings { settings in
-                                settings.transcriptionProvider = openaiIsTranscription ? "coreml-whisperkit" : "gpt-cloud"
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: openaiIsTranscription ? "checkmark.circle.fill" : "circle")
-                                Text(openaiIsTranscription ? "Used for Transcribing" : "Use for Transcribing")
-                            }
-                        }
-                        .buttonStyle(SettingsSmallButtonStyle(primary: openaiIsTranscription))
-                        .disabled(!hasKey)
-
-                        Button {
-                            store.updateSettings { settings in
-                                settings.translationProvider = openaiIsTranslation ? "mlx-native" : "gpt-cloud"
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: openaiIsTranslation ? "checkmark.circle.fill" : "circle")
-                                Text(openaiIsTranslation ? "Used for Translation" : "Use for Translation")
-                            }
-                        }
-                        .buttonStyle(SettingsSmallButtonStyle(primary: openaiIsTranslation))
-                        .disabled(!hasKey)
-                    }
-                    .padding(.top, 4)
-                }
-            }
-
-            SettingsSection(title: "Anthropic") {
-                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
-                    Text("Anthropic API key for cloud text polishing and editing.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(VaniScriptTheme.text2)
-                        .padding(.bottom, 2)
-
-                    ApiKeyInputRow(title: "Anthropic Key", text: binding(\.anthropicKey), urlString: "https://console.anthropic.com/settings/keys")
-                    ReadOnlyRow(title: "Text Model", value: "claude-3-5-sonnet")
-                }
-            }
-
-            SettingsSection(title: "Custom Cloud Providers") {
-                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
-                    if store.settings.customCloudProviders.isEmpty {
-                        Text("No custom cloud providers configured.")
-                            .font(.system(size: 12))
-                            .foregroundStyle(VaniScriptTheme.text2)
-                            .padding(.bottom, 6)
-                    } else {
-                        ForEach(store.settings.customCloudProviders) { provider in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(provider.label)
-                                        .font(.system(size: 13, weight: .bold))
-                                        .foregroundStyle(VaniScriptTheme.text0)
-                                    Text("Model: \(provider.modelName) • URL: \(provider.baseUrl)")
-                                        .font(.system(size: 11))
-                                        .foregroundStyle(VaniScriptTheme.text2)
-                                    Text("Pricing per 1M tokens: In $\(String(format: "%.2f", provider.inputCostPerMillion)) / Out $\(String(format: "%.2f", provider.outputCostPerMillion))")
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(VaniScriptTheme.accent)
-                                }
-                                Spacer()
-                                if provider.budgetLimitUsd > 0 {
-                                    Text("Limit: $\(String(format: "%.0f", provider.budgetLimitUsd))")
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .foregroundStyle(VaniScriptTheme.text1)
-                                        .padding(.trailing, 8)
-                                }
-                                Button(role: .destructive) {
-                                    store.updateSettings { settings in
-                                        settings.customCloudProviders.removeAll { $0.id == provider.id }
-                                    }
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .foregroundStyle(VaniScriptTheme.red)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(8)
-                            .background(Color.white.opacity(0.02))
-                            .cornerRadius(6)
-                        }
-                    }
-
-                    Divider().padding(.vertical, 4)
-
-                    Text("Add Custom Cloud Model")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(VaniScriptTheme.accent)
-
-                    VStack(spacing: 8) {
-                        TextInputRow(title: "Provider Name", text: $customLabel)
-                        TextInputRow(title: "API Endpoint URL", text: $customBaseUrl)
-                        SecureInputRow(title: "API Key", text: $customApiKey)
-                        TextInputRow(title: "Model Name", text: $customModelName)
-                        TextInputRow(title: "Input cost / 1M tokens ($)", text: $customInputCost)
-                        TextInputRow(title: "Output cost / 1M tokens ($)", text: $customOutputCost)
-                        TextInputRow(title: "Monthly Budget Limit ($)", text: $customBudgetLimit)
-
-                        Button {
-                            addCustomProvider()
-                        } label: {
-                            Label("Add Custom Provider", systemImage: "plus")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(SettingsPrimaryButtonStyle())
-                        .disabled(customLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || customBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-                }
+            if selectedProviderId == CloudProviderCatalog.customID {
+                customProvidersSection
+            } else if let descriptor = CloudProviderCatalog.descriptor(for: selectedProviderId) {
+                ProviderCardView(descriptor: descriptor)
             }
 
             SettingsSection(title: "Cloud Usage Statistics") {
@@ -672,6 +478,81 @@ struct SettingsView: View {
                     }
                     .buttonStyle(SettingsPrimaryButtonStyle())
                     .padding(.top, 8)
+                }
+            }
+        }
+    }
+
+    // A3: custom cloud providers section (existing mechanism, unchanged) — shown
+    // only when "Custom" is picked in the provider dropdown.
+    private var customProvidersSection: some View {
+        SettingsSection(title: "Custom Cloud Providers") {
+            VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                if store.settings.customCloudProviders.isEmpty {
+                    Text("No custom cloud providers configured.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .padding(.bottom, 6)
+                } else {
+                    ForEach(store.settings.customCloudProviders) { provider in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(provider.label)
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(VaniScriptTheme.text0)
+                                Text("Model: \(provider.modelName) • URL: \(provider.baseUrl)")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(VaniScriptTheme.text2)
+                                Text("Pricing per 1M tokens: In $\(String(format: "%.2f", provider.inputCostPerMillion)) / Out $\(String(format: "%.2f", provider.outputCostPerMillion))")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(VaniScriptTheme.accent)
+                            }
+                            Spacer()
+                            if provider.budgetLimitUsd > 0 {
+                                Text("Limit: $\(String(format: "%.0f", provider.budgetLimitUsd))")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(VaniScriptTheme.text1)
+                                    .padding(.trailing, 8)
+                            }
+                            Button(role: .destructive) {
+                                store.updateSettings { settings in
+                                    settings.customCloudProviders.removeAll { $0.id == provider.id }
+                                }
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundStyle(VaniScriptTheme.red)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(8)
+                        .background(Color.white.opacity(0.02))
+                        .cornerRadius(6)
+                    }
+                }
+
+                Divider().padding(.vertical, 4)
+
+                Text("Add Custom Cloud Model")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(VaniScriptTheme.accent)
+
+                VStack(spacing: 8) {
+                    TextInputRow(title: "Provider Name", text: $customLabel)
+                    TextInputRow(title: "API Endpoint URL", text: $customBaseUrl)
+                    SecureInputRow(title: "API Key", text: $customApiKey)
+                    TextInputRow(title: "Model Name", text: $customModelName)
+                    TextInputRow(title: "Input cost / 1M tokens ($)", text: $customInputCost)
+                    TextInputRow(title: "Output cost / 1M tokens ($)", text: $customOutputCost)
+                    TextInputRow(title: "Monthly Budget Limit ($)", text: $customBudgetLimit)
+
+                    Button {
+                        addCustomProvider()
+                    } label: {
+                        Label("Add Custom Provider", systemImage: "plus")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SettingsPrimaryButtonStyle())
+                    .disabled(customLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || customBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
         }
@@ -1655,6 +1536,200 @@ private struct SecureInputRow: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .font(.system(size: 13))
+    }
+}
+
+// A3: card for the currently selected cloud provider in the API & Usage tab.
+// Renders the provider's key / budget / usage toggles compactly, reusing the
+// existing settings rows. Behavior for existing providers (Gemini/OpenAI/Anthropic)
+// is preserved 1:1; new providers (Qwen/OpenRouter/Ollama Cloud) expose a key
+// field plus a "coming soon" note — full engine wiring lands in A5. Custom is
+// handled separately by SettingsView.customProvidersSection.
+private struct ProviderCardView: View {
+    @EnvironmentObject private var store: WorkflowStore
+    let descriptor: CloudProviderDescriptor
+
+    var body: some View {
+        switch descriptor.id {
+        case CloudProviderCatalog.geminiID:
+            geminiCard
+        case CloudProviderCatalog.openaiID:
+            openaiCard
+        case CloudProviderCatalog.anthropicID:
+            anthropicCard
+        default:
+            comingSoonCard
+        }
+    }
+
+    // MARK: - Gemini (behavior 1:1 with the previous "Google Gemini" section)
+    private var geminiCard: some View {
+        let isTranscription = store.settings.transcriptionProvider == "gemini-cloud"
+        let isTranslation = store.settings.translationProvider == "gemini-cloud"
+        return SettingsSection(title: descriptor.label, headerAccessory: AnyView(
+            HStack(spacing: 4) {
+                if isTranscription { statusBadge("Transcribing") }
+                if isTranslation { statusBadge("Translation") }
+            }
+        )) {
+            VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                Text("Gemini API key for cloud transcription, translation, and editing.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .padding(.bottom, 2)
+
+                ApiKeyInputRow(title: "Gemini Key", text: binding(\.geminiKey), urlString: descriptor.getApiKeyURL)
+                ReadOnlyRow(title: "Text Model", value: "gemini-2.5-flash")
+                SliderRow(title: "Gemini Budget", value: binding(\.geminiBudgetUsd), range: 0...200, format: "$%.0f")
+
+                HStack(spacing: 8) {
+                    let hasKey = !store.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+                    Button {
+                        store.updateSettings { settings in
+                            settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : "gemini-cloud"
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: isTranscription ? "checkmark.circle.fill" : "circle")
+                            Text(isTranscription ? "Used for Transcribing" : "Use for Transcribing")
+                        }
+                    }
+                    .buttonStyle(SettingsSmallButtonStyle(primary: isTranscription))
+                    .disabled(!hasKey)
+
+                    Button {
+                        store.updateSettings { settings in
+                            settings.translationProvider = isTranslation ? "mlx-native" : "gemini-cloud"
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: isTranslation ? "checkmark.circle.fill" : "circle")
+                            Text(isTranslation ? "Used for Translation" : "Use for Translation")
+                        }
+                    }
+                    .buttonStyle(SettingsSmallButtonStyle(primary: isTranslation))
+                    .disabled(!hasKey)
+                }
+                .padding(.top, 4)
+            }
+        }
+    }
+
+    // MARK: - OpenAI (behavior 1:1 with the previous "OpenAI" section)
+    private var openaiCard: some View {
+        let isTranscription = store.settings.transcriptionProvider == "gpt-cloud"
+        let isTranslation = store.settings.translationProvider == "gpt-cloud"
+        return SettingsSection(title: descriptor.label, headerAccessory: AnyView(
+            HStack(spacing: 4) {
+                if isTranscription { statusBadge("Transcribing") }
+                if isTranslation { statusBadge("Translation") }
+            }
+        )) {
+            VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                Text("OpenAI API key for cloud transcription, translation, and editing.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .padding(.bottom, 2)
+
+                ApiKeyInputRow(title: "OpenAI Key", text: binding(\.openaiKey), urlString: descriptor.getApiKeyURL)
+                ReadOnlyRow(title: "Text Model", value: "gpt-4o-mini / whisper-1")
+                SliderRow(title: "OpenAI Budget", value: binding(\.openaiBudgetUsd), range: 0...200, format: "$%.0f")
+
+                HStack(spacing: 8) {
+                    let hasKey = !store.settings.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+                    Button {
+                        store.updateSettings { settings in
+                            settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : "gpt-cloud"
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: isTranscription ? "checkmark.circle.fill" : "circle")
+                            Text(isTranscription ? "Used for Transcribing" : "Use for Transcribing")
+                        }
+                    }
+                    .buttonStyle(SettingsSmallButtonStyle(primary: isTranscription))
+                    .disabled(!hasKey)
+
+                    Button {
+                        store.updateSettings { settings in
+                            settings.translationProvider = isTranslation ? "mlx-native" : "gpt-cloud"
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: isTranslation ? "checkmark.circle.fill" : "circle")
+                            Text(isTranslation ? "Used for Translation" : "Use for Translation")
+                        }
+                    }
+                    .buttonStyle(SettingsSmallButtonStyle(primary: isTranslation))
+                    .disabled(!hasKey)
+                }
+                .padding(.top, 4)
+            }
+        }
+    }
+
+    // MARK: - Anthropic (behavior 1:1 with the previous "Anthropic" section)
+    private var anthropicCard: some View {
+        SettingsSection(title: descriptor.label) {
+            VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                Text("Anthropic API key for cloud text polishing and editing.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .padding(.bottom, 2)
+
+                ApiKeyInputRow(title: "Anthropic Key", text: binding(\.anthropicKey), urlString: descriptor.getApiKeyURL)
+                ReadOnlyRow(title: "Text Model", value: "claude-3-5-sonnet")
+            }
+        }
+    }
+
+    // MARK: - Qwen / OpenRouter / Ollama Cloud (stub: key + "coming soon"; full A5)
+    private var comingSoonCard: some View {
+        SettingsSection(title: descriptor.label) {
+            VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                Text("\(descriptor.label) support is coming soon. You can save your API key now; model selection and usage tracking arrive in a later update.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .padding(.bottom, 2)
+
+                if let keyPath = apiKeyPath {
+                    ApiKeyInputRow(title: "\(descriptor.label) Key", text: binding(keyPath), urlString: descriptor.getApiKeyURL)
+                }
+            }
+        }
+    }
+
+    // Key storage keyPath for the not-yet-wired providers.
+    private var apiKeyPath: WritableKeyPath<AppSettings, String>? {
+        switch descriptor.id {
+        case CloudProviderCatalog.qwenID: return \.qwenApiKey
+        case CloudProviderCatalog.openrouterID: return \.openrouterApiKey
+        case CloudProviderCatalog.ollamaCloudID: return \.ollamaCloudApiKey
+        default: return nil
+        }
+    }
+
+    // Two-way binding into AppSettings via the shared store (matches SettingsView).
+    private func binding<Value>(_ keyPath: WritableKeyPath<AppSettings, Value>) -> Binding<Value> {
+        Binding {
+            store.settings[keyPath: keyPath]
+        } set: { value in
+            store.updateSettings { settings in
+                settings[keyPath: keyPath] = value
+            }
+        }
+    }
+
+    private func statusBadge(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 8, weight: .heavy))
+            .foregroundStyle(Color.dynamic(light: .white, dark: Color(red: 10/255, green: 10/255, blue: 18/255)))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1)
+            .background(VaniScriptTheme.green)
+            .cornerRadius(4)
     }
 }
 

@@ -36,8 +36,10 @@ QA: bash/python-скрипты под QA/scripts/, manifest.json, run_all.sh.
 
 Этап B — прогнать:
 1. QA/run_all.sh — весь manifest. После фикса — ПОЛНЫЙ re-run.
-2. FAIL → QA/BUG_REPORT.md → «зови оркестратора»
-3. PASS → QA/REPORT.md → «QA green — зови оркестратора»
+2. FAIL → QA/BUG_REPORT.md; next_actor: orchestrator
+3. PASS → QA/REPORT.md; next_actor: orchestrator
+4. Human всегда: «Готово. Скажи оркестратору: статус»
+⛔ Не зови Coder/Gemini/QA-друг-друга. Hub = Orchestrator.
 
 ## Gap-hunt checklist
 Дельта: happy path; error/invalid; CLI absent (.cliMissing); auth/not-logged-in;
@@ -72,6 +74,6 @@ QA: bash/python-скрипты под QA/scripts/, manifest.json, run_all.sh.
   QA/run_all.sh
 
 ### Сдача
-FAIL → QA/BUG_REPORT.md → «зови оркестратора»
-GREEN → QA/REPORT.md → «QA green — зови оркестратора»
+FAIL → QA/BUG_REPORT.md → next_actor: orchestrator → «Готово. Скажи оркестратору: статус»
+GREEN → QA/REPORT.md → next_actor: orchestrator → «Готово. QA green. Скажи оркестратору: статус»
 ```

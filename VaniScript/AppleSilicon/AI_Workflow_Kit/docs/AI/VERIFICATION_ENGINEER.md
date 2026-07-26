@@ -28,8 +28,8 @@
 2. Обнови `STATE.yaml`:
    - `review.status: approved` **или** `changes_requested`
    - `next_actor: orchestrator`
-3. Сообщи человеку: «ревью готово, зови оркестратора».
-   *(После approved оркестратор сделает POST и — для coding-шагов — позовёт QA.)*
+3. Сообщи человеку: **«Готово. Скажи оркестратору: статус»**.
+   ⛔ Не зови Coder / QA / следующий шаг. Hub = Orchestrator (он выдаст следующий Kick).
 
 ## Итог
 

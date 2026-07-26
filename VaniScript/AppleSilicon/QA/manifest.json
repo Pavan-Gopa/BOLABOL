@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "description": "VaniScript QA suite manifest. Order: build gates first, then MCP smoke, then Q7 doc-only delta, then the swift-test regression gate. QA engineer adds N scripts per run (not just one).",
+  "description": "VaniScript QA suite manifest. Order: build gates, MCP smoke, Q7 doc-delta, A1 catalog, A2 usage, A3 UI reorg (provider dropdown + cards). QA engineer adds N scripts per run (not just one).",
   "scripts": [
     {
       "path": "build_gate_as.sh",
@@ -28,7 +28,7 @@
       "kind": "q7-doc-delta",
       "area": "Q7 acceptance checklist",
       "enabled": true,
-      "note": "QWEN_MCP_ACCEPTANCE.md: all [x], no [ ], verdict 'ИТОГ: [PASS]'."
+      "note": "QWEN_MCP_ACCEPTANCE.md: all [x], no [ ], verdict '\u0418\u0422\u041e\u0413: [PASS]'."
     },
     {
       "path": "q7_acceptance_3_surfaces.sh",
@@ -168,14 +168,14 @@
       "kind": "a2-delta",
       "area": "UsageRecorder",
       "enabled": true,
-      "note": "A2: per-model key providerId:model (§6.2) with blank-model fallback."
+      "note": "A2: per-model key providerId:model (\u00a76.2) with blank-model fallback."
     },
     {
       "path": "a2_record_besteffort_noop.sh",
       "kind": "a2-delta",
       "area": "UsageRecorder",
       "enabled": true,
-      "note": "A2: record() no-op when nil/empty delta and no audio (§14.4 best-effort)."
+      "note": "A2: record() no-op when nil/empty delta and no audio (\u00a714.4 best-effort)."
     },
     {
       "path": "a2_parser_gemini.sh",
@@ -203,7 +203,7 @@
       "kind": "a2-delta",
       "area": "CloudAudioTranscriptionEngine",
       "enabled": true,
-      "note": "A2: transcription result carries usage: TokenUsage? from Gemini+OpenAI paths. (Pipeline wiring deferred A5/A6 — scope OK.)"
+      "note": "A2: transcription result carries usage: TokenUsage? from Gemini+OpenAI paths. (Pipeline wiring deferred A5/A6 \u2014 scope OK.)"
     },
     {
       "path": "a2_translation_accumulator.sh",
@@ -231,7 +231,7 @@
       "kind": "a2-delta",
       "area": "WorkflowStore",
       "enabled": true,
-      "note": "A2: recordCloudTranslationUsage is async, non-throwing, best-effort (§14.4)."
+      "note": "A2: recordCloudTranslationUsage is async, non-throwing, best-effort (\u00a714.4)."
     },
     {
       "path": "a2_tests_present.sh",
@@ -252,21 +252,21 @@
       "kind": "a2-delta",
       "area": "DECISIONS",
       "enabled": true,
-      "note": "A2: ADR D-2026-07-26-A2 (usage recording, §14.4, scope note, 287 tests)."
+      "note": "A2: ADR D-2026-07-26-A2 (usage recording, \u00a714.4, scope note, 287 tests)."
     },
     {
       "path": "a2_no_keys_in_source.sh",
       "kind": "a2-delta",
       "area": "Security",
       "enabled": true,
-      "note": "A2: no hardcoded API keys/tokens in A2 sources or tests (§14.7)."
+      "note": "A2: no hardcoded API keys/tokens in A2 sources or tests (\u00a714.7)."
     },
     {
       "path": "a2_appsettings_usage_migration_safe.sh",
       "kind": "a2-delta",
       "area": "AppSettings",
       "enabled": true,
-      "note": "A2: settings.usage decodeIfPresent ?? [:] migration-safe; ProviderUsage last* intact (§14.1 + A1 regression)."
+      "note": "A2: settings.usage decodeIfPresent ?? [:] migration-safe; ProviderUsage last* intact (\u00a714.1 + A1 regression)."
     },
     {
       "path": "a2_swift_test_green.sh",
@@ -274,7 +274,153 @@
       "area": "A2 swift test gate",
       "enabled": true,
       "note": "A2: swift test green, 0 failures, soft-warn < 287; env-only sandbox errors reported as ENV-ONLY (not product FAIL)."
+    },
+    {
+      "path": "a3_selected_provider_default.sh",
+      "kind": "a3-delta",
+      "area": "SettingsView state",
+      "enabled": true,
+      "note": "A3: selectedProviderId defaults to CloudProviderCatalog.geminiID."
+    },
+    {
+      "path": "a3_picker_uses_catalog.sh",
+      "kind": "a3-delta",
+      "area": "SettingsView apiKeysTab",
+      "enabled": true,
+      "note": "A3: Provider Picker ForEach(CloudProviderCatalog.providers) \u2014 catalog order."
+    },
+    {
+      "path": "a3_single_card_at_a_time.sh",
+      "kind": "a3-delta",
+      "area": "SettingsView apiKeysTab",
+      "enabled": true,
+      "note": "A3: only one provider card at a time; no always-expanded Gemini/OpenAI/Anthropic sections."
+    },
+    {
+      "path": "a3_api_keys_tab_structure.sh",
+      "kind": "a3-delta",
+      "area": "SettingsView apiKeysTab",
+      "enabled": true,
+      "note": "A3: apiKeysTab structure = Cloud Provider picker \u2192 conditional card \u2192 stats."
+    },
+    {
+      "path": "a3_custom_path_intact.sh",
+      "kind": "a3-delta",
+      "area": "SettingsView Custom",
+      "enabled": true,
+      "note": "A3: Custom path retains add/remove and is gated by customID."
+    },
+    {
+      "path": "a3_provider_card_location.sh",
+      "kind": "a3-delta",
+      "area": "ProviderCardView",
+      "enabled": true,
+      "note": "A3: ProviderCardView defined in SettingsView or own file (both OK)."
+    },
+    {
+      "path": "a3_engine_ids_preserved.sh",
+      "kind": "a3-delta",
+      "area": "ProviderCardView engines",
+      "enabled": true,
+      "note": "A3: engine ids gemini-cloud/gpt-cloud/coreml-whisperkit/mlx-native preserved."
+    },
+    {
+      "path": "a3_gemini_openai_parity.sh",
+      "kind": "a3-delta",
+      "area": "ProviderCardView Gemini/OpenAI",
+      "enabled": true,
+      "note": "A3: Gemini/OpenAI key + ReadOnlyRow + budget Slider + Transcribing/Translation toggles."
+    },
+    {
+      "path": "a3_anthropic_card.sh",
+      "kind": "a3-delta",
+      "area": "ProviderCardView Anthropic",
+      "enabled": true,
+      "note": "A3: Anthropic key + ReadOnlyRow model."
+    },
+    {
+      "path": "a3_coming_soon_stub.sh",
+      "kind": "a3-delta",
+      "area": "ProviderCardView stubs",
+      "enabled": true,
+      "note": "A3: Qwen/OpenRouter/Ollama coming-soon stub via default case."
+    },
+    {
+      "path": "a3_stub_key_fields.sh",
+      "kind": "a3-delta",
+      "area": "ProviderCardView AppSettings",
+      "enabled": true,
+      "note": "A3: stubs map to qwenApiKey/openrouterApiKey/ollamaCloudApiKey."
+    },
+    {
+      "path": "a3_get_api_key_url_descriptor.sh",
+      "kind": "a3-delta",
+      "area": "ProviderCardView catalog SSOT",
+      "enabled": true,
+      "note": "A3: Get API Key URL from descriptor.getApiKeyURL."
+    },
+    {
+      "path": "a3_stats_section_unchanged.sh",
+      "kind": "a3-delta",
+      "area": "Cloud Usage Statistics",
+      "enabled": true,
+      "note": "A3: Cloud Usage Statistics section still present (A6 territory)."
+    },
+    {
+      "path": "a3_no_a4_validation_or_model_net.sh",
+      "kind": "a3-delta",
+      "area": "A3 out-of-scope A4",
+      "enabled": true,
+      "note": "A3: no CloudKeyValidator/CloudModelCatalog/network model listing."
+    },
+    {
+      "path": "a3_no_a5_engine_routing.sh",
+      "kind": "a3-delta",
+      "area": "A3 out-of-scope A5",
+      "enabled": true,
+      "note": "A3: no engine routing for qwen/openrouter/ollama in ProviderCardView."
+    },
+    {
+      "path": "a3_switch_covers_catalog_ids.sh",
+      "kind": "a3-delta",
+      "area": "Catalog + SettingsView IDs",
+      "enabled": true,
+      "note": "A3: catalog IDs referenced; fixed A1 order intact."
+    },
+    {
+      "path": "a3_scope_no_engine_usage_changes.sh",
+      "kind": "a3-delta",
+      "area": "A3 UI-only scope",
+      "enabled": true,
+      "note": "A3: no A5-like provider routing in WorkflowStore normalizedUsageProviderId."
+    },
+    {
+      "path": "a3_no_hardcoded_api_keys.sh",
+      "kind": "a3-delta",
+      "area": "Security \u00a714.7",
+      "enabled": true,
+      "note": "A3: no hardcoded API key literals in SettingsView."
+    },
+    {
+      "path": "a3_feedback_approved.sh",
+      "kind": "a3-delta",
+      "area": "FEEDBACK",
+      "enabled": true,
+      "note": "A3: FEEDBACK.md Verifier [APPROVED] with handoff claims."
+    },
+    {
+      "path": "a3_state_yaml_a3.sh",
+      "kind": "a3-delta",
+      "area": "STATE.yaml",
+      "enabled": true,
+      "note": "A3: current_step A3; implementation+review approved."
+    },
+    {
+      "path": "a3_swift_build_green.sh",
+      "kind": "a3-regression",
+      "area": "A3 swift build gate",
+      "enabled": true,
+      "note": "A3: swift build green; ENV-ONLY sandbox soft-pass."
     }
   ]
 }
-

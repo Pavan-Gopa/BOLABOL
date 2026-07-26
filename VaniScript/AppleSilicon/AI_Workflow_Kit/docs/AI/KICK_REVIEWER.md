@@ -95,5 +95,8 @@ Graphify first: MCP "graphify" или CLI graphify explain/path/query
   **RESULT:** [APPROVED] or [CHANGES_REQUESTED]
 
 ### После вердикта
-Обнови STATE.yaml: review.status, next_actor: orchestrator. Скажи Human: «зови оркестратора».
+Обнови STATE.yaml: `review.status` = approved | changes_requested,
+`next_actor: orchestrator`.
+Human **только**: «Готово. Скажи оркестратору: статус»
+⛔ Не зови Coder/QA/следующий шаг — hub = Orchestrator.
 ```

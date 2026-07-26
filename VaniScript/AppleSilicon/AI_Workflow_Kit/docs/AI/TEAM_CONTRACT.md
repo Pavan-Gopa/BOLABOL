@@ -22,46 +22,62 @@
 
 No role redesigns architecture unless Orchestrator explicitly allows (Architect packet).
 
-## Workflow (shared filesystem)
+## Workflow — hub = Orchestrator (обязательно)
+
+**Все роли общаются только через файлы + Orchestrator.** Human открывает
+**новое окно** для Coder / Reviewer / QA и вставляет **Kick, который выдал
+Orchestrator**. Агенты **не** зовут друг друга («зови Gemini», «зови QA» — **запрещено**).
 
 ```
-Orchestrator: git checkpoint PRE step (commit + tag grok/pre-Gn or ui/pre-Un + push)
+Human → Orchestrator: «статус» / «приступай»
         ↓
-Orchestrator prepares STATE (step + target_files)
+Orchestrator читает STATE + FEEDBACK + QA reports
+        → обновляет STATE / checkpoints
+        → выдаёт готовый Kick (copy-paste) + «На очереди: <роль>»
         ↓
-Human → Hy3: implement
+Human открывает НОВОЕ окно нужного агента → вставляет Kick
         ↓
-Hy3 codes → verify → implementation.status = waiting_review
+Agent работает → пишет файлы (код / FEEDBACK / QA report)
+        → STATE: next_actor = orchestrator
+        → Human: «Готово. Скажи оркестратору: статус»
         ↓
-Human → Gemini: review
-        ↓
-Gemini → FEEDBACK.md → review.status = approved | changes_requested
-        ↓
-Human → Orchestrator: advance or retry
-        ↓
-If approved: git checkpoint POST step (commit + tag …-done + push)
-        ↓
-[coding-шаги] Human → QA: «зови QA» / «Новая фича: <step>»
-        → gap-hunt + full suite (QA/run_all.sh)
-        → FAIL: QA/BUG_REPORT.md → Human → Orchestrator (triage, NOT straight to Coder)
-        → GREEN: QA/REPORT.md → Human → Orchestrator
-        ↓
-Orchestrator: QA green → PRE next step → (loop)
-              QA bugs  → fix/retry (Coder only) → Verifier re-review → QA re-run
+Human → Orchestrator: «статус»  →  (loop)
 ```
+
+Типичный круг одного coding-шага:
+
+```
+Orchestrator PRE-tag + Kick Coder
+  → Coder → waiting_review + next_actor=orchestrator
+Orchestrator Kick Reviewer (Gemini)
+  → Reviewer → approved|changes_requested + next_actor=orchestrator
+Orchestrator Kick QA   (если coding + QA gate)
+  → QA → REPORT/BUG_REPORT + next_actor=orchestrator
+Orchestrator: green → POST-tag → open next → PRE next → Kick Coder
+```
+
+### Handoff phrase (все агенты → Human)
+
+| Кто закончил | Что сказать Human |
+|--------------|-------------------|
+| **Любой** (Coder / Reviewer / QA) | **«Готово. Скажи оркестратору: статус»** |
+| **Запрещено** | «зови Gemini», «зови ревью», «зови QA», «зови Hy3», «зови кодера» |
+
+`next_actor` после сдачи агента **всегда** `orchestrator`. Кого звать дальше
+решает только Orchestrator (и выдаёт Kick).
 
 ### Кто что делает, когда QA нашёл баг
 
 | Actor | Action |
 |-------|--------|
-| **QA** | Детектит, пишет `QA/BUG_REPORT.md`, говорит Human: «зови оркестратора» |
-| **Orchestrator** | Читает баги, открывает fix/retry шаг (scope, `target_files`, PRE-tag) |
-| **Coder** | **Единственный, кто чинит product-код** |
-| **Verifier** | Ре-ревьюит фикс (качество), не первый имплементор |
-| **QA** | Ре-ранит `QA/run_all.sh` после approve фикса |
+| **QA** | Детектит, пишет `QA/BUG_REPORT.md`, Human: «скажи оркестратору: статус» |
+| **Orchestrator** | Читает баги, открывает fix/retry шаг (scope, `target_files`, PRE-tag), Kick Coder |
+| **Coder** | **Единственный, кто чинит product-код** → снова «статус» оркестратору |
+| **Verifier** | Ре-ревьюит фикс **после Kick от Orchestrator** |
+| **QA** | Ре-ранит suite **после Kick от Orchestrator** |
 
 **Не:** отправлять QA-баги Verifier'у «починить» (Verifier не пишет product-код).
-**Не:** пропускать Orchestrator для major/blocker (потеряются STATE/checkpoints).
+**Не:** пропускать Orchestrator (потеряются STATE/checkpoints + нет Kick).
 **OK для minor/flaky:** Orchestrator может открыть крошечный fix-шаг с Coder в один прыжок.
 
 ## Hard rules
@@ -115,13 +131,13 @@ Orchestrator: QA green → PRE next step → (loop)
 
 ## Human short commands
 
-| Phrase | Actor |
-|--------|--------|
-| `приступай` / `зови оркестратора` / `статус` | Orchestrator (Grok) |
-| `зови Hy3` / `кодер` | Implementation Engineer (Hy3) — kick из `KICK_CODER.md` |
-| `зови Gemini` / `ревью` / `Твоя очередь` | Verification Engineer (Gemini) — `KICK_REVIEWER.md` |
-| `зови QA` / `Твоя очередь QA` | QA Script Engineer — `QA_ENGINEER.md` / `KICK_QA.md` |
-| `Новая фича: Q3` | QA — script для шага + full suite |
-| `следующий шаг` | Orchestrator (only if approved **и QA green** для coding-шагов) |
-| `retry` / `правки` | Orchestrator → same step, attempts++ |
-| Architect packet | Orchestrator → Human → Architect (Qwen 3.8 Max) |
+**Основной (и почти единственный) цикл:**
+
+| Phrase | Кто | Что происходит |
+|--------|-----|----------------|
+| **`статус`** / `приступай` / `зови оркестратора` | **Orchestrator** | Читает файлы, двигает STATE, выдаёт **Kick** следующего |
+| *(вставить Kick в новое окно)* | Coder / Reviewer / QA | Работает по Kick; сдаёт с `next_actor: orchestrator` |
+
+Legacy-фразы (`зови Hy3`, `зови Gemini`, `зови QA`) **не нужны** — Kick всегда
+из ответа Orchestrator. Если агент сам сказал «зови Gemini» — **игнор**; скажи
+оркестратору `статус`.

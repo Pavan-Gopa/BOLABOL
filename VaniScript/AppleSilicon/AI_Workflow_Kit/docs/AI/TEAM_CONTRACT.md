@@ -12,7 +12,7 @@
 
 | Role | Model | Writes code? | Updates |
 |------|-------|--------------|---------|
-| **Architect** *(on demand)* | Qwen 3.8 Max / Claude | no product features | ADR → `DECISIONS.md`, `QWEN_ARCHITECTURE.md` |
+| **Architect** *(on demand)* | Qwen 3.8 Max / Claude | no product features | ADR → `DECISIONS.md`, `*_ARCHITECTURE.md`, `*_STEPS.md`; role doc: `ARCHITECT.md` |
 | **Planner** *(on demand)* | Qwen 3.8 Max / Claude | no product features | `*_STEPS.md` |
 | **Orchestrator** | Grok / Claude | only if attempts ≥ 3 | `STATE.yaml`, `DECISIONS.md`, checkpoints; triages bugs |
 | **Implementation Engineer** | **Hy3 / Hi3 / Coder** | **yes** product | code in `target_files`, then `implementation.status` |

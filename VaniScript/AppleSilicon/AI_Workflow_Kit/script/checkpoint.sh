@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Git checkpoints for GROK_MCP (G0–G6), UI_AS (U0–U3) and QWEN_MCP (Q0–Q7).
+# Git checkpoints for GROK_MCP (G0–G6), UI_AS (U0–U3), QWEN_MCP (Q0–Q7) and API_USAGE (A1–A8).
 # Scoped to VaniScript paths — never git add -A on the whole AI Projects monorepo.
 #
 # Usage:
@@ -7,6 +7,8 @@
 #   ./AI_Workflow_Kit/script/checkpoint.sh post G1 "short description"
 #   ./AI_Workflow_Kit/script/checkpoint.sh pre Q1
 #   ./AI_Workflow_Kit/script/checkpoint.sh post Q1 "short description"
+#   ./AI_Workflow_Kit/script/checkpoint.sh pre A1
+#   ./AI_Workflow_Kit/script/checkpoint.sh post A1 "short description"
 #   ./AI_Workflow_Kit/script/checkpoint.sh list
 #   ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post G1
 set -euo pipefail
@@ -38,8 +40,11 @@ resolve_step() {
   elif [[ "$step" =~ ^Q[0-7]$|^QWEN_DONE$ ]]; then
     TRACK_PREFIX="qwen"
     TRACK_LABEL="QWEN_MCP"
+  elif [[ "$step" =~ ^A[1-8]$|^API_USAGE_DONE$ ]]; then
+    TRACK_PREFIX="apiusage"
+    TRACK_LABEL="API_USAGE"
   else
-    die "step must be G0..G6, GROK_DONE, U0..U3, UI_DONE, Q0..Q7, or QWEN_DONE; got: ${step:-empty}"
+    die "step must be G0..G6, GROK_DONE, U0..U3, UI_DONE, Q0..Q7, QWEN_DONE, A1..A8, or API_USAGE_DONE; got: ${step:-empty}"
   fi
 }
 
@@ -144,6 +149,8 @@ cmd_list() {
   git tag -l 'ui/*' --sort=creatordate
   echo "=== qwen/* tags ==="
   git tag -l 'qwen/*' --sort=creatordate
+  echo "=== apiusage/* tags ==="
+  git tag -l 'apiusage/*' --sort=creatordate
   echo "=== recent commits ==="
   git log --oneline --decorate -15
 }
@@ -169,8 +176,8 @@ cmd_rollback() {
 usage() {
   cat <<'EOF'
 Usage:
-  ./AI_Workflow_Kit/script/checkpoint.sh pre <G0..G6|U0..U3|Q0..Q7>
-  ./AI_Workflow_Kit/script/checkpoint.sh post <G0..G6|U0..U3|Q0..Q7> [description]
+  ./AI_Workflow_Kit/script/checkpoint.sh pre <G0..G6|U0..U3|Q0..Q7|A1..A8>
+  ./AI_Workflow_Kit/script/checkpoint.sh post <G0..G6|U0..U3|Q0..Q7|A1..A8> [description]
   ./AI_Workflow_Kit/script/checkpoint.sh list
   ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post <step>
 

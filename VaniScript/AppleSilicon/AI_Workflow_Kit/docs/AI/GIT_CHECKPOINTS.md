@@ -28,6 +28,15 @@
 
 **QWEN_MCP QA gate:** для coding-шагов (Q2–Q6) `post` ставится после approve **и** QA green. Doc-only (Q1, Q7) — сразу после approve.
 
+## Naming — API_USAGE
+
+| Moment | Tag | Commit message (пример) |
+|--------|-----|-------------------------|
+| **До** старта `An` | `apiusage/pre-An` | `chore(apiusage): checkpoint before An` |
+| **После** approve `An` (+ QA green для coding-шагов) | `apiusage/An-done` | `feat(apiusage): An — <кратко>` |
+
+**API_USAGE QA gate:** для coding-шагов (A1–A7) `post` ставится после approve **и** QA green. Doc-only (A8) — сразу после approve.
+
 Теги **не** перезаписывать (`-f` запрещён).
 
 ## Script

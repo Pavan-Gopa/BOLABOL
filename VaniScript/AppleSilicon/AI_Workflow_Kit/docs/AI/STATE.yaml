@@ -1,17 +1,30 @@
-# QWEN_MCP track — orchestrated by Cline
-# Product scope: AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md
+# API_USAGE track — orchestrated by Cline
+# Product scope: AI_Workflow_Kit/docs/API_USAGE_STEPS.md
+# Architecture: AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
 
-current_step: QWEN_DONE
+current_step: A1
 step_description: >
-  Трек QWEN_MCP завершён. Все 7 шагов (Q1–Q7) выполнены.
-  3 поверхности: External Qwen MCP (:19790), AS embedded chat, Electron embedded.
-  QA: 15/15 GREEN. BUG-001/002/003 CLOSED. 267 тестов green.
-  Следующий трек: по решению Human.
+  Discovery + data model (фундамент). CloudProviderCatalog (фиксированный порядок
+  провайдеров), расширения AppSettings/ProviderUsage (qwen/openrouter/ollama ключи,
+  модели, бюджеты; lastModel/lastTransactionAt). Верификация endpoints новых
+  провайдеров. Unit-тест decode старых settings → дефолты. UI и движки НЕ меняем.
 
-target_files: []
+target_files:
+  - Sources/VaniScriptCore/CloudProviderCatalog.swift
+  - Sources/VaniScriptCore/AppSettings.swift
+  - Tests/VaniScriptCoreTests/AppSettingsCloudFieldsTests.swift
+  - AI_Workflow_Kit/docs/DECISIONS.md
+  - AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
+  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 
 coder_brief: >
-  Трек QWEN_MCP завершён. Новых заданий нет. Ждём следующий трек от Human.
+  A1 — фундамент трека API_USAGE. Создай CloudProviderCatalog.swift (дескрипторы
+  провайдеров, фиксированный порядок gemini→openai→anthropic→qwen→openrouter→
+  ollama-cloud→custom). Расширь AppSettings (новые ключи/модели/бюджеты через
+  decodeIfPresent) и ProviderUsage (lastModel, lastTransactionAt). Unit-тест:
+  decode старых settings без новых полей → дефолты; round-trip. Верифицируй
+  endpoints (curl/доки) и обнови теги [med]→[high] в API_USAGE_ARCHITECTURE.md.
+  UI и движки НЕ трогай. Graphify first.
 
 completed_steps:
   - G0
@@ -37,35 +50,35 @@ completed_steps:
   - QWEN_DONE
 
 implementation:
-  status: done
-  attempts: 1
+  status: pending
+  attempts: 0
 
 review:
-  status: approved
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: green
-  last_report: "QA/REPORT.md"
-  suite: "15 scripts (15 PASS / 0 FAIL) — Q7 final"
+  status: pending
+  last_report: ""
+  suite: ""
   bugs_open: 0
 
-next_actor: human
+next_actor: implementation
 
-track: QWEN_MCP
-prior_track: UI_AS
+track: API_USAGE
+prior_track: QWEN_MCP
 
 working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "qwen/pre-Q7"
+  last_pre_tag: ""
   last_post_tag: "qwen/Q7-done"
   last_commit: "ff4b8b0"
 
 plan_files:
-  - AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md
-  - AI_Workflow_Kit/docs/QWEN_ARCHITECTURE.md
+  - AI_Workflow_Kit/docs/API_USAGE_STEPS.md
+  - AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
   - AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
   - AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md

@@ -58,20 +58,24 @@ completed_steps:
   - A6
 
 implementation:
-  status: pending
-  attempts: 0
+  status: approved
+  attempts: 1
 
 review:
-  status: pending
+  status: approved
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: green
+  status: pending
   last_report: "QA/REPORT.md"
-  suite: "A6: 114 PASS / 0 FAIL; 16 a6-* scripts; swift 320/46 GREEN"
+  suite: "awaiting A7 full suite (prior A6: 114 PASS / 0 FAIL)"
   bugs_open: 0
+  note: >
+    A7 Gemini APPROVED. Step-aware: scripts asserting «no A7 balance» (a6_no_a7_balance,
+    a5_no_a6_stats_no_a7_balance) need update for current_step A7+. Post-tag
+    apiusage/A7-done only after QA green.
 
-next_actor: implementation
+next_actor: qa
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -80,9 +84,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "apiusage/pre-A6"
+  last_pre_tag: "apiusage/pre-A7"
   last_post_tag: "apiusage/A6-done"
-  last_commit: "f3dea7e"
+  last_commit: "55507e9"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

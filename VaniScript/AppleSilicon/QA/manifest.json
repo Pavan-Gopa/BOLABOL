@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "description": "VaniScript QA suite manifest. Order: build gates, MCP smoke, Q7 doc-delta, A1 catalog, A2 usage, A3 UI reorg, A4 key validation + model catalog, A5 Qwen/OpenRouter/Ollama Cloud full integration, A6 usage statistics UI. QA engineer adds N scripts per run.",
+  "description": "VaniScript QA suite manifest. Order: build gates, MCP smoke, Q7 doc-delta, A1 catalog, A2 usage, A3 UI reorg, A4 key validation + model catalog, A5 Qwen/OpenRouter/Ollama Cloud full integration, A6 usage statistics UI, A7 real balance adapter (OpenRouter first). QA engineer adds N scripts per run.",
   "scripts": [
     {
       "path": "build_gate_as.sh",
@@ -799,6 +799,139 @@
       "area": "A6 swift test gate",
       "enabled": true,
       "note": "A6: swift test green ≥320 soft-warn; ENV-ONLY soft-pass."
+    },
+    {
+      "path": "a7_balance_service_present.sh",
+      "kind": "a7-service",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "CloudBalanceService.swift present: actor + BalanceProvider + providers + A7 markers"
+    },
+    {
+      "path": "a7_balance_info_cases.sh",
+      "kind": "a7-service",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "BalanceInfo = .usd(remaining:total:)/.planLimits(label:detail:)/.unavailable, Equatable+Sendable"
+    },
+    {
+      "path": "a7_openrouter_parsers.sh",
+      "kind": "a7-openrouter",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "GET /api/v1/credits + /api/v1/key (Bearer); pure parseCredits/parseKey; typed unparsable error"
+    },
+    {
+      "path": "a7_openrouter_mapping.sh",
+      "kind": "a7-openrouter",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "remaining = credits−usage; per-key cap min(accountRemaining,keyRemaining); total = keyLimit ?? credits"
+    },
+    {
+      "path": "a7_ollama_plan_based.sh",
+      "kind": "a7-ollama",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "OllamaCloudBalanceProvider → .planLimits('Plan-based (GPU time)'), never a fake $"
+    },
+    {
+      "path": "a7_honesty_guard_no_fetch.sh",
+      "kind": "a7-honesty",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": ".none/.estimated → nil provider → .unavailable no-fetch; empty OpenRouter key no-fetch"
+    },
+    {
+      "path": "a7_quiet_fallback.sh",
+      "kind": "a7-honesty",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "CloudBalanceError typed; balance() do/catch → .unavailable quiet; non-2xx → .requestFailed"
+    },
+    {
+      "path": "a7_ttl_cache_force.sh",
+      "kind": "a7-cache",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "TTL=60s in-memory per provider id; force bypass; invalidate(); session-only (no persistence)"
+    },
+    {
+      "path": "a7_http_fetcher_injected.sh",
+      "kind": "a7-network",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "network only via injected CloudHTTPFetcher (A4 reuse); no direct URLSession in service"
+    },
+    {
+      "path": "a7_catalog_balance_kinds.sh",
+      "kind": "a7-catalog",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "balanceKind: openrouter=.openrouterCredits, ollama=.ollamaPlan, gemini/openai/anthropic/qwen/custom=.estimated"
+    },
+    {
+      "path": "a7_settings_balance_row.sh",
+      "kind": "a7-ui",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "SettingsView CloudBalanceRow module-visible; gated to real kinds; .usd/.planLimits/'Estimated only'; lazy+Refresh"
+    },
+    {
+      "path": "a7_usage_stats_real_balance.sh",
+      "kind": "a7-ui",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "UsageStatisticsView realBalanceSection reuses CloudBalanceRow; gated by kind + configured key"
+    },
+    {
+      "path": "a7_no_fake_usd_estimated.sh",
+      "kind": "a7-honesty",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "no fake $ for .estimated providers; A6 estimated disclaimer intact; balance gated to real kinds"
+    },
+    {
+      "path": "a7_tests_present.sh",
+      "kind": "a7-tests",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "CloudBalanceServiceTests @Suite(A7): parsers/cap/Ollama/guard/quiet/cache/force on mocked network"
+    },
+    {
+      "path": "a7_no_keys_in_source.sh",
+      "kind": "a7-security",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "no sk-/AIza/ghp_/xox- secrets in A7 sources/tests (§14.7)"
+    },
+    {
+      "path": "a7_adr_present.sh",
+      "kind": "a7-docs",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "ADR D-2026-07-26-A7 with OpenRouter shapes + honesty rules + 331 tests"
+    },
+    {
+      "path": "a7_feedback_approved.sh",
+      "kind": "a7-docs",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "FEEDBACK.md A7 [APPROVED] + handoff claims"
+    },
+    {
+      "path": "a7_state_yaml_a7.sh",
+      "kind": "a7-docs",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "STATE.yaml current_step A7; implementation+review approved; target_files mention CloudBalanceService"
+    },
+    {
+      "path": "a7_swift_test_green.sh",
+      "kind": "a7-gate",
+      "area": "A7 real balance",
+      "enabled": true,
+      "note": "swift test green; soft-warn <331; ENV-ONLY soft-pass"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "description": "VaniScript QA suite manifest. Order: build gates, MCP smoke, Q7 doc-delta, A1 catalog, A2 usage, A3 UI reorg, A4 key validation + model catalog, A5 Qwen/OpenRouter/Ollama Cloud full integration. QA engineer adds N scripts per run.",
+  "description": "VaniScript QA suite manifest. Order: build gates, MCP smoke, Q7 doc-delta, A1 catalog, A2 usage, A3 UI reorg, A4 key validation + model catalog, A5 Qwen/OpenRouter/Ollama Cloud full integration, A6 usage statistics UI. QA engineer adds N scripts per run.",
   "scripts": [
     {
       "path": "build_gate_as.sh",
@@ -28,7 +28,7 @@
       "kind": "q7-doc-delta",
       "area": "Q7 acceptance checklist",
       "enabled": true,
-      "note": "QWEN_MCP_ACCEPTANCE.md: all [x], no [ ], verdict '\u0418\u0422\u041e\u0413: [PASS]'."
+      "note": "QWEN_MCP_ACCEPTANCE.md: all [x], no [ ], verdict 'ИТОГ: [PASS]'."
     },
     {
       "path": "q7_acceptance_3_surfaces.sh",
@@ -168,14 +168,14 @@
       "kind": "a2-delta",
       "area": "UsageRecorder",
       "enabled": true,
-      "note": "A2: per-model key providerId:model (\u00a76.2) with blank-model fallback."
+      "note": "A2: per-model key providerId:model (§6.2) with blank-model fallback."
     },
     {
       "path": "a2_record_besteffort_noop.sh",
       "kind": "a2-delta",
       "area": "UsageRecorder",
       "enabled": true,
-      "note": "A2: record() no-op when nil/empty delta and no audio (\u00a714.4 best-effort)."
+      "note": "A2: record() no-op when nil/empty delta and no audio (§14.4 best-effort)."
     },
     {
       "path": "a2_parser_gemini.sh",
@@ -203,7 +203,7 @@
       "kind": "a2-delta",
       "area": "CloudAudioTranscriptionEngine",
       "enabled": true,
-      "note": "A2: transcription result carries usage: TokenUsage? from Gemini+OpenAI paths. (Pipeline wiring deferred A5/A6 \u2014 scope OK.)"
+      "note": "A2: transcription result carries usage: TokenUsage? from Gemini+OpenAI paths. (Pipeline wiring deferred A5/A6 — scope OK.)"
     },
     {
       "path": "a2_translation_accumulator.sh",
@@ -231,7 +231,7 @@
       "kind": "a2-delta",
       "area": "WorkflowStore",
       "enabled": true,
-      "note": "A2: recordCloudTranslationUsage is async, non-throwing, best-effort (\u00a714.4)."
+      "note": "A2: recordCloudTranslationUsage is async, non-throwing, best-effort (§14.4)."
     },
     {
       "path": "a2_tests_present.sh",
@@ -252,21 +252,21 @@
       "kind": "a2-delta",
       "area": "DECISIONS",
       "enabled": true,
-      "note": "A2: ADR D-2026-07-26-A2 (usage recording, \u00a714.4, scope note, 287 tests)."
+      "note": "A2: ADR D-2026-07-26-A2 (usage recording, §14.4, scope note, 287 tests)."
     },
     {
       "path": "a2_no_keys_in_source.sh",
       "kind": "a2-delta",
       "area": "Security",
       "enabled": true,
-      "note": "A2: no hardcoded API keys/tokens in A2 sources or tests (\u00a714.7)."
+      "note": "A2: no hardcoded API keys/tokens in A2 sources or tests (§14.7)."
     },
     {
       "path": "a2_appsettings_usage_migration_safe.sh",
       "kind": "a2-delta",
       "area": "AppSettings",
       "enabled": true,
-      "note": "A2: settings.usage decodeIfPresent ?? [:] migration-safe; ProviderUsage last* intact (\u00a714.1 + A1 regression)."
+      "note": "A2: settings.usage decodeIfPresent ?? [:] migration-safe; ProviderUsage last* intact (§14.1 + A1 regression)."
     },
     {
       "path": "a2_swift_test_green.sh",
@@ -287,7 +287,7 @@
       "kind": "a3-delta",
       "area": "SettingsView apiKeysTab",
       "enabled": true,
-      "note": "A3: Provider Picker ForEach(CloudProviderCatalog.providers) \u2014 catalog order."
+      "note": "A3: Provider Picker ForEach(CloudProviderCatalog.providers) — catalog order."
     },
     {
       "path": "a3_single_card_at_a_time.sh",
@@ -301,7 +301,7 @@
       "kind": "a3-delta",
       "area": "SettingsView apiKeysTab",
       "enabled": true,
-      "note": "A3: apiKeysTab structure = Cloud Provider picker \u2192 conditional card \u2192 stats."
+      "note": "A3: apiKeysTab structure = Cloud Provider picker → conditional card → stats."
     },
     {
       "path": "a3_custom_path_intact.sh",
@@ -397,7 +397,7 @@
     {
       "path": "a3_no_hardcoded_api_keys.sh",
       "kind": "a3-delta",
-      "area": "Security \u00a714.7",
+      "area": "Security §14.7",
       "enabled": true,
       "note": "A3: no hardcoded API key literals in SettingsView."
     },
@@ -434,7 +434,7 @@
       "kind": "a4-delta",
       "area": "CloudKeyValidator empty/custom",
       "enabled": true,
-      "note": "A4: empty key \u2192 idle; custom \u2192 valid without network."
+      "note": "A4: empty key → idle; custom → valid without network."
     },
     {
       "path": "a4_key_validator_uses_list_request.sh",
@@ -523,7 +523,7 @@
     {
       "path": "a4_no_keys_in_source.sh",
       "kind": "a4-delta",
-      "area": "Security \u00a714.7",
+      "area": "Security §14.7",
       "enabled": true,
       "note": "A4: no sk-/AIza secret literals."
     },
@@ -546,7 +546,7 @@
       "kind": "a4-delta",
       "area": "Verifier scope OK",
       "enabled": true,
-      "note": "A4: Anthropic ReadOnly + whisper-1 deferred \u2014 not bugs."
+      "note": "A4: Anthropic ReadOnly + whisper-1 deferred — not bugs."
     },
     {
       "path": "a4_feedback_approved.sh",
@@ -567,7 +567,7 @@
       "kind": "a4-regression",
       "area": "A4 swift test gate",
       "enabled": true,
-      "note": "A4: swift test green \u2265308 soft-warn; ENV-ONLY soft-pass."
+      "note": "A4: swift test green ≥308 soft-warn; ENV-ONLY soft-pass."
     },
     {
       "path": "a5_registry_translation_gating.sh",
@@ -581,7 +581,7 @@
       "kind": "a5-delta",
       "area": "ProviderRegistry transcription",
       "enabled": true,
-      "note": "A5: supportsTranscription=false \u2192 no transcription options for the three."
+      "note": "A5: supportsTranscription=false → no transcription options for the three."
     },
     {
       "path": "a5_cloud_chat_router_endpoints.sh",
@@ -595,7 +595,7 @@
       "kind": "a5-delta",
       "area": "CloudChatRouter model",
       "enabled": true,
-      "note": "A5: settings model override vs catalog default; blank key \u2192 nil."
+      "note": "A5: settings model override vs catalog default; blank key → nil."
     },
     {
       "path": "a5_translation_engine_routing.sh",
@@ -670,7 +670,7 @@
     {
       "path": "a5_no_keys_in_source.sh",
       "kind": "a5-delta",
-      "area": "Security \u00a714.7",
+      "area": "Security §14.7",
       "enabled": true,
       "note": "A5: no sk-/AIza secret literals."
     },
@@ -686,7 +686,119 @@
       "kind": "a5-regression",
       "area": "A5 swift test gate",
       "enabled": true,
-      "note": "A5: swift test green \u2265320 soft-warn; ENV-ONLY soft-pass."
+      "note": "A5: swift test green ≥320 soft-warn; ENV-ONLY soft-pass."
+    },
+    {
+      "path": "a6_usage_statistics_view_present.sh",
+      "kind": "a6-delta",
+      "area": "UsageStatisticsView file",
+      "enabled": true,
+      "note": "A6: UsageStatisticsView.swift present with struct + A6 markers."
+    },
+    {
+      "path": "a6_settings_wired.sh",
+      "kind": "a6-delta",
+      "area": "SettingsView wiring",
+      "enabled": true,
+      "note": "A6: apiKeysTab wires UsageStatisticsView(); old section removed; provider card intact."
+    },
+    {
+      "path": "a6_last_transaction.sh",
+      "kind": "a6-delta",
+      "area": "Last Transaction Details",
+      "enabled": true,
+      "note": "A6: max lastTransactionAt, lastModel badge, Prompt/Completion/Total."
+    },
+    {
+      "path": "a6_active_providers_summary.sh",
+      "kind": "a6-delta",
+      "area": "Active providers summary",
+      "enabled": true,
+      "note": "A6: Transcribing/Translation via providerDisplayName + legacy id normalize."
+    },
+    {
+      "path": "a6_per_model_cards.sh",
+      "kind": "a6-delta",
+      "area": "Per-model cards",
+      "enabled": true,
+      "note": "A6: N transactions, 6 metrics, estimateCost, remaining vs budget."
+    },
+    {
+      "path": "a6_disclaimer_exact.sh",
+      "kind": "a6-delta",
+      "area": "Disclaimer exact string",
+      "enabled": true,
+      "note": "A6: exact Electron disclaimer string match."
+    },
+    {
+      "path": "a6_reset_and_empty_state.sh",
+      "kind": "a6-delta",
+      "area": "Reset + empty state",
+      "enabled": true,
+      "note": "A6: Reset → usage = [:]; empty state No usage recorded yet."
+    },
+    {
+      "path": "a6_old_section_removed.sh",
+      "kind": "a6-delta",
+      "area": "Old section removed",
+      "enabled": true,
+      "note": "A6: Cloud Usage Statistics + StatItem/BudgetBar/estimateCost gone from SettingsView."
+    },
+    {
+      "path": "a6_cloud_api_usage_title.sh",
+      "kind": "a6-delta",
+      "area": "Section title",
+      "enabled": true,
+      "note": "A6: Cloud API Usage title (not old Cloud Usage Statistics sectionTitle)."
+    },
+    {
+      "path": "a6_no_a7_balance.sh",
+      "kind": "a6-delta",
+      "area": "A6 out-of-scope A7",
+      "enabled": true,
+      "note": "A6: no CloudBalanceService; no network balance in UsageStatisticsView."
+    },
+    {
+      "path": "a6_ui_only_scope.sh",
+      "kind": "a6-delta",
+      "area": "UI-only scope",
+      "enabled": true,
+      "note": "A6: UI only — engines/registry/UsageRecorder not redefined in UsageStatisticsView."
+    },
+    {
+      "path": "a6_provider_cards_intact.sh",
+      "kind": "a6-delta",
+      "area": "Provider cards intact",
+      "enabled": true,
+      "note": "A6: ProviderCardView + cloud cards still present after stats rewrite."
+    },
+    {
+      "path": "a6_no_keys_in_source.sh",
+      "kind": "a6-delta",
+      "area": "Security §14.7",
+      "enabled": true,
+      "note": "A6: no sk-/AIza secret literals in A6 sources."
+    },
+    {
+      "path": "a6_feedback_approved.sh",
+      "kind": "a6-delta",
+      "area": "FEEDBACK",
+      "enabled": true,
+      "note": "A6: FEEDBACK.md Verifier [APPROVED] with handoff claims."
+    },
+    {
+      "path": "a6_state_yaml_a6.sh",
+      "kind": "a6-delta",
+      "area": "STATE.yaml",
+      "enabled": true,
+      "note": "A6: current_step A6; implementation+review approved."
+    },
+    {
+      "path": "a6_swift_test_green.sh",
+      "kind": "a6-regression",
+      "area": "A6 swift test gate",
+      "enabled": true,
+      "note": "A6: swift test green ≥320 soft-warn; ENV-ONLY soft-pass."
     }
   ]
 }

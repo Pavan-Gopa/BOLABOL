@@ -52,20 +52,23 @@ completed_steps:
   - A5
 
 implementation:
-  status: pending
-  attempts: 0
+  status: approved
+  attempts: 1
 
 review:
-  status: pending
+  status: approved
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: green
+  status: pending
   last_report: "QA/REPORT.md"
-  suite: "A5: 98 PASS / 0 FAIL; 17 a5-* scripts; swift 320/46 GREEN"
+  suite: "awaiting A6 full suite (prior A5: 98 PASS / 0 FAIL)"
   bugs_open: 0
+  note: >
+    A6 Gemini APPROVED. Old QA scripts asserting unchanged «Cloud Usage Statistics»
+    are stale by design — make step-aware. Post-tag apiusage/A6-done only after QA green.
 
-next_actor: implementation
+next_actor: qa
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -74,9 +77,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "apiusage/pre-A5"
+  last_pre_tag: "apiusage/pre-A6"
   last_post_tag: "apiusage/A5-done"
-  last_commit: "b357cc2"
+  last_commit: "9b064e0"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

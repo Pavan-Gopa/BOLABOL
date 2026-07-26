@@ -6,6 +6,11 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
     var label: String
     var model: String
     var apiKey: String
+    // A5: OpenAI-compatible routing for the new providers (Qwen/OpenRouter/Ollama
+    // Cloud). `nil` endpoint = legacy hardcoded providers (gemini-cloud/gpt-cloud),
+    // whose URLs stay inside the engine — behavior 1:1 with pre-A5.
+    var endpoint: URL? = nil
+    var headers: [String: String] = [:]
 
     static func resolve(settings: AppSettings, providerID: String) -> ActiveCloudTranslationProvider? {
         let trimmedProvider = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -32,7 +37,20 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
                 apiKey: key
             )
         default:
-            return nil
+            // A5: Qwen / OpenRouter / Ollama Cloud resolve through the core
+            // CloudChatRouter (base URL + settings model + key). Unknown ids or a
+            // missing key still return nil, exactly like the legacy cases above.
+            guard let route = CloudChatRouter.route(providerID: trimmedProvider, settings: settings) else {
+                return nil
+            }
+            return ActiveCloudTranslationProvider(
+                id: route.providerID,
+                label: route.label,
+                model: route.model,
+                apiKey: route.apiKey,
+                endpoint: route.endpoint,
+                headers: route.headers
+            )
         }
     }
 
@@ -196,6 +214,16 @@ actor CloudTextTranslationEngine {
         case "gpt-cloud":
             return try await generateOpenAI(prompt: prompt, provider: provider)
         default:
+            // A5: routed providers (Qwen/OpenRouter/Ollama Cloud) carry their own
+            // OpenAI-compatible endpoint + auth headers, resolved by CloudChatRouter.
+            if let endpoint = provider.endpoint {
+                return try await generateOpenAICompatible(
+                    prompt: prompt,
+                    provider: provider,
+                    url: endpoint,
+                    headers: provider.headers
+                )
+            }
             throw CloudTranslationError.emptyResponse(provider: provider.label)
         }
     }
@@ -248,9 +276,29 @@ actor CloudTextTranslationEngine {
     }
 
     private func generateOpenAI(prompt: String, provider: ActiveCloudTranslationProvider) async throws -> String {
+        // Legacy gpt-cloud path: fixed OpenAI URL + Bearer, now delegating to the
+        // shared OpenAI-compatible builder (A5 refactor — behavior unchanged).
         guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
             throw CloudTranslationError.invalidEndpoint
         }
+        return try await generateOpenAICompatible(
+            prompt: prompt,
+            provider: provider,
+            url: url,
+            headers: ["Authorization": "Bearer \(provider.apiKey)"]
+        )
+    }
+
+    // A5: one request/response path for every OpenAI-compatible chat provider
+    // (OpenAI, Qwen DashScope compatible-mode, OpenRouter, Ollama Cloud /v1). The
+    // caller supplies the endpoint + auth headers; body shape and usage parsing
+    // (§8.1, best-effort) are identical across providers.
+    private func generateOpenAICompatible(
+        prompt: String,
+        provider: ActiveCloudTranslationProvider,
+        url: URL,
+        headers: [String: String]
+    ) async throws -> String {
         let body = OpenAIChatCompletionRequest(
             model: provider.model,
             temperature: 0.2,
@@ -264,7 +312,11 @@ actor CloudTextTranslationEngine {
         )
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(provider.apiKey)", forHTTPHeaderField: "Authorization")
+        // Auth comes from the caller (Bearer for all current providers); the key is
+        // only ever placed in the header — never logged (invariant §14.3).
+        for (field, value) in headers {
+            request.setValue(value, forHTTPHeaderField: field)
+        }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
 

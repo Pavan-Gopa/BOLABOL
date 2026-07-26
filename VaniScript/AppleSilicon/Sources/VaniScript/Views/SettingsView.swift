@@ -1542,8 +1542,8 @@ private struct SecureInputRow: View {
 // A3: card for the currently selected cloud provider in the API & Usage tab.
 // Renders the provider's key / budget / usage toggles compactly, reusing the
 // existing settings rows. Behavior for existing providers (Gemini/OpenAI/Anthropic)
-// is preserved 1:1; new providers (Qwen/OpenRouter/Ollama Cloud) expose a key
-// field plus a "coming soon" note — full engine wiring lands in A5. Custom is
+// is preserved 1:1; new providers (Qwen/OpenRouter/Ollama Cloud) get the full A5
+// card (key + validation + models + honest capability toggles). Custom is
 // handled separately by SettingsView.customProvidersSection.
 private struct ProviderCardView: View {
     @EnvironmentObject private var store: WorkflowStore
@@ -1557,6 +1557,11 @@ private struct ProviderCardView: View {
             openaiCard
         case CloudProviderCatalog.anthropicID:
             anthropicCard
+        case CloudProviderCatalog.qwenID,
+             CloudProviderCatalog.openrouterID,
+             CloudProviderCatalog.ollamaCloudID:
+            // A5: full key + model + toggles card (stub retired).
+            cloudProviderCard
         default:
             comingSoonCard
         }
@@ -1699,7 +1704,135 @@ private struct ProviderCardView: View {
         }
     }
 
-    // MARK: - Qwen / OpenRouter / Ollama Cloud (stub: key + "coming soon"; full A5)
+    // MARK: - Qwen / OpenRouter / Ollama Cloud (A5: full integration card)
+    //
+    // One generic card driven by CloudProviderCatalog + CloudChatRouter ids:
+    //   key row → validity badge + auto-loaded model dropdown (CloudKeyModelRow, A4)
+    //   → budget slider (where a budget field exists) → Use-for toggles.
+    // Honesty (§14): the "Use for Transcribing" toggle is disabled with an
+    // explanation whenever `capabilities.supportsTranscription == false` — we never
+    // offer a pipeline the provider cannot actually serve. Translation is available
+    // for all three (OpenAI-compatible chat, routed by CloudChatRouter).
+    private var cloudProviderCard: some View {
+        // Engine/registry provider id == catalog id (A5 decision: no "-cloud" suffix
+        // remap needed for usage keys §8).
+        let engineID = descriptor.id
+        let isTranscription = store.settings.transcriptionProvider == engineID
+        let isTranslation = store.settings.translationProvider == engineID
+        let supportsTranscription = descriptor.capabilities.supportsTranscription
+        return SettingsSection(title: descriptor.label, headerAccessory: AnyView(
+            HStack(spacing: 4) {
+                if isTranscription { statusBadge("Transcribing") }
+                if isTranslation { statusBadge("Translation") }
+            }
+        )) {
+            VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                Text("\(descriptor.label) API key for cloud translation and editing.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .padding(.bottom, 2)
+
+                if let keyPath = apiKeyPath {
+                    ApiKeyInputRow(title: "\(descriptor.label) Key", text: binding(keyPath), urlString: descriptor.getApiKeyURL)
+                }
+                if descriptor.id == CloudProviderCatalog.ollamaCloudID {
+                    // Self-host escape hatch; CloudChatRouter appends /v1/chat/completions.
+                    TextInputRow(title: "Base URL", text: binding(\.ollamaCloudBaseUrl))
+                }
+                if let modelPath = textModelPath {
+                    CloudKeyModelRow(
+                        descriptor: descriptor,
+                        apiKey: store.settings[keyPath: apiKeyPath ?? \.geminiKey],
+                        selectedModel: binding(modelPath),
+                        fallbackModel: descriptor.defaultTextModel
+                    )
+                }
+                if let budgetPath = budgetPath {
+                    SliderRow(title: "\(descriptor.label) Budget", value: binding(budgetPath), range: 0...200, format: "$%.0f")
+                }
+
+                cloudProviderToggles(
+                    engineID: engineID,
+                    isTranscription: isTranscription,
+                    isTranslation: isTranslation,
+                    supportsTranscription: supportsTranscription
+                )
+
+                if !supportsTranscription {
+                    Text("Transcribing is unavailable: \(descriptor.label) does not offer a verified audio transcription API yet. Translation works with any \(descriptor.label) chat model.")
+                        .font(.system(size: 10))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                }
+            }
+        }
+    }
+
+    // A5: settings keyPath for the provider's text model (written by CloudKeyModelRow).
+    private var textModelPath: WritableKeyPath<AppSettings, String>? {
+        switch descriptor.id {
+        case CloudProviderCatalog.qwenID: return \.qwenCloudModel
+        case CloudProviderCatalog.openrouterID: return \.openrouterModel
+        case CloudProviderCatalog.ollamaCloudID: return \.ollamaCloudModel
+        default: return nil
+        }
+    }
+
+    // A5: budget keyPath where AppSettings has one (Ollama Cloud is plan-based — none).
+    private var budgetPath: WritableKeyPath<AppSettings, Double>? {
+        switch descriptor.id {
+        case CloudProviderCatalog.qwenID: return \.qwenBudgetUsd
+        case CloudProviderCatalog.openrouterID: return \.openrouterBudgetUsd
+        default: return nil
+        }
+    }
+
+    // A5: "Use for Transcribing / Translation" buttons for the generic card.
+    // Transcribing is shown but disabled (with a tooltip) when the provider has no
+    // verified audio API — visible-but-disabled is the honest UX (§14): the user
+    // learns the limitation instead of wondering where the toggle went.
+    private func cloudProviderToggles(
+        engineID: String,
+        isTranscription: Bool,
+        isTranslation: Bool,
+        supportsTranscription: Bool
+    ) -> some View {
+        HStack(spacing: 8) {
+            let hasKey = !(apiKeyPath.map { store.settings[keyPath: $0] } ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+            Button {
+                store.updateSettings { settings in
+                    settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : engineID
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: isTranscription ? "checkmark.circle.fill" : "circle")
+                    Text(isTranscription ? "Used for Transcribing" : "Use for Transcribing")
+                }
+            }
+            .buttonStyle(SettingsSmallButtonStyle(primary: isTranscription))
+            .disabled(!hasKey || !supportsTranscription)
+            .help(supportsTranscription
+                ? ""
+                : "\(descriptor.label) has no verified audio transcription API in VaniScript yet.")
+
+            Button {
+                store.updateSettings { settings in
+                    settings.translationProvider = isTranslation ? "mlx-native" : engineID
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: isTranslation ? "checkmark.circle.fill" : "circle")
+                    Text(isTranslation ? "Used for Translation" : "Use for Translation")
+                }
+            }
+            .buttonStyle(SettingsSmallButtonStyle(primary: isTranslation))
+            .disabled(!hasKey)
+        }
+        .padding(.top, 4)
+    }
+
+    // MARK: - Fallback card for ids without a dedicated card (defensive only)
     private var comingSoonCard: some View {
         SettingsSection(title: descriptor.label) {
             VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {

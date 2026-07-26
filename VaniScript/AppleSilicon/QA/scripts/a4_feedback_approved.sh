@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # A4: FEEDBACK.md Verifier [APPROVED] for A4 with key handoff claims.
+# Step-aware: when current_step is past A4, search the whole FEEDBACK file for the
+# historical A4 APPROVED block (head may now be A5+).
 set -uo pipefail
 AS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$AS_DIR"
@@ -8,12 +10,30 @@ FILE="AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 python3 - <<'PY'
 from pathlib import Path
+import re
 text = Path("AI_Workflow_Kit/docs/AI/FEEDBACK.md").read_text(encoding="utf-8")
-head = text[:5000]
-if "A4" not in head:
-    raise SystemExit("FAIL: FEEDBACK head does not mention A4")
-if "[APPROVED]" not in head:
-    raise SystemExit("FAIL: A4 FEEDBACK missing [APPROVED] in head")
+state = Path("AI_Workflow_Kit/docs/AI/STATE.yaml").read_text(encoding="utf-8") if Path("AI_Workflow_Kit/docs/AI/STATE.yaml").exists() else ""
+m = re.search(r'^current_step:\s*([A-Za-z0-9_]+)', state, re.M)
+step = m.group(1) if m else "A4"
+
+if "A4" not in text:
+    raise SystemExit("FAIL: FEEDBACK does not mention A4")
+if "[APPROVED]" not in text:
+    raise SystemExit("FAIL: FEEDBACK missing [APPROVED]")
+
+if step == "A4":
+    head = text[:5000]
+    if "A4" not in head:
+        raise SystemExit("FAIL: FEEDBACK head does not mention A4")
+    if "[APPROVED]" not in head:
+        raise SystemExit("FAIL: A4 FEEDBACK missing [APPROVED] in head")
+else:
+    # Historical A4 block must still document the A4 claims somewhere
+    if "A4 —" not in text and "A4 -" not in text and "шаг: **A4" not in text and "A4 — Валидация" not in text:
+        # Accept any A4 section still present
+        if "CloudKeyValidator" not in text or "A4" not in text:
+            raise SystemExit("FAIL: historical A4 FEEDBACK block missing")
+
 for needle in (
     "CloudKeyValidator",
     "CloudModelCatalog",
@@ -21,7 +41,7 @@ for needle in (
     "geminiTextModel",
     "whisper-1",
 ):
-    if needle not in text[:8000]:
+    if needle not in text:
         raise SystemExit(f"FAIL: A4 FEEDBACK missing claim: {needle}")
-print("PASS: FEEDBACK.md A4 is [APPROVED] with expected handoff claims.")
+print(f"PASS: FEEDBACK.md A4 is [APPROVED] with expected handoff claims (step={step}).")
 PY

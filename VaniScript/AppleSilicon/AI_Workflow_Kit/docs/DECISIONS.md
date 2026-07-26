@@ -257,3 +257,45 @@
 - **Out of scope (A2):** UI статистики (A6), новые провайдеры в движках (A5), баланс (A7).
 - **Verification:** `swift build` + `swift test` — 287 tests, 42 suites, GREEN (14 новых
   в `UsageRecorderTests`).
+
+## D-2026-07-26-A5 — API_USAGE A5: Qwen / OpenRouter / Ollama Cloud full integration
+
+- **Status:** Implemented (awaiting verification).
+- **Context:** A3 оставил Qwen/OpenRouter/Ollama Cloud карточками-заглушками ("coming
+  soon"). A5 превращает их в рабочих провайдеров: ключ → валидация/модели (A4) →
+  Translation. Транскрипция — честно off (нет верифицированного аудио-API).
+- **Decision:**
+  1. **`CloudChatRouter` в `ProviderRegistry.swift` (Core).** Чистый слой routing
+     (`CloudChatRoute`: providerID/label/model/apiKey/endpoint/headers), тестируемый
+     из `VaniScriptCoreTests` без сети/ключей. Движки (app target) делегируют ему.
+  2. **Endpoints (все OpenAI-compatible chat/completions, Bearer):** `[high]`
+     - Qwen: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions`
+       (тот же DashScope compatible-mode base, что и CloudModelCatalog, A1 verified).
+     - OpenRouter: `https://openrouter.ai/api/v1/chat/completions`.
+     - Ollama Cloud: `{ollamaCloudBaseUrl|https://ollama.com}/v1/chat/completions` —
+       выбран OpenAI-compatible `/v1` вместо нативного `/api/chat`, чтобы все три
+       провайдера шли через ОДИН request/response/usage-парсер
+       (`generateOpenAICompatible`, рефакторинг бывшего `generateOpenAI`; gpt-cloud
+       поведение 1:1). Trailing slashes у base URL нормализуются.
+  3. **Provider ids = catalog ids** (`qwen`/`openrouter`/`ollama-cloud`, БЕЗ суффикса
+     `-cloud` как у legacy `gemini-cloud`): `normalizedUsageProviderId` в WorkflowStore
+     пропускает их без remap → usage-ключи `providerId:model` (§8) корректны без
+     правки WorkflowStore (вне target_files A5).
+  4. **ProviderRegistry:** translation-опции при непустом ключе (паттерн gemini/gpt);
+     transcription-опции — data-driven по `capabilities.supportsTranscription`
+     (сегодня все три `false` → опций нет; включение = флип флага в каталоге).
+  5. **Capabilities (честно):** transcription у Qwen/OpenRouter/Ollama Cloud НЕ
+     заявляется — у Qwen ASR-модели (qwen-audio) не верифицированы через
+     compatible-mode, OpenRouter/Ollama Cloud не дают STT endpoint. UI-тумблер
+     "Use for Transcribing" виден, но disabled + tooltip/пояснение.
+     `CloudAudioTranscriptionEngine.resolve` намеренно без новых кейсов.
+  6. **UI:** `comingSoonCard` заменён generic `cloudProviderCard` (key +
+     `CloudKeyModelRow` + budget slider где есть поле + Base URL для Ollama +
+     честные toggles). Ollama budget-слайдера нет (plan-based, A7).
+- **Scope note:** проводка записи usage транскрипции через NativeProcessingPipeline
+  по-прежнему deferred — новые провайдеры не транскрибируют, переводы пишутся через
+  существующий A2-путь (`recordCloudTranslationUsage`), который автоматически
+  покрывает новые ids.
+- **Out of scope (A5):** stats UI (A6), реальный баланс (A7), локальные модели, MCP.
+- **Verification:** `swift build` + `swift test` — 320 tests, 46 suites, GREEN
+  (+12 новых: `ProviderRegistryCloudTests`, `CloudProviderRoutingTests`).

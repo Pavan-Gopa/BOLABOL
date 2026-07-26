@@ -1,26 +1,19 @@
-# API_USAGE track — orchestrated by Cline
+# API_USAGE track — COMPLETE
 # Product scope: AI_Workflow_Kit/docs/API_USAGE_STEPS.md
 # Architecture: AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
+# Acceptance: AI_Workflow_Kit/docs/API_USAGE_ACCEPTANCE.md
 
-current_step: A8
+current_step: API_USAGE_DONE
 step_description: >
-  Doc-only + acceptance smoke. Финальная документация API_USAGE: ACCEPTANCE
-  чеклист по 5 поверхностям, README AS обновлён (новые провайдеры + вкладка
-  API & Usage), smoke build/test, ADR «API_USAGE done». Без product-фич.
+  Трек API_USAGE завершён (A1–A8). Все product-шаги approved + QA green;
+  A8 doc-only approved (QA waived). Acceptance checklist, README и ADR
+  «API_USAGE done» на месте.
 
-target_files:
-  - AI_Workflow_Kit/docs/API_USAGE_ACCEPTANCE.md
-  - README.md
-  - AI_Workflow_Kit/docs/DECISIONS.md
-  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
+target_files: []
 
 coder_brief: >
-  A8 — DOC-ONLY. Создай API_USAGE_ACCEPTANCE.md (чеклист 5 поверхностей:
-  dropdown, карточка+валидация+модели, запись usage, статистика, баланс) с
-  реальными путями/командами по факту A1–A7. Обнови README Apple Silicon:
-  Qwen/OpenRouter/Ollama Cloud + вкладка API & Usage. Smoke: swift build +
-  swift test green; ручной UI-чеклист (без реальных ключей). ADR «API_USAGE done»
-  в DECISIONS.md. Product-код НЕ трогать. Graphify first.
+  Track complete. No open coding step. Next program step is outside API_USAGE
+  unless Orchestrator/Human open a new track.
 
 completed_steps:
   - G0
@@ -51,10 +44,12 @@ completed_steps:
   - A5
   - A6
   - A7
+  - A8
+  - API_USAGE_DONE
 
 implementation:
-  status: waiting_review
-  attempts: 1
+  status: done
+  attempts: 0
 
 review:
   status: approved
@@ -63,26 +58,28 @@ review:
 qa:
   status: green
   last_report: "QA/REPORT.md"
-  suite: "A7: 133 PASS / 0 FAIL; 19 a7-* scripts; swift 331/47 GREEN"
+  suite: "A7 last coding QA: 133 PASS / 0 FAIL; A8 doc-only QA waived"
   bugs_open: 0
-  note: "A7 closed. A8 is DOC-ONLY — QA waived after Verifier APPROVED."
+  note: "API_USAGE track complete. All surfaces accepted."
 
-next_actor: orchestrator
+next_actor: none
 
 track: API_USAGE
 prior_track: QWEN_MCP
+track_status: DONE
 
 working_roots:
   - AppleSilicon
 
 checkpoint:
   last_pre_tag: "apiusage/pre-A8"
-  last_post_tag: "apiusage/A7-done"
-  last_commit: "b5f9548"
+  last_post_tag: "apiusage/A8-done"
+  last_commit: "34b212e"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md
   - AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
+  - AI_Workflow_Kit/docs/API_USAGE_ACCEPTANCE.md
   - AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
   - AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md

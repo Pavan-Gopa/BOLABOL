@@ -1,3 +1,9 @@
+> ⚠️ **STALE (не текущий прогон).** Этот отчёт — исторический, за шаг **A1** (env-only
+> FAIL: sandbox ModuleCache «Operation not permitted» + git-scope `q7_doc_only_no_code`).
+> Текущий прогон **A2 — GREEN (39/39 PASS, 0 bugs)**; актуальный статус см. в
+> `QA/REPORT.md`. Оба env-only FAIL из этого файла закрыты: swift test теперь проходит
+> (287/42 GREEN), `q7_doc_only_no_code.sh` сделан step-aware (N/A для code-шага A2).
+
 # QA Bug Report (A1)
 
 ## Summary

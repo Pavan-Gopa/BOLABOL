@@ -17,6 +17,28 @@ REPO_ROOT="$(cd "$AS_DIR" && git rev-parse --show-toplevel 2>/dev/null || true)"
 
 echo "Q7 doc-only gate — AppleSilicon scope"
 
+# Step-awareness: this gate encodes a DOC-ONLY invariant that is only meaningful for
+# doc-only steps (Q5/Q7/A8). Once the track advances to a CODE step (e.g. A2 — usage
+# recording, which legitimately modifies its approved .swift target_files), enforcing
+# "no code in the diff" would be a false positive. Read current_step from STATE.yaml and
+# treat the gate as N/A (PASS) for any non-doc-only step.
+STATE_FILE="$AS_DIR/AI_Workflow_Kit/docs/AI/STATE.yaml"
+current_step=""
+if [[ -f "$STATE_FILE" ]]; then
+  current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_]+).*/\1/p' "$STATE_FILE" | head -1)"
+fi
+case "$current_step" in
+  Q5|Q7|A8)
+    echo "current_step='$current_step' is a doc-only step — enforcing the no-code gate."
+    ;;
+  *)
+    echo "NOTE: current_step='${current_step:-unknown}' is a CODE step; the Q7 doc-only gate is N/A."
+    echo "OK: doc-only gate skipped — a code step legitimately changes approved target_files."
+    echo "RESULT: PASS (q7_doc_only_no_code, step-aware N/A)"
+    exit 0
+    ;;
+esac
+
 if [[ -z "${REPO_ROOT:-}" ]]; then
   echo "FAIL: not a git repository (cannot verify doc-only)"
   exit 1

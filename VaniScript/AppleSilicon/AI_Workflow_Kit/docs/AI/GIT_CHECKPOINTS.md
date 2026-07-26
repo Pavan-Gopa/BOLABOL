@@ -69,7 +69,8 @@ Workspace `AI Projects` — multi-project monorepo. Checkpoint script:
 | Actor | When | Action |
 |-------|------|--------|
 | **Orchestrator (Grok)** | Opening step | Ensure `pre` tag exists **before** Hy3 codes |
-| **Orchestrator** | After Gemini **APPROVED** | `post` step; then advance STATE; immediately `pre` next |
+| **Orchestrator** | After Gemini **APPROVED** (coding + QA gate) | STATE → `next_actor: qa` (no post yet); Kick QA. After **QA green**: `post` → advance → `pre` next |
+| **Orchestrator** | After Gemini **APPROVED** (doc-only) | `post` step; advance STATE; immediately `pre` next |
 | **Hy3** | End of implement | Does **not** post-tag; leave dirty tree OK |
 | **Human** | If agents cannot push | Run same script / `git push && git push --tags` |
 
@@ -78,7 +79,9 @@ Workspace `AI Projects` — multi-project monorepo. Checkpoint script:
 1. `pre Gn` — clean checkpoint of relevant tree before implementation  
 2. Hy3 implements (working tree dirty OK)  
 3. Gemini reviews  
-4. On approve → `post Gn` → advance → `pre G(n+1)`
+4. On approve (coding + QA gate: Q2–Q6, A1–A7) → STATE `next_actor: qa` (no post yet) → QA suite  
+5. On QA green → `post Gn` → advance → `pre G(n+1)`  
+6. On approve (doc-only: Q1/Q7/G6/A8) → `post` → advance → `pre` next immediately  
 
 On **changes_requested**: no new post-tag until approve. No second pre-tag.
 

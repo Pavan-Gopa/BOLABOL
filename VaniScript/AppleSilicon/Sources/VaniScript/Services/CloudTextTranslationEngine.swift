@@ -35,6 +35,29 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
 }
 
 actor CloudTextTranslationEngine {
+    // A2 (§8.1): usage accumulator. Each low-level `generate*` call adds the token
+    // counters it parsed out of the API response here; a high-level operation may
+    // fan out into several HTTP calls (e.g. batched cue translation), so we SUM.
+    // The store calls `takeLastUsage()` once, immediately after a high-level call
+    // returns, to read and reset the accumulated delta. Actor isolation serializes
+    // these mutations; recording is best-effort (invariant §14.4) so a shared engine
+    // instance interleaving two operations at worst mis-attributes a delta — it never
+    // fails or corrupts the translation itself.
+    private var accumulatedUsage: TokenUsage?
+
+    /// Fold one call's parsed usage into the accumulator (nil deltas are ignored).
+    private func accumulate(_ delta: TokenUsage?) {
+        guard let delta, !delta.isEmpty else { return }
+        accumulatedUsage = (accumulatedUsage ?? TokenUsage(inputTokens: 0, outputTokens: 0)) + delta
+    }
+
+    /// Return and clear the usage accumulated since the last read. Returns `nil` when
+    /// no provider usage was seen (so the store records nothing — best-effort).
+    func takeLastUsage() -> TokenUsage? {
+        defer { accumulatedUsage = nil }
+        return accumulatedUsage
+    }
+
     enum CloudTranslationError: LocalizedError {
         case invalidEndpoint
         case emptyResponse(provider: String)
@@ -196,6 +219,9 @@ actor CloudTextTranslationEngine {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         try validate(response: response, data: data, provider: provider.label)
+        // A2: best-effort usage capture — parse the token counters from the raw
+        // response and fold them into the accumulator. Never throws.
+        accumulate(UsageRecorder.parseGeminiUsage(from: data))
         let decoded = try JSONDecoder().decode(GeminiGenerateContentResponse.self, from: data)
         let text = decoded.candidates?
             .flatMap { $0.content?.parts ?? [] }
@@ -234,6 +260,8 @@ actor CloudTextTranslationEngine {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         try validate(response: response, data: data, provider: provider.label)
+        // A2: best-effort usage capture (OpenAI-compatible `usage` block). Never throws.
+        accumulate(UsageRecorder.parseOpenAIUsage(from: data))
         let decoded = try JSONDecoder().decode(OpenAIChatCompletionResponse.self, from: data)
         let text = decoded.choices
             .map(\.message.content)

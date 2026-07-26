@@ -98,7 +98,7 @@
       "kind": "q7-doc-delta",
       "area": "Q7 doc-only gate",
       "enabled": true,
-      "note": "Pending diff under AppleSilicon/ has no .swift/.js/.ts/.py code (doc-only). Adapted: qwen/pre-Q7 ref absent, Q7 edits are uncommitted -> inspect git diff HEAD scoped to AppleSilicon."
+      "note": "Pending diff under AppleSilicon/ has no .swift/.js/.ts/.py code (doc-only). STEP-AWARE: only enforced for doc-only steps (Q5/Q7/A8 per STATE.yaml current_step); N/A (PASS) for code steps like A2."
     },
     {
       "path": "q7_swift_test_green.sh",
@@ -141,6 +141,139 @@
       "area": "AppSettings",
       "enabled": true,
       "note": "A1 validation: text model defaults."
+    },
+    {
+      "path": "a2_usagerecorder_purity.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorder",
+      "enabled": true,
+      "note": "A2: UsageRecorder is a pure, non-throwing VaniScriptCore enum (no I/O, no UI)."
+    },
+    {
+      "path": "a2_tokenusage_type.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorder",
+      "enabled": true,
+      "note": "A2: TokenUsage public struct, Equatable+Sendable, isEmpty, `+` operator."
+    },
+    {
+      "path": "a2_record_aggregation.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorder",
+      "enabled": true,
+      "note": "A2: record() increments sessions/input/output/audio and refreshes last* fields."
+    },
+    {
+      "path": "a2_record_per_model_key.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorder",
+      "enabled": true,
+      "note": "A2: per-model key providerId:model (§6.2) with blank-model fallback."
+    },
+    {
+      "path": "a2_record_besteffort_noop.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorder",
+      "enabled": true,
+      "note": "A2: record() no-op when nil/empty delta and no audio (§14.4 best-effort)."
+    },
+    {
+      "path": "a2_parser_gemini.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorder parsers",
+      "enabled": true,
+      "note": "A2: parseGeminiUsage reads usageMetadata.prompt/candidatesTokenCount, nil on empty."
+    },
+    {
+      "path": "a2_parser_openai.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorder parsers",
+      "enabled": true,
+      "note": "A2: parseOpenAIUsage reads usage.prompt_tokens/completion_tokens (snake_case)."
+    },
+    {
+      "path": "a2_parsers_lenient_nil.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorder parsers",
+      "enabled": true,
+      "note": "A2: both parsers lenient (try?, optional, nil on missing block, non-throwing)."
+    },
+    {
+      "path": "a2_transcription_result_usage.sh",
+      "kind": "a2-delta",
+      "area": "CloudAudioTranscriptionEngine",
+      "enabled": true,
+      "note": "A2: transcription result carries usage: TokenUsage? from Gemini+OpenAI paths. (Pipeline wiring deferred A5/A6 — scope OK.)"
+    },
+    {
+      "path": "a2_translation_accumulator.sh",
+      "kind": "a2-delta",
+      "area": "CloudTextTranslationEngine",
+      "enabled": true,
+      "note": "A2: actor accumulator + takeLastUsage() read-and-reset; generate* feeds parsed usage."
+    },
+    {
+      "path": "a2_workflowstore_record.sh",
+      "kind": "a2-delta",
+      "area": "WorkflowStore",
+      "enabled": true,
+      "note": "A2: recordCloudTranslationUsage folds takeLastUsage() into settings.usage at >=4 call sites."
+    },
+    {
+      "path": "a2_workflowstore_normalized_id.sh",
+      "kind": "a2-delta",
+      "area": "WorkflowStore",
+      "enabled": true,
+      "note": "A2: normalizedUsageProviderId gemini-cloud->gemini, gpt-cloud->openai, default passthrough."
+    },
+    {
+      "path": "a2_workflowstore_besteffort.sh",
+      "kind": "a2-delta",
+      "area": "WorkflowStore",
+      "enabled": true,
+      "note": "A2: recordCloudTranslationUsage is async, non-throwing, best-effort (§14.4)."
+    },
+    {
+      "path": "a2_tests_present.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorderTests",
+      "enabled": true,
+      "note": "A2: UsageRecorderTests (A2) suite present, @testable import, exactly 14 @Test."
+    },
+    {
+      "path": "a2_tests_coverage_areas.sh",
+      "kind": "a2-delta",
+      "area": "UsageRecorderTests",
+      "enabled": true,
+      "note": "A2: 14 tests cover record/last*/per-model/best-effort/parsers/round-trip/arithmetic."
+    },
+    {
+      "path": "a2_decisions_adr.sh",
+      "kind": "a2-delta",
+      "area": "DECISIONS",
+      "enabled": true,
+      "note": "A2: ADR D-2026-07-26-A2 (usage recording, §14.4, scope note, 287 tests)."
+    },
+    {
+      "path": "a2_no_keys_in_source.sh",
+      "kind": "a2-delta",
+      "area": "Security",
+      "enabled": true,
+      "note": "A2: no hardcoded API keys/tokens in A2 sources or tests (§14.7)."
+    },
+    {
+      "path": "a2_appsettings_usage_migration_safe.sh",
+      "kind": "a2-delta",
+      "area": "AppSettings",
+      "enabled": true,
+      "note": "A2: settings.usage decodeIfPresent ?? [:] migration-safe; ProviderUsage last* intact (§14.1 + A1 regression)."
+    },
+    {
+      "path": "a2_swift_test_green.sh",
+      "kind": "a2-regression",
+      "area": "A2 swift test gate",
+      "enabled": true,
+      "note": "A2: swift test green, 0 failures, soft-warn < 287; env-only sandbox errors reported as ENV-ONLY (not product FAIL)."
     }
   ]
 }

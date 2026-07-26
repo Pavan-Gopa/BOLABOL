@@ -220,3 +220,40 @@
   движки. Точные model id / аудио-capabilities новых провайдеров уточняются на A5 (пока
   дефолты-заглушки в каталоге).
 - **Verification:** `swift build` + `swift test` — 273 tests, 41 suites, GREEN.
+
+## D-2026-07-26-A2 — API_USAGE A2: usage recording (fixes empty statistics)
+
+- **Status:** Implemented (awaiting verification).
+- **Context:** Движки делали HTTP-запросы, но не извлекали token-счётчики; `settings.usage`
+  никогда не писался → статистика всегда пустая. A2 добавляет запись usage без изменения
+  UI и без ломания транскрипции/перевода (best-effort, инвариант §14.4).
+- **Decision:**
+  1. Новый `Sources/VaniScriptCore/UsageRecorder.swift` — чистый, тестируемый слой:
+     - `TokenUsage(inputTokens, outputTokens)` (+`+`, `isEmpty`).
+     - `record(into:providerId:model:delta:audioMinutes:now:)` — агрегатор по ключу
+       `providerId:model` (§6.2): инкремент sessions/input/output/audio + обновление
+       `last*`. No-op когда нет ни токенов, ни аудио (best-effort — нет пустых записей).
+     - `parseGeminiUsage(from:)` (`usageMetadata.promptTokenCount`/`candidatesTokenCount`)
+       и `parseOpenAIUsage(from:)` (`usage.prompt_tokens`/`completion_tokens`). Парсеры
+       вынесены в Core (а не в app-target движки) чтобы быть тестируемыми из
+       `VaniScriptCoreTests`; любой сбой декода/отсутствие usage → `nil` (не бросают).
+  2. **Движки возвращают токены:**
+     - `CloudAudioTranscriptionEngine`: `CloudAudioTranscriptionResult.usage: TokenUsage?`;
+       парсинг из Gemini/OpenAI ответов, проброс в результат.
+     - `CloudTextTranslationEngine`: actor-аккумулятор + `takeLastUsage()`; каждый
+       `generate*` складывает распарсенный delta (несколько HTTP-вызовов в одной
+       операции суммируются), стор считывает и сбрасывает один раз после операции.
+       Выбран аккумулятор (а не смена типа возврата `translate`) чтобы не менять
+       десятки вызовов и не ломать MLX-движок с той же сигнатурой (минимальный diff).
+  3. **`WorkflowStore` пишет `settings.usage`:** приватный best-effort
+     `recordCloudTranslationUsage(from:provider:)` вызывается после каждого успешного
+     облачного перевода/шортс-планирования (`reviewCloudEngine`/`shortsCloudEngine`).
+     `normalizedUsageProviderId` маппит `gemini-cloud`→`gemini`, `gpt-cloud`→`openai`
+     (совместимо с ключами `estimateCost` для A6).
+- **Scope note:** облачная транскрипция вызывается из `NativeProcessingPipeline`
+  (не в `target_files` A2). Движок уже **возвращает** `usage` в результате; проводка
+  записи транскрипции в settings — когда pipeline попадёт в scope (A5/A6). Требование
+  A2 «движок возвращает токены» выполнено; запись через WorkflowStore покрывает переводы.
+- **Out of scope (A2):** UI статистики (A6), новые провайдеры в движках (A5), баланс (A7).
+- **Verification:** `swift build` + `swift test` — 287 tests, 42 suites, GREEN (14 новых
+  в `UsageRecorderTests`).

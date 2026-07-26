@@ -36,6 +36,10 @@ struct ActiveCloudTranscriptionProvider: Equatable, Sendable {
 struct CloudAudioTranscriptionResult: Sendable {
     var text: String
     var cues: [TranscriptCue]
+    // A2 (§8.1): token counters parsed from the provider response, or nil when the
+    // provider returned none (e.g. whisper without a usage block). Best-effort — the
+    // transcription result is valid regardless of whether usage was captured.
+    var usage: TokenUsage? = nil
 }
 
 actor CloudAudioTranscriptionEngine {
@@ -88,9 +92,11 @@ actor CloudAudioTranscriptionEngine {
             chunkEndSec: chunkEndSec
         )
         let raw: String
+        // A2: usage is parsed alongside the transcript text and attached to the result.
+        let usage: TokenUsage?
         switch provider.id {
         case "gemini-cloud":
-            raw = try await transcribeWithGemini(
+            (raw, usage) = try await transcribeWithGemini(
                 audioData: audioData,
                 fileName: audioURL.lastPathComponent,
                 mimeType: mimeType(for: audioURL),
@@ -98,7 +104,7 @@ actor CloudAudioTranscriptionEngine {
                 provider: provider
             )
         case "gpt-cloud":
-            raw = try await transcribeWithOpenAI(
+            (raw, usage) = try await transcribeWithOpenAI(
                 audioData: audioData,
                 fileName: audioURL.lastPathComponent,
                 mimeType: mimeType(for: audioURL),
@@ -110,7 +116,7 @@ actor CloudAudioTranscriptionEngine {
             throw CloudTranscriptionError.emptyResponse(provider: provider.label)
         }
 
-        return try parse(rawText: raw, provider: provider, chunkStartSec: chunkStartSec, chunkEndSec: chunkEndSec)
+        return try parse(rawText: raw, provider: provider, usage: usage, chunkStartSec: chunkStartSec, chunkEndSec: chunkEndSec)
     }
 
     private func transcriptionPrompt(
@@ -174,7 +180,7 @@ actor CloudAudioTranscriptionEngine {
         mimeType: String,
         prompt: String,
         provider: ActiveCloudTranscriptionProvider
-    ) async throws -> String {
+    ) async throws -> (text: String, usage: TokenUsage?) {
         var components = URLComponents(string: "https://generativelanguage.googleapis.com/v1beta/models/\(provider.model):generateContent")
         components?.queryItems = [URLQueryItem(name: "key", value: provider.apiKey)]
         guard let url = components?.url else { throw CloudTranscriptionError.invalidEndpoint }
@@ -209,6 +215,8 @@ actor CloudAudioTranscriptionEngine {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         try validate(response: response, data: data, provider: provider.label)
+        // A2: best-effort usage capture from the raw Gemini response. Never throws.
+        let usage = UsageRecorder.parseGeminiUsage(from: data)
         let decoded = try JSONDecoder().decode(GeminiAudioGenerateContentResponse.self, from: data)
         let text = decoded.candidates?
             .flatMap { $0.content?.parts ?? [] }
@@ -221,7 +229,7 @@ actor CloudAudioTranscriptionEngine {
                 detail: geminiEmptyResponseDetail(decoded, rawData: data)
             )
         }
-        return text
+        return (text, usage)
     }
 
     private func transcribeWithOpenAI(
@@ -231,7 +239,7 @@ actor CloudAudioTranscriptionEngine {
         prompt: String,
         sourceLang: String,
         provider: ActiveCloudTranscriptionProvider
-    ) async throws -> String {
+    ) async throws -> (text: String, usage: TokenUsage?) {
         guard let url = URL(string: "https://api.openai.com/v1/audio/transcriptions") else {
             throw CloudTranscriptionError.invalidEndpoint
         }
@@ -262,15 +270,19 @@ actor CloudAudioTranscriptionEngine {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         try validate(response: response, data: data, provider: provider.label)
+        // A2: some OpenAI-compatible transcription models return a `usage` block
+        // (e.g. gpt-4o-transcribe); classic whisper-1 does not → nil. Never throws.
+        let usage = UsageRecorder.parseOpenAIUsage(from: data)
         let decoded = try JSONDecoder().decode(OpenAITranscriptionResponse.self, from: data)
         let text = decoded.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw CloudTranscriptionError.emptyResponse(provider: provider.label) }
-        return text
+        return (text, usage)
     }
 
     private func parse(
         rawText: String,
         provider: ActiveCloudTranscriptionProvider,
+        usage: TokenUsage?,
         chunkStartSec: Double,
         chunkEndSec: Double
     ) throws -> CloudAudioTranscriptionResult {
@@ -289,7 +301,7 @@ actor CloudAudioTranscriptionEngine {
         )
         if !timestampedCues.isEmpty {
             let text = timestampedCues.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-            return CloudAudioTranscriptionResult(text: text, cues: timestampedCues)
+            return CloudAudioTranscriptionResult(text: text, cues: timestampedCues, usage: usage)
         }
 
         let text = SessionState
@@ -300,7 +312,8 @@ actor CloudAudioTranscriptionEngine {
         }
         return CloudAudioTranscriptionResult(
             text: text,
-            cues: SessionState.reconstructCuesFromRawText(text, startSec: chunkStartSec, endSec: chunkEndSec)
+            cues: SessionState.reconstructCuesFromRawText(text, startSec: chunkStartSec, endSec: chunkEndSec),
+            usage: usage
         )
     }
 

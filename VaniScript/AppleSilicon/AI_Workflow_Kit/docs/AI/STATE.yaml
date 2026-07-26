@@ -2,34 +2,26 @@
 # Product scope: AI_Workflow_Kit/docs/API_USAGE_STEPS.md
 # Architecture: AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md
 
-current_step: A5
+current_step: A6
 step_description: >
-  Полноценная интеграция Qwen / OpenRouter / Ollama Cloud: из заглушек A3 в
-  рабочие провайдеры (ключ → валидация/модели A4 → Translation + Transcribing
-  где supportsTranscription). ProviderRegistry + resolve + engine routing.
-  Тумблер Transcribing честно по capabilities. Usage record для новых id.
-  Unit-тесты resolve/routing (мок). ADR endpoints.
+  Статистика использования (UI, эталон Electron tab 7). Last Transaction Details
+  (lastModel badge), сводка Transcribing/Translation providers, per-model карточки
+  (N transactions, Prompt/Completion/Total, Audio min, Estimated spent/remaining),
+  дисклеймер, Reset. Данные из settings.usage. Заменить старую «Cloud Usage Statistics».
 
 target_files:
-  - Sources/VaniScriptCore/ProviderRegistry.swift
-  - Sources/VaniScript/Services/CloudAudioTranscriptionEngine.swift
-  - Sources/VaniScript/Services/CloudTextTranslationEngine.swift
   - Sources/VaniScript/Views/SettingsView.swift
-  - Tests/VaniScriptCoreTests/ProviderRegistryCloudTests.swift
-  - Tests/VaniScriptCoreTests/CloudProviderRoutingTests.swift
-  - AI_Workflow_Kit/docs/DECISIONS.md
+  - Sources/VaniScript/Views/UsageStatisticsView.swift
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 
 coder_brief: >
-  A5 — Qwen/OpenRouter/Ollama Cloud full integration. ProviderRegistry cloud
-  options when key present. ActiveCloud*Provider.resolve for new providers
-  (base URL + settings model + key). Engines: OpenAI-compatible for Qwen
-  (DashScope compatible-mode) / OpenRouter; Ollama Cloud Bearer + /api or /v1
-  per A1 discovery. UI: remove coming-soon stubs; toggles by
-  capabilities.supportsTranscription; CloudKeyModelRow for new providers.
-  UsageRecorder path for new providerIds. Optional: wire transcription usage
-  via NativeProcessingPipeline if still missing (A2 defer). Unit tests mock
-  only. ADR in DECISIONS. No A6 stats UI, no A7 balance. Graphify first.
+  A6 — Usage statistics UI (Electron tab 7 parity). New UsageStatisticsView (file
+  or in SettingsView): Last Transaction Details (max lastTransactionAt, lastModel
+  badge, Prompt/Completion/Total); summary Transcribing/Translation via
+  providerDisplayName; per-model cards from settings.usage (N sessions, tokens,
+  audio min, estimateCost spent, remaining vs budget); exact disclaimer string;
+  Reset → usage = [:]. Remove old Cloud Usage Statistics section. UI only — no
+  A7 balance, no engine changes. Graphify first. Ref Electron SettingsModal.tsx.
 
 completed_steps:
   - G0
@@ -57,25 +49,23 @@ completed_steps:
   - A2
   - A3
   - A4
+  - A5
 
 implementation:
-  status: approved
-  attempts: 1
+  status: pending
+  attempts: 0
 
 review:
-  status: approved
+  status: pending
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: pending
+  status: green
   last_report: "QA/REPORT.md"
-  suite: "awaiting A5 full suite (prior A4: 81 PASS / 0 FAIL)"
+  suite: "A5: 98 PASS / 0 FAIL; 17 a5-* scripts; swift 320/46 GREEN"
   bugs_open: 0
-  note: >
-    A5 Gemini APPROVED. No transcription for new providers (capabilities false) OK.
-    CloudChatRouter in Core OK. Post-tag apiusage/A5-done only after QA green.
 
-next_actor: qa
+next_actor: implementation
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -85,8 +75,8 @@ working_roots:
 
 checkpoint:
   last_pre_tag: "apiusage/pre-A5"
-  last_post_tag: "apiusage/A4-done"
-  last_commit: "23886bc"
+  last_post_tag: "apiusage/A5-done"
+  last_commit: "b357cc2"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

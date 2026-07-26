@@ -50,11 +50,11 @@ completed_steps:
   - QWEN_DONE
 
 implementation:
-  status: pending
-  attempts: 0
+  status: waiting_review
+  attempts: 1
 
 review:
-  status: pending
+  status: approved
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
@@ -63,7 +63,7 @@ qa:
   suite: ""
   bugs_open: 0
 
-next_actor: implementation
+next_actor: orchestrator
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -72,9 +72,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: ""
+  last_pre_tag: "apiusage/pre-A1"
   last_post_tag: "qwen/Q7-done"
-  last_commit: "ff4b8b0"
+  last_commit: "185ca34"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

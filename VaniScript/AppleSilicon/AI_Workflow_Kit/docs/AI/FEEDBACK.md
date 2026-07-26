@@ -1,37 +1,46 @@
 # Verification Report (Verification Engineer)
 
-Проверяемый шаг: Q7 — Doc-only + acceptance smoke (ФИНАЛЬНЫЙ шаг трека QWEN_MCP)
-Требования шага: `QWEN_MCP_STEPS.md` (§Q7), acceptance — `QWEN_MCP_ACCEPTANCE.md`
-Роль: Verification Engineer
+Проверяемый шаг: A1 — Discovery + data model (фундамент)
+Требования шага: `API_USAGE_STEPS.md` (§A1)
+Роль: Verification Engineer (Gemini 3.5 Flash)
 
 ---
 
 ### 1. Сборка и интеграция
-- **Собирается / тестируется ли проект после этих изменений?** Да (`swift test` — 267 тестов в 40 suites пройдены успешно за 0.137 сек). Изменения являются исключительно документационными, код приложения не затрагивали и сборку не ломают.
-- **Инвариант App Store compliance (BUG-002):** `grep -ci electron AppleSilicon/MCP_INSTRUCTIONS.md` равен **0**.
-- **Не нарушают ли изменения Codex/Grok path, MCP server, settings decode?** Нет. Исходный код (`CodexAgentService`, `GrokAgentService`, MCP server, `AppSettings`, `McpContracts.swift`) не изменялся.
-*Комментарий:* Сборка и тесты полностью зеленые. Инвариант на отсутствие слова "electron" в `AppleSilicon/MCP_INSTRUCTIONS.md` соблюдён.
+- **Собирается / тестируется ли проект после этих изменений?** Да (`swift test` — 273 теста в 41 suites прошли успешно за 0.132 сек).
+- **Не нарушают ли изменения Codex path, MCP server, settings decode?** Нет, decode настроек проверяется модульным тестом `decodesLegacySettingsToDefaults`, existing decode не сломан. Codex/Grok/Qwen chat paths и MCP server не затрагивались.
+*Комментарий:* Сборка и интеграционные/unit тесты полностью зелёные.
 
 ### 2. Логика и соответствие плану
 - **Выполнены ли все требования текущего шага?** Да.
-  1. `QWEN_MCP_ACCEPTANCE.md` заполнен реальными путями/командами (26/26 чекбоксов `[x]`, итоговый вердикт `**ИТОГ: [PASS]**`).
-  2. `AppleSilicon/README.md` содержит упоминание Qwen как CLI subprocess провайдера (модель `qwen3.8-max-preview`, описаны все 3 поверхности доступа и in-app API).
-  3. `AppleSilicon/MCP_INSTRUCTIONS.md` содержит актуализированную Qwen-секцию (embedded + external CLI).
-  4. `DECISIONS.md` содержит финальный ADR `D-2026-07-26-Q7 — QWEN_MCP track complete`.
-- **Нет ли самодеятельности?** Самодеятельность отсутствует. Продукт-код, UI, схемы настроек и MCP-сервер не затрагивались.
-- **Соблюдены ли target_files?** Да, изменены строго файлы из списка `target_files` шага Q7.
-*Комментарий:* Оформление всех файлов полностью соответствует спецификации Q7.
+  1. `CloudProviderCatalog.swift` создан: содержит 7 провайдеров в фиксированном порядке (`gemini`, `openai`, `anthropic`, `qwen`, `openrouter`, `ollama-cloud`, `custom`), дескрипторы `CloudProviderDescriptor`, `ModelsEndpoint`, `CloudProviderCapabilities`, `BalanceKind`, а также хелпер `providerDisplayName(_:)`.
+  2. `AppSettings` расширен migration-safe полями (все новые поля `decodeIfPresent` с дефолтами), `ProviderUsage` расширен полями `lastModel` и `lastTransactionAt` (`decodeIfPresent`).
+  3. `AppSettingsCloudFieldsTests.swift` покрывает декодирование старых настроек без новых полей, round-trip кодирование/декодирование, и порядок/лукап элементов каталога.
+  4. Endpoints провайдеров верифицированы, теги `[med]`→`[high]` обновлены в `API_USAGE_ARCHITECTURE.md`.
+  5. ADR `D-2026-07-26-A1` добавлен в `DECISIONS.md`.
+- **Нет ли самодеятельности?** Самодеятельность отсутствует: UI (`SettingsView`), движки, MCP, Codex/Grok/Qwen чаты и код шагов A2+ не тронуты.
+- **Соблюдены ли target_files?** Да, все изменения сделаны строго в файлах из `STATE.yaml`:
+  - `Sources/VaniScriptCore/CloudProviderCatalog.swift`
+  - `Sources/VaniScriptCore/AppSettings.swift`
+  - `Tests/VaniScriptCoreTests/AppSettingsCloudFieldsTests.swift`
+  - `AI_Workflow_Kit/docs/DECISIONS.md`
+  - `AI_Workflow_Kit/docs/API_USAGE_ARCHITECTURE.md`
+  - `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+*Комментарий:* Код полностью соответствует спецификации A1.
 
 ### 3. Безопасность и контракты
-- **Нет ли хардкода MCP token / API keys?** Нет. В примерах использованы стандартные плейсхолдеры (`<YOUR_TOKEN>`, `<paste token from VaniScript Settings>`).
-- **Нет ли silent fallback MCP chat → API?** Нет, зафиксирована явная ошибка при недоступности MCP.
-- **Isolated MCP / scopes не ослаблены без требования шага?** Сохранена изоляция `vaniscript_embedded`.
-- **Token только в env дочернего процесса? Codex/Grok/MCP server/settings не сломаны?** Все инварианты задокументированы и сохранены.
-*Комментарий:* Модель безопасности трека QWEN_MCP полностью унаследована от GROK_MCP и отражена в документации.
+- **Нет ли хардкода MCP token / API keys?** Нет.
+- **Нет ли silent fallback MCP chat → API?** Нет (MCP/чат не трогались).
+- **Isolated MCP / scopes не ослаблены без требования шага?** Сохранены без изменений.
+- **Token только в env дочернего процесса? Codex/Grok/MCP server/settings не сломаны?** Контракты безопасности не нарушены.
+*Комментарий:* Хардкод токенов/ключей отсутствует.
 
 ### 4. Комментарии и читаемость (TEAM_CONTRACT § Comments)
-- **Документация структурирована и читаема?** Да. README и MCP_INSTRUCTIONS составлены на английском языке, ADR и ACCEPTANCE — на русском по общему стандарту проекта. Описание шагов, путей и портов (19790 AS / 19789 Electron) ясное и корректное. ADR оформлен по стандарту `D-YYYY-MM-DD-QN`.
-*Комментарий:* Читаемость и структура документов на высоком уровне.
+- **Новые модули/типы имеют короткий role header?** Да, `CloudProviderCatalog.swift` содержит заголовок роли (слой VaniScriptCore, единый источник правды, scope A1).
+- **Non-obvious logic объяснена ПОЧЕМУ?** Да, добавлены why-notes в `AppSettings.swift` и `CloudProviderCatalog.swift`, поясняющие контракты `decodeIfPresent` и фиксированный порядок провайдеров.
+- **Async/cancel/ownership notes где релевантно?** Код A1 чисто декларативный/модельный.
+- **Нет шумных/устаревших комментариев?** Шумные комментарии отсутствуют.
+*Комментарий:* Комментарии и структура соответствуют требованиям `TEAM_CONTRACT.md`.
 
 ---
 

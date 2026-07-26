@@ -3,6 +3,24 @@
 Ты — **главный координатор**. Код сам не пишешь, пока `implementation.attempts < 3`.  
 Коммуникация между моделями — **только через файлы** (`STATE.yaml`, `FEEDBACK.md`). Человек по очереди запускает агентов.
 
+## Автономность (обязательно)
+
+**Не спрашивай разрешения** на handoff-переходы STATE. При «статус» / «приступай» / «твоя очередь»:
+
+1. Прочитай `STATE.yaml` + `FEEDBACK.md`.
+2. **Сразу** выполни ветвление (A–F): обнови файлы, checkpoint где нужно, выдай **готовый Kick** следующему актору.
+3. Ответ человеку = краткий статус + **кто next** + **полный Kick** (copy-paste ready). Без «сказать — сделать?».
+
+| Сигнал | Авто-действие (без вопросов) |
+|--------|------------------------------|
+| Gemini **`[APPROVED]`** / `review.status: approved` (coding-шаг) | STATE → `next_actor: qa`, `qa.status: pending`; **не** advance; **не** post-tag; выдать **Kick QA** |
+| **QA green** (`QA/REPORT.md`) | post-checkpoint → complete step → open next → pre next → Kick Coder |
+| **QA bugs** (`QA/BUG_REPORT.md`) | fix-retry (секция F) → Kick Coder |
+| Gemini **`[CHANGES REQUESTED]`** | attempts+1, `next_actor: implementation` → Kick Coder |
+| `waiting_review` + review pending | Kick Gemini (ревьюер) |
+| `pending` + review pending | pre-tag если нет → Kick Hy3 |
+| Doc-only approve (Q1/Q7/G6/A8) | post → advance → pre next → Kick (Coder или end) |
+
 ## Tracks
 
 | Track | Steps | Plan file |
@@ -16,8 +34,6 @@ Scaffold kit (`AI_Workflow_Kit/**`) — bootstrap оркестратора; **pr
 
 ## Git checkpoints (обязательно)
 
-**Перед каждым этапом и после каждого APPROVED — commit + annotated tag + push на GitHub** (если remote/push доступен).
-
 См. `GIT_CHECKPOINTS.md` и:
 
 ```bash
@@ -28,8 +44,9 @@ cd "VaniScript/AppleSilicon"
 
 | When | Action |
 |------|--------|
-| Перед стартом / выдачей шага Hy3 | `checkpoint.sh pre <step>` → tag `grok/pre-G1` или `ui/pre-U0` + push |
-| После Gemini **APPROVED** | `checkpoint.sh post <step> "summary"` → tag `…/G1-done` + push |
+| Перед стартом / выдачей шага Hy3 | `checkpoint.sh pre <step>` → tag `…/pre-<step>` + push |
+| Coding-шаг с QA gate (Q2–Q6, A1–A7, product) | **post-tag только после APPROVED + QA green** (не сразу после Gemini) |
+| Doc-only (Q1, Q7, G6, A8) | post сразу после APPROVED |
 | Затем открытие next | сразу `pre` для следующего шага |
 
 Обнови в `STATE.yaml` блок `checkpoint:` (`last_pre_tag`, `last_post_tag`, `last_commit`).
@@ -38,60 +55,78 @@ cd "VaniScript/AppleSilicon"
 
 **Важно:** script **не** делает `git add -A` по всему workspace `AI Projects`. Только пути VaniScript (см. script).
 
-## При запуске («приступай» / «твоя очередь»)
+## При запуске («приступай» / «твоя очередь» / «статус»)
 
 1. Прочитай `STATE.yaml` и `FEEDBACK.md`.
-2. Ветвление:
+2. Ветвление — **исполняй сразу**, не спрашивай:
 
 ### A) `review.status == approved` и шаг реализован
-- **Post-checkpoint** для `current_step` → tag `…/<step>-done`.
-- **QA gate** (для **coding**-шагов: Q2–Q6 и любых product-шагов):
-  - Скажи человеку **«зови QA»** (до открытия следующего coding-шага).
-  - **QA green** → добавь step в `completed_steps`, выставь следующий шаг, обнови
-    `step_description`/`target_files`, сбрось `implementation.status: pending`,
-    `attempts: 0`, `review.status: pending`, `qa.status: green`, `next_actor: implementation`,
-    сделай **Pre-checkpoint** нового шага, обнови `checkpoint:`.
-  - **QA bugs** → **НЕ** advance. Читай `QA/BUG_REPORT.md`, открой **fix/retry** для
-    **Coder only** (`target_files` из repro, PRE-tag) → см. секцию **F**.
-  - **Doc-only шаги** (Q1, Q7; G6) — QA **waived**: advance сразу после POST.
-- Обнови блок `qa:` в `STATE.yaml` (`status`, `last_report`, `suite`, `bugs_open`).
+
+#### A1 — Coding-шаг с QA gate (Q2–Q6, A1–A7, любой product-coding)
+**Авто, без вопросов (ещё НЕ post-tag, ещё НЕ advance):**
+1. Обнови `STATE.yaml`:
+   - `implementation.status: approved` (или оставь `waiting_review` если уже сдан)
+   - `review.status: approved`
+   - `qa.status: pending`
+   - `next_actor: qa`
+   - `current_step` **без изменений**
+2. В ответе: **«На очереди: QA»** + **полный заполненный Kick** из `KICK_QA.md`
+   (scope шага, target_files, команды `QA/run_all.sh`, graphify footer).
+3. **Стоп.** Жди QA green / BUG_REPORT. Не открывай next.
+
+**После QA green** (отдельный запуск / «статус» с green report):
+1. **Post-checkpoint** `current_step` → tag `…/<step>-done` + push.
+2. Добавь step в `completed_steps`; выставь следующий шаг + `step_description`/`target_files`/`coder_brief`.
+3. Сбрось: `implementation.status: pending`, `attempts: 0`, `review.status: pending`,
+   `qa.status: green`, `next_actor: implementation`.
+4. **Pre-checkpoint** нового шага; обнови `checkpoint:`.
+5. Ответ: **«На очереди: Hy3 (Coder)»** + полный Kick Coder.
+
+**После QA bugs** → секция **F** (не advance).
+
+#### A2 — Doc-only (Q1, Q7; G6; A8) — QA waived
+1. Post-checkpoint сразу → complete → open next → pre next.
+2. Kick следующему (Coder) или объяви track DONE.
 
 ### B) `review.status == changes_requested`
 - `implementation.attempts += 1`
 - `implementation.status: pending`, `review.status: pending`, `next_actor: implementation`
 - Тот же `current_step` (расширь `target_files` только если фикс требует).
 - **Не** ставь `…-done` post-tag.
+- Авто: **Kick Coder** (что править — из FEEDBACK).
 
 ### C) `attempts >= 3` (тупик)
 - Вмешайся: сузь scope / минимальный патч / DECISIONS.md.
 - Сбрось attempts для чистого retry.
 
 ### D) `implementation.status == waiting_review` и review pending
-- Ничего не кодь. Скажи: «зови Gemini».
+- Ничего не кодь. Авто: **«На очереди: Gemini»** + Kick Reviewer.
 
 ### E) `implementation.status == pending` и review pending
-- Убедись, что pre-tag существует.
-- Скажи: «зови Hy3» + краткий бриф шага (или вставь заполненный `KICK_CODER.md`).
+- Убедись, что pre-tag существует (создай если нет).
+- Авто: **«На очереди: Hy3»** + Kick Coder (`coder_brief` + `target_files`).
 
 ### F) QA triage (после `QA/BUG_REPORT.md`)
 1. Прочитай `QA/BUG_REPORT.md` (все баги списком).
 2. Открой **fix/retry** шаг: `current_step` = `fix-<step>`, `target_files` из repro,
    `implementation.status: pending`, `next_actor: implementation`, **PRE-tag**.
-3. «зови Hy3» — **только Coder** чинит product-код (никогда Verifier/QA).
-4. После фикса: «зови Gemini» (ре-ревью, если нетривиально).
-5. После approve: «зови QA» — **полный re-run** `QA/run_all.sh`.
-6. Suite green → advance на следующий feature-шаг (секция A).
+3. Авто: **Kick Hy3** — **только Coder** чинит product-код (никогда Verifier/QA).
+4. После фикса: Kick Gemini (ре-ревью, если нетривиально).
+5. После approve: снова **секция A1** (Kick QA, полный re-run).
+6. Suite green → advance (A1 «После QA green»).
 - **Minor/flaky:** можно открыть крошечный fix-шаг с Coder в один прыжок.
 - **Никогда** не назначай product-фиксы Verifier или QA.
 
 ## Не делай
 
+- **Не спрашивай** «сделать post-checkpoint? / звать QA?» — делай и выдавай Kick.
 - Не подменяй ревьюера и кодера без тупика.
 - Не открывай следующий coding-шаг, пока текущий не approved **и QA green** (для coding-шагов).
+- Не ставь post-tag coding-шага до QA green (QWEN/API_USAGE gate).
 - Не отправляй QA-баги Verifier'у «починить» — product-код чинит **только Coder**.
 - Не раздувай `target_files` «на будущее».
 - Не делай Electron visual redesign.
-- Не пропускай QA для coding-шагов Q2–Q6 (doc-only Q1/Q7 — waived).
+- Не пропускай QA для coding-шагов Q2–Q6 / A1–A7 (doc-only Q1/Q7/G6/A8 — waived).
 
 ## Graphify first (экономия токенов — обязательно для ориентации)
 

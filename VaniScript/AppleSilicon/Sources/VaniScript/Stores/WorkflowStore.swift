@@ -1242,6 +1242,8 @@ final class WorkflowStore: ObservableObject {
                         promptPresets: workflow.settings.promptPresets
                     )
                     providerID = cloudProvider.id
+                    // A2: record cloud translation usage (best-effort, never fails op).
+                    await recordCloudTranslationUsage(from: reviewCloudEngine, provider: cloudProvider)
                 } else if let model = activeTranslationModel(for: session) {
                     translated = try await reviewMLXEngine.translate(
                         text: sourceCue.text,
@@ -1435,6 +1437,10 @@ final class WorkflowStore: ObservableObject {
                     } else {
                         throw TranslationRoutingError.noTranslationProvider
                     }
+                    // A2: record cloud translation usage per segment (best-effort).
+                    if let cloudProvider {
+                        await recordCloudTranslationUsage(from: reviewCloudEngine, provider: cloudProvider)
+                    }
                     let finalText = translatedCues.isEmpty ? translated : translatedCues.map(\.text).joined(separator: "\n")
                     updated.chunks[index].setTranslation(
                         finalText,
@@ -1539,6 +1545,10 @@ final class WorkflowStore: ObservableObject {
                     providerID = model.id
                 } else {
                     throw TranslationRoutingError.noTranslationProvider
+                }
+                // A2: record cloud translation usage (best-effort).
+                if let cloudProvider {
+                    await recordCloudTranslationUsage(from: reviewCloudEngine, provider: cloudProvider)
                 }
                 updated.chunks[index].translated = translated
                 updated.chunks[index].setTranslation(
@@ -1997,6 +2007,8 @@ final class WorkflowStore: ObservableObject {
                         existingClips: shortsPlanningExclusions,
                         provider: provider
                     )
+                    // A2: record cloud Shorts-planning usage (best-effort).
+                    await recordCloudTranslationUsage(from: shortsCloudEngine, provider: provider)
                 case let .mlx(model):
                     plans = try await shortsMLXEngine.planShorts(
                         transcript: transcript,
@@ -2628,6 +2640,43 @@ final class WorkflowStore: ObservableObject {
             }
         } catch {
             statusMessage = "Project import failed: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - API usage recording (A2, §8.3)
+
+    /// Best-effort: read the token delta the cloud translation engine accumulated
+    /// during the just-completed call and fold it into `settings.usage`. Called right
+    /// after a successful `reviewCloudEngine`/`shortsCloudEngine` operation. This never
+    /// throws and never blocks the operation — invariant §14.4 (a usage failure must
+    /// not fail the translation). When the provider returned no usage, nothing is
+    /// written (the engine returns `nil` and `record` is a no-op).
+    private func recordCloudTranslationUsage(
+        from engine: CloudTextTranslationEngine,
+        provider: ActiveCloudTranslationProvider
+    ) async {
+        let delta = await engine.takeLastUsage()
+        guard delta != nil else { return }
+        let providerId = Self.normalizedUsageProviderId(provider.id)
+        updateSettings { settings in
+            UsageRecorder.record(
+                into: &settings.usage,
+                providerId: providerId,
+                model: provider.model,
+                delta: delta,
+                audioMinutes: 0
+            )
+        }
+    }
+
+    /// Map the legacy engine provider ids (`gemini-cloud` / `gpt-cloud`) to the
+    /// normalized provider keys used by usage statistics and `estimateCost`
+    /// (`gemini` / `openai`), so per-provider cost resolves in A6.
+    private static func normalizedUsageProviderId(_ id: String) -> String {
+        switch id {
+        case "gemini-cloud": return "gemini"
+        case "gpt-cloud": return "openai"
+        default: return id
         }
     }
 
@@ -3574,6 +3623,10 @@ final class WorkflowStore: ObservableObject {
         } else {
             throw TranslationRoutingError.noTranslationProvider
         }
+        // A2: record cloud translation usage (best-effort).
+        if let cloudProvider {
+            await recordCloudTranslationUsage(from: reviewCloudEngine, provider: cloudProvider)
+        }
         try reporter.checkCancellation()
         guard TranslationArchive.isUsableTranslationText(translated),
               McpProjectRevision.make(workflow: workflow) == expectedRevision,
@@ -3646,6 +3699,10 @@ final class WorkflowStore: ObservableObject {
             providerID = model.id
         } else {
             throw TranslationRoutingError.noTranslationProvider
+        }
+        // A2: record cloud cue translation usage (best-effort).
+        if let cloudProvider {
+            await recordCloudTranslationUsage(from: reviewCloudEngine, provider: cloudProvider)
         }
         try reporter.checkCancellation()
         guard TranslationArchive.isUsableTranslationText(translated),
@@ -4419,6 +4476,8 @@ final class WorkflowStore: ObservableObject {
                     existingClips: excluded,
                     provider: provider
                 )
+                // A2: record cloud Shorts-planning usage (best-effort).
+                await self.recordCloudTranslationUsage(from: self.shortsCloudEngine, provider: provider)
             case let .mlx(model):
                 plans = try await self.shortsMLXEngine.planShorts(
                     transcript: transcript,
@@ -4648,6 +4707,8 @@ final class WorkflowStore: ObservableObject {
                 switch route {
                 case let .cloud(provider):
                     translated = try await self.shortsCloudEngine.translateShortsPlan(plans[index], targetLanguage: language, provider: provider)
+                    // A2: record cloud Shorts-translation usage (best-effort).
+                    await self.recordCloudTranslationUsage(from: self.shortsCloudEngine, provider: provider)
                 case let .mlx(model):
                     translated = try await self.shortsMLXEngine.translateShortsPlan(plans[index], targetLanguage: language, model: model)
                 }

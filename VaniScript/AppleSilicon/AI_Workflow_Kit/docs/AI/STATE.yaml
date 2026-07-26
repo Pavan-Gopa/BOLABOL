@@ -51,20 +51,23 @@ completed_steps:
   - A1
 
 implementation:
-  status: pending
-  attempts: 0
+  status: approved
+  attempts: 1
 
 review:
-  status: pending
+  status: approved
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: green
+  status: pending
   last_report: "QA/BUG_REPORT.md"
-  suite: "20 scripts (17 PASS / 3 FAIL — env-only, A1 delta 5/5 PASS)"
+  suite: "awaiting A2 full suite (prior A1: 20 scripts, 17 PASS / 3 FAIL env-only)"
   bugs_open: 0
+  note: >
+    A2 Gemini APPROVED. Transcription→settings.usage via NativeProcessingPipeline
+    deferred to A5/A6 (scope OK). Post-tag apiusage/A2-done only after QA green.
 
-next_actor: implementation
+next_actor: qa
 
 track: API_USAGE
 prior_track: QWEN_MCP
@@ -73,9 +76,9 @@ working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "apiusage/pre-A1"
+  last_pre_tag: "apiusage/pre-A2"
   last_post_tag: "apiusage/A1-done"
-  last_commit: "6b3a48f"
+  last_commit: "7a477f0"
 
 plan_files:
   - AI_Workflow_Kit/docs/API_USAGE_STEPS.md

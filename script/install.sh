@@ -95,8 +95,20 @@ if [[ ! -f "$DMG_PATH" ]]; then
 fi
 
 echo "=== Attaching $DMG_PATH ==="
-ATTACH_OUTPUT="$(hdiutil attach "$DMG_PATH" -nobrowse -readonly -mountrandom "${TMPDIR:-/tmp}")"
-MOUNT_POINT="$(printf '%s\n' "$ATTACH_OUTPUT" | awk '/\/Volumes\// { print $NF; exit }')"
+# Free a previous SmartScribe volume if a prior install left it mounted.
+if [[ -d "/Volumes/$VOLUME_NAME" ]]; then
+  hdiutil detach "/Volumes/$VOLUME_NAME" -quiet 2>/dev/null || true
+fi
+
+ATTACH_OUTPUT="$(hdiutil attach "$DMG_PATH" -nobrowse -readonly 2>&1)" || {
+  echo "error: hdiutil attach failed:" >&2
+  printf '%s\n' "$ATTACH_OUTPUT" >&2
+  exit 1
+}
+
+# Last path-looking field on lines that mention /Volumes (hdiutil table output).
+MOUNT_POINT="$(printf '%s\n' "$ATTACH_OUTPUT" | grep -oE '/Volumes/[^[:space:]]+' | tail -n 1 || true)"
+
 if [[ -z "$MOUNT_POINT" || ! -d "$MOUNT_POINT/$APP_NAME.app" ]]; then
   for candidate in "/Volumes/$VOLUME_NAME" /Volumes/SmartScribe*; do
     if [[ -d "$candidate/$APP_NAME.app" ]]; then
@@ -108,6 +120,7 @@ fi
 
 if [[ -z "$MOUNT_POINT" || ! -d "$MOUNT_POINT/$APP_NAME.app" ]]; then
   echo "error: could not find $APP_NAME.app inside the DMG" >&2
+  printf '%s\n' "$ATTACH_OUTPUT" >&2
   exit 1
 fi
 

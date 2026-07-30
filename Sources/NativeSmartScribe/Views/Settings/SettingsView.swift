@@ -1,6 +1,7 @@
 import NativeSmartScribeCore
 import SwiftUI
 
+@MainActor
 struct SettingsView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
 

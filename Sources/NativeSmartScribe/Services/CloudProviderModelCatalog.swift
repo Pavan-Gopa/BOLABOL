@@ -65,16 +65,14 @@ enum CloudProviderModelCatalog {
 
     // MARK: - Qwen Subscription Models
 
-    public static var qwenSubscriptionModels: [CloudRemoteModel] {
-        [
-            CloudRemoteModel(id: "qwen3.8-max-preview", contextLength: 262_144, promptPricePer1M: 0.35, completionPricePer1M: 1.05),
-            CloudRemoteModel(id: "qwen3.7-plus", contextLength: 131_072, promptPricePer1M: 0.11, completionPricePer1M: 0.33),
-            CloudRemoteModel(id: "qwen3.7-max", contextLength: 131_072, promptPricePer1M: 0.35, completionPricePer1M: 1.05),
-            CloudRemoteModel(id: "qwen3.6-flash", contextLength: 131_072, promptPricePer1M: 0.05, completionPricePer1M: 0.15),
-            CloudRemoteModel(id: "deepseek-v4-pro", contextLength: 131_072, promptPricePer1M: 0.14, completionPricePer1M: 0.28),
-            CloudRemoteModel(id: "glm-5.2", contextLength: 131_072, promptPricePer1M: 0.10, completionPricePer1M: 0.20),
-        ]
-    }
+    public static let qwenSubscriptionModels: [CloudRemoteModel] = [
+        CloudRemoteModel(id: "qwen3.8-max-preview", contextLength: 262_144, promptPricePer1M: 0.35, completionPricePer1M: 1.05),
+        CloudRemoteModel(id: "qwen3.7-plus", contextLength: 131_072, promptPricePer1M: 0.11, completionPricePer1M: 0.33),
+        CloudRemoteModel(id: "qwen3.7-max", contextLength: 131_072, promptPricePer1M: 0.35, completionPricePer1M: 1.05),
+        CloudRemoteModel(id: "qwen3.6-flash", contextLength: 131_072, promptPricePer1M: 0.05, completionPricePer1M: 0.15),
+        CloudRemoteModel(id: "deepseek-v4-pro", contextLength: 131_072, promptPricePer1M: 0.14, completionPricePer1M: 0.28),
+        CloudRemoteModel(id: "glm-5.2", contextLength: 131_072, promptPricePer1M: 0.10, completionPricePer1M: 0.20),
+    ]
 
     // MARK: - Pricing & Context Fallbacks
 

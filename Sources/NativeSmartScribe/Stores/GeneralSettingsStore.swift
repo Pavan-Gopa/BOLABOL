@@ -77,7 +77,14 @@ final class GeneralSettingsStore: ObservableObject {
         Task {
             do {
                 let url = try await Task.detached {
-                    try SystemLogExporter.exportRecentLogs()
+                    do {
+                        return try SystemLogExporter.exportRecentLogs()
+                    } catch {
+                        NativeSmartScribeLog.app.error(
+                            "System log export failed: \(error.localizedDescription, privacy: .public)"
+                        )
+                        throw error
+                    }
                 }.value
                 logExportMessage = text(.logsExported)
                 NSWorkspace.shared.activateFileViewerSelecting([url])
@@ -91,7 +98,13 @@ final class GeneralSettingsStore: ObservableObject {
         let settings = settings.overlay
         AudioCuePlayer.shared.play(.start, settings: settings)
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(350))
+            do {
+                try await Task.sleep(for: .milliseconds(350))
+            } catch {
+                NativeSmartScribeLog.app.error(
+                    "HUD sound preview delay interrupted: \(error.localizedDescription, privacy: .public)"
+                )
+            }
             AudioCuePlayer.shared.play(.finish, settings: settings)
         }
         logExportMessage = "HUD audio debug log: ~/Library/Application Support/NativeSmartScribe/Logs/hud-audio.log"

@@ -5,6 +5,7 @@ import NativeSmartScribeCore
 import SwiftUI
 import UniformTypeIdentifiers
 
+@MainActor
 struct ContentView: View {
     private enum Layout {
         static let minimumSidebarWidth = SidebarLayoutMetrics.minimumWidth

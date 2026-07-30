@@ -2,6 +2,7 @@ import AppKit
 import NativeSmartScribeCore
 import SwiftUI
 
+@MainActor
 struct HelpSettingsView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
 

@@ -12,6 +12,7 @@ private enum GlossarySettingsLayout {
     static let categoryFilterWidth: CGFloat = 180
 }
 
+@MainActor
 struct GlossarySettingsView: View {
     @EnvironmentObject private var glossaryStore: GlossaryStore
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore

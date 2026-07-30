@@ -16,6 +16,9 @@ public enum GlossaryTextRewriter {
         }
     }
 
+    /// All access to `regexCache` is serialized through `cacheLock` (see `cachedRegex(for:)`).
+    /// `nonisolated(unsafe)` is required because the compiler cannot see the lock-based
+    /// synchronization across the stored-property boundary.
     private static let cacheLock = NSLock()
     nonisolated(unsafe) private static var regexCache: [String: NSRegularExpression] = [:]
 

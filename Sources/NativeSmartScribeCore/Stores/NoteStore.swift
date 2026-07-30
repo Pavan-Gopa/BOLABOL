@@ -236,9 +236,7 @@ public final class NoteStore: ObservableObject {
         notes[index] = note
     }
 
-    public static var preview: NoteStore {
-        NoteStore(notes: .preview)
-    }
+    public static let preview: NoteStore = NoteStore(notes: .preview)
 
     public static func live() -> NoteStore {
         let fileManager = FileManager.default

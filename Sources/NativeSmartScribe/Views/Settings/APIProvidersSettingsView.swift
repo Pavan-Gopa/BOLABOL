@@ -8,6 +8,7 @@ import SwiftUI
 /// 4) Equal-width (142px) fixed action buttons (no jittering or size jumps on click)
 /// 5) Dynamic model context length and token pricing chips
 /// 6) Token usage statistics section
+@MainActor
 struct APIProvidersSettingsView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
@@ -656,7 +657,15 @@ private struct ProviderDetailCard: View {
         let providerKind = kind
         isLoadingModels = true
         modelsFetchTask = Task {
-            if delay > 0 { try? await Task.sleep(nanoseconds: delay) }
+            if delay > 0 {
+                do {
+                    try await Task.sleep(nanoseconds: delay)
+                } catch {
+                    NativeSmartScribeLog.models.error(
+                        "Model fetch debounce interrupted: \(error.localizedDescription, privacy: .public)"
+                    )
+                }
+            }
             guard !Task.isCancelled else { return }
             let result = await CloudProviderModelCatalog.fetchModels(
                 kind: providerKind,

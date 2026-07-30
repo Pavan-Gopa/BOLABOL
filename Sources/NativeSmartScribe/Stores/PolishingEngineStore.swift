@@ -889,7 +889,6 @@ final class PolishingEngineStore: ObservableObject {
     ]
 
     private static let directSnapshotDownloadModelIDs: Set<String> = [
-        "bonsai-27b-mlx-1bit",
         "qwen35-08b-4bit",
         "qwen35-2b-4bit",
         "qwen35-4b-4bit",

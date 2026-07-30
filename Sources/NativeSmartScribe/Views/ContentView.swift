@@ -391,9 +391,32 @@ struct ContentView: View {
             return
         }
 
+        if triggerSettingsMenuItem() {
+            return
+        }
+
         if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
             _ = NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
         }
+    }
+
+    private func triggerSettingsMenuItem() -> Bool {
+        guard let mainMenu = NSApp.mainMenu else { return false }
+        for menuItem in mainMenu.items {
+            guard let submenu = menuItem.submenu else { continue }
+            for item in submenu.items {
+                let actionName = item.action.map { NSStringFromSelector($0) } ?? ""
+                if actionName == "showSettingsWindow:" ||
+                   actionName == "showPreferencesWindow:" ||
+                   (item.keyEquivalent == "," && item.keyEquivalentModifierMask.contains(.command)) {
+                    if let action = item.action {
+                        NSApp.sendAction(action, to: item.target, from: item)
+                        return true
+                    }
+                }
+            }
+        }
+        return false
     }
 
     private func findOfficialSettingsWindow() -> NSWindow? {
@@ -408,7 +431,9 @@ struct ContentView: View {
                    title == "Настройки" ||
                    title == "Ajustes" ||
                    title == "Einstellungen" ||
-                   title == "Réglages"
+                   title == "Réglages" ||
+                   title.contains("Settings") ||
+                   title.contains("Настройки")
         }
     }
 

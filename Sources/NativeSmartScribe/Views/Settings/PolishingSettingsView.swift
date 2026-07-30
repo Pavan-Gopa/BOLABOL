@@ -103,6 +103,13 @@ private struct PolishingModelRow: View {
                             .foregroundStyle(model.isCustom ? .purple : .blue)
                     }
 
+                    Text(model.backend.runtimeBadge)
+                        .font(.caption2.weight(.semibold))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(.purple.opacity(0.14), in: Capsule())
+                        .foregroundStyle(.purple)
+
                     if isActive {
                         Text(generalSettingsStore.text(.active))
                             .font(.caption2.weight(.semibold))

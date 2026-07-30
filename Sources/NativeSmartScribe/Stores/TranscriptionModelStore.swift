@@ -1,4 +1,5 @@
 import Combine
+import FluidAudio
 import Foundation
 import NativeSmartScribeCore
 import WhisperKit
@@ -11,6 +12,7 @@ final class TranscriptionModelStore: ObservableObject {
     private let userDefaults: UserDefaults
     private let fileManager: FileManager
     private let modelsDirectory: URL
+    private let parakeetModelsDirectory: URL
 
     @Published private(set) var settings: TranscriptionModelSettings {
         didSet {
@@ -23,12 +25,18 @@ final class TranscriptionModelStore: ObservableObject {
         catalog: TranscriptionModelCatalog = .nativeWhisperKit,
         userDefaults: UserDefaults = .standard,
         fileManager: FileManager = .default,
-        modelsDirectory: URL? = nil
+        modelsDirectory: URL? = nil,
+        parakeetModelsDirectory: URL? = nil
     ) {
         self.catalog = catalog
         self.userDefaults = userDefaults
         self.fileManager = fileManager
-        self.modelsDirectory = modelsDirectory ?? Self.defaultModelsDirectory(fileManager: fileManager)
+        let resolvedModelsDirectory = modelsDirectory ?? Self.defaultModelsDirectory(fileManager: fileManager)
+        self.modelsDirectory = resolvedModelsDirectory
+        self.parakeetModelsDirectory = parakeetModelsDirectory
+            ?? (modelsDirectory == nil
+                ? Self.defaultParakeetModelsDirectory(fileManager: fileManager)
+                : resolvedModelsDirectory)
         
         var loadedSettings = Self.loadSettings(from: userDefaults)
         loadedSettings.resetInterruptedDownloads()
@@ -95,7 +103,7 @@ final class TranscriptionModelStore: ObservableObject {
         reconcileModelStates()
         guard hasLocalFiles(for: model) else { return }
         _ = settings.activate(modelID: model.id, catalog: catalog)
-        // Selecting a local model implies the local Whisper backend.
+        // Selecting any downloaded on-device model implies the local backend.
         settings.backend = .localWhisper
     }
 
@@ -153,34 +161,52 @@ final class TranscriptionModelStore: ObservableObject {
         settings.markDownloading(modelID: model.id, progressFraction: nil)
 
         do {
-            let destination = destinationURL(for: model)
-            try fileManager.createDirectory(
-                at: destination,
-                withIntermediateDirectories: true
-            )
-            let progressHandler: @Sendable (Progress) -> Void = { [weak self] progress in
-                let fraction: Double?
-                if progress.totalUnitCount > 0 {
-                    fraction = progress.fractionCompleted
-                } else {
-                    fraction = nil
+            let downloadedURL: URL
+            switch model.backend {
+            case .whisperKitCoreML:
+                let destination = destinationURL(for: model)
+                try fileManager.createDirectory(
+                    at: destination,
+                    withIntermediateDirectories: true
+                )
+                let progressHandler: @Sendable (Progress) -> Void = { [weak self] progress in
+                    let fraction = progress.totalUnitCount > 0
+                        ? progress.fractionCompleted
+                        : nil
+                    Task { @MainActor [weak self] in
+                        self?.settings.markDownloading(
+                            modelID: model.id,
+                            progressFraction: fraction
+                        )
+                    }
                 }
+                downloadedURL = try await WhisperKit.download(
+                    variant: model.modelName,
+                    downloadBase: destination,
+                    useBackgroundSession: false,
+                    from: model.modelRepositoryID,
+                    progressCallback: progressHandler
+                )
 
-                Task { @MainActor [weak self] in
-                    self?.settings.markDownloading(
-                        modelID: model.id,
-                        progressFraction: fraction
-                    )
+            case .fluidAudioCoreML:
+                let destination = destinationURL(for: model)
+                try fileManager.createDirectory(
+                    at: destination,
+                    withIntermediateDirectories: true
+                )
+                downloadedURL = try await AsrModels.download(
+                    to: destination,
+                    version: .v3,
+                    encoderPrecision: .int8
+                ) { [weak self] progress in
+                    Task { @MainActor [weak self] in
+                        self?.settings.markDownloading(
+                            modelID: model.id,
+                            progressFraction: progress.fractionCompleted
+                        )
+                    }
                 }
             }
-
-            let downloadedURL = try await WhisperKit.download(
-                variant: model.modelName,
-                downloadBase: destination,
-                useBackgroundSession: false,
-                from: model.modelRepositoryID,
-                progressCallback: progressHandler
-            )
 
             settings.markDownloaded(
                 modelID: model.id,
@@ -198,7 +224,12 @@ final class TranscriptionModelStore: ObservableObject {
     private func destinationURL(
         for model: TranscriptionModelDescriptor
     ) -> URL {
-        modelsDirectory.appendingPathComponent(model.id, isDirectory: true)
+        switch model.backend {
+        case .whisperKitCoreML:
+            modelsDirectory.appendingPathComponent(model.id, isDirectory: true)
+        case .fluidAudioCoreML:
+            parakeetModelsDirectory.appendingPathComponent(model.id, isDirectory: true)
+        }
     }
 
     private func completeLocalURL(for model: TranscriptionModelDescriptor) -> URL? {
@@ -207,6 +238,16 @@ final class TranscriptionModelStore: ObservableObject {
             state.localURL,
             destinationURL(for: model)
         ].compactMap(\.self)
+
+        if model.backend == .fluidAudioCoreML {
+            return candidates.first {
+                AsrModels.modelsExist(
+                    at: $0,
+                    version: .v3,
+                    encoderPrecision: .int8
+                )
+            }
+        }
 
         for candidate in candidates {
             if LocalModelPresence.isCompleteWhisperKitModel(at: candidate, fileManager: fileManager) {
@@ -224,6 +265,19 @@ final class TranscriptionModelStore: ObservableObject {
         }
 
         return nil
+    }
+
+    func activeDownloadedModel() -> ActiveTranscriptionModel? {
+        guard let model = activeModel,
+              let localURL = completeLocalURL(for: model)
+        else {
+            return nil
+        }
+
+        return ActiveTranscriptionModel(
+            model: model,
+            modelFolderURL: localURL
+        )
     }
 
     private func findCompleteWhisperKitModel(named folderName: String, in baseURL: URL) -> URL? {
@@ -279,5 +333,13 @@ final class TranscriptionModelStore: ObservableObject {
             legacyRoot: legacyURL,
             fileManager: fileManager
         )) ?? legacyURL
+    }
+
+    private static func defaultParakeetModelsDirectory(fileManager: FileManager) -> URL {
+        (try? SharedModelsRoot.modelsDirectory(
+            for: .parakeet,
+            fileManager: fileManager
+        )) ?? fileManager.temporaryDirectory
+            .appendingPathComponent("NativeSmartScribe-Parakeet", isDirectory: true)
     }
 }

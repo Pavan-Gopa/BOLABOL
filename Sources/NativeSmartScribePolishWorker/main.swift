@@ -205,6 +205,15 @@ struct NativeSmartScribePolishWorker {
         }
 
         let startedAt = Date()
+        if request.model.backend == .llamaCppGGUF {
+            return try await runLlamaCpp(
+                request: request,
+                systemInstructions: systemInstructions,
+                userPrompt: userPrompt,
+                startedAt: startedAt
+            )
+        }
+
         let modelDirectory = URL(fileURLWithPath: request.localModelDirectoryPath, isDirectory: true)
 
         // Find the actual model directory - look for snapshots folder or the first subfolder
@@ -270,6 +279,134 @@ struct NativeSmartScribePolishWorker {
         )
     }
 
+    private static func runLlamaCpp(
+        request: MLXPolishWorkerRequest,
+        systemInstructions: String,
+        userPrompt: String,
+        startedAt: Date
+    ) async throws -> MLXPolishWorkerResponse {
+        guard let modelFileName = request.model.modelFileName else {
+            throw MLXSwiftPolishingError.workerFailed(
+                "\(request.model.displayName) does not define a GGUF model filename."
+            )
+        }
+
+        let modelDirectory = URL(
+            fileURLWithPath: request.localModelDirectoryPath,
+            isDirectory: true
+        )
+        let modelURL = modelDirectory.appendingPathComponent(modelFileName)
+        guard FileManager.default.fileExists(atPath: modelURL.path) else {
+            throw MLXSwiftPolishingError.workerFailed(
+                "GGUF model not found at \(modelURL.path)"
+            )
+        }
+
+        let runtimeDirectory = modelDirectory
+            .deletingLastPathComponent()
+            .appendingPathComponent(".runtime", isDirectory: true)
+            .appendingPathComponent("llama-b10189", isDirectory: true)
+        let llamaURL = runtimeDirectory.appendingPathComponent("llama-cli")
+        guard FileManager.default.isExecutableFile(atPath: llamaURL.path) else {
+            throw MLXSwiftPolishingError.workerFailed(
+                "llama.cpp runtime is missing at \(llamaURL.path)"
+            )
+        }
+
+        let temporaryDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(
+                "NativeSmartScribe-Bonsai-\(UUID().uuidString)",
+                isDirectory: true
+            )
+        try FileManager.default.createDirectory(
+            at: temporaryDirectory,
+            withIntermediateDirectories: true
+        )
+        defer {
+            try? FileManager.default.removeItem(at: temporaryDirectory)
+        }
+
+        let systemURL = temporaryDirectory.appendingPathComponent("system.txt")
+        let promptURL = temporaryDirectory.appendingPathComponent("prompt.txt")
+        try Data(systemInstructions.utf8).write(to: systemURL, options: .atomic)
+        try Data(userPrompt.utf8).write(to: promptURL, options: .atomic)
+
+        let process = Process()
+        process.executableURL = llamaURL
+        process.arguments = [
+            "-m", modelURL.path,
+            "-sysf", systemURL.path,
+            "-f", promptURL.path,
+            "-c", "8192",
+            "-n", String(generationTokenLimit(for: request.rawText, isReasoningModel: false)),
+            "-ngl", "999",
+            "--temp", "0.1",
+            "--top-k", "40",
+            "--top-p", "0.9",
+            "--repeat-penalty", "1.08",
+            "--conversation",
+            "--single-turn",
+            "--reasoning", "off",
+            "--no-display-prompt",
+            "--no-show-timings",
+            "--no-warmup",
+            "--simple-io",
+            "--color", "off",
+            "--log-disable"
+        ]
+        var environment = ProcessInfo.processInfo.environment
+        let existingLibraryPath = environment["DYLD_LIBRARY_PATH"]
+        environment["DYLD_LIBRARY_PATH"] = [
+            runtimeDirectory.path,
+            existingLibraryPath
+        ].compactMap(\.self).joined(separator: ":")
+        process.environment = environment
+
+        let standardOutput = Pipe()
+        let standardError = Pipe()
+        process.standardOutput = standardOutput
+        process.standardError = standardError
+        let termination = LlamaProcessTermination()
+        process.terminationHandler = { _ in
+            termination.finish()
+        }
+
+        try process.run()
+        await withTaskCancellationHandler {
+            await termination.wait()
+        } onCancel: {
+            if process.isRunning {
+                process.terminate()
+            }
+        }
+
+        let outputData = standardOutput.fileHandleForReading.readDataToEndOfFile()
+        let errorData = standardError.fileHandleForReading.readDataToEndOfFile()
+        let errorMessage = String(data: errorData, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard process.terminationStatus == 0 else {
+            let fallback = "llama.cpp exited with status \(process.terminationStatus)."
+            throw MLXSwiftPolishingError.workerFailed(
+                errorMessage.flatMap { $0.isEmpty ? nil : $0 } ?? fallback
+            )
+        }
+
+        let rawOutput = String(data: outputData, encoding: .utf8) ?? ""
+        let response = ModelOutputSanitizer.sanitize(rawOutput)
+        guard !response.isEmpty else {
+            throw MLXSwiftPolishingError.workerFailed(
+                "Bonsai returned an empty polishing result."
+            )
+        }
+
+        return MLXPolishWorkerResponse(
+            text: response,
+            backendName: "llama.cpp Metal \(request.model.displayName)",
+            loadTimeMilliseconds: Int(Date().timeIntervalSince(startedAt) * 1_000)
+        )
+    }
+
     private static func generationTokenLimit(
         for rawText: String,
         isReasoningModel: Bool
@@ -307,6 +444,37 @@ struct NativeSmartScribePolishWorker {
         }
 
         return context
+    }
+}
+
+private final class LlamaProcessTermination: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Void, Never>?
+    private var isFinished = false
+
+    func wait() async {
+        await withCheckedContinuation { continuation in
+            let shouldResumeNow = lock.withLock {
+                if isFinished {
+                    return true
+                }
+                self.continuation = continuation
+                return false
+            }
+            if shouldResumeNow {
+                continuation.resume()
+            }
+        }
+    }
+
+    func finish() {
+        let continuation = lock.withLock {
+            isFinished = true
+            let continuation = self.continuation
+            self.continuation = nil
+            return continuation
+        }
+        continuation?.resume()
     }
 }
 

@@ -18,3 +18,7 @@ xcuserdata/
 *.xcarchive/
 *.log
 *.pyc
+
+# Code review reports (generated, not tracked)
+.review/reports/
+.review/registry/.prev_count

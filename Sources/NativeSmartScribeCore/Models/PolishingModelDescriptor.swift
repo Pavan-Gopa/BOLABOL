@@ -111,17 +111,6 @@ public extension PolishingModelCatalog {
     static let nativeMLX = try! PolishingModelCatalog(
         models: [
             PolishingModelDescriptor(
-                id: "bonsai-27b-mlx-1bit",
-                displayName: "Bonsai 27B MLX 1-bit",
-                repositoryID: "prism-ml/Bonsai-27B-mlx-1bit",
-                backend: .mlxSwiftLLM,
-                downloadSize: "~5.13 GB",
-                badge: "1-bit",
-                description: "Full 27B-class Bonsai in native MLX 1-bit format. Approximately 5.5–5.9 GiB peak unified memory at 4K–10K context.",
-                quality: 5,
-                speed: 4
-            ),
-            PolishingModelDescriptor(
                 id: "qwen35-08b-4bit",
                 displayName: "Qwen 3.5 0.8B 4-bit",
                 repositoryID: "mlx-community/Qwen3.5-0.8B-4bit",

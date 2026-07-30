@@ -1,6 +1,7 @@
 import NativeSmartScribeCore
 import SwiftUI
 
+@MainActor
 struct HotkeySettingsView: View {
     @EnvironmentObject private var hotkeySettingsStore: HotkeySettingsStore
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore

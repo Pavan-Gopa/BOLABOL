@@ -108,7 +108,8 @@ public struct PolishingModelCatalog: Equatable, Sendable {
 }
 
 public extension PolishingModelCatalog {
-    static let nativeMLX = try! PolishingModelCatalog(
+    static let nativeMLX: PolishingModelCatalog = {
+        do { return try PolishingModelCatalog(
         models: [
             PolishingModelDescriptor(
                 id: "qwen35-08b-4bit",
@@ -168,4 +169,8 @@ public extension PolishingModelCatalog {
             )
         ]
     )
+    } catch {
+        fatalError("Native MLX catalog has duplicate model IDs: \(error)")
+    }
+}()
 }

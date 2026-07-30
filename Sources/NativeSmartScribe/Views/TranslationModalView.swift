@@ -2,6 +2,7 @@ import AppKit
 import NativeSmartScribeCore
 import SwiftUI
 
+@MainActor
 struct TranslationModalView: View {
     struct Provider: Identifiable, Equatable {
         let id: String

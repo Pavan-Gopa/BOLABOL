@@ -90,13 +90,25 @@ final class HotkeyOutputDispatcher {
 
         Task { @MainActor in
             // Wait for the target app to become active and settle.
-            try? await Task.sleep(nanoseconds: 450_000_000)
+            do {
+                try await Task.sleep(nanoseconds: 450_000_000)
+            } catch {
+                NativeSmartScribeLog.hotkey.error(
+                    "Hotkey paste settle delay interrupted: \(error.localizedDescription, privacy: .public)"
+                )
+            }
 
             // Use exactly one insertion strategy. Mixing AX value insertion
             // with clipboard Cmd-V can duplicate text in apps that accept the
             // AX write but do not report it reliably.
             copyToPasteboard(text)
-            try? await Task.sleep(nanoseconds: 50_000_000) // let pasteboard propagate
+            do {
+                try await Task.sleep(nanoseconds: 50_000_000) // let pasteboard propagate
+            } catch {
+                NativeSmartScribeLog.hotkey.error(
+                    "Hotkey paste pasteboard propagation delay interrupted: \(error.localizedDescription, privacy: .public)"
+                )
+            }
 
             guard hasAccessibilityPermission else {
                 NativeSmartScribeLog.hotkey.warning("Cannot send synthetic Cmd-V because Accessibility is not trusted.")

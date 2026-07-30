@@ -1,6 +1,7 @@
 import NativeSmartScribeCore
 import SwiftUI
 
+@MainActor
 struct PolishingSettingsView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var polishingEngineStore: PolishingEngineStore

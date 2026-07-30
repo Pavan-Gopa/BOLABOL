@@ -12,9 +12,7 @@ public enum APIProviderKind: String, CaseIterable, Codable, Equatable, Identifia
 
   /// Providers shown in Settings > API Providers (fixed order).
   /// Google → OpenAI → Qwen → OpenRouter → Custom.
-  public static var polishingUICases: [APIProviderKind] {
-    [.google, .openAI, .qwen, .openRouter, .custom]
-  }
+  public static let polishingUICases: [APIProviderKind] = [.google, .openAI, .qwen, .openRouter, .custom]
 
   public var displayName: String {
     switch self {

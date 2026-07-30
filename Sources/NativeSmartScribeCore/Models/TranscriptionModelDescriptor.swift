@@ -125,7 +125,8 @@ public struct TranscriptionModelCatalog: Equatable, Sendable {
 }
 
 public extension TranscriptionModelCatalog {
-    static let nativeWhisperKit = try! TranscriptionModelCatalog(
+    static let nativeWhisperKit: TranscriptionModelCatalog = {
+        do { return try TranscriptionModelCatalog(
         models: [
             TranscriptionModelDescriptor(
                 id: "parakeet-tdt-06b-v3",
@@ -216,4 +217,8 @@ public extension TranscriptionModelCatalog {
             )
         ]
     )
+    } catch {
+        fatalError("Native WhisperKit catalog has duplicate model IDs: \(error)")
+    }
+}()
 }

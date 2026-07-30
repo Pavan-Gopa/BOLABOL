@@ -72,22 +72,20 @@ public extension Array where Element == SmartScribeNote {
             .joined(separator: "\n\n")
     }
 
-    static var preview: [SmartScribeNote] {
-        [
-            SmartScribeNote(
-                title: "Local polishing architecture",
-                createdAt: Date(timeIntervalSince1970: 1_775_000_000),
-                rawText: "We need to replace the Ollama HTTP polishing path with an in-app native engine.",
-                polishedVariantOne: "Replace the Ollama HTTP polishing path with an in-app native engine.",
-                polishedVariantTwo: "The native rewrite should move text polishing into a first-class in-app engine so performance, model selection, and compute diagnostics are controlled by SmartScribe."
-            ),
-            SmartScribeNote(
-                title: "Audio import baseline",
-                createdAt: Date(timeIntervalSince1970: 1_775_003_600),
-                rawText: "Keep file import and microphone recording as separate services.",
-                polishedVariantOne: "Keep file import and microphone recording as separate services.",
-                polishedVariantTwo: "Model file import and microphone capture as independent services so each path can be tested, logged, and optimized without affecting the other."
-            )
-        ]
-    }
+    static let preview: [SmartScribeNote] = [
+        SmartScribeNote(
+            title: "Local polishing architecture",
+            createdAt: Date(timeIntervalSince1970: 1_775_000_000),
+            rawText: "We need to replace the Ollama HTTP polishing path with an in-app native engine.",
+            polishedVariantOne: "Replace the Ollama HTTP polishing path with an in-app native engine.",
+            polishedVariantTwo: "The native rewrite should move text polishing into a first-class in-app engine so performance, model selection, and compute diagnostics are controlled by SmartScribe."
+        ),
+        SmartScribeNote(
+            title: "Audio import baseline",
+            createdAt: Date(timeIntervalSince1970: 1_775_003_600),
+            rawText: "Keep file import and microphone recording as separate services.",
+            polishedVariantOne: "Keep file import and microphone recording as separate services.",
+            polishedVariantTwo: "Model file import and microphone capture as independent services so each path can be tested, logged, and optimized without affecting the other."
+        )
+    ]
 }

@@ -10,6 +10,7 @@ extension Notification.Name {
 
 /// First-launch setup assistant. Every step either applies a setting or exposes
 /// the real app action that the user will rely on after onboarding.
+@MainActor
 struct OnboardingView: View {
   @EnvironmentObject private var settingsStore: GeneralSettingsStore
   @EnvironmentObject private var glossaryStore: GlossaryStore

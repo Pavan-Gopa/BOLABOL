@@ -126,7 +126,13 @@ struct GeminiCloudDictationEngine: Sendable {
             )
 
             Task {
-                try? await self.deleteFile(apiKey: key, name: uploaded.name)
+                do {
+                    try await self.deleteFile(apiKey: key, name: uploaded.name)
+                } catch {
+                    NativeSmartScribeLog.transcription.error(
+                        "Failed to delete uploaded Gemini file \(uploaded.name, privacy: .public): \(error.localizedDescription, privacy: .public)"
+                    )
+                }
             }
         }
 

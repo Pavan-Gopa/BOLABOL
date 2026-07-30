@@ -2,6 +2,7 @@ import NativeSmartScribeCore
 import AppKit
 import SwiftUI
 
+@MainActor
 struct SidebarView: View {
     @ObservedObject var noteStore: NoteStore
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore

@@ -533,17 +533,17 @@ private enum CloudTextPolishingError: LocalizedError {
 }
 
 private extension JSONEncoder {
-    static var cloudAPI: JSONEncoder {
+    static let cloudAPI: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
         return encoder
-    }
+    }()
 }
 
 private extension JSONDecoder {
-    static var cloudAPI: JSONDecoder {
+    static let cloudAPI: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
-    }
+    }()
 }

@@ -28,17 +28,37 @@ actor ParakeetTranscriptionEngine: TranscriptionEngine {
             throw ParakeetTranscriptionError.translationUnsupported
         }
 
+        // FluidAudio's file converter lets CoreAudio downmix multichannel input.
+        // SmartScribe recordings can contain four discrete microphone channels,
+        // which can cancel to silence during that downmix. Reuse the app's robust
+        // preparation path: select the loudest physical channel first, then
+        // resample that mono signal to Parakeet's required 16 kHz input.
+        let normalizedAudioURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("smartscribe-parakeet-\(UUID().uuidString).wav")
+        defer { try? FileManager.default.removeItem(at: normalizedAudioURL) }
+        do {
+            try GeminiCloudDictationEngine.convertTo16kMonoWAV(
+                source: audioFileURL,
+                destination: normalizedAudioURL
+            )
+        } catch {
+            throw ParakeetTranscriptionError.audioPreparationFailed(
+                error.localizedDescription
+            )
+        }
+
         let manager = try await loadedManager()
         var decoderState = TdtDecoderState.make(
             decoderLayers: await manager.decoderLayerCount
         )
-        let language = request.forcedLanguageCode
-            .map { String($0.prefix(2)).lowercased() }
-            .flatMap(Language.init(rawValue:))
+
+        // Parakeet v3 detects the spoken language itself. A stale Whisper language
+        // preference acts only as a script filter in FluidAudio; for example, an
+        // Italian hint can suppress every Cyrillic token in Russian speech.
         let result = try await manager.transcribe(
-            audioFileURL,
+            normalizedAudioURL,
             decoderState: &decoderState,
-            language: language
+            language: nil
         )
         let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
@@ -74,6 +94,7 @@ actor ParakeetTranscriptionEngine: TranscriptionEngine {
 private enum ParakeetTranscriptionError: LocalizedError {
     case missingAudioFile
     case translationUnsupported
+    case audioPreparationFailed(String)
     case emptyResult
 
     var errorDescription: String? {
@@ -82,6 +103,8 @@ private enum ParakeetTranscriptionError: LocalizedError {
             "Parakeet needs a recorded or imported audio file."
         case .translationUnsupported:
             "Parakeet transcribes the source language but cannot translate speech to English. Choose a Whisper model for that routing mode."
+        case .audioPreparationFailed(let detail):
+            "Could not prepare audio for Parakeet: \(detail)"
         case .emptyResult:
             "Parakeet returned an empty transcription."
         }

@@ -52,7 +52,7 @@ struct GeminiCloudDictationEngine: Sendable {
             case .cannotReadAudio:
                 "Could not read the recorded audio file."
             case .exportFailed(let detail):
-                "Could not prepare audio for Gemini: \(detail)"
+                "Could not prepare audio: \(detail)"
             case .emptyResponse:
                 "Gemini returned an empty result."
             case .audioNotUnderstood(let sample):
@@ -81,7 +81,7 @@ struct GeminiCloudDictationEngine: Sendable {
             .appendingPathComponent("smartscribe-gemini-\(UUID().uuidString).wav")
         defer { try? FileManager.default.removeItem(at: wavURL) }
 
-        try Self.convertToGeminiWAV(source: request.audioFileURL, destination: wavURL)
+        try Self.convertTo16kMonoWAV(source: request.audioFileURL, destination: wavURL)
         let audioData = try Data(contentsOf: wavURL)
         guard audioData.count > 1000 else {
             throw DictationError.cannotReadAudio
@@ -504,14 +504,14 @@ struct GeminiCloudDictationEngine: Sendable {
 
     // MARK: - CAF / any → 16 kHz mono 16-bit WAV
 
-    /// Convert app recordings to a small 16 kHz mono 16-bit WAV that Gemini handles well.
+    /// Convert app recordings to the 16 kHz mono 16-bit WAV expected by speech engines.
     ///
     /// Recordings can be multichannel (e.g. a 4-channel aggregate input where only some
     /// channels carry the microphone signal). Letting CoreAudio downmix such a discrete
-    /// layout to mono can cancel the signal to digital silence, which makes Gemini
-    /// hallucinate filler ("the, the, the…"). To stay robust we pick the single loudest
-    /// source channel and convert only that channel — no CoreAudio channel downmix runs.
-    static func convertToGeminiWAV(source: URL, destination: URL) throws {
+    /// layout to mono can cancel the signal to digital silence, producing empty or
+    /// hallucinated transcription. To stay robust we pick the single loudest source
+    /// channel and convert only that channel — no CoreAudio channel downmix runs.
+    static func convertTo16kMonoWAV(source: URL, destination: URL) throws {
         let inputFile: AVAudioFile
         do {
             inputFile = try AVAudioFile(forReading: source)
@@ -586,7 +586,7 @@ struct GeminiCloudDictationEngine: Sendable {
         }
 
         NativeSmartScribeLog.transcription.info(
-            "Gemini WAV conversion complete: sourceFrames=\(inputFile.length) sourceChannels=\(Int(sourceFormat.channelCount)) usedChannel=\(sourceChannel) wavBytes=\(size)"
+            "Speech WAV conversion complete: sourceFrames=\(inputFile.length) sourceChannels=\(Int(sourceFormat.channelCount)) usedChannel=\(sourceChannel) wavBytes=\(size)"
         )
     }
 

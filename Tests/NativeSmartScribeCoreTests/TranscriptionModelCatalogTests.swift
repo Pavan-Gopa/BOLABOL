@@ -13,10 +13,11 @@ func nativeTranscriptionCatalogUsesWhisperKitRecommendedModelByDefault() throws 
 }
 
 @Test
-func nativeTranscriptionCatalogUsesExpectedWhisperOrder() {
+func nativeTranscriptionCatalogUsesExpectedModelOrder() {
     let catalog = TranscriptionModelCatalog.nativeWhisperKit
 
     #expect(catalog.models.map(\.id) == [
+        "parakeet-tdt-06b-v3",
         "whisperkit-small-en",
         "whisperkit-small-multilingual",
         "whisperkit-medium-en",

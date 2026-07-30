@@ -19,20 +19,21 @@ final class TranscriptionEngineStore: ObservableObject {
             // Cloud path is handled separately; return unavailable if misrouted.
             return UnavailableTranscriptionEngine()
         case .localWhisper:
-            guard let activeModel = modelStore.settings.activeDownloadedModel(
-                catalog: modelStore.catalog
-            ) else {
+            guard let activeModel = modelStore.activeDownloadedModel() else {
                 return UnavailableTranscriptionEngine()
             }
 
             switch activeModel.model.backend {
             case .whisperKitCoreML:
                 return cachedWhisperKitEngine(for: activeModel)
+            case .fluidAudioCoreML:
+                return cachedParakeetEngine(for: activeModel)
             }
         }
     }
 
     private var whisperKitEngines: [String: WhisperKitTranscriptionEngine] = [:]
+    private var parakeetEngines: [String: ParakeetTranscriptionEngine] = [:]
 
     private func cachedWhisperKitEngine(
         for activeModel: ActiveTranscriptionModel
@@ -51,6 +52,26 @@ final class TranscriptionEngineStore: ObservableObject {
             modelFolderURL: activeModel.modelFolderURL
         )
         whisperKitEngines[cacheKey] = engine
+        return engine
+    }
+
+    private func cachedParakeetEngine(
+        for activeModel: ActiveTranscriptionModel
+    ) -> ParakeetTranscriptionEngine {
+        let cacheKey = [
+            activeModel.model.id,
+            activeModel.modelFolderURL.path
+        ].joined(separator: "|")
+
+        if let cachedEngine = parakeetEngines[cacheKey] {
+            return cachedEngine
+        }
+
+        let engine = ParakeetTranscriptionEngine(
+            model: activeModel.model,
+            modelFolderURL: activeModel.modelFolderURL
+        )
+        parakeetEngines[cacheKey] = engine
         return engine
     }
 }

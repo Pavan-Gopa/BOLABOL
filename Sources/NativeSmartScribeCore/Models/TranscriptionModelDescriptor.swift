@@ -3,6 +3,16 @@ import Foundation
 public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Sendable {
     public enum Backend: String, Codable, Equatable, Sendable {
         case whisperKitCoreML
+        case fluidAudioCoreML
+
+        public var runtimeBadge: String {
+            switch self {
+            case .whisperKitCoreML:
+                "WhisperKit · Core ML"
+            case .fluidAudioCoreML:
+                "FluidAudio · Core ML/ANE"
+            }
+        }
     }
 
     public enum LanguageSupport: String, Codable, Equatable, Sendable {
@@ -43,7 +53,12 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
     public var isRecommended: Bool
 
     public var modelFolderName: String {
-        "openai_whisper-\(modelName)"
+        switch backend {
+        case .whisperKitCoreML:
+            "openai_whisper-\(modelName)"
+        case .fluidAudioCoreML:
+            "parakeet-tdt-0.6b-v3-coreml"
+        }
     }
 
     public init(
@@ -112,6 +127,20 @@ public struct TranscriptionModelCatalog: Equatable, Sendable {
 public extension TranscriptionModelCatalog {
     static let nativeWhisperKit = try! TranscriptionModelCatalog(
         models: [
+            TranscriptionModelDescriptor(
+                id: "parakeet-tdt-06b-v3",
+                displayName: "Parakeet TDT 0.6B v3",
+                modelName: "parakeet-tdt-0.6b-v3",
+                modelRepositoryID: "FluidInference/parakeet-tdt-0.6b-v3-coreml",
+                snapshotGlob: "**",
+                backend: .fluidAudioCoreML,
+                languageSupport: .multilingual,
+                downloadSize: "~482 MB",
+                badge: "Fastest",
+                description: "High-throughput Parakeet v3 for 25 European languages, including English, Dutch, Russian, and Ukrainian. Runs locally through Core ML on Apple Neural Engine.",
+                accuracy: 4,
+                speed: 5
+            ),
             TranscriptionModelDescriptor(
                 id: "whisperkit-small-en",
                 displayName: "Whisper Small English",

@@ -4,6 +4,7 @@ public enum SharedModelRuntime: String, CaseIterable, Codable, Equatable, Sendab
     case mlx
     case gguf
     case ggml
+    case parakeet
     case whisperkit
 }
 

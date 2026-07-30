@@ -228,7 +228,10 @@ final class TranscriptionModelStore: ObservableObject {
         case .whisperKitCoreML:
             modelsDirectory.appendingPathComponent(model.id, isDirectory: true)
         case .fluidAudioCoreML:
-            parakeetModelsDirectory.appendingPathComponent(model.id, isDirectory: true)
+            parakeetModelsDirectory.appendingPathComponent(
+                model.modelFolderName,
+                isDirectory: true
+            )
         }
     }
 

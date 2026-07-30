@@ -146,11 +146,11 @@ private struct TranscriptionModelRow: View {
                     }
 
                     Text(model.backend.runtimeBadge)
-                        .font(.caption2.weight(.semibold))
+                        .font(.caption2)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
-                        .background(.purple.opacity(0.14), in: Capsule())
-                        .foregroundStyle(.purple)
+                        .background(.secondary.opacity(0.10), in: Capsule())
+                        .foregroundStyle(.secondary)
 
                     if isActive {
                         Text(generalSettingsStore.text(.active))

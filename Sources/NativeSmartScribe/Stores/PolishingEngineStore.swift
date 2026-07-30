@@ -1,5 +1,4 @@
 import Combine
-import CryptoKit
 import Darwin
 import Foundation
 import HuggingFace
@@ -22,7 +21,6 @@ final class PolishingEngineStore: ObservableObject {
     private let userDefaults: UserDefaults
     private let fileManager: FileManager
     private let modelsDirectory: URL
-    private let ggufModelsDirectory: URL
     private let scanner: LocalModelScanner
     private let credentialStore: any APIProviderCredentialStoring
     private var mlxEngines: [String: MLXSwiftPolishingEngine] = [:]
@@ -66,7 +64,6 @@ final class PolishingEngineStore: ObservableObject {
         userDefaults: UserDefaults = .standard,
         fileManager: FileManager = .default,
         modelsDirectory: URL? = nil,
-        ggufModelsDirectory: URL? = nil,
         credentialStore: any APIProviderCredentialStoring = KeychainAPIProviderCredentialStore()
     ) {
         self.catalog = catalog
@@ -74,14 +71,9 @@ final class PolishingEngineStore: ObservableObject {
         self.userDefaults = userDefaults
         self.fileManager = fileManager
         self.credentialStore = credentialStore
-        let resolvedModelsDirectory = modelsDirectory ?? MLXSwiftPolishingEngine.defaultModelDirectory(
+        self.modelsDirectory = modelsDirectory ?? MLXSwiftPolishingEngine.defaultModelDirectory(
             fileManager: fileManager
         )
-        self.modelsDirectory = resolvedModelsDirectory
-        self.ggufModelsDirectory = ggufModelsDirectory
-            ?? (modelsDirectory == nil
-                ? Self.defaultGGUFModelsDirectory(fileManager: fileManager)
-                : resolvedModelsDirectory)
         self.scanner = LocalModelScanner()
         self.settings = Self.loadModelSettings(from: userDefaults)
         let loadedAPISettings = Self.hydratedAPISettings(
@@ -297,8 +289,7 @@ final class PolishingEngineStore: ObservableObject {
         }
         try? fileManager.removeItem(at: cacheDirectory(for: model))
         if let localURL = settings.installationState(for: model.id).localURL,
-           localURL.path.hasPrefix(modelsDirectory.path)
-            || localURL.path.hasPrefix(ggufModelsDirectory.path) {
+           localURL.path.hasPrefix(modelsDirectory.path) {
             try? fileManager.removeItem(at: localURL)
         }
 
@@ -352,17 +343,15 @@ final class PolishingEngineStore: ObservableObject {
     }
 
     func prepare(_ model: PolishingModelDescriptor) async {
+        guard model.backend == .mlxSwiftLLM else { return }
         guard preparingModelIDs.isEmpty else { return }
-        let preparationDirectory = model.backend == .llamaCppGGUF
-            ? ggufModelsDirectory
-            : modelsDirectory
 
         preparingModelIDs.insert(model.id)
         settings.markDownloading(modelID: model.id, progressFraction: nil)
         selectedEngineID = Self.mlxSwiftEngineID
         preparationSnapshot = .downloading(
             progressFraction: nil,
-            modelDirectory: preparationDirectory,
+            modelDirectory: modelsDirectory,
             message: "Downloading \(model.displayName)."
         )
 
@@ -371,8 +360,7 @@ final class PolishingEngineStore: ObservableObject {
         }
 
         do {
-            let snapshotURL: URL
-            let progressHandler: @MainActor @Sendable (Progress) -> Void = { [weak self] progress in
+            let snapshotURL = try await downloadSnapshot(for: model) { [weak self] progress in
                 let fraction: Double?
                 if progress.totalUnitCount > 0 {
                     fraction = progress.fractionCompleted
@@ -386,20 +374,8 @@ final class PolishingEngineStore: ObservableObject {
                 )
                 self?.preparationSnapshot = .downloading(
                     progressFraction: fraction,
-                    modelDirectory: preparationDirectory,
+                    modelDirectory: self?.modelsDirectory,
                     message: "Downloading \(model.displayName)."
-                )
-            }
-            switch model.backend {
-            case .mlxSwiftLLM:
-                snapshotURL = try await downloadSnapshot(
-                    for: model,
-                    progress: progressHandler
-                )
-            case .llamaCppGGUF:
-                snapshotURL = try await downloadGGUFBundle(
-                    for: model,
-                    progress: progressHandler
                 )
             }
 
@@ -422,7 +398,7 @@ final class PolishingEngineStore: ObservableObject {
             )
             preparationSnapshot = .failed(
                 message: error.localizedDescription,
-                modelDirectory: preparationDirectory
+                modelDirectory: modelsDirectory
             )
         }
 
@@ -481,119 +457,10 @@ final class PolishingEngineStore: ObservableObject {
         let engine = MLXSwiftPolishingEngine(
             model: model,
             localModelDirectory: localURL,
-            preparationModelDirectory: model.backend == .llamaCppGGUF
-                ? ggufModelsDirectory
-                : modelsDirectory
+            preparationModelDirectory: modelsDirectory
         )
         mlxEngines[cacheKey] = engine
         return engine
-    }
-
-    private func downloadGGUFBundle(
-        for model: PolishingModelDescriptor,
-        progress progressHandler: @MainActor @Sendable @escaping (Progress) -> Void
-    ) async throws -> URL {
-        guard let modelFileName = model.modelFileName else {
-            throw PolishingModelDownloadError.missingModelFileName(model.displayName)
-        }
-        guard let entry = try await directTreeEntries(for: model).first(where: {
-            $0.type == "file" && $0.path == modelFileName
-        }) else {
-            throw PolishingModelDownloadError.missingRemoteFile(modelFileName)
-        }
-
-        let modelDirectory = cacheDirectory(for: model)
-        let modelURL = modelDirectory.appendingPathComponent(modelFileName)
-        let runtimeDirectory = llamaRuntimeDirectory()
-        let runtimeURL = runtimeDirectory.appendingPathComponent("llama-cli")
-        let archiveDirectory = runtimeDirectory.deletingLastPathComponent()
-        let archiveURL = archiveDirectory.appendingPathComponent(Self.llamaRuntimeArchiveName)
-        let totalBytes = max(entry.size ?? 1, 1) + Self.llamaRuntimeArchiveSize
-        let progress = Progress(totalUnitCount: totalBytes)
-        progressHandler(progress)
-
-        try fileManager.createDirectory(
-            at: modelDirectory,
-            withIntermediateDirectories: true
-        )
-        try fileManager.createDirectory(
-            at: archiveDirectory,
-            withIntermediateDirectories: true
-        )
-
-        var completedBytes: Int64 = 0
-        if isCompleteDownloadedFile(at: modelURL, expectedBytes: entry.size) {
-            completedBytes += max(entry.size ?? 1, 1)
-            progress.completedUnitCount = completedBytes
-            progressHandler(progress)
-        } else {
-            let sourceURL = try directResolveURL(
-                repositoryID: model.repositoryID,
-                revision: model.revision,
-                path: modelFileName
-            )
-            try await downloadDirectFile(
-                from: sourceURL,
-                to: modelURL,
-                expectedBytes: entry.size,
-                completedBytesBeforeFile: completedBytes,
-                progress: progress,
-                progressHandler: progressHandler
-            )
-            completedBytes += max(entry.size ?? fileSize(at: modelURL) ?? 1, 1)
-            progress.completedUnitCount = min(completedBytes, totalBytes)
-            progressHandler(progress)
-        }
-
-        if fileManager.isExecutableFile(atPath: runtimeURL.path) {
-            progress.completedUnitCount = totalBytes
-            progressHandler(progress)
-            return modelDirectory
-        }
-
-        var archiveIsReady = isCompleteDownloadedFile(
-            at: archiveURL,
-            expectedBytes: Self.llamaRuntimeArchiveSize
-        )
-        if archiveIsReady,
-           try sha256(at: archiveURL) != Self.llamaRuntimeArchiveSHA256 {
-            try fileManager.removeItem(at: archiveURL)
-            archiveIsReady = false
-        }
-
-        if !archiveIsReady {
-            guard let runtimeSourceURL = URL(string: Self.llamaRuntimeArchiveURL) else {
-                throw PolishingModelDownloadError.invalidDownloadResponse(
-                    Self.llamaRuntimeArchiveName
-                )
-            }
-            try await downloadDirectFile(
-                from: runtimeSourceURL,
-                to: archiveURL,
-                expectedBytes: Self.llamaRuntimeArchiveSize,
-                completedBytesBeforeFile: completedBytes,
-                progress: progress,
-                progressHandler: progressHandler
-            )
-        }
-
-        let checksum = try sha256(at: archiveURL)
-        guard checksum == Self.llamaRuntimeArchiveSHA256 else {
-            try? fileManager.removeItem(at: archiveURL)
-            throw PolishingModelDownloadError.runtimeChecksumMismatch
-        }
-
-        try await extractLlamaRuntime(
-            archiveURL: archiveURL,
-            destination: runtimeDirectory
-        )
-        guard fileManager.isExecutableFile(atPath: runtimeURL.path) else {
-            throw PolishingModelDownloadError.runtimeExecutableMissing
-        }
-
-        progress.completedUnitCount = totalBytes
-        progressHandler(progress)
-        return modelDirectory
     }
 
     private func downloadSnapshot(
@@ -702,19 +569,6 @@ final class PolishingEngineStore: ObservableObject {
     private func directSnapshotEntries(
         for model: PolishingModelDescriptor
     ) async throws -> [DirectHuggingFaceTreeEntry] {
-        try await directTreeEntries(for: model)
-            .filter { $0.type == "file" }
-            .filter { entry in
-                Self.mlxModelDownloadPatterns.contains { pattern in
-                    fnmatch(pattern, entry.path, 0) == 0
-                }
-            }
-            .sorted { $0.path < $1.path }
-    }
-
-    private func directTreeEntries(
-        for model: PolishingModelDescriptor
-    ) async throws -> [DirectHuggingFaceTreeEntry] {
         let urlString = "https://huggingface.co/api/models/\(model.repositoryID)/tree/\(model.revision)?recursive=1&expand=1"
         guard let url = URL(string: urlString) else {
             throw PolishingModelDownloadError.invalidRepositoryID(model.repositoryID)
@@ -727,7 +581,15 @@ final class PolishingEngineStore: ObservableObject {
             throw PolishingModelDownloadError.invalidDownloadResponse(model.repositoryID)
         }
 
-        return try JSONDecoder().decode([DirectHuggingFaceTreeEntry].self, from: data)
+        let entries = try JSONDecoder().decode([DirectHuggingFaceTreeEntry].self, from: data)
+        return entries
+            .filter { $0.type == "file" }
+            .filter { entry in
+                Self.mlxModelDownloadPatterns.contains { pattern in
+                    fnmatch(pattern, entry.path, 0) == 0
+                }
+            }
+            .sorted { $0.path < $1.path }
     }
 
     private func directResolveURL(
@@ -791,62 +653,6 @@ final class PolishingEngineStore: ObservableObject {
         return size.int64Value
     }
 
-    private func sha256(at url: URL) throws -> String {
-        let data = try Data(contentsOf: url, options: .mappedIfSafe)
-        return SHA256.hash(data: data)
-            .map { String(format: "%02x", $0) }
-            .joined()
-    }
-
-    private func extractLlamaRuntime(
-        archiveURL: URL,
-        destination: URL
-    ) async throws {
-        if fileManager.fileExists(atPath: destination.path) {
-            try fileManager.removeItem(at: destination)
-        }
-        try fileManager.createDirectory(
-            at: destination,
-            withIntermediateDirectories: true
-        )
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
-        process.arguments = [
-            "-xzf", archiveURL.path,
-            "-C", destination.path,
-            "--strip-components", "1"
-        ]
-        let standardError = Pipe()
-        process.standardError = standardError
-        let termination = ProcessTermination()
-        process.terminationHandler = { _ in
-            termination.finish()
-        }
-
-        try process.run()
-        await withTaskCancellationHandler {
-            await termination.wait()
-        } onCancel: {
-            if process.isRunning {
-                process.terminate()
-            }
-        }
-
-        guard process.terminationStatus == 0 else {
-            let data = try? standardError.fileHandleForReading.readToEnd()
-            let message = data.flatMap { String(data: $0, encoding: .utf8) }
-                ?? "Unknown tar error."
-            throw PolishingModelDownloadError.runtimeExtractionFailed(message)
-        }
-    }
-
-    private func llamaRuntimeDirectory() -> URL {
-        ggufModelsDirectory
-            .appendingPathComponent(".runtime", isDirectory: true)
-            .appendingPathComponent(Self.llamaRuntimeVersion, isDirectory: true)
-    }
-
     private func applyPreparationSnapshot(
         _ snapshot: ModelPreparationSnapshot,
         for modelID: String
@@ -872,15 +678,10 @@ final class PolishingEngineStore: ObservableObject {
     private func cacheDirectory(
         for model: PolishingModelDescriptor
     ) -> URL {
-        switch model.backend {
-        case .mlxSwiftLLM:
-            modelsDirectory.appendingPathComponent(
-                model.huggingFaceCacheFolderName,
-                isDirectory: true
-            )
-        case .llamaCppGGUF:
-            ggufModelsDirectory.appendingPathComponent(model.id, isDirectory: true)
-        }
+        modelsDirectory.appendingPathComponent(
+            model.huggingFaceCacheFolderName,
+            isDirectory: true
+        )
     }
 
     private func directCacheDirectory(
@@ -943,20 +744,7 @@ final class PolishingEngineStore: ObservableObject {
     private func cachedSnapshotURL(
         for model: PolishingModelDescriptor
     ) -> URL? {
-        if model.backend == .llamaCppGGUF {
-            guard let modelFileName = model.modelFileName else { return nil }
-            let modelDirectory = cacheDirectory(for: model)
-            let modelURL = modelDirectory.appendingPathComponent(modelFileName)
-            let runtimeURL = llamaRuntimeDirectory().appendingPathComponent("llama-cli")
-            guard (fileSize(at: modelURL) ?? 0) > 0,
-                  fileManager.isExecutableFile(atPath: runtimeURL.path)
-            else {
-                return nil
-            }
-            return modelDirectory
-        }
-
-        return cachedSnapshotURL(
+        cachedSnapshotURL(
             in: cacheDirectory(for: model)
                 .appendingPathComponent("snapshots", isDirectory: true)
         ) ?? cachedSnapshotURL(
@@ -1080,14 +868,6 @@ final class PolishingEngineStore: ObservableObject {
         disabledEngineID
     }
 
-    private static func defaultGGUFModelsDirectory(fileManager: FileManager) -> URL {
-        (try? SharedModelsRoot.modelsDirectory(
-            for: .gguf,
-            fileManager: fileManager
-        )) ?? fileManager.temporaryDirectory
-            .appendingPathComponent("NativeSmartScribe-GGUF", isDirectory: true)
-    }
-
     private static func validEngineIDs(apiSettings: APIProviderSettings) -> Set<String> {
         Set([disabledEngineID, LocalRuleBasedPolishingEngine().id, mlxSwiftEngineID] + apiSettings.availablePolishingProviders.map {
             $0.kind.polishingEngineID
@@ -1109,6 +889,7 @@ final class PolishingEngineStore: ObservableObject {
     ]
 
     private static let directSnapshotDownloadModelIDs: Set<String> = [
+        "bonsai-27b-mlx-1bit",
         "qwen35-08b-4bit",
         "qwen35-2b-4bit",
         "qwen35-4b-4bit",
@@ -1117,14 +898,6 @@ final class PolishingEngineStore: ObservableObject {
     ]
 
     private static let directDownloadProgressStepBytes: Int64 = 512 * 1024
-
-    private static let llamaRuntimeVersion = "llama-b10189"
-    private static let llamaRuntimeArchiveName = "llama-b10189-bin-macos-arm64.tar.gz"
-    private static let llamaRuntimeArchiveURL =
-        "https://github.com/ggml-org/llama.cpp/releases/download/b10189/llama-b10189-bin-macos-arm64.tar.gz"
-    private static let llamaRuntimeArchiveSize: Int64 = 10_938_444
-    private static let llamaRuntimeArchiveSHA256 =
-        "2534f61b16013786b3bb8b8f4eb86326b9614733a3670c721e99a608285a8017"
 }
 
 private struct MissingPolishingModelEngine: PolishingEngine {
@@ -1316,11 +1089,6 @@ private enum PolishingModelDownloadError: LocalizedError {
     case curlFailed(String)
     case incompleteFile(String, expected: Int64, actual: Int64)
     case incompleteSnapshot(String)
-    case missingModelFileName(String)
-    case missingRemoteFile(String)
-    case runtimeChecksumMismatch
-    case runtimeExtractionFailed(String)
-    case runtimeExecutableMissing
 
     var errorDescription: String? {
         switch self {
@@ -1334,16 +1102,6 @@ private enum PolishingModelDownloadError: LocalizedError {
             "Downloaded \(filename) is incomplete: \(actual) of \(expected) bytes."
         case .incompleteSnapshot(let repositoryID):
             "Downloaded snapshot for \(repositoryID) is incomplete."
-        case .missingModelFileName(let modelName):
-            "\(modelName) does not define a GGUF model filename."
-        case .missingRemoteFile(let filename):
-            "The required Hugging Face file \(filename) was not found."
-        case .runtimeChecksumMismatch:
-            "The downloaded llama.cpp runtime failed checksum verification."
-        case .runtimeExtractionFailed(let message):
-            "Could not install the llama.cpp runtime: \(message)"
-        case .runtimeExecutableMissing:
-            "The llama.cpp runtime archive did not contain llama-cli."
         }
     }
 }

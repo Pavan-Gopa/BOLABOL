@@ -37,6 +37,7 @@ final class HotkeySessionOverlayManager {
         hotkeyTarget: HotkeyTarget = .note,
         targetLanguageLabel: String = "E",
         showsControls: Bool = false,
+        languageControlEnabled: Bool = true,
         onOriginChange: ((OverlayHUDOrigin) -> Void)? = nil,
         onLanguageTap: (() -> Void)? = nil,
         onTargetTap: (() -> Void)? = nil
@@ -52,6 +53,7 @@ final class HotkeySessionOverlayManager {
         state.hotkeyTarget = hotkeyTarget
         state.targetLanguageLabel = targetLanguageLabel
         state.showsControls = showsControls
+        state.languageControlEnabled = languageControlEnabled
         if mode == .processing || settings.style != .vertical {
             state.dragOffset = .zero
         }
@@ -77,7 +79,8 @@ final class HotkeySessionOverlayManager {
         languageMode: TranscriptionLanguageMode? = nil,
         hotkeyTarget: HotkeyTarget? = nil,
         targetLanguageLabel: String? = nil,
-        showsControls: Bool? = nil
+        showsControls: Bool? = nil,
+        languageControlEnabled: Bool? = nil
     ) {
         if let mode {
             let modeChanged = state.mode != mode
@@ -123,6 +126,9 @@ final class HotkeySessionOverlayManager {
             state.showsControls = showsControls
             panel?.updateControlsVisibility(showsControls)
         }
+        if let languageControlEnabled {
+            state.languageControlEnabled = languageControlEnabled
+        }
     }
 
     func hide() {
@@ -153,6 +159,7 @@ final class HotkeySessionOverlayManager {
             self?.originChangeHandler?(origin)
         }
         panel.onLeftTap = { [weak self] in
+            guard self?.state.languageControlEnabled == true else { return }
             self?.languageTapHandler?()
         }
         panel.onRightTap = { [weak self] in
@@ -174,6 +181,7 @@ private final class OverlayState: ObservableObject {
     @Published var hotkeyTarget: HotkeyTarget = .note
     @Published var targetLanguageLabel: String = "E"
     @Published var showsControls: Bool = false
+    @Published var languageControlEnabled: Bool = true
     @Published var isVisible: Bool = false
     @Published var dragOffset: CGSize = .zero
 }
@@ -803,7 +811,8 @@ private struct HotkeySessionOverlayView: View {
                 HStack(spacing: OverlayHUDLayout.classicButtonSpectrumGap * visualScale) {
                     controlSlot(
                         label: state.languageMode == .auto ? "A" : state.targetLanguageLabel,
-                        isActive: state.languageMode == .target
+                        isActive: state.languageMode == .target,
+                        isEnabled: state.languageControlEnabled
                     )
 
                     classicSpectrum(barCount: spectrumBarCount)
@@ -824,7 +833,8 @@ private struct HotkeySessionOverlayView: View {
                 HStack(spacing: OverlayHUDLayout.techButtonSpectrumGap * visualScale) {
                     controlSlot(
                         label: state.languageMode == .auto ? "A" : state.targetLanguageLabel,
-                        isActive: state.languageMode == .target
+                        isActive: state.languageMode == .target,
+                        isEnabled: state.languageControlEnabled
                     )
 
                     techSpectrum
@@ -845,7 +855,8 @@ private struct HotkeySessionOverlayView: View {
                 VStack(spacing: OverlayHUDLayout.verticalButtonSpectrumGap * visualScale) {
                     controlSlot(
                         label: state.languageMode == .auto ? "A" : state.targetLanguageLabel,
-                        isActive: state.languageMode == .target
+                        isActive: state.languageMode == .target,
+                        isEnabled: state.languageControlEnabled
                     )
 
                     verticalSpectrum
@@ -1021,9 +1032,14 @@ private struct HotkeySessionOverlayView: View {
     }
 
     @ViewBuilder
-    private func controlSlot(label: String, isActive: Bool) -> some View {
+    private func controlSlot(
+        label: String,
+        isActive: Bool,
+        isEnabled: Bool = true
+    ) -> some View {
         if state.showsControls {
             controlButton(label: label, isActive: isActive)
+                .opacity(isEnabled ? 1 : 0.34)
                 .transition(.opacity.combined(with: .scale(scale: 0.85)))
         } else {
             Color.clear

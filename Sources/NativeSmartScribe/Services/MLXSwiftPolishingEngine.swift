@@ -16,8 +16,8 @@ actor MLXSwiftPolishingEngine: PolishingEngine {
         preparationModelDirectory: URL = MLXSwiftPolishingEngine.defaultModelDirectory(fileManager: .default)
     ) {
         self.model = model
-        self.id = "local-model-\(model.id)"
-        self.displayName = "\(model.backend.runtimeBadge) \(model.displayName)"
+        self.id = "mlx-swift-\(model.id)"
+        self.displayName = "MLX Swift \(model.displayName)"
         self.localModelDirectory = localModelDirectory
         self.preparationModelDirectory = preparationModelDirectory
         self.snapshot = .notReady(
@@ -137,7 +137,7 @@ actor MLXSwiftPolishingEngine: PolishingEngine {
         let workerURL = executableDirectory.appendingPathComponent("NativeSmartScribePolishWorker")
         guard FileManager.default.isExecutableFile(atPath: workerURL.path) else {
             throw MLXSwiftPolishingError.workerUnavailable(
-                "Local polish worker is missing from the app bundle."
+                "MLX polish worker is missing from the app bundle."
             )
         }
 
@@ -252,7 +252,7 @@ private struct MLXPolishWorkerClient {
                     process.terminate()
                 }
                 throw MLXSwiftPolishingError.workerFailed(
-                    "Local model worker timed out after 300 seconds."
+                    "MLX worker timed out after 300 seconds."
                 )
             }
 

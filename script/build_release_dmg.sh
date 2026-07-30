@@ -6,6 +6,9 @@ APP_NAME="SmartScribe"
 DISPLAY_NAME="SmartScribe"
 BUNDLE_ID="com.smartscribe.app"
 MIN_SYSTEM_VERSION="14.0"
+# Marketing / build versions embedded in Info.plist (override with env).
+APP_VERSION="${APP_VERSION:-1.0.0}"
+APP_BUILD="${APP_BUILD:-$(date +%Y%m%d%H%M)}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE_ROOT="$(cd "$ROOT_DIR/.." && pwd)"
@@ -161,8 +164,16 @@ cat >"$INFO_PLIST" <<PLIST
   <string>AppIcon</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$APP_VERSION</string>
+  <key>CFBundleVersion</key>
+  <string>$APP_BUILD</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
   <key>LSMinimumSystemVersion</key>
   <string>$MIN_SYSTEM_VERSION</string>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.productivity</string>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
   <key>NSHighResolutionCapable</key>
@@ -295,5 +306,37 @@ if [[ "$SIGN_IDENTITY" != "-" ]]; then
   /usr/bin/codesign --force --timestamp --sign "$SIGN_IDENTITY" "$OUTPUT_DMG"
 fi
 
+# Optional: submit to Apple notarization when NOTARIZE=1 or --notarize is passed.
+SHOULD_NOTARIZE="${NOTARIZE:-0}"
+for arg in "$@"; do
+  if [[ "$arg" == "--notarize" ]]; then
+    SHOULD_NOTARIZE=1
+  fi
+done
+
+if [[ "$SHOULD_NOTARIZE" == "1" ]]; then
+  if [[ "$SIGN_IDENTITY" == "-" ]]; then
+    echo "error: cannot notarize an ad-hoc signed build" >&2
+    exit 1
+  fi
+  echo "=== Notarizing DMG ==="
+  "$ROOT_DIR/script/notarize_dmg.sh" "$OUTPUT_DMG"
+fi
+
+# Release handoff folder (checksums + install helper copy for recipients)
+HANDOFF_DIR="$DIST_DIR/handoff"
+mkdir -p "$HANDOFF_DIR"
+cp "$OUTPUT_DMG" "$HANDOFF_DIR/SmartScribe.dmg"
+cp "$ROOT_DIR/script/install.sh" "$HANDOFF_DIR/install.sh"
+chmod +x "$HANDOFF_DIR/install.sh"
+(
+  cd "$HANDOFF_DIR"
+  shasum -a 256 SmartScribe.dmg install.sh > SHA256SUMS.txt
+)
+
 echo "=== DMG successfully created at: $OUTPUT_DMG ==="
-ls -lh "$OUTPUT_DMG"
+echo "    Version: $APP_VERSION ($APP_BUILD)"
+echo "    Identity: $SIGN_IDENTITY"
+echo "    Handoff: $HANDOFF_DIR"
+ls -lh "$OUTPUT_DMG" "$HANDOFF_DIR/SmartScribe.dmg"
+cat "$HANDOFF_DIR/SHA256SUMS.txt"

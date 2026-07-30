@@ -13,6 +13,8 @@ struct GlossaryDraftSaveRequest: Equatable {
 struct GlossaryDraftModal: View {
     private static let newEntryID = "__new_glossary_entry__"
 
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
+
     let selectedText: String
     let initialSide: GlossaryDraftSide
     let authorTranscriptionLanguage: String
@@ -53,18 +55,18 @@ struct GlossaryDraftModal: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Label("Add to Glossary", systemImage: "text.badge.plus")
+                Label(generalSettingsStore.text(.addToGlossary), systemImage: "text.badge.plus")
                     .font(.headline)
                 Spacer()
                 Button(action: onCancel) {
                     Image(systemName: "xmark")
                 }
                 .buttonStyle(.plain)
-                .help("Close")
+                .help(generalSettingsStore.text(.close))
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Selected Variant")
+                Text(generalSettingsStore.text(.selectedVariant))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Text(selectedText)
@@ -73,33 +75,33 @@ struct GlossaryDraftModal: View {
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
             }
 
-            Picker("Target", selection: $selectedEntryID) {
-                Text("Create new entry").tag(Self.newEntryID)
+            Picker(generalSettingsStore.text(.target), selection: $selectedEntryID) {
+                Text(generalSettingsStore.text(.createNewEntry)).tag(Self.newEntryID)
                 ForEach(entries.sorted { $0.source.localizedCaseInsensitiveCompare($1.source) == .orderedAscending }) { entry in
                     Text(entry.source.isEmpty ? entry.translation : entry.source).tag(entry.id)
                 }
             }
 
-            Picker("Apply As", selection: $side) {
-                Text("Author Transcription").tag(GlossaryDraftSide.source)
-                Text("Auto-translation").tag(GlossaryDraftSide.translation)
+            Picker(generalSettingsStore.text(.applyAs), selection: $side) {
+                Text(generalSettingsStore.text(.authorTranscription)).tag(GlossaryDraftSide.source)
+                Text(generalSettingsStore.text(.autoTranslation)).tag(GlossaryDraftSide.translation)
             }
             .pickerStyle(.segmented)
 
-            TextField("Correct \(authorLanguageName) form", text: $source)
+            TextField(sourceTitle, text: $source)
                 .textFieldStyle(.roundedBorder)
-            TextField("\(autoTranslationLanguageName) / auto-translation form", text: $translation)
+            TextField(translationTitle, text: $translation)
                 .textFieldStyle(.roundedBorder)
 
             GlossaryCategoryPicker(category: $category, categories: categories)
 
             HStack {
                 Spacer()
-                Button("Cancel", action: onCancel)
+                Button(generalSettingsStore.text(.cancel), action: onCancel)
                 Button {
                     save()
                 } label: {
-                    Label("Save", systemImage: "checkmark")
+                    Label(generalSettingsStore.text(.save), systemImage: "checkmark")
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(isSaveDisabled)
@@ -143,5 +145,13 @@ struct GlossaryDraftModal: View {
 
     private var autoTranslationLanguageName: String {
         GlossaryLanguageCatalog.displayName(for: autoTranslationLanguage)
+    }
+
+    private var sourceTitle: String {
+        generalSettingsStore.formattedText(.correctLanguageForm, authorLanguageName)
+    }
+
+    private var translationTitle: String {
+        generalSettingsStore.formattedText(.languageAutoTranslationForm, autoTranslationLanguageName)
     }
 }

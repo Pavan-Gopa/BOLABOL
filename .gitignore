@@ -2,6 +2,10 @@
 .build/
 .swiftpm/
 .codex/
+.artifacts/
+__pycache__/
+graphify-out/
+scratch/
 dist/
 build/
 DerivedData/
@@ -13,3 +17,4 @@ xcuserdata/
 *.dmg
 *.xcarchive/
 *.log
+*.pyc

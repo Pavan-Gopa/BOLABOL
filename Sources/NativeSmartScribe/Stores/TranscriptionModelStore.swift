@@ -95,10 +95,24 @@ final class TranscriptionModelStore: ObservableObject {
         reconcileModelStates()
         guard hasLocalFiles(for: model) else { return }
         _ = settings.activate(modelID: model.id, catalog: catalog)
+        // Selecting a local model implies the local Whisper backend.
+        settings.backend = .localWhisper
     }
 
     func deactivate() {
         settings.deactivate()
+    }
+
+    func setBackend(_ backend: TranscriptionBackend) {
+        settings.backend = backend
+        if backend == .geminiCloud {
+            // Cloud dictation does not use an on-device Whisper selection.
+            // Keep activeModelID if present so switching back is easy.
+        }
+    }
+
+    var usesGeminiCloud: Bool {
+        settings.backend == .geminiCloud
     }
 
     func remove(_ model: TranscriptionModelDescriptor) {

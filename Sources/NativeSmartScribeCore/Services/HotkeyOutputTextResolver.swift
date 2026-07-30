@@ -4,11 +4,15 @@ public enum HotkeyOutputTextResolver {
     public static func text(from note: SmartScribeNote, target: HotkeyTarget) -> String {
         switch target {
         case .raw:
-            note.rawText
+            return note.rawText
         case .note:
-            note.polishedVariantOne
+            let v1 = note.polishedVariantOne.trimmingCharacters(in: .whitespacesAndNewlines)
+            return v1.isEmpty ? note.rawText : note.polishedVariantOne
         case .x2:
-            note.polishedVariantTwo
+            let v2 = note.polishedVariantTwo.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !v2.isEmpty { return note.polishedVariantTwo }
+            let v1 = note.polishedVariantOne.trimmingCharacters(in: .whitespacesAndNewlines)
+            return v1.isEmpty ? note.rawText : note.polishedVariantOne
         }
     }
 }

@@ -9,8 +9,8 @@ func hotkeySettingsMatchElectronDefaults() {
     #expect(settings.enabled == false)
     #expect(settings.target == .note)
     #expect(settings.mode == .typing)
-    #expect(settings.hotkey == "Alt+S")
-    #expect(settings.secondaryHotkey == "Alt+Shift+S")
+    #expect(settings.hotkey == "Option+S")
+    #expect(settings.secondaryHotkey == "Option+1")
 }
 
 @Test
@@ -28,8 +28,19 @@ func hotkeySettingsDecodesLegacyPayloadWithoutSecondaryHotkey() throws {
     #expect(settings.enabled == true)
     #expect(settings.target == .raw)
     #expect(settings.mode == .clipboard)
-    #expect(settings.hotkey == "Cmd+Alt+X")
-    #expect(settings.secondaryHotkey == "Alt+Shift+S")
+    // Legacy Alt / Cmd tokens are normalized to Mac Option / Command wording.
+    #expect(settings.hotkey == "Command+Option+X")
+    #expect(settings.secondaryHotkey == "Option+1")
+}
+
+@Test
+func hotkeySettingsNormalizesAltToOptionAndDisplaysGlyph() {
+    #expect(HotkeySettings.normalizeMacModifiers("Alt+S") == "Option+S")
+    #expect(HotkeySettings.normalizeMacModifiers("alt+~") == "Option+~")
+    #expect(HotkeySettings.normalizeMacModifiers("⌥+S") == "Option+S")
+    #expect(HotkeySettings.displayString(for: "Option+S") == "⌥S")
+    #expect(HotkeySettings.displayString(for: "Option+~") == "⌥~")
+    #expect(HotkeySettings.displayString(for: "Command+Option+S") == "⌘⌥S")
 }
 
 @Test
@@ -40,6 +51,17 @@ func hotkeyTargetsMapToProcessingVariants() {
     #expect(HotkeyTarget.raw.requestedPolishingVariants.isEmpty)
     #expect(HotkeyTarget.note.requestedPolishingVariants == [.variantOne])
     #expect(HotkeyTarget.x2.requestedPolishingVariants == [.variantTwo])
+}
+
+@Test
+func hotkeyTargetsCycleThroughHUDLabels() {
+    #expect(HotkeyTarget.raw.hudLabel == "R")
+    #expect(HotkeyTarget.note.hudLabel == "1")
+    #expect(HotkeyTarget.x2.hudLabel == "2")
+
+    #expect(HotkeyTarget.raw.next() == .note)
+    #expect(HotkeyTarget.note.next() == .x2)
+    #expect(HotkeyTarget.x2.next() == .raw)
 }
 
 @Test
@@ -54,4 +76,18 @@ func hotkeyOutputTextResolverSelectsRequestedNoteText() {
     #expect(HotkeyOutputTextResolver.text(from: note, target: .raw) == "raw text")
     #expect(HotkeyOutputTextResolver.text(from: note, target: .note) == "variant one")
     #expect(HotkeyOutputTextResolver.text(from: note, target: .x2) == "variant two")
+}
+
+@Test
+func hotkeyOutputTextResolverFallsBackToRawTextWhenVariantIsEmpty() {
+    let note = SmartScribeNote(
+        title: "Test",
+        rawText: "raw text",
+        polishedVariantOne: "",
+        polishedVariantTwo: ""
+    )
+
+    #expect(HotkeyOutputTextResolver.text(from: note, target: .raw) == "raw text")
+    #expect(HotkeyOutputTextResolver.text(from: note, target: .note) == "raw text")
+    #expect(HotkeyOutputTextResolver.text(from: note, target: .x2) == "raw text")
 }

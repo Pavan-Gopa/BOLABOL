@@ -199,7 +199,8 @@ final class AudioRecorder: ObservableObject {
         }
 
         smoothedFrequencyBands = zip(smoothedFrequencyBands, bands).map { previous, next in
-            previous * 0.42 + next * 0.58
+            let factor: Float = next > previous ? 0.72 : 0.38
+            return previous * (1 - factor) + next * factor
         }
         frequencyBands = smoothedFrequencyBands
     }
@@ -441,17 +442,29 @@ private func frequencyBands(for buffer: AVAudioPCMBuffer, bandCount: Int = 40) -
     }
 
     let channelCount = Int(buffer.format.channelCount)
-    var windowedSamples = Array(repeating: Float(0), count: frameCount)
+    var monoSamples = Array(repeating: Float(0), count: frameCount)
     for index in 0..<frameCount {
         var averagedSample: Float = 0
         for channel in 0..<channelCount {
             averagedSample += channelData[channel][index]
         }
-        averagedSample /= Float(max(1, channelCount))
+        monoSamples[index] = averagedSample / Float(max(1, channelCount))
+    }
+
+    // Remove the DC component before the transform. Built-in and USB
+    // microphones often carry a tiny offset or low-frequency rumble which
+    // otherwise keeps the left side of a relative spectrum permanently raised.
+    let mean = monoSamples.reduce(0, +) / Float(frameCount)
+    var squareSum: Float = 0
+    var windowedSamples = Array(repeating: Float(0), count: frameCount)
+    for index in 0..<frameCount {
+        let centeredSample = monoSamples[index] - mean
+        squareSum += centeredSample * centeredSample
         let phase = 2 * Float.pi * Float(index) / Float(max(1, frameCount - 1))
         let window = 0.5 - 0.5 * cos(phase)
-        windowedSamples[index] = averagedSample * window
+        windowedSamples[index] = centeredSample * window
     }
+    let rootMeanSquare = sqrt(squareSum / Float(frameCount))
 
     let binCount = min(frameCount / 2, 196)
     var magnitudes = Array(repeating: Float(0), count: binCount)
@@ -488,12 +501,26 @@ private func frequencyBands(for buffer: AVAudioPCMBuffer, bandCount: Int = 40) -
         return slice.reduce(0, +) / Float(max(1, slice.count))
     }
 
-    let peak = max(rawBands.max() ?? 0, 0.000_001)
+    let activityInput = min(1, max(0, (rootMeanSquare - 0.0035) / 0.035))
+    let activitySmooth = activityInput * activityInput * (3 - 2 * activityInput)
+    let activityGate = pow(activitySmooth, 0.70)
+
     return rawBands.enumerated().map { index, magnitude in
-        let relative = min(1, magnitude / peak)
-        let absolute = min(1, log1p(magnitude * 140) / log1p(36))
-        let bandWeight = 0.76 + 0.24 * Float(index) / Float(max(1, bandCount - 1))
-        let emphasized = (pow(relative, 0.42) * 0.78 + absolute * 0.22) * bandWeight
-        return max(0.03, min(1, emphasized))
+        let progress = Float(index) / Float(max(1, bandCount - 1))
+        let highGain: Float = progress > 0.50 ? (1.0 + 1.35 * (progress - 0.50) / 0.50) : 1.0
+        let absolute = min(1, log1p(magnitude * 150 * highGain) / log1p(18))
+        
+        let frequencyWeight: Float
+        if progress < 0.25 {
+            frequencyWeight = 0.85 + 0.15 * (progress / 0.25)
+        } else if progress <= 0.55 {
+            frequencyWeight = 1.0
+        } else {
+            let highProgress = (progress - 0.55) / 0.45
+            frequencyWeight = 1.0 + 1.85 * highProgress
+        }
+
+        let emphasized = absolute * frequencyWeight * activityGate
+        return max(0.02, min(1, emphasized))
     }
 }

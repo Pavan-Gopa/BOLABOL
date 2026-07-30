@@ -42,13 +42,7 @@ struct SettingsView: View {
 
             GlossarySettingsView()
                 .tabItem {
-                    Label("Glossary", systemImage: "text.book.closed")
-                }
-
-            StatisticsSettingsView()
-                .overlayScrollbar()
-                .tabItem {
-                    Label(generalSettingsStore.text(.settingsStatistics), systemImage: "chart.bar")
+                    Label(generalSettingsStore.text(.settingsGlossary), systemImage: "text.book.closed")
                 }
 
             HelpSettingsView()
@@ -56,8 +50,8 @@ struct SettingsView: View {
                     Label(generalSettingsStore.text(.settingsHelp), systemImage: "questionmark.circle")
                 }
         }
-        .padding(20)
-        .frame(width: 760, height: 640)
+        .padding(16)
+        .frame(width: 760, height: 680)
         .modifier(UIScaleModifier())
     }
 }

@@ -2,6 +2,7 @@ import NativeSmartScribeCore
 import SwiftUI
 
 struct GlossaryCategoryPicker: View {
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @Binding var category: String
     let categories: [String]
 
@@ -9,8 +10,8 @@ struct GlossaryCategoryPicker: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Picker("Category", selection: selectionBinding) {
-                Text("No category").tag(GlossaryCategorySelection.noneID)
+            Picker(generalSettingsStore.text(.category), selection: selectionBinding) {
+                Text(generalSettingsStore.text(.noCategory)).tag(GlossaryCategorySelection.noneID)
                 if !categories.isEmpty {
                     Divider()
                     ForEach(categories, id: \.self) { category in
@@ -18,13 +19,13 @@ struct GlossaryCategoryPicker: View {
                     }
                 }
                 Divider()
-                Text("Add Category...").tag(GlossaryCategorySelection.customID)
+                Text(generalSettingsStore.text(.addCategory)).tag(GlossaryCategorySelection.customID)
             }
             .labelsHidden()
             .frame(width: 190)
 
             if showsCustomField {
-                TextField("New category", text: $category)
+                TextField(generalSettingsStore.text(.newCategory), text: $category)
                     .textFieldStyle(.roundedBorder)
             }
         }

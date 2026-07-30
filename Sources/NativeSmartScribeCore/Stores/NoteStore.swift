@@ -68,19 +68,32 @@ public final class NoteStore: ObservableObject {
             selection = notes[safe: min(index, notes.count - 1)]?.id
         }
 
-        if let audioRecording = note.audioRecording, audioRecording.source == .microphone {
-            try? fileManager.removeItem(at: audioRecording.fileURL)
-        }
+        removeManagedAudioFile(note.audioRecording)
     }
 
     public func clearAll() {
         for note in notes {
-            if let audioRecording = note.audioRecording, audioRecording.source == .microphone {
-                try? fileManager.removeItem(at: audioRecording.fileURL)
-            }
+            removeManagedAudioFile(note.audioRecording)
         }
         notes.removeAll()
         selection = nil
+        // Always empty the mic Recordings folder so orphans left by failed
+        // sessions / lost note links cannot accumulate (was ~GBs of .caf junk).
+        // Permanent delete via FileManager — not the Finder Trash.
+        purgeAllFiles(in: recordingsDirectoryURL)
+    }
+
+    /// Deletes microphone recordings under Application Support that are no longer
+    /// referenced by any note. Safe to call on launch after loading notes.
+    @discardableResult
+    public func purgeOrphanedRecordings() -> Int {
+        let referenced = Set(
+            notes.compactMap { note -> String? in
+                guard let url = note.audioRecording?.fileURL else { return nil }
+                return url.standardizedFileURL.resolvingSymlinksInPath().path
+            }
+        )
+        return purgeUnreferencedFiles(in: recordingsDirectoryURL, referencedPaths: referenced)
     }
 
     @discardableResult
@@ -230,7 +243,13 @@ public final class NoteStore: ObservableObject {
     public static func live() -> NoteStore {
         let fileManager = FileManager.default
         let url = defaultNotesFileURL(fileManager: fileManager)
-        return NoteStore(notes: nil, fileManager: fileManager, notesFileURL: url, isPersistenceEnabled: true)
+        let store = NoteStore(notes: nil, fileManager: fileManager, notesFileURL: url, isPersistenceEnabled: true)
+        // One-shot hygiene: drop microphone .caf files no note still points at.
+        let removed = store.purgeOrphanedRecordings()
+        if removed > 0 {
+            // Logging stays optional in Core; no Logger dependency here.
+        }
+        return store
     }
 
     private func saveNotes() {
@@ -244,6 +263,72 @@ public final class NoteStore: ObservableObject {
         } catch {
             // Silently ignore
         }
+    }
+
+    private var applicationSupportRootURL: URL {
+        notesFileURL.deletingLastPathComponent()
+    }
+
+    private var recordingsDirectoryURL: URL {
+        applicationSupportRootURL.appendingPathComponent("Recordings", isDirectory: true)
+    }
+
+    private func removeManagedAudioFile(_ recording: AudioRecording?) {
+        guard let recording else { return }
+        let url = recording.fileURL.standardizedFileURL.resolvingSymlinksInPath()
+        guard isManagedAudioPath(url) else { return }
+        try? fileManager.removeItem(at: url)
+    }
+
+    private func isManagedAudioPath(_ url: URL) -> Bool {
+        let path = url.path
+        let supportRoot = applicationSupportRootURL.standardizedFileURL.resolvingSymlinksInPath().path
+        // Only delete files we own under this store's Application Support root.
+        return path.hasPrefix(supportRoot + "/") || path == supportRoot
+    }
+
+    private func purgeAllFiles(in directory: URL) {
+        guard fileManager.fileExists(atPath: directory.path),
+              let contents = try? fileManager.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+              )
+        else {
+            return
+        }
+        for item in contents {
+            try? fileManager.removeItem(at: item)
+        }
+    }
+
+    @discardableResult
+    private func purgeUnreferencedFiles(
+        in directory: URL,
+        referencedPaths: Set<String>
+    ) -> Int {
+        guard fileManager.fileExists(atPath: directory.path),
+              let contents = try? fileManager.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+              )
+        else {
+            return 0
+        }
+
+        var removed = 0
+        for item in contents {
+            let path = item.standardizedFileURL.resolvingSymlinksInPath().path
+            guard !referencedPaths.contains(path) else { continue }
+            do {
+                try fileManager.removeItem(at: item)
+                removed += 1
+            } catch {
+                continue
+            }
+        }
+        return removed
     }
 
     private static func loadNotes(

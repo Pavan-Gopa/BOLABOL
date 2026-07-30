@@ -47,7 +47,7 @@ struct SidebarView: View {
                     )
                 }
                 .disabled(noteStore.notes.copyAllText().isEmpty)
-                .help(isCopyAllCopied ? "Copied!" : generalSettingsStore.text(.copyAll))
+                .help(isCopyAllCopied ? generalSettingsStore.text(.copied) : generalSettingsStore.text(.copyAll))
                 .foregroundStyle(isCopyAllCopied ? .green : .primary)
                 .animation(.easeInOut(duration: 0.15), value: isCopyAllCopied)
 
@@ -109,6 +109,7 @@ struct SidebarView: View {
 }
 
 private struct SidebarNoteRow: View {
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     let note: SmartScribeNote
     let copyTitle: String
     let deleteTitle: String
@@ -143,7 +144,7 @@ private struct SidebarNoteRow: View {
                     .animation(.easeInOut(duration: 0.15), value: isCopied)
             }
             .buttonStyle(.plain)
-            .help(isCopied ? "Copied!" : copyTitle)
+            .help(isCopied ? generalSettingsStore.text(.copied) : copyTitle)
             .disabled(note.bestDisplayText().isEmpty && !isCopied)
 
             Button(role: .destructive) {

@@ -6,9 +6,9 @@ func nativeTranscriptionCatalogUsesWhisperKitRecommendedModelByDefault() throws 
     let catalog = TranscriptionModelCatalog.nativeWhisperKit
     let defaultModel = try #require(catalog.defaultModel)
 
-    #expect(defaultModel.id == "whisperkit-large-v3-v20240930-626mb")
+    #expect(defaultModel.id == "whisperkit-large-v3-full")
     #expect(defaultModel.backend == .whisperKitCoreML)
-    #expect(defaultModel.modelName == "large-v3-v20240930_626MB")
+    #expect(defaultModel.modelName == "large-v3")
     #expect(defaultModel.isRecommended)
 }
 
@@ -21,8 +21,8 @@ func nativeTranscriptionCatalogUsesExpectedWhisperOrder() {
         "whisperkit-small-multilingual",
         "whisperkit-medium-en",
         "whisperkit-medium-multilingual",
-        "whisperkit-large-v3-turbo-v20240930-632mb",
-        "whisperkit-large-v3-v20240930-626mb"
+        "whisperkit-large-v3-turbo",
+        "whisperkit-large-v3-full"
     ])
 }
 
@@ -61,4 +61,19 @@ func transcriptionLanguagePreferenceResolvesAutoAndCustomCodes() {
     #expect(TranscriptionLanguagePreference.language("ru").resolvedCode(defaultCode: "en") == "ru")
     #expect(TranscriptionLanguagePreference.custom(" PT-br ").resolvedCode(defaultCode: "en") == "pt-br")
     #expect(TranscriptionLanguagePreference.custom(" ").resolvedCode(defaultCode: "en") == "en")
+}
+
+@Test
+func transcriptionLanguageHudLabelUsesFirstLetterOfDisplayName() {
+    #expect(TranscriptionLanguageOption.hudLabel(for: "en") == "E")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "english") == "E")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "es") == "S")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "Spanish") == "S")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "fr") == "F")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "de") == "G")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "zh") == "C")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "ja") == "J")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "ru") == "R")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "ar") == "A")
+    #expect(TranscriptionLanguageOption.hudLabel(for: "") == "E")
 }

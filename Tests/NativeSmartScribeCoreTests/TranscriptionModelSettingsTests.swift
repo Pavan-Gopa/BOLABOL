@@ -41,9 +41,9 @@ func transcriptionModelSettingsClearsActiveModelWhenRemoved() {
 func transcriptionModelSettingsResolvesLanguageFromActiveModelDefault() throws {
     let catalog = TranscriptionModelCatalog.nativeWhisperKit
     var settings = TranscriptionModelSettings()
-    settings.markDownloaded(modelID: "whisperkit-large-v3-v20240930-626mb")
+    settings.markDownloaded(modelID: "whisperkit-large-v3-full")
     _ = settings.activate(
-        modelID: "whisperkit-large-v3-v20240930-626mb",
+        modelID: "whisperkit-large-v3-full",
         catalog: catalog
     )
 

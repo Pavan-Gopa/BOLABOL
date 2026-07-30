@@ -10,6 +10,8 @@ final class PolishingEngineStore: ObservableObject {
     static let mlxSwiftEngineID = "mlx-swift-local-model"
 
     private static let selectedEngineDefaultsKey = "polishing.selectedEngineID"
+    private static let lastNonDisabledEngineDefaultsKey = "polishing.lastNonDisabledEngineID"
+    private static let lastActiveModelDefaultsKey = "polishing.lastActiveModelID"
     private static let modelSettingsDefaultsKey = "polishing.modelSettings"
     private static let apiSettingsDefaultsKey = "polishing.apiProviderSettings"
 
@@ -20,7 +22,9 @@ final class PolishingEngineStore: ObservableObject {
     private let fileManager: FileManager
     private let modelsDirectory: URL
     private let scanner: LocalModelScanner
+    private let credentialStore: any APIProviderCredentialStoring
     private var mlxEngines: [String: MLXSwiftPolishingEngine] = [:]
+    private var cloudEngines: [String: CloudTextPolishingEngine] = [:]
 
     @Published private(set) var settings: PolishingModelSettings {
         didSet {
@@ -30,6 +34,7 @@ final class PolishingEngineStore: ObservableObject {
     @Published private(set) var apiSettings: APIProviderSettings {
         didSet {
             saveAPISettings()
+            cloudEngines.removeAll()
         }
     }
     @Published private(set) var preparationSnapshot: ModelPreparationSnapshot
@@ -46,6 +51,9 @@ final class PolishingEngineStore: ObservableObject {
             }
 
             userDefaults.set(selectedEngineID, forKey: Self.selectedEngineDefaultsKey)
+            if selectedEngineID != Self.disabledEngineID {
+                userDefaults.set(selectedEngineID, forKey: Self.lastNonDisabledEngineDefaultsKey)
+            }
             refreshPreparationSnapshot()
         }
     }
@@ -55,18 +63,23 @@ final class PolishingEngineStore: ObservableObject {
         ruleEngine: any PolishingEngine = LocalRuleBasedPolishingEngine(),
         userDefaults: UserDefaults = .standard,
         fileManager: FileManager = .default,
-        modelsDirectory: URL? = nil
+        modelsDirectory: URL? = nil,
+        credentialStore: any APIProviderCredentialStoring = KeychainAPIProviderCredentialStore()
     ) {
         self.catalog = catalog
         self.ruleEngine = ruleEngine
         self.userDefaults = userDefaults
         self.fileManager = fileManager
+        self.credentialStore = credentialStore
         self.modelsDirectory = modelsDirectory ?? MLXSwiftPolishingEngine.defaultModelDirectory(
             fileManager: fileManager
         )
         self.scanner = LocalModelScanner()
         self.settings = Self.loadModelSettings(from: userDefaults)
-        let loadedAPISettings = Self.loadAPISettings(from: userDefaults)
+        let loadedAPISettings = Self.hydratedAPISettings(
+            Self.loadAPISettings(from: userDefaults),
+            credentialStore: credentialStore
+        )
         self.apiSettings = loadedAPISettings
 
         let storedEngineID = userDefaults.string(forKey: Self.selectedEngineDefaultsKey)
@@ -84,6 +97,7 @@ final class PolishingEngineStore: ObservableObject {
         reconcileModelStates(refreshSnapshot: false)
         pruneStaleCustomModels()
         refreshPreparationSnapshot()
+        saveAPISettings()
         Task { @MainActor [weak self] in
             await self?.scanForLocalModels()
         }
@@ -103,10 +117,16 @@ final class PolishingEngineStore: ObservableObject {
         }
 
         if let providerKind = APIProviderKind(polishingEngineID: engineID) {
-            return CloudTextPolishingEngine(
+            let cacheKey = providerKind.polishingEngineID
+            if let cached = cloudEngines[cacheKey] {
+                return cached
+            }
+            let engine = CloudTextPolishingEngine(
                 kind: providerKind,
                 configuration: apiSettings.configuration(for: providerKind)
             )
+            cloudEngines[cacheKey] = engine
+            return engine
         }
 
         guard engineID == Self.mlxSwiftEngineID else { return ruleEngine }
@@ -201,16 +221,7 @@ final class PolishingEngineStore: ObservableObject {
         _ configuration: APIProviderConfiguration,
         for kind: APIProviderKind
     ) {
-        switch kind {
-        case .google:
-            apiSettings.google = configuration
-        case .openAI:
-            apiSettings.openAI = configuration
-        case .anthropic:
-            apiSettings.anthropic = configuration
-        case .custom:
-            apiSettings.custom = configuration
-        }
+        apiSettings.setConfiguration(configuration, for: kind)
 
         if !Self.validEngineIDs(apiSettings: apiSettings).contains(selectedEngineID) {
             selectedEngineID = Self.defaultEngineID
@@ -241,8 +252,34 @@ final class PolishingEngineStore: ObservableObject {
         reconcileModelStates()
         guard settings.installationState(for: model.id).isDownloaded else { return }
         guard settings.activate(modelID: model.id, catalog: catalog) else { return }
+        userDefaults.set(model.id, forKey: Self.lastActiveModelDefaultsKey)
         selectedEngineID = Self.mlxSwiftEngineID
         refreshPreparationSnapshot()
+    }
+
+    /// Automatically enables the polishing engine and activates the last used
+    /// or available downloaded model when the user selects Variant 1 or 2 via the HUD widget.
+    func ensurePolishingEnabledForWidgetTarget() {
+        if selectedEngineID == Self.disabledEngineID {
+            let lastEngine = userDefaults.string(forKey: Self.lastNonDisabledEngineDefaultsKey)
+            let valid = Self.validEngineIDs(apiSettings: apiSettings)
+            if let lastEngine, valid.contains(lastEngine), lastEngine != Self.disabledEngineID {
+                selectedEngineID = lastEngine
+            } else {
+                selectedEngineID = Self.mlxSwiftEngineID
+            }
+        }
+
+        reconcileModelStates()
+        if selectedEngineID == Self.mlxSwiftEngineID && settings.activeDownloadedModel(catalog: catalog) == nil {
+            let availableDownloaded = allModels.filter { settings.installationState(for: $0.id).isDownloaded }
+            let lastModelID = userDefaults.string(forKey: Self.lastActiveModelDefaultsKey)
+            if let lastModelID, let targetModel = availableDownloaded.first(where: { $0.id == lastModelID }) {
+                activate(targetModel)
+            } else if let firstDownloaded = availableDownloaded.first {
+                activate(firstDownloaded)
+            }
+        }
     }
 
     func remove(_ model: PolishingModelDescriptor) {
@@ -765,8 +802,42 @@ final class PolishingEngineStore: ObservableObject {
     }
 
     private func saveAPISettings() {
-        guard let data = try? JSONEncoder().encode(apiSettings) else { return }
+        for kind in APIProviderKind.allCases {
+            let keys = apiSettings.configuration(for: kind).apiKeys
+            try? credentialStore.saveKeys(keys, for: kind)
+        }
+
+        var redactedSettings = apiSettings
+        for kind in APIProviderKind.allCases {
+            var configuration = redactedSettings.configuration(for: kind)
+            configuration.apiKeys = []
+            redactedSettings.setConfiguration(configuration, for: kind)
+        }
+
+        guard let data = try? JSONEncoder().encode(redactedSettings) else { return }
         userDefaults.set(data, forKey: Self.apiSettingsDefaultsKey)
+    }
+
+    private static func hydratedAPISettings(
+        _ storedSettings: APIProviderSettings,
+        credentialStore: any APIProviderCredentialStoring
+    ) -> APIProviderSettings {
+        var hydratedSettings = storedSettings
+
+        for kind in APIProviderKind.allCases {
+            var configuration = hydratedSettings.configuration(for: kind)
+            let keychainKeys = credentialStore.loadKeys(for: kind)
+
+            if !keychainKeys.isEmpty {
+                configuration.apiKeys = keychainKeys
+            } else if !configuration.apiKeys.isEmpty {
+                try? credentialStore.saveKeys(configuration.apiKeys, for: kind)
+            }
+
+            hydratedSettings.setConfiguration(configuration, for: kind)
+        }
+
+        return hydratedSettings
     }
 
     private static func loadModelSettings(

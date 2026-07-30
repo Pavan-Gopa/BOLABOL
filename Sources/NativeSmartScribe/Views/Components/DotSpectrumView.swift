@@ -7,10 +7,10 @@ struct DotSpectrumView: View {
     let isActive: Bool
     let isProcessing: Bool
     var dotCount: Int = 30
-    var noiseFloor: CGFloat = 0.14
-    var amplitude: CGFloat = 0.62
-    var sensitivity: CGFloat = 1
-    var silenceThreshold: CGFloat = 0.16
+    var noiseFloor: CGFloat = 0.08
+    var amplitude: CGFloat = 0.96
+    var sensitivity: CGFloat = 1.45
+    var silenceThreshold: CGFloat = 0.035
     var processingSpeed: CGFloat = 0.72
     @State private var phase: TimeInterval = Date().timeIntervalSinceReferenceDate
 
@@ -24,7 +24,9 @@ struct DotSpectrumView: View {
         let sampledBands = resampledBands
         let peak = max(CGFloat(sampledBands.max() ?? 0), 0)
         if isActive, !isProcessing, peak < silenceThreshold {
-            return Array(repeating: noiseFloor, count: sampledBands.count)
+            return sampledBands.enumerated().map { index, _ in
+                noiseFloor + 0.015 * abs(sin(Double(index) * 0.74))
+            }
         }
 
         if !isActive {
@@ -34,12 +36,12 @@ struct DotSpectrumView: View {
         }
 
         return sampledBands.enumerated().map { index, band in
+            let progress = CGFloat(index) / CGFloat(max(dotCount - 1, 1))
+            let highGain = 1.0 + 1.85 * pow(progress, 1.2)
             let cleaned = max(0, (CGFloat(band) - silenceThreshold) / max(1 - silenceThreshold, 0.01))
-            let relative = peak > silenceThreshold ? cleaned / max((peak - silenceThreshold) / max(1 - silenceThreshold, 0.01), 0.05) : 0
-            let absolute = min(1, cleaned * 2.6 * sensitivity)
-            let shaped = pow(min(1, relative), 0.74) * 0.40 + pow(absolute, 1.12) * 0.60
-            let lowCut = 0.48 + 0.52 * CGFloat(index) / CGFloat(max(dotCount - 1, 1))
-            let voiceWeight = lowCut * (0.86 + 0.22 * sin(CGFloat(index) / CGFloat(max(dotCount - 1, 1)) * .pi))
+            let absolute = min(1, cleaned * 2.10 * sensitivity * highGain)
+            let shaped = pow(absolute, 0.82)
+            let voiceWeight = 0.65 + 0.35 * sin(progress * .pi) + 0.35 * progress
             return min(1, max(noiseFloor, shaped * voiceWeight))
         }
     }

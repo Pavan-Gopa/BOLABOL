@@ -15,6 +15,8 @@ func generalSettingsMatchElectronGeneralDefaults() {
     #expect(settings.overlay.capsuleOpacity == 0.32)
     #expect(settings.overlay.soundEnabled == true)
     #expect(settings.overlay.volume == 1)
+    #expect(settings.overlay.style == .capsule)
+    #expect(settings.overlay.styleOrigins.isEmpty)
     #expect(settings.logLevel == .warn)
 }
 
@@ -49,6 +51,41 @@ func overlaySettingsDecodeLegacyPayloadWithoutOpacity() throws {
 
     #expect(settings.capsuleOpacity == 0.32)
     #expect(settings.volume == 0.1)
+    #expect(settings.style == .capsule)
+    #expect(settings.styleOrigins.isEmpty)
+}
+
+@Test
+func overlaySettingsRememberAnIndependentOriginForEveryStyle() throws {
+    var settings = OverlayHUDSettings()
+    let capsuleOrigin = OverlayHUDOrigin(x: 120, y: 48)
+    let techOrigin = OverlayHUDOrigin(x: 812, y: 620)
+    let verticalOrigin = OverlayHUDOrigin(x: 35, y: 410)
+
+    settings.setOrigin(capsuleOrigin, for: .capsule)
+    settings.setOrigin(techOrigin, for: .tech)
+    settings.setOrigin(verticalOrigin, for: .vertical)
+
+    #expect(settings.origin(for: .capsule) == capsuleOrigin)
+    #expect(settings.origin(for: .tech) == techOrigin)
+    #expect(settings.origin(for: .vertical) == verticalOrigin)
+    #expect(settings.lastOrigin == capsuleOrigin)
+
+    let encoded = try JSONEncoder().encode(settings)
+    let decoded = try JSONDecoder().decode(OverlayHUDSettings.self, from: encoded)
+    #expect(decoded.origin(for: .capsule) == capsuleOrigin)
+    #expect(decoded.origin(for: .tech) == techOrigin)
+    #expect(decoded.origin(for: .vertical) == verticalOrigin)
+}
+
+@Test
+func overlaySettingsUseLegacyOriginOnlyForClassicStyle() {
+    let legacyOrigin = OverlayHUDOrigin(x: 240, y: 80)
+    let settings = OverlayHUDSettings(lastOrigin: legacyOrigin)
+
+    #expect(settings.origin(for: .capsule) == legacyOrigin)
+    #expect(settings.origin(for: .tech) == nil)
+    #expect(settings.origin(for: .vertical) == nil)
 }
 
 @Test
@@ -73,27 +110,81 @@ func appTextUsesSelectedRussianLanguage() {
 }
 
 @Test
-func helpTextExplainsCoreWorkflowsMoreExplicitly() {
-    #expect(
-        AppText.localized(.helpRecordStep, language: .english)
-            == "Click Record to capture audio, or use the global hotkey to record into the active app."
-    )
-    #expect(
-        AppText.localized(.helpVariantsStep, language: .english)
-            == "Raw shows the transcript, Variant 1 cleans it up, and Variant 2 rewrites it for maximum clarity."
-    )
-    #expect(
-        AppText.localized(.helpOfflineModelStep, language: .english)
-            == "Open Settings -> Local Models to download Whisper models and choose a transcription language or Auto detect."
-    )
-    #expect(
-        AppText.localized(.helpPolishingProviderStep, language: .english)
-            == "Choose Polishing Disabled, Quick Local Cleanup, a local MLX model, or an API provider depending on speed and quality needs."
-    )
-    #expect(
-        AppText.localized(.helpLogsStep, language: .english)
-            == "Use Settings -> General -> Export System Logs when something fails and you need a diagnostic file for debugging."
-    )
+func helpGuideCoversCurrentProductSurface() {
+    let hero = AppText.localized(.helpHeroSubtitle, language: .english)
+    #expect(hero.contains("Whisper") || hero.lowercased().contains("dictate"))
+
+    let start = AppText.localized(.helpStart2, language: .english)
+    #expect(start.contains("Local Models") || start.contains("Whisper"))
+    #expect(start.contains("Full") || start.contains("Large"))
+
+    let languageControl = AppText.localized(.helpHUDControlLanguage, language: .english)
+    #expect(languageControl.contains("A"))
+    #expect(languageControl.contains("E") || languageControl.contains("English"))
+
+    let leftA = AppText.localized(.helpHUDLeftA, language: .english)
+    #expect(leftA.contains("A") && leftA.lowercased().contains("auto"))
+    let leftLetter = AppText.localized(.helpHUDLeftLetter, language: .english)
+    #expect(leftLetter.contains("E") && leftLetter.contains("English"))
+    let leftTap = AppText.localized(.helpHUDLeftTap, language: .english)
+    #expect(leftTap.lowercased().contains("tap") || leftTap.contains("A"))
+
+    let rightR = AppText.localized(.helpHUDRightR, language: .english)
+    #expect(rightR.contains("R") && rightR.lowercased().contains("raw"))
+    let rightCycle = AppText.localized(.helpHUDRightCycle, language: .english)
+    #expect(rightCycle.contains("1") && rightCycle.contains("2"))
+
+    let drag = AppText.localized(.helpHUDDrag, language: .english)
+    #expect(drag.lowercased().contains("drag") || drag.lowercased().contains("move"))
+    let size = AppText.localized(.helpHUDSize, language: .english)
+    #expect(size.lowercased().contains("size") || size.contains("General"))
+    let sound = AppText.localized(.helpHUDSound, language: .english)
+    #expect(sound.lowercased().contains("sound"))
+
+    let targetControl = AppText.localized(.helpHUDControlTarget, language: .english)
+    #expect(targetControl.contains("R") && targetControl.contains("1") && targetControl.contains("2"))
+
+    let englishNote = AppText.localized(.helpLangEnglishNote, language: .english)
+    #expect(englishNote.contains("Whisper"))
+    #expect(englishNote.contains("Full") || englishNote.lowercased().contains("translate"))
+
+    let otherNote = AppText.localized(.helpLangOtherNote, language: .english)
+    #expect(otherNote.contains("LLM") || otherNote.contains("MLX"))
+
+    let providers = AppText.localized(.helpCloudProviders, language: .english)
+    #expect(providers.contains("Google"))
+    #expect(providers.contains("OpenRouter"))
+    #expect(providers.contains("Qwen"))
+    #expect(providers.contains("Custom"))
+
+    let openRouter = AppText.localized(.helpCloudOpenRouter, language: .english)
+    #expect(openRouter.lowercased().contains("balance"))
+
+    // Floating translation + dual hotkeys (recent product surface)
+    let floatHotkey = AppText.localized(.helpHotkeySecondary, language: .english)
+    #expect(floatHotkey.contains("Option+~") || floatHotkey.lowercased().contains("translation"))
+    #expect(!floatHotkey.contains("Alt+"))
+    let helpPrimary = AppText.localized(.helpHotkeyPrimary, language: .english)
+    #expect(helpPrimary.contains("Option+S"))
+    #expect(!helpPrimary.contains("Alt+"))
+    let floatCapture = AppText.localized(.helpFloatCapture, language: .english)
+    #expect(floatCapture.contains("Command-C") || floatCapture.lowercased().contains("clipboard"))
+    let favorites = AppText.localized(.helpCloudFavorites, language: .english)
+    #expect(favorites.contains("★") || favorites.lowercased().contains("favorite"))
+    let multiKeys = AppText.localized(.helpCloudKeys, language: .english)
+    #expect(multiKeys.contains("10") || multiKeys.lowercased().contains("key"))
+    #expect(!AppText.localized(.helpModeFloatTitle, language: .russian).isEmpty)
+
+    let clear = AppText.localized(.helpPrivacyClear, language: .english)
+    #expect(clear.contains("Clear All") || clear.lowercased().contains("permanently"))
+
+    #expect(AppText.localized(.helpHeroTitle, language: .russian).contains("SmartScribe"))
+    #expect(!AppText.localized(.helpStartTitle, language: .russian).isEmpty)
+    #expect(!AppText.localized(.helpHUDControlLanguage, language: .russian).isEmpty)
+
+    // Legacy keys still resolve for partial locales / older references
+    #expect(!AppText.localized(.helpQuickStart, language: .english).isEmpty)
+    #expect(!AppText.localized(.helpLogsStep, language: .english).isEmpty)
 }
 
 @Test

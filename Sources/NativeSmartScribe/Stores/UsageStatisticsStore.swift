@@ -62,6 +62,11 @@ final class UsageStatisticsStore: ObservableObject {
         settings.reset(modelID: modelID)
     }
 
+    func reset(modelIDs: [String]) {
+        guard !modelIDs.isEmpty else { return }
+        settings.reset(modelIDs: modelIDs)
+    }
+
     private func saveSettings() {
         guard let data = try? JSONEncoder().encode(settings) else { return }
         userDefaults.set(data, forKey: Self.settingsDefaultsKey)

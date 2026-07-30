@@ -26,12 +26,13 @@ public final class PolishingWorkflow {
     @discardableResult
     public func polishNote(
         _ noteID: SmartScribeNote.ID,
-        variants: [ProcessingVariant] = [.variantOne, .variantTwo]
+        variants: [ProcessingVariant] = [.variantOne, .variantTwo],
+        targetLanguage: String? = nil
     ) async -> [ProcessingVariant: PolishingResult] {
         var results: [ProcessingVariant: PolishingResult] = [:]
         guard let note = noteStore.note(withID: noteID) else { return results }
         let rawText = note.rawText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let languageGuard = PolishingLanguageGuard(sourceText: rawText)
+        let languageGuard = PolishingLanguageGuard(sourceText: rawText, targetLanguage: targetLanguage)
 
         guard !rawText.isEmpty else {
             for variant in variants.polishableVariants {
@@ -122,7 +123,14 @@ private extension Array where Element == ProcessingVariant {
 private struct PolishingLanguageGuard {
     private let sourceIsCyrillicDominant: Bool
 
-    init?(sourceText: String) {
+    init?(sourceText: String, targetLanguage: String? = nil) {
+        if let targetLanguage = targetLanguage?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+           !targetLanguage.isEmpty,
+           targetLanguage.hasPrefix("en") {
+            // Target language is English: do not lock polishing output to Russian/Cyrillic!
+            return nil
+        }
+
         let sourceProfile = ScriptProfile(text: sourceText)
         guard sourceProfile.isCyrillicDominant else {
             return nil

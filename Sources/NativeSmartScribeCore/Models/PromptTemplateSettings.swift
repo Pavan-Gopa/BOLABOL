@@ -316,6 +316,38 @@ public struct PromptTemplateSettings: Codable, Equatable, Sendable {
     public func migratedToLatestDefaults() -> PromptTemplateSettings {
         var migrated = self
 
+        // Always update Default (D) slot to latest defaults
+        migrated.variantOneSlots[.default] = PromptTemplate.variantOneDefault.body
+        migrated.variantTwoSlots[.default] = PromptTemplate.variantTwoDefault.body
+
+        // If customOne (Slot 1) in Variant 1 matches variantOneDefault or Universal, clear customOne to leave Slot 1 blank
+        let v1CustomOne = Self.normalizedPromptBody(migrated.variantOneSlots[.customOne] ?? "")
+        let v1DefaultNorm = Self.normalizedPromptBody(PromptTemplate.variantOneDefault.body)
+        if v1CustomOne == v1DefaultNorm
+            || v1CustomOne.contains("remove duplicates (important)")
+            || v1CustomOne.contains("what \"better\" means here")
+            || migrated.variantOneSlotNames[.customOne]?.lowercased() == "universal" {
+            migrated.variantOneSlots[.customOne] = ""
+            migrated.variantOneSlotNames[.customOne] = PromptSlot.customOne.title
+            if migrated.activeVariantOneSlot == .customOne {
+                migrated.activeVariantOneSlot = .default
+            }
+        }
+
+        // If customOne (Slot 1) in Variant 2 matches variantTwoDefault or Universal, clear customOne to leave Slot 1 blank
+        let v2CustomOne = Self.normalizedPromptBody(migrated.variantTwoSlots[.customOne] ?? "")
+        let v2DefaultNorm = Self.normalizedPromptBody(PromptTemplate.variantTwoDefault.body)
+        if v2CustomOne == v2DefaultNorm
+            || v2CustomOne.contains("short vs long:")
+            || v2CustomOne.contains("what \"better\" means here")
+            || migrated.variantTwoSlotNames[.customOne]?.lowercased() == "universal" {
+            migrated.variantTwoSlots[.customOne] = ""
+            migrated.variantTwoSlotNames[.customOne] = PromptSlot.customOne.title
+            if migrated.activeVariantTwoSlot == .customOne {
+                migrated.activeVariantTwoSlot = .default
+            }
+        }
+
         let activeVariantOneBody = migrated.body(for: .variantOne)
         if activeVariantOneBody == PromptTemplate.variantOneLegacyDefault.body {
             migrated.variantOneSlots[migrated.activeVariantOneSlot] = migrated.activeVariantOneSlot == .default
@@ -337,7 +369,8 @@ public struct PromptTemplateSettings: Codable, Equatable, Sendable {
             migrated.activeVariantTwoSlot = .default
         }
 
-        if migrated.markdownBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if migrated.markdownBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || Self.normalizedPromptBody(migrated.markdownBody) == Self.normalizedPromptBody(PromptTemplate.markdownLegacyDefault.body) {
             migrated.markdownBody = PromptTemplate.markdownDefault.body
         }
 
@@ -370,6 +403,12 @@ public struct PromptTemplateSettings: Codable, Equatable, Sendable {
         ]
 
         return markers.contains { normalized.contains($0) }
+    }
+
+    private static func normalizedPromptBody(_ body: String) -> String {
+        body
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func resolvedBody(

@@ -1,5 +1,24 @@
 import Foundation
 
+public enum TextFontPreference: String, CaseIterable, Codable, Equatable, Identifiable, Sendable {
+    case system
+    case serif
+    case monospaced
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .system:
+            "System"
+        case .serif:
+            "Serif"
+        case .monospaced:
+            "Monospaced"
+        }
+    }
+}
+
 public enum ThemePreference: String, CaseIterable, Codable, Equatable, Identifiable, Sendable {
     case dark
     case light
@@ -109,6 +128,14 @@ public enum OverlayPosition: String, CaseIterable, Codable, Equatable, Identifia
     }
 }
 
+public enum OverlayHUDStyle: String, CaseIterable, Codable, Equatable, Identifiable, Sendable {
+    case capsule
+    case tech
+    case vertical
+
+    public var id: String { rawValue }
+}
+
 public enum AppLogLevel: String, CaseIterable, Codable, Equatable, Identifiable, Sendable {
     case error
     case warn
@@ -139,6 +166,8 @@ public struct OverlayHUDSettings: Codable, Equatable, Sendable {
         case capsuleOpacity
         case soundEnabled
         case volume
+        case style
+        case styleOrigins
     }
 
     public var position: OverlayPosition
@@ -147,6 +176,8 @@ public struct OverlayHUDSettings: Codable, Equatable, Sendable {
     public var capsuleOpacity: Double
     public var soundEnabled: Bool
     public var volume: Double
+    public var style: OverlayHUDStyle
+    public var styleOrigins: [String: OverlayHUDOrigin]
 
     public init(
         position: OverlayPosition = .bottomCenter,
@@ -154,7 +185,9 @@ public struct OverlayHUDSettings: Codable, Equatable, Sendable {
         scale: Double = 1,
         capsuleOpacity: Double = 0.32,
         soundEnabled: Bool = true,
-        volume: Double = 1
+        volume: Double = 1,
+        style: OverlayHUDStyle = .capsule,
+        styleOrigins: [String: OverlayHUDOrigin] = [:]
     ) {
         self.position = position
         self.lastOrigin = lastOrigin
@@ -162,6 +195,8 @@ public struct OverlayHUDSettings: Codable, Equatable, Sendable {
         self.capsuleOpacity = capsuleOpacity
         self.soundEnabled = soundEnabled
         self.volume = volume
+        self.style = style
+        self.styleOrigins = styleOrigins
     }
 
     public init(from decoder: Decoder) throws {
@@ -172,6 +207,10 @@ public struct OverlayHUDSettings: Codable, Equatable, Sendable {
         self.capsuleOpacity = try container.decodeIfPresent(Double.self, forKey: .capsuleOpacity) ?? 0.32
         self.soundEnabled = try container.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? true
         self.volume = try container.decodeIfPresent(Double.self, forKey: .volume) ?? 0.55
+        self.style = try container.decodeIfPresent(OverlayHUDStyle.self, forKey: .style) ?? .capsule
+        self.styleOrigins =
+            try container.decodeIfPresent([String: OverlayHUDOrigin].self, forKey: .styleOrigins)
+            ?? [:]
         normalize()
     }
 
@@ -183,12 +222,31 @@ public struct OverlayHUDSettings: Codable, Equatable, Sendable {
         try container.encode(capsuleOpacity, forKey: .capsuleOpacity)
         try container.encode(soundEnabled, forKey: .soundEnabled)
         try container.encode(volume, forKey: .volume)
+        try container.encode(style, forKey: .style)
+        try container.encode(styleOrigins, forKey: .styleOrigins)
     }
 
     public mutating func normalize() {
         scale = scale.clamped(to: 0.8...1.6)
         capsuleOpacity = capsuleOpacity.clamped(to: 0.12...1)
         volume = volume.clamped(to: 0.1...2)
+        styleOrigins = styleOrigins.filter { key, _ in
+            OverlayHUDStyle(rawValue: key) != nil
+        }
+    }
+
+    public func origin(for style: OverlayHUDStyle) -> OverlayHUDOrigin? {
+        if let origin = styleOrigins[style.rawValue] {
+            return origin
+        }
+        return style == .capsule ? lastOrigin : nil
+    }
+
+    public mutating func setOrigin(_ origin: OverlayHUDOrigin, for style: OverlayHUDStyle) {
+        styleOrigins[style.rawValue] = origin
+        if style == .capsule {
+            lastOrigin = origin
+        }
     }
 }
 
@@ -208,24 +266,58 @@ public struct GeneralSettings: Codable, Equatable, Sendable {
     public var uiLanguage: UILanguagePreference
     public var overlay: OverlayHUDSettings
     public var logLevel: AppLogLevel
+    public var hasCompletedOnboarding: Bool
+    public var textScale: Double
+    public var textFont: TextFontPreference
 
     public init(
         theme: ThemePreference = .dark,
         uiScale: Double = 1,
         uiLanguage: UILanguagePreference = .system,
         overlay: OverlayHUDSettings = OverlayHUDSettings(),
-        logLevel: AppLogLevel = .warn
+        logLevel: AppLogLevel = .warn,
+        hasCompletedOnboarding: Bool = false,
+        textScale: Double = 1,
+        textFont: TextFontPreference = .system
     ) {
         self.theme = theme
         self.uiScale = uiScale
         self.uiLanguage = uiLanguage
         self.overlay = overlay
         self.logLevel = logLevel
+        self.hasCompletedOnboarding = hasCompletedOnboarding
+        self.textScale = textScale
+        self.textFont = textFont
+        normalize()
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case theme
+        case uiScale
+        case uiLanguage
+        case overlay
+        case logLevel
+        case hasCompletedOnboarding
+        case textScale
+        case textFont
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.theme = try container.decodeIfPresent(ThemePreference.self, forKey: .theme) ?? .dark
+        self.uiScale = try container.decodeIfPresent(Double.self, forKey: .uiScale) ?? 1
+        self.uiLanguage = try container.decodeIfPresent(UILanguagePreference.self, forKey: .uiLanguage) ?? .system
+        self.overlay = try container.decodeIfPresent(OverlayHUDSettings.self, forKey: .overlay) ?? OverlayHUDSettings()
+        self.logLevel = try container.decodeIfPresent(AppLogLevel.self, forKey: .logLevel) ?? .warn
+        self.hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? false
+        self.textScale = try container.decodeIfPresent(Double.self, forKey: .textScale) ?? 1
+        self.textFont = try container.decodeIfPresent(TextFontPreference.self, forKey: .textFont) ?? .system
         normalize()
     }
 
     public mutating func normalize() {
         uiScale = uiScale.clamped(to: 0.8...1.4)
+        textScale = textScale.clamped(to: 1.0...2.0)
         overlay.normalize()
     }
 }

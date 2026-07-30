@@ -19,7 +19,7 @@ struct PolishingSettingsView: View {
                 // Custom (scanned) models section
                 if !polishingEngineStore.customModels.isEmpty {
                     HStack {
-                        Label("Local Models", systemImage: "folder.badge.gearshape")
+                        Label(generalSettingsStore.text(.settingsLocalModels), systemImage: "folder.badge.gearshape")
                             .font(.headline)
                             .foregroundStyle(.secondary)
                         Spacer()
@@ -165,12 +165,12 @@ private struct PolishingModelRow: View {
                         polishingEngineStore.remove(model)
                     } label: {
                         Label(
-                            model.isCustom ? "Remove" : generalSettingsStore.text(.delete),
+                            model.isCustom ? generalSettingsStore.text(.remove) : generalSettingsStore.text(.delete),
                             systemImage: model.isCustom ? "xmark.circle" : "trash"
                         )
                     }
                     .controlSize(.small)
-                    .help(model.isCustom ? "Removes from list only. Files on disk are not deleted." : "")
+                    .help(model.isCustom ? generalSettingsStore.text(.removeCustomModelHelp) : "")
                 }
             }
         }
@@ -331,6 +331,7 @@ private extension ModelPreparationSnapshot {
 // MARK: - Scan for Local Models Button
 
 private struct ScanForLocalModelsButton: View {
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
 
     var body: some View {
@@ -341,9 +342,9 @@ private struct ScanForLocalModelsButton: View {
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Scan for Local Models")
+                Text(generalSettingsStore.text(.scanForLocalModels))
                     .font(.subheadline.weight(.medium))
-                Text("Search ~/Documents, ~/Downloads, and HuggingFace cache for MLX models")
+                Text(generalSettingsStore.text(.scanForLocalModelsBody))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -356,7 +357,7 @@ private struct ScanForLocalModelsButton: View {
                     HStack(spacing: 6) {
                         ProgressView()
                             .controlSize(.small)
-                        Text("Scanning…")
+                        Text(generalSettingsStore.text(.scanning))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -366,23 +367,23 @@ private struct ScanForLocalModelsButton: View {
                             await polishingEngineStore.scanForLocalModels()
                         }
                     } label: {
-                        Label("Scan", systemImage: "magnifyingglass")
+                        Label(generalSettingsStore.text(.scan), systemImage: "magnifyingglass")
                     }
                     .buttonStyle(.bordered)
                 }
 
                 if let count = polishingEngineStore.lastScanResultCount {
-                    Text(count == 0 ? "No new models found" : "Found \(count) model\(count == 1 ? "" : "s")")
+                    Text(count == 0 ? generalSettingsStore.text(.noNewModelsFound) : generalSettingsStore.formattedText(.foundModelsCount, "\(count)"))
                         .font(.caption)
                         .foregroundStyle(count > 0 ? .green : .secondary)
                 }
 
                 if let skipped = polishingEngineStore.lastScanSkippedUnsupportedCount,
                    skipped > 0 {
-                    Text("Skipped \(skipped) unsupported model\(skipped == 1 ? "" : "s")")
+                    Text(generalSettingsStore.formattedText(.skippedUnsupportedModels, "\(skipped)"))
                         .font(.caption)
                         .foregroundStyle(.orange)
-                        .help("Only text-generation MLX models with a compatible tokenizer are supported for local polishing.")
+                        .help(generalSettingsStore.text(.localPolishingSupportHint))
                 }
             }
         }

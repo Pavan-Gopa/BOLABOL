@@ -1,3 +1,4 @@
+import AppKit
 import Carbon
 import Foundation
 import NativeSmartScribeCore
@@ -5,25 +6,38 @@ import NativeSmartScribeCore
 extension Notification.Name {
     static let nativeSmartScribeHotkeyTriggered = Notification.Name("nativeSmartScribeHotkeyTriggered")
     static let nativeSmartScribeTargetHotkeyTriggered = Notification.Name("nativeSmartScribeTargetHotkeyTriggered")
+    static let nativeSmartScribeQuickTranslationHotkeyTriggered = Notification.Name("nativeSmartScribeQuickTranslationHotkeyTriggered")
+    static let nativeSmartScribeSettingsHotkeyTriggered = Notification.Name("nativeSmartScribeSettingsHotkeyTriggered")
 }
 
 @MainActor
 final class GlobalHotkeyManager {
     private var primaryHotKeyRef: EventHotKeyRef?
     private var secondaryHotKeyRef: EventHotKeyRef?
+    private var tertiaryHotKeyRef: EventHotKeyRef?
+    private var settingsHotKeyRef: EventHotKeyRef?
+    private var settingsAltHotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
-    private var currentHotkey: HotkeyCombination?
+    private var localEventMonitor: Any?
+    private var currentSettingsHotkey: String = HotkeySettings.defaultSettingsHotkey
 
     init() {
         installEventHandler()
+        installLocalMonitor()
     }
 
     func apply(settings: HotkeySettings) {
+        currentSettingsHotkey = settings.settingsHotkey
         unregister()
         guard settings.enabled else { return }
 
         do {
-            try register(primary: settings.hotkey, secondary: settings.secondaryHotkey)
+            try register(
+                primary: settings.hotkey,
+                secondary: settings.secondaryHotkey,
+                tertiary: settings.tertiaryHotkey,
+                settings: settings.settingsHotkey
+            )
         } catch {
             NativeSmartScribeLog.models.error(
                 "Failed to register global hotkeys: \(error.localizedDescription, privacy: .public)"
@@ -31,9 +45,13 @@ final class GlobalHotkeyManager {
         }
     }
 
-    private func register(primary: String, secondary: String) throws {
+    private func register(primary: String, secondary: String, tertiary: String, settings: String) throws {
         let primaryCombo = try HotkeyCombination(primary)
         let secondaryCombo = try HotkeyCombination(secondary)
+
+        // Track registered combinations to prevent duplicate registrations
+        // (Carbon silently fails when the same key+modifier combo is registered twice).
+        var registeredCombos: Set<HotkeyComboKey> = []
 
         // Register primary hotkey (ID 1)
         let primaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 1)
@@ -50,8 +68,9 @@ final class GlobalHotkeyManager {
             throw GlobalHotkeyError.registrationFailed(primaryStatus)
         }
         self.primaryHotKeyRef = primaryRef
+        registeredCombos.insert(HotkeyComboKey(keyCode: primaryCombo.keyCode, modifiers: primaryCombo.carbonModifiers))
 
-        // Register secondary hotkey (ID 2)
+        // Register secondary hotkey (ID 2) — full translation modal
         let secondaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 2)
         var secondaryRef: EventHotKeyRef?
         let secondaryStatus = RegisterEventHotKey(
@@ -64,9 +83,102 @@ final class GlobalHotkeyManager {
         )
         if secondaryStatus == noErr, let secondaryRef {
             self.secondaryHotKeyRef = secondaryRef
+            registeredCombos.insert(HotkeyComboKey(keyCode: secondaryCombo.keyCode, modifiers: secondaryCombo.carbonModifiers))
         } else {
             NativeSmartScribeLog.models.warning(
                 "Failed to register secondary hotkey \(secondary, privacy: .public): \(secondaryStatus)"
+            )
+        }
+
+        // Register tertiary hotkey (ID 3) — quick translation
+        if let tertiaryCombo = try? HotkeyCombination(tertiary) {
+            let tertiaryKey = HotkeyComboKey(keyCode: tertiaryCombo.keyCode, modifiers: tertiaryCombo.carbonModifiers)
+            if registeredCombos.contains(tertiaryKey) {
+                NativeSmartScribeLog.models.warning(
+                    "Skipped tertiary hotkey \(tertiary, privacy: .public): duplicates an already-registered hotkey"
+                )
+            } else {
+                let tertiaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 3)
+                var tertiaryRef: EventHotKeyRef?
+                let tertiaryStatus = RegisterEventHotKey(
+                    tertiaryCombo.keyCode,
+                    tertiaryCombo.carbonModifiers,
+                    tertiaryID,
+                    GetApplicationEventTarget(),
+                    0,
+                    &tertiaryRef
+                )
+                if tertiaryStatus == noErr, let tertiaryRef {
+                    self.tertiaryHotKeyRef = tertiaryRef
+                    registeredCombos.insert(tertiaryKey)
+                } else {
+                    NativeSmartScribeLog.models.warning(
+                        "Failed to register tertiary hotkey \(tertiary, privacy: .public): \(tertiaryStatus)"
+                    )
+                }
+            }
+        }
+
+        // Register settings hotkey (ID 4)
+        if let settingsCombo = try? HotkeyCombination(settings) {
+            let settingsKey = HotkeyComboKey(keyCode: settingsCombo.keyCode, modifiers: settingsCombo.carbonModifiers)
+            if registeredCombos.contains(settingsKey) {
+                NativeSmartScribeLog.models.warning(
+                    "Skipped settings hotkey \(settings, privacy: .public): duplicates an already-registered hotkey"
+                )
+            } else {
+                NativeSmartScribeLog.models.info(
+                    "Registering settings hotkey: \(settings, privacy: .public), keyCode: \(settingsCombo.keyCode), modifiers: \(settingsCombo.carbonModifiers)"
+                )
+                let settingsID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 4)
+                var settingsRef: EventHotKeyRef?
+                let settingsStatus = RegisterEventHotKey(
+                    settingsCombo.keyCode,
+                    settingsCombo.carbonModifiers,
+                    settingsID,
+                    GetApplicationEventTarget(),
+                    0,
+                    &settingsRef
+                )
+                if settingsStatus == noErr, let settingsRef {
+                    self.settingsHotKeyRef = settingsRef
+                    registeredCombos.insert(settingsKey)
+                    NativeSmartScribeLog.models.info("Settings hotkey registered successfully")
+                } else {
+                    NativeSmartScribeLog.models.warning(
+                        "Failed to register settings hotkey \(settings, privacy: .public): \(settingsStatus)"
+                    )
+                }
+
+                // If key is Tilde (kVK_ANSI_Grave), also register alternate modifier variant (without/with Shift)
+                // so Option+` and Option+~ both trigger the Settings toggle when pressed.
+                if settingsCombo.keyCode == UInt32(kVK_ANSI_Grave) {
+                    let altModifiers = (settingsCombo.carbonModifiers & UInt32(shiftKey) != 0)
+                        ? (settingsCombo.carbonModifiers & ~UInt32(shiftKey))
+                        : (settingsCombo.carbonModifiers | UInt32(shiftKey))
+
+                    let altKey = HotkeyComboKey(keyCode: settingsCombo.keyCode, modifiers: altModifiers)
+                    if !registeredCombos.contains(altKey) {
+                        var altRef: EventHotKeyRef?
+                        let altID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 4)
+                        let altStatus = RegisterEventHotKey(
+                            settingsCombo.keyCode,
+                            altModifiers,
+                            altID,
+                            GetApplicationEventTarget(),
+                            0,
+                            &altRef
+                        )
+                        if altStatus == noErr, let altRef {
+                            self.settingsAltHotKeyRef = altRef
+                            registeredCombos.insert(altKey)
+                        }
+                    }
+                }
+            }
+        } else {
+            NativeSmartScribeLog.models.warning(
+                "Failed to parse settings hotkey: \(settings, privacy: .public)"
             )
         }
     }
@@ -78,9 +190,87 @@ final class GlobalHotkeyManager {
         if let secondaryHotKeyRef {
             UnregisterEventHotKey(secondaryHotKeyRef)
         }
+        if let tertiaryHotKeyRef {
+            UnregisterEventHotKey(tertiaryHotKeyRef)
+        }
+        if let settingsHotKeyRef {
+            UnregisterEventHotKey(settingsHotKeyRef)
+        }
+        if let settingsAltHotKeyRef {
+            UnregisterEventHotKey(settingsAltHotKeyRef)
+        }
         primaryHotKeyRef = nil
         secondaryHotKeyRef = nil
-        currentHotkey = nil
+        tertiaryHotKeyRef = nil
+        settingsHotKeyRef = nil
+        settingsAltHotKeyRef = nil
+    }
+
+    private func installLocalMonitor() {
+        localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self else { return event }
+            if self.isSettingsHotkeyEvent(event) {
+                Task { @MainActor in
+                    NotificationCenter.default.post(name: .nativeSmartScribeSettingsHotkeyTriggered, object: nil)
+                }
+                return nil
+            }
+            return event
+        }
+    }
+
+    private func isSettingsHotkeyEvent(_ event: NSEvent) -> Bool {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+        // Parse current settings hotkey configuration
+        guard let combo = try? HotkeyCombination(currentSettingsHotkey) else {
+            return false
+        }
+
+        // For Tilde/Grave key (keyCode 50), match Option modifier regardless of Shift across layout variants (US, Russian, ISO)
+        if combo.keyCode == UInt32(kVK_ANSI_Grave) {
+            let hasOption = flags.contains(.option)
+            let hasCommand = flags.contains(.command)
+            let hasControl = flags.contains(.control)
+
+            guard hasOption && !hasCommand && !hasControl else { return false }
+
+            // Check physical key codes for Tilde/Grave (50), ISO Section (10), Right Bracket (30), Left Bracket (33)
+            if event.keyCode == UInt16(kVK_ANSI_Grave) ||
+               event.keyCode == UInt16(kVK_ISO_Section) ||
+               event.keyCode == UInt16(kVK_ANSI_RightBracket) ||
+               event.keyCode == UInt16(kVK_ANSI_LeftBracket) {
+                return true
+            }
+
+            // Check characters ignoring modifiers
+            if let chars = event.charactersIgnoringModifiers?.lowercased(),
+               chars.contains("~") || chars.contains("`") || chars.contains("]") || chars.contains("[") || chars.contains("§") || chars.contains("±") || chars.contains("ё") {
+                return true
+            }
+
+            // Check generated characters
+            if let chars = event.characters?.lowercased(),
+               chars.contains("]") || chars.contains("[") || chars.contains("~") || chars.contains("`") {
+                return true
+            }
+
+            return false
+        }
+
+        // For other keys, match exact key code and modifiers
+        let hasOption = (combo.carbonModifiers & UInt32(optionKey)) != 0
+        let hasCommand = (combo.carbonModifiers & UInt32(cmdKey)) != 0
+        let hasControl = (combo.carbonModifiers & UInt32(controlKey)) != 0
+        let hasShift = (combo.carbonModifiers & UInt32(shiftKey)) != 0
+
+        guard event.keyCode == UInt16(combo.keyCode) else { return false }
+        guard hasOption == flags.contains(.option) else { return false }
+        guard hasCommand == flags.contains(.command) else { return false }
+        guard hasControl == flags.contains(.control) else { return false }
+        guard hasShift == flags.contains(.shift) else { return false }
+
+        return true
     }
 
     private func installEventHandler() {
@@ -107,6 +297,15 @@ final class GlobalHotkeyManager {
                     } else if hotKeyID.id == 2 {
                         Task { @MainActor in
                             NotificationCenter.default.post(name: .nativeSmartScribeTargetHotkeyTriggered, object: nil)
+                        }
+                    } else if hotKeyID.id == 3 {
+                        Task { @MainActor in
+                            NotificationCenter.default.post(name: .nativeSmartScribeQuickTranslationHotkeyTriggered, object: nil)
+                        }
+                    } else if hotKeyID.id == 4 {
+                        NativeSmartScribeLog.models.info("Settings hotkey triggered (ID 4)")
+                        Task { @MainActor in
+                            NotificationCenter.default.post(name: .nativeSmartScribeSettingsHotkeyTriggered, object: nil)
                         }
                     }
                 }
@@ -157,12 +356,20 @@ private struct HotkeyCombination {
             }
         }
 
-        guard modifiers != 0, let keyCode = Self.keyCodes[key.uppercased()] else {
+        // Characters that require Shift on standard keyboard layouts.
+        // When the user types "~" they physically press Shift+backtick,
+        // so the Carbon hotkey must include shiftKey to match.
+        var effectiveModifiers = modifiers
+        if key == "~" || key == "TILDE" {
+            effectiveModifiers |= UInt32(shiftKey)
+        }
+
+        guard effectiveModifiers != 0, let keyCode = Self.keyCodes[key.uppercased()] else {
             throw GlobalHotkeyError.invalidHotkey(string)
         }
 
         self.keyCode = UInt32(keyCode)
-        self.carbonModifiers = modifiers
+        self.carbonModifiers = effectiveModifiers
     }
 
     private static let keyCodes: [String: Int] = [
@@ -204,8 +411,19 @@ private struct HotkeyCombination {
         "9": kVK_ANSI_9,
         "SPACE": kVK_Space,
         "RETURN": kVK_Return,
-        "ESCAPE": kVK_Escape
+        "ESCAPE": kVK_Escape,
+        "~": kVK_ANSI_Grave,
+        "`": kVK_ANSI_Grave,
+        "TILDE": kVK_ANSI_Grave,
+        "GRAVE": kVK_ANSI_Grave,
+        "BACKTICK": kVK_ANSI_Grave
     ]
+}
+
+/// Lightweight hashable key for tracking which Carbon hotkey combos are already registered.
+private struct HotkeyComboKey: Hashable {
+    let keyCode: UInt32
+    let modifiers: UInt32
 }
 
 private enum GlobalHotkeyError: LocalizedError {
@@ -215,7 +433,7 @@ private enum GlobalHotkeyError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidHotkey(let hotkey):
-            "Invalid hotkey: \(hotkey). Use a modifier plus a key, for example Alt+S."
+            "Invalid hotkey: \(hotkey). Use a modifier plus a key, for example Option+S."
         case .registrationFailed(let status):
             "Could not register hotkey. macOS returned \(status)."
         }

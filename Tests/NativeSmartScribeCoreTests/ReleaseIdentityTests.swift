@@ -23,6 +23,15 @@ func releaseScriptsBuildSmartScribeAppWithoutNativePrefix() throws {
 }
 
 @Test
+func debugRunScriptBuildsAppAndWorkerProductsSeparately() throws {
+    let source = try String(contentsOfFile: "script/build_and_run.sh", encoding: .utf8)
+
+    #expect(source.contains("swift build --arch arm64 --product \"$SWIFT_PRODUCT_NAME\""))
+    #expect(source.contains("swift build --arch arm64 --product \"$WORKER_NAME\""))
+    #expect(!source.contains("swift build --arch arm64 --product \"$SWIFT_PRODUCT_NAME\" --product \"$WORKER_NAME\""))
+}
+
+@Test
 func releaseDmgUsesSmartScribeFilename() throws {
     let source = try String(contentsOfFile: "script/build_release_dmg.sh", encoding: .utf8)
 

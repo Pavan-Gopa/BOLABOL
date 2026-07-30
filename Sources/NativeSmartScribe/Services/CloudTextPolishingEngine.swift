@@ -5,6 +5,15 @@ struct CloudTextPolishingEngine: PolishingEngine {
     let kind: APIProviderKind
     let configuration: APIProviderConfiguration
 
+    private static let googleSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest =
+            CloudRequestRetryPolicy.googleTextGeneration.timeoutInterval
+        configuration.timeoutIntervalForResource = 45
+        configuration.waitsForConnectivity = false
+        return URLSession(configuration: configuration)
+    }()
+
     var id: String { kind.polishingEngineID }
     var displayName: String { kind.displayName }
 
@@ -220,7 +229,7 @@ struct CloudTextPolishingEngine: PolishingEngine {
         let encoder = useSnakeCaseCoding ? JSONEncoder.cloudAPI : JSONEncoder()
         request.httpBody = try encoder.encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await performDataRequest(request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw CloudTextPolishingError.invalidResponse
         }
@@ -246,6 +255,56 @@ struct CloudTextPolishingEngine: PolishingEngine {
             )
             throw error
         }
+    }
+
+    private func performDataRequest(_ sourceRequest: URLRequest) async throws -> (Data, URLResponse) {
+        guard kind == .google else {
+            return try await URLSession.shared.data(for: sourceRequest)
+        }
+
+        let policy = CloudRequestRetryPolicy.googleTextGeneration
+        var request = sourceRequest
+        request.timeoutInterval = policy.timeoutInterval
+
+        for attempt in 1...policy.maxAttempts {
+            let startedAt = Date()
+            NativeSmartScribeLog.polishing.info(
+                "Cloud polishing request started provider=\(self.kind.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) attempt=\(attempt)/\(policy.maxAttempts) requestBytes=\(request.httpBody?.count ?? 0) timeoutSeconds=\(Int(policy.timeoutInterval))"
+            )
+
+            do {
+                let (data, response) = try await Self.googleSession.data(for: request)
+                let elapsedMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+
+                if (200..<300).contains(statusCode), data.isEmpty {
+                    throw CloudRequestRetryError.emptySuccessfulResponse
+                }
+
+                NativeSmartScribeLog.polishing.info(
+                    "Cloud polishing request completed provider=\(self.kind.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) attempt=\(attempt)/\(policy.maxAttempts) status=\(statusCode) responseBytes=\(data.count) elapsedMs=\(elapsedMilliseconds)"
+                )
+                return (data, response)
+            } catch {
+                let elapsedMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
+                let willRetry = attempt < policy.maxAttempts && policy.shouldRetry(error)
+
+                if willRetry {
+                    NativeSmartScribeLog.polishing.warning(
+                        "Cloud polishing request retry provider=\(self.kind.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) attempt=\(attempt)/\(policy.maxAttempts) elapsedMs=\(elapsedMilliseconds) error=\(error.localizedDescription, privacy: .public)"
+                    )
+                    try await Task.sleep(nanoseconds: policy.retryDelayNanoseconds)
+                    continue
+                }
+
+                NativeSmartScribeLog.polishing.error(
+                    "Cloud polishing request failed provider=\(self.kind.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) attempt=\(attempt)/\(policy.maxAttempts) elapsedMs=\(elapsedMilliseconds) error=\(error.localizedDescription, privacy: .public)"
+                )
+                throw error
+            }
+        }
+
+        throw CloudTextPolishingError.invalidResponse
     }
 
     private func authorizationHeaders(apiKey: String) -> [String: String] {

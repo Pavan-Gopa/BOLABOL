@@ -35,7 +35,7 @@ and does not bias WhisperKit, Apple Speech, or any LLM provider.
 - Whisper models use WhisperKit with Core ML.
 - Parakeet TDT 0.6B v3 uses FluidAudio 0.15.5 with Core ML and Apple Neural Engine.
   It transcribes 25 European languages but does not translate speech to English.
+- The HUD language control is disabled for Parakeet and English-only Whisper models.
 - MLX polishing models use the GPU through MLX Swift.
-- Bonsai 8B Q1 uses its official GGUF through llama.cpp Metal with an 8K context.
-  SmartScribe downloads only `Bonsai-8B-Q1_0.gguf` and a checksum-pinned arm64
-  llama.cpp runtime into the shared `AI_LOCAL_MODELS/gguf` directory.
+- Bonsai 27B uses the official `prism-ml/Bonsai-27B-mlx-1bit` model and Prism's
+  1-bit MLX Swift kernels. No llama.cpp or GGUF runtime is used for polishing.

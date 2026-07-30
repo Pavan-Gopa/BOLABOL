@@ -57,7 +57,7 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
         case .whisperKitCoreML:
             "openai_whisper-\(modelName)"
         case .fluidAudioCoreML:
-            "parakeet-tdt-0.6b-v3-coreml"
+            modelName
         }
     }
 

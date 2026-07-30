@@ -153,7 +153,7 @@ struct ContentView: View {
             recording,
             hotkeyTarget: nil,
             outputMode: nil,
-            forceTargetLanguage: persistentHUDForceTargetLanguage
+            forceTargetLanguage: effectiveHUDForceTargetLanguage
         )
     }
 
@@ -871,10 +871,10 @@ struct ContentView: View {
                 )
                 let target = pendingHotkeyTarget ?? settings.target
                 let mode = pendingHotkeyOutputMode ?? settings.mode
-                let forceTargetValue = persistentHUDForceTargetLanguage
+                let forceTargetValue = effectiveHUDForceTargetLanguage
                 pendingHotkeyTarget = nil
                 pendingHotkeyOutputMode = nil
-                pendingHotkeyForceTargetLanguage = persistentHUDForceTargetLanguage
+                pendingHotkeyForceTargetLanguage = forceTargetValue
                 NativeSmartScribeLog.hotkey.info(
                     "Stopped hotkey recording target=\(target.rawValue, privacy: .public) mode=\(mode.rawValue, privacy: .public) forceTargetLanguage=\(forceTargetValue) capturedSourcePID=\(pendingHotkeySourcePID ?? -1, privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
                 )
@@ -891,14 +891,19 @@ struct ContentView: View {
                 pendingHotkeySourcePID = sourceApplication?.processIdentifier
                 pendingHotkeyFocusedElement = AccessibilityPermissionService.focusedElement()
                 let resolvedTarget = settings.target
+                let languageControlEnabled = isHUDLanguageControlEnabled
+                if !languageControlEnabled {
+                    persistentHUDForceTargetLanguage = false
+                }
+                let forceTargetLanguage = effectiveHUDForceTargetLanguage
                 pendingHotkeyTarget = resolvedTarget
                 pendingHotkeyOutputMode = settings.mode
-                pendingHotkeyForceTargetLanguage = persistentHUDForceTargetLanguage
+                pendingHotkeyForceTargetLanguage = forceTargetLanguage
                 if resolvedTarget != .raw {
                     polishingEngineStore.ensurePolishingEnabledForWidgetTarget()
                 }
                 NativeSmartScribeLog.hotkey.info(
-                    "Started hotkey recording activeTargetLang=\(persistentHUDForceTargetLanguage) target=\(settings.target.rawValue, privacy: .public) mode=\(settings.mode.rawValue, privacy: .public) sourcePID=\(sourceApplication?.processIdentifier ?? -1, privacy: .public) sourceBundle=\(sourceApplication?.bundleIdentifier ?? "unknown", privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
+                    "Started hotkey recording activeTargetLang=\(forceTargetLanguage) languageControlEnabled=\(languageControlEnabled) target=\(settings.target.rawValue, privacy: .public) mode=\(settings.mode.rawValue, privacy: .public) sourcePID=\(sourceApplication?.processIdentifier ?? -1, privacy: .public) sourceBundle=\(sourceApplication?.bundleIdentifier ?? "unknown", privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
                 )
                 await audioRecorder.start()
 
@@ -906,10 +911,11 @@ struct ContentView: View {
                     hotkeySessionOverlayManager.show(
                         mode: .listening,
                         settings: generalSettingsStore.settings.overlay,
-                        languageMode: persistentHUDForceTargetLanguage ? .target : .auto,
+                        languageMode: forceTargetLanguage ? .target : .auto,
                         hotkeyTarget: resolvedTarget,
                         targetLanguageLabel: autoTranslationLanguageLabel,
                         showsControls: true,
+                        languageControlEnabled: languageControlEnabled,
                         onOriginChange: persistOverlayOrigin,
                         onLanguageTap: handleOverlayLanguageTap,
                         onTargetTap: handleOverlayTargetTap
@@ -1040,9 +1046,36 @@ struct ContentView: View {
         TranscriptionLanguageOption.hudLabel(for: targetLanguageCode)
     }
 
+    private var isHUDLanguageControlEnabled: Bool {
+        if transcriptionModelStore.settings.backend == .geminiCloud {
+            return true
+        }
+
+        guard let activeModel = transcriptionModelStore.activeModel else {
+            return false
+        }
+
+        return activeModel.backend == .whisperKitCoreML
+            && activeModel.languageSupport == .multilingual
+    }
+
+    private var effectiveHUDForceTargetLanguage: Bool {
+        isHUDLanguageControlEnabled && persistentHUDForceTargetLanguage
+    }
+
     /// Toggles the transcription language mode between auto-detection
     /// and the configured target language, persisting the selection for future sessions.
     private func handleOverlayLanguageTap() {
+        guard isHUDLanguageControlEnabled else {
+            persistentHUDForceTargetLanguage = false
+            pendingHotkeyForceTargetLanguage = false
+            hotkeySessionOverlayManager.update(
+                languageMode: .auto,
+                languageControlEnabled: false
+            )
+            return
+        }
+
         persistentHUDForceTargetLanguage.toggle()
         pendingHotkeyForceTargetLanguage = persistentHUDForceTargetLanguage
         hotkeySessionOverlayManager.update(

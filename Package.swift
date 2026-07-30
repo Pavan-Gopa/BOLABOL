@@ -22,6 +22,7 @@ let package = Package(
         )
     ],
     dependencies: [
+        .package(url: "https://github.com/PrismML-Eng/mlx-swift.git", branch: "prism"),
         .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMajor(from: "3.31.3")),
         .package(url: "https://github.com/argmaxinc/argmax-oss-swift.git", branch: "main"),
         .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.15.5"),
@@ -33,6 +34,7 @@ let package = Package(
             name: "NativeSmartScribe",
             dependencies: [
                 "NativeSmartScribeCore",
+                .product(name: "MLX", package: "mlx-swift"),
                 .product(name: "MLXLLM", package: "mlx-swift-lm"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
                 .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
@@ -59,6 +61,7 @@ let package = Package(
             name: "NativeSmartScribePolishWorker",
             dependencies: [
                 "NativeSmartScribeCore",
+                .product(name: "MLX", package: "mlx-swift"),
                 .product(name: "MLXLLM", package: "mlx-swift-lm"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
                 .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),

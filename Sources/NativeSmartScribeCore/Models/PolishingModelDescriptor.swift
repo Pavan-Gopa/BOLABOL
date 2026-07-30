@@ -3,16 +3,6 @@ import Foundation
 public struct PolishingModelDescriptor: Identifiable, Codable, Equatable, Sendable {
     public enum Backend: String, Codable, Equatable, Sendable {
         case mlxSwiftLLM
-        case llamaCppGGUF
-
-        public var runtimeBadge: String {
-            switch self {
-            case .mlxSwiftLLM:
-                "MLX · GPU"
-            case .llamaCppGGUF:
-                "llama.cpp · Metal"
-            }
-        }
     }
 
     public var id: String
@@ -27,7 +17,6 @@ public struct PolishingModelDescriptor: Identifiable, Codable, Equatable, Sendab
     public var speed: Int
     public var isRecommended: Bool
     public var extraEOSTokens: [String]
-    public var modelFileName: String?
     public var isCustom: Bool
     public var localDirectoryURL: URL?
 
@@ -66,7 +55,6 @@ public struct PolishingModelDescriptor: Identifiable, Codable, Equatable, Sendab
         speed: Int,
         isRecommended: Bool = false,
         extraEOSTokens: [String] = [],
-        modelFileName: String? = nil,
         isCustom: Bool = false,
         localDirectoryURL: URL? = nil
     ) {
@@ -82,7 +70,6 @@ public struct PolishingModelDescriptor: Identifiable, Codable, Equatable, Sendab
         self.speed = Self.clampRating(speed)
         self.isRecommended = isRecommended
         self.extraEOSTokens = extraEOSTokens
-        self.modelFileName = modelFileName
         self.isCustom = isCustom
         self.localDirectoryURL = localDirectoryURL
     }
@@ -124,16 +111,15 @@ public extension PolishingModelCatalog {
     static let nativeMLX = try! PolishingModelCatalog(
         models: [
             PolishingModelDescriptor(
-                id: "bonsai-8b-q1",
-                displayName: "Bonsai 8B 1-bit",
-                repositoryID: "prism-ml/Bonsai-8B-gguf",
-                backend: .llamaCppGGUF,
-                downloadSize: "~1.16 GB",
+                id: "bonsai-27b-mlx-1bit",
+                displayName: "Bonsai 27B MLX 1-bit",
+                repositoryID: "prism-ml/Bonsai-27B-mlx-1bit",
+                backend: .mlxSwiftLLM,
+                downloadSize: "~5.13 GB",
                 badge: "1-bit",
-                description: "Compact 1-bit Qwen-derived model for short local polishing tasks. Uses about 2.5 GB unified memory with SmartScribe's fixed 8K context.",
-                quality: 4,
-                speed: 5,
-                modelFileName: "Bonsai-8B-Q1_0.gguf"
+                description: "Full 27B-class Bonsai in native MLX 1-bit format. Approximately 5.5–5.9 GiB peak unified memory at 4K–10K context.",
+                quality: 5,
+                speed: 4
             ),
             PolishingModelDescriptor(
                 id: "qwen35-08b-4bit",

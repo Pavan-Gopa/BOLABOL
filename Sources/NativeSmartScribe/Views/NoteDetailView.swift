@@ -18,6 +18,7 @@ struct NoteDetailView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
     @EnvironmentObject private var transcriptionModelStore: TranscriptionModelStore
+    @EnvironmentObject private var hotkeySettingsStore: HotkeySettingsStore
     @EnvironmentObject private var glossaryStore: GlossaryStore
     @State private var isTogglingRecording = false
     @State private var isShowingAudioImporter = false
@@ -57,7 +58,9 @@ struct NoteDetailView: View {
                                 note: note,
                                 variant: selectedVariant
                             )
-                        }
+                        },
+                        textScale: generalSettingsStore.settings.textScale,
+                        textFont: generalSettingsStore.settings.textFont
                     ) {
                         copyToPasteboard(text(for: note, variant: selectedVariant))
                     }
@@ -118,107 +121,33 @@ struct NoteDetailView: View {
     private func topConfigBar(for note: SmartScribeNote) -> some View {
         ControlSurface(cornerRadius: 10) {
             VStack(spacing: 12) {
-                HStack(spacing: 32) {
-                    // Transcription Model Dropdown
-                    HStack(spacing: 8) {
-                        Image(systemName: "waveform")
-                            .foregroundStyle(.secondary)
-                            .frame(width: 16)
+                let isCloudGemini = transcriptionModelStore.settings.backend == .geminiCloud
+                
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 14) {
+                        transcriptionModelPicker
+                            .frame(minWidth: 140, idealWidth: 210, maxWidth: 240)
                         
-                        Menu {
-                            if downloadedTranscriptionModels.isEmpty {
-                                Text(generalSettingsStore.text(.noDownloadedTranscriptionModels))
-                            } else {
-                                ForEach(downloadedTranscriptionModels) { model in
-                                    Button {
-                                        transcriptionSelection.wrappedValue = model.id
-                                    } label: {
-                                        Text(model.displayName)
-                                        if transcriptionSelection.wrappedValue == model.id {
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
-                                }
-                            }
-                        } label: {
-                            HStack {
-                                Text(downloadedTranscriptionModels.first(where: { $0.id == transcriptionSelection.wrappedValue })?.displayName ?? generalSettingsStore.text(.transcriptionModel))
-                                    .lineLimit(1)
-                                Spacer()
-                                Image(systemName: "chevron.up.chevron.down")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 6))
-                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
-                            .contentShape(Rectangle())
+                        polishingProviderPicker(isCloudGemini: isCloudGemini)
+                            .frame(minWidth: 100, idealWidth: 125, maxWidth: 140)
+                        
+                        if isPolishingModelPickerAvailable {
+                            polishingModelPicker
+                                .frame(minWidth: 110, idealWidth: 150, maxWidth: 180)
                         }
-                        .menuStyle(.borderlessButton)
-                        .frame(width: 220)
                     }
 
-                    // Polishing Model Dropdown
                     HStack(spacing: 8) {
-                        Image(systemName: "sparkles")
-                            .foregroundStyle(.secondary)
-                            .frame(width: 16)
+                        transcriptionModelPicker
+                            .frame(minWidth: 110, idealWidth: 160, maxWidth: 200)
                         
-                        Menu {
-                            Button {
-                                polishingSelection.wrappedValue = PolishingEngineStore.disabledEngineID
-                            } label: {
-                                Text(generalSettingsStore.text(.polishingDisabled))
-                                if polishingSelection.wrappedValue == PolishingEngineStore.disabledEngineID {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                            
-                            Divider()
-                            
-                            ForEach(downloadedPolishingModels) { model in
-                                Button {
-                                    polishingSelection.wrappedValue = Self.localPolishingTag(for: model.id)
-                                } label: {
-                                    Text(model.displayName)
-                                    if polishingSelection.wrappedValue == Self.localPolishingTag(for: model.id) {
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                            
-                            if !downloadedPolishingModels.isEmpty && !apiPolishingDescriptors.isEmpty {
-                                Divider()
-                            }
-                            
-                            ForEach(apiPolishingDescriptors) { descriptor in
-                                Button {
-                                    polishingSelection.wrappedValue = descriptor.id
-                                } label: {
-                                    Text(polishingDescriptorTitle(for: descriptor))
-                                    if polishingSelection.wrappedValue == descriptor.id {
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                        } label: {
-                            HStack {
-                                Text(currentPolishingModelDisplayName())
-                                    .lineLimit(1)
-                                Spacer()
-                                Image(systemName: "chevron.up.chevron.down")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 6))
-                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
-                            .contentShape(Rectangle())
+                        polishingProviderPicker(isCloudGemini: isCloudGemini)
+                            .frame(minWidth: 85, idealWidth: 105, maxWidth: 125)
+                        
+                        if isPolishingModelPickerAvailable {
+                            polishingModelPicker
+                                .frame(minWidth: 95, idealWidth: 130, maxWidth: 160)
                         }
-                        .menuStyle(.borderlessButton)
-                        .frame(width: 220)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -233,18 +162,181 @@ struct NoteDetailView: View {
         }
     }
 
+    private var transcriptionModelPicker: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "waveform")
+                .foregroundStyle(.secondary)
+                .frame(width: 16)
+            
+            Menu {
+                Button {
+                    transcriptionModelStore.setBackend(.geminiCloud)
+                    if hotkeySettingsStore.settings.target == .raw {
+                        hotkeySettingsStore.settings.target = .note
+                    }
+                } label: {
+                    Text(TranscriptionBackend.geminiCloud.displayName)
+                    if transcriptionModelStore.settings.backend == .geminiCloud {
+                        Image(systemName: "checkmark")
+                    }
+                }
+
+                Divider()
+
+                if downloadedTranscriptionModels.isEmpty {
+                    Text(generalSettingsStore.text(.noDownloadedTranscriptionModels))
+                } else {
+                    ForEach(downloadedTranscriptionModels) { model in
+                        Button {
+                            transcriptionSelection.wrappedValue = model.id
+                        } label: {
+                            Text(model.displayName)
+                            if transcriptionModelStore.settings.backend == .localWhisper
+                                && transcriptionSelection.wrappedValue == model.id {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+
+            } label: {
+                HStack {
+                    Text(transcriptionMenuLabel)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
+                .contentShape(Rectangle())
+            }
+            .menuStyle(.borderlessButton)
+            .help(transcriptionModelStore.settings.backend.shortDescription)
+        }
+    }
+
+    private func polishingProviderPicker(isCloudGemini: Bool) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "sparkles")
+                .foregroundStyle(.secondary)
+                .frame(width: 14)
+            
+            Menu {
+                Button {
+                    polishingSelection.wrappedValue = PolishingEngineStore.disabledEngineID
+                } label: {
+                    Text(generalSettingsStore.text(.polishingDisabled))
+                    if polishingSelection.wrappedValue == PolishingEngineStore.disabledEngineID {
+                        Image(systemName: "checkmark")
+                    }
+                }
+                
+                Divider()
+                
+                ForEach(downloadedPolishingModels) { model in
+                    Button {
+                        polishingSelection.wrappedValue = Self.localPolishingTag(for: model.id)
+                    } label: {
+                        Text(model.displayName)
+                        if polishingSelection.wrappedValue == Self.localPolishingTag(for: model.id) {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+                
+                if !downloadedPolishingModels.isEmpty && !apiPolishingDescriptors.isEmpty {
+                    Divider()
+                }
+                
+                ForEach(apiPolishingDescriptors) { descriptor in
+                    Button {
+                        polishingSelection.wrappedValue = descriptor.id
+                    } label: {
+                        Text(polishingDescriptorTitle(for: descriptor))
+                        if polishingSelection.wrappedValue == descriptor.id {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(currentPolishingProviderDisplayName())
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
+                .contentShape(Rectangle())
+            }
+            .menuStyle(.borderlessButton)
+            .disabled(isCloudGemini)
+            .opacity(isCloudGemini ? 0.6 : 1.0)
+            .help(isCloudGemini ? generalSettingsStore.text(.cloudDictationUsesGemini) : "")
+        }
+    }
+
+    private var polishingModelPicker: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "cpu")
+                .foregroundStyle(.secondary)
+                .frame(width: 14)
+            
+            Menu {
+                ForEach(currentProviderModelOptions) { option in
+                    Button {
+                        selectPolishingModel(id: option.id)
+                    } label: {
+                        Text(option.displayName)
+                        if isPolishingModelSelected(id: option.id) {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(currentPolishingModelDisplayName())
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.1), lineWidth: 0.5))
+                .contentShape(Rectangle())
+            }
+            .menuStyle(.borderlessButton)
+        }
+    }
+
     private func bottomBar(for note: SmartScribeNote) -> some View {
         ControlSurface(cornerRadius: 12) {
-            HStack(spacing: 12) {
-                ModernRecordButton(
-                    isRecording: audioRecorder.isRecording,
-                    isDisabled: isTogglingRecording,
-                    action: toggleRecording
-                )
-                .help(audioRecorder.isRecording ? generalSettingsStore.text(.stopRecording) : generalSettingsStore.text(.record))
+            HStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    ModernRecordButton(
+                        isRecording: audioRecorder.isRecording,
+                        isDisabled: isTogglingRecording,
+                        action: toggleRecording
+                    )
+                    .help(audioRecorder.isRecording ? generalSettingsStore.text(.stopRecording) : generalSettingsStore.text(.record))
 
-                AudioInputDeviceStatusPill(audioRecorder: audioRecorder, compact: true)
-                    .frame(maxWidth: 210)
+                    AudioInputDeviceStatusPill(audioRecorder: audioRecorder, compact: true)
+                        .frame(minWidth: 70, idealWidth: 150, maxWidth: 210)
+                }
 
                 InAppSpectrumMeter(
                     bands: audioRecorder.frequencyBands,
@@ -253,11 +345,13 @@ struct NoteDetailView: View {
                     isProcessing: isPolishing(note),
                     elapsedTime: audioRecorder.elapsedTime
                 )
-                .frame(width: 260, height: 42)
+                .frame(minWidth: 60, idealWidth: 200, maxWidth: 260)
+                .frame(height: 42)
+                .layoutPriority(0)
 
-                Spacer()
+                Spacer(minLength: 2)
 
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     toolbarIconButton(
                         systemImage: "square.and.arrow.down",
                         helpText: generalSettingsStore.text(.importAudio)
@@ -282,7 +376,7 @@ struct NoteDetailView: View {
                     
                     Divider()
                         .frame(height: 20)
-                        .padding(.horizontal, 4)
+                        .padding(.horizontal, 2)
                         
                     SettingsLink {
                         Image(systemName: "gearshape")
@@ -291,6 +385,7 @@ struct NoteDetailView: View {
                     .labelStyle(.iconOnly)
                     .help(generalSettingsStore.text(.settings))
                 }
+                .layoutPriority(1)
             }
         }
     }
@@ -422,6 +517,19 @@ struct NoteDetailView: View {
         }
     }
 
+    private var transcriptionMenuLabel: String {
+        switch transcriptionModelStore.settings.backend {
+        case .geminiCloud:
+            return TranscriptionBackend.geminiCloud.displayName
+        case .localWhisper:
+            if let id = transcriptionModelStore.settings.activeModelID,
+               let name = downloadedTranscriptionModels.first(where: { $0.id == id })?.displayName {
+                return name
+            }
+            return generalSettingsStore.text(.noLocalModelSelected)
+        }
+    }
+
     private var downloadedPolishingModels: [PolishingModelDescriptor] {
         let downloadedCatalog = polishingEngineStore.models.filter {
             polishingEngineStore.installationState(for: $0).isDownloaded
@@ -449,6 +557,8 @@ struct NoteDetailView: View {
                     return
                 }
 
+                // Picking a Whisper model always switches back to local backend.
+                transcriptionModelStore.setBackend(.localWhisper)
                 transcriptionModelStore.activate(model)
             }
         )
@@ -563,7 +673,7 @@ struct NoteDetailView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .foregroundStyle(status.foregroundStyle)
-                .help("Show \(variant.title)")
+                .help(generalSettingsStore.formattedText(.showVariant, variant.title))
             }
         }
     }
@@ -752,18 +862,207 @@ struct NoteDetailView: View {
         onTextChanged(draft.noteID, draft.variant, rewritten.text)
     }
 
-    private func currentPolishingModelDisplayName() -> String {
+    private struct PolishingModelOption: Identifiable, Equatable {
+        let id: String
+        let displayName: String
+    }
+
+    private var activeProviderKind: APIProviderKind? {
+        if transcriptionModelStore.settings.backend == .geminiCloud {
+            return .google
+        }
+        return APIProviderKind(polishingEngineID: polishingEngineStore.selectedEngineID)
+    }
+
+    private var isPolishingModelPickerAvailable: Bool {
+        if transcriptionModelStore.settings.backend == .geminiCloud {
+            return true
+        }
+        if activeProviderKind != nil { return true }
+        if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID && !downloadedPolishingModels.isEmpty {
+            return true
+        }
+        return false
+    }
+
+    private func currentPolishingProviderDisplayName() -> String {
+        if transcriptionModelStore.settings.backend == .geminiCloud {
+            return "Google"
+        }
         let currentId = polishingSelection.wrappedValue
         if currentId == PolishingEngineStore.disabledEngineID {
             return generalSettingsStore.text(.polishingDisabled)
         }
-        if let model = downloadedPolishingModels.first(where: { Self.localPolishingTag(for: $0.id) == currentId }) {
-            return model.displayName
+        if currentId == "local-rule-based-polish" {
+            return generalSettingsStore.text(.quickLocalCleanup)
+        }
+        if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID {
+            return generalSettingsStore.text(.localMLXModel)
         }
         if let descriptor = apiPolishingDescriptors.first(where: { $0.id == currentId }) {
-            return polishingDescriptorTitle(for: descriptor)
+            return descriptor.displayName
+        }
+        return generalSettingsStore.text(.provider)
+    }
+
+    private func currentPolishingModelDisplayName() -> String {
+        if let kind = activeProviderKind {
+            let currentID = polishingEngineStore.apiSettings.configuration(for: kind).textModel
+            return modelDisplayName(id: currentID, kind: kind)
+        }
+        if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID,
+           let model = polishingEngineStore.activeModel {
+            return model.displayName
         }
         return generalSettingsStore.text(.polishingModel)
+    }
+
+    private var currentProviderModelOptions: [PolishingModelOption] {
+        if let kind = activeProviderKind {
+            return providerModelOptions(for: kind)
+        }
+        if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID {
+            return downloadedPolishingModels.map { PolishingModelOption(id: $0.id, displayName: $0.displayName) }
+        }
+        return []
+    }
+
+    private func isPolishingModelSelected(id: String) -> Bool {
+        if let kind = activeProviderKind {
+            return polishingEngineStore.apiSettings.configuration(for: kind).textModel == id
+        }
+        if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID {
+            return polishingEngineStore.activeModel?.id == id
+        }
+        return false
+    }
+
+    private func selectPolishingModel(id: String) {
+        if let kind = activeProviderKind {
+            var config = polishingEngineStore.apiSettings.configuration(for: kind)
+            config.textModel = id
+            polishingEngineStore.updateAPIConfiguration(config, for: kind)
+        } else if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID {
+            if let model = polishingEngineStore.allModels.first(where: { $0.id == id }) {
+                polishingEngineStore.activate(model)
+            }
+        }
+    }
+
+    private func cleanModelDisplayName(_ raw: String) -> String {
+        var name = raw
+        if let slashIndex = name.firstIndex(of: "/") {
+            name = String(name[name.index(after: slashIndex)...])
+        }
+        return name
+    }
+
+    private func availableModels(for kind: APIProviderKind) -> [PolishingModelOption] {
+        switch kind {
+        case .google:
+            return [
+                PolishingModelOption(id: "gemini-3.5-flash", displayName: "Gemini 3.5 Flash"),
+                PolishingModelOption(id: "gemini-2.5-flash", displayName: "Gemini 2.5 Flash"),
+                PolishingModelOption(id: "gemini-2.5-flash-lite", displayName: "Gemini 2.5 Flash Lite"),
+                PolishingModelOption(id: "gemini-2.5-pro", displayName: "Gemini 2.5 Pro"),
+                PolishingModelOption(id: "gemini-2.0-flash", displayName: "Gemini 2.0 Flash")
+            ]
+        case .openAI:
+            return [
+                PolishingModelOption(id: "gpt-4o-mini", displayName: "GPT-4o Mini"),
+                PolishingModelOption(id: "gpt-4o", displayName: "GPT-4o"),
+                PolishingModelOption(id: "o3-mini", displayName: "o3-mini"),
+                PolishingModelOption(id: "gpt-4-turbo", displayName: "GPT-4 Turbo")
+            ]
+        case .qwen:
+            return [
+                PolishingModelOption(id: "qwen3.6-flash", displayName: "Qwen 3.6 Flash"),
+                PolishingModelOption(id: "qwen3.7-plus", displayName: "Qwen 3.7 Plus"),
+                PolishingModelOption(id: "qwen3.8-max-preview", displayName: "Qwen 3.8 Max"),
+                PolishingModelOption(id: "qwen-turbo", displayName: "Qwen Turbo"),
+                PolishingModelOption(id: "qwen-max", displayName: "Qwen Max")
+            ]
+        case .openRouter:
+            return [
+                PolishingModelOption(id: "google/gemini-3.5-flash", displayName: "Gemini 3.5 Flash"),
+                PolishingModelOption(id: "deepseek/deepseek-v4-flash", displayName: "DeepSeek V4 Flash"),
+                PolishingModelOption(id: "qwen/qwen3.6-flash", displayName: "Qwen 3.6 Flash"),
+                PolishingModelOption(id: "openai/gpt-4o-mini", displayName: "GPT-4o Mini"),
+                PolishingModelOption(id: "anthropic/claude-3.5-haiku", displayName: "Claude 3.5 Haiku"),
+                PolishingModelOption(id: "google/gemini-2.5-flash", displayName: "Gemini 2.5 Flash"),
+                PolishingModelOption(id: "deepseek/deepseek-chat", displayName: "DeepSeek V3")
+            ]
+        case .custom:
+            let current = polishingEngineStore.apiSettings.configuration(for: .custom).textModel
+            return [PolishingModelOption(id: current, displayName: cleanModelDisplayName(current))]
+        case .anthropic:
+            return [
+                PolishingModelOption(id: "claude-3-5-haiku-latest", displayName: "Claude 3.5 Haiku"),
+                PolishingModelOption(id: "claude-3-5-sonnet-latest", displayName: "Claude 3.5 Sonnet")
+            ]
+        }
+    }
+
+    private func providerModelOptions(for kind: APIProviderKind) -> [PolishingModelOption] {
+        let favSet = FavoriteModelsStore.loadFavorites()
+        let baseOptions = availableModels(for: kind)
+        var result = baseOptions.filter { favSet.contains($0.id) }
+
+        for id in favSet {
+            if !result.contains(where: { $0.id == id }) && matchesProvider(modelID: id, kind: kind) {
+                result.append(PolishingModelOption(id: id, displayName: modelDisplayName(id: id, kind: kind)))
+            }
+        }
+
+        if result.isEmpty {
+            result = baseOptions
+        }
+
+        let currentID = polishingEngineStore.apiSettings.configuration(for: kind).textModel
+        if !currentID.isEmpty && !result.contains(where: { $0.id == currentID }) && matchesProvider(modelID: currentID, kind: kind) {
+            result.insert(PolishingModelOption(id: currentID, displayName: modelDisplayName(id: currentID, kind: kind)), at: 0)
+        }
+
+        var seenKeys = Set<String>()
+        var deduplicated: [PolishingModelOption] = []
+        for option in result {
+            let cleanName = cleanModelDisplayName(option.displayName)
+            let key = cleanName.lowercased()
+            if !seenKeys.contains(key) {
+                seenKeys.insert(key)
+                deduplicated.append(PolishingModelOption(id: option.id, displayName: cleanName))
+            }
+        }
+        return deduplicated
+    }
+
+    private func matchesProvider(modelID: String, kind: APIProviderKind) -> Bool {
+        let lower = modelID.lowercased()
+        if kind != .openRouter && kind != .custom && lower.contains("/") {
+            return false
+        }
+        switch kind {
+        case .google:
+            return lower.contains("gemini") || lower.contains("gemma") || lower.contains("google") || lower.contains("lyra")
+        case .openAI:
+            return lower.contains("gpt") || lower.contains("o3") || lower.contains("o1") || lower.contains("openai")
+        case .qwen:
+            return lower.contains("qwen") || lower.contains("deepseek") || lower.contains("glm")
+        case .openRouter:
+            return lower.contains("/")
+        case .anthropic:
+            return lower.contains("claude") || lower.contains("anthropic")
+        case .custom:
+            return true
+        }
+    }
+
+    private func modelDisplayName(id: String, kind: APIProviderKind) -> String {
+        let available = availableModels(for: kind)
+        if let match = available.first(where: { $0.id == id }) {
+            return cleanModelDisplayName(match.displayName)
+        }
+        return id.isEmpty ? generalSettingsStore.text(.defaultModelName) : cleanModelDisplayName(id)
     }
 
     private func toggleRecording() {
@@ -830,6 +1129,7 @@ struct NoteDetailView: View {
 }
 
 private struct ResultTextPanel: View {
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var promptTemplateStore: PromptTemplateStore
     let variant: ProcessingVariant
     let title: String
@@ -843,6 +1143,8 @@ private struct ResultTextPanel: View {
     let addToGlossaryTitle: String
     let onMarkdown: () -> Void
     let onAddToGlossary: (String) -> Void
+    let textScale: Double
+    let textFont: TextFontPreference
     let onCopy: () -> Void
 
     @State private var isCopied = false
@@ -876,7 +1178,7 @@ private struct ResultTextPanel: View {
                     }
                     .buttonStyle(SmartScribeToolbarButtonStyle(size: 28))
                     .disabled(markdownActionDisabled)
-                    .help("Generate Markdown")
+                    .help(generalSettingsStore.text(.generateMarkdown))
                 }
 
                 Button {
@@ -893,7 +1195,7 @@ private struct ResultTextPanel: View {
                 .buttonStyle(SmartScribeToolbarButtonStyle(size: 28))
                 .labelStyle(.iconOnly)
                 .disabled(isEmpty && !isCopied)
-                .help(isCopied ? "Copied!" : copyTitle)
+                .help(isCopied ? generalSettingsStore.text(.copied) : copyTitle)
             }
 
             SelectableTextView(
@@ -902,7 +1204,9 @@ private struct ResultTextPanel: View {
                 placeholder: placeholder,
                 isEditable: isEditable,
                 selectionActionTitle: addToGlossaryTitle,
-                onSelectionAction: onAddToGlossary
+                onSelectionAction: onAddToGlossary,
+                textScale: textScale,
+                textFont: textFont
             )
             .frame(maxWidth: .infinity, minHeight: 320)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -1043,10 +1347,10 @@ private struct InAppSpectrumMeter: View {
                 isActive: isActive,
                 isProcessing: usesSyntheticWave,
                 dotCount: 30,
-                noiseFloor: 0.12,
-                amplitude: 0.84,
-                sensitivity: 0.76,
-                silenceThreshold: 0.19
+                noiseFloor: 0.08,
+                amplitude: 0.96,
+                sensitivity: 1.45,
+                silenceThreshold: 0.035
             )
             .frame(maxWidth: .infinity, minHeight: 36, maxHeight: 36)
 

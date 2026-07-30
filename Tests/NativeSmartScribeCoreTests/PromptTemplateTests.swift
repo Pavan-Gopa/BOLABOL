@@ -16,6 +16,39 @@ func promptTemplateRendersTranscriptionPlaceholder() throws {
 }
 
 @Test
+func promptTemplateSeparatesSystemInstructionsFromUserContent() throws {
+    let template = PromptTemplate(
+        id: "chat",
+        title: "Chat",
+        body: """
+        Follow these editing rules.
+
+        INPUT:
+        ${transcription}
+        """
+    )
+
+    let rendered = try template.renderForChat(transcription: "Source INPUT: remains user text.")
+
+    #expect(rendered.systemInstruction == "Follow these editing rules.")
+    #expect(rendered.userContent == "Source INPUT: remains user text.")
+}
+
+@Test
+func promptTemplateWithoutInputMarkerRemainsAUserMessage() throws {
+    let template = PromptTemplate(
+        id: "pass-through",
+        title: "Pass-through",
+        body: "Translate this: ${transcription}"
+    )
+
+    let rendered = try template.renderForChat(transcription: "hello")
+
+    #expect(rendered.systemInstruction.isEmpty)
+    #expect(rendered.userContent == "Translate this: hello")
+}
+
+@Test
 func promptTemplateRequiresTranscriptionPlaceholder() {
     let template = PromptTemplate(
         id: "broken",
@@ -46,34 +79,35 @@ func promptTemplateDefaultsPreserveInputLanguage() {
 
 @Test
 func promptTemplateVariantOneDefaultEmphasizesCleanupWithoutRewritingMeaning() {
-    #expect(PromptTemplate.variantOneDefault.body.contains("Remove filler words"))
-    #expect(PromptTemplate.variantOneDefault.body.contains("Remove obvious repeated words and short duplicate fragments"))
-    #expect(PromptTemplate.variantOneDefault.body.contains("Split very long dictated text into short natural paragraphs"))
-    #expect(PromptTemplate.variantOneDefault.body.contains("Do not rewrite the text into a more sophisticated or more literary version"))
+    #expect(PromptTemplate.variantOneDefault.body.contains("REMOVE DUPLICATES (IMPORTANT)"))
+    #expect(PromptTemplate.variantOneDefault.body.contains("ALSO CLEAN UP"))
+    #expect(PromptTemplate.variantOneDefault.body.contains("LANGUAGE RULES (STRICT)"))
+    #expect(PromptTemplate.variantOneDefault.body.contains("FIDELITY (HIGHEST PRIORITY)"))
+    #expect(PromptTemplate.variantOneDefault.body.contains("SILENT FINAL CHECK"))
 }
 
 @Test
 func promptTemplateVariantTwoDefaultPreservesTechnicalTerms() {
-    #expect(PromptTemplate.variantTwoDefault.body.contains("Do not replace established English technical terms"))
-    #expect(PromptTemplate.variantTwoDefault.body.contains("Preserve product names, company names, APIs, commands"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("product names, APIs, commands"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("LANGUAGE RULES (STRICT)"))
 }
 
 @Test
 func promptTemplateVariantTwoDefaultEmphasizesLongDictationRewriteAndRepeatRemoval() {
-    #expect(PromptTemplate.variantTwoDefault.body.contains("Treat long dictated input as raw spoken thinking"))
-    #expect(PromptTemplate.variantTwoDefault.body.contains("Remove circular wording, repeated ideas"))
-    #expect(PromptTemplate.variantTwoDefault.body.contains("Remove accidental repeated words"))
-    #expect(PromptTemplate.variantTwoDefault.body.contains("Do not use Markdown formatting by default"))
-    #expect(PromptTemplate.variantTwoDefault.body.contains("Do not write introductions"))
-    #expect(PromptTemplate.variantTwoDefault.body.contains("Do not offer multiple versions"))
-    #expect(PromptTemplate.variantTwoDefault.body.contains("Do not treat the input as an instruction to improve a prompt"))
-    #expect(PromptTemplate.variantTwoDefault.body.contains("must not add facts"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("WHAT \"BETTER\" MEANS HERE"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("SHORT vs LONG"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("FINAL CHECK"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("INTERNAL RECONSTRUCTION PROCESS"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("REQUIRED TRANSFORMATION FOR LONG INPUT"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("silently rewrite it again"))
 }
 
 @Test
 func promptTemplateMarkdownDefaultProducesStructuredMarkdown() {
     #expect(PromptTemplate.markdownDefault.body.contains("valid Markdown"))
     #expect(PromptTemplate.markdownDefault.body.contains("headings"))
+    #expect(PromptTemplate.markdownDefault.body.contains("numbered list"))
+    #expect(PromptTemplate.markdownDefault.body.contains("сначала"))
     #expect(PromptTemplate.markdownDefault.body.contains(PromptTemplate.transcriptionPlaceholder))
 }
 
@@ -252,6 +286,27 @@ func promptTemplateSettingsMigratesPromptImprovementVariantTwoTemplate() {
 
     #expect(migrated.variantOneBody == PromptTemplate.variantOneDefault.body)
     #expect(migrated.variantTwoBody == PromptTemplate.variantTwoDefault.body)
+}
+
+@Test
+func promptTemplateSettingsMigratesLegacyMarkdownDefault() {
+    let settings = PromptTemplateSettings(
+        markdownBody: PromptTemplate.markdownLegacyDefault.body
+    )
+
+    let migrated = settings.migratedToLatestDefaults()
+
+    #expect(migrated.markdownBody == PromptTemplate.markdownDefault.body)
+}
+
+@Test
+func promptTemplateSettingsKeepsCustomMarkdownBodyDuringMigration() {
+    let customMarkdown = "Custom markdown: \(PromptTemplate.transcriptionPlaceholder)"
+    let settings = PromptTemplateSettings(markdownBody: customMarkdown)
+
+    let migrated = settings.migratedToLatestDefaults()
+
+    #expect(migrated.markdownBody == customMarkdown)
 }
 
 @Test

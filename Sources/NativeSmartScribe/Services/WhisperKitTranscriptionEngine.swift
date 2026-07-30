@@ -33,9 +33,10 @@ actor WhisperKitTranscriptionEngine: TranscriptionEngine {
 
         let startedAt = Date()
         let pipeline = try await loadedPipeline()
+        let options = await resolveDecodingOptions(for: request, pipeline: pipeline, audioPath: audioFileURL.path)
         let results = try await pipeline.transcribe(
             audioPath: audioFileURL.path,
-            decodeOptions: decodeOptions(for: request)
+            decodeOptions: options
         )
         let text = results
             .map(\.text)
@@ -45,6 +46,12 @@ actor WhisperKitTranscriptionEngine: TranscriptionEngine {
             .map(\.timings.tokensPerSecond)
             .filter { $0.isFinite && $0 > 0 }
             .average
+        let resultLanguages = results.map(\.language).joined(separator: ",")
+        let preview = String(text.prefix(80))
+        let hasCyrillic = text.range(of: "\\p{Cyrillic}", options: .regularExpression) != nil
+        NativeSmartScribeLog.transcription.info(
+            "WhisperKit result translateToEnglish=\(request.translateToEnglish) task=\(String(describing: options.task), privacy: .public) languageOpt=\(options.language ?? "nil", privacy: .public) resultLang=\(resultLanguages, privacy: .public) hasCyrillic=\(hasCyrillic) len=\(text.count) preview=\(preview, privacy: .public)"
+        )
 
         guard !text.isEmpty else {
             throw WhisperKitTranscriptionError.emptyResult
@@ -79,33 +86,94 @@ actor WhisperKitTranscriptionEngine: TranscriptionEngine {
         return pipeline
     }
 
-    private func decodeOptions(
-        for request: NativeSmartScribeCore.TranscriptionRequest
-    ) -> DecodingOptions {
-        // WhisperKit's `language` field means "language spoken in the audio" (source),
-        // NOT the output/target language. When translating to English via `.translate`,
-        // we must let Whisper auto-detect the source language — passing "en" would
-        // incorrectly tell Whisper the audio is already in English.
-        let normalizedLanguage: String?
+    private func resolveDecodingOptions(
+        for request: NativeSmartScribeCore.TranscriptionRequest,
+        pipeline: WhisperKit,
+        audioPath: String
+    ) async -> DecodingOptions {
         if request.translateToEnglish {
-            // Auto-detect source language for translation
-            normalizedLanguage = nil
-        } else {
-            normalizedLanguage = request.forcedLanguageCode?
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+            // WhisperKit's `language` is the *spoken* (source) language.
+            // `task: .translate` forces X→English. Never pass "en" as source
+            // when the user spoke another language.
+            //
+            // Critical: match WhisperKit CLI/unit-test defaults for translate:
+            // - usePrefillPrompt: true  (injects <|lang|><|translate|> tokens)
+            // - usePrefillCache: false  (CLI default; prefill KV cache on some
+            //   Core ML large-v3 builds effectively ignores the translate token
+            //   and keeps producing source-language text)
+            // - temperatureFallbackCount: 0
+            let detected = try? await pipeline.detectLanguage(audioPath: audioPath)
+            let spokenLanguage = detected?.language
+                .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                 .lowercased()
+
+            if let spokenLanguage, !spokenLanguage.isEmpty, spokenLanguage == "en" || spokenLanguage.hasPrefix("en") {
+                NativeSmartScribeLog.transcription.info(
+                    "Translation decoding options: task=transcribe sourceLanguage=en (already English)"
+                )
+                return DecodingOptions(
+                    verbose: false,
+                    task: .transcribe,
+                    language: "en",
+                    temperature: 0,
+                    temperatureFallbackCount: 0,
+                    usePrefillPrompt: true,
+                    usePrefillCache: false,
+                    detectLanguage: false,
+                    skipSpecialTokens: true,
+                    withoutTimestamps: true,
+                    wordTimestamps: false
+                )
+            }
+
+            let sourceLanguage: String?
+            if let spokenLanguage, !spokenLanguage.isEmpty {
+                sourceLanguage = spokenLanguage
+            } else if let forced = request.forcedLanguageCode?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased(),
+                !forced.isEmpty,
+                forced != "en",
+                !forced.hasPrefix("en") {
+                sourceLanguage = forced
+            } else {
+                // Unknown source: Whisper detects language while translating.
+                sourceLanguage = nil
+            }
+
+            NativeSmartScribeLog.transcription.info(
+                "Translation decoding options: task=translate sourceLanguage=\(sourceLanguage ?? "auto", privacy: .public) usePrefillCache=false"
+            )
+
+            return DecodingOptions(
+                verbose: false,
+                task: .translate,
+                language: sourceLanguage,
+                temperature: 0,
+                temperatureFallbackCount: 0,
+                // Force prefill so <|ru|><|translate|> are always in the prompt.
+                usePrefillPrompt: true,
+                // IMPORTANT: false — see comment above. Prefill cache broke ER.
+                usePrefillCache: false,
+                detectLanguage: sourceLanguage == nil,
+                skipSpecialTokens: true,
+                withoutTimestamps: true,
+                wordTimestamps: false
+            )
         }
 
-        // Use Whisper's native translate task when English output is requested.
-        // Whisper can translate from any supported language → English natively.
-        let task: DecodingTask = request.translateToEnglish ? .translate : .transcribe
+        let normalizedLanguage = request.forcedLanguageCode?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
 
         return DecodingOptions(
             verbose: false,
-            task: task,
+            task: .transcribe,
             language: normalizedLanguage?.isEmpty == false ? normalizedLanguage : nil,
             temperature: 0,
+            temperatureFallbackCount: 0,
             usePrefillPrompt: true,
+            usePrefillCache: false,
             detectLanguage: normalizedLanguage?.isEmpty != false,
             skipSpecialTokens: true,
             withoutTimestamps: true,

@@ -149,6 +149,48 @@ func noteStoreClearsAllNotesAndSelection() {
     #expect(store.selection == nil)
 }
 
+@MainActor
+@Test
+func noteStoreClearAllAndPurgeRemoveMicrophoneRecordingsAndOrphans() throws {
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeSmartScribe-note-store-audio-\(UUID().uuidString)", isDirectory: true)
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try fileManager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+
+    let linked = recordings.appendingPathComponent("linked.caf")
+    let orphan = recordings.appendingPathComponent("orphan.caf")
+    try Data("linked".utf8).write(to: linked)
+    try Data("orphan".utf8).write(to: orphan)
+
+    let notesURL = root.appendingPathComponent("notes.json")
+    let recording = AudioRecording(
+        fileURL: linked,
+        duration: 1,
+        sampleRate: 48_000,
+        channelCount: 1,
+        source: .microphone
+    )
+    let store = NoteStore(
+        notes: [
+            SmartScribeNote(title: "Voice", rawText: "hi", audioRecording: recording)
+        ],
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true
+    )
+
+    #expect(store.purgeOrphanedRecordings() == 1)
+    #expect(fileManager.fileExists(atPath: linked.path))
+    #expect(!fileManager.fileExists(atPath: orphan.path))
+
+    store.clearAll()
+    #expect(store.notes.isEmpty)
+    #expect(!fileManager.fileExists(atPath: linked.path))
+    #expect(!fileManager.fileExists(atPath: orphan.path))
+}
+
 @Test
 func smartScribeNotePreviewTextPrefersRawTranscript() {
     let note = SmartScribeNote(

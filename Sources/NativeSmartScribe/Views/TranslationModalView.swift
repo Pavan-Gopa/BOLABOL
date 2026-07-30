@@ -44,6 +44,7 @@ struct TranslationModalView: View {
     @State private var isTranscribingRecording = false
     @State private var isTogglingRecording = false
     @State private var errorMessage: String?
+    @State private var toastMessage: String?
     @State private var glossaryDraft: TranslationGlossaryDraft?
 
     // Live list built from the store — always up-to-date
@@ -76,8 +77,6 @@ struct TranslationModalView: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             controls
-            AudioInputDeviceStatusPill(audioRecorder: audioRecorder, compact: true)
-                .frame(maxWidth: 320, alignment: .leading)
 
             HSplitView {
                 translationTextPanel(
@@ -102,7 +101,11 @@ struct TranslationModalView: View {
             }
             .frame(minHeight: 280)
 
-            if let statusMessage {
+            if let toastMessage {
+                Label(toastMessage, systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .smartScribeFont(.caption)
+            } else if let statusMessage {
                 Label(statusMessage, systemImage: statusIconName)
                     .foregroundStyle(statusTint)
                     .smartScribeFont(.caption)
@@ -166,20 +169,26 @@ struct TranslationModalView: View {
 
             Spacer()
 
-            TranslationCloseButton { dismiss() }
+            TranslationCloseButton {
+                dismiss()
+                FloatingTranslationWindowManager.shared.close()
+            }
         }
     }
 
     // MARK: – Controls
 
+    private var activeProviderKind: APIProviderKind? {
+        APIProviderKind.allCases.first(where: { $0.polishingEngineID == providerID })
+    }
+
     private var controls: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Provider row
-            HStack(spacing: 12) {
+        HStack(spacing: 16) {
+            // 1. Provider Dropdown (Left)
+            HStack(spacing: 6) {
                 Text(generalSettingsStore.text(.provider))
                     .foregroundStyle(.secondary)
                     .font(.subheadline)
-                    .frame(width: 110, alignment: .trailing)
 
                 Picker(generalSettingsStore.text(.provider), selection: $providerID) {
                     ForEach(providers) { provider in
@@ -187,15 +196,45 @@ struct TranslationModalView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: 280, alignment: .leading)
+                .frame(maxWidth: 220, alignment: .leading)
             }
 
-            // Target Language row — picker + text field on same line
-            HStack(spacing: 12) {
+            // 2. Model Dropdown (Center) — Strictly Favorite models only
+            if let activeKind = activeProviderKind {
+                let favs = favoriteModels(for: activeKind)
+                let currentModelID = polishingEngineStore.apiSettings.configuration(for: activeKind).textModel
+
+                HStack(spacing: 6) {
+                    Text(generalSettingsStore.text(.model))
+                        .foregroundStyle(.secondary)
+                        .font(.subheadline)
+
+                    if favs.isEmpty {
+                        Text(modelDisplayName(id: currentModelID, kind: activeKind))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                    } else {
+                        Picker(generalSettingsStore.text(.model), selection: selectedModelBinding(for: activeKind)) {
+                            ForEach(favs, id: \.id) { model in
+                                Text(model.displayName).tag(model.id)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 220, alignment: .leading)
+                    }
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            // 3. Target Language Dropdown (Right)
+            HStack(spacing: 6) {
                 Text(generalSettingsStore.text(.targetLanguage))
                     .foregroundStyle(.secondary)
                     .font(.subheadline)
-                    .frame(width: 110, alignment: .trailing)
 
                 Picker(generalSettingsStore.text(.targetLanguage), selection: $targetLanguage) {
                     ForEach(Self.defaultLanguages) { language in
@@ -203,13 +242,10 @@ struct TranslationModalView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: 160, alignment: .leading)
-
-                TextField(generalSettingsStore.text(.customLanguage), text: $targetLanguage)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 120)
+                .frame(width: 140, alignment: .leading)
             }
         }
+        .padding(.vertical, 2)
     }
 
     // MARK: – Footer
@@ -222,13 +258,6 @@ struct TranslationModalView: View {
                 helpText: generalSettingsStore.text(.clear),
                 isDisabled: isClearingDisabled
             ) { clearContent() }
-
-            // Copy translated
-            TranslationIconButton(
-                systemImage: "doc.on.doc",
-                helpText: generalSettingsStore.text(.copy),
-                isDisabled: translatedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ) { copyTranslatedText() }
 
             // Record button — morphing style matching ModernRecordButton on main screen
             Button { toggleRecording() } label: {
@@ -255,6 +284,10 @@ struct TranslationModalView: View {
                   ? generalSettingsStore.text(.stopRecording)
                   : generalSettingsStore.text(.record))
 
+            // Audio Input Device Status Pill next to Record button
+            AudioInputDeviceStatusPill(audioRecorder: audioRecorder, compact: true)
+                .frame(maxWidth: 180)
+
             Spacer()
 
             // Refresh translation
@@ -266,13 +299,21 @@ struct TranslationModalView: View {
                     || providerID.isEmpty
             ) { Task { await translate() } }
 
-            // Translate — prominent pill
-            TranslateButton(
+            // Translate button
+            ActionPillButton(
+                systemImage: "translate",
+                label: generalSettingsStore.text(.translate),
                 isDisabled: isTranslating
                     || originalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    || providerID.isEmpty,
-                label: generalSettingsStore.text(.translate)
+                    || providerID.isEmpty
             ) { Task { await translate() } }
+
+            // Copy button — right next to Translate
+            ActionPillButton(
+                systemImage: "doc.on.doc",
+                label: generalSettingsStore.text(.copy),
+                isDisabled: translatedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ) { copyTranslatedTextWithFeedback() }
         }
     }
 
@@ -287,8 +328,28 @@ struct TranslationModalView: View {
         side: GlossaryDraftSide
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .smartScribeFont(.headline, weight: .semibold)
+            HStack {
+                Text(title)
+                    .smartScribeFont(.headline, weight: .semibold)
+
+                Spacer()
+
+                if side == .source {
+                    Button {
+                        pasteFromClipboardAndTranslate()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "doc.on.clipboard")
+                                .font(.system(size: 11))
+                            Text(generalSettingsStore.text(.pasteFromClipboard))
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .foregroundStyle(Color.accentColor)
+                    }
+                    .buttonStyle(.borderless)
+                    .help(generalSettingsStore.text(.pasteFromClipboardHelp))
+                }
+            }
 
             SelectableTextView(
                 text: text,
@@ -301,7 +362,11 @@ struct TranslationModalView: View {
                         selectedText: selectedText,
                         side: side
                     )
-                }
+                },
+                onDoubleClick: side == .source ? { pasteFromClipboardAndTranslate() } : nil,
+                onClick: side == .translation ? { copyTranslatedTextWithFeedback() } : nil,
+                textScale: generalSettingsStore.settings.textScale,
+                textFont: generalSettingsStore.settings.textFont
             )
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
             .overlay {
@@ -405,10 +470,36 @@ struct TranslationModalView: View {
     }
 
     private func copyTranslatedText() {
+        copyTranslatedTextWithFeedback()
+    }
+
+    private func pasteFromClipboardAndTranslate() {
+        guard let clipboardText = NSPasteboard.general.string(forType: .string)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+              !clipboardText.isEmpty else { return }
+        originalText = clipboardText
+        showToast("Pasted from clipboard")
+        if !providerID.isEmpty {
+            Task { await translate() }
+        }
+    }
+
+    private func copyTranslatedTextWithFeedback() {
         let text = translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+        showToast("Copied to clipboard!")
+    }
+
+    private func showToast(_ message: String) {
+        toastMessage = message
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            if toastMessage == message {
+                toastMessage = nil
+            }
+        }
     }
 
     private func beginGlossaryDraft(selectedText: String, side: GlossaryDraftSide) {
@@ -448,6 +539,153 @@ struct TranslationModalView: View {
                 language: targetLanguage
             ).text
         }
+    }
+
+    private struct ModelOption: Identifiable, Equatable {
+        let id: String
+        let displayName: String
+    }
+
+    private func cleanModelDisplayName(_ raw: String) -> String {
+        var name = raw
+        // If format is provider/model-id (e.g. google/gemini-3.5-flash-lite), strip the provider/ prefix
+        if let slashIndex = name.firstIndex(of: "/") {
+            name = String(name[name.index(after: slashIndex)...])
+        }
+        return name
+    }
+
+    private func availableModels(for kind: APIProviderKind) -> [ModelOption] {
+        switch kind {
+        case .google:
+            return [
+                ModelOption(id: "gemini-3.5-flash", displayName: "Gemini 3.5 Flash"),
+                ModelOption(id: "gemini-2.5-flash", displayName: "Gemini 2.5 Flash"),
+                ModelOption(id: "gemini-2.5-flash-lite", displayName: "Gemini 2.5 Flash Lite"),
+                ModelOption(id: "gemini-2.5-pro", displayName: "Gemini 2.5 Pro"),
+                ModelOption(id: "gemini-2.0-flash", displayName: "Gemini 2.0 Flash")
+            ]
+        case .openAI:
+            return [
+                ModelOption(id: "gpt-4o-mini", displayName: "GPT-4o Mini"),
+                ModelOption(id: "gpt-4o", displayName: "GPT-4o"),
+                ModelOption(id: "o3-mini", displayName: "o3-mini"),
+                ModelOption(id: "gpt-4-turbo", displayName: "GPT-4 Turbo")
+            ]
+        case .qwen:
+            return [
+                ModelOption(id: "qwen3.6-flash", displayName: "Qwen 3.6 Flash"),
+                ModelOption(id: "qwen3.7-plus", displayName: "Qwen 3.7 Plus"),
+                ModelOption(id: "qwen3.8-max-preview", displayName: "Qwen 3.8 Max"),
+                ModelOption(id: "qwen-turbo", displayName: "Qwen Turbo"),
+                ModelOption(id: "qwen-max", displayName: "Qwen Max")
+            ]
+        case .openRouter:
+            return [
+                ModelOption(id: "google/gemini-3.5-flash", displayName: "Gemini 3.5 Flash"),
+                ModelOption(id: "deepseek/deepseek-v4-flash", displayName: "DeepSeek V4 Flash"),
+                ModelOption(id: "qwen/qwen3.6-flash", displayName: "Qwen 3.6 Flash"),
+                ModelOption(id: "openai/gpt-4o-mini", displayName: "GPT-4o Mini"),
+                ModelOption(id: "anthropic/claude-3.5-haiku", displayName: "Claude 3.5 Haiku"),
+                ModelOption(id: "google/gemini-2.5-flash", displayName: "Gemini 2.5 Flash"),
+                ModelOption(id: "deepseek/deepseek-chat", displayName: "DeepSeek V3")
+            ]
+        case .custom:
+            let current = polishingEngineStore.apiSettings.configuration(for: .custom).textModel
+            return [ModelOption(id: current, displayName: cleanModelDisplayName(current))]
+        case .anthropic:
+            return [
+                ModelOption(id: "claude-3-5-haiku-latest", displayName: "Claude 3.5 Haiku"),
+                ModelOption(id: "claude-3-5-sonnet-latest", displayName: "Claude 3.5 Sonnet")
+            ]
+        }
+    }
+
+    private func favoriteModels(for kind: APIProviderKind) -> [ModelOption] {
+        let favSet = FavoriteModelsStore.loadFavorites()
+        let baseOptions = availableModels(for: kind)
+        var result = baseOptions.filter { favSet.contains($0.id) }
+
+        // Also dynamically include any starred model IDs from settings matching this provider
+        for id in favSet {
+            if !result.contains(where: { $0.id == id }) && matchesProvider(modelID: id, kind: kind) {
+                result.append(ModelOption(id: id, displayName: modelDisplayName(id: id, kind: kind)))
+            }
+        }
+
+        // If no favorites are saved for this provider, show all available models
+        if result.isEmpty {
+            result = baseOptions
+        }
+
+        // Always ensure the currently active model is present so SwiftUI Picker tag matches
+        let currentID = polishingEngineStore.apiSettings.configuration(for: kind).textModel
+        if !currentID.isEmpty && !result.contains(where: { $0.id == currentID }) && matchesProvider(modelID: currentID, kind: kind) {
+            result.insert(ModelOption(id: currentID, displayName: modelDisplayName(id: currentID, kind: kind)), at: 0)
+        }
+
+        // Clean display names and deduplicate entries by clean display name and ID
+        var seenKeys = Set<String>()
+        var deduplicated: [ModelOption] = []
+        for option in result {
+            let cleanName = cleanModelDisplayName(option.displayName)
+            let key = cleanName.lowercased()
+            if !seenKeys.contains(key) {
+                seenKeys.insert(key)
+                deduplicated.append(ModelOption(id: option.id, displayName: cleanName))
+            }
+        }
+
+        return deduplicated
+    }
+
+    private func matchesProvider(modelID: String, kind: APIProviderKind) -> Bool {
+        let lower = modelID.lowercased()
+        // OpenRouter and Custom model IDs contain slashes (e.g. google/gemini-3.5-flash-lite).
+        // Direct providers (Google, OpenAI, Anthropic, Qwen) do not use slashes in model IDs.
+        if kind != .openRouter && kind != .custom && lower.contains("/") {
+            return false
+        }
+        switch kind {
+        case .google:
+            return lower.contains("gemini") || lower.contains("gemma") || lower.contains("google") || lower.contains("lyra")
+        case .openAI:
+            return lower.contains("gpt") || lower.contains("o3") || lower.contains("o1") || lower.contains("openai")
+        case .qwen:
+            return lower.contains("qwen") || lower.contains("deepseek") || lower.contains("glm")
+        case .openRouter:
+            return lower.contains("/")
+        case .anthropic:
+            return lower.contains("claude") || lower.contains("anthropic")
+        case .custom:
+            return true
+        }
+    }
+
+    private func modelDisplayName(id: String, kind: APIProviderKind) -> String {
+        let available = availableModels(for: kind)
+        if let match = available.first(where: { $0.id == id }) {
+            return cleanModelDisplayName(match.displayName)
+        }
+        return id.isEmpty ? generalSettingsStore.text(.defaultModelName) : cleanModelDisplayName(id)
+    }
+
+    private func selectedModelBinding(for kind: APIProviderKind) -> Binding<String> {
+        Binding(
+            get: {
+                let current = polishingEngineStore.apiSettings.configuration(for: kind).textModel
+                let favs = favoriteModels(for: kind)
+                if favs.contains(where: { $0.id == current }) {
+                    return current
+                }
+                return favs.first?.id ?? current
+            },
+            set: { newModelID in
+                var config = polishingEngineStore.apiSettings.configuration(for: kind)
+                config.textModel = newModelID
+                polishingEngineStore.updateAPIConfiguration(config, for: kind)
+            }
+        )
     }
 
     private static let defaultLanguages = [
@@ -503,17 +741,18 @@ private struct TranslationIconButton: View {
     }
 }
 
-/// Prominent "Translate" pill button
-private struct TranslateButton: View {
-    let isDisabled: Bool
+/// Action pill button (Translate, Copy, etc.) — clean balanced style
+private struct ActionPillButton: View {
+    let systemImage: String
     let label: String
+    let isDisabled: Bool
     let action: () -> Void
     @State private var isHovered = false
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Image(systemName: "translate")
+                Image(systemName: systemImage)
                     .font(.system(size: 13, weight: .medium))
                 Text(label)
                     .font(.system(size: 13, weight: .semibold))
@@ -539,6 +778,7 @@ private struct TranslateButton: View {
 /// Close (×) button — square, subtle red tint on hover
 private struct TranslationCloseButton: View {
     let action: () -> Void
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @State private var isHovered = false
 
     var body: some View {
@@ -558,7 +798,7 @@ private struct TranslationCloseButton: View {
                 .animation(.easeInOut(duration: 0.15), value: isHovered)
         }
         .buttonStyle(.plain)
-        .help("Close")
+        .help(generalSettingsStore.text(.close))
         .onHover { isHovered = $0 }
     }
 }

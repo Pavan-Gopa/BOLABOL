@@ -1,4 +1,5 @@
 import AppKit
+import NativeSmartScribeCore
 import SwiftUI
 
 struct SelectableTextView: NSViewRepresentable {
@@ -15,6 +16,10 @@ struct SelectableTextView: NSViewRepresentable {
     let isEditable: Bool
     let selectionActionTitle: String?
     let onSelectionAction: ((String) -> Void)?
+    var onDoubleClick: (() -> Void)? = nil
+    var onClick: (() -> Void)? = nil
+    var textScale: Double = 1.0
+    var textFont: TextFontPreference = .system
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -32,12 +37,27 @@ struct SelectableTextView: NSViewRepresentable {
         textView.allowsUndo = isEditable
         textView.drawsBackground = false
         textView.textContainerInset = NSSize(width: 12, height: 12)
-        textView.font = NSFont.preferredFont(forTextStyle: .body)
+        textView.font = contentFont
         textView.textColor = .labelColor
         textView.string = displayText
         configureSelectionAppearance(for: textView)
         context.coordinator.textView = textView
         textView.menu = context.coordinator.makeSelectionContextMenu()
+
+        let doubleClickRecognizer = NSClickGestureRecognizer(
+            target: context.coordinator,
+            action: #selector(Coordinator.handleDoubleClick(_:))
+        )
+        doubleClickRecognizer.numberOfClicksRequired = 2
+        textView.addGestureRecognizer(doubleClickRecognizer)
+
+        let singleClickRecognizer = NSClickGestureRecognizer(
+            target: context.coordinator,
+            action: #selector(Coordinator.handleSingleClick(_:))
+        )
+        singleClickRecognizer.numberOfClicksRequired = 1
+        singleClickRecognizer.delaysPrimaryMouseButtonEvents = false
+        textView.addGestureRecognizer(singleClickRecognizer)
 
         scrollView.drawsBackground = false
         scrollView.hasVerticalScroller = true
@@ -59,7 +79,7 @@ struct SelectableTextView: NSViewRepresentable {
 
         textView.isEditable = isEditable
         textView.textColor = text.isEmpty ? .secondaryLabelColor : .labelColor
-        textView.font = NSFont.preferredFont(forTextStyle: .body)
+        textView.font = contentFont
         configureSelectionAppearance(for: textView)
         context.coordinator.parent = self
         context.coordinator.textView = textView
@@ -72,6 +92,19 @@ struct SelectableTextView: NSViewRepresentable {
         }
 
         return text.isEmpty ? placeholder : text
+    }
+
+    private var contentFont: NSFont {
+        let baseSize = NSFont.preferredFont(forTextStyle: .body).pointSize
+        let scaledSize = baseSize * textScale
+        switch textFont {
+        case .system:
+            return NSFont.systemFont(ofSize: scaledSize)
+        case .serif:
+            return NSFont.userFont(ofSize: scaledSize) ?? NSFont.systemFont(ofSize: scaledSize)
+        case .monospaced:
+            return NSFont.monospacedSystemFont(ofSize: scaledSize, weight: .regular)
+        }
     }
 
     private func configureSelectionAppearance(for textView: NSTextView) {
@@ -138,6 +171,14 @@ struct SelectableTextView: NSViewRepresentable {
             let selected = Self.selectedText(in: textView)
             guard !selected.isEmpty else { return }
             onSelectionAction(selected)
+        }
+
+        @objc func handleDoubleClick(_ recognizer: NSClickGestureRecognizer) {
+            parent.onDoubleClick?()
+        }
+
+        @objc func handleSingleClick(_ recognizer: NSClickGestureRecognizer) {
+            parent.onClick?()
         }
 
         func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {

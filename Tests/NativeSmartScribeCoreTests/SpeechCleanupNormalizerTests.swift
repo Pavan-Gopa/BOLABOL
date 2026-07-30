@@ -21,4 +21,16 @@ struct SpeechCleanupNormalizerTests {
         #expect(output.hasPrefix("Сегодня"))
         #expect(output.hasSuffix("."))
     }
+
+    @Test
+    func cloudRawCleanupRemovesDuplicatesFlashLiteMayLeaveBehind() {
+        let input = "Ну вот, я я хочу сказать, что сначала нужно, нужно получить транскрипцию. То есть, как бы, смысл должен остаться прежним."
+
+        let output = SpeechCleanupNormalizer.normalize(input, mode: .lightCleanup)
+
+        #expect(!output.localizedCaseInsensitiveContains("я я"))
+        #expect(!output.localizedCaseInsensitiveContains("нужно, нужно"))
+        #expect(!output.localizedCaseInsensitiveContains("как бы"))
+        #expect(output.localizedCaseInsensitiveContains("смысл должен остаться прежним"))
+    }
 }

@@ -11,16 +11,20 @@ public final class HotkeySessionCoordinator {
     public static let shared = HotkeySessionCoordinator()
 
     public private(set) var phase: Phase
-    private let sessionTimeout: TimeInterval
+    /// Timeout for stuck **processing** sessions only.
+    /// Active recording never expires — users may dictate for many minutes.
+    private let processingTimeout: TimeInterval
     private var lastTransitionAt: Date
 
     public init(
         phase: Phase = .idle,
-        sessionTimeout: TimeInterval = 300,
+        sessionTimeout: TimeInterval = 900,
         lastTransitionAt: Date = .distantPast
     ) {
         self.phase = phase
-        self.sessionTimeout = sessionTimeout
+        // Keep the historical parameter name for call sites/tests, but apply it
+        // only to stuck processing — never to live recording.
+        self.processingTimeout = sessionTimeout
         self.lastTransitionAt = lastTransitionAt
     }
 
@@ -29,7 +33,7 @@ public final class HotkeySessionCoordinator {
         ownerID: UUID,
         now: Date = .now
     ) -> Bool {
-        resetExpiredSessionIfNeeded(now: now)
+        resetExpiredProcessingIfNeeded(now: now)
         guard case .idle = phase else { return false }
         phase = .recording(ownerID)
         lastTransitionAt = now
@@ -41,8 +45,22 @@ public final class HotkeySessionCoordinator {
         ownerID: UUID,
         now: Date = .now
     ) -> Bool {
-        resetExpiredSessionIfNeeded(now: now)
+        resetExpiredProcessingIfNeeded(now: now)
         guard phase == .recording(ownerID) else { return false }
+        phase = .processing(ownerID)
+        lastTransitionAt = now
+        return true
+    }
+
+    /// Recovers when audio is still capturing but the session phase was lost
+    /// (legacy timeout, crash recovery path, multi-window race). Only allowed
+    /// from `.idle` so another owner's active session cannot be stolen.
+    @discardableResult
+    public func reclaimOrphanedRecordingForStop(
+        ownerID: UUID,
+        now: Date = .now
+    ) -> Bool {
+        guard case .idle = phase else { return false }
         phase = .processing(ownerID)
         lastTransitionAt = now
         return true
@@ -71,13 +89,14 @@ public final class HotkeySessionCoordinator {
         }
     }
 
-    private func resetExpiredSessionIfNeeded(now: Date) {
-        guard case .idle = phase else {
-            if now.timeIntervalSince(lastTransitionAt) > sessionTimeout {
-                phase = .idle
-                lastTransitionAt = now
-            }
+    private func resetExpiredProcessingIfNeeded(now: Date) {
+        guard case .processing = phase else {
+            // Never auto-expire live recording — long dictation is intentional.
             return
+        }
+        if now.timeIntervalSince(lastTransitionAt) > processingTimeout {
+            phase = .idle
+            lastTransitionAt = now
         }
     }
 }

@@ -14,6 +14,7 @@ private enum GlossarySettingsLayout {
 
 struct GlossarySettingsView: View {
     @EnvironmentObject private var glossaryStore: GlossaryStore
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
 
     @State private var searchText = ""
     @State private var selectedCategory = Self.allCategoriesID
@@ -67,16 +68,16 @@ struct GlossarySettingsView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .alert("Clear Glossary?", isPresented: $isShowingClearConfirmation) {
-            Button("Cancel", role: .cancel) {}
-            Button("Clear Glossary", role: .destructive) {
+        .alert(generalSettingsStore.text(.clearGlossaryTitle), isPresented: $isShowingClearConfirmation) {
+            Button(generalSettingsStore.text(.cancel), role: .cancel) {}
+            Button(generalSettingsStore.text(.clearGlossary), role: .destructive) {
                 glossaryStore.clearEntries()
                 searchText = ""
                 selectedCategory = Self.allCategoriesID
-                statusMessage = "Glossary cleared."
+                statusMessage = generalSettingsStore.text(.glossaryCleared)
             }
         } message: {
-            Text("This will delete all glossary entries. Export a JSON backup first if you want to keep them.")
+            Text(generalSettingsStore.text(.clearGlossaryMessage))
         }
     }
 
@@ -91,19 +92,19 @@ struct GlossarySettingsView: View {
                 )
 
                 GlossaryLanguageSelector(
-                    title: "Transcription",
+                    title: generalSettingsStore.text(.transcriptionModel),
                     currentLanguage: glossaryStore.settings.authorTranscriptionLanguage
                 ) { language in
                     glossaryStore.setAuthorTranscriptionLanguage(language)
-                    statusMessage = "Transcription language set to \(language)."
+                    statusMessage = generalSettingsStore.formattedText(.transcriptionLanguageSetTo, language)
                 }
 
                 GlossaryLanguageSelector(
-                    title: "Translation",
+                    title: generalSettingsStore.text(.translation),
                     currentLanguage: glossaryStore.settings.autoTranslationLanguage
                 ) { language in
                     glossaryStore.setAutoTranslationLanguage(language)
-                    statusMessage = "Translation language set to \(language)."
+                    statusMessage = generalSettingsStore.formattedText(.translationLanguageSetTo, language)
                 }
 
                 Spacer()
@@ -111,20 +112,20 @@ struct GlossarySettingsView: View {
                 Button(role: .destructive) {
                     isShowingClearConfirmation = true
                 } label: {
-                    Label("Clear Glossary", systemImage: "trash")
+                    Label(generalSettingsStore.text(.clearGlossary), systemImage: "trash")
                 }
                 .disabled(glossaryStore.settings.entries.isEmpty)
                 .controlSize(.regular)
                 .frame(height: GlossarySettingsLayout.pickerHeight, alignment: .bottom)
 
                 Menu {
-                    Button("Import JSON") { importJSON() }
-                    Button("Import CSV") { importCSV() }
+                    Button(generalSettingsStore.text(.importJSON)) { importJSON() }
+                    Button(generalSettingsStore.text(.importCSV)) { importCSV() }
                     Divider()
-                    Button("Export JSON") { exportJSON() }
-                    Button("Export CSV") { exportCSV() }
+                    Button(generalSettingsStore.text(.exportJSON)) { exportJSON() }
+                    Button(generalSettingsStore.text(.exportCSV)) { exportCSV() }
                 } label: {
-                    Label("Import / Export", systemImage: "square.and.arrow.up.on.square")
+                    Label(generalSettingsStore.text(.importExport), systemImage: "square.and.arrow.up.on.square")
                 }
                 .controlSize(.regular)
                 .frame(height: GlossarySettingsLayout.pickerHeight, alignment: .bottom)
@@ -132,11 +133,11 @@ struct GlossarySettingsView: View {
             .frame(height: GlossarySettingsLayout.headerControlHeight, alignment: .bottom)
 
             HStack(spacing: 10) {
-                TextField("Search", text: $searchText)
+                TextField(generalSettingsStore.text(.search), text: $searchText)
                     .textFieldStyle(.roundedBorder)
 
-                Picker("Category", selection: $selectedCategory) {
-                    Text("All Categories").tag(Self.allCategoriesID)
+                Picker(generalSettingsStore.text(.category), selection: $selectedCategory) {
+                    Text(generalSettingsStore.text(.allCategories)).tag(Self.allCategoriesID)
                     ForEach(glossaryStore.categories, id: \.self) { category in
                         Text(category).tag(category)
                     }
@@ -149,13 +150,13 @@ struct GlossarySettingsView: View {
 
     private var newEntryEditor: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("New Entry")
+            Text(generalSettingsStore.text(.newEntry))
                 .font(.headline)
 
             HStack(spacing: 8) {
-                TextField("\(authorLanguageName) form", text: $newSource)
+                TextField(newSourceTitle, text: $newSource)
                     .textFieldStyle(.roundedBorder)
-                TextField("\(autoTranslationLanguageName) form", text: $newTranslation)
+                TextField(newTranslationTitle, text: $newTranslation)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -164,7 +165,7 @@ struct GlossarySettingsView: View {
                     category: $newCategory,
                     categories: glossaryStore.categories
                 )
-                TextField("Variants separated by semicolons", text: $newVariants)
+                TextField(generalSettingsStore.text(.variantsSeparatedBySemicolons), text: $newVariants)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -173,7 +174,7 @@ struct GlossarySettingsView: View {
                 Button {
                     createEntry()
                 } label: {
-                    Label("Add Entry", systemImage: "plus")
+                    Label(generalSettingsStore.text(.addEntry), systemImage: "plus")
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(newSource.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -217,14 +218,14 @@ struct GlossarySettingsView: View {
         newTranslation = ""
         newCategory = ""
         newVariants = ""
-        statusMessage = "Entry added."
+        statusMessage = generalSettingsStore.text(.entryAdded)
     }
 
     private func importJSON() {
         guard let url = openPanel(allowedExtensions: ["json"]) else { return }
         do {
             try glossaryStore.importJSONData(Data(contentsOf: url))
-            statusMessage = "JSON imported."
+            statusMessage = generalSettingsStore.text(.jsonImported)
         } catch {
             statusMessage = error.localizedDescription
         }
@@ -234,7 +235,7 @@ struct GlossarySettingsView: View {
         guard let url = openPanel(allowedExtensions: ["csv"]) else { return }
         do {
             try glossaryStore.importCSVData(Data(contentsOf: url))
-            statusMessage = "CSV imported."
+            statusMessage = generalSettingsStore.text(.csvImported)
         } catch {
             statusMessage = error.localizedDescription
         }
@@ -244,7 +245,7 @@ struct GlossarySettingsView: View {
         guard let url = savePanel(defaultName: "SmartScribe-glossary.json") else { return }
         do {
             try glossaryStore.exportJSONData().write(to: url, options: .atomic)
-            statusMessage = "JSON exported."
+            statusMessage = generalSettingsStore.text(.jsonExported)
         } catch {
             statusMessage = error.localizedDescription
         }
@@ -254,7 +255,7 @@ struct GlossarySettingsView: View {
         guard let url = savePanel(defaultName: "SmartScribe-glossary.csv") else { return }
         do {
             try glossaryStore.exportCSVData().write(to: url, options: .atomic)
-            statusMessage = "CSV exported."
+            statusMessage = generalSettingsStore.text(.csvExported)
         } catch {
             statusMessage = error.localizedDescription
         }
@@ -282,14 +283,23 @@ struct GlossarySettingsView: View {
         GlossaryLanguageCatalog.displayName(for: glossaryStore.settings.autoTranslationLanguage)
     }
 
+    private var newSourceTitle: String {
+        generalSettingsStore.formattedText(.languageForm, authorLanguageName)
+    }
+
+    private var newTranslationTitle: String {
+        generalSettingsStore.formattedText(.languageForm, autoTranslationLanguageName)
+    }
+
 }
 
 private struct GlossaryToggleControl: View {
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     let isOn: Binding<Bool>
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Use glossary")
+            Text(generalSettingsStore.text(.useGlossary))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -319,6 +329,8 @@ private struct GlossaryToggleControl: View {
 
 private struct GlossaryLanguageSelector: View {
     private static let customLanguageID = "__custom_glossary_language__"
+
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
 
     let title: String
     let currentLanguage: String
@@ -370,7 +382,7 @@ private struct GlossaryLanguageSelector: View {
                 ForEach(optionLanguages, id: \.self) { language in
                     Text(language).tag(language)
                 }
-                Text("Custom...").tag(Self.customLanguageID)
+                Text(generalSettingsStore.text(.custom)).tag(Self.customLanguageID)
             }
             .labelsHidden()
             .controlSize(.regular)
@@ -391,19 +403,19 @@ private struct GlossaryLanguageSelector: View {
 
     private var customLanguagePopover: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Custom Language")
+            Text(generalSettingsStore.text(.customLanguage))
                 .font(.headline)
 
-            TextField("Language", text: $customLanguage)
+            TextField(generalSettingsStore.text(.targetLanguage), text: $customLanguage)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit(commitDraft)
 
             HStack {
                 Spacer()
-                Button("Cancel") {
+                Button(generalSettingsStore.text(.cancel)) {
                     isShowingCustomLanguage = false
                 }
-                Button("Apply") {
+                Button(generalSettingsStore.text(.apply)) {
                     commitDraft()
                 }
                 .buttonStyle(.borderedProminent)
@@ -424,6 +436,7 @@ private struct GlossaryLanguageSelector: View {
 
 private struct GlossaryEntryRow: View {
     @EnvironmentObject private var glossaryStore: GlossaryStore
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     let entry: GlossaryEntry
 
     @State private var draft: GlossaryEntry
@@ -440,9 +453,9 @@ private struct GlossaryEntryRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                TextField("\(authorLanguageName) form", text: $draft.source)
+                TextField(sourceTitle, text: $draft.source)
                     .textFieldStyle(.roundedBorder)
-                TextField("\(autoTranslationLanguageName) form", text: $draft.translation)
+                TextField(translationTitle, text: $draft.translation)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -451,7 +464,7 @@ private struct GlossaryEntryRow: View {
                     category: categoryBinding,
                     categories: glossaryStore.categories
                 )
-                TextField("Variants", text: $variantsText)
+                TextField(generalSettingsStore.text(.variants), text: $variantsText)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -461,7 +474,7 @@ private struct GlossaryEntryRow: View {
                 Button {
                     isShowingMergePicker.toggle()
                 } label: {
-                    Label("Merge Into", systemImage: "arrow.triangle.merge")
+                    Label(generalSettingsStore.text(.mergeInto), systemImage: "arrow.triangle.merge")
                 }
                 .disabled(glossaryStore.settings.entries.count < 2)
                 .popover(isPresented: $isShowingMergePicker) {
@@ -479,14 +492,14 @@ private struct GlossaryEntryRow: View {
                 Button {
                     save()
                 } label: {
-                    Label("Save", systemImage: "checkmark")
+                    Label(generalSettingsStore.text(.save), systemImage: "checkmark")
                 }
                 .disabled(draft.source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
                 Button(role: .destructive) {
                     glossaryStore.delete(draft.id)
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label(generalSettingsStore.text(.delete), systemImage: "trash")
                 }
             }
         }
@@ -516,6 +529,14 @@ private struct GlossaryEntryRow: View {
         GlossaryLanguageCatalog.displayName(for: glossaryStore.settings.autoTranslationLanguage)
     }
 
+    private var sourceTitle: String {
+        generalSettingsStore.formattedText(.languageForm, authorLanguageName)
+    }
+
+    private var translationTitle: String {
+        generalSettingsStore.formattedText(.languageForm, autoTranslationLanguageName)
+    }
+
     private func save() {
         let timestamp = isoString(from: .now)
         draft.source = draft.source.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -537,6 +558,7 @@ private struct GlossaryEntryRow: View {
 }
 
 private struct GlossaryMergeTargetPicker: View {
+    @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     let currentEntryID: GlossaryEntry.ID
     let entries: [GlossaryEntry]
     @Binding var query: String
@@ -553,13 +575,13 @@ private struct GlossaryMergeTargetPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            TextField("Search term", text: $query)
+            TextField(generalSettingsStore.text(.searchTerm), text: $query)
                 .textFieldStyle(.roundedBorder)
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 6) {
                     if targets.isEmpty {
-                        Text("No matching entries")
+                        Text(generalSettingsStore.text(.noMatchingEntries))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)

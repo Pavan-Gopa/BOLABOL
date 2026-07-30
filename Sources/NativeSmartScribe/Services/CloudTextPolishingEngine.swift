@@ -9,9 +9,12 @@ struct CloudTextPolishingEngine: PolishingEngine {
     var displayName: String { kind.displayName }
 
     func polish(_ request: PolishingRequest) async throws -> PolishingResult {
-        let prompt = try request.template.render(transcription: request.rawText)
+        let prompt = try request.template.renderForChat(transcription: request.rawText)
         let startedAt = Date()
-        let response = try await generateText(prompt: prompt)
+        let response = try await generateText(
+            systemInstruction: prompt.systemInstruction,
+            userContent: prompt.userContent
+        )
 
         return PolishingResult(
             text: ModelOutputSanitizer.sanitize(response.text),
@@ -24,15 +27,86 @@ struct CloudTextPolishingEngine: PolishingEngine {
         )
     }
 
-    private func generateText(prompt: String) async throws -> CloudTextResponse {
+    private func generateText(
+        systemInstruction: String,
+        userContent: String
+    ) async throws -> CloudTextResponse {
+        let keys = try sanitizedAPIKeys()
+        let textModel = configuration.textModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !textModel.isEmpty else {
+            throw CloudTextPolishingError.invalidConfiguration(
+                "Text model is empty. For Qwen Token Plan use a real model id such as qwen3.7-plus or qwen3.7-max (not just \"Qwen\")."
+            )
+        }
+
+        var lastError: Error?
+        for (index, apiKey) in keys.enumerated() {
+            do {
+                return try await executeGenerateText(
+                    systemInstruction: systemInstruction,
+                    userContent: userContent,
+                    apiKey: apiKey,
+                    textModel: textModel
+                )
+            } catch let error as CloudTextPolishingError {
+                lastError = error
+                let isQuotaError: Bool
+                switch error {
+                case .apiError(let statusCode, let message):
+                    isQuotaError = statusCode == 429
+                        || message.localizedCaseInsensitiveContains("RESOURCE_EXHAUSTED")
+                        || message.localizedCaseInsensitiveContains("quota")
+                        || message.localizedCaseInsensitiveContains("rate limit")
+                default:
+                    isQuotaError = false
+                }
+
+                if isQuotaError && index < keys.count - 1 {
+                    NativeSmartScribeLog.polishing.warning(
+                        "\(self.kind.displayName) API Key #\(index + 1) quota exhausted. Rotating to Key #\(index + 2)."
+                    )
+                    continue
+                }
+                throw error
+            } catch {
+                throw error
+            }
+        }
+
+        if let lastError {
+            throw lastError
+        }
+        throw CloudTextPolishingError.invalidConfiguration("API key is invalid or missing. Please check Settings > API Providers.")
+    }
+
+    private func executeGenerateText(
+        systemInstruction: String,
+        userContent: String,
+        apiKey: String,
+        textModel: String
+    ) async throws -> CloudTextResponse {
         switch kind {
         case .google:
             return try await postJSON(
-                url: googleURL(),
-                headers: [:],
-                body: GoogleGenerateRequest(contents: [
-                    GoogleContent(parts: [GooglePart(text: prompt)])
-                ]),
+                url: googleURL(model: textModel),
+                headers: ["x-goog-api-key": apiKey],
+                body: GoogleGenerateRequest(
+                    systemInstruction: systemInstruction.isEmpty
+                        ? nil
+                        : GoogleContent(parts: [GooglePart(text: systemInstruction)]),
+                    contents: [
+                        GoogleContent(
+                            role: "user",
+                            parts: [GooglePart(text: userContent)]
+                        )
+                    ],
+                    generationConfig: GoogleGenerationConfig(
+                        temperature: 0.0,
+                        maxOutputTokens: 4096,
+                        responseMimeType: "text/plain"
+                    )
+                ),
+                useSnakeCaseCoding: false,
                 decode: { (data: GoogleGenerateResponse) in
                     CloudTextResponse(
                         text: data.candidates?.first?.content.parts.compactMap(\.text).joined(separator: "\n")
@@ -47,12 +121,15 @@ struct CloudTextPolishingEngine: PolishingEngine {
         case .openAI:
             return try await postJSON(
                 url: URL(string: "https://api.openai.com/v1/chat/completions")!,
-                headers: authorizationHeaders(),
+                headers: authorizationHeaders(apiKey: apiKey),
                 body: ChatCompletionRequest(
-                    model: configuration.textModel,
-                    messages: [.init(role: "user", content: prompt)],
+                    model: textModel,
+                    messages: chatMessages(
+                        systemInstruction: systemInstruction,
+                        userContent: userContent
+                    ),
                     temperature: 0.3,
-                    maxTokens: 1200
+                    maxTokens: 4096
                 ),
                 decode: openAIResponse
             )
@@ -61,13 +138,14 @@ struct CloudTextPolishingEngine: PolishingEngine {
             return try await postJSON(
                 url: URL(string: "https://api.anthropic.com/v1/messages")!,
                 headers: [
-                    "x-api-key": configuration.apiKey,
+                    "x-api-key": apiKey,
                     "anthropic-version": "2023-06-01"
                 ],
                 body: AnthropicRequest(
-                    model: configuration.textModel,
-                    maxTokens: 1200,
-                    messages: [.init(role: "user", content: prompt)]
+                    model: textModel,
+                    system: systemInstruction.isEmpty ? nil : systemInstruction,
+                    maxTokens: 4096,
+                    messages: [.init(role: "user", content: userContent)]
                 ),
                 decode: { (data: AnthropicResponse) in
                     CloudTextResponse(
@@ -78,25 +156,59 @@ struct CloudTextPolishingEngine: PolishingEngine {
                 }
             )
 
-        case .custom:
+        case .qwen, .openRouter, .custom:
             return try await postJSON(
-                url: customChatCompletionURL(),
-                headers: authorizationHeaders(),
+                url: try openAICompatibleChatURL(for: kind),
+                headers: openAICompatibleHeaders(apiKey: apiKey, kind: kind),
                 body: ChatCompletionRequest(
-                    model: configuration.textModel,
-                    messages: [.init(role: "user", content: prompt)],
+                    model: textModel,
+                    messages: chatMessages(
+                        systemInstruction: systemInstruction,
+                        userContent: userContent
+                    ),
                     temperature: 0.3,
-                    maxTokens: 1200
+                    maxTokens: 4096
                 ),
                 decode: openAIResponse
             )
         }
     }
 
+    private func chatMessages(
+        systemInstruction: String,
+        userContent: String
+    ) -> [ChatCompletionRequest.Message] {
+        var messages: [ChatCompletionRequest.Message] = []
+        if !systemInstruction.isEmpty {
+            messages.append(.init(role: "system", content: systemInstruction))
+        }
+        messages.append(.init(role: "user", content: userContent))
+        return messages
+    }
+
+    /// Trims whitespace and rejects keys that cannot be sent in HTTP headers.
+    private func sanitizedAPIKeys() throws -> [String] {
+        let keys = configuration.sanitizedAPIKeys
+        guard !keys.isEmpty else {
+            throw CloudTextPolishingError.invalidConfiguration(
+                "API key is invalid or missing. Please check Settings > API Providers."
+            )
+        }
+        for key in keys {
+            if key.unicodeScalars.contains(where: { !$0.isASCII }) {
+                throw CloudTextPolishingError.invalidConfiguration(
+                    "API key contains non-Latin characters (often from a Russian keyboard layout). Re-paste the key carefully — it must be pure ASCII (e.g. sk-sp-H…)."
+                )
+            }
+        }
+        return keys
+    }
+
     private func postJSON<Request: Encodable, Response: Decodable>(
         url: URL,
         headers: [String: String],
         body: Request,
+        useSnakeCaseCoding: Bool = true,
         decode: (Response) throws -> CloudTextResponse
     ) async throws -> CloudTextResponse {
         var request = URLRequest(url: url)
@@ -105,7 +217,8 @@ struct CloudTextPolishingEngine: PolishingEngine {
         for (key, value) in headers {
             request.setValue(value, forHTTPHeaderField: key)
         }
-        request.httpBody = try JSONEncoder.cloudAPI.encode(body)
+        let encoder = useSnakeCaseCoding ? JSONEncoder.cloudAPI : JSONEncoder()
+        request.httpBody = try encoder.encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -113,43 +226,93 @@ struct CloudTextPolishingEngine: PolishingEngine {
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {
+            let message = Self.errorMessage(from: data)
+                ?? HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
+            NativeSmartScribeLog.polishing.error(
+                "Cloud polishing HTTP \(httpResponse.statusCode) url=\(url.absoluteString, privacy: .public) message=\(message, privacy: .public)"
+            )
             throw CloudTextPolishingError.apiError(
                 statusCode: httpResponse.statusCode,
-                message: Self.errorMessage(from: data) ?? HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)
+                message: message
             )
         }
 
-        return try decode(try JSONDecoder.cloudAPI.decode(Response.self, from: data))
+        do {
+            let decoder = useSnakeCaseCoding ? JSONDecoder.cloudAPI : JSONDecoder()
+            return try decode(try decoder.decode(Response.self, from: data))
+        } catch {
+            NativeSmartScribeLog.polishing.error(
+                "Cloud polishing decode failed url=\(url.absoluteString, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+            )
+            throw error
+        }
     }
 
-    private func authorizationHeaders() -> [String: String] {
-        ["Authorization": "Bearer \(configuration.apiKey)"]
+    private func authorizationHeaders(apiKey: String) -> [String: String] {
+        ["Authorization": "Bearer \(apiKey)"]
     }
 
-    private func googleURL() throws -> URL {
-        var components = URLComponents(
-            string: "https://generativelanguage.googleapis.com/v1beta/models/\(configuration.textModel):generateContent"
-        )
-        components?.queryItems = [URLQueryItem(name: "key", value: configuration.apiKey)]
-        guard let url = components?.url else {
+    private func googleURL(model: String) throws -> URL {
+        guard let url = URL(
+            string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
+        ) else {
             throw CloudTextPolishingError.invalidConfiguration("Invalid Google model name.")
         }
         return url
     }
 
-    private func customChatCompletionURL() throws -> URL {
-        let trimmed = configuration.baseURL
+    private func openAICompatibleChatURL(for kind: APIProviderKind) throws -> URL {
+        let configured = configuration.baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let rawBase: String
+        switch kind {
+        case .openRouter:
+            rawBase = configured.isEmpty ? APIProviderKind.openRouter.defaultBaseURL : configured
+        case .qwen:
+            rawBase = configured.isEmpty ? APIProviderKind.qwen.defaultBaseURL : configured
+        case .custom:
+            rawBase = configured
+        default:
+            rawBase = configured
+        }
+        let trimmed = rawBase
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard let url = URL(string: "\(trimmed)/chat/completions") else {
-            throw CloudTextPolishingError.invalidConfiguration("Custom provider base URL is invalid.")
+        guard !trimmed.isEmpty, let url = URL(string: "\(trimmed)/chat/completions") else {
+            throw CloudTextPolishingError.invalidConfiguration(
+                "\(kind.displayName) base URL is invalid."
+            )
         }
         return url
     }
 
-    private func openAIResponse(_ data: ChatCompletionResponse) -> CloudTextResponse {
-        CloudTextResponse(
-            text: data.choices.first?.message.content ?? "",
+    private func openAICompatibleHeaders(apiKey: String, kind: APIProviderKind) -> [String: String] {
+        var headers = authorizationHeaders(apiKey: apiKey)
+        if kind == .openRouter {
+            // Recommended by OpenRouter for ranking / abuse control.
+            headers["HTTP-Referer"] = "https://smartscribe.app"
+            headers["X-Title"] = "SmartScribe"
+        }
+        return headers
+    }
+
+    private func openAIResponse(_ data: ChatCompletionResponse) throws -> CloudTextResponse {
+        let message = data.choices.first?.message
+        // Prefer normal content; some Qwen/reasoning models put text only in
+        // `reasoning_content` or stream final answer after thinking.
+        let candidates = [
+            message?.content,
+            message?.reasoningContent
+        ]
+        let text = candidates
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty } ?? ""
+        guard !text.isEmpty else {
+            throw CloudTextPolishingError.invalidConfiguration(
+                "The provider returned an empty completion. Check the model id (e.g. qwen3.7-plus) and that your plan includes that model."
+            )
+        }
+        return CloudTextResponse(
+            text: text,
             promptTokens: data.usage?.promptTokens,
             completionTokens: data.usage?.completionTokens
         )
@@ -190,7 +353,11 @@ private struct ChatCompletionRequest: Encodable {
 private struct ChatCompletionResponse: Decodable {
     struct Choice: Decodable {
         struct Message: Decodable {
-            let content: String
+            /// OpenAI-style assistant text. Optional because some providers omit
+            /// it when only `reasoning_content` is present.
+            let content: String?
+            /// Qwen / reasoning-model field (snake_case → reasoningContent).
+            let reasoningContent: String?
         }
 
         let message: Message
@@ -212,6 +379,7 @@ private struct AnthropicRequest: Encodable {
     }
 
     let model: String
+    let system: String?
     let maxTokens: Int
     let messages: [Message]
 }
@@ -230,12 +398,26 @@ private struct AnthropicResponse: Decodable {
     let usage: Usage?
 }
 
+private struct GoogleGenerationConfig: Encodable {
+    let temperature: Double
+    let maxOutputTokens: Int
+    let responseMimeType: String
+}
+
 private struct GoogleGenerateRequest: Encodable {
+    let systemInstruction: GoogleContent?
     let contents: [GoogleContent]
+    let generationConfig: GoogleGenerationConfig?
 }
 
 private struct GoogleContent: Codable {
+    let role: String?
     let parts: [GooglePart]
+
+    init(role: String? = nil, parts: [GooglePart]) {
+        self.role = role
+        self.parts = parts
+    }
 }
 
 private struct GooglePart: Codable {
@@ -270,7 +452,15 @@ private enum CloudTextPolishingError: LocalizedError {
             return "The API provider returned an invalid response."
         case .apiError(let statusCode, let message):
             if statusCode == 401 || statusCode == 403 {
+                if message.localizedCaseInsensitiveContains("AccessDenied")
+                    || message.localizedCaseInsensitiveContains("eligible")
+                    || message.localizedCaseInsensitiveContains("Unpurchased") {
+                    return "Model access denied for this API key/plan. Pick a model included in your plan (e.g. qwen3.7-plus) in Settings > API Providers."
+                }
                 return "API key is invalid or missing. Please check Settings > API Providers."
+            }
+            if statusCode == 404, message.localizedCaseInsensitiveContains("model") {
+                return "Model not found: check the exact model id (for Qwen Token Plan try qwen3.7-plus or qwen3.7-max, not \"Qwen\")."
             }
             if statusCode == 429 {
                 return "API quota exceeded. Please check your plan or switch providers."

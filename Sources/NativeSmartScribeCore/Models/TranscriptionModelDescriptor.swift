@@ -23,7 +23,7 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
             case .english:
                 "English"
             case .multilingual:
-                "Multilingual"
+                "Multi"
             }
         }
     }
@@ -126,7 +126,7 @@ public extension TranscriptionModelCatalog {
             ),
             TranscriptionModelDescriptor(
                 id: "whisperkit-small-multilingual",
-                displayName: "Whisper Small Multilingual",
+                displayName: "Whisper Small Multi",
                 modelName: "small",
                 backend: .whisperKitCoreML,
                 languageSupport: .multilingual,
@@ -150,7 +150,7 @@ public extension TranscriptionModelCatalog {
             ),
             TranscriptionModelDescriptor(
                 id: "whisperkit-medium-multilingual",
-                displayName: "Whisper Medium Multilingual",
+                displayName: "Whisper Medium Multi",
                 modelName: "medium",
                 backend: .whisperKitCoreML,
                 languageSupport: .multilingual,
@@ -161,28 +161,28 @@ public extension TranscriptionModelCatalog {
                 speed: 4
             ),
             TranscriptionModelDescriptor(
-                id: "whisperkit-large-v3-turbo-v20240930-632mb",
+                id: "whisperkit-large-v3-turbo",
                 displayName: "Whisper Large v3 Turbo",
-                modelName: "large-v3-v20240930_turbo_632MB",
+                modelName: "large-v3-v20240930_turbo",
                 backend: .whisperKitCoreML,
                 languageSupport: .multilingual,
-                downloadSize: "~646 MB",
-                badge: "Fastest large",
-                description: "Compressed Whisper Large v3 Turbo tuned for fast multilingual transcription on Apple Silicon.",
+                downloadSize: "~1.6 GB",
+                badge: "Fast large",
+                description: "OpenAI Large v3 Turbo (~809M parameters). Faster than full Large v3 with strong multilingual quality on Apple Silicon.",
                 accuracy: 4,
                 speed: 5
             ),
             TranscriptionModelDescriptor(
-                id: "whisperkit-large-v3-v20240930-626mb",
-                displayName: "Whisper Large v3",
-                modelName: "large-v3-v20240930_626MB",
+                id: "whisperkit-large-v3-full",
+                displayName: "Whisper Large v3 Full",
+                modelName: "large-v3",
                 backend: .whisperKitCoreML,
                 languageSupport: .multilingual,
-                downloadSize: "~626 MB",
-                badge: "Recommended",
-                description: "Core ML Whisper model optimized for high-quality multilingual transcription on Apple Silicon.",
+                downloadSize: "~3 GB",
+                badge: "Best quality",
+                description: "Complete Whisper Large v3 Core ML model. Highest accuracy and the most complete multilingual capabilities on-device.",
                 accuracy: 5,
-                speed: 3,
+                speed: 2,
                 isRecommended: true
             )
         ]

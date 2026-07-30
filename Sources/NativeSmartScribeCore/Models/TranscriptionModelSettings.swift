@@ -17,15 +17,19 @@ public struct TranscriptionModelSettings: Codable, Equatable, Sendable {
     public var activeModelID: String?
     public var languagePreference: TranscriptionLanguagePreference
     public var installationStates: [String: TranscriptionModelInstallationState]
+    /// Local Whisper vs Cloud Gemini. Never falls back to Apple Speech.
+    public var backend: TranscriptionBackend
 
     public init(
         activeModelID: String? = nil,
         languagePreference: TranscriptionLanguagePreference = .auto,
-        installationStates: [String: TranscriptionModelInstallationState] = [:]
+        installationStates: [String: TranscriptionModelInstallationState] = [:],
+        backend: TranscriptionBackend = .localWhisper
     ) {
         self.activeModelID = activeModelID
         self.languagePreference = languagePreference
         self.installationStates = installationStates
+        self.backend = backend
     }
 
     public func installationState(
@@ -104,16 +108,23 @@ public struct TranscriptionModelSettings: Codable, Equatable, Sendable {
             return nil
         }
 
-        // First try direct path (for older downloads)
+        // Prefer the recorded URL when it already points at a complete WhisperKit
+        // bundle (AudioEncoder/TextDecoder/MelSpectrogram). This covers both the
+        // nested Argmax download layout and flat local folders.
+        if LocalModelPresence.isCompleteWhisperKitModel(at: localURL, fileManager: fileManager) {
+            return ActiveTranscriptionModel(
+                model: model,
+                modelFolderURL: localURL
+            )
+        }
+
+        // Nested layout: .../<downloadRoot>/openai_whisper-<variant>/
         var modelFolderURL = localURL.lastPathComponent == model.modelFolderName
             ? localURL
             : localURL.appendingPathComponent(model.modelFolderName, isDirectory: true)
 
-        // Guard against stale/partial downloads: if the model folder doesn't
-        // exist on disk try searching in subdirectories (WhisperKit creates nested structure)
         var isDirectory: ObjCBool = false
         if !fileManager.fileExists(atPath: modelFolderURL.path, isDirectory: &isDirectory) || !isDirectory.boolValue {
-            // Search in subdirectories (WhisperKit downloads create nested structure)
             if let foundURL = findModelFolder(named: model.modelFolderName, in: localURL, fileManager: fileManager) {
                 modelFolderURL = foundURL
             } else {
@@ -180,5 +191,34 @@ public struct TranscriptionModelSettings: Codable, Equatable, Sendable {
     ) -> String {
         let defaultCode = activeModel(catalog: catalog)?.languageSupport.defaultLanguageCode ?? "auto"
         return languagePreference.resolvedCode(defaultCode: defaultCode)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case activeModelID
+        case languagePreference
+        case installationStates
+        case backend
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        activeModelID = try container.decodeIfPresent(String.self, forKey: .activeModelID)
+        languagePreference = try container.decodeIfPresent(
+            TranscriptionLanguagePreference.self,
+            forKey: .languagePreference
+        ) ?? .auto
+        installationStates = try container.decodeIfPresent(
+            [String: TranscriptionModelInstallationState].self,
+            forKey: .installationStates
+        ) ?? [:]
+        backend = try container.decodeIfPresent(TranscriptionBackend.self, forKey: .backend) ?? .localWhisper
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(activeModelID, forKey: .activeModelID)
+        try container.encode(languagePreference, forKey: .languagePreference)
+        try container.encode(installationStates, forKey: .installationStates)
+        try container.encode(backend, forKey: .backend)
     }
 }

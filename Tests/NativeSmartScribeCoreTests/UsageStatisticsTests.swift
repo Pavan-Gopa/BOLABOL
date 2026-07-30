@@ -38,3 +38,17 @@ func usageStatisticsResetClearsSelectedModelOnly() {
     #expect(settings.totals["a"] == UsageTokenCount())
     #expect(settings.totals["b"]?.totalTokens == 22)
 }
+
+@Test
+func usageStatisticsResetClearsMultipleModels() {
+    var settings = UsageStatisticsSettings()
+    settings.record(modelID: "google:gemini-2.5-flash", modelName: "Gemini Flash", promptTokens: 10, completionTokens: 5)
+    settings.record(modelID: "google:gemini-2.5-pro", modelName: "Gemini Pro", promptTokens: 20, completionTokens: 10)
+    settings.record(modelID: "openai:gpt-4o-mini", modelName: "GPT-4o mini", promptTokens: 50, completionTokens: 25)
+
+    settings.reset(modelIDs: ["google:gemini-2.5-flash", "google:gemini-2.5-pro"])
+
+    #expect(settings.totals["google:gemini-2.5-flash"] == UsageTokenCount())
+    #expect(settings.totals["google:gemini-2.5-pro"] == UsageTokenCount())
+    #expect(settings.totals["openai:gpt-4o-mini"]?.totalTokens == 75)
+}

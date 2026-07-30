@@ -55,4 +55,10 @@ public struct UsageStatisticsSettings: Codable, Equatable, Sendable {
     public mutating func reset(modelID: String) {
         totals[modelID] = UsageTokenCount()
     }
+
+    public mutating func reset(modelIDs: [String]) {
+        for id in modelIDs {
+            totals[id] = UsageTokenCount()
+        }
+    }
 }

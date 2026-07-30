@@ -9,10 +9,7 @@ struct HotkeySettingsView: View {
 
     var body: some View {
         Form {
-            Section(
-                header: Text(generalSettingsStore.text(.globalHotkey)),
-                footer: Text(generalSettingsStore.text(.hotkeyDescription))
-            ) {
+            Section(header: Text(generalSettingsStore.text(.globalHotkey))) {
                 Toggle(generalSettingsStore.text(.enableHotkey), isOn: settingsEnabled)
 
                 if hotkeySettingsStore.settings.enabled {
@@ -29,13 +26,16 @@ struct HotkeySettingsView: View {
 
                         Spacer()
 
+                        hotkeyGlyphBadge(for: hotkeySettingsStore.settings.hotkey)
+
                         TextField("", text: hotkeyText)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 140)
                             .multilineTextAlignment(.trailing)
+                            .help(generalSettingsStore.formattedText(.hotkeyOptionHint, "Option+S"))
 
                         Button {
-                            hotkeySettingsStore.settings.hotkey = "Alt+S"
+                            hotkeySettingsStore.settings.hotkey = HotkeySettings.defaultPrimaryHotkey
                         } label: {
                             Image(systemName: "arrow.counterclockwise")
                         }
@@ -44,26 +44,64 @@ struct HotkeySettingsView: View {
                     }
                     .padding(.vertical, 4)
 
-                    // Row for Secondary Hotkey
+                    Divider()
+
+                    // Row for Full Translation Window Hotkey (Option+1)
                     HStack(spacing: 8) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(generalSettingsStore.text(.hotkeySecondaryLabel))
+                            Text(generalSettingsStore.text(.translationWindowLabel))
                                 .font(.body)
                                 .bold()
-                            Text(generalSettingsStore.text(.hotkeySecondaryDesc))
+                            Text(generalSettingsStore.text(.translationWindowDesc))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
 
                         Spacer()
 
+                        hotkeyGlyphBadge(for: hotkeySettingsStore.settings.secondaryHotkey)
+
                         TextField("", text: secondaryHotkeyText)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 140)
                             .multilineTextAlignment(.trailing)
+                            .help(generalSettingsStore.formattedText(.hotkeyOptionHint, "Option+1"))
 
                         Button {
-                            hotkeySettingsStore.settings.secondaryHotkey = "Alt+Shift+S"
+                            hotkeySettingsStore.settings.secondaryHotkey = HotkeySettings.defaultSecondaryHotkey
+                        } label: {
+                            Image(systemName: "arrow.counterclockwise")
+                        }
+                        .buttonStyle(.bordered)
+                        .help(generalSettingsStore.text(.reset))
+                    }
+                    .padding(.vertical, 4)
+
+                    Divider()
+
+                    // Row for Quick Translation Hotkey (Option+2)
+                    HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(generalSettingsStore.text(.quickTranslationLabel))
+                                .font(.body)
+                                .bold()
+                            Text(generalSettingsStore.text(.quickTranslationDesc))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        hotkeyGlyphBadge(for: hotkeySettingsStore.settings.tertiaryHotkey)
+
+                        TextField("", text: tertiaryHotkeyText)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 140)
+                            .multilineTextAlignment(.trailing)
+                            .help(generalSettingsStore.formattedText(.hotkeyOptionHint, "Option+2"))
+
+                        Button {
+                            hotkeySettingsStore.settings.tertiaryHotkey = HotkeySettings.defaultTertiaryHotkey
                         } label: {
                             Image(systemName: "arrow.counterclockwise")
                         }
@@ -72,6 +110,39 @@ struct HotkeySettingsView: View {
                     }
                     .padding(.vertical, 4)
                 }
+
+                Divider()
+
+                // Row for Settings Hotkey (Option+~) - always visible
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(generalSettingsStore.text(.openSettingsLabel))
+                            .font(.body)
+                            .bold()
+                        Text(generalSettingsStore.text(.openSettingsDesc))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    hotkeyGlyphBadge(for: hotkeySettingsStore.settings.settingsHotkey)
+
+                    TextField("", text: settingsHotkeyText)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 140)
+                        .multilineTextAlignment(.trailing)
+                        .help(generalSettingsStore.formattedText(.hotkeyOptionHint, "Option+~"))
+
+                    Button {
+                        hotkeySettingsStore.settings.settingsHotkey = HotkeySettings.defaultSettingsHotkey
+                    } label: {
+                        Image(systemName: "arrow.counterclockwise")
+                    }
+                    .buttonStyle(.bordered)
+                    .help(generalSettingsStore.text(.reset))
+                }
+                .padding(.vertical, 4)
             }
 
             if hotkeySettingsStore.settings.enabled {
@@ -176,16 +247,42 @@ struct HotkeySettingsView: View {
 
     private var hotkeyText: Binding<String> {
         Binding(
-            get: { hotkeySettingsStore.settings.hotkey },
-            set: { hotkeySettingsStore.settings.hotkey = $0 }
+            get: { HotkeySettings.normalizeMacModifiers(hotkeySettingsStore.settings.hotkey) },
+            set: { hotkeySettingsStore.settings.hotkey = HotkeySettings.normalizeMacModifiers($0) }
         )
     }
 
     private var secondaryHotkeyText: Binding<String> {
         Binding(
-            get: { hotkeySettingsStore.settings.secondaryHotkey },
-            set: { hotkeySettingsStore.settings.secondaryHotkey = $0 }
+            get: { HotkeySettings.normalizeMacModifiers(hotkeySettingsStore.settings.secondaryHotkey) },
+            set: { hotkeySettingsStore.settings.secondaryHotkey = HotkeySettings.normalizeMacModifiers($0) }
         )
+    }
+
+    private var tertiaryHotkeyText: Binding<String> {
+        Binding(
+            get: { HotkeySettings.normalizeMacModifiers(hotkeySettingsStore.settings.tertiaryHotkey) },
+            set: { hotkeySettingsStore.settings.tertiaryHotkey = HotkeySettings.normalizeMacModifiers($0) }
+        )
+    }
+
+    private var settingsHotkeyText: Binding<String> {
+        Binding(
+            get: { HotkeySettings.normalizeMacModifiers(hotkeySettingsStore.settings.settingsHotkey) },
+            set: { hotkeySettingsStore.settings.settingsHotkey = HotkeySettings.normalizeMacModifiers($0) }
+        )
+    }
+
+    /// Compact macOS glyph preview (e.g. ⌥S) next to the editable Option+S field.
+    @ViewBuilder
+    private func hotkeyGlyphBadge(for hotkey: String) -> some View {
+        Text(HotkeySettings.displayString(for: hotkey))
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(Color.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .help(HotkeySettings.displayString(for: hotkey))
     }
 
     private var targetSelection: Binding<HotkeyTarget> {

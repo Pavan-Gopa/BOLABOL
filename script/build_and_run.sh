@@ -32,7 +32,8 @@ pkill -x "$WORKER_NAME" >/dev/null 2>&1 || true
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
 pkill -x "$SWIFT_PRODUCT_NAME" >/dev/null 2>&1 || true
 
-swift build --arch arm64 --product "$SWIFT_PRODUCT_NAME" --product "$WORKER_NAME"
+swift build --arch arm64 --product "$SWIFT_PRODUCT_NAME"
+swift build --arch arm64 --product "$WORKER_NAME"
 BUILD_BINARY="$(swift build --arch arm64 --show-bin-path)/$SWIFT_PRODUCT_NAME"
 BUILD_WORKER_BINARY="$(swift build --arch arm64 --show-bin-path)/$WORKER_NAME"
 
@@ -194,7 +195,7 @@ MESSAGE
   SIGN_IDENTITY="-"
 fi
 
-/usr/bin/codesign --force --deep --sign "$SIGN_IDENTITY" "$APP_BUNDLE"
+/usr/bin/codesign --force --deep --timestamp=none --sign "$SIGN_IDENTITY" "$APP_BUNDLE"
 
 open_app() {
   /usr/bin/open -n "$APP_BUNDLE"

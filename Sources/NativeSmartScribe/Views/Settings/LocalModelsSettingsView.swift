@@ -4,40 +4,114 @@ import SwiftUI
 struct LocalModelsSettingsView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var transcriptionModelStore: TranscriptionModelStore
+    @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Top config block — fixed height, no scrolling inside
-            VStack(spacing: 0) {
-                Form {
-                    Section(generalSettingsStore.text(.transcriptionModel)) {
-                        LabeledContent(generalSettingsStore.text(.activeModelLabel)) {
-                            Text(transcriptionModelStore.activeModel?.displayName ?? generalSettingsStore.text(.noLocalModelSelected))
-                                .foregroundStyle(transcriptionModelStore.activeModel == nil ? .secondary : .primary)
+            // Backend: Local Whisper vs Cloud Gemini (no Apple Speech)
+            VStack(alignment: .leading, spacing: 10) {
+                Text(generalSettingsStore.text(.transcriptionEngine))
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+
+                Picker(generalSettingsStore.text(.engine), selection: backendSelection) {
+                    ForEach(TranscriptionBackend.allCases) { backend in
+                        Text(backend.displayName).tag(backend)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Text(transcriptionModelStore.settings.backend.shortDescription)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if transcriptionModelStore.settings.backend == .geminiCloud {
+                    geminiCloudStatusRow
+                } else {
+                    HStack {
+                        Text(generalSettingsStore.text(.activeModelLabel))
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(transcriptionModelStore.activeModel?.displayName ?? generalSettingsStore.text(.noLocalModelSelected))
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(transcriptionModelStore.activeModel == nil ? .secondary : .primary)
+                    }
+
+                    if transcriptionModelStore.activeModel == nil {
+                        Text(generalSettingsStore.text(.localModelsHint))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .padding(14)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(.separator.opacity(0.5), lineWidth: 1)
+            )
+            .padding(.trailing, 12)
+
+            // Models list — only this scrolls (local Whisper catalog)
+            if transcriptionModelStore.settings.backend == .localWhisper {
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(transcriptionModelStore.models) { model in
+                            TranscriptionModelRow(model: model)
                         }
                     }
+                    .padding(.vertical, 4)
+                    .padding(.trailing, 12)
                 }
-                .formStyle(.grouped)
-                .frame(height: 70)
-                // Disable the inner NSScrollView of the Form so it doesn't scroll
-                .allowsHitTesting(true)
-                .scrollDisabled(true)
+                .overlayScrollbar()
+            } else {
+                Spacer(minLength: 0)
             }
-
-            // Models list — only this scrolls
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(transcriptionModelStore.models) { model in
-                        TranscriptionModelRow(model: model)
-                    }
-                }
-                .padding(.vertical, 4)
-                .padding(.trailing, 12)
-            }
-            .overlayScrollbar()
         }
         .onAppear {
             transcriptionModelStore.reconcileModelStates()
+        }
+    }
+
+    private var backendSelection: Binding<TranscriptionBackend> {
+        Binding(
+            get: { transcriptionModelStore.settings.backend },
+            set: { newValue in
+                transcriptionModelStore.setBackend(newValue)
+            }
+        )
+    }
+
+    @ViewBuilder
+    private var geminiCloudStatusRow: some View {
+        let google = polishingEngineStore.apiSettings.configuration(for: .google)
+        let hasKey = google.hasAPIKey
+        let model = GeminiCloudDictationEngine.resolvedModelID(google.textModel)
+
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(generalSettingsStore.text(.googleAPI))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(hasKey ? generalSettingsStore.text(.keyConfigured) : generalSettingsStore.text(.noAPIKey))
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(hasKey ? .green : .orange)
+            }
+            HStack {
+                Text(generalSettingsStore.text(.geminiModel))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(model)
+                    .font(.body.weight(.semibold))
+                    .lineLimit(1)
+            }
+            Text(generalSettingsStore.text(.googleAPIBody))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

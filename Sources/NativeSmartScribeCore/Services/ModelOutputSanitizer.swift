@@ -95,7 +95,35 @@ public enum ModelOutputSanitizer {
             )
         }
 
+        cleaned = removeDuplicateBlocks(cleaned)
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    public static func removeDuplicateBlocks(_ text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return trimmed }
+
+        let len = trimmed.count
+        if len >= 10 {
+            let half = len / 2
+            let firstHalf = String(trimmed.prefix(half)).trimmingCharacters(in: .whitespacesAndNewlines)
+            let secondHalf = String(trimmed.suffix(half)).trimmingCharacters(in: .whitespacesAndNewlines)
+            if firstHalf == secondHalf {
+                return firstHalf
+            }
+        }
+
+        let lines = trimmed.components(separatedBy: .newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        if lines.count >= 2 && lines.count % 2 == 0 {
+            let mid = lines.count / 2
+            let firstBlock = lines[..<mid].joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            let secondBlock = lines[mid...].joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            if firstBlock == secondBlock {
+                return firstBlock
+            }
+        }
+
+        return trimmed
     }
 
     private static func textBetween(_ text: String, start: String, end: String) -> String? {

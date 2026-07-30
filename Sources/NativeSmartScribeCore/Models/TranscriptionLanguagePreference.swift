@@ -57,6 +57,27 @@ public extension TranscriptionLanguageOption {
     /// Falls back to the code itself when no match is found.
     static func displayName(for code: String) -> String {
         let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return builtIn.first { $0.code == normalized }?.displayName ?? code
+        if normalized == "english" { return "English" }
+        return builtIn.first {
+            $0.code == normalized || $0.displayName.lowercased() == normalized
+        }?.displayName ?? code
+    }
+
+    /// Compact single-character HUD label for the target language control
+    /// (English → "E", Spanish → "S", French → "F", Chinese → "C", …).
+    /// Prefer the first letter of the English display name so the badge stays
+    /// Latin and readable on the overlay for every built-in language.
+    static func hudLabel(for codeOrName: String) -> String {
+        let trimmed = codeOrName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "E" }
+
+        let name = displayName(for: trimmed)
+        if let letter = name.first(where: \.isLetter) {
+            return String(letter).uppercased()
+        }
+        if let letter = trimmed.first(where: \.isLetter) {
+            return String(letter).uppercased()
+        }
+        return "E"
     }
 }

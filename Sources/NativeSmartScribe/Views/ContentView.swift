@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import Carbon
 import NativeSmartScribeCore
 import SwiftUI
 import UniformTypeIdentifiers
@@ -21,9 +22,11 @@ struct ContentView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var usageStatisticsStore: UsageStatisticsStore
     @EnvironmentObject private var glossaryStore: GlossaryStore
+    @EnvironmentObject private var accessibilityPermissionStore: AccessibilityPermissionStore
     @State private var selectedVariant: ProcessingVariant = .raw
     @State private var selectedNoteText = ""
     @State private var isShowingTranslation = false
+    @State private var isShowingOnboarding = false
     @State private var translationOriginalText = ""
     @State private var translationTranslatedText = ""
     @AppStorage("translation.targetLanguage") private var translationTargetLanguage = "English"
@@ -32,10 +35,13 @@ struct ContentView: View {
     @State private var pendingHotkeyOutputMode: HotkeyOutputMode?
     @State private var pendingHotkeySourcePID: pid_t?
     @State private var pendingHotkeyFocusedElement: AXUIElement?
+    @State private var settingsWindow: NSWindow?
+    @State private var lastSettingsToggleTime: Date = .distantPast
     @State private var isTogglingHotkeyRecording = false
     @State private var hotkeyOwnerID = UUID()
     @State private var hotkeySessionOverlayManager = HotkeySessionOverlayManager()
     @State private var pendingHotkeyForceTargetLanguage = false
+    @AppStorage("hud.forceTargetLanguage") private var persistentHUDForceTargetLanguage = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -87,17 +93,38 @@ struct ContentView: View {
                 .environmentObject(polishingEngineStore)
                 .environmentObject(glossaryStore)
             }
+            .sheet(isPresented: $isShowingOnboarding) {
+                OnboardingView(
+                    accessibility: accessibilityPermissionStore,
+                    audioRecorder: audioRecorder
+                )
+                    .environmentObject(generalSettingsStore)
+                    .environmentObject(glossaryStore)
+                    .environmentObject(transcriptionModelStore)
+                    .environmentObject(polishingEngineStore)
+                    .environmentObject(hotkeySettingsStore)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
+                isShowingOnboarding = true
+            }
             .onAppear {
                 syncLocalizedServices()
+                isShowingOnboarding = !generalSettingsStore.settings.hasCompletedOnboarding
             }
             .onChange(of: generalSettingsStore.settings.uiLanguage) { _, _ in
                 syncLocalizedServices()
             }
             .onReceive(NotificationCenter.default.publisher(for: .nativeSmartScribeHotkeyTriggered)) { _ in
-                handleHotkeyTriggered(forceTarget: false)
+                handleHotkeyTriggered()
             }
             .onReceive(NotificationCenter.default.publisher(for: .nativeSmartScribeTargetHotkeyTriggered)) { _ in
-                handleHotkeyTriggered(forceTarget: true)
+                openFloatingTranslationWindow()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .nativeSmartScribeQuickTranslationHotkeyTriggered)) { _ in
+                openQuickTranslationWindow()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .nativeSmartScribeSettingsHotkeyTriggered)) { _ in
+                toggleSettingsWindow()
             }
             .onReceive(audioRecorder.$frequencyBands) { bands in
                 guard audioRecorder.isRecording else { return }
@@ -113,12 +140,21 @@ struct ContentView: View {
                 selectedNoteText = ""
             }
         }
-        .frame(minWidth: 980, minHeight: 680)
+        .frame(minWidth: 840, minHeight: 580)
     }
 
 
     private func transcribeRecording(_ recording: AudioRecording) {
-        transcribeRecording(recording, hotkeyTarget: nil, outputMode: nil)
+        // Respect the HUD A/E toggle (auto vs. forced target language) exactly like the
+        // hotkey path does. Without this, HUD-button recordings always ran in "auto"
+        // mode and Gemini kept whatever language it heard, ignoring the E (target)
+        // setting — e.g. returning Russian text even when E1 was selected.
+        transcribeRecording(
+            recording,
+            hotkeyTarget: nil,
+            outputMode: nil,
+            forceTargetLanguage: persistentHUDForceTargetLanguage
+        )
     }
 
     private func updateRawText(noteID: SmartScribeNote.ID, text: String) {
@@ -233,6 +269,149 @@ struct ContentView: View {
         }
     }
 
+    private func openFloatingTranslationWindow() {
+        // Toggle: if already visible, close it
+        if FloatingTranslationWindowManager.shared.isVisible {
+            FloatingTranslationWindowManager.shared.close()
+            return
+        }
+
+        Task { @MainActor in
+            // Attempt to copy any currently selected text from external active app
+            await postSyntheticCopy()
+
+            let selected = selectedNoteText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let clipboard = NSPasteboard.general.string(forType: .string)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let source = selected.isEmpty ? clipboard : selected
+
+            translationOriginalText = source
+            translationTranslatedText = source.isEmpty ? generalSettingsStore.text(.noTextToTranslate) : ""
+
+            FloatingTranslationWindowManager.shared.show(
+                audioRecorder: translationAudioRecorder,
+                providerID: $translationProviderID,
+                targetLanguage: $translationTargetLanguage,
+                originalText: $translationOriginalText,
+                translatedText: $translationTranslatedText,
+                generalSettingsStore: generalSettingsStore,
+                polishingEngineStore: polishingEngineStore,
+                glossaryStore: glossaryStore,
+                onTranslate: translateText,
+                onRecordingCompleted: transcribeForTranslation
+            )
+
+            guard !source.isEmpty else { return }
+            guard !translationProviderID.isEmpty else {
+                translationTranslatedText = generalSettingsStore.text(.noTranslationProvider)
+                return
+            }
+
+            translationTranslatedText = generalSettingsStore.text(.translating)
+            do {
+                let result = try await translateText(
+                    text: source,
+                    targetLanguage: translationTargetLanguage,
+                    providerID: translationProviderID
+                )
+                translationTranslatedText = result.text
+            } catch {
+                translationTranslatedText = error.localizedDescription
+            }
+        }
+    }
+
+    private func postSyntheticCopy() async {
+        let source = CGEventSource(stateID: .combinedSessionState)
+        let cDown = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_ANSI_C), keyDown: true)
+        let cUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_ANSI_C), keyDown: false)
+        cDown?.flags = .maskCommand
+        cUp?.flags = .maskCommand
+        cDown?.post(tap: .cghidEventTap)
+        try? await Task.sleep(nanoseconds: 30_000_000)
+        cUp?.post(tap: .cghidEventTap)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+    }
+
+    private func openQuickTranslationWindow() {
+        // Toggle: if already visible, close it
+        if QuickTranslationWindowManager.shared.isVisible {
+            QuickTranslationWindowManager.shared.close()
+            return
+        }
+
+        Task { @MainActor in
+            await postSyntheticCopy()
+
+            let selected = selectedNoteText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let clipboard = NSPasteboard.general.string(forType: .string)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let source = selected.isEmpty ? clipboard : selected
+
+            guard !source.isEmpty, !translationProviderID.isEmpty else {
+                QuickTranslationWindowManager.shared.show(
+                    text: "",
+                    generalSettingsStore: generalSettingsStore
+                )
+                return
+            }
+
+            do {
+                let result = try await translateText(
+                    text: source,
+                    targetLanguage: translationTargetLanguage,
+                    providerID: translationProviderID
+                )
+                QuickTranslationWindowManager.shared.show(
+                    text: result.text,
+                    generalSettingsStore: generalSettingsStore
+                )
+            } catch {
+                QuickTranslationWindowManager.shared.show(
+                    text: error.localizedDescription,
+                    generalSettingsStore: generalSettingsStore
+                )
+            }
+        }
+    }
+
+    private func toggleSettingsWindow() {
+        let now = Date()
+        guard now.timeIntervalSince(lastSettingsToggleTime) > 0.3 else { return }
+        lastSettingsToggleTime = now
+
+        NSApp.activate(ignoringOtherApps: true)
+
+        if let window = findOfficialSettingsWindow() {
+            if window.isVisible && window.isKeyWindow {
+                window.orderOut(nil)
+            } else {
+                window.makeKeyAndOrderFront(nil)
+            }
+            return
+        }
+
+        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+            _ = NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
+    }
+
+    private func findOfficialSettingsWindow() -> NSWindow? {
+        NSApp.windows.first { window in
+            let title = window.title
+            let className = String(describing: type(of: window))
+            let identifier = window.identifier?.rawValue ?? ""
+            return identifier.contains("Settings") ||
+                   className.contains("Settings") ||
+                   className.contains("Preferences") ||
+                   title == "Settings" ||
+                   title == "Настройки" ||
+                   title == "Ajustes" ||
+                   title == "Einstellungen" ||
+                   title == "Réglages"
+        }
+    }
+
     private func translateText(
         text: String,
         targetLanguage: String,
@@ -249,6 +428,11 @@ struct ContentView: View {
             engine = polishingEngineStore.engine(for: providerID)
         }
 
+        let startedAt = Date()
+        NativeSmartScribeLog.polishing.info(
+            "Translation started provider=\(providerID, privacy: .public) engine=\(engine.displayName, privacy: .public) textLength=\(text.count)"
+        )
+
         let result = try await engine.polish(
             PolishingRequest(
                 rawText: prompt,
@@ -259,6 +443,11 @@ struct ContentView: View {
                     body: PromptTemplate.transcriptionPlaceholder
                 )
             )
+        )
+
+        let elapsedMs = Int(Date().timeIntervalSince(startedAt) * 1000)
+        NativeSmartScribeLog.polishing.info(
+            "Translation completed in \(elapsedMs)ms provider=\(providerID, privacy: .public) engine=\(engine.displayName, privacy: .public)"
         )
 
         usageStatisticsStore.record(
@@ -278,6 +467,25 @@ struct ContentView: View {
     }
 
     private func transcribeForTranslation(_ recording: AudioRecording) async throws -> String {
+        // Cloud · Google Gemini: the local TranscriptionEngineStore returns
+        // UnavailableTranscriptionEngine for .geminiCloud, so route through
+        // the dictation engine directly — plain transcription, no polishing.
+        if transcriptionModelStore.settings.backend == .geminiCloud {
+            let google = polishingEngineStore.apiSettings.configuration(for: .google)
+            let engine = GeminiCloudDictationEngine(
+                apiKey: google.apiKey,
+                modelID: google.textModel
+            )
+            let result = try await engine.dictate(
+                GeminiCloudDictationEngine.DictationRequest(
+                    audioFileURL: recording.fileURL,
+                    forceTargetLanguage: false,
+                    targetLanguageName: ""
+                )
+            )
+            return glossaryStore.apply(to: result.text, target: .source).text
+        }
+
         let engine = transcriptionEngineStore.activeEngine(modelStore: transcriptionModelStore)
         let languageCode = transcriptionModelStore.resolvedLanguageCode
         let activeModel = transcriptionModelStore.activeModel
@@ -303,6 +511,18 @@ struct ContentView: View {
         forceTargetLanguage: Bool = false
     ) {
         Task { @MainActor in
+            // Cloud · Google Gemini: fast audio-to-Raw first, followed by an
+            // optional text-only Variant 1/2 polishing pass.
+            if transcriptionModelStore.settings.backend == .geminiCloud {
+                await transcribeRecordingViaGeminiCloud(
+                    recording,
+                    hotkeyTarget: hotkeyTarget,
+                    outputMode: outputMode,
+                    forceTargetLanguage: forceTargetLanguage
+                )
+                return
+            }
+
             let workflow = RecordingTranscriptionWorkflow(
                 noteStore: noteStore,
                 engine: transcriptionEngineStore.activeEngine(
@@ -311,7 +531,11 @@ struct ContentView: View {
                 glossarySettingsProvider: { glossaryStore.settings }
             )
             let languageCode: String
-            if hotkeyTarget != nil {
+            if forceTargetLanguage {
+                // E / target mode: output must be the configured target language.
+                languageCode = targetLanguageCode
+            } else if hotkeyTarget != nil {
+                // A / auto mode on hotkey: always auto-detect spoken language.
                 languageCode = "auto"
             } else {
                 languageCode = transcriptionModelStore.resolvedLanguageCode
@@ -320,7 +544,8 @@ struct ContentView: View {
             let isMultilingual = activeModel?.languageSupport == .multilingual
             let route = TranscriptionLanguageRouter.route(
                 resolvedLanguageCode: languageCode,
-                isMultilingualModel: isMultilingual
+                isMultilingualModel: isMultilingual,
+                forceTargetLanguage: forceTargetLanguage
             )
 
             let noteID = await workflow.transcribeRecording(
@@ -329,28 +554,67 @@ struct ContentView: View {
                 translateToEnglish: route.translateToEnglish
             )
 
-            let autoTranslationTargetLanguage = forceTargetLanguage
-                ? glossaryStore.settings.autoTranslationLanguage
-                : route.autoTranslateTargetLanguageCode.map {
-                    TranscriptionLanguageOption.displayName(for: $0)
+            // Target language display name for any post-Whisper LLM translation.
+            let autoTranslationTargetLanguage = route.autoTranslateTargetLanguageCode.map {
+                TranscriptionLanguageOption.displayName(for: $0)
+            } ?? (forceTargetLanguage ? TranscriptionLanguageOption.displayName(for: languageCode) : nil)
+
+            // Raw + force-target:
+            // - English target: Whisper `task: .translate` already produced English.
+            //   No LLM/MLX (fast path the user expects for E+R).
+            // - Any other target (Spanish, French, …): Whisper cannot output that
+            //   language natively, so we must run a translation pass (translation
+            //   provider / polishing engine) before inserting raw text.
+            if let hotkeyTarget, hotkeyTarget == .raw {
+                if forceTargetLanguage,
+                   let targetCode = route.autoTranslateTargetLanguageCode,
+                   let rawText = noteStore.note(withID: noteID)?.rawText,
+                   !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    let targetLanguageName = autoTranslationTargetLanguage
+                        ?? TranscriptionLanguageOption.displayName(for: targetCode)
+                    NativeSmartScribeLog.hotkey.info(
+                        "Raw hotkey non-English target path forceTargetLanguage=true target=\(targetCode, privacy: .public) (LLM translation after Whisper)"
+                    )
+                    await autoTranslateRawText(
+                        noteID: noteID,
+                        rawText: rawText,
+                        targetLanguage: targetLanguageName
+                    )
+                } else {
+                    NativeSmartScribeLog.hotkey.info(
+                        "Raw hotkey path forceTargetLanguage=\(forceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) (Whisper only)"
+                    )
                 }
-            if let targetLanguageName = autoTranslationTargetLanguage,
-               let note = noteStore.note(withID: noteID),
-               !note.rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                selectedVariant = .raw
+                applyHotkeyOutputIfNeeded(for: noteID, target: hotkeyTarget, mode: outputMode)
+                finishHotkeySessionIfNeeded(target: hotkeyTarget)
+                return
+            }
+
+            // E1 / E2 (and non-raw flows): optional LLM translation + polishing.
+            let rawText = noteStore.note(withID: noteID)?.rawText ?? ""
+            let rawTextLooksForeign = rawTextNeedsTargetLanguageConversion(
+                rawText,
+                targetLanguageCode: languageCode
+            )
+            let needsTranslation = forceTargetLanguage
+                && (route.autoTranslateTargetLanguageCode != nil || rawTextLooksForeign)
+
+            NativeSmartScribeLog.hotkey.info(
+                "Transcription routing forceTargetLanguage=\(forceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) autoTranslationTarget=\(autoTranslationTargetLanguage ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) needsTranslation=\(needsTranslation) rawLooksForeign=\(rawTextLooksForeign)"
+            )
+            if needsTranslation,
+               let targetLanguageName = autoTranslationTargetLanguage,
+               !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 await autoTranslateRawText(
                     noteID: noteID,
-                    rawText: note.rawText,
+                    rawText: rawText,
                     targetLanguage: targetLanguageName
                 )
             }
 
             if let hotkeyTarget {
                 selectedVariant = hotkeyTarget.processingVariant
-                if hotkeyTarget == .raw {
-                    applyHotkeyOutputIfNeeded(for: noteID, target: hotkeyTarget, mode: outputMode)
-                    finishHotkeySessionIfNeeded(target: hotkeyTarget)
-                    return
-                }
             }
 
             guard polishingEngineStore.canAutoPolishAfterTranscription else {
@@ -368,7 +632,8 @@ struct ContentView: View {
 
             let requestedVariants = hotkeyTarget?.requestedPolishingVariants ?? [.variantOne, .variantTwo]
             selectedVariant = hotkeyTarget?.processingVariant ?? requestedVariants.first ?? .variantOne
-            await polish(noteID, variants: requestedVariants)
+            let polishingTargetLang = forceTargetLanguage ? targetLanguageCode : nil
+            await polish(noteID, variants: requestedVariants, targetLanguage: polishingTargetLang)
             selectedVariant = hotkeyTarget?.processingVariant ?? selectedVariant
             applyHotkeyOutputIfNeeded(for: noteID, target: hotkeyTarget, mode: outputMode)
             finishHotkeySessionIfNeeded(target: hotkeyTarget)
@@ -384,7 +649,8 @@ struct ContentView: View {
 
     private func polish(
         _ noteID: SmartScribeNote.ID,
-        variants: [ProcessingVariant] = [.variantOne, .variantTwo]
+        variants: [ProcessingVariant] = [.variantOne, .variantTwo],
+        targetLanguage: String? = nil
     ) async {
         let workflow = PolishingWorkflow(
             noteStore: noteStore,
@@ -396,7 +662,7 @@ struct ContentView: View {
                 generalSettingsStore.text(key)
             }
         )
-        let results = await workflow.polishNote(noteID, variants: variants)
+        let results = await workflow.polishNote(noteID, variants: variants, targetLanguage: targetLanguage)
         for result in results.values {
             usageStatisticsStore.record(
                 modelID: result.diagnostics.backendName,
@@ -415,9 +681,20 @@ struct ContentView: View {
         rawText: String,
         targetLanguage: String
     ) async {
-        guard polishingEngineStore.canAutoPolishAfterTranscription else {
+        // Resolve the translation engine the same way the in-app Translation
+        // modal does: prefer the user-selected translation provider (which may be
+        // a local MLX model tagged "local-mlx:<modelID>"), and only fall back to
+        // the active polishing engine when no translation provider is configured.
+        // This keeps HUD auto-translation working even when the active polishing
+        // engine (e.g. a cloud provider with a missing API key) is unavailable.
+        let engine: any PolishingEngine
+        if let resolved = resolveTranslationEngine(providerID: translationProviderID) {
+            engine = resolved
+        } else if polishingEngineStore.canAutoPolishAfterTranscription {
+            engine = polishingEngineStore.activeEngine
+        } else {
             NativeSmartScribeLog.polishing.info(
-                "Skipped auto-translation — no polishing engine available."
+                "Skipped auto-translation — no translation provider or polishing engine available."
             )
             return
         }
@@ -427,7 +704,6 @@ struct ContentView: View {
                 text: rawText,
                 targetLanguage: targetLanguage
             )
-            let engine = polishingEngineStore.activeEngine
             let result = try await engine.polish(
                 PolishingRequest(
                     rawText: prompt,
@@ -459,6 +735,24 @@ struct ContentView: View {
                 "Auto-translation failed: \(error.localizedDescription, privacy: .public)"
             )
         }
+    }
+
+    /// Resolves the polishing engine to use for translation from a translation
+    /// provider tag, mirroring `translateText`. Local MLX models are tagged
+    /// "local-mlx:<modelID>"; anything else is treated as a provider/engine ID.
+    /// Returns `nil` when the provider tag is empty or its model is unavailable.
+    private func resolveTranslationEngine(providerID: String) -> (any PolishingEngine)? {
+        let trimmed = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        if let modelID = TranslationModalView.localMLXModelID(from: trimmed) {
+            guard let model = polishingEngineStore.allModels.first(where: { $0.id == modelID }) else {
+                return nil
+            }
+            return polishingEngineStore.engine(forLocalMLXModel: model)
+        }
+
+        return polishingEngineStore.engine(for: trimmed)
     }
 
     private func generateMarkdown(
@@ -499,7 +793,11 @@ struct ContentView: View {
                     )
                 )
 
-                let markdown = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                let markdown = MarkdownGenerationPostProcessor.ensureVisibleMarkdown(
+                    result.text,
+                    sourceText: trimmed
+                )
+                .trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !markdown.isEmpty else {
                     noteStore.markPolishingFailed(
                         for: noteID,
@@ -510,7 +808,14 @@ struct ContentView: View {
                     return
                 }
 
-                noteStore.applyPolishingResult(for: noteID, variant: variant, result: result)
+                noteStore.applyPolishingResult(
+                    for: noteID,
+                    variant: variant,
+                    result: PolishingResult(
+                        text: markdown,
+                        diagnostics: result.diagnostics
+                    )
+                )
                 usageStatisticsStore.record(
                     modelID: result.diagnostics.backendName,
                     modelName: result.diagnostics.backendName,
@@ -527,7 +832,7 @@ struct ContentView: View {
         }
     }
 
-    private func handleHotkeyTriggered(forceTarget: Bool) {
+    private func handleHotkeyTriggered() {
         guard !isTogglingHotkeyRecording else { return }
 
         let settings = hotkeySettingsStore.settings
@@ -538,27 +843,40 @@ struct ContentView: View {
             defer { isTogglingHotkeyRecording = false }
 
             if audioRecorder.isRecording {
-                guard HotkeySessionCoordinator.shared.beginProcessing(ownerID: hotkeyOwnerID) else {
+                // Prefer normal recording → processing transition. If the session
+                // phase was lost while audio kept running (older 5-minute timeout,
+                // multi-window race), reclaim from idle so stop still works.
+                let canProcess = HotkeySessionCoordinator.shared.beginProcessing(ownerID: hotkeyOwnerID)
+                    || HotkeySessionCoordinator.shared.reclaimOrphanedRecordingForStop(ownerID: hotkeyOwnerID)
+                guard canProcess else {
                     NativeSmartScribeLog.hotkey.info(
-                        "Ignored stop hotkey for non-owner content view owner=\(self.hotkeyOwnerID.uuidString, privacy: .public)"
+                        "Ignored stop hotkey for non-owner content view owner=\(self.hotkeyOwnerID.uuidString, privacy: .public) phaseOwned=\(HotkeySessionCoordinator.shared.isOwned(by: self.hotkeyOwnerID))"
                     )
                     return
                 }
 
-                guard let recording = audioRecorder.stop() else { return }
+                guard let recording = audioRecorder.stop() else {
+                    NativeSmartScribeLog.hotkey.error(
+                        "Stop hotkey: audioRecorder reported isRecording but stop() returned nil"
+                    )
+                    HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
+                    hotkeySessionOverlayManager.hide()
+                    return
+                }
                 hotkeySessionOverlayManager.show(
                     mode: .processing,
                     settings: generalSettingsStore.settings.overlay,
+                    showsControls: false,
                     onOriginChange: persistOverlayOrigin
                 )
                 let target = pendingHotkeyTarget ?? settings.target
                 let mode = pendingHotkeyOutputMode ?? settings.mode
-                let forceTargetValue = pendingHotkeyForceTargetLanguage
+                let forceTargetValue = persistentHUDForceTargetLanguage
                 pendingHotkeyTarget = nil
                 pendingHotkeyOutputMode = nil
-                pendingHotkeyForceTargetLanguage = false
+                pendingHotkeyForceTargetLanguage = persistentHUDForceTargetLanguage
                 NativeSmartScribeLog.hotkey.info(
-                    "Stopped hotkey recording target=\(target.rawValue, privacy: .public) mode=\(mode.rawValue, privacy: .public) capturedSourcePID=\(pendingHotkeySourcePID ?? -1, privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
+                    "Stopped hotkey recording target=\(target.rawValue, privacy: .public) mode=\(mode.rawValue, privacy: .public) forceTargetLanguage=\(forceTargetValue) capturedSourcePID=\(pendingHotkeySourcePID ?? -1, privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
                 )
                 transcribeRecording(recording, hotkeyTarget: target, outputMode: mode, forceTargetLanguage: forceTargetValue)
             } else {
@@ -572,11 +890,15 @@ struct ContentView: View {
                 let sourceApplication = NSWorkspace.shared.frontmostApplication
                 pendingHotkeySourcePID = sourceApplication?.processIdentifier
                 pendingHotkeyFocusedElement = AccessibilityPermissionService.focusedElement()
-                pendingHotkeyTarget = settings.target
+                let resolvedTarget = settings.target
+                pendingHotkeyTarget = resolvedTarget
                 pendingHotkeyOutputMode = settings.mode
-                pendingHotkeyForceTargetLanguage = forceTarget
+                pendingHotkeyForceTargetLanguage = persistentHUDForceTargetLanguage
+                if resolvedTarget != .raw {
+                    polishingEngineStore.ensurePolishingEnabledForWidgetTarget()
+                }
                 NativeSmartScribeLog.hotkey.info(
-                    "Started hotkey recording forceTarget=\(forceTarget) target=\(settings.target.rawValue, privacy: .public) mode=\(settings.mode.rawValue, privacy: .public) sourcePID=\(sourceApplication?.processIdentifier ?? -1, privacy: .public) sourceBundle=\(sourceApplication?.bundleIdentifier ?? "unknown", privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
+                    "Started hotkey recording activeTargetLang=\(persistentHUDForceTargetLanguage) target=\(settings.target.rawValue, privacy: .public) mode=\(settings.mode.rawValue, privacy: .public) sourcePID=\(sourceApplication?.processIdentifier ?? -1, privacy: .public) sourceBundle=\(sourceApplication?.bundleIdentifier ?? "unknown", privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
                 )
                 await audioRecorder.start()
 
@@ -584,7 +906,13 @@ struct ContentView: View {
                     hotkeySessionOverlayManager.show(
                         mode: .listening,
                         settings: generalSettingsStore.settings.overlay,
-                        onOriginChange: persistOverlayOrigin
+                        languageMode: persistentHUDForceTargetLanguage ? .target : .auto,
+                        hotkeyTarget: resolvedTarget,
+                        targetLanguageLabel: autoTranslationLanguageLabel,
+                        showsControls: true,
+                        onOriginChange: persistOverlayOrigin,
+                        onLanguageTap: handleOverlayLanguageTap,
+                        onTargetTap: handleOverlayTargetTap
                     )
                     hotkeySessionOverlayManager.update(
                         spectrumBands: audioRecorder.frequencyBands,
@@ -627,14 +955,215 @@ struct ContentView: View {
     }
 
     private func finishHotkeySessionIfNeeded(target: HotkeyTarget?) {
-        guard target != nil else { return }
         hotkeySessionOverlayManager.playCue(.finish, settings: generalSettingsStore.settings.overlay)
         hotkeySessionOverlayManager.hide()
         HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
     }
 
     private func persistOverlayOrigin(_ origin: OverlayHUDOrigin) {
-        generalSettingsStore.update { $0.overlay.lastOrigin = origin }
+        generalSettingsStore.update { settings in
+            settings.overlay.setOrigin(origin, for: settings.overlay.style)
+        }
+    }
+
+    /// Target language code used when the HUD is in E (force target) mode.
+    ///
+    /// Priority:
+    /// 1. Hotkey "Transcription Language" setting when it is not Auto
+    /// 2. Glossary Auto Translation Language
+    /// 3. English
+    ///
+    /// This matches the settings copy: choosing a specific transcription language
+    /// enables auto-translation into that language regardless of what was spoken.
+    private var targetLanguageCode: String {
+        let fromTranscription = transcriptionModelStore.resolvedLanguageCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        if !fromTranscription.isEmpty, fromTranscription != "auto" {
+            return normalizeLanguageCode(fromTranscription)
+        }
+
+        let autoLang = glossaryStore.settings.autoTranslationLanguage
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        return normalizeLanguageCode(autoLang.isEmpty ? "en" : autoLang)
+    }
+
+    private func normalizeLanguageCode(_ value: String) -> String {
+        let code = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if code.isEmpty || code == "auto" {
+            return "en"
+        }
+        if code.hasPrefix("en") || code == "english" {
+            return "en"
+        }
+        if let option = TranscriptionLanguageOption.builtIn.first(where: {
+            $0.displayName.lowercased() == code || $0.code == code
+        }) {
+            return option.code
+        }
+        return code
+    }
+
+    /// Heuristic: after Whisper, does the raw transcript still look like it is
+    /// not in the requested target language? Used to trigger an LLM fallback
+    /// for ER (target language + Raw) when native Whisper translate fails.
+    private func rawTextNeedsTargetLanguageConversion(
+        _ text: String,
+        targetLanguageCode: String
+    ) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+
+        let target = normalizeLanguageCode(targetLanguageCode)
+        let hasCyrillic = trimmed.range(of: "\\p{Cyrillic}", options: .regularExpression) != nil
+        let hasLatin = trimmed.range(of: "[A-Za-z]", options: .regularExpression) != nil
+
+        if target == "en" || target.hasPrefix("en") {
+            // English target: any substantial Cyrillic means conversion failed.
+            return hasCyrillic
+        }
+
+        if target == "ru" || target == "uk" || target == "bg" || target == "sr" {
+            // Cyrillic target: Latin-only text likely still needs conversion.
+            return hasLatin && !hasCyrillic
+        }
+
+        // Other targets: if the spoken language left Cyrillic and the target is
+        // not Cyrillic, conversion is still needed.
+        return hasCyrillic
+    }
+
+    /// Compact HUD letter for the configured target language
+    /// (English → E, Spanish → S, French → F, Chinese → C, …).
+    private var autoTranslationLanguageLabel: String {
+        TranscriptionLanguageOption.hudLabel(for: targetLanguageCode)
+    }
+
+    /// Toggles the transcription language mode between auto-detection
+    /// and the configured target language, persisting the selection for future sessions.
+    private func handleOverlayLanguageTap() {
+        persistentHUDForceTargetLanguage.toggle()
+        pendingHotkeyForceTargetLanguage = persistentHUDForceTargetLanguage
+        hotkeySessionOverlayManager.update(
+            languageMode: persistentHUDForceTargetLanguage ? .target : .auto,
+            targetLanguageLabel: autoTranslationLanguageLabel
+        )
+    }
+
+    /// Cycles the processing target (raw -> variant 1 -> variant 2) and persists
+    /// it as the new default for future sessions. Automatically re-enables the last used
+    /// polishing engine/model if polishing was previously disabled.
+    private func handleOverlayTargetTap() {
+        let current = pendingHotkeyTarget ?? hotkeySettingsStore.settings.target
+        let next = current.next()
+        pendingHotkeyTarget = next
+        hotkeySettingsStore.settings.target = next
+        if next != .raw {
+            polishingEngineStore.ensurePolishingEnabledForWidgetTarget()
+        }
+        hotkeySessionOverlayManager.update(hotkeyTarget: next)
+    }
+
+    /// Two-stage cloud dictation:
+    /// 1. Gemini Flash/Flash-Lite turns audio into a faithful, lightly cleaned Raw transcript.
+    /// 2. Variant 1/2, when requested, runs as a separate text-only polishing request.
+    private func transcribeRecordingViaGeminiCloud(
+        _ recording: AudioRecording,
+        hotkeyTarget: HotkeyTarget?,
+        outputMode: HotkeyOutputMode?,
+        forceTargetLanguage: Bool
+    ) async {
+        let google = polishingEngineStore.apiSettings.configuration(for: .google)
+        let resolvedTarget = hotkeyTarget ?? hotkeySettingsStore.settings.target
+        let targetName = TranscriptionLanguageOption.displayName(for: targetLanguageCode)
+
+        let note = noteStore.addRecordedNote(recording: recording, now: .now)
+        let noteID = note.id
+        noteStore.markTranscriptionStarted(for: noteID, backendName: "Google Gemini")
+
+        do {
+            let engine = GeminiCloudDictationEngine(
+                apiKey: google.apiKey,
+                modelID: google.textModel
+            )
+            let result = try await engine.dictate(
+                GeminiCloudDictationEngine.DictationRequest(
+                    audioFileURL: recording.fileURL,
+                    forceTargetLanguage: forceTargetLanguage,
+                    targetLanguageName: targetName
+                )
+            )
+
+            let glossarySettings = glossaryStore.settings
+            let rewrittenRaw = glossarySettings.enabled
+                ? GlossaryTextRewriter.apply(
+                    to: result.text,
+                    entries: glossarySettings.entries,
+                    target: .source
+                )
+                : GlossaryTextRewriter.Result(text: result.text, count: 0)
+
+            noteStore.applyTranscriptionResult(
+                for: noteID,
+                result: TranscriptionResult(
+                    text: rewrittenRaw.text,
+                    diagnostics: result.diagnostics
+                )
+            )
+
+            usageStatisticsStore.record(
+                modelID: result.diagnostics.backendName,
+                modelName: result.diagnostics.backendName,
+                diagnostics: result.diagnostics
+            )
+
+            if resolvedTarget == .raw {
+                selectedVariant = .raw
+                applyHotkeyOutputIfNeeded(for: noteID, target: resolvedTarget, mode: outputMode)
+                finishHotkeySessionIfNeeded(target: hotkeyTarget == nil ? nil : resolvedTarget)
+                return
+            }
+
+            guard polishingEngineStore.canAutoPolishAfterTranscription else {
+                selectedVariant = resolvedTarget.processingVariant
+                markPolishingUnavailable(for: noteID)
+                applyHotkeyOutputIfNeeded(for: noteID, target: resolvedTarget, mode: outputMode)
+                finishHotkeySessionIfNeeded(target: hotkeyTarget == nil ? nil : resolvedTarget)
+                return
+            }
+
+            let variant = resolvedTarget.processingVariant
+            let polishingTargetLanguage = forceTargetLanguage ? targetLanguageCode : nil
+            await polish(
+                noteID,
+                variants: [variant],
+                targetLanguage: polishingTargetLanguage
+            )
+
+            selectedVariant = variant
+            applyHotkeyOutputIfNeeded(for: noteID, target: resolvedTarget, mode: outputMode)
+            finishHotkeySessionIfNeeded(target: hotkeyTarget == nil ? nil : resolvedTarget)
+        } catch {
+            NativeSmartScribeLog.transcription.error(
+                "Gemini cloud dictation failed: \(error.localizedDescription, privacy: .public)"
+            )
+            noteStore.markTranscriptionFailed(
+                for: noteID,
+                message: error.localizedDescription,
+                backendName: "Google Gemini"
+            )
+            if resolvedTarget != .raw {
+                noteStore.markPolishingFailed(
+                    for: noteID,
+                    variant: resolvedTarget.processingVariant,
+                    message: error.localizedDescription,
+                    backendName: polishingEngineStore.activeEngine.displayName
+                )
+            }
+            selectedVariant = resolvedTarget.processingVariant
+            finishHotkeySessionIfNeeded(target: hotkeyTarget == nil ? nil : resolvedTarget)
+        }
     }
 
     private func syncLocalizedServices() {

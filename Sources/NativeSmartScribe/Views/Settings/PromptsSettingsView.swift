@@ -18,7 +18,7 @@ struct PromptsSettingsView: View {
                             .tag("variantOne")
                         Text(generalSettingsStore.text(.variantTwo))
                             .tag("variantTwo")
-                        Text("Markdown")
+                        Text(generalSettingsStore.text(.markdown))
                             .tag("markdown")
                     }
                     .pickerStyle(.segmented)

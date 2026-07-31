@@ -316,22 +316,15 @@ struct OnboardingView: View {
     .padding(.top, 2)
   }
 
+  /// Model shown with the green "RECOMMENDED" badge in the onboarding list.
+  private static let recommendedOnboardingModelID = "parakeet-tdt-06b-v3"
+
   private var onboardingModels: [TranscriptionModelDescriptor] {
-    let isEnglish = settingsStore.settings.uiLanguage
-      .resolvedLocaleIdentifier()
-      .hasPrefix("en")
-    let preferredIDs =
-      isEnglish
-      ? [
-        "whisperkit-small-en",
-        "whisperkit-medium-en",
-        "whisperkit-large-v3-full",
-      ]
-      : [
-        "whisperkit-small-multilingual",
-        "whisperkit-medium-multilingual",
-        "whisperkit-large-v3-full",
-      ]
+    let preferredIDs = [
+      "parakeet-tdt-06b-v3",
+      "whisperkit-medium-multilingual",
+      "whisperkit-large-v3-full",
+    ]
     let activeModel = transcriptionModelStore.activeModel
     let preferredModels = preferredIDs.compactMap { id in
       transcriptionModelStore.models.first { $0.id == id }
@@ -360,7 +353,9 @@ struct OnboardingView: View {
           Text(model.displayName)
             .font(.subheadline.weight(.semibold))
 
-          if let badge = model.badge {
+          if model.id == Self.recommendedOnboardingModelID {
+            statusBadge(settingsStore.text(.badgeRecommended), tint: .green)
+          } else if let badge = model.badge {
             statusBadge(badge, tint: .blue)
           }
 

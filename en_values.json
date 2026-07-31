@@ -172,7 +172,7 @@
 "helpModeWindowTitle": "Main window",
 "helpModeWindowBody": "A notebook for notes: record or import audio, review Raw / Variant 1 / Variant 2, polish, translate, and copy. Best when you want to edit and keep history.",
 "helpModeHotkeyTitle": "Hotkey + Overlay HUD",
-"helpModeHotkeyBody": "Stay inside another app. Primary hotkey (Option+S) records with the floating HUD: language mode (A / letter) and output target (R / 1 / 2). Does not steal keyboard focus while you dictate.",
+"helpModeHotkeyBody": "Stay inside another app. Primary hotkey (Option+S) records with the floating HUD: language mode (A / letter) and output target (R / 1 / 2). While the HUD is visible, scroll to switch the polishing provider, and right-click a provider to choose a specific model. Does not steal keyboard focus while you dictate.",
 "helpModeFloatTitle": "Floating Translation Window",
 "helpModeFloatBody": "The Translation Window hotkey (Option+1 by default) opens an always-on-top translation panel. It grabs selected text from the active app (via a quick Command-C), fills Original, and can translate immediately. Use when you need a language change without full dictation.",
 "helpWindowTitle": "Main window",

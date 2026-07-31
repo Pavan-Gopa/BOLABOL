@@ -48,7 +48,7 @@ See the full changelog: [Changelog — v1.0.1](#changelog--v101) · draft releas
 
 ## Screenshots
 
-> Captured from the live **1.0.1** app on Apple Silicon (July 2026).
+> Current **1.0.1** UI (from `Screenshots for GITHUB/`).
 
 ### Main workspace
 
@@ -78,13 +78,17 @@ Sidebar notes on the left; active note on the right with audio metadata, **trans
 
 | Over another app | Recording | Processing |
 |:---:|:---:|:---:|
-| ![HUD overlay](docs/screenshots/08_hud_overlay.png) | ![Recording](docs/screenshots/15_hud_recording.png) | ![Processing](docs/screenshots/16_hud_processing.png) |
+| ![HUD over Telegram](docs/screenshots/08_hud_overlay.png) | ![Recording capsule](docs/screenshots/15_hud_recording.png) | ![Processing capsule](docs/screenshots/16_hud_processing.png) |
+
+**Provider & model switcher (new in 1.0.1)** — scroll the capsule for the provider list; right-click a provider for its model menu:
+
+![HUD provider and model switcher](docs/screenshots/18_hud_provider_switcher.png)
 
 ### Translation
 
-![Translation modal](docs/screenshots/09_translation.png)
-
-More UI captures and bilingual tutorial scripts: [`docs/notebooklm-tutorial/`](docs/notebooklm-tutorial/).
+| Full translation window | Quick translation |
+|:---:|:---:|
+| ![Full translation](docs/screenshots/09_translation.png) | ![Quick translation](docs/screenshots/17_quick_translation.png) |
 
 ---
 

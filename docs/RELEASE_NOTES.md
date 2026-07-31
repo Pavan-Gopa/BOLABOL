@@ -35,21 +35,11 @@ The panel is non-activating: it does not steal keyboard focus from the app you a
 
 ## Install
 
-**DMG:** open `SmartScribe.dmg` → drag **SmartScribe** to Applications.
+1. Download **`SmartScribe.dmg`** (the only app asset in this release).
+2. Open the DMG → drag **SmartScribe** into **Applications**.
+3. Launch from Applications. Notarized Developer ID build — if Gatekeeper still prompts: right-click → Open.
 
-**CLI:**
-
-```bash
-./install.sh SmartScribe.dmg
-# or, with GitHub CLI access to this private repo:
-./install.sh --from-github
-```
-
-Notarized Developer ID build. If Gatekeeper still prompts on first open: right-click → Open.
-
-## Integrity
-
-See `SHA256SUMS.txt` next to the DMG.
+(No `install.sh` / checksum sidecar in this draft — only the DMG.)
 
 ## Notes for testers
 

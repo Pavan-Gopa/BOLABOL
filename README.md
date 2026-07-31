@@ -307,4 +307,3 @@ Private GitHub repository until public testing is complete. Builds are signed wi
 
 - In-app **Help** and onboarding replay  
 - **Export System Logs** from General settings  
-- Tutorial storyboard (EN/RU): [`docs/notebooklm-tutorial/`](docs/notebooklm-tutorial/)  

@@ -1,10 +1,10 @@
 # SmartScribe
 
-**Native macOS dictation, transcription, polishing, and translation for Apple Silicon.**
+**Native macOS dictation for Apple Silicon** — record or import speech, transcribe locally or in the cloud, polish the text, translate, and insert the result into any app with a global hotkey.
 
-SmartScribe is a Swift/SwiftUI app that turns speech into clean text — locally on your Mac, or with optional cloud providers — and can insert the result into any app via global hotkeys.
+Built as a pure Swift / SwiftUI app (AppKit only where macOS requires it). No Electron, no web shell.
 
-> Apple Silicon only (M1 and later) · macOS 14+ · Private repository
+> **Apple Silicon only** (M1 and later) · **macOS 14+** · Private repository
 
 ---
 
@@ -14,9 +14,9 @@ SmartScribe is a Swift/SwiftUI app that turns speech into clean text — locally
 
 ![Main window](docs/screenshots/01_main_window.png)
 
-Notes on the left, the active note on the right: audio metadata, transcription model, polishing model, **Raw / Variant 1 / Variant 2**, and the action bar (record, import, translate, polish, settings).
+Sidebar notes on the left; the active note on the right with audio metadata, transcription and polishing model pickers, **Raw / Variant 1 / Variant 2** tabs, and the action bar (record, import, translate, polish, settings).
 
-### Transcription and polishing result tabs
+### Transcription result tabs
 
 | Raw (direct ASR) | Variant 1 (light cleanup) |
 |:---:|:---:|
@@ -28,17 +28,17 @@ Notes on the left, the active note on the right: audio metadata, transcription m
 |:---:|:---:|
 | ![Local transcription models](docs/screenshots/05_local_transcription_models.png) | ![Local polishing models](docs/screenshots/06_local_polishing_models.png) |
 
-### API keys & cloud providers
+### Cloud API providers
 
 ![API providers](docs/screenshots/04_api_keys.png)
 
-Google Gemini, OpenAI, Anthropic, Qwen, OpenRouter, and custom OpenAI-compatible endpoints. Multi-key rotation, disable/enable keys, live model catalogs where supported.
+Google Gemini, OpenAI, Anthropic, Qwen, OpenRouter, and custom OpenAI-compatible endpoints. Multi-key rotation, enable/disable keys, live model catalogs where the provider supports them. Keys stay on the device.
 
 ### Multilingual UI
 
 ![General settings — language & theme](docs/screenshots/03_general_settings_language.png)
 
-Interface languages: English, Russian, Spanish, German, French, Italian, Portuguese, Chinese, Japanese, Korean, Arabic, Hindi (plus system language). Themes: Dark / Light / System. UI scale and HUD controls.
+Interface languages: English, Russian, Spanish, German, French, Italian, Portuguese, Chinese, Japanese, Korean, Arabic, Hindi, plus system language. Themes: Dark / Light / System. UI scale and HUD controls.
 
 ### Global hotkeys & floating HUD
 
@@ -60,7 +60,7 @@ Interface languages: English, Russian, Spanish, German, French, Italian, Portugu
 |:---:|:---:|
 | ![Prompts](docs/screenshots/13_prompts.png) | ![Help](docs/screenshots/14_help.png) |
 
-More UI captures and bilingual tutorial scripts live under [`docs/notebooklm-tutorial/`](docs/notebooklm-tutorial/).
+Additional UI captures and bilingual tutorial scripts: [`docs/notebooklm-tutorial/`](docs/notebooklm-tutorial/).
 
 ---
 
@@ -68,8 +68,8 @@ More UI captures and bilingual tutorial scripts live under [`docs/notebooklm-tut
 
 ### Core workflow
 
-1. **Record** speech in-app, or **import / drag-and-drop** an audio file.
-2. **Transcribe** with a local model (WhisperKit Core ML or Parakeet FluidAudio) or cloud Gemini dictation.
+1. **Record** in-app, or **import / drag-and-drop** an audio file.
+2. **Transcribe** with a local model (WhisperKit Core ML or Parakeet FluidAudio) or optional Gemini cloud dictation.
 3. Review **Raw** text (closest to the audio).
 4. **Polish** into **Variant 1** (light cleanup), **Variant 2** (stronger rewrite), or **Markdown**.
 5. Optionally **translate**, apply the **glossary**, copy notes, or push text into another app with a hotkey.
@@ -78,13 +78,13 @@ More UI captures and bilingual tutorial scripts live under [`docs/notebooklm-tut
 
 | Engine | Runtime | Notes |
 |--------|---------|--------|
-| **Parakeet TDT 0.6B v3** | FluidAudio · Core ML / ANE | Fastest path; ~25 European languages (incl. EN/RU/UK/NL). ASR only — no speech→English translate. |
+| **Parakeet TDT 0.6B v3** | FluidAudio · Core ML / ANE | Fast path; ~25 European languages (incl. EN/RU/UK/NL). ASR only — no speech→English translate mode. |
 | **Whisper Small / Medium** | WhisperKit · Core ML | English-only and multilingual variants. |
 | **Whisper Large v3 Turbo** | WhisperKit · Core ML | Strong multilingual quality, faster than full Large. |
-| **Whisper Large v3 Full** | WhisperKit · Core ML | Highest accuracy; recommended default for quality. |
-| **Google Gemini (cloud)** | Gemini API | Optional cloud dictation path when API keys are configured. |
+| **Whisper Large v3 Full** | WhisperKit · Core ML | Highest accuracy; solid default for quality. |
+| **Google Gemini (cloud)** | Gemini API | Optional cloud dictation when API keys are configured. |
 
-Models download from inside **Settings → Local Models**. Storage prefers a shared local models root (`AI_LOCAL_MODELS_DIR` / `~/AI_LOCAL_MODELS`) with app-support fallbacks.
+Models download from **Settings → Local Models**. Storage prefers a shared local models root (`AI_LOCAL_MODELS_DIR` / `~/AI_LOCAL_MODELS`) with Application Support fallbacks.
 
 ### Text polishing
 
@@ -92,9 +92,9 @@ Polishing is **separate from ASR**. It rewrites text with prompts (not audio).
 
 **Local (MLX Swift / GPU):**
 
-- Qwen 3.5 — 0.8B, 2B, **4B (recommended)**, 9B (4-bit)
+- Qwen 3.5 — 0.8B, 2B, **4B (recommended default)**, 9B (4-bit)
 - NVIDIA Nemotron-3 Nano 4B
-- Custom / scanned local MLX models (e.g. `prism-ml/Bonsai-27B-mlx-1bit` via Prism 1-bit MLX kernels — no llama.cpp/GGUF for polishing)
+- Custom / scanned local MLX models from your folders or Hugging Face cache
 
 **Cloud polishing providers:**
 
@@ -109,10 +109,10 @@ Features: multi-key support, key enable/disable, model pickers, retries for stal
 
 ### Variants, prompts, Markdown
 
-- **Raw** — unedited transcription
-- **Variant 1** — light cleanup (fillers, repeats, self-corrections; same language/meaning)
-- **Variant 2** — stronger structure and wording (no inventing facts)
-- **Markdown** — structured export via dedicated prompt
+- **Raw** — unedited transcription  
+- **Variant 1** — light cleanup (fillers, repeats, self-corrections; same language/meaning)  
+- **Variant 2** — stronger structure and wording (no inventing facts)  
+- **Markdown** — structured export via a dedicated prompt  
 - Customizable prompt slots: default + slots `1`–`4` + Markdown (`M`) in **Settings → Prompts**
 
 ### Global hotkeys & HUD
@@ -120,13 +120,25 @@ Features: multi-key support, key enable/disable, model pickers, retries for stal
 | Shortcut | Action |
 |----------|--------|
 | **⌥S** (Option+S) | Start/stop hotkey dictation |
-| **⇧⌥S** (Shift+Option+S) | Same, then auto-translate to Glossary **Auto Translation Language** |
+| **⇧⌥S** (Shift+Option+S) | Same, then auto-translate to the Glossary **Auto Translation Language** |
 
 - Floating **HUD** (non-activating overlay): red = recording, green = processing; draggable; position remembered
 - **Target:** Raw / Variant 1 / Variant 2
-- **Mode:** Clipboard, or **Type into Active App** (Accessibility permission)
+- **Mode:** Clipboard, or **Type into Active App** (requires Accessibility)
 - Recognition language control on the HUD (disabled for Parakeet and English-only Whisper where not applicable)
 - Start/finish sounds, volume, HUD size/opacity in General settings
+
+#### Provider quick switcher (HUD context menu) — new in 1.0.1
+
+While the floating HUD capsule is visible and you have **two or more** polishing providers configured:
+
+| Gesture | Action |
+|---------|--------|
+| **Scroll** over the HUD capsule | Opens the translucent provider list next to the HUD and steps through providers (live switch) |
+| **Left-click** a provider in the list | Selects that polishing provider |
+| **Right-click** a provider in the list | Opens a **model menu** for that provider (favorites + available models); choosing a model updates the provider config and selects it |
+
+The switcher is a non-activating panel — it does not steal keyboard focus from the app you are dictating into. Scroll-to-open needs at least two enabled polishing providers (cloud or local engines exposed as polishers).
 
 ### Translation
 
@@ -138,7 +150,7 @@ Features: multi-key support, key enable/disable, model pickers, retries for stal
 
 ### Glossary (local, deterministic)
 
-- Post-ASR / post-translation term correction — **does not train or bias** Whisper/Parakeet/LLMs
+- Post-ASR / post-translation term correction — **does not train or bias** Whisper, Parakeet, or LLMs
 - Source form, translation form, categories, variant spellings
 - Import / export JSON & CSV
 - “Add to Glossary” from selected text in a note
@@ -170,16 +182,17 @@ Features: multi-key support, key enable/disable, model pickers, retries for stal
 
 First-run flow covers backend/model choice, microphone, speech recognition, and Accessibility (for typing into other apps). Help can **replay onboarding**. System permissions:
 
-- Microphone — recording
-- Speech recognition — Apple Speech paths where used
-- Accessibility — insert into focused apps
-- Apple Events — paste automation where needed
+- **Microphone** — recording  
+- **Speech recognition** — Apple Speech paths where used  
+- **Accessibility** — insert into focused apps  
+- **Apple Events** — paste automation where needed  
 
 ### Privacy model
 
-- **Local-first:** WhisperKit / Parakeet / MLX run on-device
-- Cloud is **opt-in** via API keys; text leaves the machine only when you choose a cloud engine
-- API keys stay on the device (app credential store); screenshots in docs mask secrets
+- **Local-first:** WhisperKit / Parakeet / MLX run on-device  
+- Cloud is **opt-in** via API keys; text leaves the machine only when you choose a cloud engine  
+- API keys stay on the device (app credential store); documentation screenshots mask secrets  
+- Release builds ship **without** bundled API keys or personal data  
 
 ---
 
@@ -196,23 +209,23 @@ First-run flow covers backend/model choice, microphone, speech recognition, and 
 
 ### Option A — DMG (GUI)
 
-1. Download `SmartScribe.dmg` from the [private Releases](https://github.com/Pavan-Gopa/SmartScribe/releases) page (sign in to GitHub).
+1. Download `SmartScribe.dmg` from the [Releases](https://github.com/Pavan-Gopa/SmartScribe/releases) page (sign in to GitHub if the repo is private).
 2. Open the DMG and drag **SmartScribe** into **Applications**.
 3. First launch: right-click → Open if Gatekeeper prompts (notarized builds open normally after Apple verification).
 
-### Option B — Terminal (recommended for automation)
+### Option B — Terminal
 
-From a machine that already has the DMG (or a GitHub CLI session with access to this private repo):
+From a machine that already has the DMG (or a GitHub CLI session with access to this repo):
 
 ```bash
 # Install from a local DMG path
 ./script/install.sh /path/to/SmartScribe.dmg
 
-# Or download the latest private GitHub release asset and install
+# Or download the latest GitHub release asset and install
 ./script/install.sh --from-github
 ```
 
-One-liner after `gh auth login` (repo must stay private; requires read access):
+One-liner after `gh auth login`:
 
 ```bash
 gh release download -R Pavan-Gopa/SmartScribe -p 'SmartScribe*.dmg' -D /tmp \
@@ -245,6 +258,8 @@ xcrun notarytool store-credentials "SmartScribe-Notary" \
   --team-id "438UQRF7JV" \
   --password "app-specific-password"
 
+APP_VERSION=1.0.1 NOTARIZE=1 ./script/build_release_dmg.sh
+# or:
 ./script/notarize_dmg.sh dist/SmartScribe.dmg
 ```
 
@@ -259,27 +274,26 @@ xcrun notarytool store-credentials "SmartScribe-Notary" \
 
 ### Architecture notes
 
-- SwiftUI-first UI; AppKit only where macOS requires it (hotkeys, AX insertion, overlays)
+- SwiftUI-first UI; AppKit only where macOS requires it (hotkeys, AX insertion, overlays, non-activating panels)
 - Protocol-oriented audio, transcription, polishing, and model management
-- Whisper → Core ML via WhisperKit; Parakeet → FluidAudio Core ML/ANE; polish → MLX Swift (+ Prism kernels for 1-bit models)
+- Whisper → Core ML via WhisperKit; Parakeet → FluidAudio Core ML / ANE; polish → MLX Swift (separate worker process)
 
 ---
 
-## Release branch
-
-Post–code-review release line:
+## Release line
 
 | Item | Value |
 |------|--------|
 | Branch | `codex/parakeet-bonsai` |
-| Review follow-up | `041fbdc` — *fix: resolve code review findings (5549 → 141)* |
-| Recent feature work | Parakeet + Bonsai local models, Google polish retries, Parakeet audio normalization |
+| Latest packaging target | **1.0.1** (HUD provider / model quick switcher) |
+| Remote | `https://github.com/Pavan-Gopa/SmartScribe` |
 
-Default remote: `origin` → `https://github.com/Pavan-Gopa/SmartScribe` (**private**).
+Checklist and notarization steps: [`docs/RELEASE.md`](docs/RELEASE.md)  
+User-facing release notes: [`docs/RELEASE_NOTES.md`](docs/RELEASE_NOTES.md)
 
 ---
 
-## Local model paths
+## Local model & data paths
 
 Transcription (resolved in order):
 
@@ -290,14 +304,16 @@ Transcription (resolved in order):
 
 MLX polish scan locations include `~/AI_LOCAL_MODELS/mlx`, Hugging Face hub cache, Documents, Downloads.
 
-Glossary data: `~/Library/Application Support/NativeSmartScribe/glossary.json`  
-Logs export: `~/Library/Application Support/NativeSmartScribe/Logs/`
+| Data | Path |
+|------|------|
+| Glossary | `~/Library/Application Support/NativeSmartScribe/glossary.json` |
+| Logs export | `~/Library/Application Support/NativeSmartScribe/Logs/` |
 
 ---
 
 ## License & distribution
 
-Source and releases are hosted in a **private** GitHub repository. Distribution is intended for authorized recipients only. Builds are signed with **Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)** and submitted to Apple notarization before public-facing handoff.
+Source and releases are hosted in a **private** GitHub repository until public testing is complete. Distribution is intended for authorized recipients only. Builds are signed with **Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)** and submitted to Apple notarization before handoff.
 
 ---
 

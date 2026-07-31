@@ -25,36 +25,54 @@ SmartScribe is a **pure Swift / SwiftUI** desktop app (AppKit only where the OS 
 
 ### HUD provider & model quick switcher (headline feature)
 
-While the floating HUD capsule is visible (global hotkey session) and **two or more polishing providers** are configured:
+Dictate in **any app** with the floating HUD, then **without leaving that app**:
 
 | Gesture | Result |
 |---------|--------|
-| **Scroll** over the HUD capsule | Opens a translucent **provider list** next to the capsule and steps through providers — the active polishing engine switches live. |
+| **Scroll** over the HUD capsule | Opens the translucent **provider list** and steps through polishing providers — the engine switches **live**. |
 | **Left-click** a provider row | Selects that provider. |
-| **Right-click** a provider row | Opens a **context menu of models** for that provider (favorites + available models). Choosing a model updates the provider config and activates it. |
+| **Right-click** a provider row | Opens a **model menu** for that provider (favorites + catalog). Choosing a model applies it immediately. |
 
-The switcher is a **non-activating** panel: it does not steal focus from the app you are dictating into. Ideal when you jump between local polish and a cloud model mid-workflow.
+![Scroll providers + right-click models on the HUD](docs/screenshots/18_hud_provider_switcher.png)
+
+The panel is **non-activating** — keyboard focus stays in Telegram, the browser, your IDE, etc. Needs **two or more** polishing providers configured.
 
 ### Also in this release line
 
-- Onboarding: full HUD explanation moved into an expandable panel; clearer model ordering.
-- Packaging: notarized **1.0.1** DMG for closed testing; install path documented as “open DMG → Applications”.
-- Documentation: repository README and release notes rewritten without incorrect model claims (no Bonsai).
-- Stability carried from the 1.0.0 line: Parakeet audio normalization, Google polishing stall retries, broad code-review hardening.
+- Onboarding: full HUD explanation in an expandable panel; clearer model ordering.
+- Packaging: notarized **1.0.1** DMG for closed testing.
+- Docs cleanup (no incorrect model claims).
+- Stability from the 1.0.0 line: Parakeet audio normalization, Google polish retries, code-review hardening.
 
-See the full changelog: [Changelog — v1.0.1](#changelog--v101) · draft release notes in [`docs/RELEASE_NOTES.md`](docs/RELEASE_NOTES.md).
+Full changelog: [Changelog — v1.0.1](#changelog--v101) · [`docs/RELEASE_NOTES.md`](docs/RELEASE_NOTES.md).
 
 ---
 
 ## Screenshots
 
-> Current **1.0.1** UI (from `Screenshots for GITHUB/`).
-
 ### Main workspace
 
 ![Main window](docs/screenshots/01_main_window.png)
 
-Sidebar notes on the left; active note on the right with audio metadata, **transcription model**, **polishing provider + model**, **Raw / Variant 1 / Variant 2**, prompt slots, and the action bar (record, import, translate, polish, settings).
+Sidebar notes; transcription + polishing pickers; **Raw / Variant 1 / Variant 2**; record / import / translate / polish / settings.
+
+### Floating HUD (global hotkey)
+
+Dictate over any app — red capsule while recording, green while processing:
+
+| Over another app | Recording | Processing |
+|:---:|:---:|:---:|
+| ![HUD over Telegram](docs/screenshots/08_hud_overlay.png) | ![Recording capsule](docs/screenshots/15_hud_recording.png) | ![Processing capsule](docs/screenshots/16_hud_processing.png) |
+
+**Scroll the capsule → pick provider; right-click → pick model** (the 1.0.1 highlight):
+
+![HUD provider and model switcher](docs/screenshots/18_hud_provider_switcher.png)
+
+### Translation
+
+| Full translation window | Quick translation |
+|:---:|:---:|
+| ![Full translation](docs/screenshots/09_translation.png) | ![Quick translation](docs/screenshots/17_quick_translation.png) |
 
 ### Settings
 
@@ -73,22 +91,6 @@ Sidebar notes on the left; active note on the right with audio metadata, **trans
 | Glossary | Help |
 |:---:|:---:|
 | ![Glossary](docs/screenshots/10_glossary.png) | ![Help](docs/screenshots/14_help.png) |
-
-### Floating HUD (global hotkey)
-
-| Over another app | Recording | Processing |
-|:---:|:---:|:---:|
-| ![HUD over Telegram](docs/screenshots/08_hud_overlay.png) | ![Recording capsule](docs/screenshots/15_hud_recording.png) | ![Processing capsule](docs/screenshots/16_hud_processing.png) |
-
-**Provider & model switcher (new in 1.0.1)** — scroll the capsule for the provider list; right-click a provider for its model menu:
-
-![HUD provider and model switcher](docs/screenshots/18_hud_provider_switcher.png)
-
-### Translation
-
-| Full translation window | Quick translation |
-|:---:|:---:|
-| ![Full translation](docs/screenshots/09_translation.png) | ![Quick translation](docs/screenshots/17_quick_translation.png) |
 
 ---
 

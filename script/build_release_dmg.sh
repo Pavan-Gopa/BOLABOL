@@ -7,7 +7,7 @@ DISPLAY_NAME="SmartScribe"
 BUNDLE_ID="com.smartscribe.app"
 MIN_SYSTEM_VERSION="14.0"
 # Marketing / build versions embedded in Info.plist (override with env).
-APP_VERSION="${APP_VERSION:-1.0.0}"
+APP_VERSION="${APP_VERSION:-1.0.1}"
 APP_BUILD="${APP_BUILD:-$(date +%Y%m%d%H%M)}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

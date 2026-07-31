@@ -2,32 +2,23 @@
 
 ## Branch
 
-Use the post–code-review line:
-
 ```text
 codex/parakeet-bonsai
 ```
 
-Key commits:
-
-- `a0e48ed` — Parakeet + Bonsai local models  
-- `5052c9d` / `a86f0d6` / `77d93eb` — runtime fixes  
-- `d050b8f` — automated code review pipeline  
-- `041fbdc` — resolve code review findings (5549 → 141)
-
-Repository: `https://github.com/Pavan-Gopa/SmartScribe` (**must remain private**).
+Repository: `https://github.com/Pavan-Gopa/SmartScribe` (**must remain private** until explicitly opened).
 
 ## Build signed DMG
 
 ```bash
-./script/build_release_dmg.sh
-# optional version pin:
-APP_VERSION=1.0.0 APP_BUILD=1 ./script/build_release_dmg.sh
+APP_VERSION=1.0.1 APP_BUILD=2 ./script/build_release_dmg.sh
+# or with notarization in one step:
+APP_VERSION=1.0.1 APP_BUILD=2 NOTARIZE=1 ./script/build_release_dmg.sh
 ```
 
 Outputs:
 
-- `dist/SmartScribe.dmg` — signed disk image  
+- `dist/SmartScribe.dmg` — signed (and optionally notarized) disk image  
 - `dist/release/SmartScribe.app` — app bundle  
 - `dist/handoff/` — DMG + `install.sh` + `SHA256SUMS.txt`
 
@@ -70,26 +61,29 @@ xcrun stapler validate dist/SmartScribe.dmg
 ./script/install.sh --from-github   # needs gh auth + private repo access
 ```
 
-## GitHub release (private)
+## GitHub release (draft / private testing)
 
 ```bash
 # Ensure remote stays private
 gh repo view Pavan-Gopa/SmartScribe --json isPrivate
 
 # Push branch
-git push -u origin codex/parakeet-bonsai
+git push -u origin HEAD
 
-# Create a private release with assets
-gh release create v1.0.0 \
+# Create a DRAFT release (not published to the public feed; friends with repo access can open the draft URL)
+gh release create v1.0.1 \
   dist/handoff/SmartScribe.dmg \
   dist/handoff/install.sh \
   dist/handoff/SHA256SUMS.txt \
-  --title "SmartScribe 1.0.0" \
+  --title "SmartScribe 1.0.1" \
   --notes-file docs/RELEASE_NOTES.md \
-  --target codex/parakeet-bonsai
+  --target codex/parakeet-bonsai \
+  --draft \
+  --prerelease
 ```
 
-Do **not** run `gh repo edit --visibility public`.
+Do **not** run `gh repo edit --visibility public`.  
+Do **not** publish the draft until closed testing confirms the build.
 
 ## Smoke checks after install
 
@@ -98,4 +92,5 @@ Do **not** run `gh repo edit --visibility public`.
 3. Settings → Local Models — list loads  
 4. Record a short clip → Raw text appears  
 5. Option+S HUD appears over another app  
-6. API Providers — keys remain local; polish optional  
+6. With ≥2 polishing providers: scroll HUD → provider list; right-click provider → model menu  
+7. API Providers — keys remain local; no keys pre-bundled in the app  

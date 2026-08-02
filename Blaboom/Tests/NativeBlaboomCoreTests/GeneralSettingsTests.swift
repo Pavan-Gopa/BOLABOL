@@ -21,6 +21,76 @@ func generalSettingsMatchElectronGeneralDefaults() {
 }
 
 @Test
+func generalSettingsDefaultSpeechLanguagesMatchCanonicalDefaults() {
+    let settings = GeneralSettings()
+
+    // Structural equality: the blob default equals the canonical fresh-install
+    // default computed the same way, regardless of the machine's locale.
+    #expect(settings.speechLanguages == UserSpeechLanguages())
+    #expect(settings.speechLanguages == UserSpeechLanguages.makeDefaults())
+    #expect(!settings.speechLanguages.primaryLanguageCode.isEmpty)
+    #expect(!settings.speechLanguages.additionalLanguageCode.isEmpty)
+}
+
+@Test
+func generalSettingsCarriesExplicitSpeechLanguagesPair() {
+    let pair = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "en")
+    let settings = GeneralSettings(speechLanguages: pair)
+
+    #expect(settings.speechLanguages == pair)
+    #expect(settings.speechLanguages.primaryLanguageCode == "ru")
+    #expect(settings.speechLanguages.additionalLanguageCode == "en")
+}
+
+@Test
+func generalSettingsSpeechLanguagesRoundTripThroughCodable() throws {
+    let pair = UserSpeechLanguages(primaryLanguageCode: "hi", additionalLanguageCode: "en")
+    let settings = GeneralSettings(theme: .light, speechLanguages: pair)
+
+    let data = try JSONEncoder().encode(settings)
+    let decoded = try JSONDecoder().decode(GeneralSettings.self, from: data)
+
+    #expect(decoded.speechLanguages == pair)
+    #expect(decoded.theme == .light)
+}
+
+@Test
+func generalSettingsDecodesLegacyPayloadWithoutSpeechLanguagesKey() throws {
+    let data = Data("""
+    {
+      "theme": "dark",
+      "uiScale": 1,
+      "uiLanguage": "system",
+      "hasCompletedOnboarding": false,
+      "textScale": 1,
+      "textFont": "system",
+      "isAutoArchiveCleanupEnabled": true,
+      "maxSavedAudioRecordings": 50
+    }
+    """.utf8)
+
+    let settings = try JSONDecoder().decode(GeneralSettings.self, from: data)
+
+    // Legacy payload: the pair falls back to canonical fresh-install defaults;
+    // the store layer then runs best-effort migration on top (B1).
+    #expect(settings.speechLanguages == UserSpeechLanguages())
+    #expect(settings.maxSavedAudioRecordings == 50)
+}
+
+@Test
+func generalSettingsNormalizeKeepsSpeechLanguagesPair() {
+    var settings = GeneralSettings(speechLanguages: UserSpeechLanguages(
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en"
+    ))
+
+    settings.normalize()
+
+    #expect(settings.speechLanguages.primaryLanguageCode == "ru")
+    #expect(settings.speechLanguages.additionalLanguageCode == "en")
+}
+
+@Test
 func generalSettingsNormalizeSliderRanges() {
     var settings = GeneralSettings()
     settings.uiScale = 2

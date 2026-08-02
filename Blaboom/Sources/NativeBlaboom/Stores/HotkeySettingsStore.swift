@@ -30,6 +30,18 @@ final class HotkeySettingsStore: ObservableObject {
         HotkeySettingsStore()
     }
 
+    /// Canonical speech-language pair (plan §3.3), read from the shared
+    /// GeneralSettings blob. Hotkey sessions / HUD (B6+) read this to render
+    /// the primary ↔ additional speech-language cycle.
+    var speechLanguages: UserSpeechLanguages {
+        guard let data = userDefaults.data(forKey: GeneralSettingsStore.settingsDefaultsKey),
+              let generalSettings = try? JSONDecoder().decode(GeneralSettings.self, from: data)
+        else {
+            return UserSpeechLanguages()
+        }
+        return generalSettings.speechLanguages
+    }
+
     private func saveSettings() {
         guard let data = try? JSONEncoder().encode(settings) else { return }
         userDefaults.set(data, forKey: Self.settingsDefaultsKey)

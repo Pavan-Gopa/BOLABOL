@@ -1,48 +1,64 @@
 # Blaboom 1.0.3 — live orchestration state
 # Orchestrator owns this file.
 
-current_step: B4
+current_step: B5
 step_description: >-
-  Help EN bilingual. Review APPROVED; awaiting Tester QA.
-  Note for B5: non-EN helpLang/helpHUD maps still old wording — expected until B5.
+  i18n × 15 UI languages for all new/updated onboarding, Settings, Help bilingual
+  strings (and helpLang/helpHUD alignment). No raw-key fallback; positional formats.
 target_files:
-  - Sources/NativeBlaboom/Views/Settings/HelpSettingsView.swift
   - Sources/NativeBlaboomCore/Services/AppText.swift
+  - Tests/NativeBlaboomCoreTests/AppTextFullCoverageTests.swift
   - Tests/NativeBlaboomCoreTests/SettingsLocalizationTests.swift
   - Tests/NativeBlaboomCoreTests/OnboardingLocalizationTests.swift
-  - Tests/NativeBlaboomCoreTests/AppTextFullCoverageTests.swift
+  - Tests/NativeBlaboomCoreTests/ArchiveStatsLocalizationTests.swift
+  - script/qa/check_localization_surface.sh
 completed_steps:
   - B0
   - B1
   - B2
   - B3
+  - B4
 implementation:
-  status: waiting_review
+  status: pending
   attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: 'Reviewer 465/465 green; checklist 1–7 pass; B5 non-EN map drift noted'
+  verdict: null
+  note: ''
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: B4
+  suite: null
   bugs_open: 0
   note: ''
-next_actor: tester
+next_actor: coder
 track: UX
 prior_track: FOUNDATION
 working_roots:
   - Blaboom
 checkpoint:
-  last_pre_tag: blaboom/pre-B4
-  last_post_tag: blaboom/B3-done
-  last_commit: a3df89d
+  last_pre_tag: blaboom/pre-B5
+  last_post_tag: blaboom/B4-done
+  last_commit: bd3e270
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
 coder_brief: |
-  B4 review approved — Tester validates suite + helpBilingual keys.
+  B5 — Localize all B2–B4 new/updated strings into 15 UI languages:
+  en, ru, es, de, fr, it, pt, zh, ja, ko, ar, hi, uk, tr, pl.
+
+  Priority keys (must real translations, not EN copy-paste where avoidable):
+  - Onboarding primary/additional (B2)
+  - Settings language pair (B3)
+  - Help bilingual + updated helpLang*/helpHUD* (B4)
+
+  Rules: no raw-key fallback; multi-arg → positional %1$@; RTL spot ar.
+  Keep archive stats format regressions green (tr/ja/ko/hi).
+
+  Out of scope: Canary engine (B6+), product feature changes.
+
+  Verify: swift test + localization surface checks.
 notes: |
-  Reviewer [APPROVED] 2026-08-02. After Tester green: POST B4, open B5 i18n.
+  B4 closed: review APPROVED, qa_green 467 (Tester +2 gap tests).
+  Tags: blaboom/B4-done @ bd3e270, blaboom/pre-B5.

@@ -1,0 +1,488 @@
+{
+  "authorTranscriptionLanguage" : "English",
+  "autoTranslationLanguage" : "Russian",
+  "enabled" : true,
+  "entries" : [
+    {
+      "createdAt" : "2026-07-13T15:21:30.792Z",
+      "id" : "A78F252B-49DB-4CC3-9D9B-5F10ACE56E35",
+      "remember" : true,
+      "source" : "Grok",
+      "translation" : "Grok",
+      "translations" : {
+        "Default" : "Grok",
+        "English" : "Grok",
+        "Russian" : "Grok"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "грог",
+        "грок",
+        "Groq",
+        "Groqe",
+        "грук",
+        "grog"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:27:07.924Z",
+      "id" : "219B03B2-5869-46D0-B236-06ECB1451B49",
+      "remember" : true,
+      "source" : "Codex",
+      "translation" : "Codex",
+      "translations" : {
+        "Default" : "Codex",
+        "English" : "Codex",
+        "Russian" : "Codex"
+      },
+      "updatedAt" : "2026-07-31T12:35:35.012Z",
+      "variants" : [
+        "кодес",
+        "кодекса",
+        "codeks",
+        "кодекс",
+        "кодекса; codeks; кодекс",
+        "codec"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:33:54.758Z",
+      "id" : "55833AAE-BFB2-4E13-BCD0-7E590783F663",
+      "remember" : true,
+      "source" : "Skills",
+      "translation" : "Skills",
+      "translations" : {
+        "Default" : "Skills",
+        "English" : "Skills",
+        "Russian" : "Skills"
+      },
+      "updatedAt" : "2026-07-31T12:44:43.232Z",
+      "variants" : [
+        "скиллы",
+        "скилз",
+        "kills"
+      ]
+    },
+    {
+      "createdAt" : "2026-07-13T15:53:03.386Z",
+      "id" : "8F451A8C-CAEB-4609-8739-06E5B5420DB6",
+      "remember" : true,
+      "source" : "orchestrator",
+      "translation" : "orchestrator",
+      "translations" : {
+        "Default" : "orchestrator",
+        "English" : "orchestrator",
+        "Russian" : "orchestrator"
+      },
+      "updatedAt" : "2026-07-31T12:41:34.565Z",
+      "variants" : [
+        "оркестратором",
+        "оркастратор",
+        "orkestrator"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:54:29.587Z",
+      "id" : "36D02824-373B-4BE0-9A33-6298E57E457C",
+      "remember" : true,
+      "source" : "Hy3",
+      "translation" : "Hy3",
+      "translations" : {
+        "Default" : "Hy3",
+        "English" : "Hy3",
+        "Russian" : "Hy3"
+      },
+      "updatedAt" : "2026-07-31T12:38:54.664Z",
+      "variants" : [
+        "чуай 3",
+        "high 3",
+        "hi3",
+        "hi 3"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:56:05.171Z",
+      "id" : "F799641C-74C9-4A9E-AA04-C790A993EE0D",
+      "remember" : true,
+      "source" : "Gemini",
+      "translation" : "Gemini",
+      "translations" : {
+        "Default" : "Gemini",
+        "English" : "Gemini",
+        "Russian" : "Gemini"
+      },
+      "updatedAt" : "2026-07-31T12:36:18.230Z",
+      "variants" : [
+        "джемини",
+        "Джеймини",
+        "geminy"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:59:51.172Z",
+      "id" : "8D5BA446-71B9-4EE6-A49D-EFD615C17BDC",
+      "remember" : true,
+      "source" : "splitter",
+      "translation" : "splitter",
+      "translations" : {
+        "Default" : "splitter",
+        "English" : "splitter",
+        "Russian" : "splitter"
+      },
+      "updatedAt" : "2026-07-31T12:45:11.366Z",
+      "variants" : [
+        "сплиттер",
+        "spllliter",
+        "spliter"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-14T09:16:29.566Z",
+      "id" : "843E42FF-25F7-417E-A7F2-9FB535462BF5",
+      "remember" : true,
+      "source" : "iZotope RX",
+      "translation" : "iZotope RX",
+      "translations" : {
+        "Default" : "iZotope RX",
+        "English" : "iZotope RX",
+        "Russian" : "iZotope RX"
+      },
+      "updatedAt" : "2026-07-31T12:39:31.181Z",
+      "variants" : [
+        "айзотоп rx",
+        "вайзотоп и rx",
+        "изотоп rx",
+        "isotop",
+        "izotop",
+        "issotop"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-21T04:57:33.951Z",
+      "id" : "B5F316C9-4C00-4FFD-B657-AEFFF6653600",
+      "remember" : true,
+      "source" : "Qwen Code",
+      "translation" : "Qwen Code",
+      "translations" : {
+        "Default" : "Qwen Code",
+        "English" : "Qwen Code",
+        "Russian" : "Qwen Code"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "квн-код",
+        "QN-код"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-21T10:56:51.883Z",
+      "id" : "FCAA5532-98FF-448D-A520-C97CB2EED620",
+      "remember" : true,
+      "source" : "Qwen 3.8 Max Preview",
+      "translation" : "Qwen 3.8 Max Preview",
+      "translations" : {
+        "Default" : "Qwen 3.8 Max Preview",
+        "English" : "Qwen 3.8 Max Preview",
+        "Russian" : "Qwen 3.8 Max Preview"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "квн 3.8 макс превью",
+        "QN 3.8 Max превью",
+        "QN 3.8 Max Preview"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-21T10:57:20.983Z",
+      "id" : "FA251E39-137B-475E-87DA-B1D5FE4D29F6",
+      "remember" : true,
+      "source" : "Qwen",
+      "translation" : "Qwen",
+      "translations" : {
+        "Default" : "Qwen",
+        "English" : "Qwen",
+        "Russian" : "Qwen"
+      },
+      "updatedAt" : "2026-07-31T08:45:07.542Z",
+      "variants" : [
+        "квн",
+        "Квен",
+        "QAN",
+        "QN",
+        "KVM",
+        "КВНа",
+        "Quven"
+      ]
+    },
+    {
+      "createdAt" : "2026-07-21T11:07:54.034Z",
+      "id" : "96B05644-1931-4D3F-8C49-E435A8317F0F",
+      "remember" : true,
+      "source" : "Kimi K3",
+      "translation" : "Kimi K3",
+      "translations" : {
+        "Default" : "Kimi K3",
+        "English" : "Kimi K3",
+        "Russian" : "Kimi K3"
+      },
+      "updatedAt" : "2026-07-31T12:40:41.064Z",
+      "variants" : [
+        "Кеми, kimika 3",
+        "kimi-ka 3",
+        "кимика 3",
+        "кими ка 3"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-23T09:21:20.758Z",
+      "id" : "AFE99A50-90A8-4763-B20E-7E1AF0F90A49",
+      "remember" : true,
+      "source" : "Ghostty",
+      "translation" : "Ghostty",
+      "translations" : {
+        "Default" : "Ghostty",
+        "English" : "Ghostty",
+        "Russian" : "Ghostty"
+      },
+      "updatedAt" : "2026-07-31T12:37:15.080Z",
+      "variants" : [
+        "гости, gosti, gosty"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-23T14:22:39.077Z",
+      "id" : "D75F6B87-A1D7-4EDE-A57A-3FE2A43C301D",
+      "remember" : true,
+      "source" : "Palmier Pro",
+      "translation" : "Palmier Pro",
+      "translations" : {
+        "Default" : "Palmier Pro",
+        "English" : "Palmier Pro",
+        "Russian" : "Palmier Pro"
+      },
+      "updatedAt" : "2026-07-31T12:43:09.582Z",
+      "variants" : [
+        "пол мир про",
+        "палмиер про",
+        "palmir pro"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-28T07:35:37.643Z",
+      "id" : "7D6211D4-0468-47CA-9C63-9D33E9644126",
+      "remember" : true,
+      "source" : "Gemma",
+      "translation" : "Gemma",
+      "translations" : {
+        "Default" : "Gemma",
+        "English" : "Gemma",
+        "Russian" : "Gemma"
+      },
+      "updatedAt" : "2026-07-31T12:36:50.396Z",
+      "variants" : [
+        "джема, gema",
+        "jema",
+        "jemma"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-30T14:13:21.893Z",
+      "id" : "8AB15485-DF80-4DC4-BE03-713560A0D6B8",
+      "remember" : true,
+      "source" : "Parakeet",
+      "translation" : "Parakeet",
+      "translations" : {
+        "Default" : "Parakeet",
+        "English" : "Parakeet",
+        "Russian" : "Parakeet"
+      },
+      "updatedAt" : "2026-07-31T12:43:31.682Z",
+      "variants" : [
+        "паракитом",
+        "Прокид",
+        "паракетом",
+        "паракид",
+        "паракет",
+        "паракит",
+        "parakit"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-31T05:13:10.576Z",
+      "id" : "FF0B8CD2-088A-4D11-9EFD-F0E667380481",
+      "remember" : true,
+      "source" : "HUD",
+      "translation" : "",
+      "translations" : {
+        "English" : "HUD"
+      },
+      "updatedAt" : "2026-07-31T05:13:10.576Z",
+      "variants" : [
+        "худ"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-31T05:13:49.013Z",
+      "id" : "B50BD834-FB5D-4928-91D4-A3A825017BFF",
+      "remember" : true,
+      "source" : "Graphify",
+      "translation" : "",
+      "translations" : {
+        "English" : "Graphify"
+      },
+      "updatedAt" : "2026-07-31T12:37:38.180Z",
+      "variants" : [
+        "Grafi Fi",
+        "Grafi",
+        "гафифай"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-31T12:46:56.000Z",
+      "id" : "4C6CD980-ECBA-4FB9-B105-D330B527BCDA",
+      "remember" : true,
+      "source" : "Claude",
+      "translation" : "Claude",
+      "translations" : {
+        "Default" : "Claude",
+        "English" : "Claude",
+        "Russian" : "Claude"
+      },
+      "updatedAt" : "2026-07-31T12:46:56.000Z",
+      "variants" : [
+        "Klod",
+        "cloud",
+        "klaude",
+        "клод",
+        "клауд"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-31T12:48:56.394Z",
+      "id" : "5D2FA476-39BB-4DF7-8483-7F76E5176FE7",
+      "remember" : true,
+      "source" : "Caude Code",
+      "translation" : "Caude Code",
+      "translations" : {
+        "Default" : "Caude Code",
+        "English" : "Caude Code",
+        "Russian" : "Caude Code"
+      },
+      "updatedAt" : "2026-07-31T12:48:56.394Z",
+      "variants" : [
+        "Claude код",
+        "клод кот",
+        "клод код"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-08-01T15:29:46.373Z",
+      "id" : "1ADE9AB5-0F58-4150-8B1D-9ABB1D422A16",
+      "remember" : true,
+      "source" : "DeepSeek",
+      "translation" : "",
+      "translations" : {
+        "English" : "DeepSeek"
+      },
+      "updatedAt" : "2026-08-01T15:29:46.373Z",
+      "variants" : [
+        "Deep C"
+      ]
+    },
+    {
+      "category" : "Vaishnavas",
+      "createdAt" : "2026-08-01T15:30:50.657Z",
+      "id" : "FEE87B2B-C2E7-448C-816C-B41841215407",
+      "remember" : true,
+      "source" : "Харе Кришна",
+      "translation" : "",
+      "translations" : {
+        "English" : "Харе Кришна"
+      },
+      "updatedAt" : "2026-08-01T15:30:50.657Z",
+      "variants" : [
+        "Хари Кришна"
+      ]
+    },
+    {
+      "category" : "Vaishnavas",
+      "createdAt" : "2026-08-01T15:31:45.424Z",
+      "id" : "A8D02ED2-E357-48BF-9AD8-54DC7E294816",
+      "remember" : true,
+      "source" : "Дханада",
+      "translation" : "",
+      "translations" : {
+        "English" : "Дханада"
+      },
+      "updatedAt" : "2026-08-01T15:31:45.424Z",
+      "variants" : [
+        "Драгодхана"
+      ]
+    },
+    {
+      "category" : "Vaishnavas",
+      "createdAt" : "2026-08-01T15:33:11.908Z",
+      "id" : "E261AA74-C355-45A2-AABB-B766C3427CA5",
+      "remember" : true,
+      "source" : "Прабху",
+      "translation" : "",
+      "translations" : {
+        "English" : "Прабху"
+      },
+      "updatedAt" : "2026-08-01T15:33:11.908Z",
+      "variants" : [
+        "Дабу"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-08-02T02:35:29.785Z",
+      "id" : "3E98CB0F-D193-4495-AA1F-408E3054C42B",
+      "remember" : true,
+      "source" : "BLABOOM",
+      "translation" : "",
+      "translations" : {
+        "English" : "BLABOOM"
+      },
+      "updatedAt" : "2026-08-02T02:59:00.500Z",
+      "variants" : [
+        "Блабом",
+        "Блабум"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-08-02T02:40:39.953Z",
+      "id" : "775B57CC-34B5-4AF1-AFF8-C0C61225936D",
+      "remember" : true,
+      "source" : "Tester",
+      "translation" : "",
+      "translations" : {
+        "English" : "Tester"
+      },
+      "updatedAt" : "2026-08-02T02:40:39.953Z",
+      "variants" : [
+        "Эстру"
+      ]
+    }
+  ],
+  "schemaVersion" : 2
+}

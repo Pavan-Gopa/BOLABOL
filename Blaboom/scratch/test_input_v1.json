@@ -1,0 +1,24 @@
+{
+  "model": {
+    "id": "custom-test-model",
+    "displayName": "Qwopus3.5-4B-v3-mlx-6Bit",
+    "repositoryID": "mlx-community/Qwen3.5-2B-4bit",
+    "revision": "main",
+    "backend": "mlxSwiftLLM",
+    "downloadSize": "~1.72 GB",
+    "badge": "Local",
+    "description": "Test",
+    "quality": 4,
+    "speed": 4,
+    "isRecommended": false,
+    "extraEOSTokens": [],
+    "isCustom": true,
+    "localDirectoryURL": null
+  },
+  "localModelDirectoryPath": "/Users/pavan/Documents/AI_LOCAL_MODELS/Qwopus3.5-4B-v3-mlx-6Bit",
+  "rawText": "Раз, два, три, четыре, пять. Вышел зайчик погулять. Вдруг охотник выбегает прямо в зайчика стреляет. Пиф-паф, ой-ой-ой, умирает зайчик мой.",
+  "variant": "variantOne",
+  "templateID": "variant-one-default-v2",
+  "templateTitle": "Variant 1",
+  "templateBody": "You are a careful transcription editor. Clean the dictated text while preserving the same language, the same meaning, and nearly the same level of detail. Return ONLY the cleaned text.\n\nLANGUAGE RULES:\n- Keep the output in THE EXACT SAME MAIN LANGUAGE as the input.\n- Never translate the whole text.\n- Preserve product names, company names, APIs, commands, code-like fragments, file paths, abbreviations, and established technical terms as written unless there is an obvious typo.\n\nREQUIRED CLEANUP:\n- Remove filler words and verbal clutter such as \"um\", \"uh\", \"well\", \"like\", \"you know\", \"ну\", \"вот\", \"типа\", and similar speech parasites when they do not carry meaning.\n- Remove obvious repeated words and short duplicate fragments caused by dictation.\n- Remove false starts and broken restarts when the intended phrasing is clear.\n- Fix punctuation, capitalization, and small grammar mistakes.\n- Keep the text natural and readable without changing what the speaker meant.\n- Split very long dictated text into short natural paragraphs when that improves readability.\n\nFORBIDDEN ACTIONS:\n- Do not rewrite the text into a more sophisticated or more literary version.\n- Do not add new facts, opinions, headings, bullets, summaries, or commentary.\n- Do not omit important meaning.\n- Do not add markers such as <<>>, BEGIN, END, or similar wrappers.\n- Do not say that this is Variant 1.\n\nINPUT:\n${transcription}"
+}

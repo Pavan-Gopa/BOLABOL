@@ -1,51 +1,68 @@
 # Blaboom 1.0.3 — live orchestration state
 # Orchestrator owns this file.
 
-current_step: B5
+current_step: B6
 step_description: >-
-  i18n × 15. Review APPROVED (467 tests, cartesian 0 gaps); awaiting Tester
-  with mandatory gap-hunt + new tests if coverage thin.
+  Canary Core ML spike: load HF alexwengg/canary-1b-v2-coreml, ASR EN smoke,
+  AST if possible, lang-token audit, metrics → docs/canary/COREML_SPIKE.md GO/NO-GO.
+  NO Python runtime.
 target_files:
-  - Sources/NativeBlaboomCore/Services/AppText.swift
-  - Tests/NativeBlaboomCoreTests/AppTextFullCoverageTests.swift
-  - Tests/NativeBlaboomCoreTests/SettingsLocalizationTests.swift
-  - Tests/NativeBlaboomCoreTests/OnboardingLocalizationTests.swift
-  - Tests/NativeBlaboomCoreTests/ArchiveStatsLocalizationTests.swift
-  - script/qa/check_localization_surface.sh
+  - docs/canary/COREML_SPIKE.md
+  - Sources/NativeBlaboomCore/Services/  # spike harness only if needed under Core
+  - Sources/NativeBlaboom/Services/      # optional CanaryCoreMLSpike* harness
+  - Tests/NativeBlaboomCoreTests/        # optional spike unit tests
+  - script/                              # optional spike helper scripts (no Python)
+  - Package.swift                        # only if Core ML deps required for harness
 completed_steps:
   - B0
   - B1
   - B2
   - B3
   - B4
+  - B5
 implementation:
-  status: waiting_review
+  status: pending
   attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: 'Reviewer independent 15-locale scan 0 same-as-EN; 467/467; 14/14'
+  verdict: null
+  note: ''
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: B5
+  suite: null
   bugs_open: 0
   note: ''
-next_actor: tester
-track: UX
-prior_track: FOUNDATION
+next_actor: coder
+track: CANARY
+prior_track: UX
 working_roots:
   - Blaboom
 checkpoint:
-  last_pre_tag: blaboom/pre-B5
-  last_post_tag: blaboom/B4-done
-  last_commit: 0d7301e
+  last_pre_tag: blaboom/pre-B6
+  last_post_tag: blaboom/B5-done
+  last_commit: 79ea451
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
 coder_brief: |
-  B5 review approved — Tester gap-hunts i18n coverage and may add tests/qa scripts.
+  B6 — Canary Core ML spike (GO/NO-GO)
+
+  Artifact: https://huggingface.co/alexwengg/canary-1b-v2-coreml
+  Native only: Core ML + Swift. NO Python / NeMo / pip.
+
+  Deliverables:
+  1. Load mlmodelc (or package structure) on device
+  2. ASR smoke EN (or documented failure)
+  3. AST pair attempt if tokens available
+  4. Lang-token audit — list REAL supported langs (do not invent 25)
+  5. Metrics (latency, RAM if measurable)
+  6. docs/canary/COREML_SPIKE.md with clear GO or NO-GO + evidence
+
+  Product catalog/engine (B7–B8) OUT OF SCOPE unless minimal harness needs a file.
+
+  Verify: document results; keep main swift test suite green (don't break package).
 notes: |
-  Reviewer [APPROVED] 2026-08-03. Nice-to-have: stale EN comments about B5 future.
-  After Tester green: POST B5, open B6 Canary Core ML spike.
+  B5 closed: review APPROVED, qa_green 470 (+3 Tester) + run_all 15/15.
+  UX track complete for bilingual surface. CANARY track starts at B6.

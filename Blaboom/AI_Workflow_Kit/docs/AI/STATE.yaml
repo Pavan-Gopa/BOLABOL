@@ -1,49 +1,67 @@
 # Blaboom 1.0.3 — live orchestration state
 # Orchestrator owns this file.
 
-current_step: B2
+current_step: B3
 step_description: >-
-  Onboarding primary + additional. Review APPROVED; awaiting Tester QA.
+  Settings UI: explicit Primary + Additional speech languages; same-as-primary;
+  hints (not target-always); LanguagePickerOrder; sync with onboarding store SoT.
 target_files:
-  - Sources/NativeBlaboom/Views/OnboardingView.swift
+  - Sources/NativeBlaboom/Views/Settings/GeneralSettingsView.swift
+  - Sources/NativeBlaboom/Views/Settings/HotkeySettingsView.swift
+  - Sources/NativeBlaboom/Views/Settings/SettingsView.swift
   - Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift
+  - Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift
   - Sources/NativeBlaboomCore/Services/AppText.swift
   - Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift
   - Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift
-  - Sources/NativeBlaboomCore/Models/GeneralSettings.swift
+  - Tests/NativeBlaboomCoreTests/SettingsLocalizationTests.swift
   - Tests/NativeBlaboomCoreTests/OnboardingLocalizationTests.swift
   - Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift
-  - Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift
 completed_steps:
   - B0
   - B1
+  - B2
 implementation:
-  status: waiting_review
+  status: pending
   attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: 'Reviewer re-ran 455 tests green; checklist 1–9 pass; no must-fix'
+  verdict: null
+  note: ''
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: B2
+  suite: null
   bugs_open: 0
   note: ''
-next_actor: tester
+next_actor: coder
 track: UX
 prior_track: FOUNDATION
 working_roots:
   - Blaboom
 checkpoint:
-  last_pre_tag: blaboom/pre-B2
-  last_post_tag: blaboom/B1-done
-  last_commit: 487f3d9
+  last_pre_tag: blaboom/pre-B3
+  last_post_tag: blaboom/B2-done
+  last_commit: 00b2ca5
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
 coder_brief: |
-  B2 review approved — Tester validates suite + B2 onboarding invariants.
+  B3 — Settings UI primary + additional (UX)
+
+  Explicit Settings controls for primaryLanguageCode + additionalLanguageCode
+  (plan §7). Path: Settings → Hotkey and/or General. Same store as onboarding
+  (GeneralSettings.speechLanguages). Same-as-primary control. Honest hints —
+  NOT "target always output". Pickers: LanguagePickerOrder.
+
+  EN AppText keys for new Settings strings (full 15 langs in B5).
+  Legacy transcription-language pickers: do not break auto; either keep as
+  advanced/auto engine control or clearly separate from speech pair.
+
+  Out of scope: Help (B4), full i18n (B5), Canary (B6+), onboarding redesign (B2 done).
+
+  Verify: swift test
 notes: |
-  Reviewer 2026-08-02: [APPROVED]. After Tester green: POST B2, graphify, open B3.
+  B2 closed: review APPROVED, qa_green (455 + run_all 14/14).
+  Tags: blaboom/B2-done @ 00b2ca5, blaboom/pre-B3.

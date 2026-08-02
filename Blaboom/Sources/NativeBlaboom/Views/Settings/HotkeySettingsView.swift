@@ -148,6 +148,55 @@ struct HotkeySettingsView: View {
                 .padding(.vertical, 2)
             }
 
+            // Your Languages — primary + additional speech-language pair (plan §7).
+            // Reads/writes GeneralSettingsStore.speechLanguages — the same blob the
+            // onboarding writes (single source of truth, plan §3.3). This is a
+            // separate preference from the engine-level Recognition Language control
+            // below: Parakeet/Whisper auto-detect stays untouched (plan §4.1).
+            // Copy never calls additional a "target" / "always output" language.
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(generalSettingsStore.text(.languagePairSectionTitle))
+                        .font(.title3.weight(.bold))
+                        .padding(.top, -10)
+                        .padding(.bottom, -6)
+
+                    Picker(generalSettingsStore.text(.primaryLanguage), selection: primaryLanguageSelection) {
+                        ForEach(LanguagePickerOrder.speechLanguages) { language in
+                            Text(language.displayName)
+                                .tag(language.code)
+                        }
+                    }
+
+                    Text(generalSettingsStore.text(.primaryLanguageHint))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Divider()
+                        .opacity(0.5)
+                        .padding(.vertical, 4)
+
+                    Picker(generalSettingsStore.text(.additionalLanguage), selection: additionalLanguageSelection) {
+                        ForEach(LanguagePickerOrder.speechLanguages) { language in
+                            Text(language.displayName)
+                                .tag(language.code)
+                        }
+                    }
+
+                    Text(generalSettingsStore.text(.additionalLanguageHint))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Toggle(generalSettingsStore.text(.additionalSameAsPrimary), isOn: sameAsPrimaryBinding)
+
+                    Text(generalSettingsStore.text(.languagePairEngineNote))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.vertical, 4)
+            }
+
             // Side-by-side Recognition Language & Output block
             if hotkeySettingsStore.settings.enabled {
                 Section {
@@ -365,6 +414,61 @@ struct HotkeySettingsView: View {
         Binding(
             get: { transcriptionModelStore.customLanguageCode },
             set: { transcriptionModelStore.setCustomLanguageCode($0) }
+        )
+    }
+
+    // MARK: - Speech-language pair (plan §7)
+
+    /// Primary picker writes the canonical pair through `settingPrimary` so the
+    /// same-as-primary mirror stays intact (identical semantics to onboarding,
+    /// plan §6.2, §7.1).
+    private var primaryLanguageSelection: Binding<String> {
+        Binding(
+            get: { generalSettingsStore.speechLanguages.primaryLanguageCode },
+            set: { code in
+                generalSettingsStore.speechLanguages = generalSettingsStore.speechLanguages
+                    .settingPrimary(code)
+            }
+        )
+    }
+
+    /// Additional picker writes the explicit second language. Picking a value
+    /// equal to primary returns the pair to the same-as-primary state (the
+    /// toggle below reflects that automatically) — same behavior as onboarding.
+    private var additionalLanguageSelection: Binding<String> {
+        Binding(
+            get: { generalSettingsStore.speechLanguages.additionalLanguageCode },
+            set: { code in
+                generalSettingsStore.speechLanguages = generalSettingsStore.speechLanguages
+                    .settingAdditional(code)
+            }
+        )
+    }
+
+    /// "Same as primary" mirrors additional to primary (plan §3.4, §7.1).
+    /// Turning the mirror off picks the most common second language — English,
+    /// or the first Europe-group language when primary is already English —
+    /// matching the onboarding fallback exactly (plan §6.2).
+    private var sameAsPrimaryBinding: Binding<Bool> {
+        Binding(
+            get: { generalSettingsStore.speechLanguages.usesSameAdditionalAsPrimary },
+            set: { isSame in
+                if isSame {
+                    generalSettingsStore.speechLanguages = generalSettingsStore.speechLanguages
+                        .settingAdditionalSameAsPrimary()
+                } else {
+                    let current = generalSettingsStore.speechLanguages
+                    let fallback =
+                        current.primaryLanguageCode == LanguagePickerOrder.englishCode
+                        ? LanguagePickerOrder.europeCodes.first
+                          ?? LanguagePickerOrder.englishCode
+                        : LanguagePickerOrder.englishCode
+                    generalSettingsStore.speechLanguages = UserSpeechLanguages(
+                        primaryLanguageCode: current.primaryLanguageCode,
+                        additionalLanguageCode: fallback
+                    )
+                }
+            }
         )
     }
 }

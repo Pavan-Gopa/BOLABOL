@@ -6,7 +6,7 @@ import Testing
 /// the i18n pass over the Glossary, API Providers, Hotkey, Local Models,
 /// Polishing, Prompts, Notes, Translation and Sidebar surfaces. Every key that
 /// those screens reference must resolve to a real, non-empty translation in all
-/// 12 supported languages (never the raw-key fallback), and the genuinely
+/// 15 supported languages (never the raw-key fallback), and the genuinely
 /// translatable ones must not silently fall back to English in non-English
 /// locales.
 private let concreteLanguages: [UILanguagePreference] = UILanguagePreference.allCases.filter {
@@ -55,7 +55,7 @@ private let settingsKeys: [AppTextKey] = [
     // HUD skins
     .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical,
     // B3 — speech-language pair (plan §7.1, §9.4): resolves in every locale
-    // via the EN source until the full 15-locale maps land in B5.
+    // via its own 15-locale map (B5).
     .languagePairSectionTitle, .primaryLanguage, .primaryLanguageHint,
     .additionalLanguage, .additionalLanguageHint, .additionalSameAsPrimary,
     .languagePairEngineNote,
@@ -91,17 +91,32 @@ func settingsKeysAreActuallyTranslatedBeyondEnglish() {
     // Keys whose translations are expected to genuinely differ from English in
     // non-Latin / non-English locales (brand-neutral, clearly translatable
     // strings). A silent English fallback here means a missing translation.
+    // B5 (plan §9): the B3 speech-language pair and the B4 Help bilingual
+    // section are real 15-locale strings — they must differ in every non-EN
+    // locale, never fall back to the English source.
     let translatedKeys: [AppTextKey] = [
         .clearGlossaryTitle, .glossaryCleared, .useGlossary, .addEntry,
         .cloudProvider, .accountBalance, .removeAPIKey, .usageStatistics,
         .translationWindowLabel, .quickTranslationLabel, .openSettingsLabel,
         .transcriptionEngine, .scanForLocalModels, .scanning, .noNewModelsFound,
         .copied, .defaultModelName, .removeCustomModelHelp, .cloudDictationUsesGemini,
-        .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical
+        .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical,
+        // B3 — Settings speech-language pair (plan §7.1)
+        .languagePairSectionTitle, .primaryLanguage, .primaryLanguageHint,
+        .additionalLanguage, .additionalLanguageHint, .additionalSameAsPrimary,
+        .languagePairEngineNote,
+        // B4 — Help bilingual section (plan §8.1)
+        .helpBilingualTitle, .helpBilingualIntro, .helpBilingualPrimary,
+        .helpBilingualAdditional, .helpBilingualNotAlwaysOutput, .helpBilingualWhere,
+        .helpBilingualOnboarding, .helpBilingualSettingsPath, .helpBilingualCanary,
+        .helpBilingualHUD, .helpBilingualAutoEngines, .helpBilingualPolishNote
     ]
 
     let english = UILanguagePreference.english
-    for language in [UILanguagePreference.russian, .chinese, .arabic, .hindi] {
+    // B5 (Tester): iterate ALL 14 non-EN concrete languages — a 4-locale
+    // sample (ru/zh/ar/hi) could miss a silent EN fallback in the other 10.
+    // Independently verified: 0 identical-to-EN across all 14 non-EN locales.
+    for language in concreteLanguages where language != english {
         for key in translatedKeys {
             let localized = AppText.localized(key, language: language)
             let englishValue = AppText.localized(key, language: english)
@@ -118,8 +133,7 @@ func settingsKeysAreActuallyTranslatedBeyondEnglish() {
 }
 
 /// B3 — keys added for the Settings speech-language pair (plan §7.1, §9.4).
-/// EN is authoritative for new strings; full 15-locale maps land in B5, so
-/// other locales may legitimately fall back to EN until then.
+/// Full 15-locale maps landed in B5; EN remains the authoritative source.
 private let b3SettingsSpeechLanguageKeys: [AppTextKey] = [
   .languagePairSectionTitle,
   .primaryLanguage,
@@ -159,8 +173,7 @@ func settingsSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology() {
 }
 
 /// B4 — keys added for the Help bilingual section (plan §8.1).
-/// EN is authoritative for new strings; full 15-locale maps land in B5, so
-/// other locales legitimately fall back to EN until then.
+/// Full 15-locale maps landed in B5; EN remains the authoritative source.
 private let b4HelpBilingualKeys: [AppTextKey] = [
     .helpBilingualTitle,
     .helpBilingualIntro,
@@ -257,5 +270,87 @@ func helpLangHelpHUDConsistentWithBilingualModel() {
     // helpLangWhere should reference Settings -> Hotkey -> Your Languages
     let langWhere = AppText.localized(.helpLangWhere, language: english).lowercased()
     #expect(langWhere.contains("hotkey") && langWhere.contains("your languages"), "helpLangWhere should reference Hotkey -> Your Languages")
+}
+
+/// B5 (Tester gap-hunt) — helpLang*/helpHUD* families rewritten for the
+/// bilingual model (plan §8.2). Every key must be a real translation in ALL
+/// 14 non-EN locales — never a silent EN fallback (the 4-locale ru/zh/ar/hi
+/// sample alone could miss es/de/fr/it/pt/ja/ko/uk/tr/pl).
+private let helpLangHelpHUDKeys: [AppTextKey] = [
+    .helpLangIntro, .helpLangAuto, .helpLangForced, .helpLangEnglishNote,
+    .helpLangOtherNote, .helpLangWhere,
+    .helpHUDLeftA, .helpHUDLeftLetter, .helpHUDLeftTap, .helpHUDControlLanguage,
+]
+
+@Test
+func helpLangHelpHUDDifferFromEnglishInEveryNonEnglishLocale() {
+    let english = UILanguagePreference.english
+    for language in concreteLanguages where language != english {
+        for key in helpLangHelpHUDKeys {
+            let localized = AppText.localized(key, language: language)
+            let englishValue = AppText.localized(key, language: english)
+            #expect(
+                localized != key.rawValue,
+                "helpLang/helpHUD key \(key.rawValue) missing for \(language.rawValue)"
+            )
+            #expect(
+                localized != englishValue,
+                "helpLang/helpHUD key \(key.rawValue) fell back to English for \(language.rawValue)"
+            )
+        }
+    }
+}
+
+@Test
+func helpLangHelpHUDCopyAvoidsUnnegatedTargetAlwaysOutputInEveryLocale() {
+    // Plan §3.1 / §8.2: the rewritten helpLang*/helpHUD* copy must not
+    // reintroduce the old single-"target" product promise in ANY locale —
+    // "target always output" may only appear when explicitly negated.
+    for language in concreteLanguages {
+        for key in helpLangHelpHUDKeys {
+            let value = AppText.localized(key, language: language).lowercased()
+            let phrases = ["target always output", "target output", "always output"]
+            for phrase in phrases {
+                if value.contains(phrase) {
+                    #expect(
+                        value.contains("not a") || value.contains("not "),
+                        "helpLang/helpHUD key \(key.rawValue) contained '\(phrase)' without negation in \(language.rawValue)"
+                    )
+                }
+            }
+        }
+    }
+}
+
+/// B5 (Tester gap-hunt) — terminology presence: in sample locales (ru, zh,
+/// ar, tr) the primary/additional pair must resolve to DISTINCT translations
+/// (never identical labels or an EN fallback), the same-as-primary copy must
+/// exist and differ from the plain primary/additional labels, and onboarding
+/// must share the exact same-as-primary wording with Settings (plan §6.2/§7.1).
+@Test
+func primaryAdditionalTerminologyDistinctInSampleLocales() {
+    let sampleLocales: [UILanguagePreference] = [.russian, .chinese, .arabic, .turkish]
+    for language in sampleLocales {
+        let primary = AppText.localized(.primaryLanguage, language: language)
+        let additional = AppText.localized(.additionalLanguage, language: language)
+        let settingsSameAs = AppText.localized(.additionalSameAsPrimary, language: language)
+        let onboardingSameAs = AppText.localized(.onboardingAdditionalSameAsPrimary, language: language)
+        let englishPrimary = AppText.localized(.primaryLanguage, language: .english)
+
+        #expect(!primary.isEmpty && primary != AppTextKey.primaryLanguage.rawValue,
+                "\(language.rawValue): primary language label missing")
+        #expect(!additional.isEmpty && additional != AppTextKey.additionalLanguage.rawValue,
+                "\(language.rawValue): additional language label missing")
+        #expect(primary != additional,
+                "\(language.rawValue): primary and additional labels are identical: '\(primary)'")
+        #expect(primary != englishPrimary,
+                "\(language.rawValue): primary language label fell back to English")
+        #expect(!settingsSameAs.isEmpty && settingsSameAs != AppTextKey.additionalSameAsPrimary.rawValue,
+                "\(language.rawValue): same-as-primary copy missing")
+        #expect(settingsSameAs != primary && settingsSameAs != additional,
+                "\(language.rawValue): same-as-primary copy should be a distinct phrase, got '\(settingsSameAs)'")
+        #expect(settingsSameAs == onboardingSameAs,
+                "\(language.rawValue): onboarding and Settings same-as-primary wording diverged")
+    }
 }
 

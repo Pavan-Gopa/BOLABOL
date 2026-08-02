@@ -3,8 +3,8 @@
 
 current_step: B5
 step_description: >-
-  i18n × 15 UI languages for all new/updated onboarding, Settings, Help bilingual
-  strings (and helpLang/helpHUD alignment). No raw-key fallback; positional formats.
+  i18n × 15. Review APPROVED (467 tests, cartesian 0 gaps); awaiting Tester
+  with mandatory gap-hunt + new tests if coverage thin.
 target_files:
   - Sources/NativeBlaboomCore/Services/AppText.swift
   - Tests/NativeBlaboomCoreTests/AppTextFullCoverageTests.swift
@@ -19,20 +19,20 @@ completed_steps:
   - B3
   - B4
 implementation:
-  status: pending
+  status: waiting_review
   attempts: 0
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: 'Reviewer independent 15-locale scan 0 same-as-EN; 467/467; 14/14'
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: null
+  suite: B5
   bugs_open: 0
   note: ''
-next_actor: coder
+next_actor: tester
 track: UX
 prior_track: FOUNDATION
 working_roots:
@@ -40,25 +40,12 @@ working_roots:
 checkpoint:
   last_pre_tag: blaboom/pre-B5
   last_post_tag: blaboom/B4-done
-  last_commit: bd3e270
+  last_commit: 0d7301e
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
 coder_brief: |
-  B5 — Localize all B2–B4 new/updated strings into 15 UI languages:
-  en, ru, es, de, fr, it, pt, zh, ja, ko, ar, hi, uk, tr, pl.
-
-  Priority keys (must real translations, not EN copy-paste where avoidable):
-  - Onboarding primary/additional (B2)
-  - Settings language pair (B3)
-  - Help bilingual + updated helpLang*/helpHUD* (B4)
-
-  Rules: no raw-key fallback; multi-arg → positional %1$@; RTL spot ar.
-  Keep archive stats format regressions green (tr/ja/ko/hi).
-
-  Out of scope: Canary engine (B6+), product feature changes.
-
-  Verify: swift test + localization surface checks.
+  B5 review approved — Tester gap-hunts i18n coverage and may add tests/qa scripts.
 notes: |
-  B4 closed: review APPROVED, qa_green 467 (Tester +2 gap tests).
-  Tags: blaboom/B4-done @ bd3e270, blaboom/pre-B5.
+  Reviewer [APPROVED] 2026-08-03. Nice-to-have: stale EN comments about B5 future.
+  After Tester green: POST B5, open B6 Canary Core ML spike.

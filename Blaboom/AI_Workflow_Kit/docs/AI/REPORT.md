@@ -119,3 +119,68 @@ Total B4 delta: +2 tests (SettingsLocalization +2) on top of B3's 461 → 467 to
 - No bugs opened. `bugs_open: 0`.
 
 **RESULT: qa_green**
+
+---
+
+# Step B5 — i18n × 15 (Plan §9)
+
+| Field | Value |
+|-------|-------|
+| Step | B5 — i18n × 15 UI languages |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+
+## Commands run
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Blaboom"
+
+# 1) Full suite
+swift test
+#   ✔ Test run with 470 tests in 4 suites passed (+3 from B4's 467)
+
+# 2) Full QA gate (unit tests + structural contract scripts)
+./script/qa/run_all.sh
+#   Passed: 15   Failed: 0
+#   (swift test + 14 check_*.sh contracts — NEW check_i18n_b2_b4_families.sh)
+
+# 3) New i18n family structural check (standalone re-run)
+bash script/qa/check_i18n_b2_b4_families.sh
+#   OK: 36 B2–B4/helpLang/helpHUD keys present in all 15 locale maps
+```
+
+## Pass counts
+
+- **470 tests in 4 suites** — green (467 at B4 → +3 B5 Tester tests).
+- QA gate: **15/15 steps passed** (14 pre-existing + 1 new script) — no failures.
+
+## B5 coverage table
+
+| File | Cases | Covers |
+|------|-------|--------|
+| `SettingsLocalizationTests.swift` | 10 tests | **NEW `helpLangHelpHUDDifferFromEnglishInEveryNonEnglishLocale`** — all 10 helpLang*/helpHUD* keys differ from EN in **all 14** non-EN locales (was EN spot-check only); **NEW `helpLangHelpHUDCopyAvoidsUnnegatedTargetAlwaysOutputInEveryLocale`** — no unnegated "target always output" / "target output" / "always output" in any of 15 locales; **NEW `primaryAdditionalTerminologyDistinctInSampleLocales`** — ru/zh/ar/tr primary ≠ additional labels, same-as-primary distinct phrase shared verbatim between onboarding and Settings; existing `settingsKeysAreActuallyTranslatedBeyondEnglish` **loop expanded** from ru/zh/ar/hi to all 14 non-EN locales |
+| `OnboardingLocalizationTests.swift` | 7 tests | `newlyAddedOnboardingKeysAreActuallyTranslated` **loop expanded** from ru/zh/ar/hi to all 14 non-EN locales (B2 keys + onboarding legacy keys) |
+| `AppTextFullCoverageTests.swift` | 8 tests | Still green: every key non-empty in EN/RU/all 15 locales; `everyAppTextKeyResolvesInEveryConcreteLanguage` (full cartesian, 0 gaps) |
+| `ArchiveStatsLocalizationTests.swift` | 5 tests | Unchanged, green: tr positional `%1$@`/`%2$d` order guards + tr/ja/ko/hi no-crash format checks |
+| `check_i18n_b2_b4_families.sh` | **NEW** script | Structural: all 36 B2/B3/B4/helpLang/helpHUD keys literally present in every one of the 15 locale maps of AppText.swift (runtime resolution already guarded by Swift tests) |
+
+Total B5 Tester delta: **+3 tests, +1 QA script** (467 → 470).
+
+## B5 Must-verify checklist
+
+1. ✅ **Full keys × 15 locales: non-empty, never raw-key** — `everyAppTextKeyResolvesInEveryConcreteLanguage()` green (re-run, no changes needed); `check_localization_surface.sh` reports 561 AppText keys.
+2. ✅ **B2/B3/B4 families differ from EN in ALL 14 non-EN locales** — Reviewer-flagged 4-locale hole closed: `newlyAddedOnboardingKeysAreActuallyTranslated` and `settingsKeysAreActuallyTranslatedBeyondEnglish` now iterate every non-EN concrete language (B2 7 keys + B3 7 keys + B4 12 keys). Independent pre-verification (parser over all 15 maps): 0 missing / 0 empty / 0 raw-key / **0 identical-to-EN** across all 14 non-EN locales.
+3. ✅ **helpLang*/helpHUD* non-EN: no unnegated "target always output"** — NEW all-locale terminology test + NEW all-14 differ test over the 10 rewritten keys (`helpLangIntro/Auto/Forced/EnglishNote/OtherNote/Where` + `helpHUDLeftA/LeftLetter/LeftTap/ControlLanguage`). Independent scan: 0 hits of the forbidden phrases in any locale; every non-EN locale carries a real translation.
+4. ✅ **Terminology primary/additional in sample locales (ru, zh, ar, tr)** — NEW `primaryAdditionalTerminologyDistinctInSampleLocales`: labels distinct per locale ("Основной язык"/"Дополнительный язык", "主要语言"/"附加语言", "اللغة الأساسية"/"اللغة الإضافية", "Birincil dil"/"Ek dil"), same-as-primary is a distinct phrase, onboarding and Settings share it verbatim.
+5. ✅ **Archive stats format regressions still green** — `ArchiveStatsLocalizationTests` unchanged and green (tr/ja/ko/hi `%d`/`%@` crash guards incl. tr positional `%1$@`/`%2$d`).
+6. ✅ **script/qa structural family check** — NEW `check_i18n_b2_b4_families.sh` proves each of 36 B2–B4/helpLang/helpHUD keys exists in all 15 locale maps (36 × 15 = 540 entries, all present); wired into `run_all.sh` (15/15).
+7. ✅ **`./script/qa/run_all.sh`** — 15/15 green. No failures (pre-existing or B5-introduced).
+
+## Notes
+
+- Tester made **no product changes** (`Sources/**` untouched). Test-only edits: 2 loop expansions + 3 new tests + 1 new QA script.
+- Reviewer's "non-EN differ guards iterate only ru/zh/ar/hi" note is now a permanent test contract — all 14 non-EN locales are guarded.
+- No bugs opened. `bugs_open: 0`.
+
+**RESULT: qa_green**

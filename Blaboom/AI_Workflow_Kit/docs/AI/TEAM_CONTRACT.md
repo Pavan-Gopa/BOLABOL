@@ -15,7 +15,7 @@
 | **Orchestrator** | This session (hub) | no product code | STATE, DECISIONS, checkpoints, kick prompts, graphify |
 | **Implementation Engineer** | Coder (fresh terminal) | **yes** product | `target_files` only; FEEDBACK §1–4 |
 | **Verification Engineer** | Reviewer (fresh terminal) | no | `FEEDBACK.md` review verdict |
-| **Test Engineer** | Tester (fresh terminal) | **test / QA scripts only** | tests, `REPORT.md`, `BUG_REPORT.md` |
+| **Test Engineer** | Tester (fresh terminal) | **test / QA scripts only** (no product) | new/gap tests, `script/qa`, `REPORT.md`, `BUG_REPORT.md` |
 | **Architect** *(on demand)* | Orchestrator or dedicated | no product features | ADR → DECISIONS |
 | **Human** | Pavel | — | paste kicks, say «статус», approve product decisions |
 
@@ -40,7 +40,27 @@ Human ↔ Orchestrator only (control plane)
   → Orchestrator: green → POST + graphify + PRE next + kick Coder; red → fix + kick Coder
 ```
 
-### Who does what when Tester finds a bug
+### Test Engineer after every coding step (mandatory)
+
+After Reviewer **APPROVED**, Tester does **not** only re-run what Coder already wrote.
+
+| Duty | Detail |
+|------|--------|
+| **1. Run full gate** | `swift test` + `./script/qa/run_all.sh` (or STATE-scoped suite) |
+| **2. Gap-hunt** | Compare step Done / plan §12 / coder_brief vs existing tests |
+| **3. Add tests** | Write missing unit/integration/qa scripts for **this step’s feature** |
+| **4. Report** | Green → `REPORT.md` (what ran + **what new tests added**); red product bug → `BUG_REPORT.md` (no product fix) |
+
+**Split with Coder:**
+
+- **Coder** ships feature + **minimum** tests so the change is not blind (happy path / invariants they own).
+- **Tester** is the coverage owner for the step: finds holes, edge cases, regression guards, surface QA scripts; may add many tests.
+- **Tester never** edits `Sources/**` product code (only `Tests/**`, `script/qa/**`).
+
+If gap-hunt finds **product** defects → BUG_REPORT → Orchestrator kicks Coder.  
+If only coverage is thin → Tester **adds tests in the same turn**, re-runs, then REPORT green.
+
+### Who does what when Tester finds a product bug
 
 | Actor | Action |
 |-------|--------|
@@ -48,7 +68,7 @@ Human ↔ Orchestrator only (control plane)
 | **Orchestrator** | Reads bugs, opens fix/retry, **issues full Coder kick** |
 | **Coder** | **Only one who fixes product code** |
 | **Reviewer** | Re-reviews after Orchestrator issues Reviewer kick |
-| **Tester** | Re-runs suite after Orchestrator issues Tester kick |
+| **Tester** | Re-runs suite + re-checks coverage after Orchestrator issues Tester kick |
 
 **Do not:** send bugs to Reviewer to "fix".  
 **Do not:** skip Orchestrator.  

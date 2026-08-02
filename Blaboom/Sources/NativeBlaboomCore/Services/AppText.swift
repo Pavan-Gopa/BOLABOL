@@ -76,6 +76,19 @@ public enum AppTextKey: String, CaseIterable, Sendable {
     case helpLangEnglishNote
     case helpLangOtherNote
     case helpLangWhere
+    // B4 — Help bilingual section (plan §8.1)
+    case helpBilingualTitle
+    case helpBilingualIntro
+    case helpBilingualPrimary
+    case helpBilingualAdditional
+    case helpBilingualNotAlwaysOutput
+    case helpBilingualWhere
+    case helpBilingualOnboarding
+    case helpBilingualSettingsPath
+    case helpBilingualCanary
+    case helpBilingualHUD
+    case helpBilingualAutoEngines
+    case helpBilingualPolishNote
     case helpModelsTitle
     case helpModelsIntro
     case helpModelsCatalog
@@ -770,14 +783,14 @@ public enum AppText {
             .helpHUDColorRed: "Middle waveform turns red while the microphone is recording. Speak while it is red.",
             .helpHUDColorGreen: "After you stop (hotkey again), the waveform turns green: Blaboom is transcribing, polishing if needed, and delivering the text. Wait until the HUD hides.",
             .helpHUDLeftTitle: "Left button — language mode (A ↔ letter)",
-            .helpHUDLeftA: "A = Auto. Blaboom keeps / auto-detects the language you spoke. No forced translation. Use this when you want the transcript in the same language as your speech.",
-            .helpHUDLeftLetter: "A letter instead of A means “force target language.” The letter is the first letter of that language’s English name: E = English, S = Spanish, R = Russian, F = French, C = Chinese, G = German, and so on. Which letter appears depends on Settings → Hotkey → Transcription Language (or Glossary Auto Translation Language if Hotkey is Auto).",
-            .helpHUDLeftTap: "Tap the left button once to switch A → letter (forced target), tap again to switch letter → A. The choice is remembered for the next session.",
+            .helpHUDLeftA: "A = Auto. Blaboom auto-detects the language you spoke. The transcript stays in that language (your primary language by default). No forced translation — use this when you want Raw output in the language you spoke.",
+            .helpHUDLeftLetter: "A letter instead of A means “force output language.” The letter is the first letter of that language’s English name: E = English, S = Spanish, R = Russian, F = French, C = Chinese, G = German, and so on. By default the letter is your additional language from Settings → Hotkey → Your Languages. If Hotkey → Transcription Language is set to a specific language, that language becomes the letter instead.",
+            .helpHUDLeftTap: "Tap the left button once to switch A → letter (force output to the additional language), tap again to switch letter → A (auto-detect). The choice is remembered for the next session.",
             .helpHUDRightTitle: "Right button — output target (R → 1 → 2)",
             .helpHUDRightR: "R = Raw. Deliver the plain transcript with no Variant 1 / Variant 2 polishing. Fastest path; still can use Whisper English-translate when the left button is E.",
             .helpHUDRightCycle: "1 = Variant 1 (light cleanup). 2 = Variant 2 (stronger rewrite). These need an active polishing engine (cloud or local MLX). Choosing 1 or 2 turns polishing back on if it was disabled.",
             .helpHUDRightTap: "Tap the right button to cycle R → 1 → 2 → R. The selection becomes the new default Target in Hotkey settings for future dictations.",
-            .helpHUDControlLanguage: "Left: A = auto / same language as speech. Letter (E, S, R, …) = force that target language. Tap to toggle A ↔ letter.",
+            .helpHUDControlLanguage: "Left: A = auto-detect (transcript in spoken language). Letter (E, S, R, …) = force output to that language (default = additional language). Tap to toggle A ↔ letter.",
             .helpHUDControlTarget: "Right: R = Raw transcript, 1 = Variant 1, 2 = Variant 2. Tap to cycle R → 1 → 2 → R.",
             .helpHUDDrag: "Drag: click and hold anywhere on the capsule (not only the buttons) and move it to any place on any display. Put it near the corner, above the dock, or next to the app you type in—wherever you like.",
             .helpHUDSize: "Size & transparency: Settings → General → Overlay HUD. The Size slider scales the whole capsule (and how many spectrum bars you see). Transparency fades the glass background so desktop content shows through more or less.",
@@ -786,12 +799,25 @@ public enum AppText {
             .helpHUDPosition: "After you drag the HUD, Blaboom remembers that spot and reopens there next time.",
             .helpHUDDuration: "No short artificial limit on how long you may speak. Keep talking while the waveform is red; press the hotkey again when finished.",
             .helpLangTitle: "Language modes in detail",
-            .helpLangIntro: "Language control is the left HUD button plus Settings → Hotkey → Transcription Language. They work together.",
-            .helpLangAuto: "A (auto): transcript stays in the language you spoke. Best for notes in your native language without translation.",
-            .helpLangForced: "Letter (forced target): after speech recognition, Blaboom aims for a specific output language. Speak Russian, get English; speak English, get Spanish—depending on the configured target.",
-            .helpLangEnglishNote: "Target English + multilingual Whisper: Raw uses Whisper’s built-in translate-to-English on device (fast). Prefer Large v3 Full for quality; Turbo is lighter but less reliable on long or mixed speech.",
-            .helpLangOtherNote: "Any non-English target always needs an LLM after Whisper (cloud or local MLX). Without an active polishing path, forced Spanish/Russian/… cannot convert the language.",
-            .helpLangWhere: "Set the target under Hotkey → Transcription Language (English, Spanish, Russian, …). If that is Auto, letter mode uses Glossary → Auto Translation Language, then falls back to English. The HUD letter updates from that choice.",
+            .helpLangIntro: "Language control is the left HUD button (A ↔ letter) plus Settings → Hotkey → Your Languages (primary + additional). The HUD letter defaults to your additional language. They work together.",
+            .helpLangAuto: "A (auto): transcript stays in the language you spoke (your primary language by default). Best for notes in your usual language without forced output.",
+            .helpLangForced: "Letter (forced target): after speech recognition, Blaboom can deliver the transcript in your additional language (or another chosen language). Speak in any language; tap the HUD left button to switch from A to the letter (E, S, R, F, C, G…) for forced output. The additional language from Settings → Hotkey → Your Languages is the default letter choice.",
+            .helpLangEnglishNote: "Forced English + multilingual Whisper: Raw uses Whisper’s built-in translate-to-English on device (fast). Prefer Large v3 Full for quality; Turbo is lighter but less reliable on long or mixed speech. This applies when the HUD letter is E (your additional language or a chosen target).",
+            .helpLangOtherNote: "Any non-English forced output (letter ≠ E) always needs an LLM after Whisper (cloud or local MLX). Without an active polishing engine, forced Spanish/Russian/… cannot convert the language.",
+            .helpLangWhere: "The HUD letter (forced target) defaults to your additional language from Settings → Hotkey → Your Languages. If Hotkey language is set to a specific language, that language becomes the letter. If Hotkey is Auto, the letter falls back to Glossary → Auto Translation Language, then English. Change your language pair in Settings → Hotkey → Your Languages.",
+            // B4 — Help bilingual section (plan §8.1)
+            .helpBilingualTitle: "Your languages",
+            .helpBilingualIntro: "Blaboom works with two languages: a primary language (the one you usually dictate in) and an additional language (a second language you often use). This is not a \"target always output\" model — the additional language is simply your second language for quick switching.",
+            .helpBilingualPrimary: "Primary language = your usual dictation language. Speech recognition and Raw output default to this language. HUD shows A (auto-detect) when you\u{0027}re speaking in your primary language.",
+            .helpBilingualAdditional: "Additional language = a second language you often use. On the HUD, tap the left button to switch from A to the letter representing this language (E, S, R, F, C, G, …) to force that output. Tap again to return to A.",
+            .helpBilingualNotAlwaysOutput: "Important: the additional language is not a \"target always output\" setting. You can dictate in any language; the HUD letter simply lets you quickly choose the output language for this session. Raw output still follows what you actually spoke unless you force a target.",
+            .helpBilingualWhere: "Set your two languages in Onboarding, or change them anytime in Settings → Hotkey → Your Languages. This pair also drives the HUD letter choices.",
+            .helpBilingualOnboarding: "Onboarding asks for your primary and additional languages (plan §6.1). If you skipped it, defaults are derived from your system locale.",
+            .helpBilingualSettingsPath: "Settings → Hotkey → Your Languages.",
+            .helpBilingualCanary: "Canary (when available) does not have an A mode. The HUD left button cycles directly between your primary and additional language letters (e.g., E ↔ S). No auto-detect fallback.",
+            .helpBilingualHUD: "On the HUD: left button shows A (auto) or the additional language letter. For Parakeet/Whisper, A is the default. For Canary, the button shows the current language letter (primary ↔ additional).",
+            .helpBilingualAutoEngines: "Parakeet and Whisper: auto-detect (HUD A) by default. Canary (when available): no A; HUD letter cycles primary ↔ additional.",
+            .helpBilingualPolishNote: "Polishing (MLX or cloud) runs after transcription, not on Canary. It improves the text in whatever language the transcript is in — it does not change the language.",
             .helpModelsTitle: "Local transcription models",
             .helpModelsIntro: "Settings → Local Models manages WhisperKit Core ML models that turn audio into text on Apple Silicon. This is separate from polishing models.",
             .helpModelsCatalog: "English-only (Small/Medium .en): fast when you only speak English. Multilingual Small/Medium: lighter multi-language. Large v3 Turbo (~1.6 GB): fast large model. Large v3 Full (~3 GB, Best quality): recommended default for accuracy and English translate.",

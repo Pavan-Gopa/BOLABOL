@@ -3,8 +3,8 @@
 
 current_step: B4
 step_description: >-
-  Help EN: bilingual / Your languages section per plan §8; update helpLang and
-  HUD language copy for primary+additional + Canary preview honesty (no engine yet).
+  Help EN bilingual. Review APPROVED; awaiting Tester QA.
+  Note for B5: non-EN helpLang/helpHUD maps still old wording — expected until B5.
 target_files:
   - Sources/NativeBlaboom/Views/Settings/HelpSettingsView.swift
   - Sources/NativeBlaboomCore/Services/AppText.swift
@@ -17,20 +17,20 @@ completed_steps:
   - B2
   - B3
 implementation:
-  status: pending
+  status: waiting_review
   attempts: 0
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: 'Reviewer 465/465 green; checklist 1–7 pass; B5 non-EN map drift noted'
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: null
+  suite: B4
   bugs_open: 0
   note: ''
-next_actor: coder
+next_actor: tester
 track: UX
 prior_track: FOUNDATION
 working_roots:
@@ -38,25 +38,11 @@ working_roots:
 checkpoint:
   last_pre_tag: blaboom/pre-B4
   last_post_tag: blaboom/B3-done
-  last_commit: eda8119
+  last_commit: a3df89d
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
 coder_brief: |
-  B4 — Help EN structure (plan §8)
-
-  New Help section «Your languages» / bilingual model:
-  - why two languages; primary; additional; NOT always output
-  - onboarding + Settings path (Settings → Hotkey → Your Languages)
-  - Parakeet/Whisper auto (A); Canary: no A, letter primary↔additional (document future; engine not in yet)
-  - polish note: MLX/cloud after text
-
-  Update existing helpLang* and helpHUDLeft* / language control copy to match new model.
-  EN strings required; full 15-locale maps in B5 (EN-fallback OK for new keys until B5).
-
-  Out of scope: B5 bulk maps, Canary engine, Settings redesign (B3 done).
-
-  Verify: swift test
+  B4 review approved — Tester validates suite + helpBilingual keys.
 notes: |
-  B3 closed: review APPROVED, qa_green (461 + run_all 14/14).
-  Tags: blaboom/B3-done @ eda8119, blaboom/pre-B4.
+  Reviewer [APPROVED] 2026-08-02. After Tester green: POST B4, open B5 i18n.

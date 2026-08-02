@@ -7,7 +7,7 @@ struct HelpSettingsView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
 
     @State private var expandedSectionIDs: Set<String> = [
-        "start", "modes", "hud", "float", "lang", "tips"
+        "start", "modes", "hud", "float", "lang", "bilingual", "tips"
     ]
 
     var body: some View {
@@ -134,6 +134,29 @@ struct HelpSettingsView: View {
                             generalSettingsStore.text(.helpLangEnglishNote),
                             generalSettingsStore.text(.helpLangOtherNote),
                             generalSettingsStore.text(.helpLangWhere)
+                        ])
+                    }
+                }
+
+                guideSection(
+                    id: "bilingual",
+                    icon: "character.bubble.hebrew",
+                    title: generalSettingsStore.text(.helpBilingualTitle),
+                    tint: .teal
+                ) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HelpParagraph(generalSettingsStore.text(.helpBilingualIntro))
+                        HelpBulletList(items: [
+                            generalSettingsStore.text(.helpBilingualPrimary),
+                            generalSettingsStore.text(.helpBilingualAdditional),
+                            generalSettingsStore.text(.helpBilingualNotAlwaysOutput),
+                            generalSettingsStore.text(.helpBilingualWhere),
+                            generalSettingsStore.text(.helpBilingualOnboarding),
+                            generalSettingsStore.text(.helpBilingualSettingsPath),
+                            generalSettingsStore.text(.helpBilingualCanary),
+                            generalSettingsStore.text(.helpBilingualHUD),
+                            generalSettingsStore.text(.helpBilingualAutoEngines),
+                            generalSettingsStore.text(.helpBilingualPolishNote)
                         ])
                     }
                 }

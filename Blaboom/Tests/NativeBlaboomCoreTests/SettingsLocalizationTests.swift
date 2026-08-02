@@ -58,7 +58,12 @@ private let settingsKeys: [AppTextKey] = [
     // via the EN source until the full 15-locale maps land in B5.
     .languagePairSectionTitle, .primaryLanguage, .primaryLanguageHint,
     .additionalLanguage, .additionalLanguageHint, .additionalSameAsPrimary,
-    .languagePairEngineNote
+    .languagePairEngineNote,
+    // B4 — Help bilingual section (plan §8.1)
+    .helpBilingualTitle, .helpBilingualIntro, .helpBilingualPrimary,
+    .helpBilingualAdditional, .helpBilingualNotAlwaysOutput, .helpBilingualWhere,
+    .helpBilingualOnboarding, .helpBilingualSettingsPath, .helpBilingualCanary,
+    .helpBilingualHUD, .helpBilingualAutoEngines, .helpBilingualPolishNote
 ]
 
 @Test
@@ -152,3 +157,105 @@ func settingsSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology() {
     }
   }
 }
+
+/// B4 — keys added for the Help bilingual section (plan §8.1).
+/// EN is authoritative for new strings; full 15-locale maps land in B5, so
+/// other locales legitimately fall back to EN until then.
+private let b4HelpBilingualKeys: [AppTextKey] = [
+    .helpBilingualTitle,
+    .helpBilingualIntro,
+    .helpBilingualPrimary,
+    .helpBilingualAdditional,
+    .helpBilingualNotAlwaysOutput,
+    .helpBilingualWhere,
+    .helpBilingualOnboarding,
+    .helpBilingualSettingsPath,
+    .helpBilingualCanary,
+    .helpBilingualHUD,
+    .helpBilingualAutoEngines,
+    .helpBilingualPolishNote
+]
+
+@Test
+func helpBilingualKeysResolveInEnglish() {
+    // B4 requires real EN strings for the new Help bilingual keys — never raw-key fallback.
+    for key in b4HelpBilingualKeys {
+        let value = AppText.localized(key, language: .english)
+        #expect(!value.isEmpty, "B4 key \(key.rawValue) has no English translation")
+        #expect(
+            value != key.rawValue,
+            "B4 key \(key.rawValue) fell back to its raw key in English"
+        )
+    }
+}
+
+@Test
+func helpBilingualCopyAvoidsUnnegatedTargetAlwaysOutputTerminology() {
+    // Plan §3.1 / §8.1: additional language is a second language the user often uses —
+    // never a "target" / "always output" language promise. "Target always output"
+    // may only appear when explicitly negated (e.g., "not a 'target always output'").
+    for language in concreteLanguages {
+        for key in b4HelpBilingualKeys {
+            let value = AppText.localized(key, language: language).lowercased()
+            let phrases = ["target always output", "target output", "always output"]
+            for phrase in phrases {
+                if value.contains(phrase) {
+                    #expect(
+                        value.contains("not a") || value.contains("not "),
+                        "B4 key \(key.rawValue) contained '\(phrase)' without negation in \(language.rawValue)"
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Test
+func helpBilingualCopyDescribesPrimaryAndAdditionalModel() {
+    let english = UILanguagePreference.english
+    let intro = AppText.localized(.helpBilingualIntro, language: english).lowercased()
+    let primary = AppText.localized(.helpBilingualPrimary, language: english).lowercased()
+    let additional = AppText.localized(.helpBilingualAdditional, language: english).lowercased()
+    let canary = AppText.localized(.helpBilingualCanary, language: english).lowercased()
+    let polish = AppText.localized(.helpBilingualPolishNote, language: english).lowercased()
+
+    #expect(intro.contains("primary language") && intro.contains("additional language"))
+    #expect(primary.contains("primary language"))
+    #expect(additional.contains("additional language"))
+    #expect(canary.contains("canary") && (canary.contains("no a") || canary.contains("does not have an a")))
+    #expect(polish.contains("polishing") && polish.contains("after transcription"))
+}
+
+@Test
+func helpBilingualSettingsPathMentionsHotkeyAndYourLanguages() {
+    let english = UILanguagePreference.english
+    let settingsPath = AppText.localized(.helpBilingualSettingsPath, language: english).lowercased()
+    #expect(settingsPath.contains("hotkey"), "helpBilingualSettingsPath should mention Hotkey")
+    #expect(settingsPath.contains("your languages"), "helpBilingualSettingsPath should mention Your Languages")
+}
+
+@Test
+func helpLangHelpHUDConsistentWithBilingualModel() {
+    // Spot-check: helpLang/helpHUD copy should not contradict the bilingual model.
+    // Bilingual model: additional = second language for quick switching, NOT target always output.
+    let english = UILanguagePreference.english
+    
+    // helpLangForced should mention additional language as default, not target always output
+    let langForced = AppText.localized(.helpLangForced, language: english).lowercased()
+    #expect(langForced.contains("additional language"), "helpLangForced should reference additional language")
+    #expect(!langForced.contains("target always output"), "helpLangForced should not use 'target always output' terminology")
+    
+    // helpHUDLeftLetter should mention additional language as default letter
+    let hudLeftLetter = AppText.localized(.helpHUDLeftLetter, language: english).lowercased()
+    #expect(hudLeftLetter.contains("additional language"), "helpHUDLeftLetter should reference additional language")
+    
+    // helpHUDControlLanguage should describe A as auto-detect and letter as force output
+    let hudControlLang = AppText.localized(.helpHUDControlLanguage, language: english).lowercased()
+    #expect(hudControlLang.contains("auto"), "helpHUDControlLanguage should mention auto-detect for A")
+    #expect(hudControlLang.contains("force") || hudControlLang.contains("letter"), "helpHUDControlLanguage should mention force output for letter")
+    
+    // helpLangWhere should reference Settings -> Hotkey -> Your Languages
+    let langWhere = AppText.localized(.helpLangWhere, language: english).lowercased()
+    #expect(langWhere.contains("hotkey") && langWhere.contains("your languages"), "helpLangWhere should reference Hotkey -> Your Languages")
+}
+

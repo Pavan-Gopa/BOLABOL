@@ -7,7 +7,7 @@ import Testing
 /// iteration referenced keys that did not exist in `AppTextKey`, which broke
 /// the build and left the tour unlocalised. These tests lock the contract:
 /// every onboarding key must resolve to a real, non-empty translation in all
-/// 12 supported languages (never the raw-key fallback).
+/// 15 supported languages (never the raw-key fallback).
 private let onboardingKeys: [AppTextKey] = AppTextKey.allCases.filter {
   $0.rawValue.hasPrefix("onboarding")
 }
@@ -40,19 +40,29 @@ func everyOnboardingKeyIsLocalizedInEveryLanguage() {
 
 @Test
 func newlyAddedOnboardingKeysAreActuallyTranslated() {
-  // These three keys were added to support the tour UI. Verify they did not
+  // These keys were added to support the tour UI. Verify they did not
   // silently fall back to English in non-English locales (i.e. that a real
-  // translation exists per language).
+  // translation exists per language). B5 (plan §9): the B2 speech-language
+  // steps are real 15-locale strings — they must differ from the EN source
+  // in every non-EN locale, never fall back.
   let newKeys: [AppTextKey] = [
     .onboardingWelcomeTitle,
     .onboardingPermissionsGrant,
     .onboardingGlossaryExplanation,
     .onboardingGlossaryCreate,
     .onboardingGlossaryCreated,
+    // B2 — primary + additional speech-language steps (plan §6.1)
+    .onboardingPrimaryLanguageTitle, .onboardingPrimaryLanguageHint,
+    .onboardingPrimaryLanguageBody, .onboardingAdditionalLanguageTitle,
+    .onboardingAdditionalLanguageHint, .onboardingAdditionalLanguageBody,
+    .onboardingAdditionalSameAsPrimary,
   ]
 
   let english = UILanguagePreference.english
-  for language in [UILanguagePreference.russian, .chinese, .arabic, .hindi] {
+  // B5 (Tester): iterate ALL 14 non-EN concrete languages — a 4-locale
+  // sample (ru/zh/ar/hi) could miss a silent EN fallback in es/de/fr/it/pt/
+  // ja/ko/uk/tr/pl. Independently verified: 0 identical-to-EN across 14.
+  for language in concreteLanguages where language != english {
     for key in newKeys {
       let localized = AppText.localized(key, language: language)
       let englishValue = AppText.localized(key, language: english)
@@ -100,8 +110,8 @@ func onboardingKeysUsedByWelcomeTourAllExist() {
 }
 
 /// B2 — keys added for the primary + additional speech-language steps
-/// (plan §6.1, §9.4). EN is authoritative for new strings; full 15-locale
-/// maps land in B5, so other locales may legitimately fall back to EN.
+/// (plan §6.1, §9.4). Full 15-locale maps landed in B5; EN remains the
+/// authoritative source.
 private let b2SpeechLanguageKeys: [AppTextKey] = [
   .onboardingPrimaryLanguageTitle,
   .onboardingPrimaryLanguageHint,

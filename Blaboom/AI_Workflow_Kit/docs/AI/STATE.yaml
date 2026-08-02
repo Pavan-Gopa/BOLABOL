@@ -41,9 +41,9 @@ prior_track: null
 working_roots:
   - Blaboom
 checkpoint:
-  last_pre_tag: null
-  last_post_tag: null
-  last_commit: null
+  last_pre_tag: blaboom/pre-B1
+  last_post_tag: blaboom/B0-done
+  last_commit: 126c606
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md

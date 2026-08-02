@@ -5239,7 +5239,7 @@
       "label": ".init()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L26",
+      "source_location": "L29",
       "_origin": "ast"
     },
     {
@@ -5247,7 +5247,7 @@
       "label": ".live()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L32",
+      "source_location": "L35",
       "_origin": "ast"
     },
     {
@@ -5271,7 +5271,7 @@
       "label": ".reset()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L63",
+      "source_location": "L76",
       "_origin": "ast"
     },
     {
@@ -5279,7 +5279,7 @@
       "label": ".text()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L67",
+      "source_location": "L80",
       "_origin": "ast"
     },
     {
@@ -5287,7 +5287,7 @@
       "label": ".formattedText()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L71",
+      "source_location": "L84",
       "_origin": "ast"
     },
     {
@@ -5303,7 +5303,7 @@
       "label": ".update()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L75",
+      "source_location": "L88",
       "_origin": "ast"
     },
     {
@@ -5319,7 +5319,7 @@
       "label": ".exportSystemLogs()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L82",
+      "source_location": "L95",
       "_origin": "ast"
     },
     {
@@ -5327,7 +5327,7 @@
       "label": ".testOverlayHUDSounds()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L103",
+      "source_location": "L116",
       "_origin": "ast"
     },
     {
@@ -5335,7 +5335,7 @@
       "label": ".saveSettings()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L119",
+      "source_location": "L132",
       "_origin": "ast"
     },
     {
@@ -5343,7 +5343,31 @@
       "label": ".loadSettings()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L124",
+      "source_location": "L137",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_payloadcontainsspeechlanguages",
+      "label": ".payloadContainsSpeechLanguages()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L159",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboom_stores_generalsettingsstore_swift_bool",
+      "label": "Bool",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_migratedspeechlanguages",
+      "label": ".migratedSpeechLanguages()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L173",
       "_origin": "ast"
     },
     {
@@ -5351,7 +5375,7 @@
       "label": "SystemLogExporter",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L135",
+      "source_location": "L186",
       "_origin": "ast"
     },
     {
@@ -5359,7 +5383,7 @@
       "label": ".exportRecentLogs()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L136",
+      "source_location": "L187",
       "_origin": "ast"
     },
     {
@@ -5415,7 +5439,7 @@
       "label": ".saveSettings()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
-      "source_location": "L33",
+      "source_location": "L45",
       "_origin": "ast"
     },
     {
@@ -5423,7 +5447,7 @@
       "label": ".loadSettings()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
-      "source_location": "L38",
+      "source_location": "L50",
       "_origin": "ast"
     },
     {
@@ -6337,7 +6361,7 @@
       "label": ".init()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L24",
+      "source_location": "L26",
       "_origin": "ast"
     },
     {
@@ -6345,7 +6369,7 @@
       "label": ".live()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L47",
+      "source_location": "L49",
       "_origin": "ast"
     },
     {
@@ -6353,7 +6377,7 @@
       "label": ".installationState()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L82",
+      "source_location": "L96",
       "_origin": "ast"
     },
     {
@@ -6361,7 +6385,7 @@
       "label": ".setLanguageSelectionTag()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L88",
+      "source_location": "L102",
       "_origin": "ast"
     },
     {
@@ -6369,7 +6393,7 @@
       "label": ".setCustomLanguageCode()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L98",
+      "source_location": "L112",
       "_origin": "ast"
     },
     {
@@ -6377,7 +6401,7 @@
       "label": ".activate()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L102",
+      "source_location": "L116",
       "_origin": "ast"
     },
     {
@@ -6385,7 +6409,7 @@
       "label": ".deactivate()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L110",
+      "source_location": "L124",
       "_origin": "ast"
     },
     {
@@ -6393,7 +6417,7 @@
       "label": ".setBackend()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L114",
+      "source_location": "L128",
       "_origin": "ast"
     },
     {
@@ -6409,7 +6433,7 @@
       "label": ".remove()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L126",
+      "source_location": "L140",
       "_origin": "ast"
     },
     {
@@ -6417,7 +6441,7 @@
       "label": ".hasLocalFiles()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L136",
+      "source_location": "L150",
       "_origin": "ast"
     },
     {
@@ -6425,7 +6449,7 @@
       "label": ".reconcileModelStates()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L140",
+      "source_location": "L154",
       "_origin": "ast"
     },
     {
@@ -6433,7 +6457,7 @@
       "label": ".download()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L154",
+      "source_location": "L168",
       "_origin": "ast"
     },
     {
@@ -6441,7 +6465,7 @@
       "label": ".destinationURL()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L224",
+      "source_location": "L238",
       "_origin": "ast"
     },
     {
@@ -6449,7 +6473,7 @@
       "label": ".completeLocalURL()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L238",
+      "source_location": "L252",
       "_origin": "ast"
     },
     {
@@ -6457,7 +6481,7 @@
       "label": ".activeDownloadedModel()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L273",
+      "source_location": "L287",
       "_origin": "ast"
     },
     {
@@ -6465,7 +6489,7 @@
       "label": ".findCompleteWhisperKitModel()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L286",
+      "source_location": "L300",
       "_origin": "ast"
     },
     {
@@ -6473,7 +6497,7 @@
       "label": ".saveSettings()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L305",
+      "source_location": "L319",
       "_origin": "ast"
     },
     {
@@ -6481,7 +6505,7 @@
       "label": ".loadSettings()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L310",
+      "source_location": "L324",
       "_origin": "ast"
     },
     {
@@ -6489,7 +6513,7 @@
       "label": ".defaultModelsDirectory()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L322",
+      "source_location": "L336",
       "_origin": "ast"
     },
     {
@@ -6497,7 +6521,7 @@
       "label": ".defaultParakeetModelsDirectory()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L341",
+      "source_location": "L355",
       "_origin": "ast"
     },
     {
@@ -11914,7 +11938,7 @@
       "label": ".init()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
       "_origin": "ast"
     },
     {
@@ -11922,7 +11946,7 @@
       "label": "theme",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L310",
+      "source_location": "L314",
       "_origin": "ast"
     },
     {
@@ -11930,7 +11954,7 @@
       "label": "uiScale",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L311",
+      "source_location": "L315",
       "_origin": "ast"
     },
     {
@@ -11938,7 +11962,7 @@
       "label": "uiLanguage",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L312",
+      "source_location": "L316",
       "_origin": "ast"
     },
     {
@@ -11946,7 +11970,7 @@
       "label": "overlay",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L313",
+      "source_location": "L317",
       "_origin": "ast"
     },
     {
@@ -11954,7 +11978,7 @@
       "label": "logLevel",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L314",
+      "source_location": "L318",
       "_origin": "ast"
     },
     {
@@ -11962,7 +11986,7 @@
       "label": "hasCompletedOnboarding",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L315",
+      "source_location": "L319",
       "_origin": "ast"
     },
     {
@@ -11970,7 +11994,7 @@
       "label": "textScale",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L316",
+      "source_location": "L320",
       "_origin": "ast"
     },
     {
@@ -11978,7 +12002,7 @@
       "label": "textFont",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L317",
+      "source_location": "L321",
       "_origin": "ast"
     },
     {
@@ -11986,7 +12010,7 @@
       "label": "isAutoArchiveCleanupEnabled",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L318",
+      "source_location": "L322",
       "_origin": "ast"
     },
     {
@@ -11994,7 +12018,15 @@
       "label": "maxSavedAudioRecordings",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L319",
+      "source_location": "L323",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_generalsettings_codingkeys_speechlanguages",
+      "label": "speechLanguages",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
+      "source_location": "L324",
       "_origin": "ast"
     },
     {
@@ -12002,7 +12034,7 @@
       "label": ".normalize()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L337",
+      "source_location": "L346",
       "_origin": "ast"
     },
     {
@@ -12010,7 +12042,7 @@
       "label": "Comparable",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L345",
+      "source_location": "L354",
       "_origin": "ast"
     },
     {
@@ -12018,7 +12050,7 @@
       "label": ".clamped()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L346",
+      "source_location": "L355",
       "_origin": "ast"
     },
     {
@@ -12483,6 +12515,86 @@
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/HotkeySettings.swift",
       "source_location": "L226",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder",
+      "label": "LanguagePickerOrder.swift",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage",
+      "label": "SpeechLanguage",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder_swift_string",
+      "label": "String",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage_init",
+      "label": ".init()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "label": "LanguagePickerOrder",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L24",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_isknownspeechcode",
+      "label": ".isKnownSpeechCode()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L77",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder_swift_bool",
+      "label": "Bool",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_speechcode",
+      "label": ".speechCode()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L83",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_displayname",
+      "label": ".displayName()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L102",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_normalized",
+      "label": ".normalized()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L107",
       "_origin": "ast"
     },
     {
@@ -13834,7 +13946,7 @@
       "label": ".toggled()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift",
-      "source_location": "L12",
+      "source_location": "L14",
       "_origin": "ast"
     },
     {
@@ -13898,7 +14010,7 @@
       "label": ".normalize()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L19",
+      "source_location": "L33",
       "_origin": "ast"
     },
     {
@@ -13906,7 +14018,7 @@
       "label": "TranscriptionLanguageOption",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L29",
+      "source_location": "L43",
       "_origin": "ast"
     },
     {
@@ -13914,7 +14026,7 @@
       "label": ".init()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L34",
+      "source_location": "L48",
       "_origin": "ast"
     },
     {
@@ -13922,7 +14034,7 @@
       "label": ".displayName()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L58",
+      "source_location": "L72",
       "_origin": "ast"
     },
     {
@@ -13930,7 +14042,7 @@
       "label": ".hudLabel()",
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L70",
+      "source_location": "L84",
       "_origin": "ast"
     },
     {
@@ -14683,6 +14795,142 @@
       "file_type": "code",
       "source_file": "Sources/NativeBlaboomCore/Models/UsageStatisticsSettings.swift",
       "source_location": "L55",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages",
+      "label": "UserSpeechLanguages.swift",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "label": "UserSpeechLanguages",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_swift_string",
+      "label": "String",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_init",
+      "label": ".init()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "label": ".makeDefaults()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L27",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_swift_locale",
+      "label": "Locale",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "label": ".migrating()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L50",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_swift_bool",
+      "label": "Bool",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_settingadditionalsameasprimary",
+      "label": ".settingAdditionalSameAsPrimary()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L87",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys",
+      "label": "CodingKeys",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L96",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys_primarylanguagecode",
+      "label": "primaryLanguageCode",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L97",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys_additionallanguagecode",
+      "label": "additionalLanguageCode",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L98",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_swift_decoder",
+      "label": "Decoder",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_encode",
+      "label": ".encode()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L110",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_swift_encoder",
+      "label": "Encoder",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_normalized",
+      "label": ".normalized()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L118",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_systemlocalespeechcode",
+      "label": ".systemLocaleSpeechCode()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L123",
       "_origin": "ast"
     },
     {
@@ -23540,11 +23788,51 @@
       "_origin": "ast"
     },
     {
+      "id": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdefaultspeechlanguagesmatchcanonicaldefaults",
+      "label": "generalSettingsDefaultSpeechLanguagesMatchCanonicalDefaults()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L23",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingscarriesexplicitspeechlanguagespair",
+      "label": "generalSettingsCarriesExplicitSpeechLanguagesPair()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L35",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsspeechlanguagesroundtripthroughcodable",
+      "label": "generalSettingsSpeechLanguagesRoundTripThroughCodable()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L45",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdecodeslegacypayloadwithoutspeechlanguageskey",
+      "label": "generalSettingsDecodesLegacyPayloadWithoutSpeechLanguagesKey()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L57",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizekeepsspeechlanguagespair",
+      "label": "generalSettingsNormalizeKeepsSpeechLanguagesPair()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L80",
+      "_origin": "ast"
+    },
+    {
       "id": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizesliderranges",
       "label": "generalSettingsNormalizeSliderRanges()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L23",
+      "source_location": "L93",
       "_origin": "ast"
     },
     {
@@ -23552,7 +23840,7 @@
       "label": "overlaySettingsDecodeLegacyPayloadWithoutOpacity()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L39",
+      "source_location": "L109",
       "_origin": "ast"
     },
     {
@@ -23560,7 +23848,7 @@
       "label": "overlaySettingsRememberAnIndependentOriginForEveryStyle()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L58",
+      "source_location": "L128",
       "_origin": "ast"
     },
     {
@@ -23568,7 +23856,7 @@
       "label": "overlaySettingsUseLegacyOriginOnlyForClassicStyle()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L81",
+      "source_location": "L151",
       "_origin": "ast"
     },
     {
@@ -23576,7 +23864,7 @@
       "label": "overlayPositionSupportsBottomCenter()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L91",
+      "source_location": "L161",
       "_origin": "ast"
     },
     {
@@ -23584,7 +23872,7 @@
       "label": "uiLanguagePreferenceResolvesSystemLocalesLikeElectron()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L97",
+      "source_location": "L167",
       "_origin": "ast"
     },
     {
@@ -23592,7 +23880,7 @@
       "label": "appTextUsesSelectedRussianLanguage()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L105",
+      "source_location": "L175",
       "_origin": "ast"
     },
     {
@@ -23600,7 +23888,7 @@
       "label": "helpGuideCoversCurrentProductSurface()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L112",
+      "source_location": "L182",
       "_origin": "ast"
     },
     {
@@ -23608,7 +23896,7 @@
       "label": "settingsAndTranslationCopyUsesSharedLocalizedText()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L190",
+      "source_location": "L260",
       "_origin": "ast"
     },
     {
@@ -23616,7 +23904,7 @@
       "label": "appTextCoversTranscriptionAndModelPreparationFallbacks()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L208",
+      "source_location": "L278",
       "_origin": "ast"
     },
     {
@@ -23624,7 +23912,7 @@
       "label": "appTextProvidesPrimaryInterfaceTranslationsForAllSupportedLocales()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L232",
+      "source_location": "L302",
       "_origin": "ast"
     },
     {
@@ -24209,6 +24497,70 @@
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/HotkeySettingsTests.swift",
       "source_location": "L92",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "label": "LanguagePickerOrderTests.swift",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderputsenglishfirstexcludingsystemsentinel",
+      "label": "languagePickerOrderPutsEnglishFirstExcludingSystemSentinel()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderrussianisnotsecond",
+      "label": "languagePickerOrderRussianIsNotSecond()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerordereuropecomesbeforeasia",
+      "label": "languagePickerOrderEuropeComesBeforeAsia()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L27",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerordersystemsentinelisnotbetweenenglishandfrench",
+      "label": "languagePickerOrderSystemSentinelIsNotBetweenEnglishAndFrench()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L38",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderspeechlistisexactcanonicalsequence",
+      "label": "languagePickerOrderSpeechListIsExactCanonicalSequence()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L48",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderspeechlanguageshaveendonymdisplaynames",
+      "label": "languagePickerOrderSpeechLanguagesHaveEndonymDisplayNames()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L57",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderresolvescodesandnames",
+      "label": "languagePickerOrderResolvesCodesAndNames()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L72",
       "_origin": "ast"
     },
     {
@@ -26669,11 +27021,19 @@
       "_origin": "ast"
     },
     {
+      "id": "tests_nativeblaboomcoretests_transcriptionlanguagemodetests_transcriptionlanguagemodeiscaseiterableinstableorder",
+      "label": "transcriptionLanguageModeIsCaseIterableInStableOrder()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
       "id": "tests_nativeblaboomcoretests_transcriptionlanguagemodetests_transcriptionlanguagemoderoundtripsrawvalue",
       "label": "transcriptionLanguageModeRoundTripsRawValue()",
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift",
-      "source_location": "L10",
+      "source_location": "L17",
       "_origin": "ast"
     },
     {
@@ -26970,6 +27330,126 @@
       "file_type": "code",
       "source_file": "Tests/NativeBlaboomCoreTests/UsageStatisticsTests.swift",
       "source_location": "L42",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "label": "UserSpeechLanguagesTests.swift",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsmapknownsystemlocale",
+      "label": "userSpeechLanguagesDefaultsMapKnownSystemLocale()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsmapadditionallocales",
+      "label": "userSpeechLanguagesDefaultsMapAdditionalLocales()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L16",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsfallbacktoenglishforunknownlocale",
+      "label": "userSpeechLanguagesDefaultsFallBackToEnglishForUnknownLocale()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L25",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsusesameasprimarypolicywhenprimaryisenglish",
+      "label": "userSpeechLanguagesDefaultsUseSameAsPrimaryPolicyWhenPrimaryIsEnglish()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L34",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesadditionalmayequalprimary",
+      "label": "userSpeechLanguagesAdditionalMayEqualPrimary()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L43",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagessameasprimaryhelpermirrorsprimary",
+      "label": "userSpeechLanguagesSameAsPrimaryHelperMirrorsPrimary()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L52",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesnormalizescodes",
+      "label": "userSpeechLanguagesNormalizesCodes()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L62",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationseedsprimaryfromlegacytranscriptioncode",
+      "label": "userSpeechLanguagesMigrationSeedsPrimaryFromLegacyTranscriptionCode()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L70",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationseedsadditionalfromlegacyforcetargetname",
+      "label": "userSpeechLanguagesMigrationSeedsAdditionalFromLegacyForceTargetName()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L82",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationacceptslegacytargetcodesandendonyms",
+      "label": "userSpeechLanguagesMigrationAcceptsLegacyTargetCodesAndEndonyms()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L94",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationneverduplicatestargetintoprimary",
+      "label": "userSpeechLanguagesMigrationNeverDuplicatesTargetIntoPrimary()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L113",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationignoresunknownlegacyvalues",
+      "label": "userSpeechLanguagesMigrationIgnoresUnknownLegacyValues()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L126",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationroundtripsthroughcodable",
+      "label": "userSpeechLanguagesMigrationRoundTripsThroughCodable()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L139",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdecodeslegacypayloadwithoutkeys",
+      "label": "userSpeechLanguagesDecodesLegacyPayloadWithoutKeys()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L154",
       "_origin": "ast"
     },
     {
@@ -28013,7 +28493,7 @@
       "label": "§2 — Step compliance (Coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L28",
+      "source_location": "L32",
       "_origin": "ast"
     },
     {
@@ -28021,7 +28501,7 @@
       "label": "§3 — Invariants (Coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L39",
+      "source_location": "L43",
       "_origin": "ast"
     },
     {
@@ -28029,7 +28509,7 @@
       "label": "§4 — Comments / structure (Coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L45",
+      "source_location": "L55",
       "_origin": "ast"
     },
     {
@@ -28037,7 +28517,7 @@
       "label": "§5 — Reviewer findings (Reviewer)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L51",
+      "source_location": "L68",
       "_origin": "ast"
     },
     {
@@ -28045,7 +28525,7 @@
       "label": "Must fix",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L55",
+      "source_location": "L72",
       "_origin": "ast"
     },
     {
@@ -28053,15 +28533,15 @@
       "label": "Nice to have",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L59",
+      "source_location": "L76",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_notes",
-      "label": "Notes",
+      "id": "ai_workflow_kit_docs_ai_feedback_notes_what_was_verified",
+      "label": "Notes (what was verified)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L63",
+      "source_location": "L82",
       "_origin": "ast"
     },
     {
@@ -28069,7 +28549,7 @@
       "label": "§6 — QA summary (Tester)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L67",
+      "source_location": "L89",
       "_origin": "ast"
     },
     {
@@ -28077,7 +28557,7 @@
       "label": "Handoff line (all)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L75",
+      "source_location": "L101",
       "_origin": "ast"
     },
     {
@@ -28385,51 +28865,51 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_qa_report_blaboom_1_0_3",
-      "label": "QA REPORT — Blaboom 1.0.3",
+      "id": "ai_workflow_kit_docs_ai_report_report_blaboom_1_0_3_qa",
+      "label": "REPORT — Blaboom 1.0.3 QA",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
       "source_location": "L1",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_meta",
-      "label": "Meta",
+      "id": "ai_workflow_kit_docs_ai_report_commands_run",
+      "label": "Commands run",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L5",
+      "source_location": "L12",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_commands",
-      "label": "Commands",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L13",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_report_results",
-      "label": "Results",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L21",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_report_coverage_notes_step_specific",
-      "label": "Coverage notes (step-specific)",
+      "id": "ai_workflow_kit_docs_ai_report_pass_counts",
+      "label": "Pass counts",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
       "source_location": "L28",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_bugs_open",
-      "label": "Bugs open",
+      "id": "ai_workflow_kit_docs_ai_report_b1_test_files_cases_that_cover_order_migration",
+      "label": "B1 test files / cases that cover order + migration",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L32",
+      "source_location": "L33",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_b1_must_verify_checklist",
+      "label": "B1 Must-verify checklist",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L44",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_notes",
+      "label": "Notes",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L53",
       "_origin": "ast"
     },
     {
@@ -49394,7 +49874,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L15",
+      "source_location": "L18",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -49405,7 +49885,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L17",
+      "source_location": "L20",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -49416,7 +49896,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L19",
+      "source_location": "L22",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -49427,7 +49907,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L26",
+      "source_location": "L29",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49437,7 +49917,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L26",
+      "source_location": "L29",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -49448,7 +49928,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L32",
+      "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49458,7 +49938,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L32",
+      "source_location": "L35",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -49469,7 +49949,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L36",
+      "source_location": "L39",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -49480,7 +49960,18 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L47",
+      "source_location": "L50",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L69",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -49491,7 +49982,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L63",
+      "source_location": "L76",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49501,7 +49992,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L67",
+      "source_location": "L80",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49511,7 +50002,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L67",
+      "source_location": "L80",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -49522,7 +50013,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L67",
+      "source_location": "L80",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -49533,7 +50024,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L71",
+      "source_location": "L84",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49543,7 +50034,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L71",
+      "source_location": "L84",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -49554,7 +50045,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L71",
+      "source_location": "L84",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -49565,7 +50056,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L71",
+      "source_location": "L84",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -49576,7 +50067,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L75",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49586,7 +50077,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L75",
+      "source_location": "L88",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -49597,7 +50088,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L75",
+      "source_location": "L88",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -49608,7 +50099,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L82",
+      "source_location": "L95",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49618,7 +50109,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L103",
+      "source_location": "L116",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49628,7 +50119,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L119",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49638,7 +50129,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L124",
+      "source_location": "L137",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49648,7 +50139,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L124",
+      "source_location": "L137",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -49659,7 +50150,71 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L124",
+      "source_location": "L137",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore",
+      "target": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_payloadcontainsspeechlanguages",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L159",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_payloadcontainsspeechlanguages",
+      "target": "sources_nativeblaboom_services_audiocueplayer_data",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L159",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_payloadcontainsspeechlanguages",
+      "target": "sources_nativeblaboom_stores_generalsettingsstore_swift_bool",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L159",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore",
+      "target": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_migratedspeechlanguages",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L173",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_migratedspeechlanguages",
+      "target": "sources_nativeblaboom_stores_generalsettingsstore_swift_userdefaults",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L173",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_migratedspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L173",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -49670,7 +50225,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L135",
+      "source_location": "L186",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49680,7 +50235,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L136",
+      "source_location": "L187",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49690,7 +50245,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L136",
+      "source_location": "L187",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -49702,7 +50257,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L28",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49713,7 +50268,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L33",
+      "source_location": "L36",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49724,7 +50279,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L64",
+      "source_location": "L77",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49735,7 +50290,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L72",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49746,7 +50301,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L87",
+      "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49757,7 +50312,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L95",
+      "source_location": "L108",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49768,7 +50323,29 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L128",
+      "source_location": "L141",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_loadsettings",
+      "target": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_payloadcontainsspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L148",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_loadsettings",
+      "target": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_migratedspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L149",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49779,7 +50356,18 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L173",
+      "source_location": "L224",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_systemlogexporter_exportrecentlogs",
+      "target": "sources_nativeblaboom_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L234",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49924,11 +50512,22 @@
     },
     {
       "source": "sources_nativeblaboom_stores_hotkeysettingsstore_hotkeysettingsstore",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
+      "source_location": "L36",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_hotkeysettingsstore_hotkeysettingsstore",
       "target": "sources_nativeblaboom_stores_hotkeysettingsstore_hotkeysettingsstore_savesettings",
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
-      "source_location": "L33",
+      "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49938,7 +50537,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
-      "source_location": "L38",
+      "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -49948,7 +50547,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
-      "source_location": "L38",
+      "source_location": "L50",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -49959,7 +50558,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
-      "source_location": "L38",
+      "source_location": "L50",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -49993,7 +50592,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
-      "source_location": "L42",
+      "source_location": "L54",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -53807,28 +54406,6 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L11",
-      "weight": 1.0,
-      "context": "field",
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativeblaboom_stores_transcriptionmodelstore_transcriptionmodelstore",
-      "target": "sources_nativeblaboom_stores_transcriptionmodelstore_swift_userdefaults",
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L12",
-      "weight": 1.0,
-      "context": "field",
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativeblaboom_stores_transcriptionmodelstore_transcriptionmodelstore",
-      "target": "sources_nativeblaboom_stores_transcriptionmodelstore_swift_filemanager",
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
       "source_location": "L13",
       "weight": 1.0,
       "context": "field",
@@ -53836,7 +54413,7 @@
     },
     {
       "source": "sources_nativeblaboom_stores_transcriptionmodelstore_transcriptionmodelstore",
-      "target": "sources_nativeblaboom_stores_transcriptionmodelstore_swift_url",
+      "target": "sources_nativeblaboom_stores_transcriptionmodelstore_swift_userdefaults",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
@@ -53847,11 +54424,33 @@
     },
     {
       "source": "sources_nativeblaboom_stores_transcriptionmodelstore_transcriptionmodelstore",
+      "target": "sources_nativeblaboom_stores_transcriptionmodelstore_swift_filemanager",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_transcriptionmodelstore_transcriptionmodelstore",
+      "target": "sources_nativeblaboom_stores_transcriptionmodelstore_swift_url",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
+      "source_location": "L16",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_transcriptionmodelstore_transcriptionmodelstore",
       "target": "sources_nativeblaboomcore_models_transcriptionmodelsettings_transcriptionmodelsettings",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -53862,7 +54461,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L22",
+      "source_location": "L24",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -53873,7 +54472,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L22",
+      "source_location": "L24",
       "weight": 1.0,
       "context": "generic_arg",
       "_origin": "ast"
@@ -53884,7 +54483,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -53894,7 +54493,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -53905,7 +54504,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -53916,7 +54515,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -53927,7 +54526,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -53938,7 +54537,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L47",
+      "source_location": "L49",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -53948,7 +54547,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L47",
+      "source_location": "L49",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -53959,7 +54558,18 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L51",
+      "source_location": "L53",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_transcriptionmodelstore_transcriptionmodelstore",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
+      "source_location": "L87",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -53970,7 +54580,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L82",
+      "source_location": "L96",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -53980,7 +54590,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L82",
+      "source_location": "L96",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -53991,7 +54601,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L82",
+      "source_location": "L96",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -54002,7 +54612,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L88",
+      "source_location": "L102",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54012,7 +54622,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L88",
+      "source_location": "L102",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54023,7 +54633,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L98",
+      "source_location": "L112",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54033,7 +54643,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L98",
+      "source_location": "L112",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54044,7 +54654,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L102",
+      "source_location": "L116",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54054,7 +54664,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L102",
+      "source_location": "L116",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54065,7 +54675,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L110",
+      "source_location": "L124",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54075,7 +54685,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L114",
+      "source_location": "L128",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54085,7 +54695,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L114",
+      "source_location": "L128",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54096,7 +54706,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L122",
+      "source_location": "L136",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -54107,7 +54717,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L126",
+      "source_location": "L140",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54117,7 +54727,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L126",
+      "source_location": "L140",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54128,7 +54738,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L136",
+      "source_location": "L150",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54138,7 +54748,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L136",
+      "source_location": "L150",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54149,7 +54759,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L136",
+      "source_location": "L150",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -54160,7 +54770,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L140",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54170,7 +54780,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L154",
+      "source_location": "L168",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54180,7 +54790,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L154",
+      "source_location": "L168",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54191,7 +54801,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L224",
+      "source_location": "L238",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54201,7 +54811,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L224",
+      "source_location": "L238",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54212,7 +54822,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L224",
+      "source_location": "L238",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -54223,7 +54833,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L238",
+      "source_location": "L252",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54233,7 +54843,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L238",
+      "source_location": "L252",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54244,7 +54854,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L238",
+      "source_location": "L252",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -54255,7 +54865,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L273",
+      "source_location": "L287",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54265,7 +54875,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L273",
+      "source_location": "L287",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -54276,7 +54886,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L286",
+      "source_location": "L300",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54286,7 +54896,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L286",
+      "source_location": "L300",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54297,7 +54907,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L286",
+      "source_location": "L300",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54308,7 +54918,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L305",
+      "source_location": "L319",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54318,7 +54928,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L310",
+      "source_location": "L324",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54328,7 +54938,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L310",
+      "source_location": "L324",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54339,7 +54949,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L310",
+      "source_location": "L324",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -54350,7 +54960,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L322",
+      "source_location": "L336",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54360,7 +54970,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L322",
+      "source_location": "L336",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54371,7 +54981,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L322",
+      "source_location": "L336",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -54382,7 +54992,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L341",
+      "source_location": "L355",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54392,7 +55002,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L341",
+      "source_location": "L355",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -54403,7 +55013,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L341",
+      "source_location": "L355",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -54415,7 +55025,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L34",
+      "source_location": "L36",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54426,7 +55036,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L38",
+      "source_location": "L40",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54437,7 +55047,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L41",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54448,7 +55058,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L44",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54459,7 +55069,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L48",
+      "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54470,7 +55080,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L103",
+      "source_location": "L117",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54481,7 +55091,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L104",
+      "source_location": "L118",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54492,7 +55102,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L127",
+      "source_location": "L141",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54503,7 +55113,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L130",
+      "source_location": "L144",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54514,7 +55124,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L137",
+      "source_location": "L151",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54525,7 +55135,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L143",
+      "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54536,7 +55146,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L146",
+      "source_location": "L160",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54547,7 +55157,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L149",
+      "source_location": "L163",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54558,7 +55168,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L159",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54569,7 +55179,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L167",
+      "source_location": "L181",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54580,7 +55190,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L215",
+      "source_location": "L229",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54591,7 +55201,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L239",
+      "source_location": "L253",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54602,7 +55212,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L242",
+      "source_location": "L256",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54613,7 +55223,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L265",
+      "source_location": "L279",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54624,7 +55234,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L275",
+      "source_location": "L289",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54635,7 +55245,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L280",
+      "source_location": "L294",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54646,7 +55256,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L316",
+      "source_location": "L330",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73608,11 +74218,22 @@
     },
     {
       "source": "sources_nativeblaboomcore_models_generalsettings_generalsettings",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
+      "source_location": "L284",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_generalsettings_generalsettings",
       "target": "sources_nativeblaboomcore_models_generalsettings_generalsettings_init",
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73622,7 +74243,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73633,7 +74254,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73644,7 +74265,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73655,7 +74276,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73666,7 +74287,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73677,7 +74298,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73688,7 +74309,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73699,7 +74320,18 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L284",
+      "source_location": "L286",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_generalsettings_generalsettings_init",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
+      "source_location": "L286",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73710,7 +74342,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L310",
+      "source_location": "L314",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73720,7 +74352,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L311",
+      "source_location": "L315",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73730,7 +74362,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L312",
+      "source_location": "L316",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73740,7 +74372,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L313",
+      "source_location": "L317",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73750,7 +74382,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L314",
+      "source_location": "L318",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73760,7 +74392,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L315",
+      "source_location": "L319",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73770,7 +74402,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L316",
+      "source_location": "L320",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73780,7 +74412,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L317",
+      "source_location": "L321",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73790,7 +74422,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L318",
+      "source_location": "L322",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73800,7 +74432,17 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L319",
+      "source_location": "L323",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_generalsettings_codingkeys",
+      "target": "sources_nativeblaboomcore_models_generalsettings_codingkeys_speechlanguages",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
+      "source_location": "L324",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73810,7 +74452,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L322",
+      "source_location": "L327",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73821,7 +74463,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L337",
+      "source_location": "L346",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73831,7 +74473,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L345",
+      "source_location": "L354",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73841,7 +74483,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L346",
+      "source_location": "L355",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73851,7 +74493,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L346",
+      "source_location": "L355",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -73862,7 +74504,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L346",
+      "source_location": "L355",
       "weight": 1.0,
       "context": "generic_arg",
       "_origin": "ast"
@@ -73929,7 +74571,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L306",
+      "source_location": "L310",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73940,7 +74582,18 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L327",
+      "source_location": "L332",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_generalsettings_generalsettings_init",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
+      "source_location": "L342",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -73951,7 +74604,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/GeneralSettings.swift",
-      "source_location": "L338",
+      "source_location": "L347",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -75209,6 +75862,282 @@
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/HotkeySettings.swift",
       "source_location": "L227",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder",
+      "target": "foundation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage",
+      "target": "identifiable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage",
+      "target": "equatable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage",
+      "target": "sendable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage_init",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L18",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L28",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L65",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "target": "sources_nativeblaboomcore_models_generalsettings_uilanguagepreference",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L73",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_isknownspeechcode",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L77",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_isknownspeechcode",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L77",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_isknownspeechcode",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_swift_bool",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L77",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_speechcode",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L83",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_speechcode",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L83",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_displayname",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L102",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_displayname",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L102",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_normalized",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L107",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_normalized",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L107",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_isknownspeechcode",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_normalized",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L78",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_speechcode",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_isknownspeechcode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L88",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_speechcode",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_normalized",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L89",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_displayname",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_normalized",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L103",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_displayname",
+      "target": "sources_nativeblaboomcore_models_generalsettings_uilanguagepreference",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L104",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -79834,6 +80763,16 @@
     },
     {
       "source": "sources_nativeblaboomcore_models_transcriptionlanguagemode_transcriptionlanguagemode",
+      "target": "caseiterable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_transcriptionlanguagemode_transcriptionlanguagemode",
       "target": "codable",
       "relation": "implements",
       "confidence": "EXTRACTED",
@@ -79845,6 +80784,16 @@
     {
       "source": "sources_nativeblaboomcore_models_transcriptionlanguagemode_transcriptionlanguagemode",
       "target": "equatable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_transcriptionlanguagemode_transcriptionlanguagemode",
+      "target": "identifiable",
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift",
@@ -79884,11 +80833,22 @@
     },
     {
       "source": "sources_nativeblaboomcore_models_transcriptionlanguagemode_transcriptionlanguagemode",
+      "target": "string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_transcriptionlanguagemode_transcriptionlanguagemode",
       "target": "sources_nativeblaboomcore_models_transcriptionlanguagemode_transcriptionlanguagemode_toggled",
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift",
-      "source_location": "L12",
+      "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -79898,7 +80858,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift",
-      "source_location": "L12",
+      "source_location": "L14",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -80022,7 +80982,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L19",
+      "source_location": "L33",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -80032,7 +80992,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L19",
+      "source_location": "L33",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -80043,7 +81003,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L29",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -80053,7 +81013,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L29",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -80063,7 +81023,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L29",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -80073,7 +81033,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L29",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -80083,7 +81043,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L30",
+      "source_location": "L44",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -80094,7 +81054,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L34",
+      "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -80104,7 +81064,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L34",
+      "source_location": "L48",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -80115,7 +81075,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L58",
+      "source_location": "L72",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -80125,7 +81085,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L58",
+      "source_location": "L72",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -80136,7 +81096,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L70",
+      "source_location": "L84",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -80146,7 +81106,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L70",
+      "source_location": "L84",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -80169,7 +81129,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L74",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -82790,6 +83750,397 @@
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBlaboomCore/Models/UsageStatisticsSettings.swift",
       "source_location": "L56",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages",
+      "target": "foundation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "codable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "equatable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sendable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L10",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_init",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L27",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_locale",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L27",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L27",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L50",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L50",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_locale",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L50",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L50",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_bool",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L81",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_settingadditionalsameasprimary",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_settingadditionalsameasprimary",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L87",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L96",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_string",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L96",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys",
+      "target": "codingkey",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L96",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys_primarylanguagecode",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L97",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_codingkeys_additionallanguagecode",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L98",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_init",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_decoder",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L101",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_encode",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_encode",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_encoder",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L110",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_normalized",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L118",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_normalized",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L118",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_systemlocalespeechcode",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L123",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_systemlocalespeechcode",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_locale",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L123",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_systemlocalespeechcode",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L123",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_init",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_normalized",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_systemlocalespeechcode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L32",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_systemlocalespeechcode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L60",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L75",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_settingadditionalsameasprimary",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102050,7 +103401,7 @@
     },
     {
       "source": "tests_nativeblaboomcoretests_generalsettingstests",
-      "target": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizesliderranges",
+      "target": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdefaultspeechlanguagesmatchcanonicaldefaults",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
@@ -102060,11 +103411,61 @@
     },
     {
       "source": "tests_nativeblaboomcoretests_generalsettingstests",
+      "target": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingscarriesexplicitspeechlanguagespair",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L35",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests",
+      "target": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsspeechlanguagesroundtripthroughcodable",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L45",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests",
+      "target": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdecodeslegacypayloadwithoutspeechlanguageskey",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L57",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests",
+      "target": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizekeepsspeechlanguagespair",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L80",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests",
+      "target": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizesliderranges",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L93",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests",
       "target": "tests_nativeblaboomcoretests_generalsettingstests_overlaysettingsdecodelegacypayloadwithoutopacity",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L39",
+      "source_location": "L109",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102074,7 +103475,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L58",
+      "source_location": "L128",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102084,7 +103485,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L81",
+      "source_location": "L151",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102094,7 +103495,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L91",
+      "source_location": "L161",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102104,7 +103505,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L97",
+      "source_location": "L167",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102114,7 +103515,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L105",
+      "source_location": "L175",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102124,7 +103525,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L112",
+      "source_location": "L182",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102134,7 +103535,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L190",
+      "source_location": "L260",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102144,7 +103545,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L208",
+      "source_location": "L278",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -102154,7 +103555,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L232",
+      "source_location": "L302",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -103334,6 +104735,98 @@
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/HotkeySettingsTests.swift",
       "source_location": "L92",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "target": "nativeblaboomcore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "target": "testing",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "target": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderputsenglishfirstexcludingsystemsentinel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "target": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderrussianisnotsecond",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "target": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerordereuropecomesbeforeasia",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L27",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "target": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerordersystemsentinelisnotbetweenenglishandfrench",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L38",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "target": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderspeechlistisexactcanonicalsequence",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L48",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "target": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderspeechlanguageshaveendonymdisplaynames",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L57",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests",
+      "target": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderresolvescodesandnames",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L72",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -108208,11 +109701,21 @@
     },
     {
       "source": "tests_nativeblaboomcoretests_transcriptionlanguagemodetests",
-      "target": "tests_nativeblaboomcoretests_transcriptionlanguagemodetests_transcriptionlanguagemoderoundtripsrawvalue",
+      "target": "tests_nativeblaboomcoretests_transcriptionlanguagemodetests_transcriptionlanguagemodeiscaseiterableinstableorder",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift",
       "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_transcriptionlanguagemodetests",
+      "target": "tests_nativeblaboomcoretests_transcriptionlanguagemodetests_transcriptionlanguagemoderoundtripsrawvalue",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -108710,6 +110213,179 @@
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBlaboomCoreTests/UsageStatisticsTests.swift",
       "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "foundation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "nativeblaboomcore",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "testing",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsmapknownsystemlocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsmapadditionallocales",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsfallbacktoenglishforunknownlocale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L25",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsusesameasprimarypolicywhenprimaryisenglish",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L34",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesadditionalmayequalprimary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L43",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagessameasprimaryhelpermirrorsprimary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L52",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesnormalizescodes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L62",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationseedsprimaryfromlegacytranscriptioncode",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L70",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationseedsadditionalfromlegacyforcetargetname",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L82",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationacceptslegacytargetcodesandendonyms",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L94",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationneverduplicatestargetintoprimary",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L113",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationignoresunknownlegacyvalues",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L126",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationroundtripsthroughcodable",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L139",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests",
+      "target": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdecodeslegacypayloadwithoutkeys",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -109690,7 +111366,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L28",
+      "source_location": "L32",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -109700,7 +111376,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L39",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -109710,7 +111386,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L45",
+      "source_location": "L55",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -109720,7 +111396,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L51",
+      "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -109730,7 +111406,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L55",
+      "source_location": "L72",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -109740,17 +111416,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L59",
+      "source_location": "L76",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_5_reviewer_findings_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_notes",
+      "target": "ai_workflow_kit_docs_ai_feedback_notes_what_was_verified",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L63",
+      "source_location": "L82",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -109760,7 +111436,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L67",
+      "source_location": "L89",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -109770,7 +111446,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L75",
+      "source_location": "L101",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -110096,7 +111772,7 @@
     },
     {
       "source": "ai_workflow_kit_docs_ai_report",
-      "target": "ai_workflow_kit_docs_ai_report_qa_report_blaboom_1_0_3",
+      "target": "ai_workflow_kit_docs_ai_report_report_blaboom_1_0_3_qa",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
@@ -110105,38 +111781,18 @@
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_report_qa_report_blaboom_1_0_3",
-      "target": "ai_workflow_kit_docs_ai_report_meta",
+      "source": "ai_workflow_kit_docs_ai_report_report_blaboom_1_0_3_qa",
+      "target": "ai_workflow_kit_docs_ai_report_commands_run",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L5",
+      "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_report_qa_report_blaboom_1_0_3",
-      "target": "ai_workflow_kit_docs_ai_report_commands",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_report_qa_report_blaboom_1_0_3",
-      "target": "ai_workflow_kit_docs_ai_report_results",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_report_qa_report_blaboom_1_0_3",
-      "target": "ai_workflow_kit_docs_ai_report_coverage_notes_step_specific",
+      "source": "ai_workflow_kit_docs_ai_report_report_blaboom_1_0_3_qa",
+      "target": "ai_workflow_kit_docs_ai_report_pass_counts",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
@@ -110145,12 +111801,32 @@
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_report_qa_report_blaboom_1_0_3",
-      "target": "ai_workflow_kit_docs_ai_report_bugs_open",
+      "source": "ai_workflow_kit_docs_ai_report_report_blaboom_1_0_3_qa",
+      "target": "ai_workflow_kit_docs_ai_report_b1_test_files_cases_that_cover_order_migration",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L32",
+      "source_location": "L33",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_report_blaboom_1_0_3_qa",
+      "target": "ai_workflow_kit_docs_ai_report_b1_must_verify_checklist",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L44",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_report_blaboom_1_0_3_qa",
+      "target": "ai_workflow_kit_docs_ai_report_notes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L53",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -113878,7 +115554,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L120",
+      "source_location": "L133",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -113890,19 +115566,31 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L126",
+      "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "sources_nativeblaboom_stores_generalsettingsstore_systemlogexporter_exportrecentlogs",
-      "target": "sources_nativeblaboom_services_audiocueplayer_data",
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_loadsettings",
+      "target": "sources_nativeblaboom_services_cloudtextpolishingengine_jsonencoder",
       "relation": "calls",
       "context": "call",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L183",
+      "source_location": "L150",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_migratedspeechlanguages",
+      "target": "sources_nativeblaboom_services_cloudtextpolishingengine_jsondecoder",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L176",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -113914,7 +115602,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
-      "source_location": "L34",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -113926,7 +115614,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift",
-      "source_location": "L40",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -114058,7 +115746,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L306",
+      "source_location": "L320",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -114070,7 +115758,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L314",
+      "source_location": "L328",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -114639,30 +116327,6 @@
       "_origin": "ast"
     },
     {
-      "source": "sources_nativeblaboomcore_models_prompttemplatesettings_prompttemplatesettings_normalizedslots",
-      "target": "sources_nativeblaboom_services_hotkeysessionoverlaymanager_overlayhudlayout_normalized",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "Sources/NativeBlaboomCore/Models/PromptTemplateSettings.swift",
-      "source_location": "L445",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativeblaboomcore_models_prompttemplatesettings_prompttemplatesettings_normalizedslotnames",
-      "target": "sources_nativeblaboom_services_hotkeysessionoverlaymanager_overlayhudlayout_normalized",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "Sources/NativeBlaboomCore/Models/PromptTemplateSettings.swift",
-      "source_location": "L457",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
       "source": "sources_nativeblaboomcore_services_apptext_apptext_localized",
       "target": "sources_nativeblaboomcore_stores_glossarystore_glossarystore_translations",
       "relation": "calls",
@@ -114719,18 +116383,6 @@
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboomCore/Services/MarkdownGenerationPostProcessor.swift",
       "source_location": "L85",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativeblaboomcore_services_markdowngenerationpostprocessor_markdowngenerationpostprocessor_sentencefragments",
-      "target": "sources_nativeblaboom_services_hotkeysessionoverlaymanager_overlayhudlayout_normalized",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "Sources/NativeBlaboomCore/Services/MarkdownGenerationPostProcessor.swift",
-      "source_location": "L86",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116163,7 +117815,7 @@
       "_origin": "ast"
     },
     {
-      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizesliderranges",
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdefaultspeechlanguagesmatchcanonicaldefaults",
       "target": "sources_nativeblaboomcore_models_generalsettings_generalsettings",
       "relation": "calls",
       "context": "call",
@@ -116175,6 +117827,162 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdefaultspeechlanguagesmatchcanonicaldefaults",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingscarriesexplicitspeechlanguagespair",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L37",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingscarriesexplicitspeechlanguagespair",
+      "target": "sources_nativeblaboomcore_models_generalsettings_generalsettings",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L38",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsspeechlanguagesroundtripthroughcodable",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L47",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsspeechlanguagesroundtripthroughcodable",
+      "target": "sources_nativeblaboomcore_models_generalsettings_generalsettings",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L48",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsspeechlanguagesroundtripthroughcodable",
+      "target": "sources_nativeblaboom_services_cloudtextpolishingengine_jsonencoder",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L50",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsspeechlanguagesroundtripthroughcodable",
+      "target": "sources_nativeblaboom_services_cloudtextpolishingengine_jsondecoder",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L51",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdecodeslegacypayloadwithoutspeechlanguageskey",
+      "target": "sources_nativeblaboom_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L59",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdecodeslegacypayloadwithoutspeechlanguageskey",
+      "target": "sources_nativeblaboom_services_cloudtextpolishingengine_jsondecoder",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L72",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdecodeslegacypayloadwithoutspeechlanguageskey",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L76",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizekeepsspeechlanguagespair",
+      "target": "sources_nativeblaboomcore_models_generalsettings_generalsettings",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L82",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizekeepsspeechlanguagespair",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L82",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizesliderranges",
+      "target": "sources_nativeblaboomcore_models_generalsettings_generalsettings",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L95",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_nativeblaboomcoretests_generalsettingstests_overlaysettingsdecodelegacypayloadwithoutopacity",
       "target": "sources_nativeblaboom_services_audiocueplayer_data",
       "relation": "calls",
@@ -116182,7 +117990,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L41",
+      "source_location": "L111",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116194,7 +118002,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L50",
+      "source_location": "L120",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116206,7 +118014,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L60",
+      "source_location": "L130",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116218,7 +118026,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L61",
+      "source_location": "L131",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116230,7 +118038,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L74",
+      "source_location": "L144",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116242,7 +118050,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L75",
+      "source_location": "L145",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116254,7 +118062,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L83",
+      "source_location": "L153",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116266,7 +118074,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L84",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -119386,7 +121194,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift",
-      "source_location": "L12",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -119543,6 +121351,90 @@
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/UsageStatisticsTests.swift",
       "source_location": "L51",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesadditionalmayequalprimary",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L45",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagessameasprimaryhelpermirrorsprimary",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L54",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesnormalizescodes",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L64",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationroundtripsthroughcodable",
+      "target": "sources_nativeblaboom_services_cloudtextpolishingengine_jsonencoder",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L146",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationroundtripsthroughcodable",
+      "target": "sources_nativeblaboom_services_cloudtextpolishingengine_jsondecoder",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L147",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdecodeslegacypayloadwithoutkeys",
+      "target": "sources_nativeblaboom_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L156",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdecodeslegacypayloadwithoutkeys",
+      "target": "sources_nativeblaboom_services_cloudtextpolishingengine_jsondecoder",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L158",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120538,7 +122430,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L68",
+      "source_location": "L81",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120550,7 +122442,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L89",
+      "source_location": "L102",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120562,7 +122454,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L105",
+      "source_location": "L118",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120574,7 +122466,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L110",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120586,7 +122478,19 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
-      "source_location": "L130",
+      "source_location": "L155",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboom_stores_generalsettingsstore_generalsettingsstore_migratedspeechlanguages",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift",
+      "source_location": "L179",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120922,7 +122826,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L141",
+      "source_location": "L155",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120934,7 +122838,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L147",
+      "source_location": "L161",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120946,7 +122850,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L161",
+      "source_location": "L175",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120958,7 +122862,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L211",
+      "source_location": "L225",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120970,7 +122874,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L217",
+      "source_location": "L231",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120982,7 +122886,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L256",
+      "source_location": "L270",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120994,7 +122898,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L297",
+      "source_location": "L311",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121006,7 +122910,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L334",
+      "source_location": "L348",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121018,7 +122922,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift",
-      "source_location": "L342",
+      "source_location": "L356",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123495,6 +125399,18 @@
       "_origin": "ast"
     },
     {
+      "source": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_speechcode",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_speechlanguage",
+      "relation": "references",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift",
+      "source_location": "L97",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "sources_nativeblaboomcore_models_polishingmodelinstallationstate_polishingmodelinstallationstate_init",
       "target": "sources_nativeblaboomcore_services_sharedmodelsroot_sharedmodelsroot_modelurl",
       "relation": "calls",
@@ -123562,7 +125478,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift",
-      "source_location": "L61",
+      "source_location": "L75",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123623,6 +125539,30 @@
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBlaboomCore/Models/TranscriptionModelSettings.swift",
       "source_location": "L193",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_isknownspeechcode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L57",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_speechcode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift",
+      "source_location": "L65",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -124983,6 +126923,30 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsdefaultspeechlanguagesmatchcanonicaldefaults",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizekeepsspeechlanguagespair",
+      "target": "sources_nativeblaboomcore_models_generalsettings_generalsettings_normalize",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_nativeblaboomcoretests_generalsettingstests_generalsettingsnormalizesliderranges",
       "target": "sources_nativeblaboomcore_models_generalsettings_generalsettings_normalize",
       "relation": "calls",
@@ -124990,7 +126954,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L31",
+      "source_location": "L101",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125002,7 +126966,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L65",
+      "source_location": "L135",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125014,7 +126978,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L86",
+      "source_location": "L156",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125026,7 +126990,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L93",
+      "source_location": "L163",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125038,7 +127002,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L99",
+      "source_location": "L169",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125050,7 +127014,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L107",
+      "source_location": "L177",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125062,7 +127026,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L114",
+      "source_location": "L184",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125074,7 +127038,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L192",
+      "source_location": "L262",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125086,7 +127050,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L211",
+      "source_location": "L281",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125098,7 +127062,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift",
-      "source_location": "L263",
+      "source_location": "L333",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125903,6 +127867,90 @@
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBlaboomCoreTests/HotkeySettingsTests.swift",
       "source_location": "L101",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderputsenglishfirstexcludingsystemsentinel",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "relation": "references",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderrussianisnotsecond",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "relation": "references",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerordereuropecomesbeforeasia",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "relation": "references",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerordersystemsentinelisnotbetweenenglishandfrench",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "relation": "references",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderspeechlanguageshaveendonymdisplaynames",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder",
+      "relation": "references",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L62",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderresolvescodesandnames",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_isknownspeechcode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L74",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_languagepickerordertests_languagepickerorderresolvescodesandnames",
+      "target": "sources_nativeblaboomcore_models_languagepickerorder_languagepickerorder_speechcode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift",
+      "source_location": "L77",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -129191,6 +131239,126 @@
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBlaboomCoreTests/UsageStatisticsTests.swift",
       "source_location": "L49",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsmapknownsystemlocale",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsmapadditionallocales",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsfallbacktoenglishforunknownlocale",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L27",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesdefaultsusesameasprimarypolicywhenprimaryisenglish",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_makedefaults",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L36",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationseedsprimaryfromlegacytranscriptioncode",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L72",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationseedsadditionalfromlegacyforcetargetname",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L84",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationacceptslegacytargetcodesandendonyms",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L96",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationneverduplicatestargetintoprimary",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L116",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationignoresunknownlegacyvalues",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L128",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativeblaboomcoretests_userspeechlanguagestests_userspeechlanguagesmigrationroundtripsthroughcodable",
+      "target": "sources_nativeblaboomcore_models_userspeechlanguages_userspeechlanguages_migrating",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift",
+      "source_location": "L141",
       "weight": 1.0,
       "_origin": "ast"
     },

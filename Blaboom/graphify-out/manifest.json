@@ -165,13 +165,13 @@
     "semantic_hash": ""
   },
   "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift": {
-    "mtime": 1785596996.5364554,
-    "ast_hash": "8ee5f604d58885f62e80910c6336d5fd",
+    "mtime": 1785681922.4757142,
+    "ast_hash": "b46352564cd798091786576ad49ec200",
     "semantic_hash": ""
   },
   "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift": {
-    "mtime": 1785533345.7429276,
-    "ast_hash": "f93f1167cdaf97c344d3cebe182f76c5",
+    "mtime": 1785681935.0859184,
+    "ast_hash": "8c20575888644b938385de6f0ddcf6a9",
     "semantic_hash": ""
   },
   "Sources/NativeBlaboom/Stores/PolishingEngineStore.swift": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift": {
-    "mtime": 1785533345.7412748,
-    "ast_hash": "7a2b44b9d3071817814c231b8e91fdb7",
+    "mtime": 1785681928.7498088,
+    "ast_hash": "960e1248b4f6b55e6cc89681c0d4b535",
     "semantic_hash": ""
   },
   "Sources/NativeBlaboom/Stores/UsageStatisticsStore.swift": {
@@ -330,8 +330,8 @@
     "semantic_hash": ""
   },
   "Sources/NativeBlaboomCore/Models/GeneralSettings.swift": {
-    "mtime": 1785592971.0995224,
-    "ast_hash": "9018dd81912c5af10e74e870389230c6",
+    "mtime": 1785681897.9693687,
+    "ast_hash": "a7993ca3d488fd12277e51786f40f042",
     "semantic_hash": ""
   },
   "Sources/NativeBlaboomCore/Models/GlossaryEntry.swift": {
@@ -400,13 +400,13 @@
     "semantic_hash": ""
   },
   "Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift": {
-    "mtime": 1785533345.7231429,
-    "ast_hash": "e10c26b50e7492fbe07bf686e02ae5ec",
+    "mtime": 1785681911.9207113,
+    "ast_hash": "32c082b2196335562467c60529add406",
     "semantic_hash": ""
   },
   "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift": {
-    "mtime": 1785533345.7239172,
-    "ast_hash": "f62214559e7769b52abb2be9da45b0d2",
+    "mtime": 1785681904.9925385,
+    "ast_hash": "d58d96fa6ccbbe345aad258c5d0de7b2",
     "semantic_hash": ""
   },
   "Sources/NativeBlaboomCore/Models/TranscriptionModelDescriptor.swift": {
@@ -660,8 +660,8 @@
     "semantic_hash": ""
   },
   "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift": {
-    "mtime": 1785533345.7687879,
-    "ast_hash": "441cbb9f52af5e7ba84137f8a24978a4",
+    "mtime": 1785681969.8812387,
+    "ast_hash": "6f74175c6cad2b5f84ec9bc3b4f992e3",
     "semantic_hash": ""
   },
   "Tests/NativeBlaboomCoreTests/GlossaryStoreTests.swift": {
@@ -830,8 +830,8 @@
     "semantic_hash": ""
   },
   "Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift": {
-    "mtime": 1785533345.7697082,
-    "ast_hash": "33441275e2accf446666b4482e94810e",
+    "mtime": 1785681975.7140346,
+    "ast_hash": "50ce8832a54af6764331617651078ff8",
     "semantic_hash": ""
   },
   "Tests/NativeBlaboomCoreTests/TranscriptionLanguageRoutingTests.swift": {
@@ -1010,8 +1010,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785680313.9834683,
-    "ast_hash": "d04e11e912c2ff4647c5b7dc201651dc",
+    "mtime": 1785684385.8568578,
+    "ast_hash": "63452d146b99532ecccf8b2071858d70",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -1040,8 +1040,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
-    "mtime": 1785680313.9837754,
-    "ast_hash": "d1987036da706a39a9f335f2d3faa055",
+    "mtime": 1785684379.731528,
+    "ast_hash": "57913890bb2c94cfd9a942b4ae3367f6",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REVIEW_TEMPLATE.md": {
@@ -1050,8 +1050,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785680379.0864842,
-    "ast_hash": "46be6affb8c485a69d55c081dd32108a",
+    "mtime": 1785684153.065702,
+    "ast_hash": "e27874848b5b7b617594a8b4e247e1f6",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -1357,6 +1357,26 @@
   "docs/screenshots/18_hud_provider_switcher.png": {
     "mtime": 1785515122.7492926,
     "ast_hash": "1478c914152e788a3124644cd4807fd4",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift": {
+    "mtime": 1785682065.0988944,
+    "ast_hash": "97c7672abe211a40c7b8d76668cb179e",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift": {
+    "mtime": 1785682017.7211213,
+    "ast_hash": "05c136a36498d8910f29dbb5679bc88b",
+    "semantic_hash": ""
+  },
+  "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift": {
+    "mtime": 1785681958.5634546,
+    "ast_hash": "ffc3395f34a3f5c116642839cb89705d",
+    "semantic_hash": ""
+  },
+  "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift": {
+    "mtime": 1785681948.1220336,
+    "ast_hash": "5372691d54d7585b6c560e66737ec492",
     "semantic_hash": ""
   }
 }

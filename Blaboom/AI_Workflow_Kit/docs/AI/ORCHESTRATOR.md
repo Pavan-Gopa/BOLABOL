@@ -67,7 +67,10 @@ Plan files:
 ### A) `review.status == approved` and implementation done
 
 - After review **approved** and tests not yet green → `next_actor: tester` → **kick Tester**.
-- After tests **green** → POST checkpoint → **`graphify_rebuild.sh`** → advance / PRE next → `next_actor: coder` → **kick Coder**.
+- **Tester kick must require gap-hunt + new tests** for the step (not “only re-run”).
+  Coder’s tests are a floor; Tester owns coverage completeness for the step.
+- After tests **green** (REPORT documents new tests or explicit no-gap mapping) →
+  POST checkpoint → **`graphify_rebuild.sh`** → advance / PRE next → `next_actor: coder` → **kick Coder**.
 - After tests **bugs** → do **not** advance:
   1. Read `BUG_REPORT.md` / FEEDBACK bugs
   2. Open fix/retry for **Coder only**

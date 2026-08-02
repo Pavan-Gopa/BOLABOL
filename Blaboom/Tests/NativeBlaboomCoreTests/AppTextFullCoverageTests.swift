@@ -109,3 +109,14 @@ func appTextSystemLocaleResolutionFallsBackToEnglishForUnknown() {
     ) == "en"
   )
 }
+
+@Test
+func appTextBilingualHelpKeysExistAndDocumentLanguages() {
+  let english = UILanguagePreference.english
+  let title = AppText.localized(.helpBilingualTitle, language: english)
+  let intro = AppText.localized(.helpBilingualIntro, language: english)
+  #expect(!title.isEmpty && title != AppTextKey.helpBilingualTitle.rawValue)
+  #expect(!intro.isEmpty && intro != AppTextKey.helpBilingualIntro.rawValue)
+  #expect(intro.lowercased().contains("primary"))
+}
+

@@ -3,8 +3,7 @@
 
 current_step: B3
 step_description: >-
-  Settings UI: explicit Primary + Additional speech languages; same-as-primary;
-  hints (not target-always); LanguagePickerOrder; sync with onboarding store SoT.
+  Settings primary+additional. Review APPROVED; awaiting Tester QA.
 target_files:
   - Sources/NativeBlaboom/Views/Settings/GeneralSettingsView.swift
   - Sources/NativeBlaboom/Views/Settings/HotkeySettingsView.swift
@@ -22,20 +21,20 @@ completed_steps:
   - B1
   - B2
 implementation:
-  status: pending
+  status: waiting_review
   attempts: 0
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: 'Reviewer 461/461 green; checklist 1–9 pass; nice-to-have Section header optional'
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: null
+  suite: B3
   bugs_open: 0
   note: ''
-next_actor: coder
+next_actor: tester
 track: UX
 prior_track: FOUNDATION
 working_roots:
@@ -43,25 +42,12 @@ working_roots:
 checkpoint:
   last_pre_tag: blaboom/pre-B3
   last_post_tag: blaboom/B2-done
-  last_commit: 00b2ca5
+  last_commit: 2e990aa
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
 coder_brief: |
-  B3 — Settings UI primary + additional (UX)
-
-  Explicit Settings controls for primaryLanguageCode + additionalLanguageCode
-  (plan §7). Path: Settings → Hotkey and/or General. Same store as onboarding
-  (GeneralSettings.speechLanguages). Same-as-primary control. Honest hints —
-  NOT "target always output". Pickers: LanguagePickerOrder.
-
-  EN AppText keys for new Settings strings (full 15 langs in B5).
-  Legacy transcription-language pickers: do not break auto; either keep as
-  advanced/auto engine control or clearly separate from speech pair.
-
-  Out of scope: Help (B4), full i18n (B5), Canary (B6+), onboarding redesign (B2 done).
-
-  Verify: swift test
+  B3 review approved — Tester validates suite + Settings speech-language keys.
 notes: |
-  B2 closed: review APPROVED, qa_green (455 + run_all 14/14).
-  Tags: blaboom/B2-done @ 00b2ca5, blaboom/pre-B3.
+  Reviewer [APPROVED] 2026-08-02. Meta RESULT left waiting_review by Reviewer;
+  Orchestrator treats §5 APPROVED as authoritative.

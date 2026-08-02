@@ -97,6 +97,45 @@ func userSpeechLanguagesSameAsPrimaryHelperMirrorsPrimary() {
     #expect(languages.usesSameAdditionalAsPrimary)
 }
 
+// B3 — additional-change semantics used by the Settings additional picker
+// (plan §7.1): primary stays untouched; same-as-primary is expressed by
+// additional == primary (plan §3.4).
+
+@Test
+func userSpeechLanguagesSettingAdditionalKeepsPrimary() {
+    let changed = UserSpeechLanguages(
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en"
+    ).settingAdditional("de")
+
+    #expect(changed.primaryLanguageCode == "ru")
+    #expect(changed.additionalLanguageCode == "de")
+    #expect(!changed.usesSameAdditionalAsPrimary)
+}
+
+@Test
+func userSpeechLanguagesSettingAdditionalNormalizesInput() {
+    let changed = UserSpeechLanguages(
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en"
+    ).settingAdditional(" FR ")
+
+    #expect(changed.primaryLanguageCode == "ru")
+    #expect(changed.additionalLanguageCode == "fr")
+}
+
+@Test
+func userSpeechLanguagesSettingAdditionalToPrimaryRestoresSameAsPrimary() {
+    let languages = UserSpeechLanguages(
+        primaryLanguageCode: "hi",
+        additionalLanguageCode: "en"
+    ).settingAdditional("hi")
+
+    #expect(languages.primaryLanguageCode == "hi")
+    #expect(languages.additionalLanguageCode == "hi")
+    #expect(languages.usesSameAdditionalAsPrimary)
+}
+
 @Test
 func userSpeechLanguagesNormalizesCodes() {
     let languages = UserSpeechLanguages(primaryLanguageCode: " RU ", additionalLanguageCode: "English")

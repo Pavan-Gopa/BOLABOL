@@ -105,6 +105,16 @@ public struct UserSpeechLanguages: Codable, Equatable, Sendable {
         )
     }
 
+    /// Changes additional (B3 settings / B2 onboarding additional picker).
+    /// Primary is untouched. When the new additional equals primary the pair
+    /// is back in the same-as-primary state (plan §3.4, §7.1).
+    public func settingAdditional(_ code: String) -> UserSpeechLanguages {
+        UserSpeechLanguages(
+            primaryLanguageCode: primaryLanguageCode,
+            additionalLanguageCode: code
+        )
+    }
+
     // MARK: - Codable
 
     private enum CodingKeys: String, CodingKey {

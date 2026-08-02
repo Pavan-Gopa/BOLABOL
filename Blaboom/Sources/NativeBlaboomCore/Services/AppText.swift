@@ -399,6 +399,17 @@ public enum AppTextKey: String, CaseIterable, Sendable {
     case onboardingAdditionalLanguageHint
     case onboardingAdditionalLanguageBody
     case onboardingAdditionalSameAsPrimary
+    // B3 — Settings speech-language pair (plan §7.1, §9.4). Settings surfaces
+    // the same primary + additional pair onboarding writes (plan §3.3); copy
+    // keeps the "second language you often use" framing — never a "target
+    // always output" language (plan §3.1).
+    case languagePairSectionTitle
+    case primaryLanguage
+    case primaryLanguageHint
+    case additionalLanguage
+    case additionalLanguageHint
+    case additionalSameAsPrimary
+    case languagePairEngineNote
 
     // Glossary tab + editors
     case settingsGlossary
@@ -1115,6 +1126,16 @@ public enum AppText {
             .onboardingAdditionalLanguageHint: "A second language you often use.",
             .onboardingAdditionalLanguageBody: "Additional language: %@",
             .onboardingAdditionalSameAsPrimary: "Same as primary",
+            // B3 — Settings speech-language pair (plan §7.1, §7.2, §9.4).
+            // Same store and wording as the onboarding steps; full 15-locale
+            // maps land in B5 — other locales fall back to English until then.
+            .languagePairSectionTitle: "Your Languages",
+            .primaryLanguage: "Primary language",
+            .primaryLanguageHint: "The language you usually dictate in.",
+            .additionalLanguage: "Additional language",
+            .additionalLanguageHint: "A second language you often use.",
+            .additionalSameAsPrimary: "Same as primary",
+            .languagePairEngineNote: "Parakeet and Whisper still auto-detect your speech by default. Your two languages are your defaults and are used when switching languages on the HUD.",
             .helpCloudTranscriptionTitle: "Cloud transcription (no local model)",
             .helpCloudTranscriptionBody: "Select Cloud · Google in the transcription menu, add your Google API key in Settings → API Providers, and you're done — no local model download required."
         ],

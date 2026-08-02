@@ -53,7 +53,12 @@ private let settingsKeys: [AppTextKey] = [
     .remove, .keyConfigured, .noAPIKey, .copied, .defaultModelName,
     .removeCustomModelHelp, .noNewModelsFound, .foundModelsCount, .cloudDictationUsesGemini,
     // HUD skins
-    .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical
+    .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical,
+    // B3 — speech-language pair (plan §7.1, §9.4): resolves in every locale
+    // via the EN source until the full 15-locale maps land in B5.
+    .languagePairSectionTitle, .primaryLanguage, .primaryLanguageHint,
+    .additionalLanguage, .additionalLanguageHint, .additionalSameAsPrimary,
+    .languagePairEngineNote
 ]
 
 @Test
@@ -105,4 +110,45 @@ func settingsKeysAreActuallyTranslatedBeyondEnglish() {
             )
         }
     }
+}
+
+/// B3 — keys added for the Settings speech-language pair (plan §7.1, §9.4).
+/// EN is authoritative for new strings; full 15-locale maps land in B5, so
+/// other locales may legitimately fall back to EN until then.
+private let b3SettingsSpeechLanguageKeys: [AppTextKey] = [
+  .languagePairSectionTitle,
+  .primaryLanguage,
+  .primaryLanguageHint,
+  .additionalLanguage,
+  .additionalLanguageHint,
+  .additionalSameAsPrimary,
+  .languagePairEngineNote,
+]
+
+@Test
+func settingsSpeechLanguageKeysResolveInEnglish() {
+  // B3 requires real EN strings for the new keys — never the raw-key fallback.
+  for key in b3SettingsSpeechLanguageKeys {
+    let value = AppText.localized(key, language: .english)
+    #expect(!value.isEmpty, "B3 key \(key.rawValue) has no English translation")
+    #expect(
+      value != key.rawValue,
+      "B3 key \(key.rawValue) fell back to its raw key in English"
+    )
+  }
+}
+
+@Test
+func settingsSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology() {
+  // Plan §3.1 / §7.2: additional is a second language the user often uses —
+  // never a "target" / "always output" language. Check every locale a user
+  // could see (EN fallback included).
+  for language in concreteLanguages {
+    for key in b3SettingsSpeechLanguageKeys {
+      let value = AppText.localized(key, language: language).lowercased()
+      #expect(!value.contains("target always"))
+      #expect(!value.contains("target output"))
+      #expect(!value.contains("always output"))
+    }
+  }
 }

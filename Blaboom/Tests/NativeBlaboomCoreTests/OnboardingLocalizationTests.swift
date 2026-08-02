@@ -126,6 +126,18 @@ func onboardingSpeechLanguageKeysResolveInEnglish() {
 }
 
 @Test
+func onboardingAndSettingsSameAsPrimaryCopyMatch() {
+  // B3 — the Settings "Same as primary" control describes the same policy as
+  // the onboarding step (plan §6.2, §7.1): additional mirrors primary; it is
+  // never framed as a forced output language. The two surfaces share wording.
+  let onboarding = AppText.localized(.onboardingAdditionalSameAsPrimary, language: .english)
+  let settings = AppText.localized(.additionalSameAsPrimary, language: .english)
+  #expect(!onboarding.isEmpty && onboarding != AppTextKey.onboardingAdditionalSameAsPrimary.rawValue)
+  #expect(!settings.isEmpty && settings != AppTextKey.additionalSameAsPrimary.rawValue)
+  #expect(onboarding == settings)
+}
+
+@Test
 func onboardingSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology() {
   // Plan §3.1 / §6.2: additional is a second language the user often uses —
   // never a "target" / "always output" language. Check every locale a user

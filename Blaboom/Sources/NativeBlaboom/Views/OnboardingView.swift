@@ -30,7 +30,9 @@ struct OnboardingView: View {
   @State private var glossaryCreated = false
   @State private var expandedModeID: String?
 
-  private let totalSteps = 6
+  // B2 (plan §6.1): UI language → primary → additional → transcription →
+  // permissions → modes → glossary → theme.
+  private let totalSteps = 8
 
   init(
     accessibility: AccessibilityPermissionStore,
@@ -100,12 +102,16 @@ struct OnboardingView: View {
     case 0:
       languageStep
     case 1:
-      transcriptionStep
+      primaryLanguageStep
     case 2:
-      permissionsStep
+      additionalLanguageStep
     case 3:
-      modesStep
+      transcriptionStep
     case 4:
+      permissionsStep
+    case 5:
+      modesStep
+    case 6:
       glossaryStep
     default:
       themeStep
@@ -146,7 +152,7 @@ struct OnboardingView: View {
           )
         }
         .buttonStyle(.borderedProminent)
-        .disabled(step == 1 && !transcriptionSetupIsReady)
+        .disabled(step == 3 && !transcriptionSetupIsReady)
       } else {
         Button {
           finish()
@@ -189,9 +195,12 @@ struct OnboardingView: View {
         columns: [GridItem(.adaptive(minimum: 145))],
         spacing: 10
       ) {
-        ForEach(UILanguagePreference.allCases, id: \.self) { language in
+        // B2 (plan §5): use the canonical UI-language order (System sentinel
+        // first, then English → Europe → Asia) instead of the raw allCases
+        // order, which would put Russian directly after English.
+        ForEach(LanguagePickerOrder.uiLanguages, id: \.self) { language in
           LanguageChip(
-            language: language,
+            label: language.displayName,
             isSelected: settingsStore.settings.uiLanguage == language
           ) {
             settingsStore.update { $0.uiLanguage = language }
@@ -213,7 +222,128 @@ struct OnboardingView: View {
     .padding(.horizontal, 28)
   }
 
-  // MARK: - Step 1: Transcription
+  // MARK: - Step 1: Primary speech language
+
+  /// B2 (plan §6.1 step 2): the language the user usually dictates in. Persists
+  /// immediately into the shared Settings blob via `GeneralSettingsStore`
+  /// (single source of truth, plan §3.3). Picker order follows
+  /// `LanguagePickerOrder.speechLanguages` (plan §5).
+  private var primaryLanguageStep: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      stepHeader(
+        icon: "waveform.and.mic",
+        title: settingsStore.text(.onboardingPrimaryLanguageTitle),
+        subtitle: settingsStore.text(.onboardingPrimaryLanguageHint)
+      )
+
+      LazyVGrid(
+        columns: [GridItem(.adaptive(minimum: 145))],
+        spacing: 10
+      ) {
+        ForEach(LanguagePickerOrder.speechLanguages) { language in
+          LanguageChip(
+            label: language.displayName,
+            isSelected:
+              settingsStore.speechLanguages.primaryLanguageCode == language.code
+          ) {
+            // Keep the same-as-primary mirror intact when the user later
+            // changes primary (plan §6.2): explicit additional choices stay.
+            settingsStore.speechLanguages = settingsStore.speechLanguages
+              .settingPrimary(language.code)
+          }
+        }
+      }
+
+      Text(
+        settingsStore.formattedText(
+          .onboardingPrimaryLanguageBody,
+          LanguagePickerOrder.displayName(
+            for: settingsStore.speechLanguages.primaryLanguageCode
+          )
+        )
+      )
+      .font(.footnote)
+      .foregroundStyle(.secondary)
+    }
+    .padding(.horizontal, 28)
+  }
+
+  // MARK: - Step 2: Additional speech language
+
+  /// B2 (plan §6.1 step 3): a second language the user often uses, with the
+  /// same-as-primary option (plan §6.2, §7.1). Picking any chip sets the pair
+  /// explicitly; the toggle mirrors primary. Copy never calls this a "target"
+  /// / "always output" language.
+  private var additionalLanguageStep: some View {
+    VStack(alignment: .leading, spacing: 16) {
+      stepHeader(
+        icon: "waveform.and.mic",
+        title: settingsStore.text(.onboardingAdditionalLanguageTitle),
+        subtitle: settingsStore.text(.onboardingAdditionalLanguageHint)
+      )
+
+      Toggle(
+        settingsStore.text(.onboardingAdditionalSameAsPrimary),
+        isOn: Binding(
+          get: { settingsStore.speechLanguages.usesSameAdditionalAsPrimary },
+          set: { isSame in
+            if isSame {
+              settingsStore.speechLanguages = settingsStore.speechLanguages
+                .settingAdditionalSameAsPrimary()
+            } else {
+              // Turning the mirror off needs an explicit additional: pick the
+              // most common second language (English, or French when primary
+              // is already English — first in the Europe group).
+              let current = settingsStore.speechLanguages
+              let fallback =
+                current.primaryLanguageCode == LanguagePickerOrder.englishCode
+                ? LanguagePickerOrder.europeCodes.first
+                  ?? LanguagePickerOrder.englishCode
+                : LanguagePickerOrder.englishCode
+              settingsStore.speechLanguages = UserSpeechLanguages(
+                primaryLanguageCode: current.primaryLanguageCode,
+                additionalLanguageCode: fallback
+              )
+            }
+          }
+        )
+      )
+      .toggleStyle(.switch)
+
+      LazyVGrid(
+        columns: [GridItem(.adaptive(minimum: 145))],
+        spacing: 10
+      ) {
+        ForEach(LanguagePickerOrder.speechLanguages) { language in
+          LanguageChip(
+            label: language.displayName,
+            isSelected:
+              settingsStore.speechLanguages.additionalLanguageCode == language.code
+          ) {
+            settingsStore.speechLanguages = UserSpeechLanguages(
+              primaryLanguageCode:
+                settingsStore.speechLanguages.primaryLanguageCode,
+              additionalLanguageCode: language.code
+            )
+          }
+        }
+      }
+
+      Text(
+        settingsStore.formattedText(
+          .onboardingAdditionalLanguageBody,
+          LanguagePickerOrder.displayName(
+            for: settingsStore.speechLanguages.additionalLanguageCode
+          )
+        )
+      )
+      .font(.footnote)
+      .foregroundStyle(.secondary)
+    }
+    .padding(.horizontal, 28)
+  }
+
+  // MARK: - Step 3: Transcription
 
   private var transcriptionStep: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -625,7 +755,7 @@ struct OnboardingView: View {
       || transcriptionModelStore.hasLocalFiles(for: activeModel)
   }
 
-  // MARK: - Step 2: Permissions
+  // MARK: - Step 4: Permissions
 
   private var permissionsStep: some View {
     VStack(alignment: .leading, spacing: 14) {
@@ -716,7 +846,7 @@ struct OnboardingView: View {
     )
   }
 
-  // MARK: - Step 3: Modes and hotkeys
+  // MARK: - Step 5: Modes and hotkeys
 
   private var modesStep: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -856,7 +986,7 @@ struct OnboardingView: View {
     )
   }
 
-  // MARK: - Step 4: Glossary
+  // MARK: - Step 6: Glossary
 
   private var glossaryStep: some View {
     VStack(alignment: .leading, spacing: 16) {
@@ -865,8 +995,10 @@ struct OnboardingView: View {
         title: settingsStore.text(.onboardingGlossaryTitle),
         subtitle: settingsStore.formattedText(
           .onboardingGlossaryBody,
+          // B2 (plan §6.1 step 7): prefill the glossary author language from
+          // the primary speech language rather than the interface language.
           glossaryLanguageName(
-            for: settingsStore.settings.uiLanguage
+            forSpeechCode: settingsStore.speechLanguages.primaryLanguageCode
           )
         )
       )
@@ -919,7 +1051,7 @@ struct OnboardingView: View {
     .padding(.horizontal, 28)
   }
 
-  // MARK: - Step 5: Theme
+  // MARK: - Step 7: Theme
 
   private var themeStep: some View {
     VStack(alignment: .leading, spacing: 18) {
@@ -1091,7 +1223,7 @@ struct OnboardingView: View {
 
   private func createGlossary() {
     let languageName = glossaryLanguageName(
-      for: settingsStore.settings.uiLanguage
+      forSpeechCode: settingsStore.speechLanguages.primaryLanguageCode
     )
     glossaryStore.setAuthorTranscriptionLanguage(languageName)
     glossaryStore.setEnabled(true)
@@ -1101,6 +1233,17 @@ struct OnboardingView: View {
   private func finish() {
     settingsStore.update { $0.hasCompletedOnboarding = true }
     dismiss()
+  }
+
+  /// B2 (plan §6.1): resolves a primary/additional speech-language code to a
+  /// glossary catalog name. Codes the glossary has no entry for (pl/tr/uk)
+  /// fall back to English, matching the old UI-language behaviour.
+  private func glossaryLanguageName(
+    forSpeechCode code: String
+  ) -> String {
+    glossaryLanguageName(
+      for: UILanguagePreference(rawValue: code) ?? .english
+    )
   }
 
   private func glossaryLanguageName(
@@ -1129,13 +1272,15 @@ struct OnboardingView: View {
 }
 
 private struct LanguageChip: View {
-  let language: UILanguagePreference
+  /// Label rendered on the chip (endonym display name for either the UI
+  /// language list or the primary/additional speech-language lists).
+  let label: String
   let isSelected: Bool
   let action: () -> Void
 
   var body: some View {
     Button(action: action) {
-      Text(language.displayName)
+      Text(label)
         .font(.subheadline)
         .padding(.horizontal, 12)
         .padding(.vertical, 9)

@@ -3,8 +3,7 @@
 
 current_step: B2
 step_description: >-
-  Onboarding: after UI language, ask primary then additional speech languages;
-  persist to same store as Settings; same-as-primary option; LanguagePickerOrder.
+  Onboarding primary + additional. Review APPROVED; awaiting Tester QA.
 target_files:
   - Sources/NativeBlaboom/Views/OnboardingView.swift
   - Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift
@@ -19,20 +18,20 @@ completed_steps:
   - B0
   - B1
 implementation:
-  status: pending
+  status: waiting_review
   attempts: 0
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: 'Reviewer re-ran 455 tests green; checklist 1–9 pass; no must-fix'
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: null
+  suite: B2
   bugs_open: 0
   note: ''
-next_actor: coder
+next_actor: tester
 track: UX
 prior_track: FOUNDATION
 working_roots:
@@ -40,23 +39,11 @@ working_roots:
 checkpoint:
   last_pre_tag: blaboom/pre-B2
   last_post_tag: blaboom/B1-done
-  last_commit: acaa031
+  last_commit: 487f3d9
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
 coder_brief: |
-  B2 — Onboarding primary + additional (UX)
-
-  After UI-language step, add primary + additional speech language steps
-  (or one screen with two blocks). Persist via GeneralSettingsStore to
-  UserSpeechLanguages (B1). Use LanguagePickerOrder for speech lists.
-  EN AppText keys only for new strings (full 15-locale maps in B5).
-  Option: same as primary. Copy must NOT say "target always output".
-
-  Out of scope: Settings chrome (B3), Help (B4), full i18n (B5), Canary.
-
-  Verify: swift test
+  B2 review approved — Tester validates suite + B2 onboarding invariants.
 notes: |
-  B1 closed: review APPROVED, qa_green (449 tests + run_all 14/14).
-  Tags: blaboom/B1-done, blaboom/pre-B2.
-  Graphify rebuilt (~3908 nodes).
+  Reviewer 2026-08-02: [APPROVED]. After Tester green: POST B2, graphify, open B3.

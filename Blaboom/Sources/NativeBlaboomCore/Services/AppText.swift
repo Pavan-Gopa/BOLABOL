@@ -391,6 +391,14 @@ public enum AppTextKey: String, CaseIterable, Sendable {
     case onboardingSkip
     case onboardingGetStarted
     case onboardingShowTour
+    // B2 — speech-language pair steps (plan §6.1: UI lang → primary → additional)
+    case onboardingPrimaryLanguageTitle
+    case onboardingPrimaryLanguageHint
+    case onboardingPrimaryLanguageBody
+    case onboardingAdditionalLanguageTitle
+    case onboardingAdditionalLanguageHint
+    case onboardingAdditionalLanguageBody
+    case onboardingAdditionalSameAsPrimary
 
     // Glossary tab + editors
     case settingsGlossary
@@ -1096,6 +1104,17 @@ public enum AppText {
             .onboardingPermissionsGrant: "Grant",
             .onboardingGlossaryCreate: "Create Glossary",
             .onboardingGlossaryCreated: "Glossary created!",
+            // B2 — primary + additional speech-language steps (plan §6.1, §6.2).
+            // Copy intentionally never calls additional a "target" / "always
+            // output" language (plan §3.1). Full 15-locale maps land in B5;
+            // other locales fall back to English until then.
+            .onboardingPrimaryLanguageTitle: "Primary language",
+            .onboardingPrimaryLanguageHint: "The language you usually dictate in.",
+            .onboardingPrimaryLanguageBody: "Primary language: %@",
+            .onboardingAdditionalLanguageTitle: "Additional language",
+            .onboardingAdditionalLanguageHint: "A second language you often use.",
+            .onboardingAdditionalLanguageBody: "Additional language: %@",
+            .onboardingAdditionalSameAsPrimary: "Same as primary",
             .helpCloudTranscriptionTitle: "Cloud transcription (no local model)",
             .helpCloudTranscriptionBody: "Select Cloud · Google in the transcription menu, add your Google API key in Settings → API Providers, and you're done — no local model download required."
         ],

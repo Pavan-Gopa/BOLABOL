@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| Step | B1 — Language pair store + picker order |
+| Step | B2 — Onboarding primary + additional |
 | Date | 2026-08-02 |
 | Status | **GREEN** |
 | RESULT | `qa_green` |
@@ -14,45 +14,46 @@
 ```bash
 cd "/Users/pavan/Documents/AI Projects/Blaboom"
 
-# 1) Full suite (run twice to confirm determinism)
+# 1) Full suite
 swift test
-#   ✔ Test run with 449 tests in 4 suites passed
+#   ✔ Test run with 455 tests in 4 suites passed
 
 # 2) Full QA gate (unit tests + structural contract scripts)
 ./script/qa/run_all.sh
 #   Passed: 14   Failed: 0
 #   (swift test + 13 check_*.sh contracts, incl. no-secrets, localization
-#    surface 535 AppText keys, stores wiring, release identity)
+#    surface 542 AppText keys, stores wiring, release identity)
 ```
 
 ## Pass counts
 
-- **449 tests in 4 suites** — green (both runs).
-- QA gate: **14/14 steps passed** — no pre-existing failures to document.
+- **455 tests in 4 suites** — green.
+- QA gate: **14/14 steps passed** — no pre-existing failures.
 
-## B1 test files / cases that cover order + migration
+## B2 coverage table
 
 | File | Cases | Covers |
 |------|-------|--------|
-| `Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift` | 7 tests | Order invariants: `en` first excluding System sentinel; `ru` not index 1 (index 1 == `fr`); Europe before Asia (`ru` index < `zh` index); System sentinel first in `uiLanguages` and never between `en`/`fr`; exact canonical sequence `en → fr…uk → ar…zh…ko`; endonym display names; code/name/endonym resolution |
-| `Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift` | 14 tests | Pair store + migration: defaults map known system locales, fallback `en` for unknown; additional may equal primary (same-as-primary policy); migration seeds primary from legacy transcription code and additional from legacy force-target name/code/endonym; never duplicates target into primary; ignores unknown legacy values; Codable round-trip; legacy payload without keys decodes to defaults |
-| `Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift` | +5 additions | Pair carried in blob; Codable round-trip; legacy payload without `speechLanguages` key still decodes → fresh-install defaults (store then runs best-effort migration once); `normalize()` preserves the pair |
-| `Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift` | +1 addition | `CaseIterable` stable order `[.auto, .target]` |
+| `OnboardingLocalizationTests.swift` | 7 tests | Every onboarding key localized in every language; newly added keys actually translated (ru/zh/ar/hi); all tour-used keys exist with EN translation; **B2 speech-language keys resolve in EN** (no raw-key fallback); **no "target always" / "target output" / "always output" in onboarding copy** across all 15 locales; glossary explanation avoids internal terms |
+| `UserSpeechLanguagesTests.swift` | 17 tests | Defaults map known system locales; fallback en for unknown; additional may equal primary (same-as-primary policy); **settingPrimary keeps same-as-primary mirror** (B2 §6.2); **settingPrimary keeps explicit additional**; **settingPrimary normalizes input**; sameAsPrimary helper mirrors; normalizes codes; migration from legacy codes/names/endonyms; never duplicates target into primary; ignores unknown legacy; Codable round-trip; legacy payload without keys |
+| `LanguagePickerOrderTests.swift` | 9 tests | en first (excl. System); ru not second (index 1 == fr); Europe before Asia (ru < zh); System sentinel placement; **speech codes == UI codes minus System** (B2 picker sync); exact canonical sequence; endonym display names; code/name resolution |
+| `AppTextFullCoverageTests.swift` | 8 tests | Every key non-empty in EN/RU/all 15 locales; key count ≥ 400; tab labels; note workspace labels; HUD help keys; system locale fallback |
 
-Total B1 delta: **21 new tests** (14 + 7) + **6 additions** in GeneralSettings/TranscriptionLanguageMode — matches Coder/Reviewer claims.
+Total B2 delta: +6 new tests (3 in UserSpeechLanguages, 2 in OnboardingLocalization, 1 in LanguagePickerOrder) on top of B1's 449 → 455 total.
 
-## B1 Must-verify checklist
+## B2 Must-verify checklist
 
-1. ✅ `swift test` full suite GREEN (449/449, run twice).
-2. ✅ Order invariants covered by dedicated tests (see table) — all pass.
-3. ✅ Migration / pair tests present and pass (`UserSpeechLanguages` 14, `GeneralSettings` +5, legacy decode + migration path verified; store glue thin as documented).
-4. ✅ additional may equal primary — `userSpeechLanguagesAdditionalMayEqualPrimary`, same-as-primary helper, en-primary default policy all green.
-5. ✅ No Python / forbidden runtime in B1 Sources — new files import only `Foundation`; grep for `python|Python` in the 5 B1 source files: no matches.
-6. ✅ `./script/qa/run_all.sh` — 14/14 green, no failures (pre-existing or otherwise).
+1. ✅ **`swift test` full suite GREEN** — 455/455, all 4 suites passed.
+2. ✅ **Onboarding EN keys for primary/additional resolve** — 7 new keys (`onboardingPrimaryLanguageTitle/Hint/Body`, `onboardingAdditionalLanguageTitle/Hint/Body`, `onboardingAdditionalSameAsPrimary`) all have real EN strings ("Primary language", "The language you usually dictate in.", etc.); test `onboardingSpeechLanguageKeysResolveInEnglish()` passes — no raw-key fallback.
+3. ✅ **No "target always" / "always output" terminology in onboarding strings** — test `onboardingSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology()` passes across all 15 locales. Code-comment mentions ("Copy never calls this…") are developer-only prohibitions, not user-facing. `helpLangOtherNote` uses "target always" as natural English ("non-English target always needs an LLM") — this is Help scope (B4), not onboarding, and "target" is a technical forced-language-target concept, not the prohibited "target always output" compound.
+4. ✅ **LanguagePickerOrder still green** — en first, ru not #1 (fr is #1 after en), Europe before Asia (ru index < zh index); all 9 order tests pass.
+5. ✅ **UserSpeechLanguages settingPrimary / same-as-primary tests green** — 3 new B2 tests (`settingPrimaryKeepsSameAsPrimaryMirror`, `settingPrimaryKeepsExplicitAdditional`, `settingPrimaryNormalizesInput`) plus the existing `sameAsPrimaryHelper` test all pass.
+6. ✅ **Diff is B2-scoped** — unstaged changes are exactly the 6 B2 target files + workflow artifacts (FEEDBACK.md, STATE.yaml) + graphify cache stamp. No Settings UI (`SettingsView.swift`, `GeneralSettingsView.swift`), no Help (`HelpSettingsView.swift`), no Canary/HUD (`HUDView.swift`, `CanaryCoreMLEngine.swift`) touched.
+7. ✅ **`./script/qa/run_all.sh`** — 14/14 green. No failures (pre-existing or B2-introduced). Localization surface counts 542 AppText keys (up from 535 at B1, reflecting the 7 new onboarding keys).
 
 ## Notes
 
-- Diff scope check: `git status` shows exactly the B1 `target_files` (6 modified + 4 new); `HotkeySettings.swift` model untouched as documented; no onboarding/settings/UI/AppText bulk.
+- `graphify-out/cache/last_query_stamp` change is non-target; Coder noted it was reverted (tooling artifact).
 - No bugs opened. `bugs_open: 0`.
 
 **RESULT: qa_green**

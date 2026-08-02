@@ -46,6 +46,21 @@ func languagePickerOrderSystemSentinelIsNotBetweenEnglishAndFrench() {
 }
 
 @Test
+func languagePickerOrderSpeechCodesCoverEveryUIListEntry() {
+    // B2 (plan §5.4): the speech pickers (primary/additional) and the UI
+    // language list must stay in sync — every UI language except the System
+    // sentinel is selectable as a speech language and vice versa.
+    let speechCodes = Set(LanguagePickerOrder.orderedSpeechCodes)
+    let uiCodes = Set(
+        UILanguagePreference.allCases
+            .filter { $0 != .system }
+            .map(\.rawValue)
+    )
+
+    #expect(speechCodes == uiCodes)
+}
+
+@Test
 func languagePickerOrderSpeechListIsExactCanonicalSequence() {
     #expect(LanguagePickerOrder.orderedSpeechCodes == [
         "en", // English

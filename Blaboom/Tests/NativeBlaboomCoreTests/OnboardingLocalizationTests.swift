@@ -87,11 +87,56 @@ func onboardingKeysUsedByWelcomeTourAllExist() {
     .onboardingGlossaryCreate, .onboardingGlossaryCreated,
     .onboardingThemeTitle, .onboardingThemeBody,
     .onboardingBack, .onboardingNext, .onboardingGetStarted, .onboardingSkip, .onboardingShowTour,
+    // B2 — primary + additional speech-language steps (plan §6.1).
+    .onboardingPrimaryLanguageTitle, .onboardingPrimaryLanguageHint, .onboardingPrimaryLanguageBody,
+    .onboardingAdditionalLanguageTitle, .onboardingAdditionalLanguageHint, .onboardingAdditionalLanguageBody,
+    .onboardingAdditionalSameAsPrimary,
   ]
 
   for key in usedByTour {
     let value = AppText.localized(key, language: .english)
     #expect(value != key.rawValue, "Tour key \(key.rawValue) has no English translation")
+  }
+}
+
+/// B2 — keys added for the primary + additional speech-language steps
+/// (plan §6.1, §9.4). EN is authoritative for new strings; full 15-locale
+/// maps land in B5, so other locales may legitimately fall back to EN.
+private let b2SpeechLanguageKeys: [AppTextKey] = [
+  .onboardingPrimaryLanguageTitle,
+  .onboardingPrimaryLanguageHint,
+  .onboardingPrimaryLanguageBody,
+  .onboardingAdditionalLanguageTitle,
+  .onboardingAdditionalLanguageHint,
+  .onboardingAdditionalLanguageBody,
+  .onboardingAdditionalSameAsPrimary,
+]
+
+@Test
+func onboardingSpeechLanguageKeysResolveInEnglish() {
+  // B2 requires real EN strings for the new keys — never the raw-key fallback.
+  for key in b2SpeechLanguageKeys {
+    let value = AppText.localized(key, language: .english)
+    #expect(!value.isEmpty, "B2 key \(key.rawValue) has no English translation")
+    #expect(
+      value != key.rawValue,
+      "B2 key \(key.rawValue) fell back to its raw key in English"
+    )
+  }
+}
+
+@Test
+func onboardingSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology() {
+  // Plan §3.1 / §6.2: additional is a second language the user often uses —
+  // never a "target" / "always output" language. Check every locale a user
+  // could see (EN fallback included).
+  for language in concreteLanguages {
+    for key in b2SpeechLanguageKeys {
+      let value = AppText.localized(key, language: language).lowercased()
+      #expect(!value.contains("target always"))
+      #expect(!value.contains("target output"))
+      #expect(!value.contains("always output"))
+    }
   }
 }
 

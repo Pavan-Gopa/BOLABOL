@@ -49,6 +49,44 @@ func userSpeechLanguagesAdditionalMayEqualPrimary() {
     #expect(languages.usesSameAdditionalAsPrimary)
 }
 
+// B2 — primary-change semantics used by the onboarding primary step (plan
+// §6.2): same-as-primary pairs stay mirrored, explicit additional choices stay.
+
+@Test
+func userSpeechLanguagesSettingPrimaryKeepsSameAsPrimaryMirror() {
+    let sameAsPrimary = UserSpeechLanguages(
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "ru"
+    ).settingPrimary("de")
+
+    #expect(sameAsPrimary.primaryLanguageCode == "de")
+    #expect(sameAsPrimary.additionalLanguageCode == "de")
+    #expect(sameAsPrimary.usesSameAdditionalAsPrimary)
+}
+
+@Test
+func userSpeechLanguagesSettingPrimaryKeepsExplicitAdditional() {
+    let explicit = UserSpeechLanguages(
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en"
+    ).settingPrimary("de")
+
+    #expect(explicit.primaryLanguageCode == "de")
+    #expect(explicit.additionalLanguageCode == "en")
+    #expect(!explicit.usesSameAdditionalAsPrimary)
+}
+
+@Test
+func userSpeechLanguagesSettingPrimaryNormalizesInput() {
+    let changed = UserSpeechLanguages(
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en"
+    ).settingPrimary(" FR ")
+
+    #expect(changed.primaryLanguageCode == "fr")
+    #expect(changed.additionalLanguageCode == "en")
+}
+
 @Test
 func userSpeechLanguagesSameAsPrimaryHelperMirrorsPrimary() {
     let languages = UserSpeechLanguages(primaryLanguageCode: "hi", additionalLanguageCode: "en")

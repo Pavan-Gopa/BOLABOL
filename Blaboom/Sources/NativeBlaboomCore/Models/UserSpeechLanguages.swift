@@ -91,6 +91,20 @@ public struct UserSpeechLanguages: Codable, Equatable, Sendable {
         )
     }
 
+    /// Changes primary (B2 onboarding / B3 settings). When the pair currently
+    /// uses the same-as-primary policy, additional follows the new primary so
+    /// the mirror stays intact; otherwise the explicit additional is kept.
+    public func settingPrimary(_ code: String) -> UserSpeechLanguages {
+        let normalized = Self.normalized(code)
+        let additional = usesSameAdditionalAsPrimary
+            ? normalized
+            : additionalLanguageCode
+        return UserSpeechLanguages(
+            primaryLanguageCode: normalized,
+            additionalLanguageCode: additional
+        )
+    }
+
     // MARK: - Codable
 
     private enum CodingKeys: String, CodingKey {

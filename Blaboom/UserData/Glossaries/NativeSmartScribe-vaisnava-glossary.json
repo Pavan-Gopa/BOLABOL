@@ -1,0 +1,2185 @@
+{
+  "enabled" : true,
+  "entries" : [
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-srila-prabhupada",
+      "remember" : true,
+      "source" : "Śrīla Prabhupāda",
+      "translation" : "Шрила Прабхупада",
+      "translations" : {
+        "Default" : "Шрила Прабхупада",
+        "Russian" : "Шрила Прабхупада"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Shri La Prabhupada",
+        "Shri-La-Prabhupada",
+        "Shrila-Prabhupada",
+        "Sri La Prabhupada",
+        "Shrila Prabhupada",
+        "Śrīla-Prabhupāda",
+        "Shila Prabhupada",
+        "Srila-Prabhupada",
+        "Shila-Prabhupada",
+        "Srila Prabhupada",
+        "Shrila Prabhupad",
+        "Srila Prabhupad",
+        "Srila-Prabhupad"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-bhaktivinoda-thakura",
+      "remember" : true,
+      "source" : "Bhaktivinoda Ṭhākura",
+      "translation" : "Бхактивинода Тхакур",
+      "translations" : {
+        "Default" : "Бхактивинода Тхакур",
+        "Russian" : "Бхактивинода Тхакур"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Bhaktivinoda Thakura",
+        "Bhakti Vinoda Thakur",
+        "Bhakti-Vinoda-Thakur",
+        "Bhaktivinoda-Thakura",
+        "Bhaktivinoda-Ṭhākura",
+        "Bhaktivinoda-Thakur",
+        "Bhakti Vinoda Takur",
+        "Bhaktivinoda Thakur",
+        "Bhaktivinoda Takura",
+        "Bhaktivinoda Takur",
+        "Bhakti-Vinod-Takur",
+        "Bhakti Vinod Takur"
+      ]
+    },
+    {
+      "category" : "Avataras \/ Lord",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-sri-caitanya-mahaprabhu",
+      "remember" : true,
+      "source" : "Śrī Caitanya Mahāprabhu",
+      "translation" : "Шри Чайтанья Махапрабху",
+      "translations" : {
+        "Default" : "Шри Чайтанья Махапрабху",
+        "Russian" : "Шри Чайтанья Махапрабху"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Shri Caitanya Mahaprabhu",
+        "Sri-Caitanya-Mahaprabhu",
+        "Sri Caitanya Mahaprabhu",
+        "Śrī-Caitanya-Mahāprabhu",
+        "Chaitanya Mahaprabhu",
+        "Chaitanya-Mahaprabhu",
+        "Chetanya Mahaprabhu",
+        "Chitanya-Mahaprabhu",
+        "Chitanya Mahaprabhu",
+        "Chetanya-Mahaprabhu",
+        "Shri Chaitanya",
+        "Sri-Chaitanya",
+        "Sri Chaitanya",
+        "Chatanya"
+      ]
+    },
+    {
+      "category" : "Avataras \/ Lord",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-matsya-avatara",
+      "remember" : true,
+      "source" : "Matsya Avatāra",
+      "translation" : "Матсья-аватара",
+      "translations" : {
+        "Default" : "Матсья-аватара",
+        "Russian" : "Матсья-аватара"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Matsya-Avatāra",
+        "Matsya Avatara",
+        "Matsya-Avatara",
+        "Matsia Avatar",
+        "Matsia-Avatar",
+        "Matsya-Avatar",
+        "Matsya avatār",
+        "Matsya-avatār",
+        "Matsya Avatar",
+        "Matsa-Avatar",
+        "Matsyaavatar",
+        "Matsa Avatar",
+        "Matsyavatar"
+      ]
+    },
+    {
+      "category" : "Avataras \/ Lord",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-kurma-avatara",
+      "remember" : true,
+      "source" : "Kūrma Avatāra",
+      "translation" : "Курма-аватара",
+      "translations" : {
+        "Default" : "Курма-аватара",
+        "Russian" : "Курма-аватара"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Kurma-Avatara",
+        "Kūrma-Avatāra",
+        "Kurma Avatara",
+        "Koorma-Avatar",
+        "Koorma Avatar",
+        "Kurma-avatār",
+        "Kurma-Avatar",
+        "Kurma avatār",
+        "Kurma Avatar",
+        "Kurmavatar"
+      ]
+    },
+    {
+      "category" : "Avataras \/ Lord",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-varaha-avatara",
+      "remember" : true,
+      "source" : "Varāha Avatāra",
+      "translation" : "Вараха-аватара",
+      "translations" : {
+        "Default" : "Вараха-аватара",
+        "Russian" : "Вараха-аватара"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Varaha-Avatara",
+        "Varāha-Avatāra",
+        "Varaha Avatara",
+        "Varaha Avatar",
+        "Varaha-avatār",
+        "Varaha avatār",
+        "Varaha-Avatar",
+        "Varahavatar"
+      ]
+    },
+    {
+      "category" : "Avataras \/ Lord",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-nrsimha-avatara",
+      "remember" : true,
+      "source" : "Nṛsiṁha Avatāra",
+      "translation" : "Нрисимха-аватара",
+      "translations" : {
+        "Default" : "Нрисимха-аватара",
+        "Russian" : "Нрисимха-аватара"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Nrisimha-Avatara",
+        "Narasimha Avatar",
+        "Nrisingha Avatar",
+        "Nrisingha-Avatar",
+        "Nrisimha Avatara",
+        "Narasimha-Avatar",
+        "Nrsimha Avatara",
+        "Narsingh-Avatar",
+        "Narsingh Avatar",
+        "Nṛsiṁha-Avatāra",
+        "Nrsimha-Avatara",
+        "Nrsimha-Avatar",
+        "Nrsimha Avatar",
+        "Narasimhadev"
+      ]
+    },
+    {
+      "category" : "Avataras \/ Lord",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-vamana-avatara",
+      "remember" : true,
+      "source" : "Vāmana Avatāra",
+      "translation" : "Вамана-аватара",
+      "translations" : {
+        "Default" : "Вамана-аватара",
+        "Russian" : "Вамана-аватара"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Vāmana-Avatāra",
+        "Vamana-Avatara",
+        "Vamana Avatara",
+        "Vamana Avatar",
+        "Vamana-Avatar",
+        "Vaman Avatar",
+        "Vaman-Avatar",
+        "Vamanadev"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-jayapataka-swami",
+      "remember" : true,
+      "source" : "Jayapatākā Swami",
+      "translation" : "Джаяпатака Свами",
+      "translations" : {
+        "Default" : "Джаяпатака Свами",
+        "Russian" : "Джаяпатака Свами"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Jaipataka-Maharaja",
+        "Jayapataka Maharaj",
+        "Jayapataka-Maharaj",
+        "Jaipataka Maharaja",
+        "Jaipataka Maharaj",
+        "Jayapataka-Swami",
+        "Jipataka Maharaj",
+        "Jipataka-Maharaj",
+        "Jayapataka Swami",
+        "Jayapatākā-Swami"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-krsna",
+      "remember" : true,
+      "source" : "Kṛṣṇa",
+      "translation" : "Кришна",
+      "translations" : {
+        "Default" : "Кришна",
+        "Russian" : "Кришна"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Krishnaa",
+        "Krushna",
+        "Krishna",
+        "Krisna",
+        "Krsna"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-radha-radharani",
+      "remember" : true,
+      "source" : "Rādhā \/ Rādhārāṇī",
+      "translation" : "Радха \/ Радхарани",
+      "translations" : {
+        "Default" : "Радха \/ Радхарани",
+        "Russian" : "Радха \/ Радхарани"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Radha   Radharani",
+        "Radha-\/-Radharani",
+        "Radha \/ Radharani",
+        "Rādhā-\/-Rādhārāṇī",
+        "Rādhā   Rādhārāṇī",
+        "Radha Radharani",
+        "Rādhā Rādhārāṇī",
+        "Radha-rani",
+        "Radha rani",
+        "Radharani",
+        "Raadha",
+        "Radha",
+        "Radhe"
+      ]
+    },
+    {
+      "category" : "Mantras",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-hare-krsna",
+      "remember" : true,
+      "source" : "Hare Kṛṣṇa",
+      "translation" : "Харе Кришна",
+      "translations" : {
+        "Default" : "Харе Кришна",
+        "Russian" : "Харе Кришна"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Harry-Krishna",
+        "Harry Krishna",
+        "Hari-Krishna",
+        "Hari Krishna",
+        "Harekrishna",
+        "Hare Krsna",
+        "Hare-Kṛṣṇa",
+        "Hare-Krsna"
+      ]
+    },
+    {
+      "category" : "Mantras",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-maha-mantra",
+      "remember" : true,
+      "source" : "Mahā-mantra",
+      "translation" : "Маха-мантра",
+      "translations" : {
+        "Default" : "Маха-мантра",
+        "Russian" : "Маха-мантра"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Mahā mantra",
+        "Maha mantra",
+        "Maha-mantra",
+        "Mahamantra"
+      ]
+    },
+    {
+      "category" : "Scriptures",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-bhagavad-gita",
+      "remember" : true,
+      "source" : "Bhagavad-gītā",
+      "translation" : "Бхагавад-гита",
+      "translations" : {
+        "Default" : "Бхагавад-гита",
+        "Russian" : "Бхагавад-гита"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Bhagavad Gita",
+        "Bhagavad-Gita",
+        "Bhagwad Geeta",
+        "Bhagwad-Geeta",
+        "Bhagavad gita",
+        "Bhagavad-gita",
+        "Bhagavad gītā",
+        "Bhagwad Gita",
+        "Bhagwad-Gita"
+      ]
+    },
+    {
+      "category" : "Scriptures",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-srimad-bhagavatam",
+      "remember" : true,
+      "source" : "Śrīmad-Bhāgavatam",
+      "translation" : "Шримад-Бхагаватам",
+      "translations" : {
+        "Default" : "Шримад-Бхагаватам",
+        "Russian" : "Шримад-Бхагаватам"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Shrimad-Bhagavatam",
+        "Shrimad Bhagavatam",
+        "Srimad-Bhagavatam",
+        "Srimad Bhagavatam",
+        "Śrīmad Bhāgavatam",
+        "Bhagavatam"
+      ]
+    },
+    {
+      "category" : "Scriptures",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-caitanya-caritamrta",
+      "remember" : true,
+      "source" : "Caitanya-caritāmṛta",
+      "translation" : "Чайтанья-чаритамрита",
+      "translations" : {
+        "Default" : "Чайтанья-чаритамрита",
+        "Russian" : "Чайтанья-чаритамрита"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Chaitanya Charitramrita",
+        "Chaitanya-Charitramrita",
+        "Chaitanya Charitamrita",
+        "Chaitanya-Charitamrita",
+        "Caitanya caritāmṛta",
+        "Caitanya Caritamrta",
+        "Caitanya caritamrta",
+        "Caitanya-caritamrta",
+        "Caitanya-Caritamrta"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-bhakti",
+      "remember" : true,
+      "source" : "bhakti",
+      "translation" : "бхакти",
+      "translations" : {
+        "Default" : "бхакти",
+        "Russian" : "бхакти"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Bhakthee",
+        "Bhakhti",
+        "Bakhti"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-prema",
+      "remember" : true,
+      "source" : "prema",
+      "translation" : "према",
+      "translations" : {
+        "Default" : "према",
+        "Russian" : "према"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Prema-bhakti",
+        "Prema bhakti",
+        "Preema",
+        "Prem"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-vaisnava-vaisnavism",
+      "remember" : true,
+      "source" : "Vaiṣṇava \/ Vaiṣṇavism",
+      "translation" : "Вайшнав \/ Вайшнавизм",
+      "translations" : {
+        "Default" : "Вайшнав \/ Вайшнавизм",
+        "Russian" : "Вайшнав \/ Вайшнавизм"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Vaiṣṇava-\/-Vaiṣṇavism",
+        "Vaiṣṇava   Vaiṣṇavism",
+        "Vaisnava-\/-Vaisnavism",
+        "Vaisnava \/ Vaisnavism",
+        "Vaisnava   Vaisnavism",
+        "Vaiṣṇava Vaiṣṇavism",
+        "Vaisnava Vaisnavism",
+        "Vaishnavism",
+        "Vaisnavism",
+        "Vaishnavas",
+        "Vaishnava"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-sankirtana",
+      "remember" : true,
+      "source" : "saṅkīrtana",
+      "translation" : "санкиртана",
+      "translations" : {
+        "Default" : "санкиртана",
+        "Russian" : "санкиртана"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Sankeertana",
+        "sankirtana",
+        "Sankirtana",
+        "Sankirtan"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-japa",
+      "remember" : true,
+      "source" : "japa",
+      "translation" : "джапа",
+      "translations" : {
+        "Default" : "джапа",
+        "Russian" : "джапа"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Jappa",
+        "Jaapa",
+        "Jap"
+      ]
+    },
+    {
+      "category" : "Sacred objects",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-tulasi",
+      "remember" : true,
+      "source" : "Tulasī",
+      "translation" : "Туласи",
+      "translations" : {
+        "Default" : "Туласи",
+        "Russian" : "Туласи"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Toolasi",
+        "Tulasi",
+        "Thulsi",
+        "Tulsii",
+        "Tulsi"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-visnu",
+      "remember" : true,
+      "source" : "Viṣṇu",
+      "translation" : "Вишну",
+      "translations" : {
+        "Default" : "Вишну",
+        "Russian" : "Вишну"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Vishno",
+        "Vishnu",
+        "Visnu",
+        "Visno"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-narayana",
+      "remember" : true,
+      "source" : "Nārāyaṇa",
+      "translation" : "Нараяна",
+      "translations" : {
+        "Default" : "Нараяна",
+        "Russian" : "Нараяна"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Naarayana",
+        "Narayana",
+        "Narayan"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-guru",
+      "remember" : true,
+      "source" : "guru",
+      "translation" : "гуру",
+      "translations" : {
+        "Default" : "гуру",
+        "Russian" : "гуру"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Guru dev",
+        "Guru-dev",
+        "Gurudev",
+        "Guroo"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-guru-parampara",
+      "remember" : true,
+      "source" : "guru-paramparā",
+      "translation" : "гуру-парампара",
+      "translations" : {
+        "Default" : "гуру-парампара",
+        "Russian" : "гуру-парампара"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Guru-Parampara",
+        "Guru-parampara",
+        "guru paramparā",
+        "Guru Parampara",
+        "Guru parampara",
+        "guru parampara",
+        "guru-parampara",
+        "Parampara"
+      ]
+    },
+    {
+      "category" : "Sacred places",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-vrndavana",
+      "remember" : true,
+      "source" : "Vṛndāvana",
+      "translation" : "Вриндаван",
+      "translations" : {
+        "Default" : "Вриндаван",
+        "Russian" : "Вриндаван"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Vrindavana",
+        "Vrindaban",
+        "Vrindavan",
+        "Vrndavana",
+        "Brindavan"
+      ]
+    },
+    {
+      "category" : "Sacred places",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-mayapur",
+      "remember" : true,
+      "source" : "Māyāpur",
+      "translation" : "Майяпур",
+      "translations" : {
+        "Default" : "Майяпур",
+        "Russian" : "Майяпур"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Maya-pur",
+        "Mayapura",
+        "Maya pur",
+        "Mayapur",
+        "Maapur"
+      ]
+    },
+    {
+      "category" : "Sacred places",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-navadvipa",
+      "remember" : true,
+      "source" : "Navadvīpa",
+      "translation" : "Навадвипа",
+      "translations" : {
+        "Default" : "Навадвипа",
+        "Russian" : "Навадвипа"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Navadvipa",
+        "Nabadweep",
+        "Navadwip",
+        "Nabadwip"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-jagannatha",
+      "remember" : true,
+      "source" : "Jagannātha",
+      "translation" : "Джаганнатха",
+      "translations" : {
+        "Default" : "Джаганнатха",
+        "Russian" : "Джаганнатха"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Jaggannatha",
+        "Jagannatha",
+        "Jaganaath",
+        "Jagannath",
+        "Jaganath"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-balarama",
+      "remember" : true,
+      "source" : "Balarāma",
+      "translation" : "Баларама",
+      "translations" : {
+        "Default" : "Баларама",
+        "Russian" : "Баларама"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Balaraama",
+        "Balarama",
+        "Bal-Ram",
+        "Bal Ram",
+        "Balaram"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-subhadra",
+      "remember" : true,
+      "source" : "Subhadrā",
+      "translation" : "Субхадра",
+      "translations" : {
+        "Default" : "Субхадра",
+        "Russian" : "Субхадра"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Subhadra devi",
+        "Subhadra-devi",
+        "Subhradra",
+        "Subhadra"
+      ]
+    },
+    {
+      "category" : "Avataras \/ Lord",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-nityananda",
+      "remember" : true,
+      "source" : "Nityānanda",
+      "translation" : "Нитьянанда",
+      "translations" : {
+        "Default" : "Нитьянанда",
+        "Russian" : "Нитьянанда"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Nityananda-Prabhu",
+        "Nityananda Prabhu",
+        "Nitaiyananda",
+        "Nityananada",
+        "Nityananda"
+      ]
+    },
+    {
+      "category" : "Avataras \/ Lord",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-advaita-acarya",
+      "remember" : true,
+      "source" : "Advaita Ācārya",
+      "translation" : "Адвайта Ачарья",
+      "translations" : {
+        "Default" : "Адвайта Ачарья",
+        "Russian" : "Адвайта Ачарья"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Advaita acharyaa",
+        "Advaita-acharyaa",
+        "Advaita-Acharya",
+        "Advaita Acharya",
+        "Advaita-Ācārya",
+        "Advaita-Acarya",
+        "Advaita Acarya"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-rupa-gosvami",
+      "remember" : true,
+      "source" : "Rūpa Gosvāmī",
+      "translation" : "Рупа Госвами",
+      "translations" : {
+        "Default" : "Рупа Госвами",
+        "Russian" : "Рупа Госвами"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Roopa Goswami",
+        "Roopa-Goswami",
+        "Roopa Gosvami",
+        "Rupa Gosvami",
+        "Rupa Goswami",
+        "Rupa-Goswami",
+        "Rūpa-Gosvāmī",
+        "Rupa-Gosvami"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-sanatana-gosvami",
+      "remember" : true,
+      "source" : "Sanātana Gosvāmī",
+      "translation" : "Санатана Госвами",
+      "translations" : {
+        "Default" : "Санатана Госвами",
+        "Russian" : "Санатана Госвами"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Sanatana-Gosvami",
+        "Sanatana Goswami",
+        "Sanātana-Gosvāmī",
+        "Sanatana Gosvami",
+        "Sanatana-Goswami",
+        "Sanatan Gosvami",
+        "Sanatan-Gosvami"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-raghunatha-dasa-gosvami",
+      "remember" : true,
+      "source" : "Raghunātha Dāsa Gosvāmī",
+      "translation" : "Рагхунатха Дас Госвами",
+      "translations" : {
+        "Default" : "Рагхунатха Дас Госвами",
+        "Russian" : "Рагхунатха Дас Госвами"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Raghunātha-Dāsa-Gosvāmī",
+        "Raghunatha-Dasa-Gosvami",
+        "Raghunatha Dasa Gosvami",
+        "Raghunath-Das-Goswami",
+        "Raghunath Das Gosvami",
+        "Raghunath Das Goswami",
+        "Raghunatha Dasa",
+        "Raghunatha-Dasa",
+        "Ragunath-Das",
+        "Ragunath Das"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-jiva-gosvami",
+      "remember" : true,
+      "source" : "Jīva Gosvāmī",
+      "translation" : "Джива Госвами",
+      "translations" : {
+        "Default" : "Джива Госвами",
+        "Russian" : "Джива Госвами"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Jeeva Gosvami",
+        "Jeeva-Gosvami",
+        "Jiva-Goswami",
+        "Jīva-Gosvāmī",
+        "Jiva Goswami",
+        "Jiva Gosvami",
+        "Jiva-Gosvami"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-bhaktisiddhanta-sarasvati-thakura",
+      "remember" : true,
+      "source" : "Bhaktisiddhānta Sarasvatī Ṭhākura",
+      "translation" : "Бхактисиддханта Сарасвати Тхакур",
+      "translations" : {
+        "Default" : "Бхактисиддханта Сарасвати Тхакур",
+        "Russian" : "Бхактисиддханта Сарасвати Тхакур"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Bhaktisiddhanta-Sarasvati-Thakura",
+        "Bhaktisiddhānta-Sarasvatī-Ṭhākura",
+        "Bhaktisiddhanta Sarasvati Thakura",
+        "Bhaktisiddhanta Sarasvati Takura",
+        "Bhakti Siddhanta Saraswati",
+        "Bhakti-Siddhanta-Saraswati",
+        "Bhaktisiddhanta-Saraswati",
+        "Bhaktisiddhanta Saraswati",
+        "Bhaktisiddhanta-Thakur",
+        "Bhaktisiddhanta Thakur",
+        "Bhaktisiddhanta Takur"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-madhavendra-puri",
+      "remember" : true,
+      "source" : "Mādhavendra Purī",
+      "translation" : "Мадхавендра Пури",
+      "translations" : {
+        "Default" : "Мадхавендра Пури",
+        "Russian" : "Мадхавендра Пури"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Madhavendra-Puri",
+        "Madhavendra Puri",
+        "Mādhavendra-Purī",
+        "Madhavendra",
+        "Madhav Puri",
+        "Madhav-Puri"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-isvara-puri",
+      "remember" : true,
+      "source" : "Īśvara Purī",
+      "translation" : "Ишвара Пури",
+      "translations" : {
+        "Default" : "Ишвара Пури",
+        "Russian" : "Ишвара Пури"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Ishvara Puri",
+        "Ishwara Puri",
+        "Ishvara-Puri",
+        "Ishwara-Puri",
+        "Isvara-Puri",
+        "Īśvara-Purī",
+        "Isvara Puri",
+        "Isvarapuri"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-maha-visnu",
+      "remember" : true,
+      "source" : "Mahā-Viṣṇu",
+      "translation" : "Маха-Вишну",
+      "translations" : {
+        "Default" : "Маха-Вишну",
+        "Russian" : "Маха-Вишну"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Maha Vishnu",
+        "Maha-Vishnu",
+        "Mahā Viṣṇu",
+        "Maha-Visnu",
+        "Mahavishnu",
+        "Maha Visnu"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-paramatma",
+      "remember" : true,
+      "source" : "Paramātmā",
+      "translation" : "Параматма",
+      "translations" : {
+        "Default" : "Параматма",
+        "Russian" : "Параматма"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Paramathma",
+        "Paramatman",
+        "Paramatma"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-brahman",
+      "remember" : true,
+      "source" : "Brahman",
+      "translation" : "Брахман",
+      "translations" : {
+        "Default" : "Брахман",
+        "Russian" : "Брахман"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Brahmaan",
+        "Brahmana",
+        "Brahm"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-maya",
+      "remember" : true,
+      "source" : "māyā",
+      "translation" : "майя",
+      "translations" : {
+        "Default" : "майя",
+        "Russian" : "майя"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Maaya",
+        "Mayaa",
+        "Maia",
+        "maya"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-lila",
+      "remember" : true,
+      "source" : "līlā",
+      "translation" : "лила",
+      "translations" : {
+        "Default" : "лила",
+        "Russian" : "лила"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Leelaa",
+        "Leela",
+        "Liila",
+        "lila",
+        "Lila"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-dharma",
+      "remember" : true,
+      "source" : "dharma",
+      "translation" : "дхарма",
+      "translations" : {
+        "Default" : "дхарма",
+        "Russian" : "дхарма"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Dharma dharma",
+        "Dharma-dharma",
+        "Dharmaa",
+        "Dharm"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-karma",
+      "remember" : true,
+      "source" : "karma",
+      "translation" : "карма",
+      "translations" : {
+        "Default" : "карма",
+        "Russian" : "карма"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Karma karma",
+        "Karma-karma",
+        "Karmaa",
+        "Karm"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-samsara",
+      "remember" : true,
+      "source" : "saṁsāra",
+      "translation" : "самсара",
+      "translations" : {
+        "Default" : "самсара",
+        "Russian" : "самсара"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Samsaara",
+        "samsara",
+        "Samsara",
+        "Sansar"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-moksa",
+      "remember" : true,
+      "source" : "mokṣa",
+      "translation" : "мокша",
+      "translations" : {
+        "Default" : "мокша",
+        "Russian" : "мокша"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Mooksha",
+        "Moksha",
+        "Moksh",
+        "moksa"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-mukti",
+      "remember" : true,
+      "source" : "mukti",
+      "translation" : "мукти",
+      "translations" : {
+        "Default" : "мукти",
+        "Russian" : "мукти"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Mukthi",
+        "Muktee",
+        "Mokti"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-acarya",
+      "remember" : true,
+      "source" : "ācārya",
+      "translation" : "ачарья",
+      "translations" : {
+        "Default" : "ачарья",
+        "Russian" : "ачарья"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Acharyaa",
+        "Acharya",
+        "acarya",
+        "Acarya"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-svami",
+      "remember" : true,
+      "source" : "Svāmī",
+      "translation" : "Свами",
+      "translations" : {
+        "Default" : "Свами",
+        "Russian" : "Свами"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Swamee",
+        "Swami",
+        "Svami"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-maharaja",
+      "remember" : true,
+      "source" : "Mahārāja",
+      "translation" : "Махараджа",
+      "translations" : {
+        "Default" : "Махараджа",
+        "Russian" : "Махараджа"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Maharaaj",
+        "Maharaja",
+        "Mahaaraj",
+        "Maharaj"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-prabhu",
+      "remember" : true,
+      "source" : "Prabhu",
+      "translation" : "Прабху",
+      "translations" : {
+        "Default" : "Прабху",
+        "Russian" : "Прабху"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Prabhoo",
+        "Prabho",
+        "Praboo"
+      ]
+    },
+    {
+      "category" : "Sacred places",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-vaikuntha",
+      "remember" : true,
+      "source" : "Vaikuṇṭha",
+      "translation" : "Вайкунтха",
+      "translations" : {
+        "Default" : "Вайкунтха",
+        "Russian" : "Вайкунтха"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Vaikuntha",
+        "Vaikunta",
+        "Vaikunth"
+      ]
+    },
+    {
+      "category" : "Sacred places",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-goloka-vrndavana",
+      "remember" : true,
+      "source" : "Goloka Vṛndāvana",
+      "translation" : "Голока Вриндавана",
+      "translations" : {
+        "Default" : "Голока Вриндавана",
+        "Russian" : "Голока Вриндавана"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Goloka Vrindavan",
+        "Goloka-Vrndavana",
+        "Goloka-Vṛndāvana",
+        "Goloka-Vrindavan",
+        "Goloka Vrndavana",
+        "Gauloka",
+        "Goloka"
+      ]
+    },
+    {
+      "category" : "Sacred places",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-mathura",
+      "remember" : true,
+      "source" : "Mathurā",
+      "translation" : "Матхура",
+      "translations" : {
+        "Default" : "Матхура",
+        "Russian" : "Матхура"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Mathoora",
+        "Mathuraa",
+        "Mathura"
+      ]
+    },
+    {
+      "category" : "Sacred places",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-dvaraka",
+      "remember" : true,
+      "source" : "Dvārakā",
+      "translation" : "Дварака",
+      "translations" : {
+        "Default" : "Дварака",
+        "Russian" : "Дварака"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Dwaraka",
+        "Dvaraka",
+        "Dwarka"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-puja",
+      "remember" : true,
+      "source" : "pūjā",
+      "translation" : "пуджа",
+      "translations" : {
+        "Default" : "пуджа",
+        "Russian" : "пуджа"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Pujaa",
+        "Pooja",
+        "puja",
+        "Puja"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-arati",
+      "remember" : true,
+      "source" : "āratī",
+      "translation" : "арати",
+      "translations" : {
+        "Default" : "арати",
+        "Russian" : "арати"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Aarati",
+        "Arati",
+        "Aarti",
+        "Arthi",
+        "arati"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-mangala-arati",
+      "remember" : true,
+      "source" : "maṅgala-āratī",
+      "translation" : "мангала-арати",
+      "translations" : {
+        "Default" : "мангала-арати",
+        "Russian" : "мангала-арати"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "maṅgala āratī",
+        "mangala-arati",
+        "mangala arati",
+        "Mangala arati",
+        "Mangala-arati",
+        "Mongal arati",
+        "Mongal-arati"
+      ]
+    },
+    {
+      "category" : "Sacred objects",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-prasadam",
+      "remember" : true,
+      "source" : "prasādam",
+      "translation" : "прасадам",
+      "translations" : {
+        "Default" : "прасадам",
+        "Russian" : "прасадам"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Prasaadam",
+        "prasadam",
+        "Prashad",
+        "Prasaad",
+        "Prasad"
+      ]
+    },
+    {
+      "category" : "Sacred objects",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-tilaka",
+      "remember" : true,
+      "source" : "tilaka",
+      "translation" : "тилака",
+      "translations" : {
+        "Default" : "тилака",
+        "Russian" : "тилака"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Teelak",
+        "Tilaak",
+        "Tilak"
+      ]
+    },
+    {
+      "category" : "Sacred objects",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-salagrama",
+      "remember" : true,
+      "source" : "Śālagrāma",
+      "translation" : "Шалаграма",
+      "translations" : {
+        "Default" : "Шалаграма",
+        "Russian" : "Шалаграма"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Shalagrama",
+        "Salagrama",
+        "Shaligram",
+        "Shalagram"
+      ]
+    },
+    {
+      "category" : "Sacred objects",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-mrdanga",
+      "remember" : true,
+      "source" : "mṛdaṅga",
+      "translation" : "мриданга",
+      "translations" : {
+        "Default" : "мриданга",
+        "Russian" : "мриданга"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Mridangam",
+        "Mrudanga",
+        "Mridanga",
+        "mrdanga"
+      ]
+    },
+    {
+      "category" : "Sacred objects",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-kartala",
+      "remember" : true,
+      "source" : "kartāla",
+      "translation" : "карталы",
+      "translations" : {
+        "Default" : "карталы",
+        "Russian" : "карталы"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Kartals",
+        "kartala",
+        "Kartala",
+        "Kartal"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-kirtana",
+      "remember" : true,
+      "source" : "kīrtana",
+      "translation" : "киртан",
+      "translations" : {
+        "Default" : "киртан",
+        "Russian" : "киртан"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Keertana",
+        "kirtana",
+        "Kiirtan",
+        "Kirtana",
+        "Kirtan"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-sadhu",
+      "remember" : true,
+      "source" : "sādhu",
+      "translation" : "садху",
+      "translations" : {
+        "Default" : "садху",
+        "Russian" : "садху"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Sadhu sanga",
+        "Sadhu-sanga",
+        "Saadhu",
+        "sadhu",
+        "Sadhu"
+      ]
+    },
+    {
+      "category" : "Scriptures",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-sastra",
+      "remember" : true,
+      "source" : "śāstra",
+      "translation" : "шастра",
+      "translations" : {
+        "Default" : "шастра",
+        "Russian" : "шастра"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Shaastras",
+        "Shastra",
+        "Sastra",
+        "sastra"
+      ]
+    },
+    {
+      "category" : "Scriptures",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-vedanta",
+      "remember" : true,
+      "source" : "Vedānta",
+      "translation" : "Веданта",
+      "translations" : {
+        "Default" : "Веданта",
+        "Russian" : "Веданта"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Vedanta Sutra",
+        "Vedanta-Sutra",
+        "Vedaanta",
+        "Vedanta"
+      ]
+    },
+    {
+      "category" : "Scriptures",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-upanisad",
+      "remember" : true,
+      "source" : "Upaniṣad",
+      "translation" : "Упанишада",
+      "translations" : {
+        "Default" : "Упанишада",
+        "Russian" : "Упанишада"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Upanishads",
+        "Upanishad",
+        "Upnishad",
+        "Upanisad"
+      ]
+    },
+    {
+      "category" : "Scriptures",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-veda-vedas",
+      "remember" : true,
+      "source" : "Veda \/ Vedas",
+      "translation" : "Веды",
+      "translations" : {
+        "Default" : "Веды",
+        "Russian" : "Веды"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Veda   Vedas",
+        "Veda-\/-Vedas",
+        "Veda Vedas",
+        "Veedas",
+        "Vedaas",
+        "Vegas"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-harinama",
+      "remember" : true,
+      "source" : "harināma",
+      "translation" : "харинама",
+      "translations" : {
+        "Default" : "харинама",
+        "Russian" : "харинама"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Hari-nama",
+        "Hari nama",
+        "Harinama",
+        "harinama",
+        "Harinam"
+      ]
+    },
+    {
+      "category" : "Organizations",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-nama-hatta",
+      "remember" : true,
+      "source" : "nāma-haṭṭa",
+      "translation" : "нама-хатта",
+      "translations" : {
+        "Default" : "нама-хатта",
+        "Russian" : "нама-хатта"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Nama hatta",
+        "nama-hatta",
+        "nāma haṭṭa",
+        "nama hatta",
+        "Nama-hatta",
+        "Namahatta"
+      ]
+    },
+    {
+      "category" : "Organizations",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-iskcon",
+      "remember" : true,
+      "source" : "ISKCON",
+      "translation" : "ИСККОН",
+      "translations" : {
+        "Default" : "ИСККОН",
+        "Russian" : "ИСККОН"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Isckon",
+        "Iskcon",
+        "Iskon"
+      ]
+    },
+    {
+      "category" : "Organizations",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-gaudiya-matha",
+      "remember" : true,
+      "source" : "Gauḍīya Maṭha",
+      "translation" : "Гаудия Матха",
+      "translations" : {
+        "Default" : "Гаудия Матха",
+        "Russian" : "Гаудия Матха"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Gaudiya-Matha",
+        "Gauḍīya-Maṭha",
+        "Gaudiya Matha",
+        "Gaudiya Math",
+        "Gaudiya-Math",
+        "Gaudia Math",
+        "Gaudia-Math"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-gaudiya-vaisnavism",
+      "remember" : true,
+      "source" : "Gauḍīya Vaiṣṇavism",
+      "translation" : "Гаудия-вайшнавизм",
+      "translations" : {
+        "Default" : "Гаудия-вайшнавизм",
+        "Russian" : "Гаудия-вайшнавизм"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Gaudiya-Vaishnavism",
+        "Gaudiya Vaishnavism",
+        "Gaudiya-Vaisnavism",
+        "Gaudiya Vaisnavism",
+        "Gaudiya Vaishnavas",
+        "Gaudiya-Vaishnavas",
+        "Gauḍīya-Vaiṣṇavism",
+        "Gaudia-Vaishnavism",
+        "Gaudia Vaishnavism"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-acintya-bhedabheda",
+      "remember" : true,
+      "source" : "acintya-bhedābheda",
+      "translation" : "ачинтья-бхедабхеда",
+      "translations" : {
+        "Default" : "ачинтья-бхедабхеда",
+        "Russian" : "ачинтья-бхедабхеда"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Acintya Bheda Abheda",
+        "Acintya-Bheda-Abheda",
+        "Achintya Bhedabheda",
+        "Achintya-Bhedabheda",
+        "Achintya bhedabheda",
+        "Achintya-bhedabheda",
+        "acintya-bhedabheda",
+        "acintya bhedabheda",
+        "acintya bhedābheda"
+      ]
+    },
+    {
+      "category" : "Avataras \/ Lord",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-panca-tattva",
+      "remember" : true,
+      "source" : "pañca-tattva",
+      "translation" : "панча-таттва",
+      "translations" : {
+        "Default" : "панча-таттва",
+        "Russian" : "панча-таттва"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Pancha tattva",
+        "Pancha-tattva",
+        "Panca-tattva",
+        "panca-tattva",
+        "panca tattva",
+        "pañca tattva",
+        "Panca tattva"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-govinda",
+      "remember" : true,
+      "source" : "Govinda",
+      "translation" : "Говинда",
+      "translations" : {
+        "Default" : "Говинда",
+        "Russian" : "Говинда"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Govindaa",
+        "Goovinda",
+        "Govind"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-gopala",
+      "remember" : true,
+      "source" : "Gopāla",
+      "translation" : "Гопала",
+      "translations" : {
+        "Default" : "Гопала",
+        "Russian" : "Гопала"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Goopal",
+        "Gopala",
+        "Gopal"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-gopi",
+      "remember" : true,
+      "source" : "gopī",
+      "translation" : "гопи",
+      "translations" : {
+        "Default" : "гопи",
+        "Russian" : "гопи"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Gopees",
+        "Gopis",
+        "Gopii",
+        "gopi"
+      ]
+    },
+    {
+      "category" : "Sacred personalities",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-nanda-maharaja",
+      "remember" : true,
+      "source" : "Nanda Mahārāja",
+      "translation" : "Нанда Махараджа",
+      "translations" : {
+        "Default" : "Нанда Махараджа",
+        "Russian" : "Нанда Махараджа"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Nanda Maharaja",
+        "Nanda-Mahārāja",
+        "Nanda-Maharaja",
+        "Nanda-Maharaj",
+        "Nanda Maharaj",
+        "Nand-Maharaj",
+        "Nand Maharaj"
+      ]
+    },
+    {
+      "category" : "Sacred personalities",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-yasoda",
+      "remember" : true,
+      "source" : "Yaśodā",
+      "translation" : "Яшода",
+      "translations" : {
+        "Default" : "Яшода",
+        "Russian" : "Яшода"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Yashoda-maa",
+        "Yashoda maa",
+        "Yashoda",
+        "Yasoda"
+      ]
+    },
+    {
+      "category" : "Sacred personalities",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-devaki",
+      "remember" : true,
+      "source" : "Devakī",
+      "translation" : "Деваки",
+      "translations" : {
+        "Default" : "Деваки",
+        "Russian" : "Деваки"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Devakee",
+        "Devakii",
+        "Devaki"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-sadhana",
+      "remember" : true,
+      "source" : "sādhana",
+      "translation" : "садхана",
+      "translations" : {
+        "Default" : "садхана",
+        "Russian" : "садхана"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Saadhanaa",
+        "sadhana",
+        "Sadhana",
+        "Sadhan"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-sadhana-bhakti",
+      "remember" : true,
+      "source" : "sādhana-bhakti",
+      "translation" : "садхана-бхакти",
+      "translations" : {
+        "Default" : "садхана-бхакти",
+        "Russian" : "садхана-бхакти"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Sadhana-Bhakti",
+        "sādhana bhakti",
+        "sadhana bhakti",
+        "Sadhana-bhakti",
+        "sadhana-bhakti",
+        "Sadhana bhakti",
+        "Sadhana Bhakti",
+        "Sadhanabhakti"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-vaidhi-bhakti",
+      "remember" : true,
+      "source" : "vaidhī-bhakti",
+      "translation" : "вайдхи-бхакти",
+      "translations" : {
+        "Default" : "вайдхи-бхакти",
+        "Russian" : "вайдхи-бхакти"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "vaidhī bhakti",
+        "vaidhi bhakti",
+        "vaidhi-bhakti",
+        "Vaidhi Bhakti",
+        "Vaidhi-bhakti",
+        "Vaidhi bhakti",
+        "Vaidhi-Bhakti",
+        "Vaidhabhakti"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-raganuga-bhakti",
+      "remember" : true,
+      "source" : "rāgānugā-bhakti",
+      "translation" : "раганугабхакти",
+      "translations" : {
+        "Default" : "раганугабхакти",
+        "Russian" : "раганугабхакти"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "raganuga bhakti",
+        "rāgānugā bhakti",
+        "Raganuga Bhakti",
+        "Raganuga-Bhakti",
+        "Raganuga-bhakti",
+        "raganuga-bhakti",
+        "Raganuga bhakti",
+        "Raganugabhakti"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-nava-vidha-bhakti",
+      "remember" : true,
+      "source" : "nava-vidha bhakti",
+      "translation" : "нававидха-бхакти",
+      "translations" : {
+        "Default" : "нававидха-бхакти",
+        "Russian" : "нававидха-бхакти"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Nine processes of bhakti",
+        "Nine-processes-of-bhakti",
+        "nava vidha bhakti",
+        "nava-vidha-bhakti",
+        "Navavidha Bhakti",
+        "Navavidha-Bhakti",
+        "Nava vidha",
+        "Nava-vidha"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-sravanam",
+      "remember" : true,
+      "source" : "śravaṇam",
+      "translation" : "шраванам",
+      "translations" : {
+        "Default" : "шраванам",
+        "Russian" : "шраванам"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Shravanam",
+        "Shravana",
+        "sravanam",
+        "Sravanam"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-kirtanam",
+      "remember" : true,
+      "source" : "kīrtanam",
+      "translation" : "киртанам",
+      "translations" : {
+        "Default" : "киртанам",
+        "Russian" : "киртанам"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Keertanam",
+        "kirtanam",
+        "Kirtanam",
+        "Kirtana"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-smaranam",
+      "remember" : true,
+      "source" : "smaraṇam",
+      "translation" : "смаранам",
+      "translations" : {
+        "Default" : "смаранам",
+        "Russian" : "смаранам"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "smaranam",
+        "Smaranam",
+        "Smarnam",
+        "Smarana"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-pada-sevanam",
+      "remember" : true,
+      "source" : "pāda-sevanam",
+      "translation" : "пада-севанам",
+      "translations" : {
+        "Default" : "пада-севанам",
+        "Russian" : "пада-севанам"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "pada-sevanam",
+        "Pada sevanam",
+        "pāda sevanam",
+        "pada sevanam",
+        "Pada-sevanam",
+        "Padasevana"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-arcanam",
+      "remember" : true,
+      "source" : "arcanam",
+      "translation" : "арчанам",
+      "translations" : {
+        "Default" : "арчанам",
+        "Russian" : "арчанам"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Archanam",
+        "Archana",
+        "Arcanam"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-vandanam",
+      "remember" : true,
+      "source" : "vandanam",
+      "translation" : "ванданам",
+      "translations" : {
+        "Default" : "ванданам",
+        "Russian" : "ванданам"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Vandanam",
+        "Vandana",
+        "Vandam"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-dasyam",
+      "remember" : true,
+      "source" : "dāsyam",
+      "translation" : "дасьям",
+      "translations" : {
+        "Default" : "дасьям",
+        "Russian" : "дасьям"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Dashyam",
+        "dasyam",
+        "Dasyam",
+        "Dasya"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-sakhyam",
+      "remember" : true,
+      "source" : "sakhyam",
+      "translation" : "сакхьям",
+      "translations" : {
+        "Default" : "сакхьям",
+        "Russian" : "сакхьям"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Sakheeyam",
+        "Sakhyam",
+        "Sakhya"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-atma-nivedanam",
+      "remember" : true,
+      "source" : "ātma-nivedanam",
+      "translation" : "атма-ниведанам",
+      "translations" : {
+        "Default" : "атма-ниведанам",
+        "Russian" : "атма-ниведанам"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "ātma nivedanam",
+        "atma-nivedanam",
+        "Atma nivedanam",
+        "atma nivedanam",
+        "Atma-nivedanam",
+        "Atmanivedanam"
+      ]
+    },
+    {
+      "category" : "Philosophical terms",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-anarthas",
+      "remember" : true,
+      "source" : "anarthas",
+      "translation" : "анартхи",
+      "translations" : {
+        "Default" : "анартхи",
+        "Russian" : "анартхи"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Anarthaas",
+        "Anartha"
+      ]
+    },
+    {
+      "category" : "Practices",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-arcana",
+      "remember" : true,
+      "source" : "arcana",
+      "translation" : "арчана",
+      "translations" : {
+        "Default" : "арчана",
+        "Russian" : "арчана"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Archana puja",
+        "Archana-puja",
+        "Archanaa",
+        "Archana"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-svarupa-damodara",
+      "remember" : true,
+      "source" : "Svarūpa Dāmodara",
+      "translation" : "Сварупа Дамодара",
+      "translations" : {
+        "Default" : "Сварупа Дамодара",
+        "Russian" : "Сварупа Дамодара"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Svarūpa-Dāmodara",
+        "Svarupa Damodara",
+        "Svarupa-Damodara",
+        "Swarupa Damodar",
+        "Swarupa-Damodar",
+        "Svarup Damodar",
+        "Svarup-Damodar"
+      ]
+    },
+    {
+      "category" : "Acharyas \/ Teachers",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-vasudeva-datta",
+      "remember" : true,
+      "source" : "Vāsudeva Datta",
+      "translation" : "Васудева Датта",
+      "translations" : {
+        "Default" : "Васудева Датта",
+        "Russian" : "Васудева Датта"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Vasudeva Datta Thakur",
+        "Vasudeva-Datta-Thakur",
+        "Vasudeva Datta Takur",
+        "Vāsudeva-Datta",
+        "Vasudeva Datta",
+        "Vasudeva-Datta",
+        "Vasudev-Datta",
+        "Vasudev Datta"
+      ]
+    },
+    {
+      "category" : "Names of God",
+      "createdAt" : "2026-05-08T00:00:00.000Z",
+      "id" : "starter-vaishnava-srimati",
+      "remember" : true,
+      "source" : "Śrīmatī",
+      "translation" : "Шримати",
+      "translations" : {
+        "Default" : "Шримати",
+        "Russian" : "Шримати"
+      },
+      "updatedAt" : "2026-05-08T00:00:00.000Z",
+      "variants" : [
+        "Shrimathi",
+        "Srimathi",
+        "Shrimati",
+        "Srimati"
+      ]
+    }
+  ],
+  "schemaVersion" : 1
+}

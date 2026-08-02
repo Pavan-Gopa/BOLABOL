@@ -1,0 +1,26 @@
+{
+  "scan_root": "/Users/pavan/Documents/AI Projects/Blaboom",
+  "files": {
+    "code": [
+      "/Users/pavan/Documents/AI Projects/Blaboom/Package.swift",
+      "/Users/pavan/Documents/AI Projects/Blaboom/script/build_and_run.sh",
+      "/Users/pavan/Documents/AI Projects/Blaboom/script/build_release_dmg.sh",
+      "/Users/pavan/Documents/AI Projects/Blaboom/Sources/NativeBlaboom/App/NativeBlaboomApp.swift",
+      "/Users/pavan/Documents/AI Projects/Blaboom/Sources/NativeBlaboom/Views/Components/BlaboomLogoView.swift",
+      "/Users/pavan/Documents/AI Projects/Blaboom/Sources/NativeBlaboom/Views/Components/BlaboomFullLogoView.swift",
+      "/Users/pavan/Documents/AI Projects/Blaboom/Sources/NativeBlaboom/Views/Components/BlaboomWordmarkView.swift",
+      "/Users/pavan/Documents/AI Projects/Blaboom/Sources/NativeBlaboom/Views/Components/BlaboomLogoWithWordmarkView.swift",
+      "/Users/pavan/Documents/AI Projects/Blaboom/Sources/NativeBlaboom/Views/NoteDetailView.swift",
+      "/Users/pavan/Documents/AI Projects/Blaboom/Sources/NativeBlaboom/Views/OnboardingView.swift",
+      "/Users/pavan/Documents/AI Projects/Blaboom/Sources/NativeBlaboom/Services/QuickTranslationWindowManager.swift",
+      "/Users/pavan/Documents/AI Projects/Blaboom/Tests/NativeBlaboomCoreTests/ReleaseIdentityTests.swift"
+    ],
+    "document": [],
+    "paper": [],
+    "image": [],
+    "video": []
+  },
+  "total_files": 12,
+  "total_words": 8974,
+  "skipped_sensitive": []
+}

@@ -1,0 +1,62 @@
+{
+  "Package.swift": {
+    "mtime": 1785571023.5775073,
+    "ast_hash": "22900fea7b112828a548a4a613b3a87d",
+    "semantic_hash": "22900fea7b112828a548a4a613b3a87d"
+  },
+  "script/build_and_run.sh": {
+    "mtime": 1785571041.8699005,
+    "ast_hash": "f1a9af4d9a0bc9ff77bcc74c22565747",
+    "semantic_hash": "f1a9af4d9a0bc9ff77bcc74c22565747"
+  },
+  "script/build_release_dmg.sh": {
+    "mtime": 1785571041.87122,
+    "ast_hash": "6a0865b1d01e5630c7596026392e6030",
+    "semantic_hash": "6a0865b1d01e5630c7596026392e6030"
+  },
+  "Sources/NativeBlaboom/App/NativeBlaboomApp.swift": {
+    "mtime": 1785571023.5781558,
+    "ast_hash": "88a1a9c0c978a1943a66a368d596149b",
+    "semantic_hash": "88a1a9c0c978a1943a66a368d596149b"
+  },
+  "Sources/NativeBlaboom/Views/Components/BlaboomLogoView.swift": {
+    "mtime": 1785571023.5791953,
+    "ast_hash": "3928bcfda92d4f1f9def9e7208d2ea66",
+    "semantic_hash": "3928bcfda92d4f1f9def9e7208d2ea66"
+  },
+  "Sources/NativeBlaboom/Views/Components/BlaboomFullLogoView.swift": {
+    "mtime": 1785571023.5798864,
+    "ast_hash": "22f8d83f42f120d289634e0f309e595c",
+    "semantic_hash": "22f8d83f42f120d289634e0f309e595c"
+  },
+  "Sources/NativeBlaboom/Views/Components/BlaboomWordmarkView.swift": {
+    "mtime": 1785571023.580588,
+    "ast_hash": "f3c0021d801322c0c434c124b3d6191f",
+    "semantic_hash": "f3c0021d801322c0c434c124b3d6191f"
+  },
+  "Sources/NativeBlaboom/Views/Components/BlaboomLogoWithWordmarkView.swift": {
+    "mtime": 1785563671.9789963,
+    "ast_hash": "3affd8d0daf4572c4426058178891f76",
+    "semantic_hash": "3affd8d0daf4572c4426058178891f76"
+  },
+  "Sources/NativeBlaboom/Views/NoteDetailView.swift": {
+    "mtime": 1785570654.7105725,
+    "ast_hash": "212363f3065c8aa2cb1634caaf762a37",
+    "semantic_hash": "212363f3065c8aa2cb1634caaf762a37"
+  },
+  "Sources/NativeBlaboom/Views/OnboardingView.swift": {
+    "mtime": 1785564893.6560564,
+    "ast_hash": "85e8774236a3166b391b956ae12b4230",
+    "semantic_hash": "85e8774236a3166b391b956ae12b4230"
+  },
+  "Sources/NativeBlaboom/Services/QuickTranslationWindowManager.swift": {
+    "mtime": 1785563699.9052856,
+    "ast_hash": "d355368ae323116778107b663ba20be3",
+    "semantic_hash": "d355368ae323116778107b663ba20be3"
+  },
+  "Tests/NativeBlaboomCoreTests/ReleaseIdentityTests.swift": {
+    "mtime": 1785571059.5909085,
+    "ast_hash": "9a51fce9f562aca4339775749998b2e7",
+    "semantic_hash": "9a51fce9f562aca4339775749998b2e7"
+  }
+}

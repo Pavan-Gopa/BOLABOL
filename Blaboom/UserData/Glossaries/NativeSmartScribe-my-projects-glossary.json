@@ -1,0 +1,1022 @@
+{
+  "authorTranscriptionLanguage" : "English",
+  "autoTranslationLanguage" : "Russian",
+  "enabled" : true,
+  "entries" : [
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-vaniscript",
+      "remember" : true,
+      "source" : "VaniScript",
+      "translation" : "VaniScript",
+      "translations" : {
+        "Default" : "VaniScript",
+        "Dutch" : "VaniScript",
+        "English" : "VaniScript",
+        "Russian" : "VaniScript"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Vani Script",
+        "Vani-Script",
+        "VanyScript",
+        "Wani Script",
+        "Vanni Script",
+        "ванискрипт",
+        "вани скрипт",
+        "ванни скрипт",
+        "ваниксрипт",
+        "ванни",
+        "вани",
+        "ваня скрипт",
+        "ваниск рипт",
+        "вэни скрипт",
+        "Ваннискрипт"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-smartscribe",
+      "remember" : true,
+      "source" : "SmartScribe",
+      "translation" : "SmartScribe",
+      "translations" : {
+        "Default" : "SmartScribe",
+        "Dutch" : "SmartScribe",
+        "English" : "SmartScribe",
+        "Russian" : "SmartScribe"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Smart Scribe",
+        "Smart-Scribe",
+        "Smart Script",
+        "Smart Scribes",
+        "смартскрайб",
+        "смарт скрайб",
+        "смарт скрайп",
+        "смартскрайп",
+        "смарт скрипт",
+        "смарт скрайбер"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-nativesmartscribe",
+      "remember" : true,
+      "source" : "NativeSmartScribe",
+      "translation" : "NativeSmartScribe",
+      "translations" : {
+        "Default" : "NativeSmartScribe",
+        "Dutch" : "NativeSmartScribe",
+        "English" : "NativeSmartScribe",
+        "Russian" : "NativeSmartScribe"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Native SmartScribe",
+        "Native Smart Scribe",
+        "Native-SmartScribe",
+        "нейтив смарт скрайб",
+        "нативный смарт скрайб",
+        "натив смарт скрайб",
+        "нэйтив смартскрайб"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-mindocean",
+      "remember" : true,
+      "source" : "MindOcean",
+      "translation" : "MindOcean",
+      "translations" : {
+        "Default" : "MindOcean",
+        "Dutch" : "MindOcean",
+        "English" : "MindOcean",
+        "Russian" : "MindOcean"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Mind Ocean",
+        "Mind-Ocean",
+        "MindOcian",
+        "майндошен",
+        "майнд оушен",
+        "маинд оушен",
+        "майндоушн",
+        "минд оушен",
+        "майндошн",
+        "майнд ошен"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-selfos",
+      "remember" : true,
+      "source" : "Self-OS",
+      "translation" : "Self-OS",
+      "translations" : {
+        "Default" : "Self-OS",
+        "Dutch" : "Self-OS",
+        "English" : "Self-OS",
+        "Russian" : "Self-OS"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "SelfOS",
+        "Self OS",
+        "Self-O-S",
+        "селф ос",
+        "селфос",
+        "селф-ос",
+        "селф оэс"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-synclaris",
+      "remember" : true,
+      "source" : "SYNCLARIS",
+      "translation" : "SYNCLARIS",
+      "translations" : {
+        "Default" : "SYNCLARIS",
+        "Dutch" : "SYNCLARIS",
+        "English" : "SYNCLARIS",
+        "Russian" : "SYNCLARIS"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Sinclaris",
+        "Synklaris",
+        "Synclarus",
+        "синкларис",
+        "синклар",
+        "синк лари с",
+        "синкларес",
+        "синклэрис",
+        "синкларус",
+        "синклярис",
+        "синглярис"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-chunker",
+      "remember" : true,
+      "source" : "Chunker",
+      "translation" : "Chunker",
+      "translations" : {
+        "Default" : "Chunker",
+        "Dutch" : "Chunker",
+        "English" : "Chunker",
+        "Russian" : "Chunker"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Chunk er",
+        "Chanker",
+        "чанкер",
+        "ченкер",
+        "чункер",
+        "чанкёр",
+        "чанке"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-zerda",
+      "remember" : true,
+      "source" : "ZERDA",
+      "translation" : "ZERDA",
+      "translations" : {
+        "Default" : "ZERDA",
+        "Dutch" : "ZERDA",
+        "English" : "ZERDA",
+        "Russian" : "ZERDA"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Project ZERDA",
+        "Zerda Project",
+        "зерда",
+        "зэрда",
+        "зерра",
+        "церда"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-neural-brand-engine",
+      "remember" : true,
+      "source" : "Neural Brand Engine",
+      "translation" : "Neural Brand Engine",
+      "translations" : {
+        "Default" : "Neural Brand Engine",
+        "Dutch" : "Neural Brand Engine",
+        "English" : "Neural Brand Engine",
+        "Russian" : "Neural Brand Engine"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Neural-Brand-Engine",
+        "NeuralBrandEngine",
+        "нейрал бренд энджин",
+        "нейронный движок бренда",
+        "ньюрал бренд энджин"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-project-kirtansplitter",
+      "remember" : true,
+      "source" : "AuraSplitter",
+      "translation" : "AuraSplitter",
+      "translations" : {
+        "Default" : "AuraSplitter",
+        "Dutch" : "KirtanSplitter",
+        "English" : "AuraSplitter",
+        "Russian" : "AuraSplitter"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Aura Splitter",
+        "Aura-Splitter",
+        "аура сплиттер",
+        "аурасплиттер",
+        "аура сплитер"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-term-solaris",
+      "remember" : true,
+      "source" : "Solaris",
+      "translation" : "Solaris",
+      "translations" : {
+        "Default" : "Solaris",
+        "Dutch" : "Solaris",
+        "English" : "Solaris",
+        "Russian" : "Solaris"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Solarys",
+        "соларис",
+        "солярис",
+        "саларис"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-term-synapse",
+      "remember" : true,
+      "source" : "Synapse",
+      "translation" : "Synapse",
+      "translations" : {
+        "Default" : "Synapse",
+        "Dutch" : "Synapse",
+        "English" : "Synapse",
+        "Russian" : "Synapse"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Synaps",
+        "синапс",
+        "синапсе",
+        "синэпс"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-term-geoform",
+      "remember" : true,
+      "source" : "GeoForm",
+      "translation" : "GeoForm",
+      "translations" : {
+        "Default" : "GeoForm",
+        "Dutch" : "GeoForm",
+        "English" : "GeoForm",
+        "Russian" : "GeoForm"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Geo Form",
+        "Geo-Form",
+        "геоформ",
+        "гео форм",
+        "джиоформ"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-term-kris-navigator",
+      "remember" : true,
+      "source" : "Kris (Navigator)",
+      "translation" : "Kris (Navigator)",
+      "translations" : {
+        "Default" : "Kris (Navigator)",
+        "Dutch" : "Kris (Navigator)",
+        "English" : "Kris (Navigator)",
+        "Russian" : "Kris (Navigator)"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Kris Navigator",
+        "крис навигатор",
+        "крис-навигатор"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-iskcon",
+      "remember" : true,
+      "source" : "ISKCON",
+      "translation" : "ИСККОН",
+      "translations" : {
+        "Default" : "ISKCON",
+        "Dutch" : "ISKCON",
+        "English" : "ISKCON",
+        "Russian" : "ИСККОН"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Isckon",
+        "Iskon",
+        "искон",
+        "иском",
+        "ISCON"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-srila-prabhupada",
+      "remember" : true,
+      "source" : "Śrīla Prabhupāda",
+      "translation" : "Шрила Прабхупада",
+      "translations" : {
+        "Default" : "Śrīla Prabhupāda",
+        "Dutch" : "Śrīla Prabhupāda",
+        "English" : "Śrīla Prabhupāda",
+        "Russian" : "Шрила Прабхупада"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Shri La Prabhupada",
+        "Shri-La-Prabhupada",
+        "Shrila-Prabhupada",
+        "Sri La Prabhupada",
+        "Shrila Prabhupada",
+        "Śrīla-Prabhupāda",
+        "Shila Prabhupada",
+        "Srila-Prabhupada",
+        "Shila-Prabhupada",
+        "Srila Prabhupada",
+        "Shrila Prabhupad",
+        "Srila Prabhupad",
+        "Srila-Prabhupad",
+        "Шрилы Пракупада",
+        "Шрила Пракупада",
+        "Шрила Прабупада",
+        "Прабхупада",
+        "Прабупада",
+        "Шрила Прабхупад",
+        "шилла правопада"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-krsna",
+      "remember" : true,
+      "source" : "Kṛṣṇa",
+      "translation" : "Кришна",
+      "translations" : {
+        "Default" : "Kṛṣṇa",
+        "Dutch" : "Kṛṣṇa",
+        "English" : "Kṛṣṇa",
+        "Russian" : "Кришна"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Krishnaa",
+        "Krushna",
+        "Krishna",
+        "Krisna",
+        "Krsna"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-hare-krsna",
+      "remember" : true,
+      "source" : "Hare Kṛṣṇa",
+      "translation" : "Харе Кришна",
+      "translations" : {
+        "Default" : "Hare Kṛṣṇa",
+        "Dutch" : "Hare Kṛṣṇa",
+        "English" : "Hare Kṛṣṇa",
+        "Russian" : "Харе Кришна"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Harry-Krishna",
+        "Harry Krishna",
+        "Hari-Krishna",
+        "Hari Krishna",
+        "Harekrishna",
+        "Hare Krsna",
+        "Hare-Kṛṣṇa",
+        "Hare-Krsna"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-kirtana",
+      "remember" : true,
+      "source" : "kīrtana",
+      "translation" : "киртан",
+      "translations" : {
+        "Default" : "kīrtana",
+        "Dutch" : "kīrtana",
+        "English" : "kīrtana",
+        "Russian" : "киртан"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Keertana",
+        "kirtana",
+        "Kiirtan",
+        "Kirtan",
+        "киртана",
+        "кийртан"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-prasadam",
+      "remember" : true,
+      "source" : "prasādam",
+      "translation" : "прасадам",
+      "translations" : {
+        "Default" : "prasādam",
+        "Dutch" : "prasādam",
+        "English" : "prasādam",
+        "Russian" : "прасадам"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Prasaadam",
+        "prasadam",
+        "Prashad",
+        "Prasaad",
+        "Prasad",
+        "прасад",
+        "прашадам"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-mayapur",
+      "remember" : true,
+      "source" : "Māyāpur",
+      "translation" : "Майяпур",
+      "translations" : {
+        "Default" : "Māyāpur",
+        "Dutch" : "Māyāpur",
+        "English" : "Māyāpur",
+        "Russian" : "Майяпур"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Maya-pur",
+        "Mayapura",
+        "Maya pur",
+        "Mayapur",
+        "Maapur"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-vrndavana",
+      "remember" : true,
+      "source" : "Vṛndāvana",
+      "translation" : "Вриндаван",
+      "translations" : {
+        "Default" : "Vṛndāvana",
+        "Dutch" : "Vṛndāvana",
+        "English" : "Vṛndāvana",
+        "Russian" : "Вриндаван"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Vrindavana",
+        "Vrindaban",
+        "Vrindavan",
+        "Vrndavana",
+        "Brindavan"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-harinama",
+      "remember" : true,
+      "source" : "harināma",
+      "translation" : "харинама",
+      "translations" : {
+        "Default" : "harināma",
+        "Dutch" : "harināma",
+        "English" : "harināma",
+        "Russian" : "харинама"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Hari-nama",
+        "Hari nama",
+        "Harinama",
+        "Harinam"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-starter-vaishnava-jagannatha",
+      "remember" : true,
+      "source" : "Jagannātha",
+      "translation" : "Джаганнатха",
+      "translations" : {
+        "Default" : "Jagannātha",
+        "Dutch" : "Jagannātha",
+        "English" : "Jagannātha",
+        "Russian" : "Джаганнатха"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Jaggannatha",
+        "Jagannatha",
+        "Jaganaath",
+        "Jagannath",
+        "Jaganath"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-vaishnava-uddhava",
+      "remember" : true,
+      "source" : "Uddhava",
+      "translation" : "Уддхава",
+      "translations" : {
+        "Default" : "Uddhava",
+        "Dutch" : "Uddhava",
+        "English" : "Uddhava",
+        "Russian" : "Уддхава"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Udhava",
+        "Удхава",
+        "удхова",
+        "удова",
+        "уддова",
+        "Удхви",
+        "Удхаву"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T00:00:00.000Z",
+      "id" : "custom-vaishnava-kadamba-kanana-swami",
+      "remember" : true,
+      "source" : "Kadamba Kanana Swami",
+      "translation" : "Кадамба Канана Свами",
+      "translations" : {
+        "Default" : "Kadamba Kanana Swami",
+        "Dutch" : "Kadamba Kanana Swami",
+        "English" : "Kadamba Kanana Swami",
+        "Russian" : "Кадамба Канана Свами"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Kadamba Kanan Swami",
+        "KKS",
+        "Кадамба Канан Свами",
+        "Кадамба Канана"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-02T08:45:57.606Z",
+      "id" : "DB7A07F0-2CD7-43F6-8DBE-BFCE120A2600",
+      "remember" : true,
+      "source" : "Prabhu",
+      "translation" : "Прабху",
+      "translations" : {
+        "Default" : "Prabhu",
+        "Dutch" : "Prabhu",
+        "English" : "Prabhu",
+        "Russian" : "Прабху"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Прабу",
+        "праву",
+        "prabu",
+        "Про буй"
+      ]
+    },
+    {
+      "createdAt" : "2026-07-13T15:21:30.792Z",
+      "id" : "A78F252B-49DB-4CC3-9D9B-5F10ACE56E35",
+      "remember" : true,
+      "source" : "Grok",
+      "translation" : "Grok",
+      "translations" : {
+        "Default" : "Grok",
+        "English" : "Grok",
+        "Russian" : "Grok"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "грог",
+        "грок",
+        "Groq",
+        "Groqe",
+        "грук",
+        "grog"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:27:07.924Z",
+      "id" : "219B03B2-5869-46D0-B236-06ECB1451B49",
+      "remember" : true,
+      "source" : "кодекса; codeks; кодекс",
+      "translation" : "Codex",
+      "translations" : {
+        "Default" : "кодекса; codeks; кодекс",
+        "English" : "кодекса; codeks; кодекс",
+        "Russian" : "Codex"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "кодекса"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:33:54.758Z",
+      "id" : "55833AAE-BFB2-4E13-BCD0-7E590783F663",
+      "remember" : true,
+      "source" : "Skills",
+      "translation" : "Skills",
+      "translations" : {
+        "Default" : "Skills",
+        "English" : "Skills",
+        "Russian" : "Skills"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "скиллы"
+      ]
+    },
+    {
+      "createdAt" : "2026-07-13T15:53:03.386Z",
+      "id" : "8F451A8C-CAEB-4609-8739-06E5B5420DB6",
+      "remember" : true,
+      "source" : "orchestrator",
+      "translation" : "orchestrator",
+      "translations" : {
+        "Default" : "orchestrator",
+        "English" : "orchestrator",
+        "Russian" : "orchestrator"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "оркестратором"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:54:29.587Z",
+      "id" : "36D02824-373B-4BE0-9A33-6298E57E457C",
+      "remember" : true,
+      "source" : "Hy3",
+      "translation" : "Hy3",
+      "translations" : {
+        "Default" : "Hy3",
+        "English" : "Hy3",
+        "Russian" : "Hy3"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "чуай 3",
+        "high 3"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:56:05.171Z",
+      "id" : "F799641C-74C9-4A9E-AA04-C790A993EE0D",
+      "remember" : true,
+      "source" : "Gemini",
+      "translation" : "Gemini",
+      "translations" : {
+        "Default" : "Gemini",
+        "English" : "Gemini",
+        "Russian" : "Gemini"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "джемини",
+        "Джеймини"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-13T15:58:04.688Z",
+      "id" : "1E3F7805-D608-4D28-A100-9768184F892F",
+      "remember" : true,
+      "source" : "Mandala Studio",
+      "translation" : "Mandala Studio",
+      "translations" : {
+        "Default" : "Mandala Studio",
+        "English" : "Mandala Studio",
+        "Russian" : "Mandala Studio"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "мандалу studio"
+      ]
+    },
+    {
+      "category" : "Vaishnava (core)",
+      "createdAt" : "2026-07-13T15:59:13.472Z",
+      "id" : "75790998-A85B-472D-9B31-04808F678667",
+      "remember" : true,
+      "source" : "Kirtan",
+      "translation" : "Kirtan",
+      "translations" : {
+        "Default" : "Kirtan",
+        "English" : "Kirtan",
+        "Russian" : "Kirtan"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "киртон"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-13T15:59:51.172Z",
+      "id" : "8D5BA446-71B9-4EE6-A49D-EFD615C17BDC",
+      "remember" : true,
+      "source" : "splitter",
+      "translation" : "splitter",
+      "translations" : {
+        "Default" : "splitter",
+        "English" : "splitter",
+        "Russian" : "splitter"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "сплиттер"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-14T09:16:29.566Z",
+      "id" : "843E42FF-25F7-417E-A7F2-9FB535462BF5",
+      "remember" : true,
+      "source" : "iZotope RX",
+      "translation" : "iZotope RX",
+      "translations" : {
+        "Default" : "iZotope RX",
+        "English" : "iZotope RX",
+        "Russian" : "iZotope RX"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "айзотоп rx",
+        "вайзотоп и rx",
+        "изотоп rx"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-21T04:57:33.951Z",
+      "id" : "B5F316C9-4C00-4FFD-B657-AEFFF6653600",
+      "remember" : true,
+      "source" : "Qwen Code",
+      "translation" : "Qwen Code",
+      "translations" : {
+        "Default" : "Qwen Code",
+        "English" : "Qwen Code",
+        "Russian" : "Qwen Code"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "квн-код",
+        "QN-код"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-21T10:56:51.883Z",
+      "id" : "FCAA5532-98FF-448D-A520-C97CB2EED620",
+      "remember" : true,
+      "source" : "Qwen 3.8 Max Preview",
+      "translation" : "Qwen 3.8 Max Preview",
+      "translations" : {
+        "Default" : "Qwen 3.8 Max Preview",
+        "English" : "Qwen 3.8 Max Preview",
+        "Russian" : "Qwen 3.8 Max Preview"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "квн 3.8 макс превью",
+        "QN 3.8 Max превью",
+        "QN 3.8 Max Preview"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-21T10:57:20.983Z",
+      "id" : "FA251E39-137B-475E-87DA-B1D5FE4D29F6",
+      "remember" : true,
+      "source" : "Qwen",
+      "translation" : "Qwen",
+      "translations" : {
+        "Default" : "Qwen",
+        "English" : "Qwen",
+        "Russian" : "Qwen"
+      },
+      "updatedAt" : "2026-07-31T08:45:07.542Z",
+      "variants" : [
+        "квн",
+        "Квен",
+        "QAN",
+        "QN",
+        "KVM",
+        "КВНа",
+        "Quven"
+      ]
+    },
+    {
+      "createdAt" : "2026-07-21T11:07:54.034Z",
+      "id" : "96B05644-1931-4D3F-8C49-E435A8317F0F",
+      "remember" : true,
+      "source" : "Kimi K3",
+      "translation" : "Kimi K3",
+      "translations" : {
+        "Default" : "Kimi K3",
+        "English" : "Kimi K3",
+        "Russian" : "Kimi K3"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "Кеми"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-23T09:21:20.758Z",
+      "id" : "AFE99A50-90A8-4763-B20E-7E1AF0F90A49",
+      "remember" : true,
+      "source" : "Ghostty",
+      "translation" : "Ghostty",
+      "translations" : {
+        "Default" : "Ghostty",
+        "English" : "Ghostty",
+        "Russian" : "Ghostty"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "гости"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-07-23T14:22:39.077Z",
+      "id" : "D75F6B87-A1D7-4EDE-A57A-3FE2A43C301D",
+      "remember" : true,
+      "source" : "Palmier Pro",
+      "translation" : "Palmier Pro",
+      "translations" : {
+        "Default" : "Palmier Pro",
+        "English" : "Palmier Pro",
+        "Russian" : "Palmier Pro"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "пол мир про"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-28T07:35:37.643Z",
+      "id" : "7D6211D4-0468-47CA-9C63-9D33E9644126",
+      "remember" : true,
+      "source" : "Gemma",
+      "translation" : "Gemma",
+      "translations" : {
+        "Default" : "Gemma",
+        "English" : "Gemma",
+        "Russian" : "Gemma"
+      },
+      "updatedAt" : "2026-07-30T04:41:40.518Z",
+      "variants" : [
+        "джема"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-30T14:13:21.893Z",
+      "id" : "8AB15485-DF80-4DC4-BE03-713560A0D6B8",
+      "remember" : true,
+      "source" : "Parakeet",
+      "translation" : "",
+      "translations" : {
+        "English" : "Parakeet"
+      },
+      "updatedAt" : "2026-07-31T05:55:11.280Z",
+      "variants" : [
+        "паракитом",
+        "Прокид",
+        "паракетом",
+        "паракид",
+        "паракет",
+        "паракит"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-30T14:51:28.279Z",
+      "id" : "A504B194-311C-4556-A3DD-9E4C7219E657",
+      "remember" : true,
+      "source" : "Codex",
+      "translation" : "",
+      "translations" : {
+        "English" : "Codex"
+      },
+      "updatedAt" : "2026-07-30T14:52:39.696Z",
+      "variants" : [
+        "кодекса; codeks; кодекс",
+        "codec"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-31T05:13:10.576Z",
+      "id" : "FF0B8CD2-088A-4D11-9EFD-F0E667380481",
+      "remember" : true,
+      "source" : "HUD",
+      "translation" : "",
+      "translations" : {
+        "English" : "HUD"
+      },
+      "updatedAt" : "2026-07-31T05:13:10.576Z",
+      "variants" : [
+        "худ"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-07-31T05:13:49.013Z",
+      "id" : "B50BD834-FB5D-4928-91D4-A3A825017BFF",
+      "remember" : true,
+      "source" : "Graphify",
+      "translation" : "",
+      "translations" : {
+        "English" : "Graphify"
+      },
+      "updatedAt" : "2026-07-31T05:14:05.891Z",
+      "variants" : [
+        "Grafi Fi",
+        "Grafi"
+      ]
+    }
+  ],
+  "schemaVersion" : 2
+}

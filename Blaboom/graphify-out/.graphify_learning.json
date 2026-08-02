@@ -1,0 +1,101 @@
+{
+  "generated_at": "2026-08-01T08:58:55.074140+00:00",
+  "nodes": {
+    "package": {
+      "code_fingerprint": "b71be31ef65b919e7ccf272a9bad1b8580dde2c77a9fe6f27a2fb090601fb3c7",
+      "label": "Package.swift",
+      "last": "2026-08-01T08:50:27.116360+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-01T08:50:27.116360+00:00",
+          "outcome": "useful",
+          "q": "Какой округлый системный шрифт использовать в заголовке Blaboom без контейнера, вложения файла и установки пользователем?"
+        }
+      ],
+      "score": 0.999864172,
+      "source_file": "Package.swift",
+      "status": "tentative",
+      "uses": 1
+    },
+    "sources_nativeblaboom_views_components_blaboomwordmarkview_blaboomtitlewordmarkview": {
+      "code_fingerprint": "67ec5d7640d5656b7bdef399e0255615138cc274485760dda3c59f26453b31ba",
+      "label": "BlaboomTitleWordmarkView",
+      "last": "2026-08-01T08:58:03.550561+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-01T08:58:03.550561+00:00",
+          "outcome": "useful",
+          "q": "Уменьшить заголовок BLABOOM на 30 процентов и убрать контейнер-капсулу"
+        },
+        {
+          "date": "2026-08-01T08:54:50.444576+00:00",
+          "outcome": "useful",
+          "q": "Поставить SF Pro Rounded в заголовок Blaboom вместо Comic Sans"
+        },
+        {
+          "date": "2026-08-01T08:50:27.116360+00:00",
+          "outcome": "useful",
+          "q": "Какой округлый системный шрифт использовать в заголовке Blaboom без контейнера, вложения файла и установки пользователем?"
+        }
+      ],
+      "score": 2.999784978,
+      "source_file": "Sources/NativeBlaboom/Views/Components/BlaboomWordmarkView.swift",
+      "status": "preferred",
+      "uses": 3
+    },
+    "sources_nativeblaboom_views_notedetailview_notedetailview": {
+      "code_fingerprint": "e55b137f79177ae3296a46073dd0a54884702ecd4dcef1a5d4ab9f8fa742f2ba",
+      "label": "NoteDetailView",
+      "last": "2026-08-01T08:58:03.550561+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-01T08:58:03.550561+00:00",
+          "outcome": "useful",
+          "q": "Уменьшить заголовок BLABOOM на 30 процентов и убрать контейнер-капсулу"
+        }
+      ],
+      "score": 0.999986222,
+      "source_file": "Sources/NativeBlaboom/Views/NoteDetailView.swift",
+      "status": "tentative",
+      "uses": 1
+    },
+    "system_font_comic_sans_ms_bold": {
+      "code_fingerprint": "67ec5d7640d5656b7bdef399e0255615138cc274485760dda3c59f26453b31ba",
+      "label": "ComicSansMS-Bold",
+      "last": "2026-08-01T08:50:27.116360+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-01T08:50:27.116360+00:00",
+          "outcome": "useful",
+          "q": "Какой округлый системный шрифт использовать в заголовке Blaboom без контейнера, вложения файла и установки пользователем?"
+        }
+      ],
+      "score": 0.999864172,
+      "source_file": "Sources/NativeBlaboom/Views/Components/BlaboomWordmarkView.swift",
+      "status": "tentative",
+      "uses": 1
+    },
+    "tests_nativeblaboomcoretests_releaseidentitytests": {
+      "code_fingerprint": "37afb6ff5877a9922b372cd02c86f00f002863027c092d8de8fd92d6c7742764",
+      "label": "ReleaseIdentityTests.swift",
+      "last": "2026-08-01T08:58:03.550561+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-01T08:58:03.550561+00:00",
+          "outcome": "useful",
+          "q": "Уменьшить заголовок BLABOOM на 30 процентов и убрать контейнер-капсулу"
+        },
+        {
+          "date": "2026-08-01T08:54:50.444576+00:00",
+          "outcome": "useful",
+          "q": "Поставить SF Pro Rounded в заголовок Blaboom вместо Comic Sans"
+        }
+      ],
+      "score": 1.999920806,
+      "source_file": "Tests/NativeBlaboomCoreTests/ReleaseIdentityTests.swift",
+      "status": "preferred",
+      "uses": 2
+    }
+  },
+  "version": 1
+}

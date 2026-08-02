@@ -1,0 +1,75 @@
+# Blaboom 1.0.3 — live orchestration state
+# Orchestrator owns this file.
+
+current_step: B1
+step_description: >-
+  Language pair store (primary + additional) + LanguagePickerOrder
+  (en → Europe incl. ru/uk → Asia) + migration from legacy prefs + unit tests.
+target_files:
+  - Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift
+  - Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift
+  - Sources/NativeBlaboomCore/Models/GeneralSettings.swift
+  - Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift
+  - Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift
+  - Sources/NativeBlaboomCore/Models/HotkeySettings.swift
+  - Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift
+  - Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift
+  - Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift
+  - Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift
+  - Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift
+  - Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift
+  - Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift
+completed_steps:
+  - B0
+implementation:
+  status: pending
+  attempts: 0
+review:
+  status: pending
+  last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  verdict: null
+  note: ''
+qa:
+  status: pending
+  last_report: AI_Workflow_Kit/docs/AI/REPORT.md
+  suite: null
+  bugs_open: 0
+  note: ''
+next_actor: coder
+track: FOUNDATION
+prior_track: null
+working_roots:
+  - Blaboom
+checkpoint:
+  last_pre_tag: null
+  last_post_tag: null
+  last_commit: null
+plan_files:
+  - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
+  - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
+coder_brief: |
+  B1 — Language pair store + picker order (FOUNDATION)
+
+  Create canonical UserSpeechLanguages (primaryLanguageCode + additionalLanguageCode),
+  migration from old prefs (transcription language / force-target if any), and
+  LanguagePickerOrder:
+    1) English first
+    2) Europe alpha by English name (fr, de, it, pl, pt, ru, es, tr, uk)
+    3) Asia/other (ar, zh, hi, ja, ko)
+  System UI language sentinel separate — not between en and fr.
+
+  Unit tests MUST assert:
+  - en first among ordered speech/UI lists (excluding System)
+  - ru is NOT index 1
+  - europe before asia (ru before zh)
+  - additional may equal primary
+  - migration round-trip
+
+  Terminology: primary + additional — NEVER "target always output" in API names or docs.
+
+  Out of scope: Onboarding UI (B2), Settings chrome (B3), Help (B4), i18n maps (B5), Canary (B6+).
+
+  Verify: cd Blaboom && swift test
+notes: |
+  B0 closed by Orchestrator: AI_Workflow_Kit fully adapted from plan → B0–B12 workflow.
+  First Coder kick = B1 product foundation.

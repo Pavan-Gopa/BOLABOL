@@ -1,54 +1,62 @@
 # Blaboom 1.0.3 — live orchestration state
 # Orchestrator owns this file.
 
-current_step: B1
+current_step: B2
 step_description: >-
-  Language pair store + LanguagePickerOrder. Review APPROVED; awaiting Tester QA.
+  Onboarding: after UI language, ask primary then additional speech languages;
+  persist to same store as Settings; same-as-primary option; LanguagePickerOrder.
 target_files:
+  - Sources/NativeBlaboom/Views/OnboardingView.swift
+  - Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift
+  - Sources/NativeBlaboomCore/Services/AppText.swift
   - Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift
   - Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift
   - Sources/NativeBlaboomCore/Models/GeneralSettings.swift
-  - Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift
-  - Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift
-  - Sources/NativeBlaboomCore/Models/HotkeySettings.swift
-  - Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift
-  - Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift
-  - Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift
+  - Tests/NativeBlaboomCoreTests/OnboardingLocalizationTests.swift
   - Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift
   - Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift
-  - Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift
-  - Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift
 completed_steps:
   - B0
+  - B1
 implementation:
-  status: waiting_review
+  status: pending
   attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: 'Reviewer re-ran 449 tests green; checklist 1–9 pass. Nice-to-have: gitignore graphify cache.'
+  verdict: null
+  note: ''
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: B1
+  suite: null
   bugs_open: 0
   note: ''
-next_actor: tester
-track: FOUNDATION
-prior_track: null
+next_actor: coder
+track: UX
+prior_track: FOUNDATION
 working_roots:
   - Blaboom
 checkpoint:
-  last_pre_tag: blaboom/pre-B1
-  last_post_tag: blaboom/B0-done
-  last_commit: 4ad65c9
+  last_pre_tag: blaboom/pre-B2
+  last_post_tag: blaboom/B1-done
+  last_commit: acaa031
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
 coder_brief: |
-  B1 review approved — Tester validates suite + B1 invariants before POST.
+  B2 — Onboarding primary + additional (UX)
+
+  After UI-language step, add primary + additional speech language steps
+  (or one screen with two blocks). Persist via GeneralSettingsStore to
+  UserSpeechLanguages (B1). Use LanguagePickerOrder for speech lists.
+  EN AppText keys only for new strings (full 15-locale maps in B5).
+  Option: same as primary. Copy must NOT say "target always output".
+
+  Out of scope: Settings chrome (B3), Help (B4), full i18n (B5), Canary.
+
+  Verify: swift test
 notes: |
-  Reviewer 2026-08-02: [APPROVED]. No must-fix.
-  Nice-to-have deferred (graphify cache gitignore) — optional later, not blocking B1.
-  After Tester green: Orchestrator POST B1, graphify, open B2, PRE B2, kick Coder.
+  B1 closed: review APPROVED, qa_green (449 tests + run_all 14/14).
+  Tags: blaboom/B1-done, blaboom/pre-B2.
+  Graphify rebuilt (~3908 nodes).

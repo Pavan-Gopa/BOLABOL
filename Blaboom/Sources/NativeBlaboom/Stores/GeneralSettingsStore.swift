@@ -10,7 +10,10 @@ extension Notification.Name {
 
 @MainActor
 final class GeneralSettingsStore: ObservableObject {
-    private static let settingsDefaultsKey = "general.settings"
+    /// Canonical settings blob key. Internal so sibling stores
+    /// (TranscriptionModelStore, HotkeySettingsStore) can read the speech-language
+    /// pair from the same blob (plan §3.3 — single source of truth).
+    static let settingsDefaultsKey = "general.settings"
 
     private let userDefaults: UserDefaults
 
@@ -58,6 +61,16 @@ final class GeneralSettingsStore: ObservableObject {
 
     var overlayVolumePercentage: Int {
         Int((settings.overlay.volume * 100).rounded())
+    }
+
+    /// Canonical speech-language pair (plan §3.3). This is the single source of
+    /// truth for primary + additional; onboarding (B2) and settings (B3) will
+    /// read/write through this accessor.
+    var speechLanguages: UserSpeechLanguages {
+        get { settings.speechLanguages }
+        set {
+            update { $0.speechLanguages = newValue }
+        }
     }
 
     func reset() {
@@ -127,8 +140,46 @@ final class GeneralSettingsStore: ObservableObject {
         else {
             return GeneralSettings()
         }
+
+        // Best-effort migration (plan §3.4): a legacy blob has no
+        // `speechLanguages` key yet, so seed the canonical pair from the old
+        // transcription / force-target prefs and persist it immediately so the
+        // canonical store becomes the source of truth after the first launch.
+        if !Self.payloadContainsSpeechLanguages(data) {
+            settings.speechLanguages = Self.migratedSpeechLanguages(from: userDefaults)
+            if let migrated = try? JSONEncoder().encode(settings) {
+                userDefaults.set(migrated, forKey: settingsDefaultsKey)
+            }
+        }
+
         settings.normalize()
         return settings
+    }
+
+    private static func payloadContainsSpeechLanguages(_ data: Data) -> Bool {
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return false
+        }
+        return object["speechLanguages"] != nil
+    }
+
+    /// Gathers legacy inputs and runs the pure migration in `UserSpeechLanguages`.
+    ///
+    /// - Old transcription language: `TranscriptionModelSettings.languagePreference`
+    ///   (explicit `.language`/`.custom` code seeds primary; `.auto` keeps
+    ///   system-locale default — auto-detect behavior itself is untouched, §4.1).
+    /// - Old force-target language: the `translation.targetLanguage` AppStorage
+    ///   value (a name or code) seeds additional when it differs from primary.
+    private static func migratedSpeechLanguages(from userDefaults: UserDefaults) -> UserSpeechLanguages {
+        var legacyTranscriptionCode: String?
+        if let data = userDefaults.data(forKey: TranscriptionModelStore.settingsDefaultsKey),
+           let modelSettings = try? JSONDecoder().decode(TranscriptionModelSettings.self, from: data) {
+            legacyTranscriptionCode = modelSettings.languagePreference.resolvedSpeechLanguageCode
+        }
+        return UserSpeechLanguages.migrating(
+            legacyTranscriptionCode: legacyTranscriptionCode,
+            legacyTargetLanguageName: userDefaults.string(forKey: "translation.targetLanguage")
+        )
     }
 }
 

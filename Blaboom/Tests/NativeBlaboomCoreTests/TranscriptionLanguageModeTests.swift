@@ -8,6 +8,13 @@ func transcriptionLanguageModeTogglesBetweenAutoAndTarget() {
 }
 
 @Test
+func transcriptionLanguageModeIsCaseIterableInStableOrder() {
+    #expect(TranscriptionLanguageMode.allCases == [.auto, .target])
+    #expect(TranscriptionLanguageMode.auto.id == "auto")
+    #expect(TranscriptionLanguageMode.target.id == "target")
+}
+
+@Test
 func transcriptionLanguageModeRoundTripsRawValue() {
     #expect(TranscriptionLanguageMode(rawValue: "auto") == .auto)
     #expect(TranscriptionLanguageMode(rawValue: "target") == .target)

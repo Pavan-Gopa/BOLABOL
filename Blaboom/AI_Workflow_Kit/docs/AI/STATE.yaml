@@ -3,8 +3,7 @@
 
 current_step: B1
 step_description: >-
-  Language pair store (primary + additional) + LanguagePickerOrder
-  (en → Europe incl. ru/uk → Asia) + migration from legacy prefs + unit tests.
+  Language pair store + LanguagePickerOrder. Review APPROVED; awaiting Tester QA.
 target_files:
   - Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift
   - Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift
@@ -22,20 +21,20 @@ target_files:
 completed_steps:
   - B0
 implementation:
-  status: pending
+  status: waiting_review
   attempts: 0
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: 'Reviewer re-ran 449 tests green; checklist 1–9 pass. Nice-to-have: gitignore graphify cache.'
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: null
+  suite: B1
   bugs_open: 0
   note: ''
-next_actor: coder
+next_actor: tester
 track: FOUNDATION
 prior_track: null
 working_roots:
@@ -43,33 +42,13 @@ working_roots:
 checkpoint:
   last_pre_tag: blaboom/pre-B1
   last_post_tag: blaboom/B0-done
-  last_commit: 126c606
+  last_commit: 4ad65c9
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
 coder_brief: |
-  B1 — Language pair store + picker order (FOUNDATION)
-
-  Create canonical UserSpeechLanguages (primaryLanguageCode + additionalLanguageCode),
-  migration from old prefs (transcription language / force-target if any), and
-  LanguagePickerOrder:
-    1) English first
-    2) Europe alpha by English name (fr, de, it, pl, pt, ru, es, tr, uk)
-    3) Asia/other (ar, zh, hi, ja, ko)
-  System UI language sentinel separate — not between en and fr.
-
-  Unit tests MUST assert:
-  - en first among ordered speech/UI lists (excluding System)
-  - ru is NOT index 1
-  - europe before asia (ru before zh)
-  - additional may equal primary
-  - migration round-trip
-
-  Terminology: primary + additional — NEVER "target always output" in API names or docs.
-
-  Out of scope: Onboarding UI (B2), Settings chrome (B3), Help (B4), i18n maps (B5), Canary (B6+).
-
-  Verify: cd Blaboom && swift test
+  B1 review approved — Tester validates suite + B1 invariants before POST.
 notes: |
-  B0 closed by Orchestrator: AI_Workflow_Kit fully adapted from plan → B0–B12 workflow.
-  First Coder kick = B1 product foundation.
+  Reviewer 2026-08-02: [APPROVED]. No must-fix.
+  Nice-to-have deferred (graphify cache gitignore) — optional later, not blocking B1.
+  After Tester green: Orchestrator POST B1, graphify, open B2, PRE B2, kick Coder.

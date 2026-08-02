@@ -6,7 +6,9 @@ import WhisperKit
 
 @MainActor
 final class TranscriptionModelStore: ObservableObject {
-    private static let settingsDefaultsKey = "transcription.modelSettings"
+    /// Legacy transcription settings blob key. Internal so GeneralSettingsStore
+    /// can seed the canonical speech-language pair from it during B1 migration.
+    static let settingsDefaultsKey = "transcription.modelSettings"
 
     let catalog: TranscriptionModelCatalog
     private let userDefaults: UserDefaults
@@ -77,6 +79,18 @@ final class TranscriptionModelStore: ObservableObject {
         }
 
         return code
+    }
+
+    /// Canonical speech-language pair (plan §3.3). The pair lives in the shared
+    /// GeneralSettings blob; this store only *reads* it so the legacy
+    /// `languagePreference` routing (auto-detect by default, §4.1) stays intact.
+    var speechLanguages: UserSpeechLanguages {
+        guard let data = userDefaults.data(forKey: GeneralSettingsStore.settingsDefaultsKey),
+              let generalSettings = try? JSONDecoder().decode(GeneralSettings.self, from: data)
+        else {
+            return UserSpeechLanguages()
+        }
+        return generalSettings.speechLanguages
     }
 
     func installationState(

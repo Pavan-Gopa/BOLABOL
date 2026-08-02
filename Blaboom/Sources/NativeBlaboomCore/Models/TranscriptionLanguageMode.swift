@@ -5,9 +5,11 @@ import Foundation
 /// - `auto`: the transcription language is detected automatically from the user's speech.
 /// - `target`: the transcription is auto-translated into the configured target language
 ///   (the same behavior as the secondary "force target language" hotkey).
-public enum TranscriptionLanguageMode: String, Codable, Equatable, Sendable {
+public enum TranscriptionLanguageMode: String, CaseIterable, Codable, Equatable, Identifiable, Sendable {
     case auto
     case target
+
+    public var id: String { rawValue }
 
     public func toggled() -> TranscriptionLanguageMode {
         switch self {

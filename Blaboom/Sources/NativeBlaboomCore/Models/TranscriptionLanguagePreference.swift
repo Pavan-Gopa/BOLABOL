@@ -16,6 +16,20 @@ public enum TranscriptionLanguagePreference: Codable, Equatable, Sendable {
         }
     }
 
+    /// The explicit language code carried by this preference, or nil when the
+    /// preference is auto-detection. Used by B1 migration to seed the canonical
+    /// primary language from the legacy transcription preference.
+    public var resolvedSpeechLanguageCode: String? {
+        switch self {
+        case .auto:
+            nil
+        case .language(let code):
+            code
+        case .custom(let code):
+            code
+        }
+    }
+
     private func normalize(_ code: String, fallback: String) -> String {
         let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !normalized.isEmpty else {

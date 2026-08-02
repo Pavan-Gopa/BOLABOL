@@ -280,6 +280,8 @@ public struct GeneralSettings: Codable, Equatable, Sendable {
     public var textFont: TextFontPreference
     public var isAutoArchiveCleanupEnabled: Bool
     public var maxSavedAudioRecordings: Int
+    /// Canonical speech-language pair (primary + additional, plan §3.3).
+    public var speechLanguages: UserSpeechLanguages
 
     public init(
         theme: ThemePreference = .dark,
@@ -291,7 +293,8 @@ public struct GeneralSettings: Codable, Equatable, Sendable {
         textScale: Double = 1,
         textFont: TextFontPreference = .system,
         isAutoArchiveCleanupEnabled: Bool = true,
-        maxSavedAudioRecordings: Int = 50
+        maxSavedAudioRecordings: Int = 50,
+        speechLanguages: UserSpeechLanguages = UserSpeechLanguages()
     ) {
         self.theme = theme
         self.uiScale = uiScale
@@ -303,6 +306,7 @@ public struct GeneralSettings: Codable, Equatable, Sendable {
         self.textFont = textFont
         self.isAutoArchiveCleanupEnabled = isAutoArchiveCleanupEnabled
         self.maxSavedAudioRecordings = maxSavedAudioRecordings
+        self.speechLanguages = speechLanguages
         normalize()
     }
 
@@ -317,6 +321,7 @@ public struct GeneralSettings: Codable, Equatable, Sendable {
         case textFont
         case isAutoArchiveCleanupEnabled
         case maxSavedAudioRecordings
+        case speechLanguages
     }
 
     public init(from decoder: Decoder) throws {
@@ -331,6 +336,10 @@ public struct GeneralSettings: Codable, Equatable, Sendable {
         self.textFont = try container.decodeIfPresent(TextFontPreference.self, forKey: .textFont) ?? .system
         self.isAutoArchiveCleanupEnabled = try container.decodeIfPresent(Bool.self, forKey: .isAutoArchiveCleanupEnabled) ?? true
         self.maxSavedAudioRecordings = try container.decodeIfPresent(Int.self, forKey: .maxSavedAudioRecordings) ?? 50
+        // Absent `speechLanguages` (legacy payload) decodes to fresh-install
+        // defaults; the store layer runs best-effort migration on top.
+        self.speechLanguages = try container.decodeIfPresent(UserSpeechLanguages.self, forKey: .speechLanguages)
+            ?? UserSpeechLanguages()
         normalize()
     }
 

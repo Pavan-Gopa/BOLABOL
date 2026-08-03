@@ -232,69 +232,49 @@ Load HF Core ML package, ASR smoke (EN), AST pair if possible, lang-token audit,
 
 ## B7 — Catalog, presence, download
 
-### Goal
+### Status (1.0.3)
 
-Canary in model catalog; complete-folder presence check; download UX under SharedModelsRoot `canary/…`.
-
-### Done
-
-- [ ] Install detects complete package
+**SKIPPED** — ADR-012. alexwengg Canary Core ML is **NO-GO** (B6). No catalog/download for that artifact in this train.
 
 ### Rollback
 
-`blaboom/pre-B7`
+`blaboom/pre-B7` (not opened)
 
 ---
 
 ## B8 — CanaryCoreMLEngine
 
-### Goal
+### Status (1.0.3)
 
-Full Swift `TranscriptionEngine`: preprocessor / encoder / decoder Core ML, projection + tokenizer, chunking (~14s), errors.
-
-### Done
-
-- [ ] Offline dictate produces text on device (manual or harness)
+**SKIPPED** — ADR-012. No product Canary engine.
 
 ### Rollback
 
-`blaboom/pre-B8`
+`blaboom/pre-B8` (not opened)
 
 ---
 
 ## B9 — Dictation wiring + HUD Canary logic
 
-### Goal
+### Status (1.0.3)
 
-- Session reads primary/additional  
-- Canary: HUD primary letter ↔ additional letter (no A)  
-- Non-Canary: keep A / auto  
-- Request source/target matrix plan §4.2  
-- Glossary + polish **after** text (Canary not polish)
-
-### Done
-
-- [ ] Manual matrix M3–M6 path ready; unit tests for HUD cycle + ASR/AST routing
+**SKIPPED** — ADR-012. Non-Canary HUD A / auto path unchanged (B1–B5 already ship primary+additional store + Help copy that mentions Canary “when available” as future).
 
 ### Rollback
 
-`blaboom/pre-B9`
+`blaboom/pre-B9` (not opened)
 
 ---
 
 ## B10 — Local Models UI + banners
 
-### Goal
+### Status (1.0.3)
 
-Canary card in Local Models; banner that auto language is unavailable when Canary selected.
-
-### Done
-
-- [ ] Settings path complete for Canary selection
+**SKIPPED** — ADR-012. No Canary card / auto-unavailable banner for unshipped engine.
 
 ### Rollback
 
-`blaboom/pre-B10`
+`blaboom/pre-B10` (not opened)
 
 ---
 

@@ -184,3 +184,78 @@ Total B5 Tester delta: **+3 tests, +1 QA script** (467 → 470).
 - No bugs opened. `bugs_open: 0`.
 
 **RESULT: qa_green**
+---
+
+# Step B6 — Canary Core ML spike (Meta Step)
+
+| Field | Value |
+|-------|-------|
+| Step | B6 — Canary spike NO-GO (review approved) |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+
+## Commands run
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Blaboom"
+
+# 1) Full suite
+swift test
+#   ✔ Test run with 470 tests in 4 suites passed (expectation ~470 met)
+
+# 2) Full QA gate (unit tests + structural contract scripts)
+./script/qa/run_all.sh
+#   Passed: 16   Failed: 0
+#   (swift test + 15 check_*.sh contracts — NEW check_b6_canary_spike.sh)
+
+# 3) Spike contract check (standalone re-run)
+bash script/qa/check_b6_canary_spike.sh
+#   OK: B6 spike docs-only NO-GO + zero-Python harness contracts hold
+
+# 4) Optional harness rebuild + short ASR run (models present under scratch/)
+xcrun swiftc -O -parse-as-library -o scratch/canary-spike/bin/CanarySpike docs/canary/harness/CanarySpike.swift
+scratch/canary-spike/bin/CanarySpike scratch/canary-spike/audio/en_short.wav task=asr src=en tgt=en modelRoot=scratch/canary-spike/models
+#   transcript: "To the other, to the other, …" (119 tokens, EOS: false) —
+#   reproduces spike defect D5 (degenerate loop, no content) exactly as documented.
+```
+
+## Pass counts
+
+- **470 tests in 4 suites** — green (470 at B5, no delta; spike is docs-only).
+- QA gate: **16/16 steps passed** (15 pre-existing + 1 new B6 script) — no failures.
+
+## B6 coverage table
+
+| File | Cases | Covers |
+|------|-------|--------|
+| `check_b6_canary_spike.sh` | **NEW** script | Structural contracts: `docs/canary/COREML_SPIKE.md` exists + `/NO-GO/i` verdict + defects D1–D5 + Recommendation section; `docs/canary/harness/CanarySpike.swift` exists + zero Python invocation path (`python3`/`python`/`pip`/`pip3`/`nemo`/`/usr/bin/env`/`Process(`/`executableURL`/`launchPath`), literal "Python" tolerated only in `//` comments |
+| Manual verification | — | `swift test` 470 green; harness rebuild + ASR run reproduces D5; `git status -- Sources Tests` clean |
+
+Total B6 Tester delta: **+1 QA script** (no Swift tests needed — spike is a docs-only meta step with no product code surface to unit-test).
+
+## B6 Must-verify checklist
+
+1. ✅ **`swift test` full suite GREEN (~470)** — `✔ Test run with 470 tests in 4 suites passed` (exact 470, matches B5 baseline and the ~470 expectation).
+2. ✅ **`./script/qa/run_all.sh` GREEN** — `Passed: 16  Failed: 0` (15 pre-existing + new `check_b6_canary_spike.sh`).
+3. ✅ **No Sources/** product Canary integration** — `git status --short -- Sources Tests` empty; `git diff --stat -- Sources` empty; the only "canary" hits in `Sources/**` are pre-existing B4 i18n copy strings (`helpBilingualCanary` in `AppText.swift`, surfaced in `HelpSettingsView.swift`) — UI help text about a future engine, no Core ML/engine code.
+4. ✅ **COREML_SPIKE.md present + contents** — exists; contains `Status: NO-GO`; defect table D1–D5 with evidence; zero-Python pipeline (native Swift/CoreML/Accelerate harness, `swiftc -O -parse-as-library`, no Package target); Recommendation section (do not integrate alexwengg/canary-1b-v2-coreml; keep WhisperKit; FluidInference/FluidAudio or mlx as alternatives; disk-budget note).
+5. ✅ **CanarySpike.swift has no Python invocations** — grep clean for `python3`/`python`/`pip`/`pip3`/`nemo`/`Process(`/`executableURL`/`launchPath`/`/usr/bin/env`; the single "Python" token is the header comment "pure Swift, no Python"; imports are only Accelerate/CoreML/Foundation.
+6. ✅ **Optional harness rebuild + short ASR run** — models present under `scratch/canary-spike/models/` (1.8 GB, gitignored), so the harness was rebuilt and `en_short.wav` (2.50 s < 4.09 s cap) ran: preprocessor 250 mel frames, encoder `encoded_lengths_out=4992` (matches D3), decoder produced the documented 119-token degenerate loop without EOS (matches D5). The NO-GO verdict reproduces on re-run.
+
+## Gap-hunt mapping
+
+| Gap-hunt idea | Status |
+|---------------|--------|
+| Unit test or qa script: `docs/canary/COREML_SPIKE.md` exists + `/NO-GO/i` | **Added** — part of `check_b6_canary_spike.sh` (+ D1–D5 + Recommendation) |
+| qa script: `docs/canary/harness/CanarySpike.swift` exists + greps clean for python\|Python\|pip\|nemo | **Added** — `check_b6_canary_spike.sh` (invocation patterns rejected; comment-only "Python" allowed) |
+| No multi-GB model downloads in CI-style runs | Respected — models already local; script only greps files, never downloads |
+
+## Notes
+
+- Tester made **no product changes** (`Sources/**` untouched) and **no git commit/push**.
+- Harness rebuild verified the spike's own reproduction command works; behavior confirmed unchanged (D3/D5 as documented).
+- `scratch/canary-spike/` remains gitignored per the spike's disk-budget note (delete decision is the orchestrator's, not the tester's).
+- No bugs opened. `bugs_open: 0`.
+
+**RESULT: qa_green**

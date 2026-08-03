@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785757312.0829327,
-    "ast_hash": "bf4ab817ed2515af1f127028294c8280",
+    "mtime": 1785761076.7164497,
+    "ast_hash": "f0dc35c7e2a21b180b583ba0fb1d6dc7",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785759478.580357,
-    "ast_hash": "7000d036de5c6a93ed9b7f622cb35635",
+    "mtime": 1785761899.4440503,
+    "ast_hash": "b91557570f978a18ae1a401eaa405bcc",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -715,9 +715,9 @@
     "semantic_hash": "96c89feddbba9a731af56789d1d3e72b"
   },
   "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift": {
-    "mtime": 1785743538.729119,
-    "ast_hash": "05c2231372a39b10ba27743375fd4a88",
-    "semantic_hash": "05c2231372a39b10ba27743375fd4a88"
+    "mtime": 1785760675.830616,
+    "ast_hash": "241140812c2d7de5d4e29e6ec0eee02d",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabol/Views/Settings/PolishingSettingsView.swift": {
     "mtime": 1785743538.652235,
@@ -890,8 +890,8 @@
     "semantic_hash": "4331541e755d50ba4098cbd62c336a1f"
   },
   "Sources/NativeBolabolCore/Services/AppText.swift": {
-    "mtime": 1785753604.2922714,
-    "ast_hash": "1cf7b0fbdbf0b5a099be59dcf19bf677",
+    "mtime": 1785760596.4925845,
+    "ast_hash": "f85dc07fbb3ad792fc2c3fe08de6498a",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/CloudRawTranscriptionPrompt.swift": {
@@ -1265,9 +1265,9 @@
     "semantic_hash": "f0c037b49333d151a6e85706edf4608f"
   },
   "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift": {
-    "mtime": 1785743537.7816477,
-    "ast_hash": "ef66e82a90d3269c747eb7bf57c692c0",
-    "semantic_hash": "ef66e82a90d3269c747eb7bf57c692c0"
+    "mtime": 1785760796.6366317,
+    "ast_hash": "7f0d278f84c518364794413d2fc67183",
+    "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/SharedModelsAndCatalogsTests.swift": {
     "mtime": 1785743537.4896476,

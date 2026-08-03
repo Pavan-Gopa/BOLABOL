@@ -1,16 +1,18 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S3
+current_step: S4
 step_description: >-
-  AppText EN source keys for onboarding models + language steps + Settings
-  Local Models recommendation copy, fully mapped across all 15 UI locales;
-  localization tests green.
+  Spike Canary 1B v2 FluidInference Core ML via FluidAudio: load models, short
+  audio ASR, latency/RAM, language tokens, chunking, no Python; write GO/NO-GO
+  report at docs/asr/canary-1b/COREML_SPIKE.md. Do not ship product catalog
+  wiring (that is S7+ after Human GO list).
 target_files:
-  - Sources/NativeBolabolCore/Services/AppText.swift
-  - Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift
-  - Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
-  - Tests/NativeBolabolCoreTests/AppTextFullCoverageTests.swift
+  - docs/asr/canary-1b/COREML_SPIKE.md
+  - docs/canary/harness/
+  - scratch/canary-spike/
+  - script/qa/check_b6_canary_spike.sh
+  - AI_Workflow_Kit/docs/DECISIONS.md
 completed_steps:
   - S0
   - S1
@@ -18,6 +20,7 @@ completed_steps:
   - S1b
   - S1c
   - S2
+  - S3
 skipped_steps: []
 implementation:
   status: pending
@@ -30,29 +33,30 @@ review:
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: S3
+  suite: S4
   bugs_open: 0
   note: ''
 next_actor: coder
-track: UX
-prior_track: RENAME
+track: SPIKE
+prior_track: UX
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S2
-  last_post_tag: bolabol/S1c-done
-  last_commit: 5f23a29
+  last_pre_tag: bolabol/pre-S3
+  last_post_tag: bolabol/S2-done
+  last_commit: 60e0158
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  Implement only S3. Fill all 15-locale AppText maps for train keys that still
-  fall back to EN only: onboarding model-card keys (S1c), Settings Local Models
-  recommendation keys (S2), and any S1 language-step keys still missing maps.
-  Keep EN as source of truth; no product UI/logic changes outside AppText.
-  Expand localization tests so new keys resolve non-empty in every locale and
-  avoid target-always terminology. Do not implement S4+ spikes.
+  S4 spike only: evaluate FluidInference/canary-1b-v2-coreml with FluidAudio
+  CanaryManager (or equivalent Swift Core ML harness). Produce
+  docs/asr/canary-1b/COREML_SPIKE.md with GO or NO-GO and evidence.
+  Spike checklist: load · short audio ASR · latency/RAM · lang tokens ·
+  chunking · no Python · honest language list. OS note: int4 needs macOS 15+.
+  Do NOT wire production catalog/UI/engine for Canary (S7–S10). alexwengg
+  artifact is already ADR-012 NO-GO — do not revive it as primary path.
 notes: |
-  S2 POST pending this turn: qa_green 494 tests, QA 21/21, build verify 1.0.4.
-  S2 Reviewer approved; Tester added s2 recalculation test + check_s2_*.sh
-  and fixed S1b/S1c allowlists for Settings topThree.
+  S3 qa_green: 503 tests, QA 22/22, build 1.0.4 verify. Tester added
+  check_s3_i18n_locales.sh + S1 language-step regression tests.
+  UX track S1–S3 complete. Next is Track B spikes starting S4.

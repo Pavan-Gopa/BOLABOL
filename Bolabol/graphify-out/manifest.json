@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785761076.7164497,
-    "ast_hash": "f0dc35c7e2a21b180b583ba0fb1d6dc7",
+    "mtime": 1785774327.0151627,
+    "ast_hash": "66bf789714c9253453eff56feb30696e",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
-    "mtime": 1785757312.081997,
-    "ast_hash": "6fe71433a4cc4718589e457a20a7b5e0",
+    "mtime": 1785773307.8772423,
+    "ast_hash": "ce59b08476ff4470e7a06ec6e9673007",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REVIEW_TEMPLATE.md": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785761899.4440503,
-    "ast_hash": "b91557570f978a18ae1a401eaa405bcc",
+    "mtime": 1785774922.1641283,
+    "ast_hash": "869abb30148a8b69fabf45a5c695aecc",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -890,8 +890,8 @@
     "semantic_hash": "4331541e755d50ba4098cbd62c336a1f"
   },
   "Sources/NativeBolabolCore/Services/AppText.swift": {
-    "mtime": 1785760596.4925845,
-    "ast_hash": "f85dc07fbb3ad792fc2c3fe08de6498a",
+    "mtime": 1785774169.1012876,
+    "ast_hash": "a3673e27c3f8f696a45c53ce6f65e17b",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/CloudRawTranscriptionPrompt.swift": {
@@ -1200,8 +1200,8 @@
     "semantic_hash": "58a2e88cd413c66e82fe1aab227681e4"
   },
   "Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift": {
-    "mtime": 1785753499.952109,
-    "ast_hash": "2d4c68d20b0205b950174f5a7d436afe",
+    "mtime": 1785774193.0692248,
+    "ast_hash": "3f7be3e0bc71052693122e351c742b78",
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/OnboardingModelRecommendationTests.swift": {
@@ -1265,8 +1265,8 @@
     "semantic_hash": "f0c037b49333d151a6e85706edf4608f"
   },
   "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift": {
-    "mtime": 1785760796.6366317,
-    "ast_hash": "7f0d278f84c518364794413d2fc67183",
+    "mtime": 1785774204.477109,
+    "ast_hash": "7b1670102b886aae9199d4baeb4abb0e",
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/SharedModelsAndCatalogsTests.swift": {
@@ -1440,13 +1440,18 @@
     "semantic_hash": ""
   },
   "script/qa/check_s1b_scope.sh": {
-    "mtime": 1785755820.7782435,
-    "ast_hash": "2b5cdf6b3a367840355c258a878bf416",
+    "mtime": 1785773108.7100658,
+    "ast_hash": "7fc5a950cde6745b85a228ce3b692606",
     "semantic_hash": ""
   },
   "script/qa/check_s1c_onboarding_models.sh": {
-    "mtime": 1785755820.7789805,
-    "ast_hash": "aba8336ad44f7d615165694e8d63a476",
+    "mtime": 1785773108.7104127,
+    "ast_hash": "37abd305d10804af85d914b4c76bc9bb",
+    "semantic_hash": ""
+  },
+  "script/qa/check_s2_local_models_settings.sh": {
+    "mtime": 1785773403.324917,
+    "ast_hash": "5a054597f5b08b15729f428f4dfa39f0",
     "semantic_hash": ""
   }
 }

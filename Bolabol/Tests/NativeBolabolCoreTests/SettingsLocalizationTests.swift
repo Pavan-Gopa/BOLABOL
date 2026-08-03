@@ -359,7 +359,7 @@ func primaryAdditionalTerminologyDistinctInSampleLocales() {
 }
 
 /// S2 — Settings local models recommendations keys (plan §9.4).
-/// These are new EN-only keys for S2; full 15-locale maps land in S3.
+/// Full 15-locale maps landed in S3.
 private let s2SettingsLocalModelsKeys: [AppTextKey] = [
     .settingsLocalModelsRecommendedTitle,
     .settingsLocalModelsRecommendedHint,
@@ -386,6 +386,59 @@ func s2SettingsLocalModelsHintMentionsPrimaryAndAdditional() {
             "S2 hint should mention primary and additional languages")
     #expect(!hint.contains("target always"),
             "S2 hint should not use 'target always' terminology")
+}
+
+@Test
+func s2SettingsLocalModelsKeysResolveInEveryLanguage() {
+    // S3 (plan §9.4): the S2 recommendation keys now have full 15-locale maps —
+    // never an empty string or raw-key fallback in any concrete UI language.
+    for language in concreteLanguages {
+        for key in s2SettingsLocalModelsKeys {
+            let value = AppText.localized(key, language: language)
+            #expect(!value.isEmpty, "S2 key \(key.rawValue) resolved empty for \(language.rawValue)")
+            #expect(
+                value != key.rawValue,
+                "S2 key \(key.rawValue) fell back to its raw key for \(language.rawValue)"
+            )
+        }
+    }
+}
+
+@Test
+func s2SettingsLocalModelsKeysDifferFromEnglishInEveryNonEnglishLocale() {
+    // S3: a silent EN fallback in any non-EN locale means a missing translation.
+    let english = UILanguagePreference.english
+    for language in concreteLanguages where language != english {
+        for key in s2SettingsLocalModelsKeys {
+            let localized = AppText.localized(key, language: language)
+            let englishValue = AppText.localized(key, language: english)
+            #expect(
+                localized != key.rawValue,
+                "S2 key \(key.rawValue) missing for \(language.rawValue)"
+            )
+            #expect(
+                localized != englishValue,
+                "S2 key \(key.rawValue) fell back to English for \(language.rawValue)"
+            )
+        }
+    }
+}
+
+@Test
+func s2SettingsLocalModelsCopyAvoidsTargetAlwaysOutputTerminology() {
+    // Plan §3.1 / §9.4: recommendations are an optional display order based on
+    // the primary + additional speech languages — never a forced/target output
+    // promise. Check every locale a user could see (EN fallback included).
+    for language in concreteLanguages {
+        for key in s2SettingsLocalModelsKeys {
+            let value = AppText.localized(key, language: language).lowercased()
+            #expect(!value.contains("target always"))
+            #expect(!value.contains("target output"))
+            #expect(!value.contains("always output"))
+            #expect(!value.contains("always force"))
+            #expect(!value.contains("force output"))
+        }
+    }
 }
 
 /// S2 — Recommendation grouping invariants (structural, not requiring UI render).

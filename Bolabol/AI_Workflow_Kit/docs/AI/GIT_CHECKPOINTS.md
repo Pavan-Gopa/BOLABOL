@@ -28,6 +28,7 @@ cd "/Users/pavan/Documents/AI Projects/Bolabol"
 | Event | Action |
 |-------|--------|
 | Before Coder starts step | `pre <step>` |
+| After every Coder handoff/fix | Graphify rebuild before Reviewer (no checkpoint yet) |
 | After review **approved** + QA **green** | `post <step>` then graphify then open next |
 | Doc-only bootstrap (B0 kit) | post after Orchestrator closes B0 |
 

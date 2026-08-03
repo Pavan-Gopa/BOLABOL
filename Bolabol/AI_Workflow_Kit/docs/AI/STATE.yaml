@@ -3,34 +3,31 @@
 
 current_step: S1b
 step_description: >-
-  Pure ranking OnboardingModelRecommendation.topThree(primary, additional, available)
-  R1/R2/R3 plan §3.5.3; unit tests. No onboarding UI cards yet (S1c).
-  Project brand is Bolabol (rename done).
+  OnboardingModelRecommendation.topThree. Review APPROVED. Awaiting Tester QA.
 target_files:
   - Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift
-  - Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
   - Tests/NativeBolabolCoreTests/OnboardingModelRecommendationTests.swift
-  - Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift
 completed_steps:
   - S0
   - S1
   - RENAME
+  - S1b
 skipped_steps: []
 implementation:
-  status: pending
+  status: done
   attempts: 0
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: 'Reviewer APPROVED pure ranking R1/R2/R3'
 qa:
-  status: pending
+  status: green
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: null
+  suite: S1b
   bugs_open: 0
-  note: ''
-next_actor: coder
+  note: '486 tests in 4 suites; QA 19/19; fresh APP_VERSION=1.0.4 build opened'
+next_actor: orchestrator
 track: UX
 prior_track: RENAME
 working_roots:
@@ -38,13 +35,15 @@ working_roots:
 checkpoint:
   last_pre_tag: bolabol/pre-S1b
   last_post_tag: bolabol/rename-done
-  last_commit: null
+  last_commit: bce3c93
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
-  - BOLABOL_RENAME_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  S1b — OnboardingModelRecommendation.topThree pure function + unit tests.
-  Plan §3.5.3 R1/R2/R3. Paths: NativeBolabolCore (not Blaboom).
+  S1b implementation/review/QA complete. Orchestrator closes POST.
 notes: |
-  RENAME approved + qa_green. Resume ASR UX train at S1b.
+  Graphify baseline refreshed by new Orchestrator on 2026-08-03:
+  full local code-only rebuild, 3613 nodes / 9185 edges,
+  OnboardingModelRecommendation present, 0 stale NativeBlaboom source paths.
+  Tester qa_green: 486 tests, QA 19/19, fresh 1.0.4 app opened.
+  Next: POST bolabol/S1b-done, graphify, then open S1c.

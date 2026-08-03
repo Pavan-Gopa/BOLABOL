@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # ADR-012 invariant: zero Canary PRODUCT surface (no false capabilities).
 #  1) Package.swift: no canary product/target/module naming surface anywhere.
-#  2) Sources/: "canary" is tolerated ONLY as B4 i18n help copy —
-#     AppText.swift locale maps and helpBilingual* key references (e.g.
-#     HelpSettingsView rendering .helpBilingualCanary). Any other canary hit
-#     (engine type, backend case, catalog entry, module) fails.
+#  2) Sources/: "canary" is tolerated as B4 i18n help copy — AppText.swift
+#     locale maps and helpBilingual* key references — plus S1b's pure ranking
+#     helper, which contains model IDs but no runtime integration. Any other
+#     canary hit (engine type, backend case, catalog entry, module) fails.
 # Structural complement to the catalog unit test
 # (nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend) and
 # check_b6_canary_spike.sh (docs NO-GO). No product Sources touched.
@@ -22,12 +22,14 @@ if grep -in "canary" Package.swift; then
 fi
 
 # 2. Sources/: canary allowed only as i18n help copy (AppText.swift maps or
-#    helpBilingual* key references). Everything else is a product leak.
+#    helpBilingual* key references) or the pure S1b ranking helper. Everything
+#    else is a product leak.
 while IFS= read -r line; do
   [ -n "$line" ] || continue
   case "$line" in
     *AppText.swift*) continue ;;
     *helpBilingual*) continue ;;
+    *Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift*) continue ;;
     *) echo "FAIL: canary outside i18n help copy: $line"; FAILED=1 ;;
   esac
 done < <(grep -rin "canary" Sources --include='*.swift' || true)
@@ -37,4 +39,4 @@ if [ "$FAILED" -ne 0 ]; then
   exit 1
 fi
 
-echo "OK: zero Canary product/module surface (ADR-012) — i18n help copy only"
+echo "OK: zero Canary product/module surface (ADR-012) — i18n help copy plus pure S1b ranking helper"

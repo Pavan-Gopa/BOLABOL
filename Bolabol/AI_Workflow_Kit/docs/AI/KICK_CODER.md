@@ -49,6 +49,8 @@ graphify query "<вопрос о коде/зависимостях>" --graph gra
 2. RESULT: waiting_review
 3. Скажи Human ТОЛЬКО: «Готово. Вернись к оркестратору и скажи статус/приступай.»
    НЕ «зови ревью» / не выдавай промпты другим ролям.
+4. Graphify сам не перестраивай: Orchestrator обязан обновить его по твоему diff
+   перед выдачей Reviewer kick.
 ```
 
 ---
@@ -88,6 +90,7 @@ Working directory:
 ### Сдача
 FEEDBACK.md §1–4, RESULT: waiting_review.
 «Готово. Вернись к оркестратору» — НЕ «зови ревью».
+Orchestrator обновит Graphify по этому diff до Reviewer.
 
 Токены: Graphify first — graphify query|explain|path --graph graphify-out/graph.json
 ```

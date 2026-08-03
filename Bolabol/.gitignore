@@ -1,3 +1,7 @@
 # Spike-only artifacts (Canary Core ML spike, docs/canary/COREML_SPIKE.md)
 # ~2 GB model download cache + harness build output — never commit.
 scratch/canary-spike/
+
+# Local snapshots created automatically before a forced Graphify rebuild.
+# The current graph stays in graphify-out/; dated recovery copies are not committed.
+graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/

@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 ONBOARDING="Sources/NativeBolabol/Views/OnboardingView.swift"
+SETTINGS="Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift"
 APPTEXT="Sources/NativeBolabolCore/Services/AppText.swift"
 RANKING="Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift"
 FAILED=0
@@ -75,7 +76,13 @@ while IFS= read -r line; do
   if [[ "$line" == Sources/NativeBolabol/Views/OnboardingView.swift:* ]]; then
     continue
   fi
-  fail "S1c ranking symbol appears outside the helper or onboarding view: $line"
+  if [[ "$line" == "$SETTINGS:"* ]] && {
+    [[ "$line" == *"OnboardingModelRecommendation.topThree("* ]] ||
+    [[ "$line" == *"//"* ]]
+  }; then
+    continue
+  fi
+  fail "ranking symbol appears outside the helper or onboarding/Settings views: $line"
 done < <(grep -RIn --include='*.swift' -E 'OnboardingModelRecommendation|\.topThree\(' Sources || true)
 
 # Cards must be computed from the helper result, not cached in SwiftUI state or

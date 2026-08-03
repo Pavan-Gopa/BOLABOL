@@ -54,6 +54,10 @@ private let settingsKeys: [AppTextKey] = [
     .removeCustomModelHelp, .noNewModelsFound, .foundModelsCount, .cloudDictationUsesGemini,
     // HUD skins
     .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical,
+    // S2 — Settings local models recommendations (plan §9.4)
+    .settingsLocalModelsRecommendedTitle,
+    .settingsLocalModelsRecommendedHint,
+    .settingsLocalModelsAllTitle,
     // B3 — speech-language pair (plan §7.1, §9.4): resolves in every locale
     // via its own 15-locale map (B5).
     .languagePairSectionTitle, .primaryLanguage, .primaryLanguageHint,
@@ -354,3 +358,164 @@ func primaryAdditionalTerminologyDistinctInSampleLocales() {
     }
 }
 
+/// S2 — Settings local models recommendations keys (plan §9.4).
+/// These are new EN-only keys for S2; full 15-locale maps land in S3.
+private let s2SettingsLocalModelsKeys: [AppTextKey] = [
+    .settingsLocalModelsRecommendedTitle,
+    .settingsLocalModelsRecommendedHint,
+    .settingsLocalModelsAllTitle,
+]
+
+@Test
+func s2SettingsLocalModelsKeysResolveInEnglish() {
+    for key in s2SettingsLocalModelsKeys {
+        let value = AppText.localized(key, language: .english)
+        #expect(!value.isEmpty, "S2 key \(key.rawValue) has no English translation")
+        #expect(
+            value != key.rawValue,
+            "S2 key \(key.rawValue) fell back to its raw key in English"
+        )
+    }
+}
+
+@Test
+func s2SettingsLocalModelsHintMentionsPrimaryAndAdditional() {
+    let english = UILanguagePreference.english
+    let hint = AppText.localized(.settingsLocalModelsRecommendedHint, language: english).lowercased()
+    #expect(hint.contains("primary") && hint.contains("additional"),
+            "S2 hint should mention primary and additional languages")
+    #expect(!hint.contains("target always"),
+            "S2 hint should not use 'target always' terminology")
+}
+
+/// S2 — Recommendation grouping invariants (structural, not requiring UI render).
+/// These assert the shared helper's contract that LocalModelsSettingsView relies on.
+@Test
+func onboardingModelRecommendationTopThreeReturnsUniqueModels() {
+    let primary = "en"
+    let additional = "ru"
+    let available = TranscriptionModelCatalog.nativeWhisperKit.models
+
+    let recommended = OnboardingModelRecommendation.topThree(
+        primary: primary,
+        additional: additional,
+        available: available
+    )
+
+    // TopThree returns up to 3 unique models
+    #expect(recommended.count <= 3, "topThree should return at most 3 models")
+
+    let uniqueIDs = Set(recommended.map(\.id))
+    #expect(uniqueIDs.count == recommended.count,
+            "topThree should not contain duplicate models")
+
+    // Recommended models must be from the available catalog
+    for model in recommended {
+        #expect(available.contains(where: { $0.id == model.id }),
+                "Recommended model \(model.id) not found in catalog")
+    }
+}
+
+@Test
+func onboardingModelRecommendationTopThreeWithDifferentLanguagePairs() {
+    let available = TranscriptionModelCatalog.nativeWhisperKit.models
+
+    // Case 1: Russian primary — gigaAMRussian should rank first if available
+    let ruPrimary = OnboardingModelRecommendation.topThree(
+        primary: "ru",
+        additional: "en",
+        available: available
+    )
+    // Case 2: English primary, Russian additional — should still rank for ru
+    let ruAdditional = OnboardingModelRecommendation.topThree(
+        primary: "en",
+        additional: "ru",
+        available: available
+    )
+    // Case 3: Both canary-flash languages (en + de)
+    let canaryFlash = OnboardingModelRecommendation.topThree(
+        primary: "en",
+        additional: "de",
+        available: available
+    )
+    // Case 4: Neither primary nor additional is Russian or canary-flash
+    let other = OnboardingModelRecommendation.topThree(
+        primary: "fr",
+        additional: "es",
+        available: available
+    )
+
+    // Each call should return up to 3 models
+    for result in [ruPrimary, ruAdditional, canaryFlash, other] {
+        #expect(result.count <= 3)
+        let ids = Set(result.map(\.id))
+        #expect(ids.count == result.count, "No duplicates in result")
+    }
+
+    // The ranking order differs based on language pair
+    // (We don't assert exact IDs to avoid brittleness, but verify the
+    // helper is being invoked and returns valid catalog models)
+    for result in [ruPrimary, ruAdditional, canaryFlash, other] {
+        for model in result {
+            #expect(available.contains(where: { $0.id == model.id }))
+        }
+    }
+}
+
+@Test
+func s2RecommendationRecalculatesWhenSpeechPairChanges() {
+    let available = TranscriptionModelCatalog.nativeWhisperKit.models
+
+    let compactPair = OnboardingModelRecommendation.topThree(
+        primary: "en",
+        additional: "de",
+        available: available
+    )
+    let broadPair = OnboardingModelRecommendation.topThree(
+        primary: "hi",
+        additional: "en",
+        available: available
+    )
+
+    #expect(compactPair.map(\.id) == [
+        "whisperkit-large-v3-full",
+        "whisperkit-large-v3-turbo"
+    ])
+    #expect(broadPair.map(\.id) == [
+        "whisperkit-large-v3-full",
+        "whisperkit-large-v3-turbo",
+        "parakeet-tdt-06b-v3"
+    ])
+    #expect(compactPair.map(\.id) != broadPair.map(\.id))
+}
+
+@Test
+func recommendedAndRemainingPartitionFullCatalog() {
+    // This test mirrors the LocalModelsSettingsView logic:
+    // recommendedModels + remainingModels == full catalog, no overlaps.
+    let speech = UserSpeechLanguages(primaryLanguageCode: "en", additionalLanguageCode: "ru")
+    let available = TranscriptionModelCatalog.nativeWhisperKit.models
+
+    let recommended = OnboardingModelRecommendation.topThree(
+        primary: speech.primaryLanguageCode,
+        additional: speech.additionalLanguageCode,
+        available: available
+    )
+    let recommendedIDs = Set(recommended.map(\.id))
+    let remaining = available.filter { !recommendedIDs.contains($0.id) }
+
+    // Combined count equals catalog count
+    #expect(recommended.count + remaining.count == available.count,
+            "Recommended + remaining should partition the full catalog")
+
+    // No overlap
+    let remainingIDs = Set(remaining.map(\.id))
+    #expect(recommendedIDs.isDisjoint(with: remainingIDs),
+            "Recommended and remaining should be disjoint sets")
+
+    // Every model appears exactly once across both groups
+    let combined = recommended + remaining
+    let combinedIDs = Set(combined.map(\.id))
+    #expect(combinedIDs.count == available.count,
+            "Every catalog model should appear exactly once")
+}

@@ -7,6 +7,23 @@ struct LocalModelsSettingsView: View {
     @EnvironmentObject private var transcriptionModelStore: TranscriptionModelStore
     @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
 
+    /// Computed recommendations using the shared ranking helper from OnboardingModelRecommendation.
+    /// Recalculates on every render so language-pair changes in Settings update immediately.
+    private var recommendedModels: [TranscriptionModelDescriptor] {
+        let speech = generalSettingsStore.speechLanguages
+        return OnboardingModelRecommendation.topThree(
+            primary: speech.primaryLanguageCode,
+            additional: speech.additionalLanguageCode,
+            available: transcriptionModelStore.models
+        )
+    }
+
+    /// Remaining models after removing recommended ones (each model appears exactly once).
+    private var remainingModels: [TranscriptionModelDescriptor] {
+        let recommendedIDs = Set(recommendedModels.map(\.id))
+        return transcriptionModelStore.models.filter { !recommendedIDs.contains($0.id) }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Backend: Local Whisper vs Cloud Gemini (no Apple Speech)
@@ -60,8 +77,26 @@ struct LocalModelsSettingsView: View {
             if transcriptionModelStore.settings.backend == .localWhisper {
                 ScrollView {
                     LazyVStack(spacing: 12) {
-                        ForEach(transcriptionModelStore.models) { model in
-                            TranscriptionModelRow(model: model)
+                        // Recommended section (topThree from shared helper)
+                        if !recommendedModels.isEmpty {
+                            SectionHeader(
+                                title: generalSettingsStore.text(.settingsLocalModelsRecommendedTitle),
+                                hint: generalSettingsStore.text(.settingsLocalModelsRecommendedHint)
+                            )
+                            ForEach(recommendedModels) { model in
+                                TranscriptionModelRow(model: model)
+                            }
+                        }
+
+                        // Full catalog (remaining models)
+                        if !remainingModels.isEmpty {
+                            SectionHeader(
+                                title: generalSettingsStore.text(.settingsLocalModelsAllTitle),
+                                hint: nil
+                            )
+                            ForEach(remainingModels) { model in
+                                TranscriptionModelRow(model: model)
+                            }
                         }
                     }
                     .padding(.vertical, 4)
@@ -300,5 +335,30 @@ private struct ModelMetaPill: View {
         }
         .font(.caption)
         .foregroundStyle(.secondary)
+    }
+}
+
+private struct SectionHeader: View {
+    let title: String
+    let hint: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+                .tracking(0.5)
+
+            if let hint {
+                Text(hint)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 4)
+        .padding(.bottom, 4)
     }
 }

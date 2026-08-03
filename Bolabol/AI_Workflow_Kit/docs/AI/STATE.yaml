@@ -1,20 +1,23 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S2
+current_step: S3
 step_description: >-
-  Settings Local Models: language-aware Recommended for you group from the
-  shared topThree helper, followed by the remaining full catalog without duplicates.
+  AppText EN source keys for onboarding models + language steps + Settings
+  Local Models recommendation copy, fully mapped across all 15 UI locales;
+  localization tests green.
 target_files:
-  - Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift
   - Sources/NativeBolabolCore/Services/AppText.swift
+  - Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift
   - Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
+  - Tests/NativeBolabolCoreTests/AppTextFullCoverageTests.swift
 completed_steps:
   - S0
   - S1
   - RENAME
   - S1b
   - S1c
+  - S2
 skipped_steps: []
 implementation:
   status: pending
@@ -27,7 +30,7 @@ review:
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: S2
+  suite: S3
   bugs_open: 0
   note: ''
 next_actor: coder
@@ -43,14 +46,13 @@ plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  Implement only S2. In Settings -> Local Models, derive the leading
-  recommendations from the shared topThree helper and show the rest of the
-  catalog afterward, with every model exactly once. Recommendations are
-  presentation only: never auto-activate, download, or change backend.
-  Add EN Settings copy and focused tests. Do not implement S3/S4+ or S12.
+  Implement only S3. Fill all 15-locale AppText maps for train keys that still
+  fall back to EN only: onboarding model-card keys (S1c), Settings Local Models
+  recommendation keys (S2), and any S1 language-step keys still missing maps.
+  Keep EN as source of truth; no product UI/logic changes outside AppText.
+  Expand localization tests so new keys resolve non-empty in every locale and
+  avoid target-always terminology. Do not implement S4+ spikes.
 notes: |
-  S1c POST: bolabol/S1c-done at f50963c.
-  S1c qa_green: 488 tests, QA 20/20, fresh 1.0.4 app opened.
-  Graphify refreshed after S1c POST on 2026-08-03: 4198 nodes / 9743 edges.
-  LocalModelsSettingsView already references GeneralSettingsStore and
-  TranscriptionModelStore but does not yet call OnboardingModelRecommendation.
+  S2 POST pending this turn: qa_green 494 tests, QA 21/21, build verify 1.0.4.
+  S2 Reviewer approved; Tester added s2 recalculation test + check_s2_*.sh
+  and fixed S1b/S1c allowlists for Settings topThree.

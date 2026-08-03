@@ -9914,7 +9914,7 @@
       "label": "TranscriptionModelRow",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L120",
+      "source_location": "L155",
       "_origin": "ast"
     },
     {
@@ -9922,7 +9922,7 @@
       "label": ".actionView()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L206",
+      "source_location": "L241",
       "_origin": "ast"
     },
     {
@@ -9938,7 +9938,7 @@
       "label": ".downloadText()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L275",
+      "source_location": "L310",
       "_origin": "ast"
     },
     {
@@ -9954,7 +9954,7 @@
       "label": "ModelMetaPill",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L284",
+      "source_location": "L319",
       "_origin": "ast"
     },
     {
@@ -9963,6 +9963,14 @@
       "file_type": "code",
       "source_file": "",
       "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabol_views_settings_localmodelssettingsview_sectionheader",
+      "label": "SectionHeader",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
+      "source_location": "L341",
       "_origin": "ast"
     },
     {
@@ -18294,11 +18302,35 @@
       "_origin": "ast"
     },
     {
+      "id": "sources_nativebolabolcore_services_apptext_apptextkey_settingslocalmodelsrecommendedtitle",
+      "label": "settingsLocalModelsRecommendedTitle",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L422",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_services_apptext_apptextkey_settingslocalmodelsrecommendedhint",
+      "label": "settingsLocalModelsRecommendedHint",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L423",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_services_apptext_apptextkey_settingslocalmodelsalltitle",
+      "label": "settingsLocalModelsAllTitle",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L424",
+      "_origin": "ast"
+    },
+    {
       "id": "sources_nativebolabolcore_services_apptext_apptextkey_languagepairsectiontitle",
       "label": "languagePairSectionTitle",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L425",
+      "source_location": "L429",
       "_origin": "ast"
     },
     {
@@ -18306,7 +18338,7 @@
       "label": "primaryLanguage",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L426",
+      "source_location": "L430",
       "_origin": "ast"
     },
     {
@@ -18314,7 +18346,7 @@
       "label": "primaryLanguageHint",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L427",
+      "source_location": "L431",
       "_origin": "ast"
     },
     {
@@ -18322,7 +18354,7 @@
       "label": "additionalLanguage",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L428",
+      "source_location": "L432",
       "_origin": "ast"
     },
     {
@@ -18330,7 +18362,7 @@
       "label": "additionalLanguageHint",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L429",
+      "source_location": "L433",
       "_origin": "ast"
     },
     {
@@ -18338,7 +18370,7 @@
       "label": "additionalSameAsPrimary",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L430",
+      "source_location": "L434",
       "_origin": "ast"
     },
     {
@@ -18346,7 +18378,7 @@
       "label": "languagePairEngineNote",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L431",
+      "source_location": "L435",
       "_origin": "ast"
     },
     {
@@ -18354,7 +18386,7 @@
       "label": "settingsGlossary",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L434",
+      "source_location": "L438",
       "_origin": "ast"
     },
     {
@@ -18362,7 +18394,7 @@
       "label": "clearGlossaryTitle",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L435",
+      "source_location": "L439",
       "_origin": "ast"
     },
     {
@@ -18370,7 +18402,7 @@
       "label": "clearGlossary",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L436",
+      "source_location": "L440",
       "_origin": "ast"
     },
     {
@@ -18378,7 +18410,7 @@
       "label": "clearGlossaryMessage",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L437",
+      "source_location": "L441",
       "_origin": "ast"
     },
     {
@@ -18386,7 +18418,7 @@
       "label": "glossaryCleared",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L438",
+      "source_location": "L442",
       "_origin": "ast"
     },
     {
@@ -18394,7 +18426,7 @@
       "label": "transcriptionLanguageSetTo",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L439",
+      "source_location": "L443",
       "_origin": "ast"
     },
     {
@@ -18402,7 +18434,7 @@
       "label": "translation",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L440",
+      "source_location": "L444",
       "_origin": "ast"
     },
     {
@@ -18410,7 +18442,7 @@
       "label": "translationLanguageSetTo",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L441",
+      "source_location": "L445",
       "_origin": "ast"
     },
     {
@@ -18418,7 +18450,7 @@
       "label": "importJSON",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L442",
+      "source_location": "L446",
       "_origin": "ast"
     },
     {
@@ -18426,7 +18458,7 @@
       "label": "importCSV",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L443",
+      "source_location": "L447",
       "_origin": "ast"
     },
     {
@@ -18434,7 +18466,7 @@
       "label": "exportJSON",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L444",
+      "source_location": "L448",
       "_origin": "ast"
     },
     {
@@ -18442,7 +18474,7 @@
       "label": "exportCSV",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L445",
+      "source_location": "L449",
       "_origin": "ast"
     },
     {
@@ -18450,7 +18482,7 @@
       "label": "importExport",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L446",
+      "source_location": "L450",
       "_origin": "ast"
     },
     {
@@ -18458,7 +18490,7 @@
       "label": "search",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L447",
+      "source_location": "L451",
       "_origin": "ast"
     },
     {
@@ -18466,7 +18498,7 @@
       "label": "category",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L448",
+      "source_location": "L452",
       "_origin": "ast"
     },
     {
@@ -18474,7 +18506,7 @@
       "label": "allCategories",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L449",
+      "source_location": "L453",
       "_origin": "ast"
     },
     {
@@ -18482,7 +18514,7 @@
       "label": "newEntry",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L450",
+      "source_location": "L454",
       "_origin": "ast"
     },
     {
@@ -18490,7 +18522,7 @@
       "label": "languageForm",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L451",
+      "source_location": "L455",
       "_origin": "ast"
     },
     {
@@ -18498,7 +18530,7 @@
       "label": "variantsSeparatedBySemicolons",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L452",
+      "source_location": "L456",
       "_origin": "ast"
     },
     {
@@ -18506,7 +18538,7 @@
       "label": "addEntry",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L453",
+      "source_location": "L457",
       "_origin": "ast"
     },
     {
@@ -18514,7 +18546,7 @@
       "label": "entryAdded",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L454",
+      "source_location": "L458",
       "_origin": "ast"
     },
     {
@@ -18522,7 +18554,7 @@
       "label": "jsonImported",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L455",
+      "source_location": "L459",
       "_origin": "ast"
     },
     {
@@ -18530,7 +18562,7 @@
       "label": "csvImported",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L456",
+      "source_location": "L460",
       "_origin": "ast"
     },
     {
@@ -18538,7 +18570,7 @@
       "label": "jsonExported",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L457",
+      "source_location": "L461",
       "_origin": "ast"
     },
     {
@@ -18546,7 +18578,7 @@
       "label": "csvExported",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L458",
+      "source_location": "L462",
       "_origin": "ast"
     },
     {
@@ -18554,7 +18586,7 @@
       "label": "useGlossary",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L459",
+      "source_location": "L463",
       "_origin": "ast"
     },
     {
@@ -18562,7 +18594,7 @@
       "label": "custom",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L460",
+      "source_location": "L464",
       "_origin": "ast"
     },
     {
@@ -18570,7 +18602,7 @@
       "label": "apply",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L461",
+      "source_location": "L465",
       "_origin": "ast"
     },
     {
@@ -18578,7 +18610,7 @@
       "label": "variants",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L462",
+      "source_location": "L466",
       "_origin": "ast"
     },
     {
@@ -18586,7 +18618,7 @@
       "label": "mergeInto",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L463",
+      "source_location": "L467",
       "_origin": "ast"
     },
     {
@@ -18594,7 +18626,7 @@
       "label": "save",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L464",
+      "source_location": "L468",
       "_origin": "ast"
     },
     {
@@ -18602,7 +18634,7 @@
       "label": "searchTerm",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L465",
+      "source_location": "L469",
       "_origin": "ast"
     },
     {
@@ -18610,7 +18642,7 @@
       "label": "noMatchingEntries",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L466",
+      "source_location": "L470",
       "_origin": "ast"
     },
     {
@@ -18618,7 +18650,7 @@
       "label": "addToGlossary",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L467",
+      "source_location": "L471",
       "_origin": "ast"
     },
     {
@@ -18626,7 +18658,7 @@
       "label": "selectedVariant",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L468",
+      "source_location": "L472",
       "_origin": "ast"
     },
     {
@@ -18634,7 +18666,7 @@
       "label": "createNewEntry",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L469",
+      "source_location": "L473",
       "_origin": "ast"
     },
     {
@@ -18642,7 +18674,7 @@
       "label": "applyAs",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L470",
+      "source_location": "L474",
       "_origin": "ast"
     },
     {
@@ -18650,7 +18682,7 @@
       "label": "authorTranscription",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L471",
+      "source_location": "L475",
       "_origin": "ast"
     },
     {
@@ -18658,7 +18690,7 @@
       "label": "autoTranslation",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L472",
+      "source_location": "L476",
       "_origin": "ast"
     },
     {
@@ -18666,7 +18698,7 @@
       "label": "correctLanguageForm",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L473",
+      "source_location": "L477",
       "_origin": "ast"
     },
     {
@@ -18674,7 +18706,7 @@
       "label": "languageAutoTranslationForm",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L474",
+      "source_location": "L478",
       "_origin": "ast"
     },
     {
@@ -18682,7 +18714,7 @@
       "label": "noCategory",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L475",
+      "source_location": "L479",
       "_origin": "ast"
     },
     {
@@ -18690,7 +18722,7 @@
       "label": "addCategory",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L476",
+      "source_location": "L480",
       "_origin": "ast"
     },
     {
@@ -18698,7 +18730,7 @@
       "label": "newCategory",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L477",
+      "source_location": "L481",
       "_origin": "ast"
     },
     {
@@ -18706,7 +18738,7 @@
       "label": "cloudProvider",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L480",
+      "source_location": "L484",
       "_origin": "ast"
     },
     {
@@ -18714,7 +18746,7 @@
       "label": "cloudProviderSubtitle",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L481",
+      "source_location": "L485",
       "_origin": "ast"
     },
     {
@@ -18722,7 +18754,7 @@
       "label": "baseURLLabel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L482",
+      "source_location": "L486",
       "_origin": "ast"
     },
     {
@@ -18730,7 +18762,7 @@
       "label": "baseURLPlaceholder",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L483",
+      "source_location": "L487",
       "_origin": "ast"
     },
     {
@@ -18738,7 +18770,7 @@
       "label": "endpoint",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L484",
+      "source_location": "L488",
       "_origin": "ast"
     },
     {
@@ -18746,7 +18778,7 @@
       "label": "accountBalance",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L485",
+      "source_location": "L489",
       "_origin": "ast"
     },
     {
@@ -18754,7 +18786,7 @@
       "label": "fetchingBalance",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L486",
+      "source_location": "L490",
       "_origin": "ast"
     },
     {
@@ -18762,7 +18794,7 @@
       "label": "refreshOpenRouterBalance",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L487",
+      "source_location": "L491",
       "_origin": "ast"
     },
     {
@@ -18770,7 +18802,7 @@
       "label": "budgetLimit",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L488",
+      "source_location": "L492",
       "_origin": "ast"
     },
     {
@@ -18778,7 +18810,7 @@
       "label": "qwenSubscriptionBanner",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L489",
+      "source_location": "L493",
       "_origin": "ast"
     },
     {
@@ -18786,7 +18818,7 @@
       "label": "apiKeyLabel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L490",
+      "source_location": "L494",
       "_origin": "ast"
     },
     {
@@ -18794,7 +18826,7 @@
       "label": "apiKeysCountLabel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L491",
+      "source_location": "L495",
       "_origin": "ast"
     },
     {
@@ -18802,7 +18834,7 @@
       "label": "enableAllKeys",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L492",
+      "source_location": "L496",
       "_origin": "ast"
     },
     {
@@ -18810,7 +18842,7 @@
       "label": "testOnlyKey",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L493",
+      "source_location": "L497",
       "_origin": "ast"
     },
     {
@@ -18818,7 +18850,7 @@
       "label": "manageKeys",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L494",
+      "source_location": "L498",
       "_origin": "ast"
     },
     {
@@ -18826,7 +18858,7 @@
       "label": "manageKeysHelp",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L495",
+      "source_location": "L499",
       "_origin": "ast"
     },
     {
@@ -18834,7 +18866,7 @@
       "label": "addKey",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L496",
+      "source_location": "L500",
       "_origin": "ast"
     },
     {
@@ -18842,7 +18874,7 @@
       "label": "addKeyHelp",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L497",
+      "source_location": "L501",
       "_origin": "ast"
     },
     {
@@ -18850,7 +18882,7 @@
       "label": "disabled",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L498",
+      "source_location": "L502",
       "_origin": "ast"
     },
     {
@@ -18858,7 +18890,7 @@
       "label": "removeAPIKey",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L499",
+      "source_location": "L503",
       "_origin": "ast"
     },
     {
@@ -18866,7 +18898,7 @@
       "label": "polishingModelField",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L500",
+      "source_location": "L504",
       "_origin": "ast"
     },
     {
@@ -18874,7 +18906,7 @@
       "label": "selectModel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L501",
+      "source_location": "L505",
       "_origin": "ast"
     },
     {
@@ -18882,7 +18914,7 @@
       "label": "modelID",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L502",
+      "source_location": "L506",
       "_origin": "ast"
     },
     {
@@ -18890,7 +18922,7 @@
       "label": "refreshModelList",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L503",
+      "source_location": "L507",
       "_origin": "ast"
     },
     {
@@ -18898,7 +18930,7 @@
       "label": "keyNonLatinError",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L504",
+      "source_location": "L508",
       "_origin": "ast"
     },
     {
@@ -18906,7 +18938,7 @@
       "label": "modelSpecContext",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L505",
+      "source_location": "L509",
       "_origin": "ast"
     },
     {
@@ -18914,7 +18946,7 @@
       "label": "modelSpecInput",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L506",
+      "source_location": "L510",
       "_origin": "ast"
     },
     {
@@ -18922,7 +18954,7 @@
       "label": "modelSpecOutput",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L507",
+      "source_location": "L511",
       "_origin": "ast"
     },
     {
@@ -18930,7 +18962,7 @@
       "label": "selectPolishingModelTitle",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L508",
+      "source_location": "L512",
       "_origin": "ast"
     },
     {
@@ -18938,7 +18970,7 @@
       "label": "modelsCount",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L509",
+      "source_location": "L513",
       "_origin": "ast"
     },
     {
@@ -18946,7 +18978,7 @@
       "label": "favoritesCount",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L510",
+      "source_location": "L514",
       "_origin": "ast"
     },
     {
@@ -18954,7 +18986,7 @@
       "label": "searchModelsPlaceholder",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L511",
+      "source_location": "L515",
       "_origin": "ast"
     },
     {
@@ -18962,7 +18994,7 @@
       "label": "showAllModels",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L512",
+      "source_location": "L516",
       "_origin": "ast"
     },
     {
@@ -18970,7 +19002,7 @@
       "label": "badgeRecommended",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L513",
+      "source_location": "L517",
       "_origin": "ast"
     },
     {
@@ -18978,7 +19010,7 @@
       "label": "badgeNew",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L514",
+      "source_location": "L518",
       "_origin": "ast"
     },
     {
@@ -18986,7 +19018,7 @@
       "label": "badgeFavorite",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L515",
+      "source_location": "L519",
       "_origin": "ast"
     },
     {
@@ -18994,7 +19026,7 @@
       "label": "contextLengthChip",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L516",
+      "source_location": "L520",
       "_origin": "ast"
     },
     {
@@ -19002,7 +19034,7 @@
       "label": "inputPriceChip",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L517",
+      "source_location": "L521",
       "_origin": "ast"
     },
     {
@@ -19010,7 +19042,7 @@
       "label": "outputPriceChip",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L518",
+      "source_location": "L522",
       "_origin": "ast"
     },
     {
@@ -19018,7 +19050,7 @@
       "label": "usageStatistics",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L519",
+      "source_location": "L523",
       "_origin": "ast"
     },
     {
@@ -19026,7 +19058,7 @@
       "label": "resetProviderStats",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L520",
+      "source_location": "L524",
       "_origin": "ast"
     },
     {
@@ -19034,7 +19066,7 @@
       "label": "resetProviderStatsHelp",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L521",
+      "source_location": "L525",
       "_origin": "ast"
     },
     {
@@ -19042,7 +19074,7 @@
       "label": "estCost",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L522",
+      "source_location": "L526",
       "_origin": "ast"
     },
     {
@@ -19050,7 +19082,7 @@
       "label": "totalLabel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L523",
+      "source_location": "L527",
       "_origin": "ast"
     },
     {
@@ -19058,7 +19090,7 @@
       "label": "spentLabel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L524",
+      "source_location": "L528",
       "_origin": "ast"
     },
     {
@@ -19066,7 +19098,7 @@
       "label": "balanceRemaining",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L525",
+      "source_location": "L529",
       "_origin": "ast"
     },
     {
@@ -19074,7 +19106,7 @@
       "label": "keyDisabledHelp",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L526",
+      "source_location": "L530",
       "_origin": "ast"
     },
     {
@@ -19082,7 +19114,7 @@
       "label": "keyActiveHelp",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L527",
+      "source_location": "L531",
       "_origin": "ast"
     },
     {
@@ -19090,7 +19122,7 @@
       "label": "apiKeyNumber",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L528",
+      "source_location": "L532",
       "_origin": "ast"
     },
     {
@@ -19098,7 +19130,7 @@
       "label": "apiKeyNumberPrimary",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L529",
+      "source_location": "L533",
       "_origin": "ast"
     },
     {
@@ -19106,7 +19138,7 @@
       "label": "enterAPIKey",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L530",
+      "source_location": "L534",
       "_origin": "ast"
     },
     {
@@ -19114,7 +19146,7 @@
       "label": "hideAPIKey",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L531",
+      "source_location": "L535",
       "_origin": "ast"
     },
     {
@@ -19122,7 +19154,7 @@
       "label": "showAPIKey",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L532",
+      "source_location": "L536",
       "_origin": "ast"
     },
     {
@@ -19130,7 +19162,7 @@
       "label": "favoritesFilter",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L533",
+      "source_location": "L537",
       "_origin": "ast"
     },
     {
@@ -19138,7 +19170,7 @@
       "label": "allFilter",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L534",
+      "source_location": "L538",
       "_origin": "ast"
     },
     {
@@ -19146,7 +19178,7 @@
       "label": "filterByFavorites",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L535",
+      "source_location": "L539",
       "_origin": "ast"
     },
     {
@@ -19154,7 +19186,7 @@
       "label": "noFavoriteModels",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L536",
+      "source_location": "L540",
       "_origin": "ast"
     },
     {
@@ -19162,7 +19194,7 @@
       "label": "noMatchingModels",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L537",
+      "source_location": "L541",
       "_origin": "ast"
     },
     {
@@ -19170,7 +19202,7 @@
       "label": "removeFromFavorites",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L538",
+      "source_location": "L542",
       "_origin": "ast"
     },
     {
@@ -19178,7 +19210,7 @@
       "label": "addToFavorites",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L539",
+      "source_location": "L543",
       "_origin": "ast"
     },
     {
@@ -19186,7 +19218,7 @@
       "label": "showVariant",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L542",
+      "source_location": "L546",
       "_origin": "ast"
     },
     {
@@ -19194,7 +19226,7 @@
       "label": "generateMarkdown",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L543",
+      "source_location": "L547",
       "_origin": "ast"
     },
     {
@@ -19202,7 +19234,7 @@
       "label": "model",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L544",
+      "source_location": "L548",
       "_origin": "ast"
     },
     {
@@ -19210,7 +19242,7 @@
       "label": "pasteFromClipboard",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L545",
+      "source_location": "L549",
       "_origin": "ast"
     },
     {
@@ -19218,7 +19250,7 @@
       "label": "pasteFromClipboardHelp",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L546",
+      "source_location": "L550",
       "_origin": "ast"
     },
     {
@@ -19226,7 +19258,7 @@
       "label": "hotkeyOptionHint",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L547",
+      "source_location": "L551",
       "_origin": "ast"
     },
     {
@@ -19234,7 +19266,7 @@
       "label": "translationWindowLabel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L548",
+      "source_location": "L552",
       "_origin": "ast"
     },
     {
@@ -19242,7 +19274,7 @@
       "label": "translationWindowDesc",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L549",
+      "source_location": "L553",
       "_origin": "ast"
     },
     {
@@ -19250,7 +19282,7 @@
       "label": "quickTranslationLabel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L550",
+      "source_location": "L554",
       "_origin": "ast"
     },
     {
@@ -19258,7 +19290,7 @@
       "label": "quickTranslationDesc",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L551",
+      "source_location": "L555",
       "_origin": "ast"
     },
     {
@@ -19266,7 +19298,7 @@
       "label": "openSettingsLabel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L552",
+      "source_location": "L556",
       "_origin": "ast"
     },
     {
@@ -19274,7 +19306,7 @@
       "label": "openSettingsDesc",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L553",
+      "source_location": "L557",
       "_origin": "ast"
     },
     {
@@ -19282,7 +19314,7 @@
       "label": "transcriptionEngine",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L554",
+      "source_location": "L558",
       "_origin": "ast"
     },
     {
@@ -19290,7 +19322,7 @@
       "label": "engine",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L555",
+      "source_location": "L559",
       "_origin": "ast"
     },
     {
@@ -19298,7 +19330,7 @@
       "label": "localModelsHint",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L556",
+      "source_location": "L560",
       "_origin": "ast"
     },
     {
@@ -19306,7 +19338,7 @@
       "label": "googleAPI",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L557",
+      "source_location": "L561",
       "_origin": "ast"
     },
     {
@@ -19314,7 +19346,7 @@
       "label": "geminiModel",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L558",
+      "source_location": "L562",
       "_origin": "ast"
     },
     {
@@ -19322,7 +19354,7 @@
       "label": "googleAPIBody",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L559",
+      "source_location": "L563",
       "_origin": "ast"
     },
     {
@@ -19330,7 +19362,7 @@
       "label": "scanForLocalModels",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L560",
+      "source_location": "L564",
       "_origin": "ast"
     },
     {
@@ -19338,7 +19370,7 @@
       "label": "scanForLocalModelsBody",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L561",
+      "source_location": "L565",
       "_origin": "ast"
     },
     {
@@ -19346,7 +19378,7 @@
       "label": "scanning",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L562",
+      "source_location": "L566",
       "_origin": "ast"
     },
     {
@@ -19354,7 +19386,7 @@
       "label": "scan",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L563",
+      "source_location": "L567",
       "_origin": "ast"
     },
     {
@@ -19362,7 +19394,7 @@
       "label": "skippedUnsupportedModels",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L564",
+      "source_location": "L568",
       "_origin": "ast"
     },
     {
@@ -19370,7 +19402,7 @@
       "label": "localPolishingSupportHint",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L565",
+      "source_location": "L569",
       "_origin": "ast"
     },
     {
@@ -19378,7 +19410,7 @@
       "label": "markdown",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L566",
+      "source_location": "L570",
       "_origin": "ast"
     },
     {
@@ -19386,7 +19418,7 @@
       "label": "remove",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L567",
+      "source_location": "L571",
       "_origin": "ast"
     },
     {
@@ -19394,7 +19426,7 @@
       "label": "keyConfigured",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L568",
+      "source_location": "L572",
       "_origin": "ast"
     },
     {
@@ -19402,7 +19434,7 @@
       "label": "noAPIKey",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L569",
+      "source_location": "L573",
       "_origin": "ast"
     },
     {
@@ -19410,7 +19442,7 @@
       "label": "copied",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L570",
+      "source_location": "L574",
       "_origin": "ast"
     },
     {
@@ -19418,7 +19450,7 @@
       "label": "defaultModelName",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L571",
+      "source_location": "L575",
       "_origin": "ast"
     },
     {
@@ -19426,7 +19458,7 @@
       "label": "removeCustomModelHelp",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L572",
+      "source_location": "L576",
       "_origin": "ast"
     },
     {
@@ -19434,7 +19466,7 @@
       "label": "noNewModelsFound",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L573",
+      "source_location": "L577",
       "_origin": "ast"
     },
     {
@@ -19442,7 +19474,7 @@
       "label": "foundModelsCount",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L574",
+      "source_location": "L578",
       "_origin": "ast"
     },
     {
@@ -19450,7 +19482,7 @@
       "label": "cloudDictationUsesGemini",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L575",
+      "source_location": "L579",
       "_origin": "ast"
     },
     {
@@ -19458,7 +19490,7 @@
       "label": "onboardingLanguageNote",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L576",
+      "source_location": "L580",
       "_origin": "ast"
     },
     {
@@ -19466,7 +19498,7 @@
       "label": "onboardingPermissionsGrant",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L577",
+      "source_location": "L581",
       "_origin": "ast"
     },
     {
@@ -19474,7 +19506,7 @@
       "label": "onboardingGlossaryCreate",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L578",
+      "source_location": "L582",
       "_origin": "ast"
     },
     {
@@ -19482,7 +19514,7 @@
       "label": "onboardingGlossaryCreated",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L579",
+      "source_location": "L583",
       "_origin": "ast"
     },
     {
@@ -19490,7 +19522,7 @@
       "label": "helpCloudTranscriptionTitle",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L580",
+      "source_location": "L584",
       "_origin": "ast"
     },
     {
@@ -19498,7 +19530,7 @@
       "label": "helpCloudTranscriptionBody",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L581",
+      "source_location": "L585",
       "_origin": "ast"
     },
     {
@@ -19506,7 +19538,7 @@
       "label": "helpHotkeyTertiary",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L582",
+      "source_location": "L586",
       "_origin": "ast"
     },
     {
@@ -19514,7 +19546,7 @@
       "label": "helpHotkeySettings",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L583",
+      "source_location": "L587",
       "_origin": "ast"
     },
     {
@@ -19522,7 +19554,7 @@
       "label": "helpModeQuickTitle",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L584",
+      "source_location": "L588",
       "_origin": "ast"
     },
     {
@@ -19530,7 +19562,7 @@
       "label": "helpModeQuickBody",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L585",
+      "source_location": "L589",
       "_origin": "ast"
     },
     {
@@ -19538,7 +19570,7 @@
       "label": "helpFloatQuick",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L586",
+      "source_location": "L590",
       "_origin": "ast"
     },
     {
@@ -19546,7 +19578,7 @@
       "label": "AppText",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L589",
+      "source_location": "L593",
       "_origin": "ast"
     },
     {
@@ -19554,7 +19586,7 @@
       "label": ".localized()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L590",
+      "source_location": "L594",
       "_origin": "ast"
     },
     {
@@ -27129,7 +27161,7 @@
       "label": "everySettingsKeyIsLocalizedInEveryLanguage()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L69",
+      "source_location": "L73",
       "_origin": "ast"
     },
     {
@@ -27137,7 +27169,7 @@
       "label": "settingsKeysAreActuallyTranslatedBeyondEnglish()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L89",
+      "source_location": "L93",
       "_origin": "ast"
     },
     {
@@ -27145,7 +27177,7 @@
       "label": "settingsSpeechLanguageKeysResolveInEnglish()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L147",
+      "source_location": "L151",
       "_origin": "ast"
     },
     {
@@ -27153,7 +27185,7 @@
       "label": "settingsSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L160",
+      "source_location": "L164",
       "_origin": "ast"
     },
     {
@@ -27161,7 +27193,7 @@
       "label": "helpBilingualKeysResolveInEnglish()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L192",
+      "source_location": "L196",
       "_origin": "ast"
     },
     {
@@ -27169,7 +27201,7 @@
       "label": "helpBilingualCopyAvoidsUnnegatedTargetAlwaysOutputTerminology()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L205",
+      "source_location": "L209",
       "_origin": "ast"
     },
     {
@@ -27177,7 +27209,7 @@
       "label": "helpBilingualCopyDescribesPrimaryAndAdditionalModel()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L226",
+      "source_location": "L230",
       "_origin": "ast"
     },
     {
@@ -27185,7 +27217,7 @@
       "label": "helpBilingualSettingsPathMentionsHotkeyAndYourLanguages()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L242",
+      "source_location": "L246",
       "_origin": "ast"
     },
     {
@@ -27193,7 +27225,7 @@
       "label": "helpLangHelpHUDConsistentWithBilingualModel()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L250",
+      "source_location": "L254",
       "_origin": "ast"
     },
     {
@@ -27201,7 +27233,7 @@
       "label": "helpLangHelpHUDDifferFromEnglishInEveryNonEnglishLocale()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L285",
+      "source_location": "L289",
       "_origin": "ast"
     },
     {
@@ -27209,7 +27241,7 @@
       "label": "helpLangHelpHUDCopyAvoidsUnnegatedTargetAlwaysOutputInEveryLocale()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L304",
+      "source_location": "L308",
       "_origin": "ast"
     },
     {
@@ -27217,7 +27249,47 @@
       "label": "primaryAdditionalTerminologyDistinctInSampleLocales()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L330",
+      "source_location": "L334",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_settingslocalizationtests_s2settingslocalmodelskeysresolveinenglish",
+      "label": "s2SettingsLocalModelsKeysResolveInEnglish()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L369",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_settingslocalizationtests_s2settingslocalmodelshintmentionsprimaryandadditional",
+      "label": "s2SettingsLocalModelsHintMentionsPrimaryAndAdditional()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L381",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_settingslocalizationtests_onboardingmodelrecommendationtopthreereturnsuniquemodels",
+      "label": "onboardingModelRecommendationTopThreeReturnsUniqueModels()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L393",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_settingslocalizationtests_onboardingmodelrecommendationtopthreewithdifferentlanguagepairs",
+      "label": "onboardingModelRecommendationTopThreeWithDifferentLanguagePairs()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L419",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_settingslocalizationtests_recommendedandremainingpartitionfullcatalog",
+      "label": "recommendedAndRemainingPartitionFullCatalog()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L465",
       "_origin": "ast"
     },
     {
@@ -29551,8 +29623,8 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_2_s1c_implementation_compliance",
-      "label": "§2 — S1c Implementation Compliance",
+      "id": "ai_workflow_kit_docs_ai_feedback_2_s2_implementation_compliance",
+      "label": "§2 — S2 Implementation Compliance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L29",
@@ -29563,7 +29635,7 @@
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L42",
+      "source_location": "L40",
       "_origin": "ast"
     },
     {
@@ -29571,15 +29643,15 @@
       "label": "§4 — Changed Paths & Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L56",
+      "source_location": "L55",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
-      "label": "§5 — Independent Reviewer Verification",
+      "id": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification_s1c_historical",
+      "label": "§5 — Independent Reviewer Verification (S1c Historical)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L70",
+      "source_location": "L69",
       "_origin": "ast"
     },
     {
@@ -29587,7 +29659,7 @@
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L79",
+      "source_location": "L78",
       "_origin": "ast"
     },
     {
@@ -29595,7 +29667,7 @@
       "label": "Command Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L84",
+      "source_location": "L83",
       "_origin": "ast"
     },
     {
@@ -29603,7 +29675,7 @@
       "label": "S1c Acceptance Review",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L100",
+      "source_location": "L99",
       "_origin": "ast"
     },
     {
@@ -29611,7 +29683,7 @@
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L119",
+      "source_location": "L118",
       "_origin": "ast"
     },
     {
@@ -29619,15 +29691,15 @@
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L124",
+      "source_location": "L123",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
-      "label": "§6 — Independent Tester QA",
+      "id": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa_s1c_historical",
+      "label": "§6 — Independent Tester QA (S1c Historical)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L134",
+      "source_location": "L133",
       "_origin": "ast"
     },
     {
@@ -29635,7 +29707,7 @@
       "label": "What was added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L143",
+      "source_location": "L142",
       "_origin": "ast"
     },
     {
@@ -29643,7 +29715,7 @@
       "label": "Full gate",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L150",
+      "source_location": "L149",
       "_origin": "ast"
     },
     {
@@ -29651,7 +29723,7 @@
       "label": "Manual verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L162",
+      "source_location": "L161",
       "_origin": "ast"
     },
     {
@@ -70009,11 +70081,22 @@
     },
     {
       "source": "sources_nativebolabol_views_settings_localmodelssettingsview_localmodelssettingsview",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabol_views_settings_localmodelssettingsview_localmodelssettingsview",
       "target": "view",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L10",
+      "source_location": "L27",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -70024,7 +70107,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L80",
+      "source_location": "L115",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -70035,7 +70118,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L80",
+      "source_location": "L115",
       "weight": 1.0,
       "context": "generic_arg",
       "_origin": "ast"
@@ -70046,7 +70129,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L120",
+      "source_location": "L155",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -70056,7 +70139,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L120",
+      "source_location": "L155",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -70066,7 +70149,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L121",
+      "source_location": "L156",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -70077,7 +70160,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L122",
+      "source_location": "L157",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -70088,7 +70171,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L123",
+      "source_location": "L158",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -70099,7 +70182,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L125",
+      "source_location": "L160",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -70110,7 +70193,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L206",
+      "source_location": "L241",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -70120,7 +70203,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L206",
+      "source_location": "L241",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -70131,7 +70214,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L206",
+      "source_location": "L241",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -70142,7 +70225,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L206",
+      "source_location": "L241",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -70153,7 +70236,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L275",
+      "source_location": "L310",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -70163,7 +70246,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L275",
+      "source_location": "L310",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -70174,7 +70257,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L275",
+      "source_location": "L310",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -70185,7 +70268,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L284",
+      "source_location": "L319",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -70195,7 +70278,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L284",
+      "source_location": "L319",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -70205,7 +70288,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L285",
+      "source_location": "L320",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -70216,7 +70299,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L287",
+      "source_location": "L322",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -70227,7 +70310,49 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L289",
+      "source_location": "L324",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabol_views_settings_localmodelssettingsview",
+      "target": "sources_nativebolabol_views_settings_localmodelssettingsview_sectionheader",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
+      "source_location": "L341",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabol_views_settings_localmodelssettingsview_sectionheader",
+      "target": "view",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
+      "source_location": "L341",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabol_views_settings_localmodelssettingsview_sectionheader",
+      "target": "sources_nativebolabol_views_settings_localmodelssettingsview_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
+      "source_location": "L342",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabol_views_settings_localmodelssettingsview_sectionheader",
+      "target": "view",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
+      "source_location": "L345",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -70239,7 +70364,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L226",
+      "source_location": "L261",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -70250,7 +70375,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L280",
+      "source_location": "L315",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -90926,47 +91051,37 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_settingslocalmodelsrecommendedtitle",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L422",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_settingslocalmodelsrecommendedhint",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L423",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_settingslocalmodelsalltitle",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L424",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
       "target": "sources_nativebolabolcore_services_apptext_apptextkey_languagepairsectiontitle",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L425",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_primarylanguage",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L426",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_primarylanguagehint",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L427",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_additionallanguage",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L428",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_additionallanguagehint",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -90976,7 +91091,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_additionalsameasprimary",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_primarylanguage",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -90986,7 +91101,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_languagepairenginenote",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_primarylanguagehint",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -90996,7 +91111,27 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_settingsglossary",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_additionallanguage",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L432",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_additionallanguagehint",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L433",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_additionalsameasprimary",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91006,7 +91141,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_clearglossarytitle",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_languagepairenginenote",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91016,27 +91151,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_clearglossary",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L436",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_clearglossarymessage",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L437",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_glossarycleared",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_settingsglossary",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91046,7 +91161,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_transcriptionlanguagesetto",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_clearglossarytitle",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91056,7 +91171,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_translation",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_clearglossary",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91066,7 +91181,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_translationlanguagesetto",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_clearglossarymessage",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91076,7 +91191,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_importjson",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_glossarycleared",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91086,7 +91201,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_importcsv",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_transcriptionlanguagesetto",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91096,7 +91211,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_exportjson",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_translation",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91106,7 +91221,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_exportcsv",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_translationlanguagesetto",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91116,7 +91231,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_importexport",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_importjson",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91126,7 +91241,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_search",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_importcsv",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91136,7 +91251,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_category",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_exportjson",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91146,7 +91261,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_allcategories",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_exportcsv",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91156,7 +91271,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_newentry",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_importexport",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91166,7 +91281,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_languageform",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_search",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91176,7 +91291,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_variantsseparatedbysemicolons",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_category",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91186,7 +91301,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addentry",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_allcategories",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91196,7 +91311,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_entryadded",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_newentry",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91206,7 +91321,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_jsonimported",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_languageform",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91216,7 +91331,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_csvimported",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_variantsseparatedbysemicolons",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91226,7 +91341,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_jsonexported",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addentry",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91236,7 +91351,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_csvexported",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_entryadded",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91246,7 +91361,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_useglossary",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_jsonimported",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91256,7 +91371,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_custom",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_csvimported",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91266,7 +91381,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apply",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_jsonexported",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91276,7 +91391,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_variants",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_csvexported",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91286,7 +91401,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_mergeinto",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_useglossary",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91296,7 +91411,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_save",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_custom",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91306,7 +91421,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_searchterm",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apply",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91316,7 +91431,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nomatchingentries",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_variants",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91326,7 +91441,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addtoglossary",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_mergeinto",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91336,7 +91451,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_selectedvariant",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_save",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91346,7 +91461,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_createnewentry",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_searchterm",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91356,7 +91471,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_applyas",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nomatchingentries",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91366,7 +91481,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_authortranscription",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addtoglossary",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91376,7 +91491,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_autotranslation",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_selectedvariant",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91386,7 +91501,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_correctlanguageform",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_createnewentry",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91396,7 +91511,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_languageautotranslationform",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_applyas",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91406,7 +91521,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nocategory",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_authortranscription",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91416,7 +91531,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addcategory",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_autotranslation",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91426,7 +91541,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_newcategory",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_correctlanguageform",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91436,7 +91551,27 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_cloudprovider",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_languageautotranslationform",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L478",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nocategory",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L479",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addcategory",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91446,7 +91581,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_cloudprovidersubtitle",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_newcategory",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91456,27 +91591,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_baseurllabel",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L482",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_baseurlplaceholder",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L483",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_endpoint",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_cloudprovider",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91486,7 +91601,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_accountbalance",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_cloudprovidersubtitle",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91496,7 +91611,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_fetchingbalance",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_baseurllabel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91506,7 +91621,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_refreshopenrouterbalance",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_baseurlplaceholder",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91516,7 +91631,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_budgetlimit",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_endpoint",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91526,7 +91641,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_qwensubscriptionbanner",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_accountbalance",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91536,7 +91651,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apikeylabel",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_fetchingbalance",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91546,7 +91661,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apikeyscountlabel",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_refreshopenrouterbalance",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91556,7 +91671,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_enableallkeys",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_budgetlimit",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91566,7 +91681,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_testonlykey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_qwensubscriptionbanner",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91576,7 +91691,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_managekeys",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apikeylabel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91586,7 +91701,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_managekeyshelp",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apikeyscountlabel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91596,7 +91711,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_enableallkeys",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91606,7 +91721,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addkeyhelp",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_testonlykey",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91616,7 +91731,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_disabled",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_managekeys",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91626,7 +91741,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_removeapikey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_managekeyshelp",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91636,7 +91751,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_polishingmodelfield",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addkey",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91646,7 +91761,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_selectmodel",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addkeyhelp",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91656,7 +91771,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelid",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_disabled",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91666,7 +91781,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_refreshmodellist",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_removeapikey",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91676,7 +91791,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_keynonlatinerror",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_polishingmodelfield",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91686,7 +91801,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelspeccontext",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_selectmodel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91696,7 +91811,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelspecinput",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelid",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91706,7 +91821,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelspecoutput",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_refreshmodellist",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91716,7 +91831,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_selectpolishingmodeltitle",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_keynonlatinerror",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91726,7 +91841,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelscount",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelspeccontext",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91736,7 +91851,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_favoritescount",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelspecinput",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91746,7 +91861,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_searchmodelsplaceholder",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelspecoutput",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91756,7 +91871,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_showallmodels",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_selectpolishingmodeltitle",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91766,7 +91881,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_badgerecommended",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_modelscount",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91776,7 +91891,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_badgenew",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_favoritescount",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91786,7 +91901,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_badgefavorite",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_searchmodelsplaceholder",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91796,7 +91911,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_contextlengthchip",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_showallmodels",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91806,7 +91921,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_inputpricechip",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_badgerecommended",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91816,7 +91931,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_outputpricechip",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_badgenew",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91826,7 +91941,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_usagestatistics",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_badgefavorite",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91836,7 +91951,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_resetproviderstats",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_contextlengthchip",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91846,7 +91961,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_resetproviderstatshelp",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_inputpricechip",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91856,7 +91971,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_estcost",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_outputpricechip",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91866,7 +91981,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_totallabel",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_usagestatistics",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91876,7 +91991,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_spentlabel",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_resetproviderstats",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91886,7 +92001,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_balanceremaining",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_resetproviderstatshelp",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91896,7 +92011,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_keydisabledhelp",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_estcost",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91906,7 +92021,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_keyactivehelp",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_totallabel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91916,7 +92031,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apikeynumber",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_spentlabel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91926,7 +92041,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apikeynumberprimary",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_balanceremaining",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91936,7 +92051,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_enterapikey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_keydisabledhelp",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91946,7 +92061,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_hideapikey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_keyactivehelp",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91956,7 +92071,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_showapikey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apikeynumber",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91966,7 +92081,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_favoritesfilter",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_apikeynumberprimary",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91976,7 +92091,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_allfilter",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_enterapikey",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91986,7 +92101,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_filterbyfavorites",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_hideapikey",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -91996,7 +92111,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nofavoritemodels",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_showapikey",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92006,7 +92121,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nomatchingmodels",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_favoritesfilter",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92016,7 +92131,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_removefromfavorites",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_allfilter",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92026,7 +92141,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addtofavorites",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_filterbyfavorites",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92036,7 +92151,27 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_showvariant",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nofavoritemodels",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L540",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nomatchingmodels",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L541",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_removefromfavorites",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92046,7 +92181,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_generatemarkdown",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_addtofavorites",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92056,27 +92191,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_model",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L544",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_pastefromclipboard",
-      "relation": "case_of",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L545",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_pastefromclipboardhelp",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_showvariant",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92086,7 +92201,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_hotkeyoptionhint",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_generatemarkdown",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92096,7 +92211,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_translationwindowlabel",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_model",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92106,7 +92221,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_translationwindowdesc",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_pastefromclipboard",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92116,7 +92231,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_quicktranslationlabel",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_pastefromclipboardhelp",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92126,7 +92241,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_quicktranslationdesc",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_hotkeyoptionhint",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92136,7 +92251,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_opensettingslabel",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_translationwindowlabel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92146,7 +92261,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_opensettingsdesc",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_translationwindowdesc",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92156,7 +92271,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_transcriptionengine",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_quicktranslationlabel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92166,7 +92281,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_engine",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_quicktranslationdesc",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92176,7 +92291,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_localmodelshint",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_opensettingslabel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92186,7 +92301,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_googleapi",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_opensettingsdesc",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92196,7 +92311,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_geminimodel",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_transcriptionengine",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92206,7 +92321,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_googleapibody",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_engine",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92216,7 +92331,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_scanforlocalmodels",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_localmodelshint",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92226,7 +92341,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_scanforlocalmodelsbody",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_googleapi",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92236,7 +92351,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_scanning",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_geminimodel",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92246,7 +92361,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_scan",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_googleapibody",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92256,7 +92371,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_skippedunsupportedmodels",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_scanforlocalmodels",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92266,7 +92381,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_localpolishingsupporthint",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_scanforlocalmodelsbody",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92276,7 +92391,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_markdown",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_scanning",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92286,7 +92401,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_remove",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_scan",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92296,7 +92411,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_keyconfigured",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_skippedunsupportedmodels",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92306,7 +92421,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_noapikey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_localpolishingsupporthint",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92316,7 +92431,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_copied",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_markdown",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92326,7 +92441,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_defaultmodelname",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_remove",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92336,7 +92451,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_removecustommodelhelp",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_keyconfigured",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92346,7 +92461,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nonewmodelsfound",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_noapikey",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92356,7 +92471,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_foundmodelscount",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_copied",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92366,7 +92481,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_clouddictationusesgemini",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_defaultmodelname",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92376,7 +92491,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_onboardinglanguagenote",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_removecustommodelhelp",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92386,7 +92501,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_onboardingpermissionsgrant",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_nonewmodelsfound",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92396,7 +92511,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_onboardingglossarycreate",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_foundmodelscount",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92406,7 +92521,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_onboardingglossarycreated",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_clouddictationusesgemini",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92416,7 +92531,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpcloudtranscriptiontitle",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_onboardinglanguagenote",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92426,7 +92541,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpcloudtranscriptionbody",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_onboardingpermissionsgrant",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92436,7 +92551,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helphotkeytertiary",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_onboardingglossarycreate",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92446,7 +92561,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helphotkeysettings",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_onboardingglossarycreated",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92456,7 +92571,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpmodequicktitle",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpcloudtranscriptiontitle",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92466,7 +92581,7 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpmodequickbody",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpcloudtranscriptionbody",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
@@ -92476,11 +92591,51 @@
     },
     {
       "source": "sources_nativebolabolcore_services_apptext_apptextkey",
-      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpfloatquick",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helphotkeytertiary",
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
       "source_location": "L586",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helphotkeysettings",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L587",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpmodequicktitle",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L588",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpmodequickbody",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L589",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_services_apptext_apptextkey",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_helpfloatquick",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
+      "source_location": "L590",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -92490,7 +92645,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L589",
+      "source_location": "L593",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -92500,7 +92655,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L590",
+      "source_location": "L594",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -92510,7 +92665,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L590",
+      "source_location": "L594",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -92521,7 +92676,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L590",
+      "source_location": "L594",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -92532,7 +92687,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L590",
+      "source_location": "L594",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -92543,7 +92698,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L590",
+      "source_location": "L594",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -92554,7 +92709,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L599",
+      "source_location": "L603",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -92565,7 +92720,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L599",
+      "source_location": "L603",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -112445,7 +112600,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L69",
+      "source_location": "L73",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112455,7 +112610,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L89",
+      "source_location": "L93",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112465,7 +112620,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L147",
+      "source_location": "L151",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112475,7 +112630,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L160",
+      "source_location": "L164",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112485,7 +112640,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L192",
+      "source_location": "L196",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112495,7 +112650,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L205",
+      "source_location": "L209",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112505,7 +112660,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L226",
+      "source_location": "L230",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112515,7 +112670,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L242",
+      "source_location": "L246",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112525,7 +112680,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L250",
+      "source_location": "L254",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112535,7 +112690,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L285",
+      "source_location": "L289",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112545,7 +112700,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L304",
+      "source_location": "L308",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -112555,7 +112710,57 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L330",
+      "source_location": "L334",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests",
+      "target": "tests_nativebolabolcoretests_settingslocalizationtests_s2settingslocalmodelskeysresolveinenglish",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L369",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests",
+      "target": "tests_nativebolabolcoretests_settingslocalizationtests_s2settingslocalmodelshintmentionsprimaryandadditional",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L381",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests",
+      "target": "tests_nativebolabolcoretests_settingslocalizationtests_onboardingmodelrecommendationtopthreereturnsuniquemodels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L393",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests",
+      "target": "tests_nativebolabolcoretests_settingslocalizationtests_onboardingmodelrecommendationtopthreewithdifferentlanguagepairs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L419",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests",
+      "target": "tests_nativebolabolcoretests_settingslocalizationtests_recommendedandremainingpartitionfullcatalog",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L465",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -115939,7 +116144,7 @@
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_2_s1c_implementation_compliance",
+      "target": "ai_workflow_kit_docs_ai_feedback_2_s2_implementation_compliance",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
@@ -115953,7 +116158,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L42",
+      "source_location": "L40",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -115963,107 +116168,107 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L56",
+      "source_location": "L55",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "target": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification_s1c_historical",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L70",
+      "source_location": "L69",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification_s1c_historical",
       "target": "ai_workflow_kit_docs_ai_feedback_findings",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L79",
+      "source_location": "L78",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification_s1c_historical",
       "target": "ai_workflow_kit_docs_ai_feedback_command_results",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L84",
+      "source_location": "L83",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification_s1c_historical",
       "target": "ai_workflow_kit_docs_ai_feedback_s1c_acceptance_review",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L100",
+      "source_location": "L99",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification_s1c_historical",
       "target": "ai_workflow_kit_docs_ai_feedback_change_list",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L119",
+      "source_location": "L118",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification_s1c_historical",
       "target": "ai_workflow_kit_docs_ai_feedback_verdict",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L124",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
+      "target": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa_s1c_historical",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L134",
+      "source_location": "L133",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
+      "source": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa_s1c_historical",
       "target": "ai_workflow_kit_docs_ai_feedback_what_was_added",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L143",
+      "source_location": "L142",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
+      "source": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa_s1c_historical",
       "target": "ai_workflow_kit_docs_ai_feedback_full_gate",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L150",
+      "source_location": "L149",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
+      "source": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa_s1c_historical",
       "target": "ai_workflow_kit_docs_ai_feedback_manual_verification",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L162",
+      "source_location": "L161",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -122871,7 +123076,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L214",
+      "source_location": "L249",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123075,7 +123280,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L596",
+      "source_location": "L600",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -127760,6 +127965,18 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests_recommendedandremainingpartitionfullcatalog",
+      "target": "sources_nativebolabolcore_models_userspeechlanguages_userspeechlanguages",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L469",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_nativebolabolcoretests_sharedmodelsandcatalogstests_accessibilitypermissionpromptstateresetclearsflag",
       "target": "sources_nativebolabolcore_models_accessibilitypermissionpromptstate_accessibilitypermissionpromptstate",
       "relation": "calls",
@@ -131835,7 +132052,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L215",
+      "source_location": "L250",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -131847,7 +132064,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L218",
+      "source_location": "L253",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -131859,7 +132076,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L245",
+      "source_location": "L280",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -131871,7 +132088,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift",
-      "source_location": "L277",
+      "source_location": "L312",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -132411,7 +132628,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabolCore/Services/AppText.swift",
-      "source_location": "L595",
+      "source_location": "L599",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137427,7 +137644,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L76",
+      "source_location": "L80",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137439,7 +137656,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L121",
+      "source_location": "L125",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137451,7 +137668,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L151",
+      "source_location": "L155",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137463,7 +137680,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L167",
+      "source_location": "L171",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137475,7 +137692,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L196",
+      "source_location": "L200",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137487,7 +137704,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L212",
+      "source_location": "L216",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137499,7 +137716,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L229",
+      "source_location": "L233",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137511,7 +137728,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L245",
+      "source_location": "L249",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137523,7 +137740,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L257",
+      "source_location": "L261",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137535,7 +137752,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L290",
+      "source_location": "L294",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137547,7 +137764,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L311",
+      "source_location": "L315",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -137559,7 +137776,67 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L334",
+      "source_location": "L338",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests_s2settingslocalmodelskeysresolveinenglish",
+      "target": "sources_nativebolabolcore_services_apptext_apptext_localized",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L372",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests_s2settingslocalmodelshintmentionsprimaryandadditional",
+      "target": "sources_nativebolabolcore_services_apptext_apptext_localized",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L384",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests_onboardingmodelrecommendationtopthreereturnsuniquemodels",
+      "target": "sources_nativebolabolcore_models_onboardingmodelrecommendation_onboardingmodelrecommendation_topthree",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L399",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests_onboardingmodelrecommendationtopthreewithdifferentlanguagepairs",
+      "target": "sources_nativebolabolcore_models_onboardingmodelrecommendation_onboardingmodelrecommendation_topthree",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L424",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_settingslocalizationtests_recommendedandremainingpartitionfullcatalog",
+      "target": "sources_nativebolabolcore_models_onboardingmodelrecommendation_onboardingmodelrecommendation_topthree",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
+      "source_location": "L472",
       "weight": 1.0,
       "_origin": "ast"
     },

@@ -418,6 +418,10 @@ public enum AppTextKey: String, CaseIterable, Sendable {
     case onboardingModelsRecommended
     case onboardingModelsBestMatch
     case onboardingModelsChangeLater
+    // S2 — Settings local models recommendations section (plan §9.4).
+    case settingsLocalModelsRecommendedTitle
+    case settingsLocalModelsRecommendedHint
+    case settingsLocalModelsAllTitle
     // B3 — Settings speech-language pair (plan §7.1, §9.4). Settings surfaces
     // the same primary + additional pair onboarding writes (plan §3.3); copy
     // keeps the "second language you often use" framing — never a "target
@@ -1164,6 +1168,10 @@ public enum AppText {
             .onboardingModelsRecommended: "Recommended for you",
             .onboardingModelsBestMatch: "Best match for your languages",
             .onboardingModelsChangeLater: "You can change models anytime in Settings → Local Models.",
+            // S2 — Settings local models recommendations section (plan §9.4).
+            .settingsLocalModelsRecommendedTitle: "Recommended for your languages",
+            .settingsLocalModelsRecommendedHint: "Based on your primary and additional speech languages. You can still pick any model below.",
+            .settingsLocalModelsAllTitle: "All models",
             // B3 — Settings speech-language pair (plan §7.1, §7.2, §9.4).
             // Same store and wording as the onboarding steps; full 15-locale
             // maps land in B5 — other locales fall back to English until then.

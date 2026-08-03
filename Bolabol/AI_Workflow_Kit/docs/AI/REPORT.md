@@ -893,3 +893,79 @@ plutil -p dist/Bolabol.app/Contents/Info.plist
 - `BUG_REPORT.md` was not changed; no product bugs found. `bugs_open: 0`.
 
 **RESULT: `qa_green`**
+
+---
+
+# Step S2 - Tester QA: Settings model labels + recommendations
+
+| Field | Value |
+|-------|-------|
+| Step | S2 - Settings Local Models |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+| bugs_open | 0 |
+
+## Graphify context
+
+```bash
+graphify explain "LocalModelsSettingsView" --graph graphify-out/graph.json
+# PASS - current Settings view and store/helper references found
+
+graphify query "settings local models recommended remaining topThree" \
+  --graph graphify-out/graph.json
+# PASS - Settings call site, recommendation helper, partition test, and S2 keys found
+```
+
+## Commands run
+
+```bash
+swift test
+# PASS - 494 tests in 4 suites
+
+./script/qa/run_all.sh
+# PASS - 21/21 (swift test + 20 check_*.sh contracts)
+
+APP_VERSION=1.0.4 ./script/build_and_run.sh --verify
+# PASS - NativeBolabol and NativeBolabolPolishWorker built; --verify exited 0
+
+plutil -p dist/Bolabol.app/Contents/Info.plist
+# PASS - Bolabol / com.bolabol.app / 1.0.4
+
+git diff --check -- .
+# PASS - no whitespace errors
+```
+
+## New tests and QA scripts
+
+| Path | Change | Coverage |
+|------|--------|----------|
+| `Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift` | **NEW `s2RecommendationRecalculatesWhenSpeechPairChanges`** | Proves the same catalog produces different, pair-specific results for compact `en+de` and broad `hi+en` pairs, closing the Reviewer-noted weak assertion. |
+| `script/qa/check_s2_local_models_settings.sh` | **NEW** | One shared Settings `topThree` call with the canonical pair/catalog; computed recommendation and remaining properties; full-catalog partition; recommended-before-remaining order; presentation-only mutation guard; preserved manual model actions; EN keys; exactly two product call sites; Python/Canary guards. |
+| `script/qa/check_s1b_scope.sh` | **UPDATED** | Narrowly allows the exact S2 Settings call and comments while retaining pure-helper and runtime prohibitions. |
+| `script/qa/check_s1c_onboarding_models.sh` | **UPDATED** | Narrowly allows the exact S2 Settings call while retaining the S1c onboarding contract. |
+
+The new `check_s2_*.sh` script is automatically included by the existing
+`run_all.sh` `check_*.sh` glob; `run_all.sh` itself required no functional change.
+
+## Gap-hunt mapping
+
+| S2 requirement | Guard |
+|----------------|-------|
+| Recommended group equals shared `topThree(primary, additional, catalog)` | `check_s2_local_models_settings.sh` verifies the sole Settings call uses `GeneralSettingsStore.speechLanguages` and `TranscriptionModelStore.models`; existing ranking matrix and `onboardingModelRecommendationTopThreeReturnsUniqueModels` re-run. |
+| Recommended plus remaining equals the full catalog exactly once | `recommendedAndRemainingPartitionFullCatalog`; S2 structural check verifies ID removal from the current catalog and group order. |
+| Speech-pair changes recalculate without stale state | NEW `s2RecommendationRecalculatesWhenSpeechPairChanges`; S2 check requires computed properties and rejects state/cache declarations. |
+| No recommendation auto-activates, downloads, or changes backend | S2 check rejects mutation calls inside recommendation computation and requires explicit existing download/use/delete/progress paths. |
+| EN keys are real and the hint mentions primary/additional without target-always wording | `s2SettingsLocalModelsKeysResolveInEnglish`; `s2SettingsLocalModelsHintMentionsPrimaryAndAdditional`; full localization suite remains green. |
+| Settings and onboarding call sites are allowlisted with one shared ranker | Updated S1b/S1c checks plus S2 exact two-call-site check; `run_all.sh` green. |
+| No Python, Canary product wiring, or S3+ product scope | `check_no_python_in_sources.sh`, `check_no_canary_product.sh`, package/target checks, and scoped diff review; no Tester edits to `Sources/**`, `Package.swift`, or `STATE.yaml`. |
+| Reviewer INFO on different language pairs | Closed with the exact-output NEW S2 recalculation test rather than leaving a non-differentiating assertion. |
+
+## Scope and result
+
+- Tester changed only `Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift`, `script/qa/check_s1b_scope.sh`, `script/qa/check_s1c_onboarding_models.sh`, `script/qa/check_s2_local_models_settings.sh`, this report, and FEEDBACK §8.
+- Existing Coder S2 changes in `Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift` and `Sources/NativeBolabolCore/Services/AppText.swift` were not modified by Tester.
+- `STATE.yaml`, `BUG_REPORT.md`, `Package.swift`, and Graphify source artifacts were not edited by Tester. No commit or push was performed.
+- No product defect was found; `BUG_REPORT.md` remains at `bugs_open: 0`.
+
+**RESULT: `qa_green`**

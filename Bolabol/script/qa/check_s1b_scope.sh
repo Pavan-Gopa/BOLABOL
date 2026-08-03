@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# S1b remains a pure ranking helper; S1c may call it only from its onboarding view.
+# S1b remains a pure ranking helper; S1c and S2 may call it only from their
+# dedicated views. The S2 call is checked more narrowly by check_s2_*.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -7,6 +8,7 @@ cd "$ROOT"
 
 RANKING_FILE="Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift"
 ONBOARDING_VIEW="Sources/NativeBolabol/Views/OnboardingView.swift"
+SETTINGS_VIEW="Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift"
 FAILED=0
 
 if [ ! -f "$RANKING_FILE" ]; then
@@ -24,7 +26,16 @@ while IFS= read -r line; do
   if [[ "$line" == *"$RANKING_FILE"* ]]; then
     continue
   fi
-  if [[ "$line" == "$ONBOARDING_VIEW:"* ]]; then
+  if [[ "$line" == "$ONBOARDING_VIEW:"* ]] && {
+    [[ "$line" == *"OnboardingModelRecommendation.topThree("* ]] ||
+    [[ "$line" == *"//"* ]]
+  }; then
+    continue
+  fi
+  if [[ "$line" == "$SETTINGS_VIEW:"* ]] && {
+    [[ "$line" == *"OnboardingModelRecommendation.topThree("* ]] ||
+    [[ "$line" == *"//"* ]]
+  }; then
     continue
   fi
   echo "FAIL: S1b ranking symbol is used outside its pure helper or S1c view: $line"
@@ -48,4 +59,4 @@ if [ "$FAILED" -ne 0 ]; then
   exit 1
 fi
 
-echo "OK: S1b remains a pure ranking helper with no S1c/runtime wiring"
+echo "OK: S1b remains a pure ranking helper with allowlisted UI call sites and no runtime wiring"

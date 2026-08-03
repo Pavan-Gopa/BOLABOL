@@ -969,3 +969,89 @@ The new `check_s2_*.sh` script is automatically included by the existing
 - No product defect was found; `BUG_REPORT.md` remains at `bugs_open: 0`.
 
 **RESULT: `qa_green`**
+
+---
+
+# Step S3 — Tester QA: AppText i18n × 15
+
+| Field | Value |
+|-------|-------|
+| Step | S3 — AppText localization |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+| bugs_open | 0 |
+
+## Graphify context
+
+The required read-only Graphify queries were run against `graphify-out/graph.json`:
+
+```bash
+graphify explain "AppText" --graph graphify-out/graph.json
+# PASS — AppText at Sources/NativeBolabolCore/Services/AppText.swift:593
+
+graphify query "AppText locale maps onboarding models settings local models" \
+  --graph graphify-out/graph.json
+# PASS — AppText, locale maps, onboarding, Settings, and localization tests found
+```
+
+## Gap-hunt result
+
+- Existing Coder S3 tests covered runtime resolution, EN-fallback detection, terminology, and the localized Settings → Local Models path for all 8 S3 keys.
+- The structural family check still covered only B2–B4/helpLang/helpHUD; it did not include the 8 S3 keys.
+- The existing structural check counted entries globally, so it did not prove one entry per specific locale map.
+- Existing broad coverage did not provide an explicit S1 language-step regression list including `onboardingLanguageNote` and the interface-language keys.
+
+## Commands and results
+
+```bash
+swift test
+# PASS — 503 tests in 4 suites
+
+./script/qa/run_all.sh
+# PASS — 22/22 (unit tests + 21 check_*.sh contracts)
+
+APP_VERSION=1.0.4 ./script/build_and_run.sh --verify
+# PASS — NativeBolabol and NativeBolabolPolishWorker built; --verify exited 0
+
+bash -n script/qa/check_s3_i18n_locales.sh
+bash script/qa/check_s3_i18n_locales.sh
+# PASS — 8 S3 keys + 10 S1 language-step keys in all 15 locale maps
+
+git diff --check -- .
+# PASS — no whitespace errors
+```
+
+SwiftPM emitted the existing dependency identity and unhandled-resource warnings; they did not affect the green build or test result.
+
+## New tests and QA scripts
+
+| Path | Change | Coverage |
+|------|--------|----------|
+| `Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift` | **NEW `s1LanguageStepKeysRemainCompleteInEveryLanguage`** | Explicitly checks the 10 S1 interface/primary/additional language-step keys for non-empty, non-raw resolution across all 15 concrete locales. |
+| `Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift` | **NEW `s1LanguageStepKeysRemainTranslatedInEveryNonEnglishLocale`** | Detects a silent EN fallback for every S1 language-step key in all 14 non-EN locales. |
+| `script/qa/check_s3_i18n_locales.sh` | **NEW** | Isolates each concrete locale dictionary and requires exactly one entry per map for all 8 S3 keys and the 10-key S1 regression family; also scans S3 entries for forbidden English target/output framing. Automatically included by the existing `run_all.sh` `check_*.sh` glob. |
+
+`AppTextFullCoverageTests.swift` needed no edit: its existing cartesian key × locale suite continues to cover runtime non-empty/non-raw resolution for every AppText key.
+
+## Gap-hunt mapping
+
+| S3 requirement | Guard |
+|----------------|-------|
+| Every S3 key appears in every one of the 15 locale maps | NEW `check_s3_i18n_locales.sh`, map-aware `8 × 15` structural check. |
+| Runtime values are non-empty and non-raw | Existing `AppTextFullCoverageTests` plus Coder's S3 resolution tests; full suite passed. |
+| No silent EN fallback for S3 keys | Existing all-14 non-EN S1c/S2 comparison tests; full suite passed. |
+| No target-always/output framing | Existing all-locale S3 Swift terminology tests plus the source-map-scoped S3 script guard. |
+| Change-later copy names the real localized Settings → Local Models path | Existing `onboardingModelsChangeLaterPointsToRealSettingsPathInEveryLocale`. |
+| S1 language-step maps remain complete | NEW S1 Swift regression tests plus the script's `10 × 15` structural check. |
+| Localization surface remains intact | Existing `check_localization_surface.sh`; 569 AppText keys and all 15 UI languages pass. |
+| No product scope creep | Existing no-Python/no-Canary/package/surface checks pass; Tester did not modify `Sources/**`, `Package.swift`, or `STATE.yaml`. |
+
+## Scope and result
+
+- Tester added only test coverage in the existing `OnboardingLocalizationTests.swift`, the new `script/qa/check_s3_i18n_locales.sh`, this report, and FEEDBACK §10.
+- The only `Sources/**` path remains the pre-existing Coder `AppText.swift` localization diff; no product code was changed by Tester.
+- `STATE.yaml`, `BUG_REPORT.md`, `Package.swift`, and product implementation files were not edited by Tester. No commit or push was performed.
+- No product defect was found; `BUG_REPORT.md` remains at `bugs_open: 0`.
+
+**RESULT: `qa_green`**

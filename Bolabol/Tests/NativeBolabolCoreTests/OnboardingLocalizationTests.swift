@@ -18,13 +18,29 @@ private let concreteLanguages: [UILanguagePreference] = UILanguagePreference.all
   $0 != .system
 }
 
-/// S1c's model-screen copy is EN source only; S3 owns the full locale maps.
+/// S1c's model-screen copy; S3 owns the full 15-locale maps.
 private let s1cModelKeys: [AppTextKey] = [
   .onboardingModelsTitle,
   .onboardingModelsHint,
   .onboardingModelsRecommended,
   .onboardingModelsBestMatch,
   .onboardingModelsChangeLater,
+]
+
+/// S1's three language steps. Keep this explicit so a future AppText map edit
+/// cannot silently drop a language-step translation while the broad onboarding
+/// key sweep still passes.
+private let s1LanguageStepKeys: [AppTextKey] = [
+  .onboardingChooseLanguageTitle,
+  .onboardingChooseLanguageHint,
+  .onboardingLanguageNote,
+  .onboardingPrimaryLanguageTitle,
+  .onboardingPrimaryLanguageHint,
+  .onboardingPrimaryLanguageBody,
+  .onboardingAdditionalLanguageTitle,
+  .onboardingAdditionalLanguageHint,
+  .onboardingAdditionalLanguageBody,
+  .onboardingAdditionalSameAsPrimary,
 ]
 
 @Test
@@ -138,6 +154,116 @@ func onboardingModelsChangeLaterPointsToRealSettingsPath() {
   #expect(copy != AppTextKey.onboardingModelsChangeLater.rawValue)
   #expect(copy.localizedCaseInsensitiveContains(settings))
   #expect(copy.localizedCaseInsensitiveContains(localModels))
+}
+
+@Test
+func onboardingModelKeysResolveInEveryLanguage() {
+  // S3 (plan §3.5.6): the S1c model-screen keys now have full 15-locale maps —
+  // never an empty string or raw-key fallback in any concrete UI language.
+  for language in concreteLanguages {
+    for key in s1cModelKeys {
+      let value = AppText.localized(key, language: language)
+      #expect(!value.isEmpty, "S1c key \(key.rawValue) resolved empty for \(language.rawValue)")
+      #expect(
+        value != key.rawValue,
+        "S1c key \(key.rawValue) fell back to its raw key for \(language.rawValue)"
+      )
+    }
+  }
+}
+
+@Test
+func onboardingModelKeysDifferFromEnglishInEveryNonEnglishLocale() {
+  // S3: a silent EN fallback in any non-EN locale means a missing translation.
+  let english = UILanguagePreference.english
+  for language in concreteLanguages where language != english {
+    for key in s1cModelKeys {
+      let localized = AppText.localized(key, language: language)
+      let englishValue = AppText.localized(key, language: english)
+      #expect(
+        localized != key.rawValue,
+        "S1c key \(key.rawValue) missing for \(language.rawValue)"
+      )
+      #expect(
+        localized != englishValue,
+        "S1c key \(key.rawValue) fell back to English for \(language.rawValue)"
+      )
+    }
+  }
+}
+
+@Test
+func onboardingModelKeysAvoidTargetAlwaysOutputTerminology() {
+  // Plan §3.1: model recommendations are an optional display order based on
+  // the primary + additional speech languages — never a forced/target output
+  // promise. Check every locale a user could see (EN fallback included).
+  for language in concreteLanguages {
+    for key in s1cModelKeys {
+      let value = AppText.localized(key, language: language).lowercased()
+      #expect(!value.contains("target always"))
+      #expect(!value.contains("target output"))
+      #expect(!value.contains("always output"))
+      #expect(!value.contains("always force"))
+      #expect(!value.contains("force output"))
+    }
+  }
+}
+
+@Test
+func onboardingModelsChangeLaterPointsToRealSettingsPathInEveryLocale() {
+  // S3: the change-later copy must name the real Settings → Local Models path
+  // using the localized section labels in every supported language.
+  for language in concreteLanguages {
+    let copy = AppText.localized(.onboardingModelsChangeLater, language: language)
+    let settings = AppText.localized(.settings, language: language)
+    let localModels = AppText.localized(.settingsLocalModels, language: language)
+    #expect(!copy.isEmpty, "Change-later copy empty for \(language.rawValue)")
+    #expect(copy != AppTextKey.onboardingModelsChangeLater.rawValue)
+    #expect(
+      copy.localizedCaseInsensitiveContains(settings),
+      "Change-later copy must name Settings for \(language.rawValue), got: \(copy)"
+    )
+    #expect(
+      copy.localizedCaseInsensitiveContains(localModels),
+      "Change-later copy must name the Local Models section for \(language.rawValue), got: \(copy)"
+    )
+  }
+}
+
+@Test
+func s1LanguageStepKeysRemainCompleteInEveryLanguage() {
+  // S3 regression guard: the existing UI/primary/additional language-step
+  // maps must remain real translations while the new model maps are edited.
+  for language in concreteLanguages {
+    for key in s1LanguageStepKeys {
+      let value = AppText.localized(key, language: language)
+      #expect(
+        !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+        "S1 key \(key.rawValue) resolved empty for \(language.rawValue)"
+      )
+      #expect(
+        value != key.rawValue,
+        "S1 key \(key.rawValue) fell back to its raw key for \(language.rawValue)"
+      )
+    }
+  }
+}
+
+@Test
+func s1LanguageStepKeysRemainTranslatedInEveryNonEnglishLocale() {
+  // A full S1 regression check must catch a newly introduced silent EN fallback,
+  // not only an empty or raw-key entry.
+  let english = UILanguagePreference.english
+  for language in concreteLanguages where language != english {
+    for key in s1LanguageStepKeys {
+      let localized = AppText.localized(key, language: language)
+      let englishValue = AppText.localized(key, language: english)
+      #expect(
+        localized != englishValue,
+        "S1 key \(key.rawValue) fell back to English for \(language.rawValue)"
+      )
+    }
+  }
 }
 
 /// B2 — keys added for the primary + additional speech-language steps

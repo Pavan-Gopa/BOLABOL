@@ -1,57 +1,50 @@
-# Blaboom 1.0.3 — live orchestration state
+# Blaboom 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: B12_DONE
+current_step: S1
 step_description: >-
-  TRAIN COMPLETE. Blaboom 1.0.3 bilingual UX (primary+additional) shipped path;
-  Canary product NO-GO (ADR-012, B7–B10 skipped); final QA 471 tests / run_all 18/18;
-  Developer ID signed DMG 1.0.3 (notarize optional, skipped).
-target_files: []
+  Onboarding language UX: UI language → primary dictation → additional working
+  language; clear copy; change later in Settings. No model cards yet (S1c).
+target_files:
+  - Sources/NativeBlaboom/Views/OnboardingView.swift
+  - Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift
+  - Sources/NativeBlaboomCore/Services/AppText.swift
+  - Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift
+  - Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift
+  - Tests/NativeBlaboomCoreTests/OnboardingLocalizationTests.swift
+  - Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift
 completed_steps:
-  - B0
-  - B1
-  - B2
-  - B3
-  - B4
-  - B5
-  - B6
-  - B11
-  - B12
-skipped_steps:
-  - B7
-  - B8
-  - B9
-  - B10
+  - S0
+skipped_steps: []
 implementation:
-  status: done
+  status: pending
   attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: 'B12 review APPROVED'
+  verdict: null
+  note: ''
 qa:
-  status: green
+  status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: B12
+  suite: null
   bugs_open: 0
-  note: 'Tester qa_green; version 1.0.3 on app/DMG; SHA256SUMS verified'
-next_actor: orchestrator
-track: RELEASE
-prior_track: RELEASE
+  note: ''
+next_actor: coder
+track: UX
+prior_track: null
 working_roots:
   - Blaboom
 checkpoint:
-  last_pre_tag: blaboom/pre-B12
-  last_post_tag: blaboom/B12-done
-  last_commit: 698326d
+  last_pre_tag: blaboom/pre-S1
+  last_post_tag: blaboom/S0-done
+  last_commit: null
 plan_files:
-  - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
-  - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
-  - AI_Workflow_Kit/docs/DECISIONS.md
-  - docs/canary/COREML_SPIKE.md
+  - BLABOOM_ASR_COREML_INTEGRATION_PLAN.md
+  - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  No further coding steps on 1.0.3 train. Optional follow-ups outside workflow:
-  notarize DMG; delete scratch/canary-spike models; enable git push remote.
+  S1 — Onboarding: three language steps only (UI / primary / additional).
+  See plan §3.1 and ASR_COREML_STEPS S1. Out of scope: model ranking cards (S1b/S1c).
 notes: |
-  Train closed 2026-08-03 by Orchestrator after B12 Coder→Reviewer→Tester green.
+  Train 1.0.4 ASR Core ML opened. S0 kit bootstrap by Orchestrator.
+  Runtime: Core ML for new ASR later; this step is UX only.

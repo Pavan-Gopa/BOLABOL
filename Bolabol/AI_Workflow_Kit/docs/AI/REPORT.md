@@ -117,6 +117,157 @@ plutil -p dist/Bolabol.app/Contents/Info.plist | grep -E 'Name|Identifier'
 
 ---
 
+# Step S1c — Tester QA: Onboarding 3 dynamic local-model cards
+
+| Field | Value |
+|-------|-------|
+| Step | S1c — Onboarding local models |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+| bugs_open | 0 |
+
+## Graphify and baseline
+
+The supplied Graphify graph was queried read-only; no Graphify rebuild was performed.
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+
+graphify explain "OnboardingView" --graph graphify-out/graph.json
+# PASS — OnboardingView at Sources/NativeBolabol/Views/OnboardingView.swift:13
+
+graphify explain "OnboardingModelRecommendation" --graph graphify-out/graph.json
+# PASS — .topThree() at Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift:16
+
+graphify path "OnboardingView" "OnboardingModelRecommendation" \
+  --graph graphify-out/graph.json
+# PASS — 3-hop path through TranscriptionModelDescriptor and .topThree()
+
+graphify query "S1c onboarding local models test coverage and regressions" \
+  --graph graphify-out/graph.json
+# PASS — BFS completed; 289 nodes found in the returned context
+```
+
+Graphify context supplied by the Orchestrator: **4176 nodes / 9717 edges**.
+
+```bash
+swift test
+# BASELINE PASS — 488 tests in 4 suites
+
+./script/qa/run_all.sh
+# BASELINE 18/19 — only check_s1b_scope.sh failed because the old S1b
+# allowlist rejected the required S1c OnboardingView.topThree call
+```
+
+## Commands and results
+
+```bash
+bash -n script/qa/check_s1b_scope.sh
+# PASS
+
+bash -n script/qa/check_s1c_onboarding_models.sh
+# PASS
+
+bash script/qa/check_s1b_scope.sh
+# PASS — only the ranking helper and the S1c OnboardingView call are allowed
+
+bash script/qa/check_s1c_onboarding_models.sh
+# PASS — dynamic-card, ordering, slot, optional-action, and no-runtime contracts
+
+swift test
+# PASS — 488 tests in 4 suites
+
+./script/qa/run_all.sh
+# PASS — 20/20
+
+git diff --check -- .
+# PASS — no whitespace errors
+
+git diff --name-only -- Sources Tests script/qa
+# Sources/NativeBolabol/Views/OnboardingView.swift
+# Sources/NativeBolabolCore/Services/AppText.swift
+# Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift
+# script/qa/check_s1b_scope.sh
+# script/qa/run_all.sh
+# The new check_s1c_onboarding_models.sh is untracked, so it is confirmed by
+# git status rather than git diff --name-only.
+```
+
+## New and changed QA coverage
+
+| Path | Change | Coverage |
+|------|--------|----------|
+| `script/qa/check_s1c_onboarding_models.sh` | **NEW** | Fixed eight-screen order; screen 3 `localModelsStep`; exactly one UI `topThree`; current primary/additional/store arguments; computed list; slot-zero labels; optional Next; store actions; five AppText keys; no placeholder/runtime wiring |
+| `script/qa/check_s1b_scope.sh` | **UPDATED** | Narrowly permits the required `topThree` call only in `Sources/NativeBolabol/Views/OnboardingView.swift`; retains pure-helper, engine/store/process, Canary/GigaAM, and runtime prohibitions |
+| `script/qa/run_all.sh` | **UPDATED** | Documents that the `check_*.sh` glob includes the dedicated S1c contract |
+| `Tests/NativeBolabolCoreTests/OnboardingModelRecommendationTests.swift` | Existing coverage re-run | R1/R2/R3 matrix, normalization, missing/NO-GO collapse, empty catalog, fallbacks, duplicate suppression, and three-card cap |
+| `Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift` | Existing coverage re-run | Five S1c EN keys, tour key set, and real `Settings -> Local Models` path |
+
+No additional Swift tests were needed: the remaining gaps were SwiftUI source-structure invariants, now guarded by the dedicated S1c check. No product source or Package.swift file was modified by Tester.
+
+## Gap-hunt mapping
+
+| S1c acceptance | Test / QA guard |
+|----------------|-----------------|
+| Fixed order of eight onboarding screens | `check_s1c_onboarding_models.sh`: `totalSteps = 8` and `case 0...6` / `default` mapping |
+| Screen 3 uses `localModelsStep` | `check_s1c_onboarding_models.sh` adjacency check |
+| Exactly one UI call to `topThree` | `check_s1c_onboarding_models.sh` count = 1; updated `check_s1b_scope.sh` call-site allowlist |
+| Arguments use current primary, additional, and store models | `check_s1c_onboarding_models.sh` checks `primaryLanguageCode`, `additionalLanguageCode`, and `transcriptionModelStore.models` in the call block |
+| No hard-coded preferred IDs/model-ID ranking | `check_s1c_onboarding_models.sh` rejects preferred-ID/ranking patterns, product IDs, fixed slots, and placeholders |
+| Computed list with no stale `@State`/cache | `check_s1c_onboarding_models.sh` requires computed `onboardingModels` and rejects SwiftUI state/cache declarations |
+| Recommended and Best Match only on slot #1 | `check_s1c_onboarding_models.sh` requires both keys inside `if slot == 0`; UI accessibility showed both only on the first of two cards |
+| Next is not blocked by a missing download | `check_s1c_onboarding_models.sh` rejects a step-3 disable gate; source review confirms the Next button has no download prerequisite |
+| Enter/exit without selection preserves backend and `activeModelID` | `check_s1c_onboarding_models.sh` checks the `finish()` block for no backend/activation/download mutation; explicit model actions remain separate |
+| Download/Retry/Use continue through the existing store | `check_s1c_onboarding_models.sh` requires store-backed download, retry, activate, progress, and failed-state paths |
+| Five EN AppText keys exist | Existing `OnboardingLocalizationTests` plus `check_s1c_onboarding_models.sh` enum/source-map checks |
+| Change-later copy names Settings -> Local Models | `onboardingModelsChangeLaterPointsToRealSettingsPath()` |
+| Missing/NO-GO entries collapse without placeholders | Existing `OnboardingModelRecommendationTests` collapse/empty/fallback cases plus dynamic `ForEach(onboardingModels.enumerated())` guard |
+| No S2/S3/S4+, new engines, Python, or Canary/GigaAM runtime | `check_s1c_onboarding_models.sh`, `check_s1b_scope.sh`, `check_no_python_in_sources.sh`, `check_no_canary_product.sh`, package/target checks, and scoped diff review |
+
+## Clean build and manual UI verification
+
+```bash
+swift package clean
+# PASS
+
+APP_VERSION=1.0.4 ./script/build_and_run.sh --verify
+# PASS — NativeBolabol and NativeBolabolPolishWorker built; --verify returned 0
+
+plutil -p dist/Bolabol.app/Contents/Info.plist
+# PASS — CFBundleName/Executable = Bolabol, bundle id = com.bolabol.app,
+# CFBundleShortVersionString = 1.0.4
+
+pgrep -ifl "Bolabol|NativeBolabol"
+# PASS — fresh dist/Bolabol.app/Contents/MacOS/Bolabol process observed
+```
+
+Manual UI result:
+
+| Scenario | Result |
+|----------|--------|
+| Screen 3 opens with dynamic local-model cards | **PASS** — accessibility inspection showed `Whisper Large v3 Full`; the thin available catalog correctly produced one card for the initial RU + EN pair |
+| Change primary/additional and recompute | **PASS, partial** — changing primary to English and additional to French before advancing changed screen 3 to two cards: `Whisper Large v3 Full` and `Whisper Large v3 Turbo` |
+| Recommended / Best Match only on first visible card | **PASS** — accessibility values showed both labels for the first card; the second card had neither |
+| Full Back -> change -> Forward reorder loop across a three-card catalog | **UNVERIFIED** — the current catalog exposed at most two usable cards and the UI accessibility session became unstable during the return loop |
+| Continue without downloading a model | **UNVERIFIED** — the observed card was already active; structural QA confirms no step-3 download gate |
+| Dark theme layout | **PASS** — onboarding screen rendered without visible clipping in the available dark appearance |
+| Light theme layout | **UNVERIFIED** — not claimed because the UI session did not provide a stable second-theme check |
+
+The app was relaunched only after the successful clean build. The manual language changes were restored to the original Russian primary / English additional pair before handoff. No screenshots are used as acceptance evidence; the UI claims above are based on live accessibility/static-text inspection, with unavailable scenarios explicitly marked `UNVERIFIED`.
+
+## Scope and result
+
+- `Sources/**` was not modified by Tester. The existing S1c product diff remains the Coder's diff.
+- `Package.swift`, `STATE.yaml`, and product implementation files were not modified by Tester.
+- `graphify-out/**` was not rebuilt or edited as a QA artifact.
+- No commit, tag, or push was performed.
+- `BUG_REPORT.md` was not changed because no product defect was found; `bugs_open: 0` is accurate.
+
+**RESULT: `qa_green`**
+
+---
+
 # Step S1 — Onboarding language steps (ASR Core ML 1.0.4)
 
 | Field | Value |

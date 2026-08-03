@@ -18,6 +18,15 @@ private let concreteLanguages: [UILanguagePreference] = UILanguagePreference.all
   $0 != .system
 }
 
+/// S1c's model-screen copy is EN source only; S3 owns the full locale maps.
+private let s1cModelKeys: [AppTextKey] = [
+  .onboardingModelsTitle,
+  .onboardingModelsHint,
+  .onboardingModelsRecommended,
+  .onboardingModelsBestMatch,
+  .onboardingModelsChangeLater,
+]
+
 @Test
 func everyOnboardingKeyIsLocalizedInEveryLanguage() {
   #expect(!onboardingKeys.isEmpty, "Expected onboarding keys to exist in AppTextKey")
@@ -86,17 +95,15 @@ func onboardingKeysUsedByWelcomeTourAllExist() {
   let usedByTour: [AppTextKey] = [
     .onboardingWelcomeTitle, .onboardingChooseLanguageTitle, .onboardingChooseLanguageHint,
     .onboardingLanguageNote,
-    .onboardingHowToTranscribe, .onboardingLocalTitle, .onboardingLocalBody,
-    .onboardingCloudTitle, .onboardingCloudBody,
-    .onboardingSetupTitle, .onboardingSetupLocalBody, .onboardingSetupCloudBody,
-    .onboardingOpenSettings,
+    .onboardingModelsTitle, .onboardingModelsHint, .onboardingModelsRecommended,
+    .onboardingModelsBestMatch, .onboardingModelsChangeLater,
     .onboardingPermissionsTitle, .onboardingPermissionsBody,
     .onboardingMicrophone, .onboardingAccessibility, .onboardingPermissionsGrant,
     .onboardingModesTitle, .onboardingModesBody,
     .onboardingGlossaryTitle, .onboardingGlossaryBody, .onboardingGlossaryExplanation,
     .onboardingGlossaryCreate, .onboardingGlossaryCreated,
     .onboardingThemeTitle, .onboardingThemeBody,
-    .onboardingBack, .onboardingNext, .onboardingGetStarted, .onboardingSkip, .onboardingShowTour,
+    .onboardingBack, .onboardingNext, .onboardingGetStarted, .onboardingSkip,
     // B2 — primary + additional speech-language steps (plan §6.1).
     .onboardingPrimaryLanguageTitle, .onboardingPrimaryLanguageHint, .onboardingPrimaryLanguageBody,
     .onboardingAdditionalLanguageTitle, .onboardingAdditionalLanguageHint, .onboardingAdditionalLanguageBody,
@@ -107,6 +114,30 @@ func onboardingKeysUsedByWelcomeTourAllExist() {
     let value = AppText.localized(key, language: .english)
     #expect(value != key.rawValue, "Tour key \(key.rawValue) has no English translation")
   }
+}
+
+@Test
+func onboardingModelKeysResolveInEnglish() {
+  for key in s1cModelKeys {
+    let value = AppText.localized(key, language: .english)
+    #expect(!value.isEmpty, "S1c key \(key.rawValue) has no English translation")
+    #expect(
+      value != key.rawValue,
+      "S1c key \(key.rawValue) fell back to its raw key in English"
+    )
+  }
+}
+
+@Test
+func onboardingModelsChangeLaterPointsToRealSettingsPath() {
+  let copy = AppText.localized(.onboardingModelsChangeLater, language: .english)
+  let settings = AppText.localized(.settings, language: .english)
+  let localModels = AppText.localized(.settingsLocalModels, language: .english)
+
+  #expect(!copy.isEmpty)
+  #expect(copy != AppTextKey.onboardingModelsChangeLater.rawValue)
+  #expect(copy.localizedCaseInsensitiveContains(settings))
+  #expect(copy.localizedCaseInsensitiveContains(localModels))
 }
 
 /// B2 — keys added for the primary + additional speech-language steps

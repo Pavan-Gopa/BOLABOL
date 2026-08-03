@@ -31,7 +31,8 @@ run_step() {
 # 1) Swift unit tests (NativeBolabolCore)
 run_step "swift test (NativeBolabolCoreTests)" swift test
 
-# 2) Structural / source contracts
+# 2) Structural / source contracts. The glob includes the dedicated S1c
+#    onboarding-model contract alongside the existing step guards.
 for script in "$ROOT"/script/qa/check_*.sh; do
   [ -f "$script" ] || continue
   name="$(basename "$script")"

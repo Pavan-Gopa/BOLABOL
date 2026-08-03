@@ -14,22 +14,23 @@ completed_steps:
   - S1
   - RENAME
   - S1b
+  - S1c
 skipped_steps: []
 implementation:
-  status: pending
-  attempts: 0
+  status: done
+  attempts: 1
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: 'Reviewer APPROVED S1c; no product/test findings'
 qa:
-  status: pending
+  status: green
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
   suite: S1c
   bugs_open: 0
-  note: ''
-next_actor: coder
+  note: '488 tests in 4 suites; QA 20/20; fresh 1.0.4 build opened'
+next_actor: orchestrator
 track: UX
 prior_track: RENAME
 working_roots:
@@ -42,14 +43,14 @@ plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  Implement only S1c. Replace the hard-coded onboarding model order with
-  OnboardingModelRecommendation.topThree(primary:additional:available:).
-  Screen 3 is optional: Next/Skip must not require a download or silently
-  change the current/default engine. Recommended badge belongs only to slot 1.
-  Add EN source copy and focused tests. Do not implement S2/S3/S4+.
+  S1c implementation/review/QA complete. Orchestrator closes POST and opens S2.
 notes: |
   S1b POST: bolabol/S1b-done at 59dafa7.
-  Graphify refreshed after POST on 2026-08-03: 4174 nodes / 9723 edges.
-  OnboardingView references TranscriptionModelStore; its current screen 3 uses
-  a hard-coded preferred-ID list and blocks Next until setup is ready.
-  S1c must use the S1b helper and make model setup optional.
+  S1c Coder handoff: RESULT waiting_review, 488 tests in 4 suites.
+  Graphify refreshed after the Coder handoff on 2026-08-03:
+  4176 nodes / 9717 edges; OnboardingView reaches topThree through
+  TranscriptionModelDescriptor in the extracted graph.
+  Reviewer APPROVED: 14/14 S1c acceptance checks pass; no product/test defects.
+  Tester qa_green: 488 tests, QA 20/20, fresh 1.0.4 build opened.
+  Manual UI: dynamic one/two-card states and slot-1 labels observed; full
+  three-card Back loop, no-download transition, and light theme unverified.

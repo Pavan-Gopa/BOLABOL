@@ -78,3 +78,13 @@ func transcriptionLanguageHudLabelUsesFirstLetterOfDisplayName() {
     #expect(TranscriptionLanguageOption.hudLabel(for: "ar") == "A")
     #expect(TranscriptionLanguageOption.hudLabel(for: "") == "E")
 }
+
+@Test
+func nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend() {
+    let catalog = TranscriptionModelCatalog.nativeWhisperKit
+    #expect(!catalog.models.contains { $0.id.lowercased().contains("canary") })
+    #expect(!catalog.models.contains { $0.modelName.lowercased().contains("canary") })
+    let backends = catalog.models.map(\.backend)
+    #expect(backends.allSatisfy { $0 == .whisperKitCoreML || $0 == .fluidAudioCoreML })
+}
+

@@ -3,9 +3,8 @@
 
 current_step: B11
 step_description: >-
-  Final automated QA gate for 1.0.3 train without product Canary (ADR-012).
-  Plan §12.1 + script/qa: native-only, bilingual, i18n, no Python; archive
-  format regressions; spike contract. Fill any remaining coverage gaps.
+  Final QA consolidation. Review APPROVED (471/471, 17/17). Awaiting Tester
+  gap-hunt before POST and B12 open.
 target_files:
   - Tests/NativeBlaboomCoreTests/**
   - script/qa/**
@@ -21,25 +20,25 @@ completed_steps:
   - B5
   - B6
 skipped_steps:
-  - B7   # ADR-012 Canary product catalog
-  - B8   # ADR-012 CanaryCoreMLEngine
-  - B9   # ADR-012 Canary HUD wiring
-  - B10  # ADR-012 Canary Local Models UI
+  - B7
+  - B8
+  - B9
+  - B10
 implementation:
-  status: pending
+  status: waiting_review
   attempts: 0
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: 'Reviewer 471 + 17/17; COVERAGE + RELEASE_NOTES OK'
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: null
+  suite: B11
   bugs_open: 0
   note: ''
-next_actor: coder
+next_actor: tester
 track: RELEASE
 prior_track: CANARY
 working_roots:
@@ -47,25 +46,12 @@ working_roots:
 checkpoint:
   last_pre_tag: blaboom/pre-B11
   last_post_tag: blaboom/B6-done
-  last_commit: 1b8634f
+  last_commit: aa827b6
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
-  - docs/canary/COREML_SPIKE.md
 coder_brief: |
-  B11 — QA suite consolidation (no product Canary)
-
-  ADR-012: B7–B10 skipped. Focus:
-  1. Map plan §12.1 automated matrix to existing tests; add missing ones
-  2. Ensure script/qa covers: no Python in Sources, bilingual keys, localization,
-     B6 spike contracts, package/targets, no secrets
-  3. Update COVERAGE.md for 1.0.3 train status
-  4. Optional: RELEASE_NOTES draft bullets for bilingual + Canary NO-GO honesty
-  5. swift test + run_all green
-
-  Out of scope: implementing Canary engine; notarize (B12).
-
-  Verify: swift test && ./script/qa/run_all.sh
+  B11 review approved — Tester gap-hunts final QA gate.
 notes: |
-  B6 closed NO-GO. UX bilingual B1–B5 shipped. Next after B11: B12 test build 1.0.3.
+  After Tester green: POST B11, open B12 (last step — APP_VERSION=1.0.3 build/smoke).

@@ -1,0 +1,50 @@
+# Bolabol 1.0.4 ASR Core ML — live orchestration state
+# Orchestrator owns this file.
+
+current_step: S1b
+step_description: >-
+  Pure ranking OnboardingModelRecommendation.topThree(primary, additional, available)
+  R1/R2/R3 plan §3.5.3; unit tests. No onboarding UI cards yet (S1c).
+  Project brand is Bolabol (rename done).
+target_files:
+  - Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift
+  - Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
+  - Tests/NativeBolabolCoreTests/OnboardingModelRecommendationTests.swift
+  - Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift
+completed_steps:
+  - S0
+  - S1
+  - RENAME
+skipped_steps: []
+implementation:
+  status: pending
+  attempts: 0
+review:
+  status: pending
+  last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  verdict: null
+  note: ''
+qa:
+  status: pending
+  last_report: AI_Workflow_Kit/docs/AI/REPORT.md
+  suite: null
+  bugs_open: 0
+  note: ''
+next_actor: coder
+track: UX
+prior_track: RENAME
+working_roots:
+  - Bolabol
+checkpoint:
+  last_pre_tag: bolabol/pre-S1b
+  last_post_tag: bolabol/rename-done
+  last_commit: null
+plan_files:
+  - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
+  - BOLABOL_RENAME_PLAN.md
+  - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
+coder_brief: |
+  S1b — OnboardingModelRecommendation.topThree pure function + unit tests.
+  Plan §3.5.3 R1/R2/R3. Paths: NativeBolabolCore (not Blaboom).
+notes: |
+  RENAME approved + qa_green. Resume ASR UX train at S1b.

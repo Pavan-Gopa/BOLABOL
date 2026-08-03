@@ -38,7 +38,7 @@ working_roots:
 checkpoint:
   last_pre_tag: blaboom/pre-S1
   last_post_tag: blaboom/S0-done
-  last_commit: null
+  last_commit: 57c1e02
 plan_files:
   - BLABOOM_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md

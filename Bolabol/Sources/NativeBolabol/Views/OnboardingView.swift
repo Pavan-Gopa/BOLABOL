@@ -15,7 +15,6 @@ struct OnboardingView: View {
   @EnvironmentObject private var settingsStore: GeneralSettingsStore
   @EnvironmentObject private var glossaryStore: GlossaryStore
   @EnvironmentObject private var transcriptionModelStore: TranscriptionModelStore
-  @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
   @EnvironmentObject private var hotkeySettingsStore: HotkeySettingsStore
   @Environment(\.dismiss) private var dismiss
 
@@ -24,13 +23,10 @@ struct OnboardingView: View {
 
   @State private var step = 0
   @State private var micGranted = false
-  @State private var googleAPIKey = ""
-  @State private var showsGoogleAPIKey = false
-  @State private var showsAddGoogleKeyForm = false
   @State private var glossaryCreated = false
   @State private var expandedModeID: String?
 
-  // B2 (plan §6.1): UI language → primary → additional → transcription →
+  // S1c (plan §3.1): UI language → primary → additional → local models →
   // permissions → modes → glossary → theme.
   private let totalSteps = 8
 
@@ -106,7 +102,7 @@ struct OnboardingView: View {
     case 2:
       additionalLanguageStep
     case 3:
-      transcriptionStep
+      localModelsStep
     case 4:
       permissionsStep
     case 5:
@@ -152,7 +148,6 @@ struct OnboardingView: View {
           )
         }
         .buttonStyle(.borderedProminent)
-        .disabled(step == 3 && !transcriptionSetupIsReady)
       } else {
         Button {
           finish()
@@ -340,135 +335,43 @@ struct OnboardingView: View {
     .padding(.horizontal, 28)
   }
 
-  // MARK: - Step 3: Transcription
+  // MARK: - Step 3: Local transcription models
 
-  private var transcriptionStep: some View {
+  private var localModelsStep: some View {
     VStack(alignment: .leading, spacing: 12) {
       stepHeader(
         icon: "waveform.and.magnifyingglass",
-        title: settingsStore.text(.onboardingHowToTranscribe),
-        subtitle: transcriptionModelStore.usesGeminiCloud
-          ? settingsStore.text(.onboardingCloudBody)
-          : settingsStore.text(.onboardingLocalBody)
+        title: settingsStore.text(.onboardingModelsTitle),
+        subtitle: settingsStore.text(.onboardingModelsHint)
       )
 
-      HStack(spacing: 12) {
-        backendButton(
-          backend: .localWhisper,
-          icon: "internaldrive",
-          title: settingsStore.text(.onboardingLocalTitle),
-          body: settingsStore.text(.onboardingLocalBody),
-          tint: .blue
-        )
-
-        backendButton(
-          backend: .geminiCloud,
-          icon: "cloud",
-          title: settingsStore.text(.onboardingCloudTitle),
-          body: settingsStore.text(.onboardingCloudBody),
-          tint: .green
-        )
+      VStack(alignment: .leading, spacing: 6) {
+        ForEach(Array(onboardingModels.enumerated()), id: \.element.id) { index, model in
+          onboardingModelRow(model, slot: index)
+        }
       }
 
-      if transcriptionModelStore.usesGeminiCloud {
-        cloudSetup
-      } else {
-        localModelSetup
-      }
+      Text(settingsStore.text(.onboardingModelsChangeLater))
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
     }
     .padding(.horizontal, 28)
   }
 
-  private func backendButton(
-    backend: TranscriptionBackend,
-    icon: String,
-    title: String,
-    body: String,
-    tint: Color
-  ) -> some View {
-    let isSelected = transcriptionModelStore.settings.backend == backend
-
-    return Button {
-      withAnimation(.easeInOut(duration: 0.2)) {
-        transcriptionModelStore.setBackend(backend)
-      }
-    } label: {
-      HStack(alignment: .top, spacing: 12) {
-        Image(systemName: icon)
-          .font(.title2.weight(.bold))
-          .foregroundStyle(tint)
-          .frame(width: 28)
-
-        VStack(alignment: .leading, spacing: 4) {
-          HStack {
-            Text(title)
-              .font(.title3.weight(.bold))
-            Spacer()
-            Image(
-              systemName: isSelected
-                ? "checkmark.circle.fill"
-                : "circle"
-            )
-            .font(.title3.weight(.semibold))
-            .foregroundStyle(isSelected ? tint : .secondary)
-          }
-          Text(body)
-            .font(.body)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-      }
-      .padding(14)
-      .frame(maxWidth: .infinity, alignment: .topLeading)
-      .background(
-        RoundedRectangle(cornerRadius: 12)
-          .fill(
-            isSelected
-              ? tint.opacity(0.12)
-              : Color.secondary.opacity(0.05)
-          )
-      )
-      .overlay {
-        RoundedRectangle(cornerRadius: 12)
-          .stroke(
-            isSelected ? tint : Color.secondary.opacity(0.18),
-            lineWidth: isSelected ? 2 : 1
-          )
-      }
-    }
-    .buttonStyle(.plain)
-  }
-
-  private var localModelSetup: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      ForEach(onboardingModels) { model in
-        onboardingModelRow(model)
-      }
-    }
-  }
-
-  /// Model shown with the green "RECOMMENDED" badge in the onboarding list.
-  private static let recommendedOnboardingModelID = "parakeet-tdt-06b-v3"
-
+  /// The ranking helper is the single source of truth for this screen. Keeping
+  /// this computed avoids stale cards after Back changes either speech language.
   private var onboardingModels: [TranscriptionModelDescriptor] {
-    let preferredIDs = [
-      "parakeet-tdt-06b-v3",
-      "whisperkit-medium-multilingual",
-      "whisperkit-large-v3-full",
-    ]
-    let activeModel = transcriptionModelStore.activeModel
-    let preferredModels = preferredIDs.compactMap { id in
-      transcriptionModelStore.models.first { $0.id == id }
-    }
-
-    return ([activeModel].compactMap { $0 } + preferredModels)
-      .uniqued(by: \.id)
-      .prefix(3)
-      .map { $0 }
+    OnboardingModelRecommendation.topThree(
+      primary: settingsStore.speechLanguages.primaryLanguageCode,
+      additional: settingsStore.speechLanguages.additionalLanguageCode,
+      available: transcriptionModelStore.models
+    )
   }
 
   private func onboardingModelRow(
-    _ model: TranscriptionModelDescriptor
+    _ model: TranscriptionModelDescriptor,
+    slot: Int
   ) -> some View {
     let installation = transcriptionModelStore.installationState(for: model)
     let isActive = transcriptionModelStore.settings.activeModelID == model.id
@@ -484,8 +387,11 @@ struct OnboardingView: View {
           Text(model.displayName)
             .font(.headline)
 
-          if model.id == Self.recommendedOnboardingModelID {
-            statusBadge(settingsStore.text(.badgeRecommended), tint: .blue)
+          if slot == 0 {
+            statusBadge(
+              settingsStore.text(.onboardingModelsRecommended),
+              tint: .blue
+            )
           } else if let badge = model.badge {
             statusBadge(badge, tint: .blue)
           }
@@ -496,6 +402,12 @@ struct OnboardingView: View {
               tint: .green
             )
           }
+        }
+
+        if slot == 0 {
+          Text(settingsStore.text(.onboardingModelsBestMatch))
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(.blue)
         }
 
         Text(model.description)
@@ -589,167 +501,6 @@ struct OnboardingView: View {
       .buttonStyle(.bordered)
       .controlSize(.small)
     }
-  }
-
-  private var cloudSetup: some View {
-    let google = polishingEngineStore.apiSettings.configuration(for: .google)
-    let keyCount = configuredGoogleKeyCount
-
-    return VStack(alignment: .leading, spacing: 12) {
-      HStack {
-        Label("Google Gemini", systemImage: "key")
-          .font(.title3.bold())
-        Spacer()
-        Text(
-          keyCount > 1
-            ? settingsStore.formattedText(.apiKeysCountLabel, "\(keyCount)")
-            : keyCount == 1
-              ? settingsStore.text(.keyConfigured)
-              : settingsStore.text(.noAPIKey)
-        )
-        .font(.subheadline.weight(.bold))
-        .foregroundStyle(google.hasAPIKey ? .green : .orange)
-      }
-
-      Text(settingsStore.text(.onboardingCloudBody))
-        .font(.body)
-        .foregroundStyle(.secondary)
-
-      if keyCount > 0 && !showsAddGoogleKeyForm {
-        HStack(spacing: 10) {
-          Label(
-            keyCount > 1
-              ? settingsStore.formattedText(.apiKeysCountLabel, "\(keyCount)")
-              : settingsStore.text(.keyConfigured),
-            systemImage: google.hasAPIKey
-              ? "checkmark.shield.fill"
-              : "exclamationmark.shield.fill"
-          )
-          .font(.subheadline.weight(.semibold))
-          .foregroundStyle(google.hasAPIKey ? .green : .orange)
-
-          Spacer()
-
-          if google.apiKeys.count < 10 {
-            Button {
-              showsAddGoogleKeyForm = true
-            } label: {
-              Label(settingsStore.text(.addKey), systemImage: "plus")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-          }
-        }
-        .padding(11)
-        .background(
-          RoundedRectangle(cornerRadius: 9)
-            .fill(google.hasAPIKey ? Color.green.opacity(0.08) : Color.secondary.opacity(0.06))
-        )
-      } else {
-        googleAPIKeyForm
-      }
-
-      if let apiKeyURL = APIProviderKind.google.getAPIKeyURL {
-        Link(destination: apiKeyURL) {
-          Label(
-            settingsStore.text(.getAPIKey),
-            systemImage: "arrow.up.right.square"
-          )
-          .font(.subheadline.weight(.medium))
-        }
-      }
-
-      Text(settingsStore.text(.googleAPIBody))
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-    .padding(14)
-    .background(
-      RoundedRectangle(cornerRadius: 12)
-        .fill(google.hasAPIKey ? Color.green.opacity(0.08) : Color.secondary.opacity(0.06))
-    )
-    .overlay {
-      RoundedRectangle(cornerRadius: 12)
-        .stroke(google.hasAPIKey ? Color.green.opacity(0.25) : Color.secondary.opacity(0.18))
-    }
-  }
-
-  private var googleAPIKeyForm: some View {
-    HStack(spacing: 8) {
-      Group {
-        if showsGoogleAPIKey {
-          TextField(
-            settingsStore.text(.enterAPIKey),
-            text: $googleAPIKey
-          )
-        } else {
-          SecureField(
-            settingsStore.text(.enterAPIKey),
-            text: $googleAPIKey
-          )
-        }
-      }
-      .textFieldStyle(.roundedBorder)
-
-      Button {
-        showsGoogleAPIKey.toggle()
-      } label: {
-        Image(
-          systemName: showsGoogleAPIKey
-            ? "eye.slash"
-            : "eye"
-        )
-      }
-      .buttonStyle(.bordered)
-      .accessibilityLabel(
-        settingsStore.text(
-          showsGoogleAPIKey ? .hideAPIKey : .showAPIKey
-        )
-      )
-
-      if configuredGoogleKeyCount > 0 {
-        Button {
-          googleAPIKey = ""
-          showsAddGoogleKeyForm = false
-        } label: {
-          Image(systemName: "xmark")
-        }
-        .buttonStyle(.bordered)
-        .accessibilityLabel(settingsStore.text(.cancel))
-      }
-
-      Button(settingsStore.text(.save)) {
-        saveGoogleAPIKey()
-      }
-      .buttonStyle(.borderedProminent)
-      .disabled(
-        googleAPIKey
-          .trimmingCharacters(in: .whitespacesAndNewlines)
-          .isEmpty
-      )
-    }
-  }
-
-  private var configuredGoogleKeyCount: Int {
-    polishingEngineStore.apiSettings
-      .configuration(for: .google)
-      .configuredAPIKeyCount
-  }
-
-  private var transcriptionSetupIsReady: Bool {
-    if transcriptionModelStore.usesGeminiCloud {
-      return polishingEngineStore.apiSettings
-        .configuration(for: .google)
-        .hasAPIKey
-    }
-
-    guard let activeModel = transcriptionModelStore.activeModel else {
-      return false
-    }
-
-    return transcriptionModelStore.installationState(for: activeModel).isDownloaded
-      || transcriptionModelStore.hasLocalFiles(for: activeModel)
   }
 
   // MARK: - Step 4: Permissions
@@ -1182,37 +933,6 @@ struct OnboardingView: View {
     }
   }
 
-  private func saveGoogleAPIKey() {
-    let trimmedKey =
-      googleAPIKey
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmedKey.isEmpty else { return }
-
-    var configuration = polishingEngineStore.apiSettings
-      .configuration(for: .google)
-    if configuredGoogleKeyCount > 0 && showsAddGoogleKeyForm {
-      configuration.addKey(trimmedKey)
-    } else {
-      configuration.apiKey = trimmedKey
-    }
-    if configuration.textModel
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-      .isEmpty
-    {
-      configuration.textModel = APIProviderKind.google.defaultTextModel
-    }
-    polishingEngineStore.updateAPIConfiguration(
-      configuration,
-      for: .google
-    )
-    transcriptionModelStore.setBackend(.geminiCloud)
-    if hotkeySettingsStore.settings.target == .raw {
-      hotkeySettingsStore.settings.target = .note
-    }
-    googleAPIKey = ""
-    showsAddGoogleKeyForm = false
-  }
-
   private func tryMode(notification: Notification.Name) {
     hotkeySettingsStore.settings.enabled = true
     NotificationCenter.default.post(name: notification, object: nil)
@@ -1299,14 +1019,5 @@ private struct LanguageChip: View {
         }
     }
     .buttonStyle(.plain)
-  }
-}
-
-extension Array {
-  fileprivate func uniqued<Value: Hashable>(
-    by keyPath: KeyPath<Element, Value>
-  ) -> [Element] {
-    var seen = Set<Value>()
-    return filter { seen.insert($0[keyPath: keyPath]).inserted }
   }
 }

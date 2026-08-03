@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# S1b must remain a pure ranking helper: no S1c UI or ASR runtime wiring.
+# S1b remains a pure ranking helper; S1c may call it only from its onboarding view.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 RANKING_FILE="Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift"
+ONBOARDING_VIEW="Sources/NativeBolabol/Views/OnboardingView.swift"
 FAILED=0
 
 if [ ! -f "$RANKING_FILE" ]; then
@@ -20,13 +21,14 @@ fi
 
 while IFS= read -r line; do
   [ -n "$line" ] || continue
-  case "$line" in
-    *OnboardingModelRecommendation.swift*) ;;
-    *)
-      echo "FAIL: S1b ranking symbol is used outside its pure helper: $line"
-      FAILED=1
-      ;;
-  esac
+  if [[ "$line" == *"$RANKING_FILE"* ]]; then
+    continue
+  fi
+  if [[ "$line" == "$ONBOARDING_VIEW:"* ]]; then
+    continue
+  fi
+  echo "FAIL: S1b ranking symbol is used outside its pure helper or S1c view: $line"
+  FAILED=1
 done < <(grep -RIn --include='*.swift' -E 'OnboardingModelRecommendation|\.topThree\(' Sources || true)
 
 while IFS= read -r line; do

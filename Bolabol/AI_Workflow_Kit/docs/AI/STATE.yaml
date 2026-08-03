@@ -35,9 +35,9 @@ prior_track: RENAME
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S1b
+  last_pre_tag: bolabol/pre-S1c
   last_post_tag: bolabol/S1b-done
-  last_commit: 59dafa7
+  last_commit: 0d76648
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md

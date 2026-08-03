@@ -117,6 +117,67 @@ swift test
 APP_VERSION=1.0.4 ./script/build_and_run.sh --verify
 ```
 
-## S2+ 
+## S2 — Settings model labels + recommendations
+
+### Goal
+
+Make Settings → Local Models use the same language-aware recommendation helper
+as onboarding without duplicating models or changing manual selection.
+
+### Requirements
+
+1. Keep the existing backend picker, cloud status, active-model state, download,
+   retry, use, delete, progress, and full-catalog behavior.
+2. For the local backend, compute recommendations only through
+   `OnboardingModelRecommendation.topThree`, using the current canonical
+   primary/additional pair from `GeneralSettingsStore` and the shipped catalog.
+3. Present recommendations first and the remaining full catalog afterward.
+   Each descriptor must appear exactly once across both groups.
+4. Language changes in Settings must recalculate the groups without cached or
+   duplicated ranking logic.
+5. Add clear EN Settings labels/hints explaining that recommendations follow
+   main + additional languages. Full locale coverage is S3.
+6. Preserve arbitrary manual model selection; recommendations are display order
+   only and must not auto-activate, download, or change backend.
+7. Preserve accessibility and current light/dark layout.
+
+### target_files
+
+```yaml
+- Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift
+- Sources/NativeBolabolCore/Services/AppText.swift
+- Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
+```
+
+### Out of scope
+
+- Onboarding changes
+- S3 full 15-locale maps
+- S4–S10 model spikes, catalog entries, engines, downloads, and OS gates
+- S12 default-selection hints for future GO models
+- Ranking-table changes or a second ranking helper
+- Cloud provider redesign
+
+### Done
+
+- [ ] Recommended group equals current `topThree(primary, additional, catalog)`
+- [ ] Recommended + remaining groups contain the full catalog exactly once
+- [ ] Speech-pair changes recalculate without stale state
+- [ ] No recommendation automatically mutates model/backend/download state
+- [ ] EN Settings copy and focused tests green
+- [ ] `swift test` and full QA green
+- [ ] Fresh `APP_VERSION=1.0.4` build opened
+- [ ] FEEDBACK status `waiting_review`
+
+### Verify
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+swift test
+./script/qa/run_all.sh
+APP_VERSION=1.0.4 ./script/build_and_run.sh --verify
+```
+
+## S3+
 
 See master plan §4.

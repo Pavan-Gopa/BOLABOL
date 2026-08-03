@@ -29127,6 +29127,66 @@
       "_origin": "ast"
     },
     {
+      "id": "script_qa_check_s1c_onboarding_models",
+      "label": "check_s1c_onboarding_models.sh",
+      "file_type": "code",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "file"
+      },
+      "_origin": "ast"
+    },
+    {
+      "id": "script_qa_check_s1c_onboarding_models_sh__entry",
+      "label": "check_s1c_onboarding_models.sh script",
+      "file_type": "code",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_entrypoint"
+      },
+      "_origin": "ast"
+    },
+    {
+      "id": "script_qa_check_s1c_onboarding_models_fail",
+      "label": "fail()",
+      "file_type": "code",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L13",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast"
+    },
+    {
+      "id": "script_qa_check_s1c_onboarding_models_require_file",
+      "label": "require_file()",
+      "file_type": "code",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L18",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast"
+    },
+    {
+      "id": "script_qa_check_s1c_onboarding_models_require_adjacent",
+      "label": "require_adjacent()",
+      "file_type": "code",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L24",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast"
+    },
+    {
       "id": "script_qa_check_settings_surface",
       "label": "check_settings_surface.sh",
       "file_type": "code",
@@ -29515,6 +29575,86 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "label": "§5 — Independent Reviewer Verification",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L70",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_findings",
+      "label": "Findings",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L79",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_command_results",
+      "label": "Command Results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L84",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s1c_acceptance_review",
+      "label": "S1c Acceptance Review",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L100",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list",
+      "label": "Change List",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L119",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict",
+      "label": "Verdict",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L124",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
+      "label": "§6 — Independent Tester QA",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L134",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_added",
+      "label": "What was added",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L143",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_full_gate",
+      "label": "Full gate",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L150",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_manual_verification",
+      "label": "Manual verification",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L162",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_ai_git_checkpoints",
       "label": "GIT_CHECKPOINTS.md",
       "file_type": "document",
@@ -29899,43 +30039,35 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
-      "label": "Step S1 — Onboarding language steps (ASR Core ML 1.0.4)",
+      "id": "ai_workflow_kit_docs_ai_report_step_s1c_tester_qa_onboarding_3_dynamic_local_model_cards",
+      "label": "Step S1c — Tester QA: Onboarding 3 dynamic local-model cards",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
       "source_location": "L120",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_commands_run_129",
-      "label": "Commands run",
+      "id": "ai_workflow_kit_docs_ai_report_graphify_and_baseline",
+      "label": "Graphify and baseline",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L129",
+      "source_location": "L130",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_pass_counts_144",
-      "label": "Pass counts",
+      "id": "ai_workflow_kit_docs_ai_report_commands_and_results",
+      "label": "Commands and results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L144",
+      "source_location": "L163",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_s1_must_verify_checklist",
-      "label": "S1 Must-verify checklist",
+      "id": "ai_workflow_kit_docs_ai_report_new_and_changed_qa_coverage",
+      "label": "New and changed QA coverage",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L149",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_report_new_tests_added_s1_tester_delta",
-      "label": "New tests added (S1 Tester delta)",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L157",
+      "source_location": "L197",
       "_origin": "ast"
     },
     {
@@ -29943,31 +30075,95 @@
       "label": "Gap-hunt mapping",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L165",
+      "source_location": "L209",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_notes_174",
-      "label": "Notes",
+      "id": "ai_workflow_kit_docs_ai_report_clean_build_and_manual_ui_verification",
+      "label": "Clean build and manual UI verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L174",
+      "source_location": "L228",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_commands_run_191",
+      "id": "ai_workflow_kit_docs_ai_report_scope_and_result",
+      "label": "Scope and result",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L259",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
+      "label": "Step S1 — Onboarding language steps (ASR Core ML 1.0.4)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L271",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_commands_run_280",
       "label": "Commands run",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L191",
+      "source_location": "L280",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_pass_counts_205",
+      "id": "ai_workflow_kit_docs_ai_report_pass_counts_295",
       "label": "Pass counts",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L205",
+      "source_location": "L295",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_s1_must_verify_checklist",
+      "label": "S1 Must-verify checklist",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L300",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_new_tests_added_s1_tester_delta",
+      "label": "New tests added (S1 Tester delta)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L308",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_316",
+      "label": "Gap-hunt mapping",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L316",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_notes_325",
+      "label": "Notes",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L325",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_commands_run_342",
+      "label": "Commands run",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L342",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_pass_counts_356",
+      "label": "Pass counts",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L356",
       "_origin": "ast"
     },
     {
@@ -29975,7 +30171,7 @@
       "label": "B4 coverage table",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L210",
+      "source_location": "L361",
       "_origin": "ast"
     },
     {
@@ -29983,15 +30179,15 @@
       "label": "B4 Must-verify checklist",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L220",
+      "source_location": "L371",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_notes_232",
+      "id": "ai_workflow_kit_docs_ai_report_notes_383",
       "label": "Notes",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L232",
+      "source_location": "L383",
       "_origin": "ast"
     },
     {
@@ -29999,23 +30195,23 @@
       "label": "Step B5 — i18n × 15 (Plan §9)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L242",
+      "source_location": "L393",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_commands_run_251",
+      "id": "ai_workflow_kit_docs_ai_report_commands_run_402",
       "label": "Commands run",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L251",
+      "source_location": "L402",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_pass_counts_270",
+      "id": "ai_workflow_kit_docs_ai_report_pass_counts_421",
       "label": "Pass counts",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L270",
+      "source_location": "L421",
       "_origin": "ast"
     },
     {
@@ -30023,7 +30219,7 @@
       "label": "B5 coverage table",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L275",
+      "source_location": "L426",
       "_origin": "ast"
     },
     {
@@ -30031,15 +30227,15 @@
       "label": "B5 Must-verify checklist",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L287",
+      "source_location": "L438",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_notes_297",
+      "id": "ai_workflow_kit_docs_ai_report_notes_448",
       "label": "Notes",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L297",
+      "source_location": "L448",
       "_origin": "ast"
     },
     {
@@ -30047,7 +30243,7 @@
       "label": "Step B12 — Tester confirmation (independent re-verify of build 1.0.3)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L307",
+      "source_location": "L458",
       "_origin": "ast"
     },
     {
@@ -30055,7 +30251,7 @@
       "label": "Commands run (independent re-run)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L316",
+      "source_location": "L467",
       "_origin": "ast"
     },
     {
@@ -30063,7 +30259,7 @@
       "label": "Must-verify checklist (Tester re-verify)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L350",
+      "source_location": "L501",
       "_origin": "ast"
     },
     {
@@ -30071,23 +30267,23 @@
       "label": "Optional verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L360",
+      "source_location": "L511",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_366",
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_517",
       "label": "Gap-hunt mapping",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L366",
+      "source_location": "L517",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_notes_373",
+      "id": "ai_workflow_kit_docs_ai_report_notes_524",
       "label": "Notes",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L373",
+      "source_location": "L524",
       "_origin": "ast"
     },
     {
@@ -30095,23 +30291,23 @@
       "label": "Step B6 — Canary Core ML spike (Meta Step)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L382",
+      "source_location": "L533",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_commands_run_391",
+      "id": "ai_workflow_kit_docs_ai_report_commands_run_542",
       "label": "Commands run",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L391",
+      "source_location": "L542",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_pass_counts_416",
+      "id": "ai_workflow_kit_docs_ai_report_pass_counts_567",
       "label": "Pass counts",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L416",
+      "source_location": "L567",
       "_origin": "ast"
     },
     {
@@ -30119,7 +30315,7 @@
       "label": "B6 coverage table",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L421",
+      "source_location": "L572",
       "_origin": "ast"
     },
     {
@@ -30127,23 +30323,23 @@
       "label": "B6 Must-verify checklist",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L430",
+      "source_location": "L581",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_439",
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_590",
       "label": "Gap-hunt mapping",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L439",
+      "source_location": "L590",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_notes_447",
+      "id": "ai_workflow_kit_docs_ai_report_notes_598",
       "label": "Notes",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L447",
+      "source_location": "L598",
       "_origin": "ast"
     },
     {
@@ -30151,23 +30347,23 @@
       "label": "Step B11 — QA suite consolidation (Plan §11 step 11 / §12.1)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L458",
+      "source_location": "L609",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_commands_run_467",
+      "id": "ai_workflow_kit_docs_ai_report_commands_run_618",
       "label": "Commands run",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L467",
+      "source_location": "L618",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_pass_counts_486",
+      "id": "ai_workflow_kit_docs_ai_report_pass_counts_637",
       "label": "Pass counts",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L486",
+      "source_location": "L637",
       "_origin": "ast"
     },
     {
@@ -30175,7 +30371,7 @@
       "label": "B11 coverage table",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L491",
+      "source_location": "L642",
       "_origin": "ast"
     },
     {
@@ -30183,7 +30379,7 @@
       "label": "B11 Must-verify checklist",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L504",
+      "source_location": "L655",
       "_origin": "ast"
     },
     {
@@ -30191,15 +30387,15 @@
       "label": "Step B11 re-verification — QA suite consolidation (Tester re-run, gap-hunt)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L517",
+      "source_location": "L668",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_commands_run_independent_re_run_526",
+      "id": "ai_workflow_kit_docs_ai_report_commands_run_independent_re_run_677",
       "label": "Commands run (independent re-run)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L526",
+      "source_location": "L677",
       "_origin": "ast"
     },
     {
@@ -30207,15 +30403,15 @@
       "label": "§12.1 ↔ real guard mapping (verified, no holes)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L549",
+      "source_location": "L700",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_562",
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_713",
       "label": "Gap-hunt mapping",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L562",
+      "source_location": "L713",
       "_origin": "ast"
     },
     {
@@ -30223,15 +30419,15 @@
       "label": "Must-verify checklist (re-run)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L571",
+      "source_location": "L722",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_notes_580",
+      "id": "ai_workflow_kit_docs_ai_report_notes_731",
       "label": "Notes",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L580",
+      "source_location": "L731",
       "_origin": "ast"
     },
     {
@@ -30239,15 +30435,15 @@
       "label": "Step B12 — Test build 1.0.3 (LAST)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L590",
+      "source_location": "L741",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_commands_run_599",
+      "id": "ai_workflow_kit_docs_ai_report_commands_run_750",
       "label": "Commands run",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L599",
+      "source_location": "L750",
       "_origin": "ast"
     },
     {
@@ -30255,7 +30451,7 @@
       "label": "Produced Artifacts & Evidence",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L627",
+      "source_location": "L778",
       "_origin": "ast"
     },
     {
@@ -30263,7 +30459,7 @@
       "label": "Version Confirmation",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L638",
+      "source_location": "L789",
       "_origin": "ast"
     },
     {
@@ -30271,15 +30467,15 @@
       "label": "Smoke & Manual Matrix Verification (M1–M10)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L645",
+      "source_location": "L796",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_pass_counts_652",
+      "id": "ai_workflow_kit_docs_ai_report_pass_counts_803",
       "label": "Pass counts",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L652",
+      "source_location": "L803",
       "_origin": "ast"
     },
     {
@@ -30287,23 +30483,23 @@
       "label": "Step S1b — Tester QA: OnboardingModelRecommendation ranking",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L664",
+      "source_location": "L815",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_commands_run_673",
+      "id": "ai_workflow_kit_docs_ai_report_commands_run_824",
       "label": "Commands run",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L673",
+      "source_location": "L824",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_pass_counts_698",
+      "id": "ai_workflow_kit_docs_ai_report_pass_counts_849",
       "label": "Pass counts",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L698",
+      "source_location": "L849",
       "_origin": "ast"
     },
     {
@@ -30311,15 +30507,15 @@
       "label": "New tests added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L705",
+      "source_location": "L856",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_717",
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_868",
       "label": "Gap-hunt mapping",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L717",
+      "source_location": "L868",
       "_origin": "ast"
     },
     {
@@ -30327,7 +30523,7 @@
       "label": "Scope and notes",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L737",
+      "source_location": "L888",
       "_origin": "ast"
     },
     {
@@ -30619,11 +30815,67 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_asr_coreml_steps_s2",
-      "label": "S2+",
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_s2_settings_model_labels_recommendations",
+      "label": "S2 — Settings model labels + recommendations",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
       "source_location": "L120",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_goal_122",
+      "label": "Goal",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L122",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_requirements_127",
+      "label": "Requirements",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L127",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_target_files_144",
+      "label": "target_files",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L144",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_152",
+      "label": "Out of scope",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L152",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_done_161",
+      "label": "Done",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L161",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_verify_172",
+      "label": "Verify",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L172",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_s3",
+      "label": "S3+",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L181",
       "_origin": "ast"
     },
     {
@@ -115298,6 +115550,101 @@
       "_origin": "ast"
     },
     {
+      "source": "script_qa_check_s1c_onboarding_models",
+      "target": "script_qa_check_s1c_onboarding_models_sh__entry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s1c_onboarding_models",
+      "target": "script_qa_check_s1c_onboarding_models_fail",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s1c_onboarding_models",
+      "target": "script_qa_check_s1c_onboarding_models_require_file",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s1c_onboarding_models",
+      "target": "script_qa_check_s1c_onboarding_models_require_adjacent",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s1c_onboarding_models_sh__entry",
+      "target": "script_qa_check_s1c_onboarding_models_require_file",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L32",
+      "weight": 1.0,
+      "context": "call",
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s1c_onboarding_models_sh__entry",
+      "target": "script_qa_check_s1c_onboarding_models_fail",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L42",
+      "weight": 1.0,
+      "context": "call",
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s1c_onboarding_models_sh__entry",
+      "target": "script_qa_check_s1c_onboarding_models_require_adjacent",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L44",
+      "weight": 1.0,
+      "context": "call",
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s1c_onboarding_models_require_file",
+      "target": "script_qa_check_s1c_onboarding_models_fail",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L20",
+      "weight": 1.0,
+      "context": "call",
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s1c_onboarding_models_require_adjacent",
+      "target": "script_qa_check_s1c_onboarding_models_fail",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s1c_onboarding_models.sh",
+      "source_location": "L28",
+      "weight": 1.0,
+      "context": "call",
+      "_origin": "ast"
+    },
+    {
       "source": "script_qa_check_settings_surface",
       "target": "script_qa_check_settings_surface_sh__entry",
       "relation": "contains",
@@ -115617,6 +115964,106 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L56",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L70",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L79",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "target": "ai_workflow_kit_docs_ai_feedback_command_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L84",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "target": "ai_workflow_kit_docs_ai_feedback_s1c_acceptance_review",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L100",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L119",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_5_independent_reviewer_verification",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L124",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L134",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_added",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L143",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
+      "target": "ai_workflow_kit_docs_ai_feedback_full_gate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L150",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_6_independent_tester_qa",
+      "target": "ai_workflow_kit_docs_ai_feedback_manual_verification",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L162",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116042,7 +116489,7 @@
     },
     {
       "source": "ai_workflow_kit_docs_ai_report",
-      "target": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
+      "target": "ai_workflow_kit_docs_ai_report_step_s1c_tester_qa_onboarding_3_dynamic_local_model_cards",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
@@ -116051,22 +116498,92 @@
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
-      "target": "ai_workflow_kit_docs_ai_report_commands_run_129",
+      "source": "ai_workflow_kit_docs_ai_report_step_s1c_tester_qa_onboarding_3_dynamic_local_model_cards",
+      "target": "ai_workflow_kit_docs_ai_report_graphify_and_baseline",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L129",
+      "source_location": "L130",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s1c_tester_qa_onboarding_3_dynamic_local_model_cards",
+      "target": "ai_workflow_kit_docs_ai_report_commands_and_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L163",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s1c_tester_qa_onboarding_3_dynamic_local_model_cards",
+      "target": "ai_workflow_kit_docs_ai_report_new_and_changed_qa_coverage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L197",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s1c_tester_qa_onboarding_3_dynamic_local_model_cards",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L209",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s1c_tester_qa_onboarding_3_dynamic_local_model_cards",
+      "target": "ai_workflow_kit_docs_ai_report_clean_build_and_manual_ui_verification",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L228",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s1c_tester_qa_onboarding_3_dynamic_local_model_cards",
+      "target": "ai_workflow_kit_docs_ai_report_scope_and_result",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L259",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report",
+      "target": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L271",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
-      "target": "ai_workflow_kit_docs_ai_report_pass_counts_144",
+      "target": "ai_workflow_kit_docs_ai_report_commands_run_280",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L144",
+      "source_location": "L280",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
+      "target": "ai_workflow_kit_docs_ai_report_pass_counts_295",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L295",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116076,7 +116593,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L149",
+      "source_location": "L300",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116086,47 +116603,47 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L157",
+      "source_location": "L308",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
-      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_316",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L165",
+      "source_location": "L316",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
-      "target": "ai_workflow_kit_docs_ai_report_notes_174",
+      "target": "ai_workflow_kit_docs_ai_report_notes_325",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L174",
+      "source_location": "L325",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
-      "target": "ai_workflow_kit_docs_ai_report_commands_run_191",
+      "target": "ai_workflow_kit_docs_ai_report_commands_run_342",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L191",
+      "source_location": "L342",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
-      "target": "ai_workflow_kit_docs_ai_report_pass_counts_205",
+      "target": "ai_workflow_kit_docs_ai_report_pass_counts_356",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L205",
+      "source_location": "L356",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116136,7 +116653,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L210",
+      "source_location": "L361",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116146,17 +116663,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L220",
+      "source_location": "L371",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_s1_onboarding_language_steps_asr_core_ml_1_0_4",
-      "target": "ai_workflow_kit_docs_ai_report_notes_232",
+      "target": "ai_workflow_kit_docs_ai_report_notes_383",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L232",
+      "source_location": "L383",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116166,27 +116683,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L242",
+      "source_location": "L393",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b5_i18n_15_plan_9",
-      "target": "ai_workflow_kit_docs_ai_report_commands_run_251",
+      "target": "ai_workflow_kit_docs_ai_report_commands_run_402",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L251",
+      "source_location": "L402",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b5_i18n_15_plan_9",
-      "target": "ai_workflow_kit_docs_ai_report_pass_counts_270",
+      "target": "ai_workflow_kit_docs_ai_report_pass_counts_421",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L270",
+      "source_location": "L421",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116196,7 +116713,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L275",
+      "source_location": "L426",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116206,17 +116723,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L287",
+      "source_location": "L438",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b5_i18n_15_plan_9",
-      "target": "ai_workflow_kit_docs_ai_report_notes_297",
+      "target": "ai_workflow_kit_docs_ai_report_notes_448",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L297",
+      "source_location": "L448",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116226,7 +116743,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L307",
+      "source_location": "L458",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116236,7 +116753,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L316",
+      "source_location": "L467",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116246,7 +116763,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L350",
+      "source_location": "L501",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116256,27 +116773,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L360",
+      "source_location": "L511",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b12_tester_confirmation_independent_re_verify_of_build_1_0_3",
-      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_366",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_517",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L366",
+      "source_location": "L517",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b12_tester_confirmation_independent_re_verify_of_build_1_0_3",
-      "target": "ai_workflow_kit_docs_ai_report_notes_373",
+      "target": "ai_workflow_kit_docs_ai_report_notes_524",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L373",
+      "source_location": "L524",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116286,27 +116803,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L382",
+      "source_location": "L533",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b6_canary_core_ml_spike_meta_step",
-      "target": "ai_workflow_kit_docs_ai_report_commands_run_391",
+      "target": "ai_workflow_kit_docs_ai_report_commands_run_542",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L391",
+      "source_location": "L542",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b6_canary_core_ml_spike_meta_step",
-      "target": "ai_workflow_kit_docs_ai_report_pass_counts_416",
+      "target": "ai_workflow_kit_docs_ai_report_pass_counts_567",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L416",
+      "source_location": "L567",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116316,7 +116833,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L421",
+      "source_location": "L572",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116326,27 +116843,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L430",
+      "source_location": "L581",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b6_canary_core_ml_spike_meta_step",
-      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_439",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_590",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L439",
+      "source_location": "L590",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b6_canary_core_ml_spike_meta_step",
-      "target": "ai_workflow_kit_docs_ai_report_notes_447",
+      "target": "ai_workflow_kit_docs_ai_report_notes_598",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L447",
+      "source_location": "L598",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116356,27 +116873,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L458",
+      "source_location": "L609",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b11_qa_suite_consolidation_plan_11_step_11_12_1",
-      "target": "ai_workflow_kit_docs_ai_report_commands_run_467",
+      "target": "ai_workflow_kit_docs_ai_report_commands_run_618",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L467",
+      "source_location": "L618",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b11_qa_suite_consolidation_plan_11_step_11_12_1",
-      "target": "ai_workflow_kit_docs_ai_report_pass_counts_486",
+      "target": "ai_workflow_kit_docs_ai_report_pass_counts_637",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L486",
+      "source_location": "L637",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116386,7 +116903,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L491",
+      "source_location": "L642",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116396,7 +116913,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L504",
+      "source_location": "L655",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116406,17 +116923,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L517",
+      "source_location": "L668",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b11_re_verification_qa_suite_consolidation_tester_re_run_gap_hunt",
-      "target": "ai_workflow_kit_docs_ai_report_commands_run_independent_re_run_526",
+      "target": "ai_workflow_kit_docs_ai_report_commands_run_independent_re_run_677",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L526",
+      "source_location": "L677",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116426,17 +116943,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L549",
+      "source_location": "L700",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b11_re_verification_qa_suite_consolidation_tester_re_run_gap_hunt",
-      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_562",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_713",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L562",
+      "source_location": "L713",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116446,17 +116963,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L571",
+      "source_location": "L722",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b11_re_verification_qa_suite_consolidation_tester_re_run_gap_hunt",
-      "target": "ai_workflow_kit_docs_ai_report_notes_580",
+      "target": "ai_workflow_kit_docs_ai_report_notes_731",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L580",
+      "source_location": "L731",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116466,17 +116983,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L590",
+      "source_location": "L741",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b12_test_build_1_0_3_last",
-      "target": "ai_workflow_kit_docs_ai_report_commands_run_599",
+      "target": "ai_workflow_kit_docs_ai_report_commands_run_750",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L599",
+      "source_location": "L750",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116486,7 +117003,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L627",
+      "source_location": "L778",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116496,7 +117013,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L638",
+      "source_location": "L789",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116506,17 +117023,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L645",
+      "source_location": "L796",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_b12_test_build_1_0_3_last",
-      "target": "ai_workflow_kit_docs_ai_report_pass_counts_652",
+      "target": "ai_workflow_kit_docs_ai_report_pass_counts_803",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L652",
+      "source_location": "L803",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116526,27 +117043,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L664",
+      "source_location": "L815",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_s1b_tester_qa_onboardingmodelrecommendation_ranking",
-      "target": "ai_workflow_kit_docs_ai_report_commands_run_673",
+      "target": "ai_workflow_kit_docs_ai_report_commands_run_824",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L673",
+      "source_location": "L824",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_s1b_tester_qa_onboardingmodelrecommendation_ranking",
-      "target": "ai_workflow_kit_docs_ai_report_pass_counts_698",
+      "target": "ai_workflow_kit_docs_ai_report_pass_counts_849",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L698",
+      "source_location": "L849",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116556,17 +117073,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L705",
+      "source_location": "L856",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_step_s1b_tester_qa_onboardingmodelrecommendation_ranking",
-      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_717",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_mapping_868",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L717",
+      "source_location": "L868",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116576,7 +117093,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L737",
+      "source_location": "L888",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116912,11 +117429,81 @@
     },
     {
       "source": "ai_workflow_kit_docs_asr_coreml_steps_bolabol_asr_core_ml_step_cards_s0_s15",
-      "target": "ai_workflow_kit_docs_asr_coreml_steps_s2",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_s2_settings_model_labels_recommendations",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
       "source_location": "L120",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s2_settings_model_labels_recommendations",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_goal_122",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L122",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s2_settings_model_labels_recommendations",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_requirements_127",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L127",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s2_settings_model_labels_recommendations",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_target_files_144",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L144",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s2_settings_model_labels_recommendations",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_152",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L152",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s2_settings_model_labels_recommendations",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_done_161",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L161",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s2_settings_model_labels_recommendations",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_verify_172",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L172",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_bolabol_asr_core_ml_step_cards_s0_s15",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_s3",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L181",
       "weight": 1.0,
       "_origin": "ast"
     },

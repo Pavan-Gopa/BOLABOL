@@ -62,7 +62,69 @@ Total B3 delta: +6 tests (UserSpeechLanguages +3, SettingsLocalization +2, Onboa
 
 ---
 
-# Step B4 — Help EN Bilingual (Plan §8.1)
+# Step S1 — Onboarding language steps (ASR Core ML 1.0.4)
+
+| Field | Value |
+|-------|-------|
+| Step | S1 — Onboarding language UX |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+
+## Commands run
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Blaboom"
+
+# 1) Full unit test suite
+swift test
+#   ✔ Test run with 473 tests in 4 suites passed after 0.040 seconds
+#   (471 at S1 review → +2 Tester gap tests)
+
+# 2) Full QA gate (unit tests + structural contract scripts)
+./script/qa/run_all.sh
+#   Passed: 18   Failed: 0
+```
+
+## Pass counts
+
+- **473 tests in 4 suites** — green (471 at reviewer approval → +2 S1 Tester tests).
+- QA gate: **18/18 steps passed** — no failures (pre-existing or S1-introduced).
+
+## S1 Must-verify checklist
+
+1. ✅ **`swift test` GREEN (~471)** — 471/471 at review state re-ran clean; 473/473 after Tester gap tests. All 4 suites passed.
+2. ✅ **`./script/qa/run_all.sh`** — 18/18 passed (incl. `check_localization_surface.sh`, `check_no_canary_product.sh`, `check_no_python_in_sources.sh`).
+3. ✅ **EN onboarding keys for UI / primary / additional resolve (no raw-key)** — `onboardingSpeechLanguageKeysResolveInEnglish()` + `onboardingKeysUsedByWelcomeTourAllExist()` green; all `onboarding*` keys non-empty and never the raw key across all 15 locales (`everyOnboardingKeyIsLocalizedInEveryLanguage`).
+4. ✅ **No "target always output" / "always force output" in new onboarding speech copy** — `onboardingSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology()` now also asserts **"force output"** and **"always force"** (previously only target/always-output compounds) across all 15 locales. Verified manually: the only "force output" hits in AppText are pre-existing `helpHUDLeftLetter`/`helpHUDLeftTap`/`helpHUDControlLanguage` HUD-letter help copy — a different surface, not the onboarding speech steps.
+5. ✅ **Diff scoped to S1** — `git diff --stat -- Sources Tests`: only `OnboardingView.swift` (+7/−4, `.settingAdditional(...)` refactor), `AppText.swift` EN map (+5/−8, UI/primary/additional copy + Settings hints), and Tester's `OnboardingLocalizationTests.swift`. No engines, no Canary/GigaAM, no S1b ranking.
+
+## New tests added (S1 Tester delta)
+
+| File | Test | Covers |
+|------|------|--------|
+| `OnboardingLocalizationTests.swift` | **NEW `onboardingSpeechLanguageBodiesPointToRealSettingsSections`** | S1 req 4 — EN primary/additional bodies + UI-language note contain the "change this later in Settings" promise, and the path segments match the **real** Settings section labels (`.settingsHotkey` = "Hotkey", `.languagePairSectionTitle` = "Your Languages", `.settingsGeneral` = "General") so copy can never point at a nonexistent settings path. |
+| `OnboardingLocalizationTests.swift` | **NEW `onboardingChooseLanguageStepSeparatesUiFromDictation`** | S1 req 1 — EN Step-0 title says "interface"; the hint says UI-only and that dictation is unaffected; hint avoids target / force-output / always-output wording. |
+| `OnboardingLocalizationTests.swift` | **EXTENDED `onboardingSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology`** | Added "force output" + "always force" to the forbidden-compound scan over the 7 B2 keys × 15 locales. |
+
+## Gap-hunt mapping
+
+| Gap-hunt idea | Status |
+|---------------|--------|
+| Assert EN strings for primary/additional include Settings path hints | **Added** — `onboardingSpeechLanguageBodiesPointToRealSettingsSections` (hint + real section-label match, not just any "Settings" mention). |
+| Terminology test re-run; extend if hole | **Extended** — "force output" / "always force" compounds were not covered by the existing test (only target/always-output); added to the 15-locale scan. No hits in any onboarding key; HUD-help hits are pre-existing and out of scope. |
+| UI language decoupled from speech languages (S1 req 1) | **Added** — `onboardingChooseLanguageStepSeparatesUiFromDictation` (title = interface; hint = UI-only, dictation unaffected). |
+| settingAdditional persistence / same-as-primary | **No-gap** — `settingAdditionalKeepsPrimary` / `settingAdditionalNormalizesInput` / `settingAdditionalToPrimaryRestoresSameAsPrimary` (UserSpeechLanguagesTests) + `onboardingAndSettingsSameAsPrimaryCopyMatch` already cover the S1 picker change (`.settingAdditional(...)` in `OnboardingView`). |
+
+## Notes
+
+- Tester made **no product changes** (`Sources/**` untouched beyond the already-present S1 diff) and **no git commit/push**.
+- Diff-scope verified: only the 2 S1 target files + Tester test file are modified in `Sources/`/`Tests/`.
+- No bugs opened. `bugs_open: 0`.
+
+**RESULT: qa_green**
+
+---
 
 | Field | Value |
 |-------|-------|

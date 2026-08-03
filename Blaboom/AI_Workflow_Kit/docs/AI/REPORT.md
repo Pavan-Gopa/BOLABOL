@@ -184,7 +184,83 @@ Total B5 Tester delta: **+3 tests, +1 QA script** (467 → 470).
 - No bugs opened. `bugs_open: 0`.
 
 **RESULT: qa_green**
+
 ---
+
+# Step B12 — Tester confirmation (independent re-verify of build 1.0.3)
+
+| Field | Value |
+|-------|-------|
+| Step | B12 — Test build 1.0.3 (independent Tester confirmation) |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+
+## Commands run (independent re-run)
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Blaboom"
+
+# 1) Full unit test suite
+swift test
+#   ✔ Test run with 471 tests in 4 suites passed
+
+# 2) Full QA gate (unit tests + structural contract scripts)
+./script/qa/run_all.sh
+#   Passed: 18   Failed: 0
+
+# 3) Version check — dev app bundle
+plutil -p dist/Blaboom.app/Contents/Info.plist | grep ShortVersion
+#   CFBundleShortVersionString => "1.0.3"   (CFBundleVersion "202608031018")
+
+# 4) Version check — release app bundle
+plutil -p dist/release/Blaboom.app/Contents/Info.plist | grep ShortVersion
+#   CFBundleShortVersionString => "1.0.3"   (CFBundleVersion "1")
+
+# 5) Artifact presence / recency / size
+ls -la dist/Blaboom.dmg dist/Blaboom.app dist/release/Blaboom.app dist/handoff/
+#   dist/Blaboom.dmg  26,388,418 bytes  2026-08-03 10:32
+
+# 6) Optional: codesign identity
+codesign -dv --verbose=2 dist/release/Blaboom.app 2>&1 | head -8
+#   Authority=Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)
+
+# 7) Optional: SHA256 handoff verification
+shasum -a 256 dist/Blaboom.dmg dist/handoff/Blaboom.dmg dist/handoff/install.sh
+#   matches dist/handoff/SHA256SUMS.txt entries exactly
+```
+
+## Must-verify checklist (Tester re-verify)
+
+1. ✅ **`swift test` GREEN** — 471/471 tests in 4 suites passed (matches ~471 claim).
+2. ✅ **`./script/qa/run_all.sh` GREEN** — 18/18 steps passed, 0 failed.
+3. ✅ **`dist/Blaboom.app` version** — `CFBundleShortVersionString` = `1.0.3` (plutil verified).
+4. ✅ **`dist/release/Blaboom.app` version** — `CFBundleShortVersionString` = `1.0.3` (plutil verified).
+5. ✅ **`dist/Blaboom.dmg`** — exists, 26,388,418 bytes (~25 MB, non-trivial), timestamp 2026-08-03 10:32 (recent).
+6. ✅ **REPORT B12 section complete** — artifacts table, version confirmation, smoke matrix M1–M3/M7–M10 PASS, M4–M6 N/A (ADR-012 Canary NO-GO), notarization optional skip noted.
+7. ✅ **No Canary product ship claim** — `docs/RELEASE_NOTES.md` "Honest Engine Status": Canary 1B Core ML marked NO-GO, "not shipped in 1.0.3".
+
+## Optional verification
+
+- **Codesign:** `dist/release/Blaboom.app` signed with `Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)`, runtime flag, arm64 Mach-O — matches REPORT claims.
+- **SHA256 handoff:** `dist/handoff/SHA256SUMS.txt` present; recomputed hashes match exactly — `Blaboom.dmg` `768c8f55eaac25bf990123fbdb2186961dfa98edf6518f3f9fee0accb547fc4c` (identical in `dist/` and `dist/handoff/`), `install.sh` `09a1a33f247587720ba084a1628d249410db5647a87ef2c5d6e15881f2f40d31`.
+- Notarization not re-run (optional skip per step; Developer ID signed and ready).
+
+## Gap-hunt mapping
+
+| Gap-hunt idea | Status |
+|---------------|--------|
+| Verify handoff SHA256SUMS.txt against actual artifacts | **No-gap** — recomputed `shasum -a 256` for both DMG copies + install.sh matches the handoff file exactly; no new script needed. |
+| Extra unit tests for release step | **No-gap** — release step is artifact/plist/checksum verification, already covered by the 471-test suite + 18-check QA gate + the above plutil/shasum/codesign re-verify. Suite + artifacts solid. |
+
+## Notes
+
+- Tester made **no product changes** (`Sources/**`, `Package.swift` untouched) and **no git commit/push**.
+- Artifacts verified as-is; **no rebuild performed** (nothing broken).
+- No bugs opened. `bugs_open: 0`.
+
+**RESULT: qa_green**
+
 
 # Step B6 — Canary Core ML spike (Meta Step)
 
@@ -391,4 +467,79 @@ swift test --filter nativeTranscriptionCatalogDoesNotContainCanaryProductOrBacke
 - No bugs opened. `bugs_open: 0`.
 
 **RESULT: qa_green**
+
+---
+
+# Step B12 — Test build 1.0.3 (LAST)
+
+| Field | Value |
+|-------|-------|
+| Step | B12 — Test build 1.0.3 (LAST) |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+
+## Commands run
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Blaboom"
+
+# 1) Full unit test suite
+swift test
+#   ✔ Test run with 471 tests in 4 suites passed after 0.052 seconds
+
+# 2) Full QA gate (unit tests + structural contract scripts)
+./script/qa/run_all.sh
+#   Passed: 18   Failed: 0
+
+# 3) Build and verify dev app bundle (version 1.0.3)
+APP_VERSION=1.0.3 ./script/build_and_run.sh verify
+#   Build of product 'NativeBlaboom' complete!
+#   dist/Blaboom.app created; Info.plist CFBundleShortVersionString = 1.0.3
+
+# 4) Build release DMG package (version 1.0.3, build 1)
+APP_VERSION=1.0.3 APP_BUILD=1 ./script/build_release_dmg.sh
+#   DMG created at dist/Blaboom.dmg (25 MB)
+#   Signed with identity: Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)
+
+# 5) Optional WhisperKit Tiny smoke script
+./script/smoke_whisperkit_tiny.sh
+#   Skipped / Blocked: missing fixture /Users/pavan/Documents/AI Projects/jfk.wav (code 2)
+```
+
+## Produced Artifacts & Evidence
+
+| Artifact | Path | Size | Timestamp | Identity / Checksum |
+|----------|------|------|-----------|--------------------|
+| Dev App Bundle | `dist/Blaboom.app` | — | 2026-08-03 10:18 | Ad-hoc / Local (CFBundleShortVersionString 1.0.3) |
+| Release App Bundle | `dist/release/Blaboom.app` | — | 2026-08-03 10:32 | Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV) |
+| Release DMG | `dist/Blaboom.dmg` | ~25 MB | 2026-08-03 10:32 | Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV) |
+| Handoff DMG | `dist/handoff/Blaboom.dmg` | ~25 MB | 2026-08-03 10:32 | SHA256: `768c8f55eaac25bf990123fbdb2186961dfa98edf6518f3f9fee0accb547fc4c` |
+| Handoff Script | `dist/handoff/install.sh` | — | 2026-08-03 10:32 | SHA256: `09a1a33f247587720ba084a1628d249410db5647a87ef2c5d6e15881f2f40d31` |
+| Checksums File | `dist/handoff/SHA256SUMS.txt` | — | 2026-08-03 10:32 | Verified present |
+
+## Version Confirmation
+- `Sources/NativeBlaboom/Resources/Info.plist`: `CFBundleShortVersionString` = `1.0.3`
+- `script/build_and_run.sh`: `APP_VERSION` default `1.0.3`, outputs `CFBundleShortVersionString` `1.0.3` into `dist/Blaboom.app/Contents/Info.plist`
+- `script/build_release_dmg.sh`: `APP_VERSION` default `1.0.3`, outputs `CFBundleShortVersionString` `1.0.3` into `dist/release/Blaboom.app/Contents/Info.plist`
+- `docs/RELEASE.md`: release commands specify `APP_VERSION=1.0.3`
+- `docs/RELEASE_NOTES.md`: version `1.0.3 (build 1)` documented
+
+## Smoke & Manual Matrix Verification (M1–M10)
+
+- **App Launch & Smoke:** `./script/build_and_run.sh verify` launched `dist/Blaboom.app`, confirmed active process. Bundle version verified as `1.0.3`.
+- **Notarization Status:** Skipped as OPTIONAL (Developer ID codesigned, ready for notarization via `script/notarize_dmg.sh` or `NOTARIZE=1` when Apple ID credentials configured on build machine).
+- **M1–M3, M7–M10 Manual Matrix:** Confirmed GREEN / PASS.
+- **M4–M6 Manual Matrix:** N/A (ADR-012 Canary Core ML marked NO-GO, omitted from product train 1.0.3 per plan).
+
+## Pass counts
+
+- **471 tests in 4 suites** (`swift test`) — green.
+- **18/18 QA gate checks** (`./script/qa/run_all.sh`) — green.
+- **Zero Python dependency** in `Sources/` (`check_no_python_in_sources.sh`).
+- **No Canary product code** (`check_no_canary_product.sh`).
+- **No git commit / push**.
+
+**RESULT: qa_green**
+
 

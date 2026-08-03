@@ -1,16 +1,20 @@
 # Blaboom 1.0.3 — live orchestration state
 # Orchestrator owns this file.
 
-current_step: B11
+current_step: B12
 step_description: >-
-  Final QA consolidation. Review APPROVED (471/471, 17/17). Awaiting Tester
-  gap-hunt before POST and B12 open.
+  Last step: APP_VERSION=1.0.3 test build + smoke. Document results.
+  Notarize optional (not hard gate for first internal). Manual matrix M1–M3,M7–M10
+  notes; M4–M6 N/A (Canary skipped ADR-012).
 target_files:
-  - Tests/NativeBlaboomCoreTests/**
-  - script/qa/**
+  - script/build_and_run.sh
+  - script/build_release_dmg.sh
+  - script/smoke_whisperkit_tiny.sh
+  - Sources/NativeBlaboom/Resources/Info.plist
+  - docs/RELEASE.md
+  - docs/RELEASE_NOTES.md
   - AI_Workflow_Kit/docs/AI/REPORT.md
   - AI_Workflow_Kit/docs/AI/COVERAGE.md
-  - docs/RELEASE_NOTES.md
 completed_steps:
   - B0
   - B1
@@ -19,39 +23,51 @@ completed_steps:
   - B4
   - B5
   - B6
+  - B11
 skipped_steps:
   - B7
   - B8
   - B9
   - B10
 implementation:
-  status: waiting_review
+  status: pending
   attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: 'Reviewer 471 + 17/17; COVERAGE + RELEASE_NOTES OK'
+  verdict: null
+  note: ''
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: B11
+  suite: null
   bugs_open: 0
   note: ''
-next_actor: tester
+next_actor: coder
 track: RELEASE
-prior_track: CANARY
+prior_track: RELEASE
 working_roots:
   - Blaboom
 checkpoint:
-  last_pre_tag: blaboom/pre-B11
-  last_post_tag: blaboom/B6-done
-  last_commit: aa827b6
+  last_pre_tag: blaboom/pre-B12
+  last_post_tag: blaboom/B11-done
+  last_commit: 2ee1c57
 plan_files:
   - BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md
   - AI_Workflow_Kit/docs/BLABOOM_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  B11 review approved — Tester gap-hunts final QA gate.
+  B12 — Test build 1.0.3 (LAST step)
+
+  1. Ensure version defaults/docs are 1.0.3 (build_release_dmg already defaults 1.0.3)
+  2. APP_VERSION=1.0.3 ./script/build_and_run.sh OR build_release_dmg for package
+  3. Smoke: app launches; note version string; optional smoke_whisperkit_tiny if feasible
+  4. Manual matrix notes in REPORT: M1–M3, M7–M10 ready/done; M4–M6 N/A Canary
+  5. Do not claim Canary shipping
+  6. Notarize optional — only if credentials ready and Human expects; not hard gate
+
+  Verify: build succeeds; swift test still green; document paths to artifacts.
+
+  Out of scope: reopening B7–B10 Canary product.
 notes: |
-  After Tester green: POST B11, open B12 (last step — APP_VERSION=1.0.3 build/smoke).
+  B11 closed: 471 tests, run_all 18/18, ADR-012 guards. Final product step B12.

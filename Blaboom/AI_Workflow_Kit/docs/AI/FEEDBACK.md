@@ -8,7 +8,7 @@
 
 | Field | Value |
 |-------|--------|
-| Step | B6 |
+| Step | B11 |
 | Actor | reviewer |
 | Timestamp | 2026-08-03 |
 | RESULT | `approved` |
@@ -22,15 +22,18 @@ Commands run and outcomes:
 ```bash
 cd "/Users/pavan/Documents/AI Projects/Blaboom"
 
-# Build spike harness
-xcrun swiftc -O -parse-as-library -o scratch/canary-spike/bin/CanarySpike docs/canary/harness/CanarySpike.swift
+# 1) Full unit test suite
+swift test
+#   ✔ Test run with 471 tests in 4 suites passed (+1 B11 test)
 
-# Spike harness test runs (short audio < 4.09 s cap)
-scratch/canary-spike/bin/CanarySpike scratch/canary-spike/audio/en_short.wav task=asr src=en tgt=en modelRoot=scratch/canary-spike/models
-scratch/canary-spike/bin/CanarySpike scratch/canary-spike/audio/en_short.wav task=ast src=en tgt=fr modelRoot=scratch/canary-spike/models
+# 2) Full QA gate (unit tests + structural contract scripts)
+./script/qa/run_all.sh
+#   Passed: 17   Failed: 0
+#   (swift test + 16 check_*.sh contracts — incl. NEW check_no_python_in_sources.sh)
 
-# Suite verification
-swift test       # ✔ 470 tests in 4 suites passed
+# 3) New Python contract check
+./script/qa/check_no_python_in_sources.sh
+#   OK: Sources/ is 100% native Swift with zero Python files or runtime invocations
 ```
 
 No `git commit` / `git push`.
@@ -39,79 +42,73 @@ No `git commit` / `git push`.
 
 ## §2 — Step compliance (Coder)
 
-- [x] Spike evaluation performed using native Swift harness (`docs/canary/harness/CanarySpike.swift`).
-- [x] SPIKE document written: `docs/canary/COREML_SPIKE.md` with explicit NO-GO decision based on defects D1–D5:
-  - D1: `metadata.json` describes fp32 spec-8 export; executable model is fp16 iOS-17 export.
-  - D2: **fp16 length overflow caps usable audio at ~4.09 s** (>65504 samples → inf → garbage `features_length`).
-  - D3: `encoded_lengths` output is bit-reinterpreted garbage (4992 for 250 mel frames).
-  - D4: **Mel frontend is broken** (linear-Hz filterbank instead of log-mel, channels 36–127 zeroed out, non-zero output floor on silence, pad region garbage).
-  - D5: **Decoder emits degenerate loops, never real transcript content** due to corrupted mel input features.
-- [x] NO product Canary integration added (no changes under `Sources/` or app target; spike code isolated under `docs/canary/` and `scratch/`).
-- [x] Recommendation documented: Do not use `alexwengg/canary-1b-v2-coreml`. Keep WhisperKit for Blaboom 1.0.3 ASR, or consider FluidInference/FluidAudio Canary manager if Canary model support is required in future releases.
-- [x] Model artifacts gitignored under `scratch/canary-spike/`.
-- [x] `swift test` GREEN — 470/470.
-- [x] No Python runtime path used for harness or evaluation.
+- [x] Full test suite executed and GREEN — 471 tests in 4 suites (`swift test`).
+- [x] QA gate executed and GREEN — 17/17 steps passed (`./script/qa/run_all.sh`).
+- [x] Zero Python in `Sources/` validated by script guard `script/qa/check_no_python_in_sources.sh`.
+- [x] ADR-012 Canary product absence asserted via `nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend` unit test in `TranscriptionModelCatalogTests.swift` and `check_b6_canary_spike.sh`.
+- [x] Matrix §12.1 in `AI_Workflow_Kit/docs/AI/COVERAGE.md` fully mapped and confirmed GREEN.
+- [x] `docs/RELEASE_NOTES.md` contains 1.0.3 release notes (honest Canary NO-GO status & bilingual language pair features).
+- [x] `AI_Workflow_Kit/docs/AI/REPORT.md` contains accurate B11 section.
+- [x] No product `Sources/` modifications introduced (changes limited to tests, scripts, and docs).
 - [x] No `git commit` / `git push`.
 
 ---
 
 ## §3 — Invariants (Coder)
 
-- ZERO Python dependency: spike execution, model loading, log-mel frontend testing, and SentencePiece token decoding implemented purely in native Swift/CoreML/Accelerate.
-- Main package integrity preserved: 0 edits to `Sources/**`, main test suite passes 470/470.
-- GO/NO-GO status strictly grounded in empirical evidence (defects D1–D5).
-- Model files stored in gitignored local scratch directory (`scratch/canary-spike/models/`).
+- ZERO Python dependency in `Sources/` (enforced by `check_no_python_in_sources.sh`).
+- Zero Canary product code or backend in `Sources/` or `TranscriptionModelCatalog` (ADR-012 NO-GO invariant).
+- 471 unit tests green.
+- 17 QA gate scripts green.
+- No `git commit` / `git push`.
 
 ---
 
 ## §4 — Comments / structure (Coder)
 
-- `docs/canary/COREML_SPIKE.md`: complete evaluation report documenting environment, artifact audit, steps performed, detailed defect analysis (D1–D5), GO/NO-GO verdict, recommendation, artifacts table, and reproduction commands.
-- `docs/canary/harness/CanarySpike.swift`: Swift harness implementing preprocessor -> encoder -> decoder -> projection pipeline using CoreML, Accelerate (cblas_sgemv), and vDSP.
+- `script/qa/check_no_python_in_sources.sh`: NEW script validating zero `.py` files and zero Python binary/process execution in `Sources/`.
+- `Tests/NativeBlaboomCoreTests/TranscriptionModelCatalogTests.swift`: added `nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend` test.
+- `AI_Workflow_Kit/docs/AI/COVERAGE.md`: updated §12.1 matrix.
+- `docs/RELEASE_NOTES.md`: updated release notes for 1.0.3 train.
+- `AI_Workflow_Kit/docs/AI/REPORT.md`: B11 section present and up to date.
 
 ---
 
 ## §5 — Reviewer findings (Reviewer)
 
-### Decision: `[APPROVED]`
+### Status: [APPROVED]
 
-#### Checklist Audit
-1. **Scope Isolation:** Verified. `git status --short -- docs/canary Sources` confirms changes are isolated entirely within `docs/canary/`. Zero modifications made under `Sources/` or product app targets.
-2. **Spike Documentation Rigor:** Verified. `docs/canary/COREML_SPIKE.md` provides environment specs, artifact audit, step-by-step methodologies, defect table (D1–D5), explicit NO-GO verdict, and clear recommendations.
-3. **Defect Analysis Coherence:** Verified. Defects D1–D5 are technically sound, detailed, and empirically supported:
-   - D1: Executable CoreML model is fp16 iOS-17 export, contradicting `metadata.json` (fp32 spec-8).
-   - D2: fp16 scalar overflow (`length` / `audio_lengths` > 65504 samples → inf) caps usable audio at ~4.09 seconds.
-   - D3: `encoded_lengths` output produces bit-reinterpretation garbage (4992 for 250 mel frames).
-   - D4: Preprocessor Mel frontend is corrupt (linear-Hz filterbank, zeroed channels 36–127, non-zero silence floor, pad region garbage).
-   - D5: Decoder emits fluent but repetitive hallucinated token loops without EOS due to broken input features.
-4. **Zero Python Path:** Verified. `docs/canary/harness/CanarySpike.swift` is 100% native Swift using `Accelerate`, `CoreML`, and `Foundation`. No Python invocations or dependencies.
-5. **Architectural Recommendation Honesty:** Verified. Recommends avoiding `alexwengg/canary-1b-v2-coreml`, retaining production WhisperKit engine for Blaboom 1.0.3, and noting official `FluidInference`/`FluidAudio` Canary manager as potential future options.
-6. **Main Suite Health:** Verified. `swift test` executed clean with 470/470 tests passing across 4 test suites.
-7. **Language Claims Integrity:** Verified. Token vocabulary audit accurately maps ISO-639-1 tokens without inflating capabilities or creating false product promises.
-
-#### Summary
-The B6 Canary Core ML spike evaluation is approved with high confidence. The NO-GO recommendation is fully justified by empirical evidence.
+1. **Diff Scope:** Confirmed diff touches only B11 target paths (`Tests/NativeBlaboomCoreTests/TranscriptionModelCatalogTests.swift`, `script/qa/check_no_python_in_sources.sh`, `AI_Workflow_Kit/docs/AI/COVERAGE.md`, `AI_Workflow_Kit/docs/AI/REPORT.md`, `docs/RELEASE_NOTES.md`, `FEEDBACK.md`). Zero modifications in product code `Sources/` or `Package.swift`. No Canary engine code introduced.
+2. **Coverage Mapping (§12.1):** `AI_Workflow_Kit/docs/AI/COVERAGE.md` accurately maps all §12.1 matrix items and aligns with actual test guards and QA scripts.
+3. **No-Python Contract:** `script/qa/check_no_python_in_sources.sh` is present, executable, and passes cleanly. Verifies zero `.py`/`.pyc` files and zero python/pip/nemo binary/process invocations in `Sources/`.
+4. **ADR-012 Catalog Integrity:** `TranscriptionModelCatalogTests.swift` contains unit test `nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend()` confirming native catalog has zero Canary product IDs or backends.
+5. **Release Notes Honesty:** `docs/RELEASE_NOTES.md` accurately highlights the bilingual primary+additional features, 15 UI locales, canonical picker ordering, and explicitly records Canary 1B Core ML as NO-GO (not shipping in 1.0.3).
+6. **Automated Suite Execution:** `swift test` (471/471 passed) and `./script/qa/run_all.sh` (17/17 passed) verified 100% green.
+7. **No Commit/Push:** Verified local working state maintained without unauthorized git commit/push actions.
 
 ---
 
 ## §6 — QA summary (Tester)
 
-### Decision: `[qa_green]`
+### Status: [GREEN] — `qa_green`
 
-#### Checklist Audit
-1. **Full suite:** `swift test` → `✔ Test run with 470 tests in 4 suites passed` (matches ~470 expectation; 470 at B5 baseline, no delta — spike is docs-only).
-2. **QA gate:** `./script/qa/run_all.sh` → `Passed: 16  Failed: 0` (15 pre-existing scripts + NEW `check_b6_canary_spike.sh`).
-3. **Sources isolation:** `git status --short -- Sources Tests` empty; `git diff --stat -- Sources` empty. Only "canary" hits under `Sources/**` are pre-existing B4 i18n copy strings (`helpBilingualCanary` etc. in `AppText.swift` surfaced via `HelpSettingsView.swift`) — help text about a future engine, zero Core ML/engine code. No product Canary integration.
-4. **COREML_SPIKE.md contents:** exists; `Status: NO-GO`; defect table D1–D5 with evidence; zero-Python pipeline (native Swift/CoreML/Accelerate harness, `swiftc -O -parse-as-library`, no Package target); Recommendation section present (do not integrate `alexwengg/canary-1b-v2-coreml`; keep WhisperKit; FluidInference/FluidAudio or mlx as alternatives).
-5. **Zero Python path:** `CanarySpike.swift` greps clean for `python3`/`python`/`pip`/`pip3`/`nemo`/`Process(`/`executableURL`/`launchPath`/`/usr/bin/env`; the only "Python" token is the header comment "pure Swift, no Python"; imports = Accelerate/CoreML/Foundation only. Enforced permanently by new script (comment-only allowance).
-6. **Harness rebuild + ASR run (models were present):** `scratch/canary-spike/models/` exists → harness rebuilt (`xcrun swiftc -O -parse-as-library`), `en_short.wav` (2.50 s < 4.09 s cap) ran: 250 mel frames, `encoded_lengths_out=4992` (D3 reproduced), transcript = 119-token degenerate loop "To the other, to the other, …" without EOS (D5 reproduced). NO-GO verdict independently reproduces on re-run.
+**Re-verification (2026-08-03, independent run):**
 
-#### New tests added
-- `script/qa/check_b6_canary_spike.sh` — structural contracts: `docs/canary/COREML_SPIKE.md` exists + `/NO-GO/i` + D1–D5 + Recommendation; `docs/canary/harness/CanarySpike.swift` exists + zero-Python-invocation grep. Wired into `run_all.sh` automatically (glob `check_*.sh`). No Swift test added — the spike has no product code surface to unit-test.
+1. `swift test` — **471/471 tests in 4 suites passed** (matches the ~471 claim).
+2. `./script/qa/run_all.sh` — **18/18 steps passed** (17 pre-existing + NEW `check_no_canary_product.sh`); 0 failures.
+3. `./script/qa/check_no_python_in_sources.sh` standalone — **OK** (zero `.py`/`.pyc`, zero python/pip/nemo/process invocation in `Sources/`).
+4. `nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend` — present (`TranscriptionModelCatalogTests.swift:83`) and green (isolated + in-suite).
+5. COVERAGE.md §12.1 — all 8 plan rows map to real guards (mapping table in REPORT.md); no orphans.
+6. RELEASE_NOTES.md — honest Canary NO-GO spot-read confirmed ("not shipped in 1.0.3").
 
-#### Findings / issues
-- No bugs opened. `bugs_open: 0`. Tester made no product changes and no `git commit`/`git push`.
-- Minor (non-blocking) observation: `scratch/canary-spike/models` (1.8 GB) remains on disk; COREML_SPIKE.md §6 recommends deleting after decision recording — deletion decision belongs to the Orchestrator, not the tester.
+**Gap-hunt outcome (B11 Tester):**
+
+- **New script added:** `script/qa/check_no_canary_product.sh` — asserts ADR-012 no-product-Canary at the build surface: zero canary in `Package.swift` (products/targets/deps) and in `Sources/**` canary allowed only as `AppText.swift` i18n help copy / `helpBilingual*` key references (verified: all 62 hits are AppText help-copy or HelpSettingsView `.helpBilingualCanary`).
+- **No-gap (documented in REPORT.md):** other catalog enums (`PolishingModelCatalog`, `CloudProviderModelCatalog`, `GlossaryLanguageCatalog`) have zero canary entries — no catalog test expansion needed; RELEASE_NOTES and COVERAGE.md already honest/complete.
+
+**Constraints honored:** no product `Sources/**` or `Package.swift` changes; no git commit/push; test/docs/scripts only.
+
+**RESULT: `qa_green`**
 
 ---
 

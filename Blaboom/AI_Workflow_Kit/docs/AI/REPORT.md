@@ -259,3 +259,136 @@ Total B6 Tester delta: **+1 QA script** (no Swift tests needed — spike is a do
 - No bugs opened. `bugs_open: 0`.
 
 **RESULT: qa_green**
+
+---
+
+# Step B11 — QA suite consolidation (Plan §11 step 11 / §12.1)
+
+| Field | Value |
+|-------|-------|
+| Step | B11 — QA suite consolidation |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+
+## Commands run
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Blaboom"
+
+# 1) Full unit test suite
+swift test
+#   ✔ Test run with 471 tests in 4 suites passed (+1 B11 test)
+
+# 2) Full QA gate (unit tests + structural contract scripts)
+./script/qa/run_all.sh
+#   Passed: 17   Failed: 0
+#   (swift test + 16 check_*.sh contracts — NEW check_no_python_in_sources.sh)
+
+# 3) New Python contract check
+./script/qa/check_no_python_in_sources.sh
+#   OK: Sources/ is 100% native Swift with zero Python files or runtime invocations
+```
+
+## Pass counts
+
+- **471 tests in 4 suites** — green (+1 new test `nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend`).
+- QA gate: **17/17 steps passed** (16 pre-existing + 1 new script `check_no_python_in_sources.sh`) — 0 failures.
+
+## B11 coverage table
+
+| Area | Status | Test / Script Guard |
+|------|--------|---------------------|
+| Language pair migration | **GREEN** | `UserSpeechLanguagesTests.swift` (B1) |
+| Picker order (en first; ru not #2; europe before asia) | **GREEN** | `LanguagePickerOrderTests.swift` (B1) |
+| Onboarding/settings/help keys × 15 locales | **GREEN** | `AppTextFullCoverageTests.swift`, `OnboardingLocalizationTests.swift`, `SettingsLocalizationTests.swift`, `check_i18n_b2_b4_families.sh` (B2–B5) |
+| Canary product absence (no false capabilities) | **GREEN** | `check_b6_canary_spike.sh`, `TranscriptionModelCatalogTests.swift` (`nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend`) |
+| HUD cycle primary↔additional | **GREEN** | `HUDProviderSwitcherFeatureTests.swift`, `HUDLayoutAndComposerTests.swift` |
+| ASR/AST routing matrix | **GREEN** | `TranscriptionLanguageRoutingTests.swift`, `StarterGlossaryAndLanguageRoutingTests.swift` |
+| Archive stats format regression (tr/ja/ko/hi) | **GREEN** | `ArchiveStatsLocalizationTests.swift` |
+| No Python in Sources | **GREEN** | `script/qa/check_no_python_in_sources.sh` (**NEW**), `check_b6_canary_spike.sh` |
+
+## B11 Must-verify checklist
+
+1. ✅ **`swift test` full suite GREEN** — 471/471 tests passed across 4 suites.
+2. ✅ **`./script/qa/run_all.sh` GREEN** — 17/17 steps passed (16 check_*.sh scripts + swift test).
+3. ✅ **No Python in Sources** — `script/qa/check_no_python_in_sources.sh` created, executable, and passing. Zero `.py` files and zero binary/process spawning in `Sources/`.
+4. ✅ **Canary product catalog absence asserted** — `nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend` unit test added to `TranscriptionModelCatalogTests.swift` and passing.
+5. ✅ **COVERAGE.md updated** — §12.1 matrix updated for 1.0.3 train status.
+6. ✅ **RELEASE_NOTES.md updated** — honest Canary status (NO-GO pending Core ML export improvements) and 1.0.3 bilingual primary/additional feature highlights added.
+
+**RESULT: qa_green**
+
+---
+
+# Step B11 re-verification — QA suite consolidation (Tester re-run, gap-hunt)
+
+| Field | Value |
+|-------|-------|
+| Step | B11 — QA suite consolidation (independent re-verify) |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+
+## Commands run (independent re-run)
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Blaboom"
+
+# 1) Full unit test suite
+swift test
+#   ✔ Test run with 471 tests in 4 suites passed (matches claim ~471+)
+
+# 2) Full QA gate (unit tests + structural contract scripts)
+./script/qa/run_all.sh
+#   Passed: 18   Failed: 0
+#   (swift test + 17 check_*.sh contracts — NEW check_no_canary_product.sh)
+
+# 3) Python contract check (standalone)
+./script/qa/check_no_python_in_sources.sh
+#   OK: Sources/ is 100% native Swift with zero Python files or runtime invocations
+
+# 4) Canary catalog test (isolated)
+swift test --filter nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend
+#   ✔ passed (1/1)
+```
+
+## §12.1 ↔ real guard mapping (verified, no holes)
+
+| Plan §12.1 row | Guard (verified exists + green) |
+|----------------|--------------------------------|
+| Language pair migration | `UserSpeechLanguagesTests.swift` (B1) |
+| Picker order: en first; ru not #2; europe before asia | `LanguagePickerOrderTests.swift` (B1) |
+| All new onboarding/settings/help keys × 15 langs | `AppTextFullCoverageTests.swift`, `OnboardingLocalizationTests.swift`, `SettingsLocalizationTests.swift`, `check_i18n_b2_b4_families.sh` (B2–B5) |
+| Canary capabilities.supportsAuto == false (ADR-012: no product Canary ⇒ absence) | `nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend` + `check_b6_canary_spike.sh` + **`check_no_canary_product.sh`** |
+| HUD cycle primary↔additional | `HUDProviderSwitcherFeatureTests.swift`, `HUDLayoutAndComposerTests.swift` |
+| ASR vs AST routing from primary/additional/active | `TranscriptionLanguageRoutingTests.swift`, `StarterGlossaryAndLanguageRoutingTests.swift` |
+| Archive stats format regression (tr/ja/ko/hi) | `ArchiveStatsLocalizationTests.swift` |
+| No Python imports in Sources | `script/qa/check_no_python_in_sources.sh` |
+
+## Gap-hunt mapping
+
+| Gap-hunt idea | Status |
+|---------------|--------|
+| Assert Package.swift / Sources have no canary product module name | **Added** — NEW `script/qa/check_no_canary_product.sh`: zero case-insensitive "canary" in `Package.swift` (products/targets/deps); in `Sources/**` canary allowed ONLY in `AppText.swift` i18n maps or `helpBilingual*` key references (verified all 62 hits are `AppText.swift` help-copy or `HelpSettingsView.swift` rendering `.helpBilingualCanary`). Wired into `run_all.sh` (auto-glob): 17 → 18/18. |
+| Expand catalog test if other catalog enums could list canary | **No-gap** — enumerated all catalog types in Sources: `TranscriptionModelCatalog` (guarded by unit test), `PolishingModelCatalog`, `CloudProviderModelCatalog` (providers openAI/qwen/openRouter/custom/anthropic/google — no canary), `GlossaryLanguageCatalog` (language codes). Zero canary case/entry in any non-AppText source. No expansion needed. |
+| RELEASE_NOTES honesty spot-read | **No-gap** — `docs/RELEASE_NOTES.md` §"Honest Engine Status": Canary 1B Core ML marked NO-GO (precision loss, audio-length scaling limits, degenerate repetition loops), "not shipped in 1.0.3", WhisperKit/Parakeet remain primary. Honest. |
+| COVERAGE.md §12.1 rows match real guards | **No-gap** — all 8 plan rows map to existing files/scripts (table above); COVERAGE.md row "Canary product absence" updated to include the new script. |
+
+## Must-verify checklist (re-run)
+
+1. ✅ `swift test` — 471/471 green.
+2. ✅ `./script/qa/run_all.sh` — 18/18 green (17 pre-existing + NEW `check_no_canary_product.sh`).
+3. ✅ `check_no_python_in_sources.sh` standalone — OK.
+4. ✅ `nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend` present (`TranscriptionModelCatalogTests.swift:83`) and green in isolation + suite.
+5. ✅ COVERAGE.md §12.1 rows ↔ real tests/scripts — all 8 mapped, no orphans.
+6. ✅ RELEASE_NOTES Canary NO-GO — honest, spot-read verified.
+
+## Notes
+
+- Tester made **no product changes** (`Sources/**`, `Package.swift` untouched) and **no git commit/push**.
+- Delta this re-verify: +1 QA script (`check_no_canary_product.sh`), docs only (COVERAGE.md, REPORT.md, FEEDBACK.md).
+- No bugs opened. `bugs_open: 0`.
+
+**RESULT: qa_green**
+

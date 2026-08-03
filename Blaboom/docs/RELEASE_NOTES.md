@@ -3,25 +3,28 @@
 Native Apple Silicon release — local dictation, transcription, polishing, translation, and hotkey insertion into any app.
 
 **Version:** 1.0.3 (build 1)  
-**Codename track:** Canary ASR/AST integration (development / testing)
+**Codename track:** Bilingual Language Pairs & QA Consolidation
 
 ---
 
-## What's planned / in progress in 1.0.3
+## What's new in 1.0.3
 
-### Languages + Canary (in progress)
+### Languages & Picker Ordering
 
-- **Primary + additional** languages (second language you often use — not “always output on that language”).
-- Onboarding asks both; Settings + Help; **15 UI locales**.
-- **Canary Core ML** ASR/AST — native only (Core ML + MLX polish; **no Python**):  
-  [`alexwengg/canary-1b-v2-coreml`](https://huggingface.co/alexwengg/canary-1b-v2-coreml).
-- Canary HUD: letter of **primary** (e.g. **R**), tap → **additional** (e.g. **E**); **A** inactive.
-- Parakeet / Whisper keep **auto language** by default.
-- Master plan: [`BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md`](../BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md).
+- **Primary + Additional** language pair model (second language you often use — not a forced "always output in this target language" setting).
+- Onboarding configures both languages upfront; Settings + Help fully updated; **15 UI locales**.
+- Canonical language picker ordering: **English first → Europe (incl. ru/uk) → Asia & others**. Russian is no longer listed at #2.
 
-### Status
+### Honest Engine Status (Canary Spike Evaluation)
 
-- Version **1.0.3**. Early builds may be internal/test before full notarized release.
+- **Canary 1B Core ML spike (ADR-012):** Evaluated and marked **NO-GO** for product integration in 1.0.3 due to precision loss, audio length scaling limits, and degenerate repetition loops in the current Core ML export (`alexwengg/canary-1b-v2-coreml`).
+- Canary is **not shipped** in 1.0.3 pending an official or improved Core ML export.
+- **WhisperKit (Large v3 / Turbo / Small)** and **Parakeet TDT 0.6B v3** remain the primary production local transcription engines with full auto language detection.
+
+### Quality & QA Consolidation
+
+- Comprehensive automated test suite and QA contract scripts (`script/qa/run_all.sh`).
+- Verified zero Python runtime dependencies in application sources (100% native Swift/Core ML/Accelerate).
 
 ---
 
@@ -47,7 +50,7 @@ Native Apple Silicon release — local dictation, transcription, polishing, tran
 
 ## Highlights (full product baseline)
 
-- **Local transcription:** Parakeet TDT 0.6B v3 · WhisperKit · *(1.0.3) Canary Core ML — WIP*
+- **Local transcription:** Parakeet TDT 0.6B v3 · WhisperKit (Large v3 / Turbo / Multilingual / Small)
 - **Local polishing:** MLX Swift (Qwen 3.5 family, Nemotron-3 Nano)
 - **Cloud optional:** Gemini, OpenAI, Anthropic, Qwen, OpenRouter, custom OpenAI-compatible
 - **Hotkeys / HUD:** dictate, translate, provider switcher

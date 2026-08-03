@@ -1055,3 +1055,73 @@ SwiftPM emitted the existing dependency identity and unhandled-resource warnings
 - No product defect was found; `BUG_REPORT.md` remains at `bugs_open: 0`.
 
 **RESULT: `qa_green`**
+
+---
+
+# Step S4 - Tester QA: Canary 1B v2 FluidInference Core ML spike
+
+| Field | Value |
+|-------|-------|
+| Step | S4 (SPIKE) |
+| Date | 2026-08-04 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+| bugs_open | 0 |
+
+## Graphify context
+
+The required read-only Graphify query was run first against the supplied graph:
+
+```bash
+graphify query "Canary Core ML FluidAudio spike harness" --graph graphify-out/graph.json
+# PASS - 112-node traversal includes the S4 report, fixed CanaryFluidSpike harness,
+# B6 artifacts, FluidAudio, and the QA guards
+```
+
+## Gap-hunt result
+
+| S4 contract | Result |
+|-------------|--------|
+| `docs/asr/canary-1b/COREML_SPIKE.md` exists with explicit `**Status:** NO-GO` | PASS |
+| S4 report contains Environment, Artifact audit, Load, Short audio ASR, Latency, Language tokens, Chunking, No Python, AST, and Verdict coverage | PASS |
+| B6 + S4 dual-check requires the S4 NO-GO verdict and zero-Python harness path | PASS after QA guard update |
+| Product Canary surface remains absent | PASS |
+| Fixed S4 harness builds with `xcrun swiftc` | PASS |
+| B6 report and B6 harness remain present | PASS |
+| Optional `en_short` runtime spot-check | N/A - ignored model/audio artifacts are not present in this checkout |
+
+## Commands and results
+
+```bash
+bash -n script/qa/check_b6_canary_spike.sh
+# PASS
+
+script/qa/check_no_canary_product.sh
+# PASS - zero Canary product/module surface
+
+script/qa/check_b6_canary_spike.sh
+# PASS - B6 + S4 NO-GO docs and zero-Python harness contracts
+
+xcrun swiftc -O -parse-as-library -o /tmp/CanaryFluidSpike-qa \
+  docs/canary/harness/CanaryFluidSpike.swift
+# PASS
+
+swift test
+# PASS - 503 tests in 4 suites
+
+./script/qa/run_all.sh
+# PASS - Passed: 22  Failed: 0
+
+git diff --check -- .
+# PASS
+```
+
+## QA delta
+
+- Updated the existing `script/qa/check_b6_canary_spike.sh` S4 branch to require the exact `**Status:** NO-GO` line instead of accepting a generic GO/NO-GO marker.
+- Kept the S4 checklist and Swift-only/no-process invocation checks in the dual-check.
+- No new Swift tests were needed: this is a docs-only spike and the product suite remains green.
+- No product `Sources/**`, `Package.swift`, `STATE.yaml`, or `BUG_REPORT.md` changes were made by Tester. No product defect was found; the spike NO-GO is the expected outcome.
+- No commit or push was performed.
+
+**RESULT: `qa_green`**

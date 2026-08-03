@@ -117,4 +117,14 @@
 
 ---
 
+## ADR-013 — Canary 1B v2 FluidInference Core ML NO-GO (S4 spike)
+
+**Status:** Accepted (S4 spike 2026-08-03/04; Reviewer re-review APPROVED; Tester qa_green 2026-08-04)
+**Decision:** Do **not** integrate `https://huggingface.co/FluidInference/canary-1b-v2-coreml` (int4) into Bolabol 1.0.4 product (catalog, download UX, CanaryCoreMLEngine, Onboarding, HUD). Extends ADR-012: **both** known Canary 1B Core ML exports are NO-GO.
+**Evidence:** `docs/asr/canary-1b/COREML_SPIKE.md` rev. 2 (authoritative) + fixed `docs/canary/harness/CanaryFluidSpike.swift` — S4 verdict **NO-GO** with F1–F6. Rev. 2 probe figures (supersede unauditable rev. 1): mel frontend fails frequency discrimination (1 kHz vs 4 kHz diffuse overlapping channels); valid-region exact-zero mel fraction **~0.67**; pearson(mel frame sums, envelope) **= 0.009** (preflight > 0.5); content-free embeddings cos(two EN) **= 0.97**, cos(EN, RU) **= 0.88**; decoder non-EOS loops on EN/FR/RU/AST with true `audio_length` semantics. F6: pinned FluidAudio 0.15.5 has no Canary API; upstream 2024 `canary` branch contract does not match this export. Reviewer re-reproduced short-clip lengths `39946 → 249 → 32` from fixed harness.
+**Kept:** metadata.json honest and consistent with MIL; all 4 models load on CPU/ANE; language tokens 24–206 verified in vocab; zero Python inference path.
+**1.0.4 ASR:** proceed with S5 (Canary Flash) and S6 (GigaAM v3 RU) spikes; Whisper/Parakeet remain shipping ASR.
+**Future:** revisit Canary 1B only with a new export passing preflight: mel envelope correlation > 0.5 + sine frequency discrimination + non-looping EOS-terminated transcript; fix must land in the exporter (mobius mel path), not the app.
+
+---
 *Add new ADRs at the bottom; do not rewrite history — supersede with new ADR if needed.*

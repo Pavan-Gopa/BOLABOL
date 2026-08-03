@@ -1,17 +1,17 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S4
+current_step: S5
 step_description: >-
-  Spike Canary 1B v2 FluidInference Core ML via FluidAudio: load models, short
-  audio ASR, latency/RAM, language tokens, chunking, no Python; write GO/NO-GO
-  report at docs/asr/canary-1b/COREML_SPIKE.md. Do not ship product catalog
-  wiring (that is S7+ after Human GO list).
+  Spike Canary Flash ~180M Core ML: find community HF export and/or convert via
+  mobius; load, short audio ASR, latency/RAM, lang tokens, chunking, no Python;
+  write GO/NO-GO at docs/asr/canary-flash/COREML_SPIKE.md. No product catalog
+  wiring (S7+ after Human GO list).
 target_files:
-  - docs/asr/canary-1b/COREML_SPIKE.md
+  - docs/asr/canary-flash/COREML_SPIKE.md
   - docs/canary/harness/
-  - scratch/canary-spike/
-  - script/qa/check_b6_canary_spike.sh
+  - scratch/canary-flash-spike/
+  - script/qa/
   - AI_Workflow_Kit/docs/DECISIONS.md
 completed_steps:
   - S0
@@ -21,6 +21,7 @@ completed_steps:
   - S1c
   - S2
   - S3
+  - S4
 skipped_steps: []
 implementation:
   status: pending
@@ -33,7 +34,7 @@ review:
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: S4
+  suite: S5
   bugs_open: 0
   note: ''
 next_actor: coder
@@ -42,21 +43,20 @@ prior_track: UX
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S3
-  last_post_tag: bolabol/S2-done
-  last_commit: 60e0158
+  last_pre_tag: bolabol/pre-S4
+  last_post_tag: bolabol/S3-done
+  last_commit: 9ffd2cc
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  S4 spike only: evaluate FluidInference/canary-1b-v2-coreml with FluidAudio
-  CanaryManager (or equivalent Swift Core ML harness). Produce
-  docs/asr/canary-1b/COREML_SPIKE.md with GO or NO-GO and evidence.
-  Spike checklist: load · short audio ASR · latency/RAM · lang tokens ·
-  chunking · no Python · honest language list. OS note: int4 needs macOS 15+.
-  Do NOT wire production catalog/UI/engine for Canary (S7–S10). alexwengg
-  artifact is already ADR-012 NO-GO — do not revive it as primary path.
+  S5 spike only: evaluate Canary Flash ~180M Core ML for Bolabol offline ASR
+  (languages EN/DE/FR/ES). Paths: (A) community Core ML HF export if found;
+  (B) mobius convert + validate; (C) Swift Core ML harness. Produce
+  docs/asr/canary-flash/COREML_SPIKE.md with GO or NO-GO. Checklist: load ·
+  short audio ASR · latency/RAM · lang tokens · chunking · no Python · honest
+  language list. Do NOT product-wire Canary (S7+). Canary 1B is ADR-012/013
+  NO-GO — do not re-open S4 as primary. Keep product Sources Canary-free.
 notes: |
-  S3 qa_green: 503 tests, QA 22/22, build 1.0.4 verify. Tester added
-  check_s3_i18n_locales.sh + S1 language-step regression tests.
-  UX track S1–S3 complete. Next is Track B spikes starting S4.
+  S4 POST pending this turn: FluidInference canary-1b NO-GO; ADR-013 Accepted;
+  Tester qa_green 503 tests, QA 22/22; dual-check requires Status NO-GO.

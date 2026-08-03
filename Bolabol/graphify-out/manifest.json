@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785781645.2277102,
-    "ast_hash": "2d180827a9c657a1fb82c9d51a1e682e",
+    "mtime": 1785785543.0785275,
+    "ast_hash": "476b22d35ae8cb645fbccf1c8010a79b",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
-    "mtime": 1785776401.2703505,
-    "ast_hash": "9ded9adaf9b5f0bfb3420fc01f798105",
+    "mtime": 1785783911.065332,
+    "ast_hash": "43dceb7fc84b83d6a257ac250feba9d3",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REVIEW_TEMPLATE.md": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785782041.302037,
-    "ast_hash": "57342028f1eba1dce67f8eecd6b570cd",
+    "mtime": 1785785593.9305112,
+    "ast_hash": "dac88189f85a622559366a19654a867b",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -220,8 +220,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/DECISIONS.md": {
-    "mtime": 1785778784.1698177,
-    "ast_hash": "3a8219df047ce30dde82cda6369d5baf",
+    "mtime": 1785784304.8736856,
+    "ast_hash": "20c0eea2eec75b4fc45572bd2f369629",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/PROJECT_CONTEXT.md": {
@@ -450,8 +450,8 @@
     "semantic_hash": "24d8a46de77e170cb07bb8b1b4a09c9b"
   },
   "script/qa/check_b6_canary_spike.sh": {
-    "mtime": 1785778678.7848256,
-    "ast_hash": "7542eb9607b921f1fabd3eb688d0977a",
+    "mtime": 1785785426.1860065,
+    "ast_hash": "da0d80c635ed38c5e0723864bab36165",
     "semantic_hash": ""
   },
   "docs/canary/COREML_SPIKE.md": {
@@ -1467,6 +1467,16 @@
   "docs/asr/canary-1b/COREML_SPIKE.md": {
     "mtime": 1785781616.6290903,
     "ast_hash": "e59e1f605fa2df5af0257dfd566822d0",
+    "semantic_hash": ""
+  },
+  "docs/canary/harness/CanaryFlashSpike.swift": {
+    "mtime": 1785784977.6218414,
+    "ast_hash": "e5d0906e7f12ad8feffdf50add67f193",
+    "semantic_hash": ""
+  },
+  "docs/asr/canary-flash/COREML_SPIKE.md": {
+    "mtime": 1785785499.6060724,
+    "ast_hash": "039180cf88d76f4cc88e9efd4656b5c4",
     "semantic_hash": ""
   }
 }

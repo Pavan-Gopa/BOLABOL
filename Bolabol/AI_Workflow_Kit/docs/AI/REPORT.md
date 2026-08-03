@@ -1125,3 +1125,81 @@ git diff --check -- .
 - No commit or push was performed.
 
 **RESULT: `qa_green`**
+
+---
+
+# Step S5 - Tester QA: Canary Flash (~180M) Core ML spike
+
+| Field | Value |
+|-------|-------|
+| Step | S5 (SPIKE) |
+| Date | 2026-08-04 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+| bugs_open | 0 |
+
+## Graphify context
+
+The required read-only Graphify query was run first against the supplied graph:
+
+```bash
+graphify query "CanaryFlashSpike" --graph graphify-out/graph.json
+# PASS - 25-node traversal includes the S5 harness entry point, frontend,
+# Core ML model loading, decode path, and helpers.
+```
+
+## Gap-hunt result
+
+| S5 contract | Result |
+|-------------|--------|
+| `docs/asr/canary-flash/COREML_SPIKE.md` exists with explicit `**Status:** GO` | PASS |
+| S5 report covers Environment, Artifact audit, Load, Short audio ASR, Latency, Language tokens, Chunking, No Python, AST, and Verdict | PASS |
+| B6/S4/S5 dual-check accepts S5 GO and still requires S4 NO-GO | PASS; S5 GO requirement strengthened by Tester |
+| Product Canary engine/catalog/UI boundary remains absent | PASS; `check_no_canary_product.sh` |
+| S5 harness builds with `xcrun swiftc` | PASS |
+| B6/S4 docs and harnesses remain intact | PASS; dual-check green |
+| Optional EN short runtime: non-empty transcript and EOS | PASS; exact transcript, `EOS: true` |
+| Model/audio blobs are ignored and untracked | PASS; `.gitignore` rule and `git ls-files` check |
+
+## Commands and results
+
+```bash
+script/qa/check_no_canary_product.sh
+# PASS - zero Canary product/module surface
+
+script/qa/check_b6_canary_spike.sh
+# PASS - B6 + S4 NO-GO + S5 GO docs and zero-Python harness contracts
+
+xcrun swiftc -O -parse-as-library -o /tmp/CanaryFlashSpike-qa \
+  docs/canary/harness/CanaryFlashSpike.swift
+# PASS
+
+/tmp/CanaryFlashSpike-qa scratch/canary-flash-spike/audio/en_short.wav \
+  task=asr src=en tgt=en \
+  modelRoot=scratch/canary-flash-spike/models/CanaryFlash \
+  compute=ane maxTokens=256
+# PASS - non-empty exact EN transcript; EOS: true; confidence 0.988; RTFx 28.6x
+
+swift test
+# PASS - 503 tests in 4 suites
+
+./script/qa/run_all.sh
+# PASS - Passed: 22  Failed: 0
+
+git check-ignore -v scratch/canary-flash-spike
+# PASS - ignored by .gitignore
+
+git diff --check -- .
+# PASS
+```
+
+## QA delta and findings
+
+- Strengthened `script/qa/check_b6_canary_spike.sh` so S5 requires an explicit `**Status:** GO`; S4 continues to require `**Status:** NO-GO`.
+- No new Swift tests were needed: the spike is docs/harness-only and the complete product suite remains green.
+- Reviewer non-blocking notes remain recorded for S7+: RTFx denominator versus the capped 10 s window, EOS inclusion in the confidence denominator, and direct encoder-mask value observation.
+- Runtime artifacts were available in this checkout and the required EN short spot-check passed. The observed runtime footprint was 78 MiB; this is environment evidence and does not alter the GO decision.
+- No product `Sources/**`, `Package.swift`, `STATE.yaml`, or `BUG_REPORT.md` changes were made by Tester. The expected S5 GO is not a product bug; `bugs_open` remains 0.
+- No commit or push was performed.
+
+**RESULT: `qa_green`**

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# B6 + S4 Canary Core ML spike contracts (docs-only, NO-GO):
+# B6 + S4 + S5 Canary Core ML spike contracts (docs-only):
 #  1) docs/canary/COREML_SPIKE.md exists, verdict matches /NO-GO/i, covers
 #     defects D1–D5, and carries a Recommendation section.
 #  2) docs/canary/harness/CanarySpike.swift exists and contains NO Python
@@ -10,7 +10,9 @@
 #     verdict and covers the spike checklist (Environment, Artifact audit,
 #     Load, ASR, Latency, Language tokens, Chunking, No Python, AST, Verdict);
 #     docs/canary/harness/CanaryFluidSpike.swift is Swift-only (no Python path).
-# Structural complement to the B6/S4 spike reviews; no product Sources touched.
+#  4) S5 dual-check: docs/asr/canary-flash/COREML_SPIKE.md exists with a GO/NO-GO
+#     verdict and covers the same checklist; the Flash harness is Swift-only.
+# Structural complement to the B6/S4/S5 spike reviews; no product Sources touched.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
@@ -19,6 +21,8 @@ DOC="docs/canary/COREML_SPIKE.md"
 HARNESS="docs/canary/harness/CanarySpike.swift"
 S4_DOC="docs/asr/canary-1b/COREML_SPIKE.md"
 S4_HARNESS="docs/canary/harness/CanaryFluidSpike.swift"
+S5_DOC="docs/asr/canary-flash/COREML_SPIKE.md"
+S5_HARNESS="docs/canary/harness/CanaryFlashSpike.swift"
 
 FAILED=0
 
@@ -80,9 +84,39 @@ if [ -f "$HARNESS" ]; then
   done <<< "$hits"
 fi
 
+# S5 dual-check: report + checklist + Swift-only harness.
+if [ -f "$S5_DOC" ]; then
+  grep -qE "^\*\*Status:\*\* GO([[:space:]]|$)" "$S5_DOC" || { echo "FAIL: $S5_DOC lacks explicit GO status"; FAILED=1; }
+  for sec in "Environment" "Artifact audit" "Load" "Short audio ASR" "Latency" "Language tokens" "Chunking" "No Python" "AST" "Verdict"; do
+    grep -qi "$sec" "$S5_DOC" || { echo "FAIL: $S5_DOC lacks checklist section: $sec"; FAILED=1; }
+  done
+else
+  echo "FAIL: $S5_DOC not found"
+  FAILED=1
+fi
+if [ -f "$S5_HARNESS" ]; then
+  # Python invocation vectors (binaries, shebangs, Process spawning).
+  if grep -nE "python3|python[0-9.]*([[:space:]]|/)|pip3?([[:space:]]|$)|nemo|/usr/bin/env|Process\(|executableURL|launchPath" "$S5_HARNESS"; then
+    echo "FAIL: $S5_HARNESS contains Python/process invocation patterns"
+    FAILED=1
+  fi
+  # Any literal "Python" mention must sit on a comment line.
+  hits=$(grep -n "Python" "$S5_HARNESS" || true)
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    case "$line" in
+      *//*Python*) ;;
+      *) echo "FAIL: $S5_HARNESS non-comment Python mention: $line"; FAILED=1 ;;
+    esac
+  done <<< "$hits"
+else
+  echo "FAIL: $S5_HARNESS not found"
+  FAILED=1
+fi
+
 if [ "$FAILED" -ne 0 ]; then
-  echo "FAIL: B6/S4 Canary spike contracts broken (docs-only NO-GO, zero Python path)"
+  echo "FAIL: B6/S4/S5 Canary spike contracts broken (docs-only, zero Python path)"
   exit 1
 fi
 
-echo "OK: B6 + S4 spike docs (NO-GO) + zero-Python harness contracts hold"
+echo "OK: B6 + S4 + S5 spike docs (GO/NO-GO) + zero-Python harness contracts hold"

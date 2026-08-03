@@ -713,3 +713,179 @@ S4 QA gate is **GREEN**. The approved evidence package remains **NO-GO** for `Fl
 **RESULT: `qa_green`**
 
 > Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S5 — Spike Canary Flash ~180M Core ML (Step S5, coder)
+
+## Meta
+
+| Field | Value |
+|-------|-------|
+| Step | S5 (SPIKE) |
+| Actor | coder |
+| Timestamp | 2026-08-04T01:20:00Z |
+| RESULT | waiting_review |
+
+## §1 — Inventory & Pass/Fail Summary
+
+- **Working Directory**: `/Users/pavan/Documents/AI Projects/Bolabol`
+- **Required Graphify commands**: completed against `graphify-out/graph.json` (not stale):
+  - `graphify query "Canary Core ML FluidAudio spike harness" --graph graphify-out/graph.json` — 114 nodes; `CanaryFluidSpike.swift`, `CanarySpike.swift`, S4 report, FEEDBACK S4 sections, TranscriptionModelStore all present
+  - `graphify query "check_no_canary_product" --graph graphify-out/graph.json` — `script/qa/check_no_canary_product.sh` present
+  - `graphify explain "TranscriptionEngine" --graph graphify-out/graph.json` — `AppTextKey.transcriptionEngine` at `Sources/NativeBolabolCore/Services/AppText.swift L558`
+- **Reviewed context**: BOLABOL_ASR_COREML_INTEGRATION_PLAN.md §§1.3/4 (S5)/2.2, STATE.yaml (read-only, S5), TEAM_CONTRACT.md, S4 report (`docs/asr/canary-1b/COREML_SPIKE.md`, ADR-013), B6 report, S4 lessons (true valid-length semantics, A/B evidence classes, no README WER/RTFx claims without reproduction).
+- **Artifact search order (plan §1.3)**: **(A) found** — community Core ML export `aufklarer/Canary-180M-Flash-CoreML` (int8 mlprogram, iOS 17 / macOS 14, en/de/es/fr, cc-by-4.0, created 2026-08-01, lastModified 2026-08-02, 2119 downloads) of `nvidia/canary-180m-flash`. **(B) mobius conversion not needed** (no conversion performed in this step). **(C) harness built** from the published MIL/config contract, frontend adapted from the exporter's own reference SDK (soniqo/speech-swift `MelPreprocessor`, Apache-2.0, attributed).
+- **Verdict: GO** — first Canary-family Core ML artifact in the Bolabol spike series that actually transcribes: exact greedy transcripts in EN/DE/FR/ES and AST en→de, EOS always fires, decode-only RTFx ≥28×, footprint 26–45 MiB, 100 % native Core ML. Defects found are non-blocking (F1 `.all` computeUnits unusable; F2 fixed 10 s window truncates longer audio → VAD segmentation required; F3 README FLEURS numbers not reproduced; F4 one TTS clip decoded poorly — audio-side, not a model defect).
+- `STATE.yaml` was not changed. No commit, tag, or push was performed.
+
+## §2 — S5 Spike Compliance
+
+- [x] `docs/asr/canary-flash/COREML_SPIKE.md` created with explicit **GO** status and all 10 checklist items documented with evidence (tables + reproduction §9).
+- [x] Checklist coverage: Environment · Artifact audit (HF metadata + sizes + MIL signatures verified) · Load (CPU + CPU+ANE; `.all` fails F1) · Short audio ASR (PASS — exact EN/DE/FR/ES + AST en→de) · Latency/RAM (stage table, RTFx, footprint) · Language tokens (en=62/de=76/fr=69/es=169 verified; honest 4-language claim) · Chunking/window (10 s fixed window, truncation verified on 16.5 s clip, VAD-segmentation constraint documented) · No Python (pure Swift/Accelerate/CoreML harness) · AST (en→de tested exact; other 5 directions by construction) · Verdict GO.
+- [x] Harness path documented: `docs/canary/harness/CanaryFlashSpike.swift` (Swift/CoreML/Accelerate only, builds with `xcrun swiftc -O -parse-as-library`); large blobs under `scratch/canary-flash-spike/` now gitignored (275 MB, `.gitignore` rule added); existing B6/S4 harnesses untouched.
+- [x] Product Sources remain Canary-free: `check_no_canary_product.sh` PASS; zero product diff.
+- [x] `swift test` green — 503 tests in 4 suites (unchanged product).
+- [x] `./script/qa/run_all.sh` green — 22/22 (extended `check_b6_canary_spike.sh` with S5 dual-check: GO/NO-GO verdict + 10 checklist sections + zero-Python harness).
+- [x] ADR draft: **not written** (no DECISIONS.md change — GO is conditional on §7 constraints and the Human GO list gate after S6; Orchestrator decides whether an ADR is warranted).
+- [x] S4 (Canary 1B) not re-opened; ADR-012/013 intact; contrast-only usage.
+
+## §3 — Verification
+
+| Command | Result |
+|---------|--------|
+| `graphify query/explain …` (3 commands) | PASS |
+| `script/qa/check_no_canary_product.sh` | PASS — zero Canary product surface |
+| `script/qa/check_b6_canary_spike.sh` | PASS — B6/S4/S5 docs + zero-Python harness contracts |
+| `script/qa/check_no_python_in_sources.sh` | PASS |
+| `swift test` | PASS — 503 tests in 4 suites |
+| `./script/qa/run_all.sh` | PASS — 22/22 |
+| `xcrun swiftc -O -parse-as-library` harness build | PASS (warning-free) |
+| `CanaryFlashSpike` runs (EN/DE/FR/ES/AST/truncation/CPU/ANE, ≈10) | All EOS-terminated; exact transcripts (report §4.1) |
+| `git diff --check` | PASS |
+
+## §4 — Handoff
+
+- **Verdict summary**: S5 = **GO** for `aufklarer/Canary-180M-Flash-CoreML` as the Bolabol 1.0.4 Canary Flash candidate (EN/DE/FR/ES, compact/fast tier, macOS 14+). Evidence: exact transcripts on 6/7 short clips across 4 languages + en→de AST (confidence 0.87–0.99; the single failure was a TTS-voice artifact with confidence 0.636), EOS on every run, decode-only RTFx 28.3×–48.5×, footprint 26–45 MiB, honest metadata and verified MIL contract. Full evidence: `docs/asr/canary-flash/COREML_SPIKE.md`.
+- **Integration constraints for S7+ (report §7)**: engine must use `.cpuAndNeuralEngine` only (`.all` crashes MPSGraph, F1); mel frontend must follow the NeMo contract (harness frontend = verified reference); pass true mel-frame count as `length`; audio > 10 s must be VAD-segmented (no cross-window context, F2); no WER claim from README (F3).
+- **Human gate**: S5 GO feeds the post-S4–S6 Human GO list (§4 plan). Do not wire Canary into catalog/onboarding/settings until S7+ (out of scope here).
+- **Scope respected**: no production catalog/download/UI/engine changes; no commit/push; `STATE.yaml` untouched; graphify graph not rebuilt (Orchestrator domain).
+- **Candidates for Tester**: S5 dual-check already extended in `check_b6_canary_spike.sh`; spot-check the report's numbers against §9 reproduction commands; no product tests affected (0 product diff).
+
+**RESULT: `waiting_review`**
+
+> Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S5 — Spike Canary Flash ~180M Core ML (Independent Reviewer)
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Role | Verification Engineer / Reviewer |
+| Step | S5 (SPIKE) |
+| Date | 2026-08-04 |
+| Scope | Report, Swift harness, B6/S4/S5 QA dual-check, product boundary, artifact hygiene |
+| RESULT | `approved` |
+
+### Graphify and Scope Verification
+
+- Graphify was run first against the supplied current graph:
+  - `graphify query "Canary Flash Core ML spike harness" --graph graphify-out/graph.json` — 130-node BFS traversal; S5 report, `CanaryFlashSpike.swift`, S4 report/harness, FEEDBACK and Core ML symbols are present.
+  - `graphify query "CanaryFlashSpike" --graph graphify-out/graph.json` — 25-node traversal; harness entry point, frontend, model loading, decode and helper symbols are present.
+  - `graphify query "check_no_canary_product" --graph graphify-out/graph.json` — 2-node traversal; `script/qa/check_no_canary_product.sh` is present.
+- `git diff --name-only -- Sources` — empty. The broader scoped diff contains only `.gitignore` and `script/qa/check_b6_canary_spike.sh`; S5 report/harness are untracked additions, as expected. Existing B6/S4 report and harness paths have no diff.
+- `Sources/**` contains only the pre-existing allowlisted S1b recommendation references to Canary IDs; no Canary backend, engine, catalog, download, or runtime wiring is present. `check_no_canary_product.sh` is green.
+- `STATE.yaml` was not edited by this reviewer. Its existing worktree handoff change points to S5 `waiting_review`/reviewer and was left untouched.
+
+### Acceptance Checklist
+
+| # | Requirement | Reviewer evidence | Result |
+|---|-------------|-------------------|--------|
+| 1 | Explicit verdict | `docs/asr/canary-flash/COREML_SPIKE.md:4` has `**Status:** GO`; §6 repeats GO. | PASS |
+| 2 | Ten checklist items with evidence | Report §6 (`:141-151`) enumerates Environment, Artifact audit, Load, ASR, Latency/RAM, Language tokens, Chunking/window, No Python, AST and Verdict, with supporting §§1-5/7/9. | PASS |
+| 3 | GO evidence: load, transcript, EOS | Report §§3/4.1 claims CPU/ANE loads, EN/DE/FR/ES transcripts, AST en→de and EOS; source prints load, shapes, transcript, EOS and timings. Runtime artifacts are absent in this checkout, so independent execution is **UNAVAILABLE**. | PASS, runtime UNAVAILABLE |
+| 4 | S4 valid-length/padding lesson | `CanaryFlashSpike.swift:27-30,216-225,226-229,500-515` computes true `floor(samples / 160)` frames, caps at the 1000-frame window, zero-fills the remainder and passes the true count as `length`; it does not use the padded buffer size. | PASS |
+| 5 | Honest language list | Report §§4.3/4.6 limits the claim to EN/DE/FR/ES, disables auto-detect, tests all four ASR languages and only claims AST en→de as exercised; other five directions are explicitly construction-only. | PASS |
+| 6 | S7+ constraints documented | Report §7 specifies `.cpuAndNeuralEngine`, NeMo frontend/true length, macOS 14+, 10 s/VAD segmentation, no cross-window context, confidence caveat, no unverified WER claim and license. | PASS |
+| 7 | No product Canary surface | `script/qa/check_no_canary_product.sh` — `OK`; `git diff --name-only -- Sources` empty; `run_all.sh` also passes product catalog/no-wiring checks. | PASS |
+| 8 | No Python in inference path | `check_b6_canary_spike.sh` and `check_no_python_in_sources.sh` pass; Swift harness imports only Foundation/CoreML/Accelerate and has no process/Python path. | PASS |
+| 9 | Model blobs not force-committed | `git check-ignore -v scratch/canary-flash-spike` — `.gitignore:4`; no model/audio files are present or tracked. | PASS |
+| 10 | S4 1B remains closed | Report lines `9`, `162` retain S4/ADR-012/013 as NO-GO and explicitly keep it contrast-only; no S4 artifact diff is present. | PASS |
+| 11 | Tests and QA | `swift test` — 503 tests in 4 suites; `script/qa/check_b6_canary_spike.sh` — OK; `./script/qa/run_all.sh` — 22/22; `xcrun swiftc -O -parse-as-library ...CanaryFlashSpike.swift` — PASS; `git diff --check -- .` — PASS. | PASS |
+| 12 | Dual-check preserves S4 NO-GO and requires S5 GO | `check_b6_canary_spike.sh:34` requires S4 `**Status:** NO-GO`; `:89` requires S5 `**Status:** GO`; the complete script is green. | PASS |
+
+### Findings
+
+**Blocking:** none.
+
+**Non-blocking:**
+
+- `CanaryFlashSpike.swift:497-508,584` computes RTFx from the full source duration, while `MelFrontend.extract` caps work at the 10 s/1000-frame window. The `en_long` 16.48 s RTFx therefore is not the throughput of the processed window. Keep the short-clip result, but for future reporting either use the processed duration (10 s) or label the raw-source figure explicitly.
+- `CanaryFlashSpike.swift:552-575` adds the EOS logit score to `scoreSum` before checking EOS, then divides by `tokens.count`, which excludes EOS. The reported confidence is therefore not exactly `exp(mean log p)` over emitted tokens as documented. This does not affect transcript/EOS/GO evidence, but should be corrected before using confidence in product UX.
+- The harness obtains `encoder_mask` and prints its shape (`:516-521`) but does not inspect mask values. The report's valid encoded-frame ratio is derived from `length`/the known contract, not an observed mask-value assertion. Keep the valid-length implementation as PASS; label this part as contract/source evidence unless a future harness adds a mask-value check.
+
+**INFO / residual risk:**
+
+- `scratch/canary-flash-spike/` contains no model or audio artifacts here. Exact transcript, EOS, load, `.all` failure, latency and footprint claims were not runtime spot-checked by this reviewer; they remain coder-reported evidence, with source-consistency and structural QA verified.
+- The S5 QA gate is docs/source-contract validation, not a model-quality evaluator. Product integration remains out of scope and must wait for S7+ plus the Human GO gate after S4-S6.
+
+### GO Decision
+
+The coder's **GO is justified for the S5 spike artifact**: the report has an explicit verdict and complete checklist, the true valid-length/padding correction is present, language and S7+ claims are bounded, S4 remains NO-GO, the dual-check is green, and no product Canary surface was introduced. This is not approval to wire the model into product. Runtime validation is explicitly **UNAVAILABLE** in this checkout and should be rerun when the ignored model/audio set is available.
+
+### Change List
+
+- No blocking change is required for S5 acceptance.
+- Carry the RTFx denominator, EOS-confidence denominator and encoder-mask observation items into S7+ harness/report hardening before relying on those metrics for product decisions.
+
+**VERDICT: APPROVED**
+
+**RESULT: `approved`**
+
+> Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S5 - Independent Tester QA (Canary Flash ~180M Core ML spike)
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Role | Tester / QA |
+| Step | S5 (SPIKE) |
+| Date | 2026-08-04 |
+| RESULT | `qa_green` |
+| bugs | 0 |
+
+### What was verified
+
+- Graphify was queried first: `graphify query "CanaryFlashSpike" --graph graphify-out/graph.json` — PASS, 25-node traversal with the S5 harness entry point, frontend, model loading, decode path, and helpers.
+- `docs/asr/canary-flash/COREML_SPIKE.md` exists with explicit `**Status:** GO` and all ten checklist items.
+- `script/qa/check_b6_canary_spike.sh` passes the B6/S4/S5 dual-check. S5 now requires explicit GO; S4 still requires explicit NO-GO.
+- `script/qa/check_no_canary_product.sh` passes. No product Canary engine/catalog/UI wiring or product Sources diff was introduced.
+- `xcrun swiftc -O -parse-as-library -o /tmp/CanaryFlashSpike-qa docs/canary/harness/CanaryFlashSpike.swift` passes.
+- Optional runtime was available: EN short audio produced the exact non-empty transcript `The quick brown fox jumps over the lazy dog.` with `EOS: true`, confidence `0.988`, and decode-only RTFx `28.6x` on ANE.
+- `swift test` passes: 503 tests in 4 suites.
+- `./script/qa/run_all.sh` passes: 22/22.
+- `scratch/canary-flash-spike/` is ignored by `.gitignore`; model/audio blobs are not tracked. B6 and S4 artifacts remain intact.
+- `git diff --check -- .` passes.
+
+### Gap found and added
+
+- The existing S5 branch accepted either `GO` or `NO-GO`, so it did not enforce the expected S5 outcome. Updated `script/qa/check_b6_canary_spike.sh` to require `**Status:** GO` for S5 while preserving the exact S4 `**Status:** NO-GO` guard.
+- No new Swift tests were required; the full product test and structural QA gates pass.
+- Reviewer non-blocking notes remain for S7+ hardening: RTFx denominator, confidence formula denominator, and direct encoder-mask value observation.
+- `BUG_REPORT.md` was not changed. The expected spike GO is not a product defect.
+- No product `Sources/**`, `Package.swift`, `STATE.yaml`, commit, or push was changed by Tester.
+
+### Result
+
+S5 QA gate is **GREEN**. The approved evidence package remains **GO** for `aufklarer/Canary-180M-Flash-CoreML` as a spike candidate only; product integration remains out of scope for S5.
+
+**RESULT: `qa_green`**
+
+> Готово. Вернись к оркестратору и скажи статус.

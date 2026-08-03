@@ -28421,10 +28421,10 @@
       "_origin": "ast"
     },
     {
-      "id": "docs_canary_harness_canaryfluidspike",
-      "label": "CanaryFluidSpike.swift",
+      "id": "docs_canary_harness_canaryflashspike",
+      "label": "CanaryFlashSpike.swift",
       "file_type": "code",
-      "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
       "source_location": "L1",
       "_origin": "ast"
     },
@@ -28444,6 +28444,262 @@
       "type": "module",
       "source_file": "docs/canary/harness/CanarySpike.swift",
       "source_location": "L24",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_config",
+      "label": "Config",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L48",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_swift_string",
+      "label": "String",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_parseargs",
+      "label": "parseArgs()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L58",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_readwav",
+      "label": "readWav()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L78",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_swift_float",
+      "label": "Float",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_swift_int",
+      "label": "Int",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_footprintbytes",
+      "label": "footprintBytes()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L136",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_swift_uint64",
+      "label": "UInt64",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_melfrontend",
+      "label": "MelFrontend",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L152",
+      "_origin": "ast"
+    },
+    {
+      "id": "vdsp_length",
+      "label": "vDSP_Length",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "fftsetup",
+      "label": "FFTSetup",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_melfrontend_init",
+      "label": ".init()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L171",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_swift_any",
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "label": ".extract()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L194",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_swift_mlmultiarray",
+      "label": "MLMultiArray",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
+      "label": ".normalizePerFeature()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L283",
+      "_origin": "ast"
+    },
+    {
+      "id": "unsafemutablepointer",
+      "label": "UnsafeMutablePointer",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_melfrontend_buildmelfilterbank",
+      "label": ".buildMelFilterbank()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L306",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_flashmodels",
+      "label": "FlashModels",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L349",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_swift_mlmodel",
+      "label": "MLModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_flashmodels_computeunits",
+      "label": ".computeUnits()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L360",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_swift_mlcomputeunits",
+      "label": "MLComputeUnits",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_flashmodels_load",
+      "label": ".load()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L368",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_makei32",
+      "label": "makeI32()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L425",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_makei32scalar",
+      "label": "makeI32Scalar()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L431",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_run",
+      "label": "run()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L437",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_swift_mlfeaturevalue",
+      "label": "MLFeatureValue",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_argmax",
+      "label": "argmax()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L447",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_decode",
+      "label": "decode()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L468",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_canaryflashspike",
+      "label": "CanaryFlashSpike",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L479",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "label": ".main()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L481",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryfluidspike",
+      "label": "CanaryFluidSpike.swift",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
+      "source_location": "L1",
       "_origin": "ast"
     },
     {
@@ -28535,7 +28791,7 @@
       "_origin": "ast"
     },
     {
-      "id": "mlcomputeunits",
+      "id": "docs_canary_harness_canaryfluidspike_swift_mlcomputeunits",
       "label": "MLComputeUnits",
       "file_type": "code",
       "source_file": "",
@@ -30471,6 +30727,158 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
+      "label": "**S4 Re-review (after fix attempt 1)**",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L595",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_prior_blocking_item",
+      "label": "Prior Blocking Item",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L604",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_spot_check_results",
+      "label": "Spot-check Results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L619",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_report_and_provenance",
+      "label": "Report and Provenance",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L632",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_regression_results",
+      "label": "Regression Results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L638",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_654",
+      "label": "Findings",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L654",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_660",
+      "label": "Change List",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L660",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_666",
+      "label": "Verdict",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L666",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s4_independent_tester_qa_canary_1b_fluidinference_core_ml_spike",
+      "label": "S4 - Independent Tester QA (Canary 1B FluidInference Core ML spike)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L678",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_680",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L680",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_verified",
+      "label": "What was verified",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L690",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added",
+      "label": "Gap found and added",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L702",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_result",
+      "label": "Result",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L709",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_step_s5_coder",
+      "label": "S5 — Spike Canary Flash ~180M Core ML (Step S5, coder)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L719",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_721",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L721",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_730",
+      "label": "§1 — Inventory & Pass/Fail Summary",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L730",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_2_s5_spike_compliance",
+      "label": "§2 — S5 Spike Compliance",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L742",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_753",
+      "label": "§3 — Verification",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L753",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_767",
+      "label": "§4 — Handoff",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L767",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_ai_git_checkpoints",
       "label": "GIT_CHECKPOINTS.md",
       "file_type": "document",
@@ -31444,6 +31852,46 @@
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
       "source_location": "L1050",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_step_s4_tester_qa_canary_1b_v2_fluidinference_core_ml_spike",
+      "label": "Step S4 - Tester QA: Canary 1B v2 FluidInference Core ML spike",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1061",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_graphify_context_1071",
+      "label": "Graphify context",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1071",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_result_1081",
+      "label": "Gap-hunt result",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1081",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_commands_and_results_1093",
+      "label": "Commands and results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1093",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_qa_delta",
+      "label": "QA delta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1119",
       "_origin": "ast"
     },
     {
@@ -32447,8 +32895,8 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_decisions_adr_013_canary_1b_v2_fluidinference_core_ml_no_go_s4_spike_draft_orchestrator_to_finalize",
-      "label": "ADR-013 — Canary 1B v2 FluidInference Core ML NO-GO (S4 spike) — DRAFT (Orchestrator to finalize)",
+      "id": "ai_workflow_kit_docs_decisions_adr_013_canary_1b_v2_fluidinference_core_ml_no_go_s4_spike",
+      "label": "ADR-013 — Canary 1B v2 FluidInference Core ML NO-GO (S4 spike)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L120",
@@ -34796,6 +35244,142 @@
       "file_type": "document",
       "source_file": "docs/asr/canary-1b/COREML_SPIKE.md",
       "source_location": "L183",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike",
+      "label": "COREML_SPIKE.md",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "label": "Canary Flash (~180M) Core ML — S5 Spike Report",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_1_environment",
+      "label": "1. Environment",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_2_artifact_audit",
+      "label": "2. Artifact audit",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L24",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_3_load",
+      "label": "3. Load",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L57",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_4_results",
+      "label": "4. Results",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L67",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_4_1_short_audio_asr_checklist_4_pass_all_four_languages_ast",
+      "label": "4.1 Short audio ASR (checklist #4) — PASS, all four languages + AST",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L71",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_4_2_latency_ram_checklist_5_pass_decode_dominant_trivially_real_time",
+      "label": "4.2 Latency / RAM (checklist #5) — PASS (decode-dominant, trivially real-time)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L89",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_4_3_language_tokens_checklist_6_pass_honest_4_language_claim",
+      "label": "4.3 Language tokens (checklist #6) — PASS, honest 4-language claim",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L106",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_4_4_chunking_window_checklist_7_contract_verified_truncation_is_the_documented_behavior",
+      "label": "4.4 Chunking / window (checklist #7) — CONTRACT VERIFIED; truncation is the documented behavior",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L112",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_4_5_no_python_checklist_8_pass",
+      "label": "4.5 No Python (checklist #8) — PASS",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L119",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_4_6_ast_checklist_9_tested_pass_en_de",
+      "label": "4.6 AST (checklist #9) — TESTED, PASS (en→de)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L123",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_5_defects_found",
+      "label": "5. Defects found",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L127",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_6_go_no_go",
+      "label": "6. GO/NO-GO",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L136",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_7_recommendation_for_s7_plan_update",
+      "label": "7. Recommendation (for S7+ / plan update)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L155",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_8_artifacts",
+      "label": "8. Artifacts",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L166",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_flash_coreml_spike_9_reproduction",
+      "label": "9. Reproduction",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L177",
       "_origin": "ast"
     },
     {
@@ -115476,6 +116060,1032 @@
       "_origin": "ast"
     },
     {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "accelerate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "coreml",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L43",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "foundation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L44",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_config",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L48",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_config",
+      "target": "docs_canary_harness_canaryflashspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L49",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_parseargs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L58",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_parseargs",
+      "target": "docs_canary_harness_canaryflashspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L58",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_parseargs",
+      "target": "docs_canary_harness_canaryflashspike_config",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L58",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_readwav",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L78",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_readwav",
+      "target": "docs_canary_harness_canaryflashspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L78",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_readwav",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L78",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_readwav",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L78",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_footprintbytes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L136",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_footprintbytes",
+      "target": "docs_canary_harness_canaryflashspike_swift_uint64",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L136",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_melfrontend",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L152",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L153",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend",
+      "target": "vdsp_length",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L163",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend",
+      "target": "fftsetup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L167",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L168",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend",
+      "target": "docs_canary_harness_canaryflashspike_melfrontend_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L171",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_init",
+      "target": "docs_canary_harness_canaryflashspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L171",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_init",
+      "target": "docs_canary_harness_canaryflashspike_swift_any",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L171",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_init",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L171",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend",
+      "target": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L194",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L194",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L194",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L194",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend",
+      "target": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L283",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
+      "target": "unsafemutablepointer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L283",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L283",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L283",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend",
+      "target": "docs_canary_harness_canaryflashspike_melfrontend_buildmelfilterbank",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L306",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_buildmelfilterbank",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L306",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_buildmelfilterbank",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L306",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_flashmodels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L349",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlmodel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L350",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L353",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels",
+      "target": "docs_canary_harness_canaryflashspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L353",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels",
+      "target": "docs_canary_harness_canaryflashspike_flashmodels_computeunits",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L360",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels_computeunits",
+      "target": "docs_canary_harness_canaryflashspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L360",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels_computeunits",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlcomputeunits",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L360",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels",
+      "target": "docs_canary_harness_canaryflashspike_flashmodels_load",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L368",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels_load",
+      "target": "docs_canary_harness_canaryflashspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L368",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels_load",
+      "target": "docs_canary_harness_canaryflashspike_flashmodels",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L368",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_makei32",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L425",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_makei32",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L425",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_makei32",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L425",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_makei32scalar",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L431",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_makei32scalar",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L431",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_makei32scalar",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L431",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L437",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_run",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlmodel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L437",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_run",
+      "target": "docs_canary_harness_canaryflashspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L437",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_run",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlfeaturevalue",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L437",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_argmax",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L447",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_argmax",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L447",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_argmax",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L447",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_argmax",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L447",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_decode",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L468",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_decode",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L468",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_decode",
+      "target": "docs_canary_harness_canaryflashspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L468",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_canaryflashspike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L479",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike",
+      "target": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L481",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_parseargs",
+      "target": "docs_canary_harness_canaryflashspike_config",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L59",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_parseargs",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L69",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_readwav",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L89",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_readwav",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L117",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_footprintbytes",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L140",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_init",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L172",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_init",
+      "target": "docs_canary_harness_canaryflashspike_melfrontend_buildmelfilterbank",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L188",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "target": "vdsp_length",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L208",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L226",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "target": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L277",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
+      "target": "vdsp_length",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L288",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_buildmelfilterbank",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L340",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels_load",
+      "target": "docs_canary_harness_canaryflashspike_flashmodels_computeunits",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L369",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels_load",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L411",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels_load",
+      "target": "docs_canary_harness_canaryflashspike_flashmodels",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L416",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_makei32",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L426",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_makei32scalar",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L432",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_parseargs",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L482",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_flashmodels_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L488",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_readwav",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L491",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_melfrontend",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L504",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L506",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L512",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_swift_mlfeaturevalue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L513",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_makei32scalar",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L514",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L521",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_makei32",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L537",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_argmax",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L557",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_decode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L574",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L575",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "docs_canary_harness_canaryflashspike_footprintbytes",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L585",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend",
+      "target": "docs_canary_harness_canaryflashspike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L158",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "docs_canary_harness_canaryfluidspike",
       "target": "accelerate",
       "relation": "imports",
@@ -115691,7 +117301,7 @@
     },
     {
       "source": "docs_canary_harness_canaryfluidspike_canarymodels_computeunits",
-      "target": "mlcomputeunits",
+      "target": "docs_canary_harness_canaryfluidspike_swift_mlcomputeunits",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
@@ -118769,6 +120379,196 @@
       "_origin": "ast"
     },
     {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L595",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_prior_blocking_item",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L604",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_spot_check_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L619",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_report_and_provenance",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L632",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_regression_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L638",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_654",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L654",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_660",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L660",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_666",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L666",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s4_independent_tester_qa_canary_1b_fluidinference_core_ml_spike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L678",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_tester_qa_canary_1b_fluidinference_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_680",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L680",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_tester_qa_canary_1b_fluidinference_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_verified",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L690",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_tester_qa_canary_1b_fluidinference_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L702",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_tester_qa_canary_1b_fluidinference_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_result",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L709",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_step_s5_coder",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L719",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_721",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L721",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_730",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L730",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_2_s5_spike_compliance",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L742",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_753",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L753",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_767",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L767",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "ai_workflow_kit_docs_ai_git_checkpoints",
       "target": "ai_workflow_kit_docs_ai_git_checkpoints_git_checkpoints_bolabol_1_0_3",
       "relation": "contains",
@@ -119925,6 +121725,56 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
       "source_location": "L1050",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report",
+      "target": "ai_workflow_kit_docs_ai_report_step_s4_tester_qa_canary_1b_v2_fluidinference_core_ml_spike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1061",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s4_tester_qa_canary_1b_v2_fluidinference_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_graphify_context_1071",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1071",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s4_tester_qa_canary_1b_v2_fluidinference_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_result_1081",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1081",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s4_tester_qa_canary_1b_v2_fluidinference_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_commands_and_results_1093",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1093",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s4_tester_qa_canary_1b_v2_fluidinference_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_qa_delta",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1119",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121130,7 +122980,7 @@
     },
     {
       "source": "ai_workflow_kit_docs_decisions_adr_log_bolabol",
-      "target": "ai_workflow_kit_docs_decisions_adr_013_canary_1b_v2_fluidinference_core_ml_no_go_s4_spike_draft_orchestrator_to_finalize",
+      "target": "ai_workflow_kit_docs_decisions_adr_013_canary_1b_v2_fluidinference_core_ml_no_go_s4_spike",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
@@ -123955,6 +125805,166 @@
       "confidence": "EXTRACTED",
       "source_file": "docs/asr/canary-1b/COREML_SPIKE.md",
       "source_location": "L183",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike",
+      "target": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "target": "docs_asr_canary_flash_coreml_spike_1_environment",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "target": "docs_asr_canary_flash_coreml_spike_2_artifact_audit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "target": "docs_asr_canary_flash_coreml_spike_3_load",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L57",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "target": "docs_asr_canary_flash_coreml_spike_4_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L67",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_4_results",
+      "target": "docs_asr_canary_flash_coreml_spike_4_1_short_audio_asr_checklist_4_pass_all_four_languages_ast",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L71",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_4_results",
+      "target": "docs_asr_canary_flash_coreml_spike_4_2_latency_ram_checklist_5_pass_decode_dominant_trivially_real_time",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L89",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_4_results",
+      "target": "docs_asr_canary_flash_coreml_spike_4_3_language_tokens_checklist_6_pass_honest_4_language_claim",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L106",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_4_results",
+      "target": "docs_asr_canary_flash_coreml_spike_4_4_chunking_window_checklist_7_contract_verified_truncation_is_the_documented_behavior",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L112",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_4_results",
+      "target": "docs_asr_canary_flash_coreml_spike_4_5_no_python_checklist_8_pass",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L119",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_4_results",
+      "target": "docs_asr_canary_flash_coreml_spike_4_6_ast_checklist_9_tested_pass_en_de",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L123",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "target": "docs_asr_canary_flash_coreml_spike_5_defects_found",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L127",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "target": "docs_asr_canary_flash_coreml_spike_6_go_no_go",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L136",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "target": "docs_asr_canary_flash_coreml_spike_7_recommendation_for_s7_plan_update",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L155",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "target": "docs_asr_canary_flash_coreml_spike_8_artifacts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L166",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_flash_coreml_spike_canary_flash_180m_core_ml_s5_spike_report",
+      "target": "docs_asr_canary_flash_coreml_spike_9_reproduction",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
+      "source_location": "L177",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -131319,6 +133329,126 @@
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBolabolCoreTests/WorkflowAndSanitizerEdgeCaseTests.swift",
       "source_location": "L187",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_readwav",
+      "target": "sources_nativebolabol_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L79",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_readwav",
+      "target": "int16",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L114",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_readwav",
+      "target": "uint16",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L114",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_readwav",
+      "target": "int32",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L115",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
+      "target": "sources_nativebolabol_views_providerquickswitcher_providerquickswitcherlistview_row",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L292",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_flashmodels_load",
+      "target": "sources_nativebolabol_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L386",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_argmax",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_scan",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L460",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "sources_nativebolabol_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L502",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_prompt",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L530",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_canaryflashspike_main",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_output",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L541",
       "weight": 1.0,
       "_origin": "ast"
     },

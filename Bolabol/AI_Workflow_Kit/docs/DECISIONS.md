@@ -127,4 +127,16 @@
 **Future:** revisit Canary 1B only with a new export passing preflight: mel envelope correlation > 0.5 + sine frequency discrimination + non-looping EOS-terminated transcript; fix must land in the exporter (mobius mel path), not the app.
 
 ---
+
+## ADR-014 — Canary Flash 180M Core ML GO candidate (S5 spike)
+
+**Status:** Accepted as spike candidate (S5 2026-08-04; Reviewer APPROVED; Tester qa_green with runtime EN short EOS)
+**Decision:** Record `https://huggingface.co/aufklarer/Canary-180M-Flash-CoreML` (int8 mlprogram of `nvidia/canary-180m-flash`) as a **GO spike candidate** for Bolabol 1.0.4 Canary Flash (EN/DE/FR/ES). **Do not** product-wire catalog/engine/UI until Human GO list after S4–S6 and steps S7+.
+**Evidence:** `docs/asr/canary-flash/COREML_SPIKE.md` + `docs/canary/harness/CanaryFlashSpike.swift`; dual-check enforces `**Status:** GO`; product `check_no_canary_product` green; Tester runtime: exact EN short transcript, EOS true.
+**Constraints for S7+:** use `.cpuAndNeuralEngine` (not `.all`); NeMo-aligned mel frontend + true length; audio > 10 s needs VAD segmentation; no unverified README WER; harden RTFx/confidence metrics before product UX.
+**Contrast:** Canary 1B paths remain NO-GO (ADR-012, ADR-013).
+**1.0.4 next:** complete S6 GigaAM spike, then Human GO list for which models enter S7+.
+
+---
 *Add new ADRs at the bottom; do not rewrite history — supersede with new ADR if needed.*
+

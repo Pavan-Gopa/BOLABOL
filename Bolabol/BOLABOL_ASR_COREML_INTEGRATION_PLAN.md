@@ -488,7 +488,7 @@ S0
 
 1. Адаптировать `AI_Workflow_Kit` STATE: `current_step: S0`, plan file = этот документ.  
 2. Steps cards → `AI_Workflow_Kit/docs/ASR_COREML_STEPS.md` (S0–S15).  
-3. Цикл: PRE → Kick Coder → Reviewer → Tester (gap-hunt) → POST → graphify.  
+3. Цикл: PRE → Kick Coder → graphify → Reviewer → Tester (gap-hunt) → POST → graphify.
 4. После S4–S6: **Human** подтверждает GO list перед S7.  
 5. Tags: `bolabol/pre-S*`, `bolabol/S*-done`.
 

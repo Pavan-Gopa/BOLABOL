@@ -1,1142 +1,292 @@
 {
   "Package.swift": {
-    "mtime": 1785571023.5775073,
-    "ast_hash": "22900fea7b112828a548a4a613b3a87d",
-    "semantic_hash": "22900fea7b112828a548a4a613b3a87d"
+    "mtime": 1785743538.0721118,
+    "ast_hash": "fc9e5c2fb47eee3b4e267fd0a62e8c57",
+    "semantic_hash": "fc9e5c2fb47eee3b4e267fd0a62e8c57"
   },
   "script/build_and_run.sh": {
-    "mtime": 1785732494.0870833,
-    "ast_hash": "a77175661d230a456f0c54eb1c04ba14",
-    "semantic_hash": ""
+    "mtime": 1785743538.04764,
+    "ast_hash": "e81ae88c6a1c48230cfd6dbe6e93ee6e",
+    "semantic_hash": "e81ae88c6a1c48230cfd6dbe6e93ee6e"
   },
   "script/build_release_dmg.sh": {
-    "mtime": 1785665603.5542152,
-    "ast_hash": "98a4b23bb5ee1c05f827f0e671f6eae1",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/App/NativeBlaboomApp.swift": {
-    "mtime": 1785670327.4390574,
-    "ast_hash": "0f4da127bb9c806d0f39db4e595df10e",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Components/BlaboomLogoView.swift": {
-    "mtime": 1785571023.5791953,
-    "ast_hash": "3928bcfda92d4f1f9def9e7208d2ea66",
-    "semantic_hash": "3928bcfda92d4f1f9def9e7208d2ea66"
-  },
-  "Sources/NativeBlaboom/Views/Components/BlaboomFullLogoView.swift": {
-    "mtime": 1785571023.5798864,
-    "ast_hash": "22f8d83f42f120d289634e0f309e595c",
-    "semantic_hash": "22f8d83f42f120d289634e0f309e595c"
-  },
-  "Sources/NativeBlaboom/Views/Components/BlaboomWordmarkView.swift": {
-    "mtime": 1785574819.1507561,
-    "ast_hash": "f3c0021d801322c0c434c124b3d6191f",
-    "semantic_hash": "f3c0021d801322c0c434c124b3d6191f"
-  },
-  "Sources/NativeBlaboom/Views/Components/BlaboomLogoWithWordmarkView.swift": {
-    "mtime": 1785563671.9789963,
-    "ast_hash": "3affd8d0daf4572c4426058178891f76",
-    "semantic_hash": "3affd8d0daf4572c4426058178891f76"
-  },
-  "Sources/NativeBlaboom/Views/NoteDetailView.swift": {
-    "mtime": 1785575388.2533498,
-    "ast_hash": "3f7b24f29dbd7958ab78782b3cebddfc",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/OnboardingView.swift": {
-    "mtime": 1785684995.1930332,
-    "ast_hash": "1226f2ed572a901c5df9ac62d427a9a4",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/QuickTranslationWindowManager.swift": {
-    "mtime": 1785670303.8672578,
-    "ast_hash": "848b9fb232690f7ec84f1ed7203d5f55",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/ReleaseIdentityTests.swift": {
-    "mtime": 1785575943.5879254,
-    "ast_hash": "cf8dd915665378775dd8dd9ab4bff8ae",
-    "semantic_hash": ""
+    "mtime": 1785743538.042216,
+    "ast_hash": "cbe7d63d842fcac44f4fe4130c145c29",
+    "semantic_hash": "cbe7d63d842fcac44f4fe4130c145c29"
   },
   "AI_Workflow_Kit/script/checkpoint.sh": {
-    "mtime": 1785680348.587844,
-    "ast_hash": "ef5718f9066d3974fce7e54deb8860dc",
-    "semantic_hash": ""
+    "mtime": 1785743537.4677882,
+    "ast_hash": "73477daa2391cd3801a4d3170d232fed",
+    "semantic_hash": "73477daa2391cd3801a4d3170d232fed"
   },
   "AI_Workflow_Kit/script/graphify_rebuild.sh": {
-    "mtime": 1785680348.5871315,
-    "ast_hash": "b890519a18ba30fb9d549d0a3a93d819",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/APIProviderCredentialStore.swift": {
-    "mtime": 1785533345.7599323,
-    "ast_hash": "a872af0637518cbb2d7d96517d365dca",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/AccessibilityPermissionService.swift": {
-    "mtime": 1785533345.7615287,
-    "ast_hash": "55498a12cf147488c903c509e243d1db",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/AppleSpeechTranscriptionEngine.swift": {
-    "mtime": 1785533345.7540262,
-    "ast_hash": "1f14fe95d3f074b67f6240985520b3d9",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/AudioCuePlayer.swift": {
-    "mtime": 1785533345.7586856,
-    "ast_hash": "dadde8c8274fdb36f0a86c371f12d855",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/AudioFileImporter.swift": {
-    "mtime": 1785533345.761282,
-    "ast_hash": "bbb8f58da6425dfaed786023b43279e3",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/AudioRecorder.swift": {
-    "mtime": 1785588853.8753226,
-    "ast_hash": "e5ab5d5a42ec1c72ea8ae05f47322192",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/CloudProviderModelCatalog.swift": {
-    "mtime": 1785533345.7576075,
-    "ast_hash": "544cb8dca2ccb090039d22dc95d802de",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/CloudTextPolishingEngine.swift": {
-    "mtime": 1785642674.3392358,
-    "ast_hash": "31120e09bba35e1c1df9d2fb775d1bf2",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/FloatingTranslationWindowManager.swift": {
-    "mtime": 1785670298.9451902,
-    "ast_hash": "88f94561f2a3ce4d630b1fe6bcd1fad4",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/GeminiCloudDictationEngine.swift": {
-    "mtime": 1785533345.762427,
-    "ast_hash": "903b390759cde690785167f3b67d8ecd",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/GlobalHotkeyManager.swift": {
-    "mtime": 1785670272.5072033,
-    "ast_hash": "c71f767c380490d6eb6ebcfb2f61ab1d",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/HotkeyOutputDispatcher.swift": {
-    "mtime": 1785533345.7618508,
-    "ast_hash": "a16626eaf1a95041fb4e08ab6ad8dedf",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/HotkeySessionOverlayManager.swift": {
-    "mtime": 1785533345.7596302,
-    "ast_hash": "fec06789e0e80116f90884d56b8a1874",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/LocalModelScanner.swift": {
-    "mtime": 1785533345.7583132,
-    "ast_hash": "521359ef7f548bae7ccc4712b8393a2a",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/MLXSwiftPolishingEngine.swift": {
-    "mtime": 1785533345.7561796,
-    "ast_hash": "1ae1ca4141f9e17470d44b2d9387f3e4",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/ParakeetTranscriptionEngine.swift": {
-    "mtime": 1785533345.7578657,
-    "ast_hash": "9c1573e98283a349c0bcd9fad50e95a6",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/UnavailableTranscriptionEngine.swift": {
-    "mtime": 1785533345.7558913,
-    "ast_hash": "cee9e1edb67ef13c4988ff0704188de5",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Services/WhisperKitTranscriptionEngine.swift": {
-    "mtime": 1785533345.7610183,
-    "ast_hash": "eab93567393861bd8a1449bb39050daf",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Stores/AccessibilityPermissionStore.swift": {
-    "mtime": 1785533345.7427256,
-    "ast_hash": "7035700b8eed55011c3c7d45a9bd0ef8",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift": {
-    "mtime": 1785681922.4757142,
-    "ast_hash": "b46352564cd798091786576ad49ec200",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Stores/HotkeySettingsStore.swift": {
-    "mtime": 1785681935.0859184,
-    "ast_hash": "8c20575888644b938385de6f0ddcf6a9",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Stores/PolishingEngineStore.swift": {
-    "mtime": 1785533345.7423253,
-    "ast_hash": "6968338a50b49451d4a69cb685364d1e",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Stores/PromptTemplateStore.swift": {
-    "mtime": 1785533345.7417176,
-    "ast_hash": "e4871fe258b81632ad3272d18a8f03f2",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Stores/TranscriptionEngineStore.swift": {
-    "mtime": 1785533345.743131,
-    "ast_hash": "36ed28cc0b1e59c7cb9c5135257728d9",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Stores/TranscriptionModelStore.swift": {
-    "mtime": 1785681928.7498088,
-    "ast_hash": "960e1248b4f6b55e6cc89681c0d4b535",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Stores/UsageStatisticsStore.swift": {
-    "mtime": 1785533345.7433572,
-    "ast_hash": "bd67e4331959e1edc3b894194f600b07",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Support/UIScaleModifier.swift": {
-    "mtime": 1785533345.7438576,
-    "ast_hash": "15141bee87aa85893e9034342fadefab",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/AudioPlaybackModalView.swift": {
-    "mtime": 1785643999.5926657,
-    "ast_hash": "d13855f55e0de0471230d8a1aeed0cc1",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Components/AudioInputDeviceStatusPill.swift": {
-    "mtime": 1785533345.7498457,
-    "ast_hash": "70b39be0e6392a00c8e66ef2c8e97ede",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Components/BlaboomButtonStyles.swift": {
-    "mtime": 1785533345.7493496,
-    "ast_hash": "95bbae276f221c12da176ddc2b26c96e",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Components/DotSpectrumView.swift": {
-    "mtime": 1785533345.7495866,
-    "ast_hash": "5dc85f94fe5de7e1fde12c417509a1a3",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/ContentView.swift": {
-    "mtime": 1785670294.539201,
-    "ast_hash": "3611993d51396d5c2328cea591246bee",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/GlossaryCategoryPicker.swift": {
-    "mtime": 1785533345.7484055,
-    "ast_hash": "883f510c8dc303069f6da88c9d848ad2",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/GlossaryDraftModal.swift": {
-    "mtime": 1785533345.7486486,
-    "ast_hash": "def390aab64f62f3a73833197d5c08bc",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/ProviderQuickSwitcher.swift": {
-    "mtime": 1785639917.7552438,
-    "ast_hash": "bc7f96de879d1af80034849a28d29f91",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/SelectableTextView.swift": {
-    "mtime": 1785533345.750889,
-    "ast_hash": "9965aa6db410ac5536fcb7efd9b4363b",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/APIProvidersSettingsView.swift": {
-    "mtime": 1785533345.745465,
-    "ast_hash": "f5fa3e1588c8414d82d9dce129db110b",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/GeneralSettingsView.swift": {
-    "mtime": 1785596487.348458,
-    "ast_hash": "f110d193138b5fc8dec30b9310015fe9",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/GlossarySettingsView.swift": {
-    "mtime": 1785533345.7447062,
-    "ast_hash": "9e9d51577dd306e36cab2f094dce8b00",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/HelpSettingsView.swift": {
-    "mtime": 1785689248.6553311,
-    "ast_hash": "3e8bba4dd3a137587f30752dc35256b7",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/HotkeySettingsView.swift": {
-    "mtime": 1785687647.81608,
-    "ast_hash": "57e866ec2693c7de852dd12a696e1a58",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/LocalModelsSettingsView.swift": {
-    "mtime": 1785533345.748054,
-    "ast_hash": "1e4c991fe9d40c846e48c0e16054e301",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/PolishingSettingsView.swift": {
-    "mtime": 1785533345.7441976,
-    "ast_hash": "d42af85810b700ba65b8829f3f694664",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/PromptsSettingsView.swift": {
-    "mtime": 1785533345.7463374,
-    "ast_hash": "e43bb9418736ddac6bafdae8ffabb4e7",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/SettingsView.swift": {
-    "mtime": 1785533345.7467108,
-    "ast_hash": "e45aa61a34007d0782bc0166e8cacb68",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/Settings/StatisticsSettingsView.swift": {
-    "mtime": 1785533345.7473614,
-    "ast_hash": "c6c841ddff0053b5829e7296ef127593",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/SidebarView.swift": {
-    "mtime": 1785660208.8097143,
-    "ast_hash": "13724df497a291bb089d74687e7eecf9",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Views/TranslationModalView.swift": {
-    "mtime": 1785533345.7533855,
-    "ast_hash": "4bfdffe74b92cc83fc7523952081e41e",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/APIProviderSettings.swift": {
-    "mtime": 1785533345.724267,
-    "ast_hash": "08912f5344be6f19940da20fe7eddeca",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/AccessibilityPermissionPromptState.swift": {
-    "mtime": 1785533345.7263882,
-    "ast_hash": "013c87fc25498c6e97e146f0cec61dff",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/AudioRecording.swift": {
-    "mtime": 1785533345.7267883,
-    "ast_hash": "c880b0ebd920a1483d43111984c1e895",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/BlaboomNote.swift": {
-    "mtime": 1785533345.7270784,
-    "ast_hash": "ed50a33940b7ea3797b97d0b4b253ab8",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/GeneralSettings.swift": {
-    "mtime": 1785681897.9693687,
-    "ast_hash": "a7993ca3d488fd12277e51786f40f042",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/GlossaryEntry.swift": {
-    "mtime": 1785533345.722929,
-    "ast_hash": "b95cd0bb986175451551725f44faa7cb",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/GlossarySettings.swift": {
-    "mtime": 1785533345.7204132,
-    "ast_hash": "8bf6dfb83e33935483ab1c7394452ec5",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/HotkeySettings.swift": {
-    "mtime": 1785586585.491916,
-    "ast_hash": "7f0518f38e8db28d88a430b2b9d7436a",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/LocalModelDescriptor.swift": {
-    "mtime": 1785533345.7250898,
-    "ast_hash": "ed0e0ea7fe5075f254a9ad7904b59560",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/ModelPreparationSnapshot.swift": {
-    "mtime": 1785533345.7211742,
-    "ast_hash": "254e22c93afb0c0a4350540c1f440032",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/PolishingModelDescriptor.swift": {
-    "mtime": 1785533345.7261446,
-    "ast_hash": "12ec8b79af05c0c42479daf7184d0cde",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/PolishingModelInstallationState.swift": {
-    "mtime": 1785533345.7245605,
-    "ast_hash": "85861e42a511cb83dd1eba200b4482b7",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/PolishingModelSettings.swift": {
-    "mtime": 1785533345.7179155,
-    "ast_hash": "f2d469dde359f0a222349c884d7bbc9e",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/PolishingStatus.swift": {
-    "mtime": 1785533345.726588,
-    "ast_hash": "6503fc75524625931005196f1a6df0b4",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/ProcessingVariant.swift": {
-    "mtime": 1785533345.7222857,
-    "ast_hash": "d6bce98bb0dc6c37952f213aebd8a8de",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/PromptTemplateSettings.swift": {
-    "mtime": 1785533345.7220538,
-    "ast_hash": "56aa265652b40d08a255a069990dae83",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/StarterGlossary.swift": {
-    "mtime": 1785533345.7258878,
-    "ast_hash": "e634a1b66a08b71485393466bcf8aa4d",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/TranscriptionBackend.swift": {
-    "mtime": 1785533345.7247741,
-    "ast_hash": "dbae5518107d0e4ac8eff0e7abab3b86",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/TranscriptionLanguageMode.swift": {
-    "mtime": 1785681911.9207113,
-    "ast_hash": "32c082b2196335562467c60529add406",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/TranscriptionLanguagePreference.swift": {
-    "mtime": 1785681904.9925385,
-    "ast_hash": "d58d96fa6ccbbe345aad258c5d0de7b2",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/TranscriptionModelDescriptor.swift": {
-    "mtime": 1785533345.7254336,
-    "ast_hash": "6cbd33e24fb988717e5d95fd145a2e8f",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/TranscriptionModelInstallationState.swift": {
-    "mtime": 1785533345.719115,
-    "ast_hash": "4de164d20b8f076fe7b3949f3205815c",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/TranscriptionModelSettings.swift": {
-    "mtime": 1785533345.7234325,
-    "ast_hash": "7d39e9616ed3fff38d45b972e69cc038",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/TranscriptionStatus.swift": {
-    "mtime": 1785533345.723693,
-    "ast_hash": "d2d767ed6a42933922064796d8ce4247",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/UsageStatisticsSettings.swift": {
-    "mtime": 1785533345.7185204,
-    "ast_hash": "5ff896ea58a1996e80855e25f8e8019c",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/AppText.swift": {
-    "mtime": 1785694742.9936237,
-    "ast_hash": "fe51efb74bbb93139402ed6130b30d20",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/CloudRawTranscriptionPrompt.swift": {
-    "mtime": 1785533345.7302878,
-    "ast_hash": "c9303558277c625b6589ceb72486144a",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/CloudRequestRetryPolicy.swift": {
-    "mtime": 1785533345.728689,
-    "ast_hash": "6c57220f18fc103963a1d2f373106f22",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/EngineProtocols.swift": {
-    "mtime": 1785533345.7284493,
-    "ast_hash": "7da92458cebff1e70a4f3433d357922b",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/FocusedTextInsertionSnapshot.swift": {
-    "mtime": 1785533345.729084,
-    "ast_hash": "d33b1dbf8b4aa3adbd926f8e325a0303",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/GlossarySelectionHelpers.swift": {
-    "mtime": 1785533345.729576,
-    "ast_hash": "6ac3808cd340aa4bdc2887347dca6cf3",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/GlossaryTextRewriter.swift": {
-    "mtime": 1785533345.7305694,
-    "ast_hash": "86a56f8edc27a7a3e2b8fb1e07879340",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/HUDProviderListComposer.swift": {
-    "mtime": 1785639904.827262,
-    "ast_hash": "9ec26128501a230ad9ed2c0d329efa43",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/HUDQuickSwitcherLayout.swift": {
-    "mtime": 1785639904.827295,
-    "ast_hash": "28c412d3125469b0b9080727a9ea6cc3",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/HUDSpectrumResponse.swift": {
-    "mtime": 1785533345.739121,
-    "ast_hash": "66bf89ad8ddaabfd89a0553950eeb3bc",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/HotkeyOutputTextResolver.swift": {
-    "mtime": 1785533345.7325552,
-    "ast_hash": "a0bf8d8401209a1df2b4122c37a13879",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/HotkeySessionCoordinator.swift": {
-    "mtime": 1785533345.7318017,
-    "ast_hash": "0dadcd2592c26c01bb4d5b6e4578afbc",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/LocalMLXModelCompatibility.swift": {
-    "mtime": 1785533345.7298467,
-    "ast_hash": "1670d2c88467a9dc6a92fa060275d7fe",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/LocalModelPresence.swift": {
-    "mtime": 1785533345.7289014,
-    "ast_hash": "0d12e89cb0501b8a9922308cd93b9bcb",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/LocalRuleBasedPolishingEngine.swift": {
-    "mtime": 1785639904.827314,
-    "ast_hash": "f27f6bbe0f1537d6e90bf86e4127b49e",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/MarkdownGenerationPostProcessor.swift": {
-    "mtime": 1785533345.729323,
-    "ast_hash": "d5212cd46e8872f02d22320d256e969f",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/ModelOutputSanitizer.swift": {
-    "mtime": 1785533345.7315605,
-    "ast_hash": "9c1c4ed7a8a1b4b9d46a647778763f87",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/PolishingEngineRegistry.swift": {
-    "mtime": 1785533345.7312062,
-    "ast_hash": "2a4096f011751d3156894c4612c9b709",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/PolishingModelOptionsProvider.swift": {
-    "mtime": 1785533345.739973,
-    "ast_hash": "a73ff7711d86aad06ebe3b76aab96680",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/PolishingModelPromptControl.swift": {
-    "mtime": 1785533345.7279692,
-    "ast_hash": "b448a70333ba9ddc38dfa04e0568d534",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/PolishingRequestPolicy.swift": {
-    "mtime": 1785642674.3381553,
-    "ast_hash": "c257f05688f8d22622d24537f620c0e3",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/PolishingWorkflow.swift": {
-    "mtime": 1785533345.7308986,
-    "ast_hash": "22096e4db3f6e3e4547216bf3f099d21",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/PromptTemplate.swift": {
-    "mtime": 1785641917.2045808,
-    "ast_hash": "9acf27e60c030285a18623ad2c8f7611",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/ProviderQuickSwitcherModel.swift": {
-    "mtime": 1785533345.7393649,
-    "ast_hash": "a21aff2508f7cb99aa9cf509263d2c48",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/RecordingTranscriptionWorkflow.swift": {
-    "mtime": 1785587311.777292,
-    "ast_hash": "fa0cc98dc41e3a9d1bd92c7c3a4cf9a2",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/SharedModelsRoot.swift": {
-    "mtime": 1785533345.7281938,
-    "ast_hash": "f8dc81e399d72ebebb83c9734fce3238",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/TranscriptionLanguageRouting.swift": {
-    "mtime": 1785533345.730093,
-    "ast_hash": "b7286a5a5123f0cefcc6090623ef0dd9",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Services/TranslationPrompt.swift": {
-    "mtime": 1785533345.7395973,
-    "ast_hash": "509838ec517d6a4f730476872a80a239",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Stores/GlossaryStore.swift": {
-    "mtime": 1785533345.7135508,
-    "ast_hash": "16b5dad029492b2c4780944946b0ef85",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Stores/NoteStore.swift": {
-    "mtime": 1785597020.4243422,
-    "ast_hash": "98f9e6cd78ca34bb1b6827d7889e7001",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Support/NativeBlaboomLog.swift": {
-    "mtime": 1785533345.7272878,
-    "ast_hash": "3224dfbfb68cbe78607fc9e411bfc469",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Support/SidebarLayoutMetrics.swift": {
-    "mtime": 1785533345.7277536,
-    "ast_hash": "9716c5cff977b0dce299c70f480043d2",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Support/SpeechCleanupNormalizer.swift": {
-    "mtime": 1785533345.727532,
-    "ast_hash": "52498bb85755d33b1471ccc17c5a705e",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomPolishWorker/main.swift": {
-    "mtime": 1785641917.2065732,
-    "ast_hash": "ba99d3b1c87f391a03bfab758673966f",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/APIProviderSettingsTests.swift": {
-    "mtime": 1785533345.7680843,
-    "ast_hash": "82979501f55b101ffc45496b27db87d0",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/AccessibilityPermissionPromptStateTests.swift": {
-    "mtime": 1785533345.7718842,
-    "ast_hash": "862906b3ae2789f193a552fa17cee6f2",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/AppTextFullCoverageTests.swift": {
-    "mtime": 1785692236.0453403,
-    "ast_hash": "9adecadf80aa856cf3c36d6a48ab32dc",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/ArchiveStatsLocalizationTests.swift": {
-    "mtime": 1785660208.8095732,
-    "ast_hash": "ce97d7c15086101b6b286a2565b6b879",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/AudioRecordingTests.swift": {
-    "mtime": 1785533345.7669697,
-    "ast_hash": "126d16850c14b9c6ee1574873581802d",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/CloudAPIFeatureTests.swift": {
-    "mtime": 1785638727.3334777,
-    "ast_hash": "568f1801076695314cadb2d79f0dde2f",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/CloudProviderStabilizationTests.swift": {
-    "mtime": 1785639720.351826,
-    "ast_hash": "9e95a91777e6abc31bbb134d16c97ecf",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/CloudRequestRetryPolicyTests.swift": {
-    "mtime": 1785533345.7675674,
-    "ast_hash": "49e96c0793e181f237a56a64be00a1d5",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/DomainModelsExhaustiveTests.swift": {
-    "mtime": 1785640246.9305038,
-    "ast_hash": "0e7ff0224ef50b5c0ebd467351103e04",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/FocusedTextInsertionTests.swift": {
-    "mtime": 1785533345.7642953,
-    "ast_hash": "35d719e442cee62f0ea9c3d713706ca5",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/GeminiDictationInstructionTests.swift": {
-    "mtime": 1785533345.7724915,
-    "ast_hash": "4fc813a8fd122b04adc362219d25eb3f",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/GeneralSettingsTests.swift": {
-    "mtime": 1785681969.8812387,
-    "ast_hash": "6f74175c6cad2b5f84ec9bc3b4f992e3",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/GlossaryStoreTests.swift": {
-    "mtime": 1785533345.7683969,
-    "ast_hash": "72487b060abb45eaa906a7a1aa054cec",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/GlossaryTextRewriterTests.swift": {
-    "mtime": 1785533345.7631423,
-    "ast_hash": "b077cd2de5761ef4a18260c890d202f2",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/HUDLayoutAndComposerTests.swift": {
-    "mtime": 1785640064.5769598,
-    "ast_hash": "15e0dd447ce1f5919555d51382636464",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/HUDProviderSwitcherFeatureTests.swift": {
-    "mtime": 1785639917.7551408,
-    "ast_hash": "b836158f33ae29370ed0ba14ed1bbe26",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/HUDSpectrumResponseTests.swift": {
-    "mtime": 1785533345.7699394,
-    "ast_hash": "19051da51c1a372aa211ba8086947a58",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/HotkeySessionCoordinatorTests.swift": {
-    "mtime": 1785533345.766328,
-    "ast_hash": "91c8913d27656197a363f7d916312217",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/HotkeySettingsTests.swift": {
-    "mtime": 1785584072.4219751,
-    "ast_hash": "cb47629fc5b94869aa6637b26813c704",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/LocalMLXModelCompatibilityTests.swift": {
-    "mtime": 1785533345.7691104,
-    "ast_hash": "0d356694606786dedd722946e12d3b39",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/LocalRuleBasedPolishingEngineTests.swift": {
-    "mtime": 1785640217.668428,
-    "ast_hash": "8a8975534147ec27b4640a75ef223ebd",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/MarkdownGenerationPostProcessorTests.swift": {
-    "mtime": 1785533345.7735202,
-    "ast_hash": "cccdf20f1974a6bbbd1960e68a4595db",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/ModelOutputSanitizerTests.swift": {
-    "mtime": 1785533345.7716696,
-    "ast_hash": "155304f130b352f3956231e96cbd8c38",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/ModelPreparationSnapshotTests.swift": {
-    "mtime": 1785533345.7732844,
-    "ast_hash": "91c41cf84e52415238508bdf9ac3db9f",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/ModelPresenceVerificationTests.swift": {
-    "mtime": 1785533345.7665462,
-    "ast_hash": "f17e1afb502c638dd8b62a2223f6997c",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/NewFeatureRegressionTests.swift": {
-    "mtime": 1785639755.147824,
-    "ast_hash": "9b975363767e1515fa3d689170b035e6",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/NoteStoreTests.swift": {
-    "mtime": 1785533345.766004,
-    "ast_hash": "0d77aac2a274313de53bf866560c9df2",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/OnboardingLocalizationTests.swift": {
-    "mtime": 1785696015.443855,
-    "ast_hash": "38d9aff64695a1bf4ac6347a1bbfd6a4",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/PolishingEngineRegistryTests.swift": {
-    "mtime": 1785533345.7706807,
-    "ast_hash": "4d09db8646f90d1337cd74cc9347531f",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/PolishingModelCatalogTests.swift": {
-    "mtime": 1785533345.7730937,
-    "ast_hash": "0ef9c9d7872b1c1912eeb16bf9c055a3",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/PolishingModelOptionsProviderTests.swift": {
-    "mtime": 1785533345.7704694,
-    "ast_hash": "086484fb0201619eb3a11bab07887fbb",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/PolishingModelReasoningTests.swift": {
-    "mtime": 1785533345.766772,
-    "ast_hash": "92d7acd414fcd46c490e64bc00a85c09",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/PolishingModelSettingsTests.swift": {
-    "mtime": 1785533345.7645402,
-    "ast_hash": "7e6313a40610a22377bcc86e8ccb3b4b",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/PolishingRequestPolicyTests.swift": {
-    "mtime": 1785644261.71845,
-    "ast_hash": "5cef18c4c92710da54363d31fc1e3ac4",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/PolishingWorkflowTests.swift": {
-    "mtime": 1785533345.7722332,
-    "ast_hash": "61aae179c94372bb2c1e4ce3e90d0a03",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/PromptTemplateTests.swift": {
-    "mtime": 1785533345.7653062,
-    "ast_hash": "554b2fc856babce3542ebe783c8f82d5",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/ProviderQuickSwitcherModelTests.swift": {
-    "mtime": 1785533345.7672074,
-    "ast_hash": "71bf5afeffd043bada676522ff629343",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/RecordingTranscriptionWorkflowTests.swift": {
-    "mtime": 1785533345.7709398,
-    "ast_hash": "bd2a3a04446735e3636cb38ab920c8c9",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/SettingsLocalizationTests.swift": {
-    "mtime": 1785696044.7470024,
-    "ast_hash": "2758ec1128bf1c4237c4148507ac93b2",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/SharedModelsAndCatalogsTests.swift": {
-    "mtime": 1785640217.66823,
-    "ast_hash": "1e7fbac4df890a9ce7c71c196effacdf",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/SharedModelsRootTests.swift": {
-    "mtime": 1785533345.7656527,
-    "ast_hash": "05471414b9de5fbce211b9eeb4863824",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/SidebarLayoutMetricsTests.swift": {
-    "mtime": 1785533345.7629118,
-    "ast_hash": "f7a2efc4c80dda94d8f4d290c4d9623b",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/SpeechCleanupNormalizerTests.swift": {
-    "mtime": 1785533345.7626848,
-    "ast_hash": "74c4703b40d28b82b89d796939acdcea",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/StarterGlossaryAndLanguageRoutingTests.swift": {
-    "mtime": 1785640217.6683075,
-    "ast_hash": "840016b0f92477adf27a9cace3d0f285",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/TranscriptionBackendTests.swift": {
-    "mtime": 1785533345.7633944,
-    "ast_hash": "5bc6ef554cf71ebcd8ead0d9ad81ae15",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/TranscriptionLanguageModeTests.swift": {
-    "mtime": 1785681975.7140346,
-    "ast_hash": "50ce8832a54af6764331617651078ff8",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/TranscriptionLanguageRoutingTests.swift": {
-    "mtime": 1785533345.7640529,
-    "ast_hash": "7431e4ced85eb9eb9653dbbf58920fb2",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/TranscriptionModelCatalogTests.swift": {
-    "mtime": 1785728116.6139383,
-    "ast_hash": "7dd1d4a4f7fa53019f78a862e95ee338",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/TranscriptionModelSettingsTests.swift": {
-    "mtime": 1785533345.7694478,
-    "ast_hash": "57e9bd70c032517545cfb6313698a0f7",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/TranslationPromptTests.swift": {
-    "mtime": 1785533345.7729106,
-    "ast_hash": "50a35d5602946bffee5f26f95fc0e12e",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/UsageStatisticsTests.swift": {
-    "mtime": 1785533345.772729,
-    "ast_hash": "cbee593b916b3ec44ccdf0efe5b288fd",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/WorkflowAndSanitizerEdgeCaseTests.swift": {
-    "mtime": 1785640119.3119187,
-    "ast_hash": "7c11bd6e0d288e90d123631e0bbdef2c",
-    "semantic_hash": ""
+    "mtime": 1785743537.462354,
+    "ast_hash": "d2f77d73b025e07d263fb6b7f950321b",
+    "semantic_hash": "d2f77d73b025e07d263fb6b7f950321b"
   },
   "UserData/Glossaries/NativeSmartScribe-my-projects-glossary.json": {
-    "mtime": 1785501078.5639255,
+    "mtime": 1785743539.1026146,
     "ast_hash": "865a3735a3a9b5625ba9982178447edc",
-    "semantic_hash": ""
+    "semantic_hash": "865a3735a3a9b5625ba9982178447edc"
   },
   "UserData/Glossaries/NativeSmartScribe-vaisnava-glossary-english-dutch.json": {
-    "mtime": 1783093555.43325,
+    "mtime": 1785743539.1136148,
     "ast_hash": "f185a3b2ce48dbc085e0c6edc3bb98ba",
-    "semantic_hash": ""
+    "semantic_hash": "f185a3b2ce48dbc085e0c6edc3bb98ba"
   },
   "UserData/Glossaries/NativeSmartScribe-vaisnava-glossary.json": {
-    "mtime": 1782968756.1241355,
+    "mtime": 1785743539.0969281,
     "ast_hash": "e623b56aa4244845c93596a48e6028b4",
-    "semantic_hash": ""
+    "semantic_hash": "e623b56aa4244845c93596a48e6028b4"
   },
   "UserData/Glossaries/SmartScribe-glossary_Tech+.json": {
-    "mtime": 1785641419.3656282,
-    "ast_hash": "9f474ce33449dcbbbadaf03bbf367cfb",
-    "semantic_hash": ""
+    "mtime": 1785743539.1077788,
+    "ast_hash": "dd8a93a1780c19b167d8f7713da75d15",
+    "semantic_hash": "dd8a93a1780c19b167d8f7713da75d15"
   },
   "UserData/Glossaries/SmartScribe-glossary_Tech.json": {
-    "mtime": 1785502167.7398396,
+    "mtime": 1785743539.1196382,
     "ast_hash": "8dd14a007ac9871e1b67d96216bdd97e",
-    "semantic_hash": ""
+    "semantic_hash": "8dd14a007ac9871e1b67d96216bdd97e"
   },
   "restructure.sh": {
-    "mtime": 1785551569.820267,
-    "ast_hash": "fa486d696c533b5ae2f1ecc38a423a7b",
-    "semantic_hash": ""
+    "mtime": 1785743537.3044207,
+    "ast_hash": "583033fb752f11709b7c04c98800bdde",
+    "semantic_hash": "583033fb752f11709b7c04c98800bdde"
   },
   "scratch/test_didset.swift": {
     "mtime": 1785532602.0985081,
     "ast_hash": "c2c15481646627ebc259176a73ae7cee",
-    "semantic_hash": ""
+    "semantic_hash": "c2c15481646627ebc259176a73ae7cee"
   },
   "scratch/test_input_v1.json": {
     "mtime": 1785532602.09903,
     "ast_hash": "ad5f7a7e9aec086d1b61a21c39c36c3c",
-    "semantic_hash": ""
+    "semantic_hash": "ad5f7a7e9aec086d1b61a21c39c36c3c"
   },
   "scratch/test_persistence.swift": {
-    "mtime": 1785532602.098756,
-    "ast_hash": "2361ca031b038332acbcaa326484a3d4",
-    "semantic_hash": ""
+    "mtime": 1785747044.5685456,
+    "ast_hash": "b243b19526a1f25b9050dfb65023d0e6",
+    "semantic_hash": "b243b19526a1f25b9050dfb65023d0e6"
   },
   "script/install.sh": {
-    "mtime": 1785532600.32192,
-    "ast_hash": "c20305422af11e3239b980d5e8992fe9",
-    "semantic_hash": ""
+    "mtime": 1785743537.9405148,
+    "ast_hash": "00068dedf885173ac470c32f0d5e9587",
+    "semantic_hash": "00068dedf885173ac470c32f0d5e9587"
   },
   "script/notarize_dmg.sh": {
-    "mtime": 1785532600.3213775,
-    "ast_hash": "63269299a941d4c439821d9bbae36743",
-    "semantic_hash": ""
+    "mtime": 1785743537.930442,
+    "ast_hash": "5af1bf65f24383d617e3b4e58931415b",
+    "semantic_hash": "5af1bf65f24383d617e3b4e58931415b"
   },
   "script/qa/check_cloud_providers.sh": {
-    "mtime": 1785641917.209177,
-    "ast_hash": "02564d3acb0236b221af46e90b855090",
-    "semantic_hash": ""
+    "mtime": 1785743538.0312178,
+    "ast_hash": "840df4957f523bd9384cb16ea510a507",
+    "semantic_hash": "840df4957f523bd9384cb16ea510a507"
   },
   "script/qa/check_hotkey_hud_surface.sh": {
-    "mtime": 1785640185.2907083,
-    "ast_hash": "934a802137a21873ba7db862d023ca53",
-    "semantic_hash": ""
+    "mtime": 1785743537.9932208,
+    "ast_hash": "06a712543233868fb3023da98e58040a",
+    "semantic_hash": "06a712543233868fb3023da98e58040a"
   },
   "script/qa/check_hud_provider_switcher.sh": {
-    "mtime": 1785640185.2907362,
-    "ast_hash": "4da7d54a30ae997b81a8fa6f4a172719",
-    "semantic_hash": ""
+    "mtime": 1785743538.0365603,
+    "ast_hash": "b1b72f518f090944a8c747f14c3046d0",
+    "semantic_hash": "b1b72f518f090944a8c747f14c3046d0"
   },
   "script/qa/check_localization_surface.sh": {
-    "mtime": 1785640185.2908356,
-    "ast_hash": "98cf3abd8fd9545cd88c00e3efc8125b",
-    "semantic_hash": ""
+    "mtime": 1785743537.9510906,
+    "ast_hash": "528689f2a40bd1c4bbec765a6ecd34d7",
+    "semantic_hash": "528689f2a40bd1c4bbec765a6ecd34d7"
   },
   "script/qa/check_no_secrets.sh": {
-    "mtime": 1785640185.2906086,
+    "mtime": 1785743538.020185,
     "ast_hash": "97293b8a4b8062419dc615747de7d72e",
-    "semantic_hash": ""
+    "semantic_hash": "97293b8a4b8062419dc615747de7d72e"
   },
   "script/qa/check_package_and_targets.sh": {
-    "mtime": 1785640185.2908163,
-    "ast_hash": "00249dd9e1c626b60f313afb0d43171d",
-    "semantic_hash": ""
+    "mtime": 1785743538.0043404,
+    "ast_hash": "76b12a82beb4caf5f2198d542a418084",
+    "semantic_hash": "76b12a82beb4caf5f2198d542a418084"
   },
   "script/qa/check_polishing_request_policy.sh": {
-    "mtime": 1785644213.8306983,
-    "ast_hash": "eeef9883a691081ddc5bf2604ead62c4",
-    "semantic_hash": ""
+    "mtime": 1785743537.95637,
+    "ast_hash": "fc5f6035ff2877816bad195efd85a2a7",
+    "semantic_hash": "fc5f6035ff2877816bad195efd85a2a7"
   },
   "script/qa/check_release_identity.sh": {
-    "mtime": 1785640185.2906237,
-    "ast_hash": "aeacb9e5ea8502cab7d0737abab8cc7a",
-    "semantic_hash": ""
+    "mtime": 1785743537.9986162,
+    "ast_hash": "a016520a81d88ebe31e0896a35d22c61",
+    "semantic_hash": "a016520a81d88ebe31e0896a35d22c61"
   },
   "script/qa/check_settings_surface.sh": {
-    "mtime": 1785640185.2908785,
-    "ast_hash": "fc306adb456de80485c3d9e957a11b50",
-    "semantic_hash": ""
+    "mtime": 1785743538.0098271,
+    "ast_hash": "2f2e651cb2056089caf994155ab767b9",
+    "semantic_hash": "2f2e651cb2056089caf994155ab767b9"
   },
   "script/qa/check_stores_wiring.sh": {
-    "mtime": 1785640185.3005164,
-    "ast_hash": "93bbbae4190dc83292fd8d76c2c5ccc1",
-    "semantic_hash": ""
+    "mtime": 1785743537.987975,
+    "ast_hash": "06076f8d8d50dafd4c9fe16b47f07a76",
+    "semantic_hash": "06076f8d8d50dafd4c9fe16b47f07a76"
   },
   "script/qa/check_test_coverage_breadth.sh": {
-    "mtime": 1785640185.3005211,
-    "ast_hash": "277a9678ff268aebcfc7586e53c9cfac",
-    "semantic_hash": ""
+    "mtime": 1785743537.9670687,
+    "ast_hash": "6ef9855334d59d6c0951a9234bea173b",
+    "semantic_hash": "6ef9855334d59d6c0951a9234bea173b"
   },
   "script/qa/check_transcription_polishing_pipeline.sh": {
-    "mtime": 1785640268.3203087,
-    "ast_hash": "05e1e591b5ef4aa081d0c37a3314a6d8",
-    "semantic_hash": ""
+    "mtime": 1785743537.9618576,
+    "ast_hash": "6411467d5e6bad774e6df0c5c5b4a74a",
+    "semantic_hash": "6411467d5e6bad774e6df0c5c5b4a74a"
   },
   "script/qa/check_workspace_ui_surface.sh": {
-    "mtime": 1785640185.2908125,
-    "ast_hash": "18b5b6be02ae838d0f5ab6981ebbdf0e",
-    "semantic_hash": ""
+    "mtime": 1785743537.977999,
+    "ast_hash": "dd03fb2e6a7f3d03af4000ca13a3d81b",
+    "semantic_hash": "dd03fb2e6a7f3d03af4000ca13a3d81b"
   },
   "script/qa/run_all.sh": {
-    "mtime": 1785640185.290614,
-    "ast_hash": "db47be30bc8f9d81b48e8b35ef98e91e",
-    "semantic_hash": ""
+    "mtime": 1785743537.9720936,
+    "ast_hash": "089595e421c27fdfde0c9125fc15bfcf",
+    "semantic_hash": "089595e421c27fdfde0c9125fc15bfcf"
   },
   "script/smoke_whisperkit_tiny.sh": {
-    "mtime": 1785532600.321615,
-    "ast_hash": "4c29e4aedb335a2d6a85f39c3a47456f",
-    "semantic_hash": ""
+    "mtime": 1785743537.9353516,
+    "ast_hash": "b7537aa48ca840a48caafbfbf42dcb1d",
+    "semantic_hash": "b7537aa48ca840a48caafbfbf42dcb1d"
   },
   "AI_Workflow_Kit/docs/AI/ARCHITECT_HANDOFF.md": {
-    "mtime": 1785680313.9836514,
-    "ast_hash": "cd0eebee6b736ade80b755199cc99e2d",
+    "mtime": 1785743537.425937,
+    "ast_hash": "52dafe794535c42c10d5fe3b17a28f5d",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/BUG_REPORT.md": {
-    "mtime": 1785680348.5872142,
-    "ast_hash": "216451dc7d88b36fb472096ab91df3d3",
+    "mtime": 1785743537.3842838,
+    "ast_hash": "49465989a162b55373eb1d467237f26c",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/COVERAGE.md": {
-    "mtime": 1785733386.6636229,
-    "ast_hash": "bd3f2e10c240f6b2976260ad38ae4312",
+    "mtime": 1785743537.4185355,
+    "ast_hash": "7a94e42c88e7214a1606769e040185af",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785737522.4608216,
-    "ast_hash": "eb117e4022e867fa6a391cdfdffa5001",
+    "mtime": 1785749458.371462,
+    "ast_hash": "13b41c7d41159d93ee560774b56a4560",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
-    "mtime": 1785680313.983463,
-    "ast_hash": "ffb35a0300ccaed64756d46ad27c94db",
+    "mtime": 1785750999.8416939,
+    "ast_hash": "ca745220663d35fd1a4f5ca5f6be5404",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/KICK_CODER.md": {
-    "mtime": 1785680313.9829886,
-    "ast_hash": "423cf78d940a2e7506dd39b45e0bd7e5",
+    "mtime": 1785750999.8411512,
+    "ast_hash": "ff7deac81e9a55268961793ddfd0a272",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/KICK_REVIEWER.md": {
-    "mtime": 1785680313.983638,
-    "ast_hash": "efad195d40a22390bae1c8822984201d",
+    "mtime": 1785750999.8415153,
+    "ast_hash": "f4abe70e7af995369d279ac14df0b42d",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/KICK_TESTER.md": {
-    "mtime": 1785692923.9543352,
-    "ast_hash": "000d4d686343f1ee6ca2e1268e76fa57",
+    "mtime": 1785743537.4025855,
+    "ast_hash": "d31b24e17deec4fb9a67aa0f893f3116",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md": {
-    "mtime": 1785692923.9542127,
-    "ast_hash": "36cafa2b147d02f81e96a6aabc3397e9",
+    "mtime": 1785750999.8405902,
+    "ast_hash": "30ad83d31238c7fef8e9ca1488b9a6ac",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
-    "mtime": 1785737516.2017305,
-    "ast_hash": "a1602deb9c6338787e502ed7955cfaa0",
+    "mtime": 1785747328.636051,
+    "ast_hash": "cc0b6fef054b496ba41f16ff3b73e03b",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REVIEW_TEMPLATE.md": {
-    "mtime": 1785680313.983739,
-    "ast_hash": "ae9405bff88bcf62c435e75f7fb56d2a",
+    "mtime": 1785743537.411018,
+    "ast_hash": "4c9c1974dd03ddf78982cd9feffcb13f",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785737778.1840029,
-    "ast_hash": "066267b12322138b6560e879e01af27a",
+    "mtime": 1785750251.5209916,
+    "ast_hash": "2525c75ab0fc66346c61b744721797ca",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
-    "mtime": 1785692923.962344,
-    "ast_hash": "d29af03c0f79605bd7ba250638fbdfa1",
-    "semantic_hash": ""
-  },
-  "AI_Workflow_Kit/docs/BLABOOM_STEPS.md": {
-    "mtime": 1785727975.6919436,
-    "ast_hash": "2982b0c3f0da3b45ddcbe53599aa7a93",
+    "mtime": 1785750999.8408926,
+    "ast_hash": "a3cc3d2eb689512613f9044b337b417c",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/DECISIONS.md": {
-    "mtime": 1785727975.6916585,
-    "ast_hash": "a4c4ad4b555d0cb39d34618807bafb79",
+    "mtime": 1785743537.456653,
+    "ast_hash": "0bbdda88be156e780c52f9de244c6697",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/PROJECT_CONTEXT.md": {
-    "mtime": 1785680196.9200976,
-    "ast_hash": "fccf4b0e84882b863f9d0daa0a5d2ca8",
-    "semantic_hash": ""
-  },
-  "BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md": {
-    "mtime": 1785667024.5216012,
-    "ast_hash": "c312d8088f216523e9bbd04c52105d53",
+    "mtime": 1785743537.3133752,
+    "ast_hash": "e2aa2634853fc99da93ed71c12103352",
     "semantic_hash": ""
   },
   "COMMERCIAL.md": {
-    "mtime": 1785532600.3204665,
-    "ast_hash": "9098a578f743709da162a00fef6cef75",
+    "mtime": 1785743537.8897433,
+    "ast_hash": "655131b9c3dd279a842c2e9eb64f28c6",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1785667042.080839,
-    "ast_hash": "d72a6553edd600db5faf17e504261888",
+    "mtime": 1785743538.0590007,
+    "ast_hash": "9665ddb427ffa4d05c198eced4fe2c0e",
     "semantic_hash": ""
   },
   "RENAME_REPORT.md": {
-    "mtime": 1785551599.9832768,
-    "ast_hash": "0b9821bcb29cc9bd7633ff694efa023f",
+    "mtime": 1785743539.1518316,
+    "ast_hash": "64403cc43275779246e1d4b4fc66e15f",
     "semantic_hash": ""
   },
   "RESTRUCTURE_README.md": {
-    "mtime": 1785551581.9455452,
-    "ast_hash": "e56e494c34c58073016cca326983ef17",
+    "mtime": 1785743539.143348,
+    "ast_hash": "5a037ab63c9a6d0e77ad018f9ca2663f",
     "semantic_hash": ""
   },
   "UserData/RecoveredPrompts/custom-slot-prompts-20260707.md": {
-    "mtime": 1783439247.8758857,
+    "mtime": 1785743539.1286519,
     "ast_hash": "5406f0bc94b6aa9ffbd19c455e514ecd",
     "semantic_hash": ""
   },
   "UserData/RecoveredPrompts/slot-1-polish-prompts-20260707.md": {
-    "mtime": 1783437437.7665727,
+    "mtime": 1785743539.136358,
     "ast_hash": "1a23950e1aeffb1dbee5deeb505a7d4c",
     "semantic_hash": ""
   },
   "UserData/ShareablePrompts/SmartScribe-Devotional.md": {
-    "mtime": 1783439664.3735185,
+    "mtime": 1785743539.0827987,
     "ast_hash": "eb66080cad06ad17ea9fb1710a37afdd",
     "semantic_hash": ""
   },
   "UserData/ShareablePrompts/SmartScribe-Messages.md": {
-    "mtime": 1783439664.3725913,
+    "mtime": 1785743539.0745893,
     "ast_hash": "2ca588e4c0b9923cff8b24adaf7ff65a",
     "semantic_hash": ""
   },
   "UserData/ShareablePrompts/SmartScribe-Technical.md": {
-    "mtime": 1783439664.373132,
+    "mtime": 1785743539.0907845,
     "ast_hash": "6391c63e4c38bc9d19caeb937a73cb9d",
     "semantic_hash": ""
   },
   "UserData/ShareablePrompts/SmartScribe-Universal.md": {
-    "mtime": 1783439664.3717613,
+    "mtime": 1785743539.0668893,
     "ast_hash": "4bf4177c16b0fec8f23753a8bd3a8854",
     "semantic_hash": ""
   },
   "docs/RELEASE.md": {
-    "mtime": 1785665603.5619028,
-    "ast_hash": "d1656ac288cddd2ea2225ba176cbdb0a",
+    "mtime": 1785743537.9146988,
+    "ast_hash": "5bca9cb4ac817b36ef108a7a132a5ea5",
     "semantic_hash": ""
   },
   "docs/RELEASE_NOTES.md": {
-    "mtime": 1785728140.7601595,
-    "ast_hash": "53d850fce85675d7897b5fd6fe9d44aa",
+    "mtime": 1785743537.9251537,
+    "ast_hash": "3a9f2cd52f96599e5aa2d29c7effd4b7",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260801_085027_\u043a\u0430\u043a\u043e\u0439_\u043e\u043a\u0440\u0443\u0433\u043b\u044b\u0439_\u0441\u0438\u0441\u0442\u0435\u043c\u043d\u044b\u0439_\u0448\u0440\u0438\u0444\u0442_\u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c_\u0432_\u0437\u0430\u0433\u043e.md": {
@@ -1197,76 +347,6 @@
   "Screenshots for GITHUB/\u043e\u043a\u043d\u043e \u043f\u043e\u043b\u043d\u043e\u0433\u043e \u044d\u043a\u0440\u0430\u043d\u0430 \u043f\u0435\u0440\u0435\u0432\u043e\u0434\u0430.png": {
     "mtime": 1785507026.9113429,
     "ast_hash": "810c100dbd6da3fa22f24c3f5d609310",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_128x128.png": {
-    "mtime": 1785582616.0392263,
-    "ast_hash": "110e2ecf17c58fb2725ab3393fc5d2cd",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_128x128@2x.png": {
-    "mtime": 1785582616.041081,
-    "ast_hash": "bfe98272824fa255fa3f143e7fccbfbf",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_16x16.png": {
-    "mtime": 1785582616.0366397,
-    "ast_hash": "b16bcd3b4d8c162b925a4f45ea708ec2",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_16x16@2x.png": {
-    "mtime": 1785582616.0373573,
-    "ast_hash": "3f4be1e0394dc320a88580f06a88b668",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_256x256.png": {
-    "mtime": 1785582616.042928,
-    "ast_hash": "bfe98272824fa255fa3f143e7fccbfbf",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_256x256@2x.png": {
-    "mtime": 1785582616.048851,
-    "ast_hash": "5b6df1170037a1f3e6077e066b49e072",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_32x32.png": {
-    "mtime": 1785582616.0377986,
-    "ast_hash": "3f4be1e0394dc320a88580f06a88b668",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_32x32@2x.png": {
-    "mtime": 1785582616.0384052,
-    "ast_hash": "35b268b07ddcfb97e813240fb4939c6c",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_512x512.png": {
-    "mtime": 1785582616.0542157,
-    "ast_hash": "5b6df1170037a1f3e6077e066b49e072",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/AppIcon.iconset/icon_512x512@2x.png": {
-    "mtime": 1785582616.0733461,
-    "ast_hash": "0eb3e5a35bbb66c504ec026a11b2d549",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/Logos/BLABOOM_LOGO.svg": {
-    "mtime": 1785570999.8681066,
-    "ast_hash": "777352f2ee280349ff39f5411cfbf8f3",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/Logos/BLABOOM_LOGO_Full.svg": {
-    "mtime": 1785570999.8695135,
-    "ast_hash": "25ff3f91b50559221c53d8d6c675e151",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/Logos/BLABOOM_Wordmark.svg": {
-    "mtime": 1785570999.8706467,
-    "ast_hash": "97d32388657570cf775367d93ffa8ce1",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboom/Resources/Logos/BLABOOM_status_bar_icon.svg": {
-    "mtime": 1785570999.871562,
-    "ast_hash": "435b987b9b448e838eabf1d4bdaaa6d6",
     "semantic_hash": ""
   },
   "docs/screenshots/01_main_window.png": {
@@ -1359,54 +439,1004 @@
     "ast_hash": "1478c914152e788a3124644cd4807fd4",
     "semantic_hash": ""
   },
-  "Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift": {
-    "mtime": 1785682065.0988944,
-    "ast_hash": "97c7672abe211a40c7b8d76668cb179e",
-    "semantic_hash": ""
-  },
-  "Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift": {
-    "mtime": 1785687636.0793443,
-    "ast_hash": "4331541e755d50ba4098cbd62c336a1f",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/LanguagePickerOrderTests.swift": {
-    "mtime": 1785684982.3039796,
-    "ast_hash": "c7ba2563cea0d05a5a60af8eaf13fb2a",
-    "semantic_hash": ""
-  },
-  "Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift": {
-    "mtime": 1785687675.8600516,
-    "ast_hash": "bf9efd00bff6f0ad4a8d3f3aa6bd584e",
-    "semantic_hash": ""
-  },
   "script/qa/check_i18n_b2_b4_families.sh": {
-    "mtime": 1785696060.1644826,
-    "ast_hash": "747511f6ad108852f6984b0f66b9a003",
-    "semantic_hash": ""
+    "mtime": 1785743538.0253692,
+    "ast_hash": "d642b43765042dc2ea221a785121630d",
+    "semantic_hash": "d642b43765042dc2ea221a785121630d"
   },
   "docs/canary/harness/CanarySpike.swift": {
-    "mtime": 1785715572.1641781,
-    "ast_hash": "d8b375abf468e67679b2c8fffc24f40a",
-    "semantic_hash": ""
+    "mtime": 1785743537.9074166,
+    "ast_hash": "24d8a46de77e170cb07bb8b1b4a09c9b",
+    "semantic_hash": "24d8a46de77e170cb07bb8b1b4a09c9b"
   },
   "script/qa/check_b6_canary_spike.sh": {
-    "mtime": 1785727847.34186,
+    "mtime": 1785743538.0149384,
     "ast_hash": "50e2fba28644834db6fd89e32ee7367f",
-    "semantic_hash": ""
+    "semantic_hash": "50e2fba28644834db6fd89e32ee7367f"
   },
   "docs/canary/COREML_SPIKE.md": {
-    "mtime": 1785719625.9541488,
-    "ast_hash": "8c97ccba50196c3634c00bf9d54dbdd7",
+    "mtime": 1785743537.8993838,
+    "ast_hash": "a725e882051f6b85ccef69a06fc5641f",
     "semantic_hash": ""
   },
   "script/qa/check_no_canary_product.sh": {
-    "mtime": 1785728703.0218449,
+    "mtime": 1785743537.9831471,
     "ast_hash": "d62342eccc3c8903303fdfb7b200dbdf",
-    "semantic_hash": ""
+    "semantic_hash": "d62342eccc3c8903303fdfb7b200dbdf"
   },
   "script/qa/check_no_python_in_sources.sh": {
-    "mtime": 1785728127.4237702,
+    "mtime": 1785743537.9459,
     "ast_hash": "005ba80e85fa5b27b96506a8d3738d1b",
+    "semantic_hash": "005ba80e85fa5b27b96506a8d3738d1b"
+  },
+  "Sources/NativeBolabol/App/NativeBolabolApp.swift": {
+    "mtime": 1785743538.5561485,
+    "ast_hash": "005fddb1c56f4148e1ef23b5d9302c79",
+    "semantic_hash": "005fddb1c56f4148e1ef23b5d9302c79"
+  },
+  "Sources/NativeBolabol/Services/APIProviderCredentialStore.swift": {
+    "mtime": 1785743538.9909558,
+    "ast_hash": "8ffc2b2f643de39176ce57c72f7dd94f",
+    "semantic_hash": "8ffc2b2f643de39176ce57c72f7dd94f"
+  },
+  "Sources/NativeBolabol/Services/AccessibilityPermissionService.swift": {
+    "mtime": 1785743539.032339,
+    "ast_hash": "db0984656fcf2b4a6dcd2f2b01581f47",
+    "semantic_hash": "db0984656fcf2b4a6dcd2f2b01581f47"
+  },
+  "Sources/NativeBolabol/Services/AppleSpeechTranscriptionEngine.swift": {
+    "mtime": 1785743538.9055822,
+    "ast_hash": "cad3d30f12ed0e1475d2505c6602a04b",
+    "semantic_hash": "cad3d30f12ed0e1475d2505c6602a04b"
+  },
+  "Sources/NativeBolabol/Services/AudioCuePlayer.swift": {
+    "mtime": 1785743538.9738457,
+    "ast_hash": "b5dbc92dfcb005bc135e002719266c9f",
+    "semantic_hash": "b5dbc92dfcb005bc135e002719266c9f"
+  },
+  "Sources/NativeBolabol/Services/AudioFileImporter.swift": {
+    "mtime": 1785743539.0252514,
+    "ast_hash": "508aaa967b038a25aba1d9ce8d3e84b6",
+    "semantic_hash": "508aaa967b038a25aba1d9ce8d3e84b6"
+  },
+  "Sources/NativeBolabol/Services/AudioRecorder.swift": {
+    "mtime": 1785743539.0093265,
+    "ast_hash": "003435c9549b403482e0327b5feb9116",
+    "semantic_hash": "003435c9549b403482e0327b5feb9116"
+  },
+  "Sources/NativeBolabol/Services/CloudProviderModelCatalog.swift": {
+    "mtime": 1785743538.9492075,
+    "ast_hash": "a1151ad89c7330f3918a272b66dfee12",
+    "semantic_hash": "a1151ad89c7330f3918a272b66dfee12"
+  },
+  "Sources/NativeBolabol/Services/CloudTextPolishingEngine.swift": {
+    "mtime": 1785743538.930852,
+    "ast_hash": "3239d432944932bce2bf7b529f1cf727",
+    "semantic_hash": "3239d432944932bce2bf7b529f1cf727"
+  },
+  "Sources/NativeBolabol/Services/FloatingTranslationWindowManager.swift": {
+    "mtime": 1785743538.939144,
+    "ast_hash": "c0806ceac7cd333ae80fd27bde56b0c7",
+    "semantic_hash": "c0806ceac7cd333ae80fd27bde56b0c7"
+  },
+  "Sources/NativeBolabol/Services/GeminiCloudDictationEngine.swift": {
+    "mtime": 1785743539.0501986,
+    "ast_hash": "aa378b91b7bee8f9180cd1e52fdb1405",
+    "semantic_hash": "aa378b91b7bee8f9180cd1e52fdb1405"
+  },
+  "Sources/NativeBolabol/Services/GlobalHotkeyManager.swift": {
+    "mtime": 1785743538.9999855,
+    "ast_hash": "208195b35c4f427200a633c7254d7303",
+    "semantic_hash": "208195b35c4f427200a633c7254d7303"
+  },
+  "Sources/NativeBolabol/Services/HotkeyOutputDispatcher.swift": {
+    "mtime": 1785743539.0415847,
+    "ast_hash": "0ccda49981cd23aefe12c99c7c25fb79",
+    "semantic_hash": "0ccda49981cd23aefe12c99c7c25fb79"
+  },
+  "Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift": {
+    "mtime": 1785743538.984048,
+    "ast_hash": "81f3742d9072346cb7997e6f4e92214a",
+    "semantic_hash": "81f3742d9072346cb7997e6f4e92214a"
+  },
+  "Sources/NativeBolabol/Services/LocalModelScanner.swift": {
+    "mtime": 1785743538.9650087,
+    "ast_hash": "ca72f161a11ef129d5049f9d013f098d",
+    "semantic_hash": "ca72f161a11ef129d5049f9d013f098d"
+  },
+  "Sources/NativeBolabol/Services/MLXSwiftPolishingEngine.swift": {
+    "mtime": 1785743538.922164,
+    "ast_hash": "b328c35c24583f8c1997d619148b3cd5",
+    "semantic_hash": "b328c35c24583f8c1997d619148b3cd5"
+  },
+  "Sources/NativeBolabol/Services/ParakeetTranscriptionEngine.swift": {
+    "mtime": 1785743538.9569652,
+    "ast_hash": "6afcd0708be4bd355d6956ec6d1c7716",
+    "semantic_hash": "6afcd0708be4bd355d6956ec6d1c7716"
+  },
+  "Sources/NativeBolabol/Services/QuickTranslationWindowManager.swift": {
+    "mtime": 1785743538.8961065,
+    "ast_hash": "c7115f1386f1af4bf20e2efcceea1704",
+    "semantic_hash": "c7115f1386f1af4bf20e2efcceea1704"
+  },
+  "Sources/NativeBolabol/Services/UnavailableTranscriptionEngine.swift": {
+    "mtime": 1785743538.9135528,
+    "ast_hash": "55c8c16d357ddacccb009c1c2367f93e",
+    "semantic_hash": "55c8c16d357ddacccb009c1c2367f93e"
+  },
+  "Sources/NativeBolabol/Services/WhisperKitTranscriptionEngine.swift": {
+    "mtime": 1785743539.0183291,
+    "ast_hash": "bddc2f1cd8359fe7ab2f530d89a087a5",
+    "semantic_hash": "bddc2f1cd8359fe7ab2f530d89a087a5"
+  },
+  "Sources/NativeBolabol/Stores/AccessibilityPermissionStore.swift": {
+    "mtime": 1785743538.5963373,
+    "ast_hash": "28e5d485448b72ae79fb13452859f331",
+    "semantic_hash": "28e5d485448b72ae79fb13452859f331"
+  },
+  "Sources/NativeBolabol/Stores/GeneralSettingsStore.swift": {
+    "mtime": 1785743538.627937,
+    "ast_hash": "4dee3681fb451abc2437290969cc93c6",
+    "semantic_hash": "4dee3681fb451abc2437290969cc93c6"
+  },
+  "Sources/NativeBolabol/Stores/HotkeySettingsStore.swift": {
+    "mtime": 1785743538.6035407,
+    "ast_hash": "f325038f809e92ca45c3b85e95ed2c5b",
+    "semantic_hash": "f325038f809e92ca45c3b85e95ed2c5b"
+  },
+  "Sources/NativeBolabol/Stores/PolishingEngineStore.swift": {
+    "mtime": 1785743538.5886552,
+    "ast_hash": "08bba8b393da2b0fc0a40de05c2b8c53",
+    "semantic_hash": "08bba8b393da2b0fc0a40de05c2b8c53"
+  },
+  "Sources/NativeBolabol/Stores/PromptTemplateStore.swift": {
+    "mtime": 1785743538.5795043,
+    "ast_hash": "b53ba26db89f69aefd3c4910efebe959",
+    "semantic_hash": "b53ba26db89f69aefd3c4910efebe959"
+  },
+  "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift": {
+    "mtime": 1785743538.611342,
+    "ast_hash": "8989cfaaf30966d7f6810d687133f5fa",
+    "semantic_hash": "8989cfaaf30966d7f6810d687133f5fa"
+  },
+  "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift": {
+    "mtime": 1785743538.571287,
+    "ast_hash": "cb6d7d8de317dda9e180ed674f941ab2",
+    "semantic_hash": "cb6d7d8de317dda9e180ed674f941ab2"
+  },
+  "Sources/NativeBolabol/Stores/UsageStatisticsStore.swift": {
+    "mtime": 1785743538.6188116,
+    "ast_hash": "a989bdbce4a5d7a6ae4c52545fc9c8b3",
+    "semantic_hash": "a989bdbce4a5d7a6ae4c52545fc9c8b3"
+  },
+  "Sources/NativeBolabol/Support/UIScaleModifier.swift": {
+    "mtime": 1785743538.6350176,
+    "ast_hash": "389583426874db4b68d2fa6257832eb4",
+    "semantic_hash": "389583426874db4b68d2fa6257832eb4"
+  },
+  "Sources/NativeBolabol/Views/AudioPlaybackModalView.swift": {
+    "mtime": 1785743538.6439407,
+    "ast_hash": "b040b31f2860fa3088028961c73f97a0",
+    "semantic_hash": "b040b31f2860fa3088028961c73f97a0"
+  },
+  "Sources/NativeBolabol/Views/Components/AudioInputDeviceStatusPill.swift": {
+    "mtime": 1785743538.8036482,
+    "ast_hash": "67513a34f05377c4ba0941003a8c2750",
+    "semantic_hash": "67513a34f05377c4ba0941003a8c2750"
+  },
+  "Sources/NativeBolabol/Views/Components/BolabolButtonStyles.swift": {
+    "mtime": 1785743538.788001,
+    "ast_hash": "3f950418ab97a0d94cf0b48ae00c4b67",
+    "semantic_hash": "3f950418ab97a0d94cf0b48ae00c4b67"
+  },
+  "Sources/NativeBolabol/Views/Components/BolabolFullLogoView.swift": {
+    "mtime": 1785743538.7807698,
+    "ast_hash": "6111f8b08ba18ac0252df0297b95f0db",
+    "semantic_hash": "6111f8b08ba18ac0252df0297b95f0db"
+  },
+  "Sources/NativeBolabol/Views/Components/BolabolLogoView.swift": {
+    "mtime": 1785743538.7602563,
+    "ast_hash": "1d4767755a1465cb3d407d135c580977",
+    "semantic_hash": "1d4767755a1465cb3d407d135c580977"
+  },
+  "Sources/NativeBolabol/Views/Components/BolabolLogoWithWordmarkView.swift": {
+    "mtime": 1785743538.773636,
+    "ast_hash": "0262a74fb228dd16ce7e996a0d949c62",
+    "semantic_hash": "0262a74fb228dd16ce7e996a0d949c62"
+  },
+  "Sources/NativeBolabol/Views/Components/BolabolWordmarkView.swift": {
+    "mtime": 1785743538.7671735,
+    "ast_hash": "945a94709607c83138ea1b2bb7a6cd40",
+    "semantic_hash": "945a94709607c83138ea1b2bb7a6cd40"
+  },
+  "Sources/NativeBolabol/Views/Components/DotSpectrumView.swift": {
+    "mtime": 1785743538.796099,
+    "ast_hash": "5dc85f94fe5de7e1fde12c417509a1a3",
+    "semantic_hash": "5dc85f94fe5de7e1fde12c417509a1a3"
+  },
+  "Sources/NativeBolabol/Views/ContentView.swift": {
+    "mtime": 1785743538.8486114,
+    "ast_hash": "6dfff4e21e4ea0b458b39668805ad8e9",
+    "semantic_hash": "6dfff4e21e4ea0b458b39668805ad8e9"
+  },
+  "Sources/NativeBolabol/Views/GlossaryCategoryPicker.swift": {
+    "mtime": 1785743538.7363596,
+    "ast_hash": "1c468053924077b43e4882fc27d02574",
+    "semantic_hash": "1c468053924077b43e4882fc27d02574"
+  },
+  "Sources/NativeBolabol/Views/GlossaryDraftModal.swift": {
+    "mtime": 1785743538.7445085,
+    "ast_hash": "9a8a36b790057a259bc6c4e6f0e2c641",
+    "semantic_hash": "9a8a36b790057a259bc6c4e6f0e2c641"
+  },
+  "Sources/NativeBolabol/Views/NoteDetailView.swift": {
+    "mtime": 1785743538.813196,
+    "ast_hash": "d3a296ec6e1d01dbbd372ea8e1b3a4c6",
+    "semantic_hash": "d3a296ec6e1d01dbbd372ea8e1b3a4c6"
+  },
+  "Sources/NativeBolabol/Views/OnboardingView.swift": {
+    "mtime": 1785743538.8322875,
+    "ast_hash": "e7ce731f61a855ed0db8654508fb5ff5",
+    "semantic_hash": "e7ce731f61a855ed0db8654508fb5ff5"
+  },
+  "Sources/NativeBolabol/Views/ProviderQuickSwitcher.swift": {
+    "mtime": 1785743538.8652744,
+    "ast_hash": "0e5c7885b5b99d9f96a8e45ce1addb74",
+    "semantic_hash": "0e5c7885b5b99d9f96a8e45ce1addb74"
+  },
+  "Sources/NativeBolabol/Views/SelectableTextView.swift": {
+    "mtime": 1785743538.822089,
+    "ast_hash": "a5036b7520a6cd269532b4f3ace8261a",
+    "semantic_hash": "a5036b7520a6cd269532b4f3ace8261a"
+  },
+  "Sources/NativeBolabol/Views/Settings/APIProvidersSettingsView.swift": {
+    "mtime": 1785743538.6707823,
+    "ast_hash": "78f9df98fd60010f4946eb39f08744a9",
+    "semantic_hash": "78f9df98fd60010f4946eb39f08744a9"
+  },
+  "Sources/NativeBolabol/Views/Settings/GeneralSettingsView.swift": {
+    "mtime": 1785743538.7044992,
+    "ast_hash": "5c5ed1c1744f5beb94c978723836183a",
+    "semantic_hash": "5c5ed1c1744f5beb94c978723836183a"
+  },
+  "Sources/NativeBolabol/Views/Settings/GlossarySettingsView.swift": {
+    "mtime": 1785743538.6613703,
+    "ast_hash": "4c150330c336ec2481acda019b6ac260",
+    "semantic_hash": "4c150330c336ec2481acda019b6ac260"
+  },
+  "Sources/NativeBolabol/Views/Settings/HelpSettingsView.swift": {
+    "mtime": 1785743538.6798632,
+    "ast_hash": "c7fbac8e8bc7cc5a8b3773dbe3bdd0c0",
+    "semantic_hash": "c7fbac8e8bc7cc5a8b3773dbe3bdd0c0"
+  },
+  "Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift": {
+    "mtime": 1785743538.720224,
+    "ast_hash": "96c89feddbba9a731af56789d1d3e72b",
+    "semantic_hash": "96c89feddbba9a731af56789d1d3e72b"
+  },
+  "Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift": {
+    "mtime": 1785743538.729119,
+    "ast_hash": "05c2231372a39b10ba27743375fd4a88",
+    "semantic_hash": "05c2231372a39b10ba27743375fd4a88"
+  },
+  "Sources/NativeBolabol/Views/Settings/PolishingSettingsView.swift": {
+    "mtime": 1785743538.652235,
+    "ast_hash": "ee5def82f37cd8585fad30fea879f49d",
+    "semantic_hash": "ee5def82f37cd8585fad30fea879f49d"
+  },
+  "Sources/NativeBolabol/Views/Settings/PromptsSettingsView.swift": {
+    "mtime": 1785743538.6881416,
+    "ast_hash": "5116645ceeba7432a9e487a50f8773eb",
+    "semantic_hash": "5116645ceeba7432a9e487a50f8773eb"
+  },
+  "Sources/NativeBolabol/Views/Settings/SettingsView.swift": {
+    "mtime": 1785743538.6961427,
+    "ast_hash": "f2312363efa0ff53b569e9f85d0ab35e",
+    "semantic_hash": "f2312363efa0ff53b569e9f85d0ab35e"
+  },
+  "Sources/NativeBolabol/Views/Settings/StatisticsSettingsView.swift": {
+    "mtime": 1785743538.711867,
+    "ast_hash": "b9ba3a6964705b08bd8e1a1c46a6edb9",
+    "semantic_hash": "b9ba3a6964705b08bd8e1a1c46a6edb9"
+  },
+  "Sources/NativeBolabol/Views/SidebarView.swift": {
+    "mtime": 1785743538.7532418,
+    "ast_hash": "01dfaed61fa03290713dbf3b74aba0bc",
+    "semantic_hash": "01dfaed61fa03290713dbf3b74aba0bc"
+  },
+  "Sources/NativeBolabol/Views/TranslationModalView.swift": {
+    "mtime": 1785743538.880698,
+    "ast_hash": "af75b847650c0cb3248d2b8bd2c147db",
+    "semantic_hash": "af75b847650c0cb3248d2b8bd2c147db"
+  },
+  "Sources/NativeBolabolCore/Models/APIProviderSettings.swift": {
+    "mtime": 1785743538.2228258,
+    "ast_hash": "08912f5344be6f19940da20fe7eddeca",
+    "semantic_hash": "08912f5344be6f19940da20fe7eddeca"
+  },
+  "Sources/NativeBolabolCore/Models/AccessibilityPermissionPromptState.swift": {
+    "mtime": 1785743538.277201,
+    "ast_hash": "013c87fc25498c6e97e146f0cec61dff",
+    "semantic_hash": "013c87fc25498c6e97e146f0cec61dff"
+  },
+  "Sources/NativeBolabolCore/Models/AudioRecording.swift": {
+    "mtime": 1785743538.2908268,
+    "ast_hash": "c880b0ebd920a1483d43111984c1e895",
+    "semantic_hash": "c880b0ebd920a1483d43111984c1e895"
+  },
+  "Sources/NativeBolabolCore/Models/BolabolNote.swift": {
+    "mtime": 1785743538.2984395,
+    "ast_hash": "8da7cf0ab9921f44ecbc6adef4c1248b",
+    "semantic_hash": "8da7cf0ab9921f44ecbc6adef4c1248b"
+  },
+  "Sources/NativeBolabolCore/Models/GeneralSettings.swift": {
+    "mtime": 1785743538.177433,
+    "ast_hash": "a7993ca3d488fd12277e51786f40f042",
+    "semantic_hash": "a7993ca3d488fd12277e51786f40f042"
+  },
+  "Sources/NativeBolabolCore/Models/GlossaryEntry.swift": {
+    "mtime": 1785743538.1843102,
+    "ast_hash": "b95cd0bb986175451551725f44faa7cb",
+    "semantic_hash": "b95cd0bb986175451551725f44faa7cb"
+  },
+  "Sources/NativeBolabolCore/Models/GlossarySettings.swift": {
+    "mtime": 1785743538.121407,
+    "ast_hash": "8bf6dfb83e33935483ab1c7394452ec5",
+    "semantic_hash": "8bf6dfb83e33935483ab1c7394452ec5"
+  },
+  "Sources/NativeBolabolCore/Models/HotkeySettings.swift": {
+    "mtime": 1785743538.1372254,
+    "ast_hash": "7f0518f38e8db28d88a430b2b9d7436a",
+    "semantic_hash": "7f0518f38e8db28d88a430b2b9d7436a"
+  },
+  "Sources/NativeBolabolCore/Models/LanguagePickerOrder.swift": {
+    "mtime": 1785743538.1539516,
+    "ast_hash": "97c7672abe211a40c7b8d76668cb179e",
+    "semantic_hash": "97c7672abe211a40c7b8d76668cb179e"
+  },
+  "Sources/NativeBolabolCore/Models/LocalModelDescriptor.swift": {
+    "mtime": 1785743538.2445486,
+    "ast_hash": "ed0e0ea7fe5075f254a9ad7904b59560",
+    "semantic_hash": "ed0e0ea7fe5075f254a9ad7904b59560"
+  },
+  "Sources/NativeBolabolCore/Models/ModelPreparationSnapshot.swift": {
+    "mtime": 1785743538.1288872,
+    "ast_hash": "254e22c93afb0c0a4350540c1f440032",
+    "semantic_hash": "254e22c93afb0c0a4350540c1f440032"
+  },
+  "Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift": {
+    "mtime": 1785749077.732672,
+    "ast_hash": "e852b246a647b5ec2635ae84e4317723",
+    "semantic_hash": "e852b246a647b5ec2635ae84e4317723"
+  },
+  "Sources/NativeBolabolCore/Models/PolishingModelDescriptor.swift": {
+    "mtime": 1785743538.2704394,
+    "ast_hash": "12ec8b79af05c0c42479daf7184d0cde",
+    "semantic_hash": "12ec8b79af05c0c42479daf7184d0cde"
+  },
+  "Sources/NativeBolabolCore/Models/PolishingModelInstallationState.swift": {
+    "mtime": 1785743538.2308931,
+    "ast_hash": "85861e42a511cb83dd1eba200b4482b7",
+    "semantic_hash": "85861e42a511cb83dd1eba200b4482b7"
+  },
+  "Sources/NativeBolabolCore/Models/PolishingModelSettings.swift": {
+    "mtime": 1785743538.0981994,
+    "ast_hash": "f2d469dde359f0a222349c884d7bbc9e",
+    "semantic_hash": "f2d469dde359f0a222349c884d7bbc9e"
+  },
+  "Sources/NativeBolabolCore/Models/PolishingStatus.swift": {
+    "mtime": 1785743538.283782,
+    "ast_hash": "6503fc75524625931005196f1a6df0b4",
+    "semantic_hash": "6503fc75524625931005196f1a6df0b4"
+  },
+  "Sources/NativeBolabolCore/Models/ProcessingVariant.swift": {
+    "mtime": 1785743538.160376,
+    "ast_hash": "d6bce98bb0dc6c37952f213aebd8a8de",
+    "semantic_hash": "d6bce98bb0dc6c37952f213aebd8a8de"
+  },
+  "Sources/NativeBolabolCore/Models/PromptTemplateSettings.swift": {
+    "mtime": 1785743538.145914,
+    "ast_hash": "56aa265652b40d08a255a069990dae83",
+    "semantic_hash": "56aa265652b40d08a255a069990dae83"
+  },
+  "Sources/NativeBolabolCore/Models/StarterGlossary.swift": {
+    "mtime": 1785743538.262439,
+    "ast_hash": "e634a1b66a08b71485393466bcf8aa4d",
+    "semantic_hash": "e634a1b66a08b71485393466bcf8aa4d"
+  },
+  "Sources/NativeBolabolCore/Models/TranscriptionBackend.swift": {
+    "mtime": 1785743538.2377346,
+    "ast_hash": "a979c297d64070cd8fbe9649b78b9778",
+    "semantic_hash": "a979c297d64070cd8fbe9649b78b9778"
+  },
+  "Sources/NativeBolabolCore/Models/TranscriptionLanguageMode.swift": {
+    "mtime": 1785743538.1908586,
+    "ast_hash": "32c082b2196335562467c60529add406",
+    "semantic_hash": "32c082b2196335562467c60529add406"
+  },
+  "Sources/NativeBolabolCore/Models/TranscriptionLanguagePreference.swift": {
+    "mtime": 1785743538.2145262,
+    "ast_hash": "d58d96fa6ccbbe345aad258c5d0de7b2",
+    "semantic_hash": "d58d96fa6ccbbe345aad258c5d0de7b2"
+  },
+  "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift": {
+    "mtime": 1785743538.2534864,
+    "ast_hash": "6cbd33e24fb988717e5d95fd145a2e8f",
+    "semantic_hash": "6cbd33e24fb988717e5d95fd145a2e8f"
+  },
+  "Sources/NativeBolabolCore/Models/TranscriptionModelInstallationState.swift": {
+    "mtime": 1785743538.1128962,
+    "ast_hash": "4de164d20b8f076fe7b3949f3205815c",
+    "semantic_hash": "4de164d20b8f076fe7b3949f3205815c"
+  },
+  "Sources/NativeBolabolCore/Models/TranscriptionModelSettings.swift": {
+    "mtime": 1785743538.1993861,
+    "ast_hash": "7d39e9616ed3fff38d45b972e69cc038",
+    "semantic_hash": "7d39e9616ed3fff38d45b972e69cc038"
+  },
+  "Sources/NativeBolabolCore/Models/TranscriptionStatus.swift": {
+    "mtime": 1785743538.2065842,
+    "ast_hash": "d2d767ed6a42933922064796d8ce4247",
+    "semantic_hash": "d2d767ed6a42933922064796d8ce4247"
+  },
+  "Sources/NativeBolabolCore/Models/UsageStatisticsSettings.swift": {
+    "mtime": 1785743538.1050668,
+    "ast_hash": "5ff896ea58a1996e80855e25f8e8019c",
+    "semantic_hash": "5ff896ea58a1996e80855e25f8e8019c"
+  },
+  "Sources/NativeBolabolCore/Models/UserSpeechLanguages.swift": {
+    "mtime": 1785743538.168378,
+    "ast_hash": "4331541e755d50ba4098cbd62c336a1f",
+    "semantic_hash": "4331541e755d50ba4098cbd62c336a1f"
+  },
+  "Sources/NativeBolabolCore/Services/AppText.swift": {
+    "mtime": 1785743538.5106258,
+    "ast_hash": "48150b322eb2a521594161e5e5957856",
+    "semantic_hash": "48150b322eb2a521594161e5e5957856"
+  },
+  "Sources/NativeBolabolCore/Services/CloudRawTranscriptionPrompt.swift": {
+    "mtime": 1785743538.4172664,
+    "ast_hash": "c9303558277c625b6589ceb72486144a",
+    "semantic_hash": "c9303558277c625b6589ceb72486144a"
+  },
+  "Sources/NativeBolabolCore/Services/CloudRequestRetryPolicy.swift": {
+    "mtime": 1785743538.3501139,
+    "ast_hash": "6c57220f18fc103963a1d2f373106f22",
+    "semantic_hash": "6c57220f18fc103963a1d2f373106f22"
+  },
+  "Sources/NativeBolabolCore/Services/EngineProtocols.swift": {
+    "mtime": 1785743538.342587,
+    "ast_hash": "7da92458cebff1e70a4f3433d357922b",
+    "semantic_hash": "7da92458cebff1e70a4f3433d357922b"
+  },
+  "Sources/NativeBolabolCore/Services/FocusedTextInsertionSnapshot.swift": {
+    "mtime": 1785743538.365006,
+    "ast_hash": "d33b1dbf8b4aa3adbd926f8e325a0303",
+    "semantic_hash": "d33b1dbf8b4aa3adbd926f8e325a0303"
+  },
+  "Sources/NativeBolabolCore/Services/GlossarySelectionHelpers.swift": {
+    "mtime": 1785743538.3945832,
+    "ast_hash": "6ac3808cd340aa4bdc2887347dca6cf3",
+    "semantic_hash": "6ac3808cd340aa4bdc2887347dca6cf3"
+  },
+  "Sources/NativeBolabolCore/Services/GlossaryTextRewriter.swift": {
+    "mtime": 1785743538.4255772,
+    "ast_hash": "86a56f8edc27a7a3e2b8fb1e07879340",
+    "semantic_hash": "86a56f8edc27a7a3e2b8fb1e07879340"
+  },
+  "Sources/NativeBolabolCore/Services/HUDProviderListComposer.swift": {
+    "mtime": 1785743538.4564571,
+    "ast_hash": "9ec26128501a230ad9ed2c0d329efa43",
+    "semantic_hash": "9ec26128501a230ad9ed2c0d329efa43"
+  },
+  "Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift": {
+    "mtime": 1785743538.3721654,
+    "ast_hash": "28c412d3125469b0b9080727a9ea6cc3",
+    "semantic_hash": "28c412d3125469b0b9080727a9ea6cc3"
+  },
+  "Sources/NativeBolabolCore/Services/HUDSpectrumResponse.swift": {
+    "mtime": 1785743538.5185392,
+    "ast_hash": "66bf89ad8ddaabfd89a0553950eeb3bc",
+    "semantic_hash": "66bf89ad8ddaabfd89a0553950eeb3bc"
+  },
+  "Sources/NativeBolabolCore/Services/HotkeyOutputTextResolver.swift": {
+    "mtime": 1785743538.4793167,
+    "ast_hash": "82b2f7e796236dd98558b4676609d10b",
+    "semantic_hash": "82b2f7e796236dd98558b4676609d10b"
+  },
+  "Sources/NativeBolabolCore/Services/HotkeySessionCoordinator.swift": {
+    "mtime": 1785743538.4639654,
+    "ast_hash": "0dadcd2592c26c01bb4d5b6e4578afbc",
+    "semantic_hash": "0dadcd2592c26c01bb4d5b6e4578afbc"
+  },
+  "Sources/NativeBolabolCore/Services/LocalMLXModelCompatibility.swift": {
+    "mtime": 1785743538.4024322,
+    "ast_hash": "1670d2c88467a9dc6a92fa060275d7fe",
+    "semantic_hash": "1670d2c88467a9dc6a92fa060275d7fe"
+  },
+  "Sources/NativeBolabolCore/Services/LocalModelPresence.swift": {
+    "mtime": 1785743538.3581314,
+    "ast_hash": "0d12e89cb0501b8a9922308cd93b9bcb",
+    "semantic_hash": "0d12e89cb0501b8a9922308cd93b9bcb"
+  },
+  "Sources/NativeBolabolCore/Services/LocalRuleBasedPolishingEngine.swift": {
+    "mtime": 1785743538.387499,
+    "ast_hash": "f27f6bbe0f1537d6e90bf86e4127b49e",
+    "semantic_hash": "f27f6bbe0f1537d6e90bf86e4127b49e"
+  },
+  "Sources/NativeBolabolCore/Services/MarkdownGenerationPostProcessor.swift": {
+    "mtime": 1785743538.380722,
+    "ast_hash": "d5212cd46e8872f02d22320d256e969f",
+    "semantic_hash": "d5212cd46e8872f02d22320d256e969f"
+  },
+  "Sources/NativeBolabolCore/Services/ModelOutputSanitizer.swift": {
+    "mtime": 1785743538.4499674,
+    "ast_hash": "9c1c4ed7a8a1b4b9d46a647778763f87",
+    "semantic_hash": "9c1c4ed7a8a1b4b9d46a647778763f87"
+  },
+  "Sources/NativeBolabolCore/Services/PolishingEngineRegistry.swift": {
+    "mtime": 1785743538.4415617,
+    "ast_hash": "2a4096f011751d3156894c4612c9b709",
+    "semantic_hash": "2a4096f011751d3156894c4612c9b709"
+  },
+  "Sources/NativeBolabolCore/Services/PolishingModelOptionsProvider.swift": {
+    "mtime": 1785743538.5408952,
+    "ast_hash": "a73ff7711d86aad06ebe3b76aab96680",
+    "semantic_hash": "a73ff7711d86aad06ebe3b76aab96680"
+  },
+  "Sources/NativeBolabolCore/Services/PolishingModelPromptControl.swift": {
+    "mtime": 1785743538.3267844,
+    "ast_hash": "b448a70333ba9ddc38dfa04e0568d534",
+    "semantic_hash": "b448a70333ba9ddc38dfa04e0568d534"
+  },
+  "Sources/NativeBolabolCore/Services/PolishingRequestPolicy.swift": {
+    "mtime": 1785743538.4963117,
+    "ast_hash": "b95be7b7cf62b37e2786671c03d7fb6b",
+    "semantic_hash": "b95be7b7cf62b37e2786671c03d7fb6b"
+  },
+  "Sources/NativeBolabolCore/Services/PolishingWorkflow.swift": {
+    "mtime": 1785743538.4344277,
+    "ast_hash": "a9e6a74cd9e1fd63d628864bf81528dd",
+    "semantic_hash": "a9e6a74cd9e1fd63d628864bf81528dd"
+  },
+  "Sources/NativeBolabolCore/Services/PromptTemplate.swift": {
+    "mtime": 1785743538.4726155,
+    "ast_hash": "9acf27e60c030285a18623ad2c8f7611",
+    "semantic_hash": "9acf27e60c030285a18623ad2c8f7611"
+  },
+  "Sources/NativeBolabolCore/Services/ProviderQuickSwitcherModel.swift": {
+    "mtime": 1785743538.5263014,
+    "ast_hash": "a21aff2508f7cb99aa9cf509263d2c48",
+    "semantic_hash": "a21aff2508f7cb99aa9cf509263d2c48"
+  },
+  "Sources/NativeBolabolCore/Services/RecordingTranscriptionWorkflow.swift": {
+    "mtime": 1785743538.487276,
+    "ast_hash": "dd84988d36bda2c7e44f081f7ba0d18d",
+    "semantic_hash": "dd84988d36bda2c7e44f081f7ba0d18d"
+  },
+  "Sources/NativeBolabolCore/Services/SharedModelsRoot.swift": {
+    "mtime": 1785743538.3347611,
+    "ast_hash": "f8dc81e399d72ebebb83c9734fce3238",
+    "semantic_hash": "f8dc81e399d72ebebb83c9734fce3238"
+  },
+  "Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift": {
+    "mtime": 1785743538.4102323,
+    "ast_hash": "b7286a5a5123f0cefcc6090623ef0dd9",
+    "semantic_hash": "b7286a5a5123f0cefcc6090623ef0dd9"
+  },
+  "Sources/NativeBolabolCore/Services/TranslationPrompt.swift": {
+    "mtime": 1785743538.5332835,
+    "ast_hash": "509838ec517d6a4f730476872a80a239",
+    "semantic_hash": "509838ec517d6a4f730476872a80a239"
+  },
+  "Sources/NativeBolabolCore/Stores/GlossaryStore.swift": {
+    "mtime": 1785743538.0812619,
+    "ast_hash": "c0986bd22ebee4dfc209580d4996d639",
+    "semantic_hash": "c0986bd22ebee4dfc209580d4996d639"
+  },
+  "Sources/NativeBolabolCore/Stores/NoteStore.swift": {
+    "mtime": 1785743538.0903227,
+    "ast_hash": "31aeca5a9f1d020c21a0c5c409eb9e5f",
+    "semantic_hash": "31aeca5a9f1d020c21a0c5c409eb9e5f"
+  },
+  "Sources/NativeBolabolCore/Support/NativeBolabolLog.swift": {
+    "mtime": 1785743538.3048477,
+    "ast_hash": "5de94ff20b332ba1e62f4539c72b2481",
+    "semantic_hash": "5de94ff20b332ba1e62f4539c72b2481"
+  },
+  "Sources/NativeBolabolCore/Support/SidebarLayoutMetrics.swift": {
+    "mtime": 1785743538.3197842,
+    "ast_hash": "9716c5cff977b0dce299c70f480043d2",
+    "semantic_hash": "9716c5cff977b0dce299c70f480043d2"
+  },
+  "Sources/NativeBolabolCore/Support/SpeechCleanupNormalizer.swift": {
+    "mtime": 1785743538.3133411,
+    "ast_hash": "52498bb85755d33b1471ccc17c5a705e",
+    "semantic_hash": "52498bb85755d33b1471ccc17c5a705e"
+  },
+  "Sources/NativeBolabolPolishWorker/main.swift": {
+    "mtime": 1785743538.5477612,
+    "ast_hash": "6c43ee956366ba46107961eb403bb87c",
+    "semantic_hash": "6c43ee956366ba46107961eb403bb87c"
+  },
+  "Tests/NativeBolabolCoreTests/APIProviderSettingsTests.swift": {
+    "mtime": 1785743537.6723468,
+    "ast_hash": "5951a2e137f1a06f9a2fbc2cf3705c19",
+    "semantic_hash": "5951a2e137f1a06f9a2fbc2cf3705c19"
+  },
+  "Tests/NativeBolabolCoreTests/AccessibilityPermissionPromptStateTests.swift": {
+    "mtime": 1785743537.7953885,
+    "ast_hash": "d30e3fec0608c970571de31d45e1cd0d",
+    "semantic_hash": "d30e3fec0608c970571de31d45e1cd0d"
+  },
+  "Tests/NativeBolabolCoreTests/AppTextFullCoverageTests.swift": {
+    "mtime": 1785743537.7416713,
+    "ast_hash": "55bf11f5b721df82f1d57df3333461e1",
+    "semantic_hash": "55bf11f5b721df82f1d57df3333461e1"
+  },
+  "Tests/NativeBolabolCoreTests/ArchiveStatsLocalizationTests.swift": {
+    "mtime": 1785743537.8826435,
+    "ast_hash": "01ba932a37ad2ac9e81493e287836a58",
+    "semantic_hash": "01ba932a37ad2ac9e81493e287836a58"
+  },
+  "Tests/NativeBolabolCoreTests/AudioRecordingTests.swift": {
+    "mtime": 1785743537.641532,
+    "ast_hash": "5f7ab84718ee0c7326b0a5729e56af79",
+    "semantic_hash": "5f7ab84718ee0c7326b0a5729e56af79"
+  },
+  "Tests/NativeBolabolCoreTests/CloudAPIFeatureTests.swift": {
+    "mtime": 1785743537.868479,
+    "ast_hash": "641410cfc4f84dd2858707844c6f155f",
+    "semantic_hash": "641410cfc4f84dd2858707844c6f155f"
+  },
+  "Tests/NativeBolabolCoreTests/CloudProviderStabilizationTests.swift": {
+    "mtime": 1785743537.7129354,
+    "ast_hash": "ca5f755556fc9c44bf1bebe5fdd1d9db",
+    "semantic_hash": "ca5f755556fc9c44bf1bebe5fdd1d9db"
+  },
+  "Tests/NativeBolabolCoreTests/CloudRequestRetryPolicyTests.swift": {
+    "mtime": 1785743537.6571364,
+    "ast_hash": "1b903acf22ca2296961625ae1faa7bc7",
+    "semantic_hash": "1b903acf22ca2296961625ae1faa7bc7"
+  },
+  "Tests/NativeBolabolCoreTests/DomainModelsExhaustiveTests.swift": {
+    "mtime": 1785743537.8393843,
+    "ast_hash": "d8a76b2b7d62b7546e2e84edc1b9a7cb",
+    "semantic_hash": "d8a76b2b7d62b7546e2e84edc1b9a7cb"
+  },
+  "Tests/NativeBolabolCoreTests/FocusedTextInsertionTests.swift": {
+    "mtime": 1785743537.5313606,
+    "ast_hash": "278459f501a59f4d65a24ef51f143182",
+    "semantic_hash": "278459f501a59f4d65a24ef51f143182"
+  },
+  "Tests/NativeBolabolCoreTests/GeminiDictationInstructionTests.swift": {
+    "mtime": 1785743537.8105717,
+    "ast_hash": "d754ac27d5feb7a775a5c9dc1cbf0cdf",
+    "semantic_hash": "d754ac27d5feb7a775a5c9dc1cbf0cdf"
+  },
+  "Tests/NativeBolabolCoreTests/GeneralSettingsTests.swift": {
+    "mtime": 1785743537.6885495,
+    "ast_hash": "791b57ec781d2ee1309c5be2ed3b2985",
+    "semantic_hash": "791b57ec781d2ee1309c5be2ed3b2985"
+  },
+  "Tests/NativeBolabolCoreTests/GlossaryStoreTests.swift": {
+    "mtime": 1785743537.680676,
+    "ast_hash": "4fdacb12bee5d9fef85dc00aacf4e4d6",
+    "semantic_hash": "4fdacb12bee5d9fef85dc00aacf4e4d6"
+  },
+  "Tests/NativeBolabolCoreTests/GlossaryTextRewriterTests.swift": {
+    "mtime": 1785743537.5031257,
+    "ast_hash": "ef5746cec20db1beae59022a04abb1a7",
+    "semantic_hash": "ef5746cec20db1beae59022a04abb1a7"
+  },
+  "Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift": {
+    "mtime": 1785743537.8538713,
+    "ast_hash": "34ae277852c38b8828196ccfea132d1a",
+    "semantic_hash": "34ae277852c38b8828196ccfea132d1a"
+  },
+  "Tests/NativeBolabolCoreTests/HUDProviderSwitcherFeatureTests.swift": {
+    "mtime": 1785743537.6342325,
+    "ast_hash": "5df658aadc14d06a4d748cd9f9ded9da",
+    "semantic_hash": "5df658aadc14d06a4d748cd9f9ded9da"
+  },
+  "Tests/NativeBolabolCoreTests/HUDSpectrumResponseTests.swift": {
+    "mtime": 1785743537.733675,
+    "ast_hash": "adba36d5af191be5b3a83b258e49bb13",
+    "semantic_hash": "adba36d5af191be5b3a83b258e49bb13"
+  },
+  "Tests/NativeBolabolCoreTests/HotkeySessionCoordinatorTests.swift": {
+    "mtime": 1785743537.6112595,
+    "ast_hash": "bf3799b88500384da6326f69a717cd54",
+    "semantic_hash": "bf3799b88500384da6326f69a717cd54"
+  },
+  "Tests/NativeBolabolCoreTests/HotkeySettingsTests.swift": {
+    "mtime": 1785743537.5464764,
+    "ast_hash": "e627d0cb3a16e0e88730152096a2ac3b",
+    "semantic_hash": "e627d0cb3a16e0e88730152096a2ac3b"
+  },
+  "Tests/NativeBolabolCoreTests/LanguagePickerOrderTests.swift": {
+    "mtime": 1785743537.824672,
+    "ast_hash": "a4ae3a5756fdad39ca1d7365d7b30f3a",
+    "semantic_hash": "a4ae3a5756fdad39ca1d7365d7b30f3a"
+  },
+  "Tests/NativeBolabolCoreTests/LocalMLXModelCompatibilityTests.swift": {
+    "mtime": 1785743537.6963468,
+    "ast_hash": "9c555fab011028b8a93f3bf52387ab2d",
+    "semantic_hash": "9c555fab011028b8a93f3bf52387ab2d"
+  },
+  "Tests/NativeBolabolCoreTests/LocalRuleBasedPolishingEngineTests.swift": {
+    "mtime": 1785743537.553706,
+    "ast_hash": "5423f5e1a7fa6a28f58fbec38a112834",
+    "semantic_hash": "5423f5e1a7fa6a28f58fbec38a112834"
+  },
+  "Tests/NativeBolabolCoreTests/MarkdownGenerationPostProcessorTests.swift": {
+    "mtime": 1785743537.8753266,
+    "ast_hash": "66c4059eae5f481e722670c92ed35436",
+    "semantic_hash": "66c4059eae5f481e722670c92ed35436"
+  },
+  "Tests/NativeBolabolCoreTests/ModelOutputSanitizerTests.swift": {
+    "mtime": 1785743537.7887125,
+    "ast_hash": "c58ae2b8bf443d3028bcfc97b154feff",
+    "semantic_hash": "c58ae2b8bf443d3028bcfc97b154feff"
+  },
+  "Tests/NativeBolabolCoreTests/ModelPreparationSnapshotTests.swift": {
+    "mtime": 1785743537.860474,
+    "ast_hash": "2285051f1f7165e852fcebf182b6a228",
+    "semantic_hash": "2285051f1f7165e852fcebf182b6a228"
+  },
+  "Tests/NativeBolabolCoreTests/ModelPresenceVerificationTests.swift": {
+    "mtime": 1785743537.6187243,
+    "ast_hash": "fd667b9e6e6cdc839ec3efc5cc6802c5",
+    "semantic_hash": "fd667b9e6e6cdc839ec3efc5cc6802c5"
+  },
+  "Tests/NativeBolabolCoreTests/NewFeatureRegressionTests.swift": {
+    "mtime": 1785743537.7045302,
+    "ast_hash": "91442b12cb3edaa18c6772a7117fb30b",
+    "semantic_hash": "91442b12cb3edaa18c6772a7117fb30b"
+  },
+  "Tests/NativeBolabolCoreTests/NoteStoreTests.swift": {
+    "mtime": 1785743537.6035647,
+    "ast_hash": "58a2e88cd413c66e82fe1aab227681e4",
+    "semantic_hash": "58a2e88cd413c66e82fe1aab227681e4"
+  },
+  "Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift": {
+    "mtime": 1785743537.7499502,
+    "ast_hash": "749a191fb9f1737094236a00d17a603e",
+    "semantic_hash": "749a191fb9f1737094236a00d17a603e"
+  },
+  "Tests/NativeBolabolCoreTests/OnboardingModelRecommendationTests.swift": {
+    "mtime": 1785749077.7334216,
+    "ast_hash": "0cbff2c4d25b2a4268509bcc4e978b68",
+    "semantic_hash": "0cbff2c4d25b2a4268509bcc4e978b68"
+  },
+  "Tests/NativeBolabolCoreTests/PolishingEngineRegistryTests.swift": {
+    "mtime": 1785743537.764967,
+    "ast_hash": "df0db22c536261298a9c4fad32561a0c",
+    "semantic_hash": "df0db22c536261298a9c4fad32561a0c"
+  },
+  "Tests/NativeBolabolCoreTests/PolishingModelCatalogTests.swift": {
+    "mtime": 1785743537.8464658,
+    "ast_hash": "37fe54189e4cc98701a784c92dc06203",
+    "semantic_hash": "37fe54189e4cc98701a784c92dc06203"
+  },
+  "Tests/NativeBolabolCoreTests/PolishingModelOptionsProviderTests.swift": {
+    "mtime": 1785743537.758067,
+    "ast_hash": "bc8e195d877f1806d562b04abfde8634",
+    "semantic_hash": "bc8e195d877f1806d562b04abfde8634"
+  },
+  "Tests/NativeBolabolCoreTests/PolishingModelReasoningTests.swift": {
+    "mtime": 1785743537.6261833,
+    "ast_hash": "02428d90a75f6b5b3f2410b76be560d0",
+    "semantic_hash": "02428d90a75f6b5b3f2410b76be560d0"
+  },
+  "Tests/NativeBolabolCoreTests/PolishingModelSettingsTests.swift": {
+    "mtime": 1785743537.5385969,
+    "ast_hash": "6a195845a97dcb6add477ef42d2db243",
+    "semantic_hash": "6a195845a97dcb6add477ef42d2db243"
+  },
+  "Tests/NativeBolabolCoreTests/PolishingRequestPolicyTests.swift": {
+    "mtime": 1785743537.5623915,
+    "ast_hash": "93160c5088c9816004e2679411db8436",
+    "semantic_hash": "93160c5088c9816004e2679411db8436"
+  },
+  "Tests/NativeBolabolCoreTests/PolishingWorkflowTests.swift": {
+    "mtime": 1785743537.8036835,
+    "ast_hash": "4767a741598adcf69fa646e0c390c2ed",
+    "semantic_hash": "4767a741598adcf69fa646e0c390c2ed"
+  },
+  "Tests/NativeBolabolCoreTests/PromptTemplateTests.swift": {
+    "mtime": 1785743537.570974,
+    "ast_hash": "9fdb1da91c9397b1ce397494dd090e1d",
+    "semantic_hash": "9fdb1da91c9397b1ce397494dd090e1d"
+  },
+  "Tests/NativeBolabolCoreTests/ProviderQuickSwitcherModelTests.swift": {
+    "mtime": 1785743537.6502829,
+    "ast_hash": "b357425f72d9e1c32cd7e1e49beccf28",
+    "semantic_hash": "b357425f72d9e1c32cd7e1e49beccf28"
+  },
+  "Tests/NativeBolabolCoreTests/RecordingTranscriptionWorkflowTests.swift": {
+    "mtime": 1785743537.773381,
+    "ast_hash": "158250f0a46cfb9b2943996f542e6eea",
+    "semantic_hash": "158250f0a46cfb9b2943996f542e6eea"
+  },
+  "Tests/NativeBolabolCoreTests/ReleaseIdentityTests.swift": {
+    "mtime": 1785743537.6648304,
+    "ast_hash": "f0c037b49333d151a6e85706edf4608f",
+    "semantic_hash": "f0c037b49333d151a6e85706edf4608f"
+  },
+  "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift": {
+    "mtime": 1785743537.7816477,
+    "ast_hash": "ef66e82a90d3269c747eb7bf57c692c0",
+    "semantic_hash": "ef66e82a90d3269c747eb7bf57c692c0"
+  },
+  "Tests/NativeBolabolCoreTests/SharedModelsAndCatalogsTests.swift": {
+    "mtime": 1785743537.4896476,
+    "ast_hash": "052cefb372fc8ffa4eaf3370af361c77",
+    "semantic_hash": "052cefb372fc8ffa4eaf3370af361c77"
+  },
+  "Tests/NativeBolabolCoreTests/SharedModelsRootTests.swift": {
+    "mtime": 1785743537.5872748,
+    "ast_hash": "3a2bb931ab274cbe839e04a6a8c363af",
+    "semantic_hash": "3a2bb931ab274cbe839e04a6a8c363af"
+  },
+  "Tests/NativeBolabolCoreTests/SidebarLayoutMetricsTests.swift": {
+    "mtime": 1785743537.4959552,
+    "ast_hash": "6a3ac66734eb0b87713b5264e1c7cd79",
+    "semantic_hash": "6a3ac66734eb0b87713b5264e1c7cd79"
+  },
+  "Tests/NativeBolabolCoreTests/SpeechCleanupNormalizerTests.swift": {
+    "mtime": 1785743537.4744134,
+    "ast_hash": "1b50f0438cd6c26cfde161e583f9bfdd",
+    "semantic_hash": "1b50f0438cd6c26cfde161e583f9bfdd"
+  },
+  "Tests/NativeBolabolCoreTests/StarterGlossaryAndLanguageRoutingTests.swift": {
+    "mtime": 1785743537.595276,
+    "ast_hash": "93f316adb0125e5a46193b26783d3315",
+    "semantic_hash": "93f316adb0125e5a46193b26783d3315"
+  },
+  "Tests/NativeBolabolCoreTests/TranscriptionBackendTests.swift": {
+    "mtime": 1785743537.5100477,
+    "ast_hash": "17dce5a9c2d34eb21bb58d7f5c4ee87a",
+    "semantic_hash": "17dce5a9c2d34eb21bb58d7f5c4ee87a"
+  },
+  "Tests/NativeBolabolCoreTests/TranscriptionLanguageModeTests.swift": {
+    "mtime": 1785743537.7269433,
+    "ast_hash": "7d3e010296f0d9dea07577cfca3b7632",
+    "semantic_hash": "7d3e010296f0d9dea07577cfca3b7632"
+  },
+  "Tests/NativeBolabolCoreTests/TranscriptionLanguageRoutingTests.swift": {
+    "mtime": 1785743537.5248466,
+    "ast_hash": "a1dbfeb7961d421008c6676e74255cb0",
+    "semantic_hash": "a1dbfeb7961d421008c6676e74255cb0"
+  },
+  "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift": {
+    "mtime": 1785743537.517354,
+    "ast_hash": "93266f60fc73f94f5bb26de93078afac",
+    "semantic_hash": "93266f60fc73f94f5bb26de93078afac"
+  },
+  "Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift": {
+    "mtime": 1785743537.7204392,
+    "ast_hash": "d9a91e55408ec99a24a7dd93789ecd02",
+    "semantic_hash": "d9a91e55408ec99a24a7dd93789ecd02"
+  },
+  "Tests/NativeBolabolCoreTests/TranslationPromptTests.swift": {
+    "mtime": 1785743537.83139,
+    "ast_hash": "788dd55d6e2bb6db1a6e7791299fdf11",
+    "semantic_hash": "788dd55d6e2bb6db1a6e7791299fdf11"
+  },
+  "Tests/NativeBolabolCoreTests/UsageStatisticsTests.swift": {
+    "mtime": 1785743537.8174222,
+    "ast_hash": "d4a078cba5b8fd508491541fe4626aa0",
+    "semantic_hash": "d4a078cba5b8fd508491541fe4626aa0"
+  },
+  "Tests/NativeBolabolCoreTests/UserSpeechLanguagesTests.swift": {
+    "mtime": 1785743537.5796466,
+    "ast_hash": "5f72f15cf6bf1bc76281eefc2be9ff15",
+    "semantic_hash": "5f72f15cf6bf1bc76281eefc2be9ff15"
+  },
+  "Tests/NativeBolabolCoreTests/WorkflowAndSanitizerEdgeCaseTests.swift": {
+    "mtime": 1785743537.4823015,
+    "ast_hash": "1faec7573299d690826048f8d7840b05",
+    "semantic_hash": "1faec7573299d690826048f8d7840b05"
+  },
+  "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md": {
+    "mtime": 1785743537.4483776,
+    "ast_hash": "401e2257baf05f59fea87526437c3254",
+    "semantic_hash": ""
+  },
+  "AI_Workflow_Kit/docs/BOLABOL_STEPS.md": {
+    "mtime": 1785743537.3228421,
+    "ast_hash": "210db7ca01aa66badb22897770e5a45d",
+    "semantic_hash": ""
+  },
+  "BOLABOL_1.0.3_IMPLEMENTATION_PLAN.md": {
+    "mtime": 1785743539.1606853,
+    "ast_hash": "a42ed89380d39022b270ee6dfe710100",
+    "semantic_hash": ""
+  },
+  "BOLABOL_ASR_COREML_INTEGRATION_PLAN.md": {
+    "mtime": 1785743539.0585842,
+    "ast_hash": "5b7b8e2a995c493117db6c1755248cf6",
+    "semantic_hash": ""
+  },
+  "BOLABOL_RENAME_PLAN.md": {
+    "mtime": 1785744000.1779501,
+    "ast_hash": "a582b97df17ea0352e7adc19531a9c4d",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260803_095154_\u043f\u043e\u043d\u044f\u0442\u044c_workflow_\u043f\u0440\u043e\u0435\u043a\u0442\u0430_bolabol__\u0444\u0443\u043d\u043a\u0446\u0438\u0438_orchestra.md": {
+    "mtime": 1785750714.2821562,
+    "ast_hash": "7abecbe4b9b7e198a44103fad8f1be21",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_128x128.png": {
+    "mtime": 1785582616.0392263,
+    "ast_hash": "110e2ecf17c58fb2725ab3393fc5d2cd",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_128x128@2x.png": {
+    "mtime": 1785582616.041081,
+    "ast_hash": "bfe98272824fa255fa3f143e7fccbfbf",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_16x16.png": {
+    "mtime": 1785582616.0366397,
+    "ast_hash": "b16bcd3b4d8c162b925a4f45ea708ec2",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_16x16@2x.png": {
+    "mtime": 1785582616.0373573,
+    "ast_hash": "3f4be1e0394dc320a88580f06a88b668",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_256x256.png": {
+    "mtime": 1785582616.042928,
+    "ast_hash": "bfe98272824fa255fa3f143e7fccbfbf",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_256x256@2x.png": {
+    "mtime": 1785582616.048851,
+    "ast_hash": "5b6df1170037a1f3e6077e066b49e072",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_32x32.png": {
+    "mtime": 1785582616.0377986,
+    "ast_hash": "3f4be1e0394dc320a88580f06a88b668",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_32x32@2x.png": {
+    "mtime": 1785582616.0384052,
+    "ast_hash": "35b268b07ddcfb97e813240fb4939c6c",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_512x512.png": {
+    "mtime": 1785582616.0542157,
+    "ast_hash": "5b6df1170037a1f3e6077e066b49e072",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/AppIcon.iconset/icon_512x512@2x.png": {
+    "mtime": 1785582616.0733461,
+    "ast_hash": "0eb3e5a35bbb66c504ec026a11b2d549",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/Logos/BOLABOL_LOGO.svg": {
+    "mtime": 1785570999.8681066,
+    "ast_hash": "777352f2ee280349ff39f5411cfbf8f3",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/Logos/BOLABOL_LOGO_Full.svg": {
+    "mtime": 1785570999.8695135,
+    "ast_hash": "25ff3f91b50559221c53d8d6c675e151",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/Logos/BOLABOL_Wordmark.svg": {
+    "mtime": 1785570999.8706467,
+    "ast_hash": "97d32388657570cf775367d93ffa8ce1",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Resources/Logos/BOLABOL_status_bar_icon.svg": {
+    "mtime": 1785570999.871562,
+    "ast_hash": "435b987b9b448e838eabf1d4bdaaa6d6",
     "semantic_hash": ""
   }
 }

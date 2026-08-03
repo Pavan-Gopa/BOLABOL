@@ -31,6 +31,7 @@ Human ↔ Orchestrator only (control plane)
   → Human: новое окно → Coder
   → Coder: code + FEEDBACK waiting_review → «вернись к оркестратору»
   → Human → Orchestrator «статус»
+  → Orchestrator: graphify rebuild по последнему Coder diff
   → Orchestrator выдаёт kick Reviewer
   → Human: новое окно → Reviewer
   → Reviewer: APPROVED | CHANGES_REQUESTED → «вернись к оркестратору»
@@ -77,7 +78,9 @@ If only coverage is thin → Tester **adds tests in the same turn**, re-runs, th
 ## Hard rules
 
 1. **Graphify first.** Before large exploration: `graphify query` on `graphify-out/graph.json`.
-2. **Graphify update.** Orchestrator runs `graphify_rebuild.sh` after each POST (green cycle).
+2. **Graphify update.** A new Orchestrator rebuilds before starting work. Orchestrator
+   then runs `graphify_rebuild.sh` after every Coder handoff (including fix/retry)
+   before Reviewer, and again after each POST green cycle.
 3. Keep project **testable** every step: `swift test` (and QA scripts when on B11 or when STATE requires).
 4. **One step at a time** (B0…B12). No skipping stop-gates.
 5. Diff **only** in `STATE.yaml` → `target_files`.

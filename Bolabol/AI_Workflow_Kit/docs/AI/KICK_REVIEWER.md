@@ -15,6 +15,7 @@
 - НЕ чинишь баги сам
 - НЕ git commit / push
 - Вердикт: APPROVED или CHANGES_REQUESTED в FEEDBACK.md
+- Начинаешь review только после Orchestrator Graphify rebuild по последнему Coder diff
 
 ## Проект
 Native macOS Swift 6 app. Train 1.0.3: primary+additional languages + Canary Core ML.
@@ -34,6 +35,8 @@ Contract: AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
 ## Graphify
 cd "/Users/pavan/Documents/AI Projects/Bolabol"
 graphify query "…" --graph graphify-out/graph.json
+Если свежий Coder symbol/path отсутствует или граф явно stale — остановись и верни
+Human к Orchestrator для rebuild; не продолжай review по старому графу.
 
 ## Сдача
 Заполни FEEDBACK.md review sections + RESULT: approved | changes_requested.

@@ -16,7 +16,9 @@ cd "/Users/pavan/Documents/AI Projects/Bolabol"
 
 1. Читаешь `STATE.yaml` + `FEEDBACK.md` (+ `REPORT.md` / `BUG_REPORT.md` при QA).
 2. Обновляешь STATE / checkpoints / next_actor.
-3. **Всегда** выдаёшь **полный copy-paste kick-промпт** для следующего агента
+3. После каждого завершённого Coder handoff (включая fix/retry) запускаешь
+   `graphify_rebuild.sh` **до** kick Reviewer.
+4. **Всегда** выдаёшь **полный copy-paste kick-промпт** для следующего агента
    (новое терминальное окно = пустой контекст).
 
 | Агент | Промпт даёт | Откуда шаблон |
@@ -62,7 +64,8 @@ Plan files:
 
 1. Read `STATE.yaml` + `FEEDBACK.md` (+ test reports if relevant).
 2. Sync STATE if worker finished but STATE still stale.
-3. Branch **and always end with a full kick prompt** when `next_actor` is a worker:
+3. If Coder just finished implementation or a fix, rebuild Graphify before Reviewer.
+4. Branch **and always end with a full kick prompt** when `next_actor` is a worker:
 
 ### A) `review.status == approved` and implementation done
 
@@ -83,6 +86,7 @@ Plan files:
 
 - `attempts += 1`, same step, `next_actor: coder`
 - **Kick Coder** с конкретным списком из FEEDBACK §5
+- После возврата Coder: Graphify rebuild → **Kick Reviewer**
 
 ### C) `attempts >= 3`
 
@@ -91,6 +95,7 @@ Plan files:
 
 ### D) `waiting_review` / `next_actor: reviewer`
 
+- Ensure Graphify was rebuilt after the latest Coder diff
 - **Kick Reviewer** (scope, target_files, Done checklist, commands)
 
 ### E) `pending` / `next_actor: coder`
@@ -130,11 +135,18 @@ cd "/Users/pavan/Documents/AI Projects/Bolabol"
 - Scope: **only** `Bolabol/` under monorepo git root
 - **Commit + tag + push (if remote pushable)** only from Orchestrator after cycle policy
 
-## Graphify (каждый POST-цикл)
+## Graphify (перед началом работы, после каждого Coder и каждого POST-цикла)
 
 ```bash
 ./AI_Workflow_Kit/script/graphify_rebuild.sh
 ```
+
+- **New Orchestrator / first interaction:** rebuild before issuing any worker kick
+  so the session starts from the current working tree rather than inherited graph state.
+- **Coder handoff:** rebuild immediately before Reviewer so review queries see the
+  latest product code. This also applies after every Coder fix/retry.
+- **POST cycle:** rebuild again after QA green / POST to include Tester-added tests,
+  QA scripts, and final workflow artifacts.
 
 Update `STATE.yaml` → `checkpoint:` after PRE/POST.
 

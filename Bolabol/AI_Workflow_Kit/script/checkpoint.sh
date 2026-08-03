@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# checkpoint.sh — git checkpoints for Bolabol 1.0.3 (B0–B12)
+# checkpoint.sh — scoped git checkpoints for Bolabol workflow steps
 #
 # Scoped to Bolabol/ under the AI Projects monorepo — never git add -A on
 # the monorepo root without path filter.
@@ -40,10 +40,12 @@ fi
 
 resolve_step() {
   local step="${1:-}"
-  if [[ "$step" =~ ^B([0-9]|1[0-2])$ ]]; then
+  if [[ "$step" =~ ^B([0-9]|1[0-2])$ ]] \
+    || [[ "$step" =~ ^S([0-9]|1[0-5])$ ]] \
+    || [[ "$step" =~ ^S1(b|c)$ ]]; then
     return 0
   fi
-  die "step must be B0..B12; got: ${step:-empty}"
+  die "step must be B0..B12, S0..S15, S1b, or S1c; got: ${step:-empty}"
 }
 
 pre_tag_for()  { echo "${PRODUCT_PREFIX}/pre-${1}"; }
@@ -106,7 +108,7 @@ cmd_pre() {
     return 0
   fi
   commit_if_dirty_scoped "chore(${PRODUCT_PREFIX}): checkpoint before ${step}"
-  git tag -a "$tag" -m "Bolabol 1.0.3 checkpoint before ${step}"
+  git tag -a "$tag" -m "Bolabol checkpoint before ${step}"
   echo "created tag $tag → $(git rev-parse --short HEAD)"
   push_all "$tag"
   echo "PRE-CHECK DONE: $tag"
@@ -122,7 +124,7 @@ cmd_post() {
     die "tag $tag already exists — refuse to overwrite. Delete manually if intentional."
   fi
   commit_if_dirty_scoped "feat(${PRODUCT_PREFIX}): ${step} — ${detail}"
-  git tag -a "$tag" -m "Bolabol 1.0.3 ${step} done: ${detail}"
+  git tag -a "$tag" -m "Bolabol ${step} done: ${detail}"
   echo "created tag $tag → $(git rev-parse --short HEAD)"
   push_all "$tag"
   echo "POST-CHECK DONE: $tag"
@@ -156,8 +158,8 @@ cmd_rollback() {
 usage() {
   cat <<'EOF'
 Usage:
-  ./AI_Workflow_Kit/script/checkpoint.sh pre <B0..B12>
-  ./AI_Workflow_Kit/script/checkpoint.sh post <B0..B12> [description]
+  ./AI_Workflow_Kit/script/checkpoint.sh pre <B0..B12|S0..S15|S1b|S1c>
+  ./AI_Workflow_Kit/script/checkpoint.sh post <B0..B12|S0..S15|S1b|S1c> [description]
   ./AI_Workflow_Kit/script/checkpoint.sh list
   ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post <B0..B12>
 

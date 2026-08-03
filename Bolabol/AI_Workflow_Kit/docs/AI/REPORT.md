@@ -60,8 +60,6 @@ Total B3 delta: +6 tests (UserSpeechLanguages +3, SettingsLocalization +2, Onboa
 
 **RESULT: qa_green**
 
----
-
 # RENAME — Tester Verification (R2)
 
 | Field | Value |
@@ -660,3 +658,87 @@ APP_VERSION=1.0.3 APP_BUILD=1 ./script/build_release_dmg.sh
 - **No git commit / push**.
 
 **RESULT: qa_green**
+
+---
+
+# Step S1b — Tester QA: OnboardingModelRecommendation ranking
+
+| Field | Value |
+|-------|-------|
+| Step | S1b — Ranking pure function |
+| Date | 2026-08-03 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+
+## Commands run
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+
+graphify query "OnboardingModelRecommendation topThree TranscriptionModelDescriptor" --graph graphify-out/graph.json
+# PASS — BFS query completed against graphify-out/graph.json
+
+swift test
+# Test run with 486 tests in 4 suites passed
+
+./script/qa/run_all.sh
+# Passed: 19  Failed: 0
+
+swift package clean
+APP_VERSION=1.0.4 ./script/build_and_run.sh --verify
+# Build of product 'NativeBolabol' complete; --verify returned successfully
+
+pgrep -x Bolabol
+# running Bolabol process observed after the fresh build
+
+plutil -p dist/Bolabol.app/Contents/Info.plist
+# CFBundleShortVersionString => "1.0.4"
+```
+
+## Pass counts
+
+- **486 tests in 4 suites** — green (481 baseline; +5 new S1b tests).
+- QA gate: **19/19 steps passed** — 0 failures.
+- Fresh app build and launch verification: **PASS**; `Bolabol.app` opened only after both product builds completed and `--verify` confirmed the process.
+- Manual ranking-helper UI verification: **N/A**; S1b has no visible UI state. Fresh application launch was verified instead.
+
+## New tests added
+
+| File | Test | Covers |
+|------|------|--------|
+| `OnboardingModelRecommendationTests.swift` | `onboardingModelRecommendationUsesCanaryFlashForEveryCompactLanguagePair` | All `en/de/fr/es` primary/additional combinations with Canary Flash, Large v3, Turbo order |
+| `OnboardingModelRecommendationTests.swift` | `onboardingModelRecommendationUsesR3OrderForOtherLanguagePairs` | Non-compact `zh+en` R3 order: Large v3, Turbo, Canary 1B |
+| `OnboardingModelRecommendationTests.swift` | `onboardingModelRecommendationNormalizesRussianAdditionalLanguageCode` | Case/whitespace normalization when Russian is additional |
+| `OnboardingModelRecommendationTests.swift` | `onboardingModelRecommendationCapsResultAtThreeModels` | Explicit maximum-three invariant |
+| `OnboardingModelRecommendationTests.swift` | `onboardingModelRecommendationAcceptsOnlySpeechLanguageInputs` | Compile-time API guard: only primary, additional, catalog; no UI language input |
+
+`onboardingModelRecommendationDoesNotReturnDuplicateModels` was strengthened to assert the exact R1 output while the catalog contains a duplicate ID.
+
+## Gap-hunt mapping
+
+| # | Requirement | Guard |
+|---|-------------|-------|
+| 1 | R1: Russian primary or additional puts GigaAM first | `onboardingModelRecommendationMatchesLanguageMatrix`; `onboardingModelRecommendationAppliesRussianRuleWhenAdditionalIsRussian` |
+| 2 | `ru+en` and `ru+ru` matrix | `onboardingModelRecommendationMatchesLanguageMatrix` |
+| 3 | R2 `en/de/fr/es`: Canary Flash, Large v3, Turbo | `onboardingModelRecommendationUsesCanaryFlashForEveryCompactLanguagePair` |
+| 4 | `en+es`, `en+en`, `de+fr` matrix | `onboardingModelRecommendationMatchesLanguageMatrix` |
+| 5 | R3 other pairs: Large v3, Turbo, available fallback | `onboardingModelRecommendationUsesR3OrderForOtherLanguagePairs`; `onboardingModelRecommendationUsesParakeetWhenCanary1BIsUnavailable`; `onboardingModelRecommendationUsesFlashAsFinalR3Fallback` |
+| 6 | `hi+en` matrix | `onboardingModelRecommendationMatchesLanguageMatrix`; `onboardingModelRecommendationCapsResultAtThreeModels` |
+| 7 | Russian only in additional | `onboardingModelRecommendationAppliesRussianRuleWhenAdditionalIsRussian`; `onboardingModelRecommendationNormalizesRussianAdditionalLanguageCode` |
+| 8 | Language-code case and whitespace normalization | `onboardingModelRecommendationNormalizesSpeechLanguageCodes`; `onboardingModelRecommendationNormalizesRussianAdditionalLanguageCode` |
+| 9 | Missing GigaAM shifts available models upward | `onboardingModelRecommendationCollapsesMissingGigaAM` |
+| 10 | Missing Canary 1B uses next available fallback | `onboardingModelRecommendationUsesParakeetWhenCanary1BIsUnavailable` |
+| 11 | Empty catalog returns `[]` | `onboardingModelRecommendationReturnsEmptyForEmptyCatalog` |
+| 12 | Duplicate IDs do not duplicate output | `onboardingModelRecommendationDoesNotReturnDuplicateModels` |
+| 13 | Result is capped at three | `onboardingModelRecommendationCapsResultAtThreeModels` |
+| 14 | Ranking is independent of UI language | `onboardingModelRecommendationAcceptsOnlySpeechLanguageInputs`; `check_s1b_scope.sh` confirms no UI call site |
+| 15 | No S1c UI, engine wiring, or Canary/GigaAM runtime integration | `check_s1b_scope.sh`; `check_no_canary_product.sh`; `check_package_and_targets.sh` all passed |
+
+## Scope and notes
+
+- Tester changed only `Tests/**`, `script/qa/**`, this report, and FEEDBACK §6. No `Sources/**` product code was changed by Tester.
+- `check_no_canary_product.sh` now permits the S1b ranking helper's model IDs only; `check_s1b_scope.sh` rejects UI/runtime imports, engine/store/process wiring, ranking call sites outside the helper, and ASR candidate references outside the helper or existing help copy.
+- No S1c UI, engine wiring, or Canary/GigaAM runtime integration was added.
+- `BUG_REPORT.md` was not changed; no product bugs found. `bugs_open: 0`.
+
+**RESULT: `qa_green`**

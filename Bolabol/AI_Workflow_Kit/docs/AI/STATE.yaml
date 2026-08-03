@@ -1,12 +1,14 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S1b
+current_step: S1c
 step_description: >-
-  OnboardingModelRecommendation.topThree. Review APPROVED. Awaiting Tester QA.
+  Onboarding localModels screen: up to three dynamic cards bound directly to
+  OnboardingModelRecommendation.topThree; Back recalculates; download optional.
 target_files:
-  - Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift
-  - Tests/NativeBolabolCoreTests/OnboardingModelRecommendationTests.swift
+  - Sources/NativeBolabol/Views/OnboardingView.swift
+  - Sources/NativeBolabolCore/Services/AppText.swift
+  - Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift
 completed_steps:
   - S0
   - S1
@@ -14,36 +16,40 @@ completed_steps:
   - S1b
 skipped_steps: []
 implementation:
-  status: done
+  status: pending
   attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: 'Reviewer APPROVED pure ranking R1/R2/R3'
+  verdict: null
+  note: ''
 qa:
-  status: green
+  status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: S1b
+  suite: S1c
   bugs_open: 0
-  note: '486 tests in 4 suites; QA 19/19; fresh APP_VERSION=1.0.4 build opened'
-next_actor: orchestrator
+  note: ''
+next_actor: coder
 track: UX
 prior_track: RENAME
 working_roots:
   - Bolabol
 checkpoint:
   last_pre_tag: bolabol/pre-S1b
-  last_post_tag: bolabol/rename-done
-  last_commit: bce3c93
+  last_post_tag: bolabol/S1b-done
+  last_commit: 59dafa7
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  S1b implementation/review/QA complete. Orchestrator closes POST.
+  Implement only S1c. Replace the hard-coded onboarding model order with
+  OnboardingModelRecommendation.topThree(primary:additional:available:).
+  Screen 3 is optional: Next/Skip must not require a download or silently
+  change the current/default engine. Recommended badge belongs only to slot 1.
+  Add EN source copy and focused tests. Do not implement S2/S3/S4+.
 notes: |
-  Graphify baseline refreshed by new Orchestrator on 2026-08-03:
-  full local code-only rebuild, 3613 nodes / 9185 edges,
-  OnboardingModelRecommendation present, 0 stale NativeBlaboom source paths.
-  Tester qa_green: 486 tests, QA 19/19, fresh 1.0.4 app opened.
-  Next: POST bolabol/S1b-done, graphify, then open S1c.
+  S1b POST: bolabol/S1b-done at 59dafa7.
+  Graphify refreshed after POST on 2026-08-03: 4174 nodes / 9723 edges.
+  OnboardingView references TranscriptionModelStore; its current screen 3 uses
+  a hard-coded preferred-ID list and blocks Next until setup is ready.
+  S1c must use the S1b helper and make model setup optional.

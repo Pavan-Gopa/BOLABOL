@@ -3,34 +3,28 @@
 
 current_step: S1
 step_description: >-
-  Onboarding language UX: UI language → primary dictation → additional working
-  language; clear copy; change later in Settings. No model cards yet (S1c).
+  Onboarding language UX. Review APPROVED (471 tests). Awaiting Tester.
 target_files:
   - Sources/NativeBlaboom/Views/OnboardingView.swift
-  - Sources/NativeBlaboom/Stores/GeneralSettingsStore.swift
   - Sources/NativeBlaboomCore/Services/AppText.swift
-  - Sources/NativeBlaboomCore/Models/UserSpeechLanguages.swift
-  - Sources/NativeBlaboomCore/Models/LanguagePickerOrder.swift
-  - Tests/NativeBlaboomCoreTests/OnboardingLocalizationTests.swift
-  - Tests/NativeBlaboomCoreTests/UserSpeechLanguagesTests.swift
 completed_steps:
   - S0
 skipped_steps: []
 implementation:
-  status: pending
+  status: waiting_review
   attempts: 0
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: 'Reviewer APPROVED S1 checklist 1–8; 471 green'
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: null
+  suite: S1
   bugs_open: 0
   note: ''
-next_actor: coder
+next_actor: tester
 track: UX
 prior_track: null
 working_roots:
@@ -38,13 +32,11 @@ working_roots:
 checkpoint:
   last_pre_tag: blaboom/pre-S1
   last_post_tag: blaboom/S0-done
-  last_commit: 57c1e02
+  last_commit: e439314
 plan_files:
   - BLABOOM_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  S1 — Onboarding: three language steps only (UI / primary / additional).
-  See plan §3.1 and ASR_COREML_STEPS S1. Out of scope: model ranking cards (S1b/S1c).
+  S1 review approved — Tester validates suite + onboarding copy contracts.
 notes: |
-  Train 1.0.4 ASR Core ML opened. S0 kit bootstrap by Orchestrator.
-  Runtime: Core ML for new ASR later; this step is UX only.
+  After Tester green: POST S1, open S1b ranking pure function.

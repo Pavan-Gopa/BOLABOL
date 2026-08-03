@@ -320,11 +320,8 @@ struct OnboardingView: View {
             isSelected:
               settingsStore.speechLanguages.additionalLanguageCode == language.code
           ) {
-            settingsStore.speechLanguages = UserSpeechLanguages(
-              primaryLanguageCode:
-                settingsStore.speechLanguages.primaryLanguageCode,
-              additionalLanguageCode: language.code
-            )
+            settingsStore.speechLanguages = settingsStore.speechLanguages
+              .settingAdditional(language.code)
           }
         }
       }

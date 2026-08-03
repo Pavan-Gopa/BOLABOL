@@ -1,4 +1,4 @@
-# FEEDBACK — Blaboom 1.0.3
+# FEEDBACK — Blaboom 1.0.4 (ASR Core ML)
 
 > Workers fill sections on handoff. Orchestrator reads this every «статус».
 
@@ -8,7 +8,7 @@
 
 | Field | Value |
 |-------|--------|
-| Step | B12 |
+| Step | S1 |
 | Actor | reviewer |
 | Timestamp | 2026-08-03 |
 | RESULT | `approved` |
@@ -22,28 +22,13 @@ Commands run and outcomes:
 ```bash
 cd "/Users/pavan/Documents/AI Projects/Blaboom"
 
-# 1) Full unit test suite
+# 1) Graphify queries
+graphify query "OnboardingView primary additional uiLanguage speechLanguages" --graph graphify-out/graph.json
+graphify path "OnboardingView" "GeneralSettingsStore" --graph graphify-out/graph.json
+
+# 2) Full unit test suite
 swift test
-#   ✔ Test run with 471 tests in 4 suites passed after 0.052 seconds
-
-# 2) Full QA gate (unit tests + structural contract scripts)
-./script/qa/run_all.sh
-#   Passed: 18   Failed: 0
-
-# 3) Build and verify dev app bundle (version 1.0.3)
-APP_VERSION=1.0.3 ./script/build_and_run.sh verify
-#   Build of product 'NativeBlaboom' complete!
-#   dist/Blaboom.app created; Info.plist CFBundleShortVersionString = 1.0.3
-
-# 4) Build release DMG package (version 1.0.3, build 1)
-APP_VERSION=1.0.3 APP_BUILD=1 ./script/build_release_dmg.sh
-#   DMG created at dist/Blaboom.dmg (25 MB)
-#   Signed with identity: Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)
-#   Handoff folder generated at dist/handoff/ with SHA256SUMS.txt
-
-# 5) Optional WhisperKit Tiny smoke script
-./script/smoke_whisperkit_tiny.sh
-#   Skipped / Blocked: missing fixture /Users/pavan/Documents/AI Projects/jfk.wav (code 2)
+#   ✔ Test run with 471 tests in 4 suites passed after 0.046 seconds
 ```
 
 No `git commit` / `git push`.
@@ -52,77 +37,81 @@ No `git commit` / `git push`.
 
 ## §2 — Step compliance (Coder)
 
-- [x] Version **1.0.3** confirmed across `Sources/NativeBlaboom/Resources/Info.plist`, `script/build_and_run.sh`, `script/build_release_dmg.sh`, `docs/RELEASE.md`, and `docs/RELEASE_NOTES.md`.
-- [x] Dev build verified via `APP_VERSION=1.0.3 ./script/build_and_run.sh verify` (`dist/Blaboom.app` generated with `CFBundleShortVersionString` = `1.0.3`).
-- [x] Release DMG built via `APP_VERSION=1.0.3 APP_BUILD=1 ./script/build_release_dmg.sh` (`dist/Blaboom.dmg` 25 MB, Developer ID signed, handoff files generated with SHA256 checksums).
-- [x] Artifact paths, sizes, timestamps, and checksums recorded in `AI_Workflow_Kit/docs/AI/REPORT.md`.
-- [x] App launch & smoke verified (`./script/build_and_run.sh verify` launched process).
-- [x] Optional `smoke_whisperkit_tiny.sh` attempted and skip/blocked status documented (missing `/Users/pavan/Documents/AI Projects/jfk.wav`).
-- [x] Full unit test suite executed and GREEN — 471 tests in 4 suites (`swift test`).
-- [x] QA gate executed and GREEN — 18/18 steps passed (`./script/qa/run_all.sh`).
-- [x] `AI_Workflow_Kit/docs/AI/REPORT.md` updated with Step B12 section (commands, artifacts, version evidence, manual matrix M1–M3/M7–M10 PASS, M4–M6 N/A Canary).
-- [x] `AI_Workflow_Kit/docs/AI/COVERAGE.md` updated with manual matrix B12 pass status.
-- [x] Notarization status explicitly stated (skipped as OPTIONAL, Developer ID signed).
+- [x] Three distinct onboarding language screens configured: Step 0 (Interface language), Step 1 (Main dictation language / primary), Step 2 (Additional working language / additional).
+- [x] Clear EN titles, hints, and notes added to AppText for screens 0–2.
+- [x] Clear hint on screens 0–2: "You can change this later in Settings" (Settings → General for UI, Settings → Hotkey → Your Languages for Primary/Additional).
+- [x] Primary+additional speech languages persisted via `GeneralSettingsStore.speechLanguages` (single source of truth).
+- [x] Speech pickers use `LanguagePickerOrder.speechLanguages`; UI picker uses `LanguagePickerOrder.uiLanguages`.
+- [x] Additional screen provides "Same as primary" toggle and updates speech languages via `.settingAdditional(...)`.
+- [x] Copy strictly avoids forbidden terminology ("target always output" / "always force output").
+- [x] All 471 unit tests green (`swift test`).
+- [x] Step indices and footer Back / Next / Skip / Get Started buttons consistent.
 - [x] No `git commit` / `git push`.
 
 ---
 
 ## §3 — Invariants (Coder)
 
-- `CFBundleShortVersionString` is 1.0.3 across all Info.plist files and build scripts.
-- Release DMG `dist/Blaboom.dmg` created freshly (2026-08-03 10:32, 25MB, Developer ID signed).
-- ZERO Python dependency in `Sources/` (`check_no_python_in_sources.sh`).
-- Zero Canary product code in `Sources/` or `Package.swift` (`check_no_canary_product.sh`).
+- Primary/additional terminology strictly preserved — NEVER "target always output".
+- Code modified ONLY in target files allowed for S1.
+- No Canary/GigaAM/model ranking (S1b/S1c out of scope).
 - 471 unit tests green.
-- 18 QA gate scripts green.
 - No `git commit` / `git push`.
 
 ---
 
 ## §4 — Comments / structure (Coder)
 
-- `Sources/NativeBlaboom/Resources/Info.plist`: updated `CFBundleShortVersionString` to `1.0.3`.
-- `script/build_and_run.sh`: added `APP_VERSION="${APP_VERSION:-1.0.3}"` and `APP_BUILD="${APP_BUILD:-$(date +%Y%m%d%H%M)}"` and updated Info.plist generation template to output `CFBundleShortVersionString` and `CFBundleVersion`.
-- `dist/Blaboom.dmg` & `dist/handoff/`: freshly generated 1.0.3 release DMG package with `install.sh` and `SHA256SUMS.txt`.
-- `AI_Workflow_Kit/docs/AI/COVERAGE.md`: updated manual matrix status for B12 release build verification.
-- `AI_Workflow_Kit/docs/AI/REPORT.md`: appended Step B12 section.
-- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`: updated for Step B12 handoff with RESULT `waiting_review`.
+- `Sources/NativeBlaboom/Views/OnboardingView.swift`: updated `additionalLanguageStep` picker action to use `.settingAdditional(...)`.
+- `Sources/NativeBlaboomCore/Services/AppText.swift`: updated English strings for `.onboardingChooseLanguageTitle`, `.onboardingChooseLanguageHint`, `.onboardingLanguageNote`, `.onboardingPrimaryLanguageTitle`, `.onboardingPrimaryLanguageHint`, `.onboardingPrimaryLanguageBody`, `.onboardingAdditionalLanguageTitle`, `.onboardingAdditionalLanguageHint`, `.onboardingAdditionalLanguageBody` to clearly separate UI language from primary and additional speech languages and include settings hints.
 
 ---
 
 ## §5 — Reviewer decision
 
-- **Verdict**: `[APPROVED]`
-- **Step**: B12 — Test build 1.0.3 (LAST)
-- **Reviewer Checks**:
-  1. ✅ `CFBundleShortVersionString` is 1.0.3 across dev app (`dist/Blaboom.app`), release app (`dist/release/Blaboom.app`), Info.plist, build scripts, RELEASE.md, and RELEASE_NOTES.md.
-  2. ✅ Fresh B12 DMG/app timestamps (2026-08-03 10:32).
-  3. ✅ REPORT documents 1.0.3 release artifacts, smoke verification, M4–M6 N/A Canary, and optional notarization skip.
-  4. ✅ Honest release notes: zero Canary product ship claim.
-  5. ✅ `swift test` (471/471) + `run_all.sh` (18/18) fully GREEN.
-  6. ✅ Scope clean (no B7–B10 Canary product reopened).
+[APPROVED]
+
+### Step S1 Review Checklist:
+- [x] **1. UI language vs primary vs additional**: Three distinct concepts and screens in onboarding (Step 0: Interface language, Step 1: Main dictation language, Step 2: Additional working language).
+- [x] **2. EN copy + Settings path hints**: English strings provide clear distinctions and hints directing users to Settings → General for UI, and Settings → Hotkey → Your Languages for speech languages.
+- [x] **3. Additional ≠ "target always output"**: Terminology is strictly compliant; no "target always output" wording.
+- [x] **4. speechLanguages SoT & Same as primary**: Speech languages utilize `GeneralSettingsStore.speechLanguages` single source of truth and update properly via `.settingAdditional(...)`.
+- [x] **5. LanguagePickerOrder**: Appropriate ordering lists applied (`uiLanguages` vs `speechLanguages`).
+- [x] **6. No scope creep**: No changes made to Canary/GigaAM, S1b/S1c ranking, or engines.
+- [x] **7. swift test green**: `swift test` passed cleanly with 471 tests passing across 4 test suites.
+- [x] **8. Target files only**: Diff is strictly constrained to `Sources/NativeBlaboom/Views/OnboardingView.swift` and `Sources/NativeBlaboomCore/Services/AppText.swift`.
+
+Verdict: Step S1 changes fully approved.
 
 ---
 
-## §6 — Tester QA (B12 re-verify)
+## §6 — Tester QA
 
-- **Verdict**: `qa_green`
-- **Step**: B12 — Test build 1.0.3 (independent Tester confirmation, no rebuild)
-- **Tester Checks**:
-  1. ✅ `swift test` — **471 tests in 4 suites passed** (matches ~471 claim).
-  2. ✅ `./script/qa/run_all.sh` — **18/18 passed, 0 failed**.
-  3. ✅ `dist/Blaboom.app/Contents/Info.plist` — `CFBundleShortVersionString` = **1.0.3** (plutil).
-  4. ✅ `dist/release/Blaboom.app/Contents/Info.plist` — `CFBundleShortVersionString` = **1.0.3** (plutil); codesign `Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)`.
-  5. ✅ `dist/Blaboom.dmg` — exists, 26,388,418 bytes, timestamp 2026-08-03 10:32.
-  6. ✅ REPORT B12 section complete — M4–M6 N/A Canary (ADR-012), notarization optional skip noted.
-  7. ✅ `docs/RELEASE_NOTES.md` — Canary NO-GO, **no product ship claim** ("not shipped in 1.0.3").
-  8. ✅ SHA256 handoff — `dist/handoff/SHA256SUMS.txt` recomputed and matches both DMG copies + install.sh exactly.
-- **Gap-hunt**: No-gap — checksums verified, suite + artifacts solid; no new tests/scripts added.
-- **No product changes** (`Sources/**` untouched); **no git commit / push**.
+| Field | Value |
+|-------|--------|
+| Actor | tester |
+| Timestamp | 2026-08-03 |
+| RESULT | `qa_green` |
+
+Commands run:
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Blaboom"
+swift test          # ✔ 473 tests in 4 suites passed (471 → +2 Tester gap tests)
+./script/qa/run_all.sh  # ✔ Passed: 18   Failed: 0
+```
+
+Must-verify: EN onboarding keys resolve (no raw-key) ✅ · no "target always output" / "always force output" in new onboarding speech copy ✅ · diff scoped to OnboardingView + AppText EN, no engines ✅ · `settingAdditional` covered ✅.
+
+New tests added (`Tests/NativeBlaboomCoreTests/OnboardingLocalizationTests.swift`):
+- `onboardingSpeechLanguageBodiesPointToRealSettingsSections` — primary/additional bodies + UI-note carry "change this later in Settings" and path segments match real Settings section labels (Hotkey / Your Languages / General).
+- `onboardingChooseLanguageStepSeparatesUiFromDictation` — Step-0 title = interface, hint UI-only + dictation unaffected.
+- Extended `onboardingSpeechLanguageCopyAvoidsTargetAlwaysOutputTerminology` — scan now includes "force output" / "always force" across all 15 locales.
+
+No gaps left: settingAdditional persistence and same-as-primary already guarded (`UserSpeechLanguagesTests`, `onboardingAndSettingsSameAsPrimaryCopyMatch`). No bugs opened. `bugs_open: 0`. Full details in `AI_Workflow_Kit/docs/AI/REPORT.md` § S1.
 
 ---
 
 ## Handoff line (all)
 
-> Готово. Вернись к оркестратору и скажи «статус».
-
+> Готово. Вернись к оркестратору и скажи статус.

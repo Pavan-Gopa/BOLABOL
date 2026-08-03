@@ -1110,8 +1110,8 @@ public enum AppText {
             .chooseLocalPolishingModelShort: "Choose and download a local polishing model.",
             // Onboarding
             .onboardingWelcomeTitle: "Welcome to Blaboom",
-            .onboardingChooseLanguageTitle: "Choose your language",
-            .onboardingChooseLanguageHint: "You can change this anytime in Settings → General.",
+            .onboardingChooseLanguageTitle: "Interface language",
+            .onboardingChooseLanguageHint: "UI only (menus & help). Does not affect dictation.",
             .onboardingHowToTranscribe: "How do you want to transcribe?",
             .onboardingLocalTitle: "Local (Parakeet + Whisper)",
             .onboardingLocalBody: "On-device, private, works offline. Download a model once and you're set.",
@@ -1137,7 +1137,7 @@ public enum AppText {
             .onboardingSkip: "Skip",
             .onboardingGetStarted: "Get Started",
             .onboardingShowTour: "Show Welcome Tour",
-            .onboardingLanguageNote: "Interface language: %@. Change anytime in Settings → General.",
+            .onboardingLanguageNote: "Interface language: %@. You can change this later in Settings → General.",
             .onboardingPermissionsGrant: "Grant",
             .onboardingGlossaryCreate: "Create Glossary",
             .onboardingGlossaryCreated: "Glossary created!",
@@ -1145,12 +1145,12 @@ public enum AppText {
             // Copy intentionally never calls additional a "target" / "always
             // output" language (plan §3.1). Full 15-locale maps land in B5;
             // other locales fall back to English until then.
-            .onboardingPrimaryLanguageTitle: "Primary language",
-            .onboardingPrimaryLanguageHint: "The language you usually dictate in.",
-            .onboardingPrimaryLanguageBody: "Primary language: %@",
-            .onboardingAdditionalLanguageTitle: "Additional language",
+            .onboardingPrimaryLanguageTitle: "Main dictation language",
+            .onboardingPrimaryLanguageHint: "The primary language you usually dictate in.",
+            .onboardingPrimaryLanguageBody: "Primary language: %@. You can change this later in Settings → Hotkey → Your Languages.",
+            .onboardingAdditionalLanguageTitle: "Additional working language",
             .onboardingAdditionalLanguageHint: "A second language you often use.",
-            .onboardingAdditionalLanguageBody: "Additional language: %@",
+            .onboardingAdditionalLanguageBody: "Additional language: %@. You can change this later in Settings → Hotkey → Your Languages.",
             .onboardingAdditionalSameAsPrimary: "Same as primary",
             // B3 — Settings speech-language pair (plan §7.1, §7.2, §9.4).
             // Same store and wording as the onboarding steps; full 15-locale

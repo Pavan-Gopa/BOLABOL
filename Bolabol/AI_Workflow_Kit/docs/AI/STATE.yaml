@@ -1,14 +1,14 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S1c
+current_step: S2
 step_description: >-
-  Onboarding localModels screen: up to three dynamic cards bound directly to
-  OnboardingModelRecommendation.topThree; Back recalculates; download optional.
+  Settings Local Models: language-aware Recommended for you group from the
+  shared topThree helper, followed by the remaining full catalog without duplicates.
 target_files:
-  - Sources/NativeBolabol/Views/OnboardingView.swift
+  - Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift
   - Sources/NativeBolabolCore/Services/AppText.swift
-  - Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift
+  - Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
 completed_steps:
   - S0
   - S1
@@ -17,40 +17,40 @@ completed_steps:
   - S1c
 skipped_steps: []
 implementation:
-  status: done
-  attempts: 1
+  status: pending
+  attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: 'Reviewer APPROVED S1c; no product/test findings'
+  verdict: null
+  note: ''
 qa:
-  status: green
+  status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: S1c
+  suite: S2
   bugs_open: 0
-  note: '488 tests in 4 suites; QA 20/20; fresh 1.0.4 build opened'
-next_actor: orchestrator
+  note: ''
+next_actor: coder
 track: UX
 prior_track: RENAME
 working_roots:
   - Bolabol
 checkpoint:
   last_pre_tag: bolabol/pre-S1c
-  last_post_tag: bolabol/S1b-done
-  last_commit: 0d76648
+  last_post_tag: bolabol/S1c-done
+  last_commit: f50963c
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  S1c implementation/review/QA complete. Orchestrator closes POST and opens S2.
+  Implement only S2. In Settings -> Local Models, derive the leading
+  recommendations from the shared topThree helper and show the rest of the
+  catalog afterward, with every model exactly once. Recommendations are
+  presentation only: never auto-activate, download, or change backend.
+  Add EN Settings copy and focused tests. Do not implement S3/S4+ or S12.
 notes: |
-  S1b POST: bolabol/S1b-done at 59dafa7.
-  S1c Coder handoff: RESULT waiting_review, 488 tests in 4 suites.
-  Graphify refreshed after the Coder handoff on 2026-08-03:
-  4176 nodes / 9717 edges; OnboardingView reaches topThree through
-  TranscriptionModelDescriptor in the extracted graph.
-  Reviewer APPROVED: 14/14 S1c acceptance checks pass; no product/test defects.
-  Tester qa_green: 488 tests, QA 20/20, fresh 1.0.4 build opened.
-  Manual UI: dynamic one/two-card states and slot-1 labels observed; full
-  three-card Back loop, no-download transition, and light theme unverified.
+  S1c POST: bolabol/S1c-done at f50963c.
+  S1c qa_green: 488 tests, QA 20/20, fresh 1.0.4 app opened.
+  Graphify refreshed after S1c POST on 2026-08-03: 4198 nodes / 9743 edges.
+  LocalModelsSettingsView already references GeneralSettingsStore and
+  TranscriptionModelStore but does not yet call OnboardingModelRecommendation.

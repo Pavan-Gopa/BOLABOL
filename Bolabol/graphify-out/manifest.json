@@ -145,9 +145,9 @@
     "semantic_hash": "dd03fb2e6a7f3d03af4000ca13a3d81b"
   },
   "script/qa/run_all.sh": {
-    "mtime": 1785743537.9720936,
-    "ast_hash": "089595e421c27fdfde0c9125fc15bfcf",
-    "semantic_hash": "089595e421c27fdfde0c9125fc15bfcf"
+    "mtime": 1785755820.7793005,
+    "ast_hash": "a2d8f57733d2d113f23846a103f49931",
+    "semantic_hash": ""
   },
   "script/smoke_whisperkit_tiny.sh": {
     "mtime": 1785743537.9353516,
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785754104.0587385,
-    "ast_hash": "cecc462e6b8069d6877b0285a2f0166f",
+    "mtime": 1785757312.0829327,
+    "ast_hash": "bf4ab817ed2515af1f127028294c8280",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
-    "mtime": 1785751769.2976654,
-    "ast_hash": "7da0afe423ab490a013a33cecfc8a425",
+    "mtime": 1785757312.081997,
+    "ast_hash": "6fe71433a4cc4718589e457a20a7b5e0",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REVIEW_TEMPLATE.md": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785752853.6037018,
-    "ast_hash": "1630e3129f19ff2ad9d21d68aaf577e7",
+    "mtime": 1785759478.580357,
+    "ast_hash": "7000d036de5c6a93ed9b7f622cb35635",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -1340,8 +1340,8 @@
     "semantic_hash": "1faec7573299d690826048f8d7840b05"
   },
   "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md": {
-    "mtime": 1785752815.1981242,
-    "ast_hash": "975b1950b44dc13e09af70257fb03c97",
+    "mtime": 1785759478.580146,
+    "ast_hash": "2d6c0959638bee900275321507ee67e9",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/BOLABOL_STEPS.md": {
@@ -1440,8 +1440,13 @@
     "semantic_hash": ""
   },
   "script/qa/check_s1b_scope.sh": {
-    "mtime": 1785751439.2873075,
-    "ast_hash": "89ffa50800a8c97cb33790fd2a752c69",
+    "mtime": 1785755820.7782435,
+    "ast_hash": "2b5cdf6b3a367840355c258a878bf416",
+    "semantic_hash": ""
+  },
+  "script/qa/check_s1c_onboarding_models.sh": {
+    "mtime": 1785755820.7789805,
+    "ast_hash": "aba8336ad44f7d615165694e8d63a476",
     "semantic_hash": ""
   }
 }

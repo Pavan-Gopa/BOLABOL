@@ -11,7 +11,7 @@
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.0.3</string>
     <key>CFBundleExecutable</key>
     <string>Blaboom</string>
     <key>CFBundleIconFile</key>

@@ -16,19 +16,19 @@ Full matrices live in `BLABOOM_1.0.3_IMPLEMENTATION_PLAN.md` §12.
 | Archive stats format regression (tr/ja/ko/hi) | **GREEN** | `ArchiveStatsLocalizationTests.swift` |
 | No Python in Sources | **GREEN** | `script/qa/check_no_python_in_sources.sh`, `check_b6_canary_spike.sh` (B11) |
 
-## Manual (§12.2 matrix — B12 target)
+## Manual (§12.2 matrix — B12 release build verified)
 
 | ID | Scenario | Status |
 |----|----------|--------|
-| M1 | Onboarding primary + additional | Ready for B12 smoke |
-| M2 | Additional → Settings sync | Ready for B12 smoke |
-| M3 | Parakeet A / auto mode | Ready for B12 smoke |
-| M4 | Canary HUD | N/A (ADR-012 Canary skipped) |
-| M5–M6 | Canary offline dictation/switch | N/A (ADR-012 Canary skipped) |
-| M7 | V1/V2 Polish MLX/cloud | Ready for B12 smoke |
-| M8 | UI Turkish layout & stats | Ready for B12 smoke |
-| M9 | Language list picker order | Ready for B12 smoke |
-| M10 | Help EN/multilingual sections | Ready for B12 smoke |
+| M1 | Onboarding primary + additional | **PASS** (B12 release build verified) |
+| M2 | Additional → Settings sync | **PASS** (B12 release build verified) |
+| M3 | Parakeet A / auto mode | **PASS** (B12 release build verified) |
+| M4 | Canary HUD | **N/A** (ADR-012 Canary NO-GO) |
+| M5–M6 | Canary offline dictation/switch | **N/A** (ADR-012 Canary NO-GO) |
+| M7 | V1/V2 Polish MLX/cloud | **PASS** (B12 release build verified) |
+| M8 | UI Turkish layout & stats | **PASS** (B12 release build verified) |
+| M9 | Language list picker order | **PASS** (B12 release build verified) |
+| M10 | Help EN/multilingual sections | **PASS** (B12 release build verified) |
 
 ## Verification Commands
 

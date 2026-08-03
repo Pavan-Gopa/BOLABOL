@@ -7,6 +7,8 @@ APP_NAME="Blaboom"
 DISPLAY_NAME="Blaboom"
 BUNDLE_ID="com.blaboom.app"
 MIN_SYSTEM_VERSION="14.0"
+APP_VERSION="${APP_VERSION:-1.0.3}"
+APP_BUILD="${APP_BUILD:-$(date +%Y%m%d%H%M)}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE_ROOT="$(cd "$ROOT_DIR/.." && pwd)"
@@ -147,6 +149,10 @@ cat >"$INFO_PLIST" <<PLIST
   <string>AppIcon</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$APP_VERSION</string>
+  <key>CFBundleVersion</key>
+  <string>$APP_BUILD</string>
   <key>LSMinimumSystemVersion</key>
   <string>$MIN_SYSTEM_VERSION</string>
   <key>NSPrincipalClass</key>

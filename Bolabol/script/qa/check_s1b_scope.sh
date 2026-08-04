@@ -51,6 +51,9 @@ while IFS= read -r line; do
     *TranscriptionEngineStore.swift*) ;;
     *AppText.swift*) ;;
     *helpBilingual*) ;;
+    # S9: GO engine implementations are allowed
+    *Engines/CanaryCoreMLEngine.swift*) ;;
+    *Engines/GigaAMCoreMLEngine.swift*) ;;
     *)
       echo "FAIL: ASR candidate appears outside S1b/helper/catalog or help copy: $line"
       FAILED=1

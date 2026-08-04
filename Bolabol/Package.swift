@@ -72,7 +72,7 @@ let package = Package(
         ),
         .testTarget(
             name: "NativeBolabolCoreTests",
-            dependencies: ["NativeBolabolCore"],
+            dependencies: ["NativeBolabolCore", "NativeBolabol"],
             path: "Tests/NativeBolabolCoreTests"
         )
     ]

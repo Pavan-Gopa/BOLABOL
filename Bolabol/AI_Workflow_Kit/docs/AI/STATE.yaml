@@ -9,11 +9,8 @@ step_description: >-
   chunk caps, state resets, explicit language via capabilities). Gate: offline
   dictate produces text. No UI cards (S10), no HUD matrix (S11).
 target_files:
-  - Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift
-  - Sources/NativeBolabol/Engines/
-  - Sources/NativeBolabolCore/
-  - Tests/NativeBolabolCoreTests/
-  - script/qa/check_no_canary_product.sh
+  - Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift
+  - Tests/NativeBolabolCoreTests/S9RuntimeSmokeTests.swift
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 completed_steps:
   - S0
@@ -29,28 +26,37 @@ completed_steps:
   - S4b
   - S7
   - S8
+  - S9
 skipped_steps: []
 implementation:
-  status: pending
-  attempts: 0
+  status: done
+  attempts: 2
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: >-
+    Independent Reviewer approved the BUG-003 fix on 2026-08-05. The review
+    verified the real product decoder seam, rank-1 int32 pos regression test,
+    full gate, and all three opt-in real runtime smokes. Tester must now perform
+    independent feature QA and confirm BUG-003 closure.
 qa:
-  status: pending
+  status: green
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
   suite: S9
   bugs_open: 0
-  note: ''
-security:
-  next_run: recommended_after_S9
   note: >-
-    S8 introduced first real CDN/HF model-download path (SECURITY.md trigger:
-    "first CDN download path"). Recommend Security campaign after S9 engines wire
-    the download path, or at pre-release — Human decides.
-next_actor: coder
+    Independent Tester QA rerun is green: the product rank regression, full
+    suite (555 tests), full QA gate (29/29), dedicated real Path B smoke, and
+    all three S9 runtime smokes passed. BUG-003 is CLOSED; no open S9 product
+    defects remain.
+security:
+  next_run: deferred_human_testing
+  note: >-
+    Human decision 2026-08-04: Security campaign deferred — Human will manually
+    test the app first; Security kick after that (Human + Orchestrator decide
+    scope). Trigger context: S8 first CDN download path + S9 live engines.
+next_actor: architect
 track: PRODUCT
 prior_track: SPIKE_COMPLETE
 go_list:
@@ -77,24 +83,29 @@ plan_files:
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  Implement S9 only (step card in ASR_COREML_STEPS.md). Real Core ML engines for
-  the ADR-018 GO backends, wired into TranscriptionEngineStore (remove
-  UnavailableTranscriptionEngine stubs): CanaryCoreMLEngine (Flash + 1B Path B)
-  and GigaAMCoreMLEngine. Port frontend/decode logic from the verified spike
-  harnesses: CanaryFlashSpike.swift (Flash), CanarySmdesaiSpike.swift (1B Path
-  B), GigaAMCoreMLSpike.swift (GigaAM). Enforce spike constraints: Flash
-  .cpuAndNeuralEngine only + NeMo mel frontend + true lengths + <=10s chunks;
-  1B macOS 15+ MLState gate + Path B frontend constants + <=15s chunks + fresh
-  MLState per segment + native SentencePiece from canary_spe.model; GigaAM HTK
-  log-mel + 16kHz mono + <=30s chunks + RNNT state reset per chunk + blank 1024.
-  Explicit language only (no auto-detect); consume capabilities, NOT
-  languageSupport (NB-4). Load from S8 storage roots, require S8 complete-folder
-  presence. Honest errors (missing model / unsupported OS). Narrow
-  check_no_canary_product.sh per ADR-018 (engines allowed from S9; still forbid
-  NO-GO HF sources + Python). No S10 UI cards/banners, no S11 HUD matrix.
+  Fix BUG-003 only. The real Canary 1B Path B runtime smoke loads the GO package
+  but fails before decoding because product code creates pos with rank 2 ([1, 1])
+  while the Core ML decoder requires rank 1. Reconcile the product input shape
+  with the verified S4b Path B harness/model contract; preserve all strict S9
+  constraints and existing Flash/GigaAM behavior. Add or adjust only minimum
+  non-fake regression coverage needed to prove the product sends the required
+  shape, then run the opt-in real smoke when documented scratch assets exist.
+  Do not change S10+ UI/HUD work, catalog/download behavior, Tester findings,
+  BUG_REPORT.md, or workflow state.
 notes: |
-  S8 cycle closed with bug loop: POST bolabol/S8-done @ 3659a72 (LOCAL ONLY —
-  monorepo remote push DISABLED; Human must push when enabled). Graphify rebuilt
-  after POST (4723 nodes). S9 step card written. next_actor: coder for S9.
-  NB-4 must be honored in S9 (capabilities, not languageSupport). Security
-  campaign recommended after S9 (first CDN download path + engines now live).
+  S8 cycle closed: POST bolabol/S8-done @ 3659a72 (LOCAL ONLY — monorepo remote
+  push DISABLED; Human must push when enabled). PRE bolabol/pre-S9 @ ca10a95.
+  S9 loop: Coder handoff → Reviewer CHANGES_REQUESTED (BLOCK-S9-001..004) →
+  Coder Fix Attempt 1 (all 4 blocking closed, 552 tests, 28/28 QA) → Graphify
+  rebuilt (4942 nodes) → Reviewer re-review approved. Tester then completed
+  feature QA: 554 tests and 29/29 QA were green, but real Canary 1B Path B
+  smoke was red with BUG-003. Coder fixed only BUG-003: product pos is now
+  rank 1, targeted/full tests, 29/29 QA, all three real runtime smokes, and a
+   fresh build are reported green. Graphify was rebuilt (4,988 nodes) and the
+   independent Reviewer approved BUG-003. Independent Tester QA then passed:
+   555 tests, 29/29 QA checks, the real Path B smoke, and all three runtime
+   smokes; BUG-003 is closed and S9 is complete. Graphify POST rebuild is
+   required. S10 is named in the authoritative ASR plan but lacks a detailed
+   executable card, so Architect must first produce a design-only scope packet.
+   Security remains deferred until Human manual testing and a green S9 feature
+   gate.

@@ -110,6 +110,8 @@ while IFS= read -r line; do
     *Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift*) ;;
     *Sources/NativeBolabol/Stores/TranscriptionModelStore.swift*) ;;
     *Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift*) ;;
+    # S9: GO engine implementations are allowed
+    *Sources/NativeBolabol/Engines/GigaAMCoreMLEngine.swift*) ;;
     *) echo "FAIL: GigaAM product reference outside catalog/backend surface: $line"; FAILED=1 ;;
   esac
 done < <(grep -RIni --include='*.swift' "gigaam" Sources || true)

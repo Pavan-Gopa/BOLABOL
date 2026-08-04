@@ -149,4 +149,15 @@
 **1.0.4 next:** Human GO list → Track C S7+ for approved models only.
 
 ---
+
+## ADR-016 — Canary 1B reopen via Bolabol-fixed Core ML package (S4b)
+
+**Status:** Accepted (process) — 2026-08-04  
+**Decision:** Canary 1B may re-enter the 1.0.4 train **only** as a **new** Bolabol-owned Core ML package that passes S4b preflight (`docs/asr/canary-1b/FIX_PLAN.md`). Hosting may be **Bolabol cloud / CDN** (not Hugging Face). ADR-012 and ADR-013 remain in force for the failed HF exports (`alexwengg`, `FluidInference/canary-1b-v2-coreml`).  
+**Must fix first:** F1 mel frontend (exporter or Path B native NeMo mel); then re-validate F2/F3 (embeddings + EOS). App UI/download URL alone cannot clear NO-GO.  
+**Product wiring:** only after S4b spike **GO** + Human inclusion on GO list + S7–S9 (custom engine; do not depend on FluidAudio unmerged `canary` branch).  
+**Package:** versioned id e.g. `bolabol-canary-1b-v2-coreml-r1` + `MANIFEST.json` SHA-256 per file + LICENSE.  
+**Rationale:** User wants large Canary; S4 proved HF int4 stack loads but does not ASR; Flash/GigaAM GO candidates do not replace a fixed 1B if export is repaired correctly.
+
+---
 *Add new ADRs at the bottom; do not rewrite history — supersede with new ADR if needed.*

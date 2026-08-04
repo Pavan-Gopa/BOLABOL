@@ -1,12 +1,19 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: GO-LIST
+current_step: S4b
 step_description: >-
-  Human gate after Track B spikes (S4–S6): choose which GO candidates enter
-  product integration Track C (S7+). Spikes complete; no product wiring until
-  Human confirms the GO list.
-target_files: []
+  Canary 1B Core ML fix: P0 triage (smdesai spike + FluidAudio path analysis),
+  then Path A/B mel fix if needed; preflight ASR GO; Bolabol cloud package +
+  MANIFEST; BOLABOL_COREML_SPIKE.md. No product catalog wiring.
+target_files:
+  - docs/asr/canary-1b/FIX_PLAN.md
+  - docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md
+  - docs/asr/canary-1b/fix/
+  - docs/canary/harness/
+  - scratch/canary-1b-fix/
+  - script/qa/
+  - AI_Workflow_Kit/docs/DECISIONS.md
 completed_steps:
   - S0
   - S1
@@ -20,37 +27,37 @@ completed_steps:
   - S6
 skipped_steps: []
 implementation:
-  status: blocked_on_human
+  status: pending
   attempts: 0
 review:
-  status: n/a
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
   verdict: null
-  note: 'Track B complete; awaiting Human GO list'
+  note: ''
 qa:
-  status: green
+  status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: S6
+  suite: S4b
   bugs_open: 0
-  note: 'S6 qa_green 503 tests, QA 23/23; runtime optional UNAVAILABLE for Tester'
-next_actor: human
-track: SPIKE_COMPLETE
-prior_track: SPIKE
+  note: ''
+next_actor: coder
+track: C1B_FIX
+prior_track: SPIKE_COMPLETE
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S6
+  last_pre_tag: bolabol/pre-S4b
   last_post_tag: bolabol/S6-done
   last_commit: pending
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
+  - docs/asr/canary-1b/FIX_PLAN.md
 coder_brief: |
-  Do not start S7 until Human GO list is recorded. Candidates:
-  - Canary Flash (ADR-014 GO): aufklarer/Canary-180M-Flash-CoreML EN/DE/FR/ES
-  - GigaAM v3 RU (ADR-015 GO): huggingfinger0/gigaam-v3-coreml RU-only
-  - Canary 1B: NO-GO (ADR-012/013) — do not ship
+  S4b: follow FIX_PLAN.md. P0 first — spike smdesai/canary-1b-v2-coreml and
+  FluidAudio Canary frontend path; if neither GO, Path A re-export or Path B
+  native mel. Preflight mel+EOS; package bolabol-canary-1b-v2-coreml-rN for CDN;
+  write BOLABOL_COREML_SPIKE.md. No product wiring. Keep FI/alexwengg NO-GO.
 notes: |
-  Track B closed. S4 NO-GO, S5 GO candidate, S6 GO candidate.
-  Human must choose ship set for S7+ (Flash / GigaAM / both / neither).
-  Whisper/Parakeet remain default shipping ASR until integration.
+  Human approved start 2026-08-04. PRE S4b this turn. Graphify refreshed.
+  Parallel: Human GO list Flash/GigaAM for S7+ still open.

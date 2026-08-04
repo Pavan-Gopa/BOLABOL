@@ -15,8 +15,8 @@
     "semantic_hash": "cbe7d63d842fcac44f4fe4130c145c29"
   },
   "AI_Workflow_Kit/script/checkpoint.sh": {
-    "mtime": 1785752641.4648104,
-    "ast_hash": "669802d1b0c2033d8d0acac23799c138",
+    "mtime": 1785818513.5307322,
+    "ast_hash": "47468d5acb1c5534a12ddd88f2eb4be9",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/script/graphify_rebuild.sh": {
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/BUG_REPORT.md": {
-    "mtime": 1785743537.3842838,
-    "ast_hash": "49465989a162b55373eb1d467237f26c",
+    "mtime": 1785824808.2949905,
+    "ast_hash": "e4a72a77efc836f6ba16669d732bb181",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/COVERAGE.md": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785814730.164627,
-    "ast_hash": "6c12a03f2a24d0ee77b7bea2b13a145c",
+    "mtime": 1785823572.7434175,
+    "ast_hash": "d0331fed6e8730e6b620c52b2ac25fd3",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -190,13 +190,13 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/KICK_TESTER.md": {
-    "mtime": 1785743537.4025855,
-    "ast_hash": "d31b24e17deec4fb9a67aa0f893f3116",
+    "mtime": 1785824808.2911606,
+    "ast_hash": "b82dfd046f80d36f902e4bf60c39e50a",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md": {
-    "mtime": 1785751118.2934632,
-    "ast_hash": "1b94d8f3ee244f563b465e267769ae0d",
+    "mtime": 1785824808.2997234,
+    "ast_hash": "806902d273ce16801d1be18987c56e4c",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
@@ -210,18 +210,18 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785815769.3313904,
-    "ast_hash": "60ae7b898676ab0a7b923648fed92a9f",
+    "mtime": 1785824891.935033,
+    "ast_hash": "9d17d12a54d66f98100979007a056615",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
-    "mtime": 1785751118.2938013,
-    "ast_hash": "d82058e1c9e31bac36869b8161f15a58",
+    "mtime": 1785824808.2997262,
+    "ast_hash": "7df81d7ef0f86f342fd64c171f97ffe9",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/DECISIONS.md": {
-    "mtime": 1785815769.396615,
-    "ast_hash": "fa2423878ab134689637151eba3e5d21",
+    "mtime": 1785818513.5214567,
+    "ast_hash": "8b7cb0675014c62211cf84cc25e83103",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/PROJECT_CONTEXT.md": {
@@ -1340,8 +1340,8 @@
     "semantic_hash": "1faec7573299d690826048f8d7840b05"
   },
   "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md": {
-    "mtime": 1785759478.580146,
-    "ast_hash": "2d6c0959638bee900275321507ee67e9",
+    "mtime": 1785818513.521289,
+    "ast_hash": "ca54ee4ca089b5652407441f06da7e1e",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/BOLABOL_STEPS.md": {
@@ -1492,6 +1492,51 @@
   "docs/asr/gigaam-v3/COREML_SPIKE.md": {
     "mtime": 1785790388.9330528,
     "ast_hash": "1b29ab5890a7fa30f16ce40819cad89e",
+    "semantic_hash": ""
+  },
+  "docs/asr/canary-1b/FIX_PLAN.md": {
+    "mtime": 1785822914.1544256,
+    "ast_hash": "7d7836da1276acd83e570968f5bde34d",
+    "semantic_hash": ""
+  },
+  "docs/asr/canary-1b/fix/package_manifest.sh": {
+    "mtime": 1785822820.904323,
+    "ast_hash": "04fcd04c0a3c9e6944120908e81bc0d8",
+    "semantic_hash": ""
+  },
+  "docs/canary/harness/CanarySmdesaiSpike.swift": {
+    "mtime": 1785822667.754692,
+    "ast_hash": "231a599c3ced0a331356e88a381b5ac9",
+    "semantic_hash": ""
+  },
+  "script/qa/check_s4b_canary_fix.sh": {
+    "mtime": 1785823119.909665,
+    "ast_hash": "09d803e0716a74e0f52bdc5d161c7c0d",
+    "semantic_hash": ""
+  },
+  "AI_Workflow_Kit/docs/AI/SECURITY.md": {
+    "mtime": 1785824808.290984,
+    "ast_hash": "35a9f5c75e607972dbb6b2eae59da4a9",
+    "semantic_hash": ""
+  },
+  "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md": {
+    "mtime": 1785824808.291105,
+    "ast_hash": "f136f187d01e43c2b547e5843949c31d",
+    "semantic_hash": ""
+  },
+  "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md": {
+    "mtime": 1785823138.341785,
+    "ast_hash": "477012ef98ac052ed36bbf039bcab294",
+    "semantic_hash": ""
+  },
+  "docs/asr/canary-1b/fix/P0_TRIAGE.md": {
+    "mtime": 1785822942.5846612,
+    "ast_hash": "5306a19818bc0af8e08d79b7dfe0a56b",
+    "semantic_hash": ""
+  },
+  "docs/asr/canary-1b/fix/probes/README.md": {
+    "mtime": 1785822942.5891159,
+    "ast_hash": "924c72577884e59191fabc3d49a99807",
     "semantic_hash": ""
   }
 }

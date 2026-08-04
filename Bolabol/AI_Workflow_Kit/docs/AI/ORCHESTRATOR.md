@@ -14,19 +14,25 @@ cd "/Users/pavan/Documents/AI Projects/Bolabol"
 **Всё идёт через оркестратора.** Human **не** «сам зовёт» Coder/Reviewer/Tester по
 подсказке другого агента — он возвращается **сюда** (окно Orchestrator), а ты:
 
-1. Читаешь `STATE.yaml` + `FEEDBACK.md` (+ `REPORT.md` / `BUG_REPORT.md` при QA).
+1. Читаешь `STATE.yaml` + `FEEDBACK.md` (+ `REPORT.md` / `BUG_REPORT.md` при QA;
+   **`SECURITY_REPORT.md`** только после Security kick).
 2. Обновляешь STATE / checkpoints / next_actor.
 3. После каждого завершённого Coder handoff (включая fix/retry) запускаешь
    `graphify_rebuild.sh` **до** kick Reviewer.
 4. **Всегда** выдаёшь **полный copy-paste kick-промпт** для следующего агента
    (новое терминальное окно = пустой контекст).
+5. **Security Engineer** — отдельный rare agent (`KICK_SECURITY.md`). Kick only on
+   Human request, pre-release, or large attack-surface change — **not** every step.
+   Security findings → **Coder fix kick** (Security never patches `Sources/**`).
+   Policy: `AI_Workflow_Kit/docs/AI/SECURITY.md`.
 
-| Агент | Промпт даёт | Откуда шаблон |
-|-------|-------------|---------------|
-| Coder | **Orchestrator** | `KICK_CODER.md` + STATE/card |
-| Reviewer | **Orchestrator** | `KICK_REVIEWER.md` + diff scope |
-| Tester / QA | **Orchestrator** | `KICK_TESTER.md` + step scope |
-| Architect | **Orchestrator** | Architect packet (design-only) |
+| Агент | Промпт даёт | Откуда шаблон | Частота |
+|-------|-------------|---------------|---------|
+| Coder | **Orchestrator** | `KICK_CODER.md` + STATE/card | every step |
+| Reviewer | **Orchestrator** | `KICK_REVIEWER.md` + diff scope | every step |
+| Tester / QA | **Orchestrator** | `KICK_TESTER.md` + step scope | every step |
+| **Security** | **Orchestrator** | `KICK_SECURITY.md` + audit scope | **rare / final** |
+| Architect | **Orchestrator** | Architect packet (design-only) | on demand |
 
 ### Запрещено Orchestrator'у
 
@@ -70,17 +76,27 @@ Plan files:
 ### A) `review.status == approved` and implementation done
 
 - After review **approved** and tests not yet green → `next_actor: tester` → **kick Tester**.
-- **Tester kick must require gap-hunt + new tests** for the step (not “only re-run”).
-  Coder’s tests are a floor; Tester owns coverage completeness for the step.
+- **Tester kick must require gap-hunt + new feature tests** (not “only re-run”).
+  Coder’s tests are a floor; Tester owns **feature** coverage for the step.
+  Do **not** require full Security audit on every Tester kick.
 - After tests **green** (REPORT documents new tests or explicit no-gap mapping) →
   POST checkpoint → **`graphify_rebuild.sh`** → advance / PRE next → `next_actor: coder` → **kick Coder**.
 - After tests **bugs** → do **not** advance:
   1. Read `BUG_REPORT.md` / FEEDBACK bugs
   2. Open fix/retry for **Coder only**
   3. **Kick Coder** (fix)
-  4. After Coder done → **kick Reviewer** (re-review)
+  4. After Coder done → Graphify → **kick Reviewer** (re-review)
   5. After approve → **kick Tester** (re-run)
   6. Green → next step
+
+### A2) Security campaign (rare — not every step)
+
+- Trigger: Human «security» / pre-release / STATE `security.next_run` / large surface change.
+- `next_actor: security` → **kick Security** (`KICK_SECURITY.md` + scope).
+- After handoff: read `SECURITY_REPORT.md`.
+  - `findings_open` critical/high → **Coder fix kick** (SEC list) → Reviewer → Tester → optional Security re-pass if Human wants.
+  - `security_clean` → note in STATE; continue normal pipeline.
+- Never block ordinary step POST on “Security not run this step”.
 
 ### B) `changes_requested`
 

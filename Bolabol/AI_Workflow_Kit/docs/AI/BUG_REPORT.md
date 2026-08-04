@@ -1,6 +1,9 @@
-# BUG REPORT — Bolabol 1.0.3
+# BUG REPORT — Bolabol 1.0.4
 
-> Tester fills when suite is red. Orchestrator opens fix/retry for Coder.
+> Tester fills when **functional** suite is red or product behavior is wrong.
+> For **security** findings use `SECURITY_REPORT.md` (SEC-*).
+> Orchestrator opens fix/retry for Coder from either file.
+> Tester never patches product `Sources/**`.
 
 ## Meta
 

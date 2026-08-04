@@ -56,7 +56,7 @@
       "label": "pre_tag_for()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L51",
+      "source_location": "L52",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -68,7 +68,7 @@
       "label": "post_tag_for()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L52",
+      "source_location": "L53",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -80,7 +80,7 @@
       "label": "has_remote_push()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L54",
+      "source_location": "L55",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -92,7 +92,7 @@
       "label": "push_all()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L63",
+      "source_location": "L64",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -104,7 +104,7 @@
       "label": "stage_scoped()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L78",
+      "source_location": "L79",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -116,7 +116,7 @@
       "label": "commit_if_dirty_scoped()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L89",
+      "source_location": "L90",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -128,7 +128,7 @@
       "label": "cmd_pre()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L100",
+      "source_location": "L101",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -140,7 +140,7 @@
       "label": "cmd_post()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L117",
+      "source_location": "L118",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -152,7 +152,7 @@
       "label": "cmd_list()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L133",
+      "source_location": "L134",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -164,7 +164,7 @@
       "label": "cmd_rollback()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L140",
+      "source_location": "L141",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -176,7 +176,7 @@
       "label": "usage()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L158",
+      "source_location": "L159",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -188,7 +188,7 @@
       "label": "main()",
       "file_type": "code",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L171",
+      "source_location": "L172",
       "metadata": {
         "language": "bash",
         "kind": "bash_function"
@@ -28421,6 +28421,30 @@
       "_origin": "ast"
     },
     {
+      "id": "docs_asr_canary_1b_fix_package_manifest",
+      "label": "package_manifest.sh",
+      "file_type": "code",
+      "source_file": "docs/asr/canary-1b/fix/package_manifest.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "file"
+      },
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_package_manifest_sh__entry",
+      "label": "package_manifest.sh script",
+      "file_type": "code",
+      "source_file": "docs/asr/canary-1b/fix/package_manifest.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_entrypoint"
+      },
+      "_origin": "ast"
+    },
+    {
       "id": "docs_asr_gigaam_v3_gigaamcoremlspike",
       "label": "GigaAMCoreMLSpike.swift",
       "file_type": "code",
@@ -28855,7 +28879,7 @@
       "_origin": "ast"
     },
     {
-      "id": "fftsetup",
+      "id": "docs_canary_harness_canaryflashspike_swift_fftsetup",
       "label": "FFTSetup",
       "file_type": "code",
       "source_file": "",
@@ -28903,7 +28927,7 @@
       "_origin": "ast"
     },
     {
-      "id": "unsafemutablepointer",
+      "id": "docs_canary_harness_canaryflashspike_swift_unsafemutablepointer",
       "label": "UnsafeMutablePointer",
       "file_type": "code",
       "source_file": "",
@@ -29220,6 +29244,390 @@
       "file_type": "code",
       "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
       "source_location": "L253",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike",
+      "label": "CanarySmdesaiSpike.swift",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "label": "SpikeError",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L20",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "label": "String",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_config",
+      "label": "Config",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_parseargs",
+      "label": "parseArgs()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L38",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_readwav",
+      "label": "readWav()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L60",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "label": "Float",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "label": "Int",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_computeunits",
+      "label": "computeUnits()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L133",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_mlcomputeunits",
+      "label": "MLComputeUnits",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_makefloatarray",
+      "label": "makeFloatArray()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L141",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "label": "MLMultiArray",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_makeintarray",
+      "label": "makeIntArray()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L149",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_run",
+      "label": "run()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L155",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_mlmodel",
+      "label": "MLModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_mlfeaturevalue",
+      "label": "MLFeatureValue",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_floatvalues",
+      "label": "floatValues()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L163",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_scalarint",
+      "label": "scalarInt()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L168",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_modelpath",
+      "label": "modelPath()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L172",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_url",
+      "label": "URL",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_models",
+      "label": "Models",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L176",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_models_load",
+      "label": ".load()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L183",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "label": "NativeMelFrontend",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L229",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_fftsetup",
+      "label": "FFTSetup",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_init",
+      "label": ".init()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L245",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "label": ".extract()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L259",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_normalize",
+      "label": ".normalize()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L346",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_swift_unsafemutablepointer",
+      "label": "UnsafeMutablePointer",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_buildmelfilterbank",
+      "label": ".buildMelFilterbank()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L364",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_makesine",
+      "label": "makeSine()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L413",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_paddedwindow",
+      "label": "paddedWindow()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L419",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "label": "preprocess()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L426",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_pearson",
+      "label": "pearson()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L440",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_channelscores",
+      "label": "channelScores()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L458",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_topchannels",
+      "label": "topChannels()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L470",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_melenergy",
+      "label": "melEnergy()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L474",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_frameenvelope",
+      "label": "frameEnvelope()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L486",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "label": "runMelPreflight()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L497",
+      "_origin": "ast"
+    },
+    {
+      "id": "melextractor",
+      "label": "MelExtractor",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_transposeencoder",
+      "label": "transposeEncoder()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L535",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_makeselfmask",
+      "label": "makeSelfMask()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L546",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_argmax",
+      "label": "argmax()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L553",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_decode",
+      "label": "decode()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L564",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_runasr",
+      "label": "runASR()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L570",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "label": "runStatefulDecoder()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L637",
+      "_origin": "ast"
+    },
+    {
+      "id": "mlstate",
+      "label": "MLState",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike",
+      "label": "CanarySmdesaiSpike",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L653",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "label": ".main()",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L655",
       "_origin": "ast"
     },
     {
@@ -30243,6 +30651,54 @@
       "_origin": "ast"
     },
     {
+      "id": "script_qa_check_s4b_canary_fix",
+      "label": "check_s4b_canary_fix.sh",
+      "file_type": "code",
+      "source_file": "script/qa/check_s4b_canary_fix.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "file"
+      },
+      "_origin": "ast"
+    },
+    {
+      "id": "script_qa_check_s4b_canary_fix_sh__entry",
+      "label": "check_s4b_canary_fix.sh script",
+      "file_type": "code",
+      "source_file": "script/qa/check_s4b_canary_fix.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_entrypoint"
+      },
+      "_origin": "ast"
+    },
+    {
+      "id": "script_qa_check_s4b_canary_fix_require_file",
+      "label": "require_file()",
+      "file_type": "code",
+      "source_file": "script/qa/check_s4b_canary_fix.sh",
+      "source_location": "L15",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast"
+    },
+    {
+      "id": "script_qa_check_s4b_canary_fix_require_text",
+      "label": "require_text()",
+      "file_type": "code",
+      "source_file": "script/qa/check_s4b_canary_fix.sh",
+      "source_location": "L20",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast"
+    },
+    {
       "id": "script_qa_check_s6_gigaam_spike",
       "label": "check_s6_gigaam_spike.sh",
       "file_type": "code",
@@ -30531,8 +30987,8 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_3",
-      "label": "BUG REPORT — Bolabol 1.0.3",
+      "id": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_4",
+      "label": "BUG REPORT — Bolabol 1.0.4",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
       "source_location": "L1",
@@ -30543,7 +30999,7 @@
       "label": "Meta",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
-      "source_location": "L5",
+      "source_location": "L8",
       "_origin": "ast"
     },
     {
@@ -30551,7 +31007,7 @@
       "label": "Bugs",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
-      "source_location": "L13",
+      "source_location": "L16",
       "_origin": "ast"
     },
     {
@@ -30559,7 +31015,7 @@
       "label": "BUG-001 — title",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
-      "source_location": "L15",
+      "source_location": "L18",
       "_origin": "ast"
     },
     {
@@ -30567,7 +31023,7 @@
       "label": "Summary for Orchestrator",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
-      "source_location": "L28",
+      "source_location": "L31",
       "_origin": "ast"
     },
     {
@@ -31491,6 +31947,54 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_core_ml_fix_bolabol_hosted_package_step_s4b_coder",
+      "label": "S4b — Canary 1B Core ML fix + Bolabol-hosted package (Step S4b, coder)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1107",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_1109",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1109",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_1119",
+      "label": "§1 — Inventory & Pass/Fail Summary",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1119",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_2_s4b_implementation_compliance",
+      "label": "§2 — S4b Implementation Compliance",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1133",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_1146",
+      "label": "§3 — Verification",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1146",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_1163",
+      "label": "§4 — Handoff",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1163",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_ai_git_checkpoints",
       "label": "GIT_CHECKPOINTS.md",
       "file_type": "document",
@@ -31611,8 +32115,8 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_kick_tester_kick_шаблон_test_engineer_tester_qa_bolabol",
-      "label": "Kick-шаблон: Test Engineer (Tester / QA) — Bolabol",
+      "id": "ai_workflow_kit_docs_ai_kick_tester_kick_шаблон_test_engineer_tester_qa_security_bolabol",
+      "label": "Kick-шаблон: Test Engineer (Tester / QA + Security) — Bolabol",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/KICK_TESTER.md",
       "source_location": "L1",
@@ -31631,7 +32135,7 @@
       "label": "Task (задание на конкретный шаг)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/KICK_TESTER.md",
-      "source_location": "L58",
+      "source_location": "L76",
       "_origin": "ast"
     },
     {
@@ -31663,7 +32167,7 @@
       "label": "Запрещено Orchestrator'у",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L31",
+      "source_location": "L34",
       "_origin": "ast"
     },
     {
@@ -31671,7 +32175,7 @@
       "label": "Что worker-агенты говорят Human",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L39",
+      "source_location": "L42",
       "_origin": "ast"
     },
     {
@@ -31679,7 +32183,7 @@
       "label": "Tracks (1.0.3)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L49",
+      "source_location": "L52",
       "_origin": "ast"
     },
     {
@@ -31687,7 +32191,7 @@
       "label": "On turn («приступай» / «статус» / «дальше»)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L63",
+      "source_location": "L66",
       "_origin": "ast"
     },
     {
@@ -31695,7 +32199,7 @@
       "label": "A) `review.status == approved` and implementation done",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L70",
+      "source_location": "L73",
       "_origin": "ast"
     },
     {
@@ -31703,7 +32207,7 @@
       "label": "B) `changes_requested`",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L85",
+      "source_location": "L90",
       "_origin": "ast"
     },
     {
@@ -31711,7 +32215,7 @@
       "label": "C) `attempts >= 3`",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L91",
+      "source_location": "L96",
       "_origin": "ast"
     },
     {
@@ -31719,7 +32223,7 @@
       "label": "D) `waiting_review` / `next_actor: reviewer`",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L96",
+      "source_location": "L101",
       "_origin": "ast"
     },
     {
@@ -31727,7 +32231,7 @@
       "label": "E) `pending` / `next_actor: coder`",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L101",
+      "source_location": "L106",
       "_origin": "ast"
     },
     {
@@ -31735,7 +32239,7 @@
       "label": "F) Architect handoff / design needed",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L106",
+      "source_location": "L111",
       "_origin": "ast"
     },
     {
@@ -31743,7 +32247,7 @@
       "label": "G) B6 NO-GO",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L110",
+      "source_location": "L115",
       "_origin": "ast"
     },
     {
@@ -31751,7 +32255,7 @@
       "label": "Kick delivery format (каждый раз)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L116",
+      "source_location": "L121",
       "_origin": "ast"
     },
     {
@@ -31759,7 +32263,7 @@
       "label": "Checkpoints",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L125",
+      "source_location": "L130",
       "_origin": "ast"
     },
     {
@@ -31767,7 +32271,7 @@
       "label": "Graphify (перед началом работы, после каждого Coder и каждого POST-цикла)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L138",
+      "source_location": "L143",
       "_origin": "ast"
     },
     {
@@ -31775,7 +32279,7 @@
       "label": "Bolabol-specific rules",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L153",
+      "source_location": "L158",
       "_origin": "ast"
     },
     {
@@ -31783,7 +32287,7 @@
       "label": "Kick footer (append to every short kick)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L166",
+      "source_location": "L171",
       "_origin": "ast"
     },
     {
@@ -32635,6 +33139,158 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_ai_security",
+      "label": "SECURITY.md",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_security_testing_policy_bolabol_workflow",
+      "label": "Security testing policy — Bolabol workflow",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_principle",
+      "label": "Principle",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_who_does_what",
+      "label": "Who does what",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_mandatory_on_every_tester_turn_after_reviewer_approved",
+      "label": "Mandatory on every Tester turn (after Reviewer APPROVED)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L20",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_severity_workflow",
+      "label": "Severity → workflow",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L41",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_what_tester_must_never_do",
+      "label": "What Tester must never do",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L49",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_minimal_local_repro_for_tests",
+      "label": "Minimal local repro for tests",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L57",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_existing_baseline_assets",
+      "label": "Existing baseline assets",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L62",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report",
+      "label": "SECURITY_REPORT.md",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report_security_report_bolabol",
+      "label": "SECURITY REPORT — Bolabol",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report_meta",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report_scope_this_turn",
+      "label": "Scope this turn",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report_baseline_gates_run",
+      "label": "Baseline gates run",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L30",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report_findings",
+      "label": "Findings",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L39",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report_sec_001_title",
+      "label": "SEC-001 — title",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L41",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report_new_security_tests_qa_scripts_added",
+      "label": "New security tests / QA scripts added",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L56",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report_summary_for_orchestrator",
+      "label": "Summary for Orchestrator",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L62",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_security_report_handoff",
+      "label": "Handoff",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L69",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_ai_team_contract",
       "label": "TEAM_CONTRACT.md",
       "file_type": "document",
@@ -32683,11 +33339,11 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_team_contract_who_does_what_when_tester_finds_a_product_bug",
-      "label": "Who does what when Tester finds a product bug",
+      "id": "ai_workflow_kit_docs_ai_team_contract_who_does_what_when_tester_finds_a_product_bug_or_security_issue",
+      "label": "Who does what when Tester finds a product bug **or security issue**",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L64",
+      "source_location": "L67",
       "_origin": "ast"
     },
     {
@@ -32695,7 +33351,7 @@
       "label": "Hard rules",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L78",
+      "source_location": "L82",
       "_origin": "ast"
     },
     {
@@ -32703,7 +33359,7 @@
       "label": "Comments (mandatory quality bar)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L102",
+      "source_location": "L106",
       "_origin": "ast"
     },
     {
@@ -32711,7 +33367,7 @@
       "label": "Forbidden",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L113",
+      "source_location": "L117",
       "_origin": "ast"
     },
     {
@@ -32719,7 +33375,7 @@
       "label": "Build bar (default)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L119",
+      "source_location": "L123",
       "_origin": "ast"
     },
     {
@@ -32727,7 +33383,7 @@
       "label": "Handoff phrase (all workers)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L128",
+      "source_location": "L132",
       "_origin": "ast"
     },
     {
@@ -32936,6 +33592,78 @@
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
       "source_location": "L181",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "label": "S4b — Canary 1B Core ML fix + Bolabol-hosted package",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L185",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_goal_187",
+      "label": "Goal",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L187",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_why_s4_residual",
+      "label": "Why (S4 residual)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L196",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_two_allowed_fix_paths_pick_one_document_choice",
+      "label": "Two allowed fix paths (pick one; document choice)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L211",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_requirements_221",
+      "label": "Requirements",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L221",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_target_files_239",
+      "label": "target_files",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L239",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_251",
+      "label": "Out of scope",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L251",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_done_259",
+      "label": "Done",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L259",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_verify_270",
+      "label": "Verify",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L270",
       "_origin": "ast"
     },
     {
@@ -33608,6 +34336,14 @@
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L142",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_adr_016_canary_1b_reopen_via_bolabol_fixed_core_ml_package_s4b",
+      "label": "ADR-016 — Canary 1B reopen via Bolabol-fixed Core ML package (S4b)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L153",
       "_origin": "ast"
     },
     {
@@ -35811,6 +36547,126 @@
       "_origin": "ast"
     },
     {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike",
+      "label": "BOLABOL_COREML_SPIKE.md",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_canary_1b_v2_core_ml_bolabol_s4b_spike_report",
+      "label": "Canary 1B v2 Core ML — Bolabol S4b Spike Report",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_1_result",
+      "label": "1. Result",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_2_p0_triage",
+      "label": "2. P0 Triage",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L24",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_public_options",
+      "label": "Public options",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_smdesai_spike",
+      "label": "smdesai spike",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L41",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_fluidaudio_analysis",
+      "label": "FluidAudio analysis",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L75",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_3_path_chosen",
+      "label": "3. Path Chosen",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L90",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_4_preflight_evidence",
+      "label": "4. Preflight Evidence",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L113",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_mel",
+      "label": "Mel",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L118",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_asr_ast",
+      "label": "ASR / AST",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L131",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_platform_and_policy",
+      "label": "Platform and policy",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L143",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_5_package",
+      "label": "5. Package",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L154",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_6_reproduction",
+      "label": "6. Reproduction",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L206",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_bolabol_coreml_spike_7_s7_constraints",
+      "label": "7. S7+ Constraints",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L261",
+      "_origin": "ast"
+    },
+    {
       "id": "docs_asr_canary_1b_coreml_spike",
       "label": "COREML_SPIKE.md",
       "file_type": "document",
@@ -35952,6 +36808,302 @@
       "file_type": "document",
       "source_file": "docs/asr/canary-1b/COREML_SPIKE.md",
       "source_location": "L183",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan",
+      "label": "FIX_PLAN.md",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "label": "Canary 1B Core ML — Fix Plan (S4b)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_0_internet_survey_2026_08_04_other_canary_1b_core_ml_options",
+      "label": "0. Internet survey (2026-08-04) — other “Canary 1B Core ML” options?",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L15",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_0_1_core_ml_packages_aimed_at_canary_1b_v2_native_apple",
+      "label": "0.1 Core ML packages aimed at Canary **1B v2** (native Apple)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L19",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_0_2_not_core_ml_not_bolabol_product_path_do_not_confuse",
+      "label": "0.2 Not Core ML / not Bolabol product path (do not confuse)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L28",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_0_3_nuance_fluidinference_claims_working_benchmarks",
+      "label": "0.3 Nuance: FluidInference claims “working” benchmarks",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L39",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_0_4_survey_conclusion_as_of_2026_08_04",
+      "label": "0.4 Survey conclusion (as of 2026-08-04)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L53",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_1_what_is_actually_broken_must_fix",
+      "label": "1. What is actually broken (must fix)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L62",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_what_is_not_broken_do_not_waste_time",
+      "label": "What is **not** broken (do not waste time)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L75",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_what_must_not_be_fixed_only_in_product_ui",
+      "label": "What must **not** be “fixed” only in product UI",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L83",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_2_fix_paths",
+      "label": "2. Fix paths",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L90",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_path_a_full_core_ml_re_export_preferred_for_one_folder_on_cloud",
+      "label": "Path A — Full Core ML re-export (preferred for “one folder on cloud”)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L92",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_path_b_hybrid_flash_lesson",
+      "label": "Path B — Hybrid (Flash lesson)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L112",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_3_preflight_gate_go_checklist",
+      "label": "3. Preflight gate (GO checklist)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L133",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_3_1_mel_kills_f1",
+      "label": "3.1 Mel (kills F1)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L137",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_3_2_asr_kills_f3_end_to_end",
+      "label": "3.2 ASR (kills F3 / end-to-end)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L145",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_3_3_platform_policy",
+      "label": "3.3 Platform / policy",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L154",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_3_4_package_integrity",
+      "label": "3.4 Package integrity",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L163",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_4_cloud_packaging_for_our_cloud_not_hf",
+      "label": "4. Cloud packaging (for “our cloud”, not HF)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L175",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_4_1_versioning",
+      "label": "4.1 Versioning",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L177",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_4_2_manifest_json_schema",
+      "label": "4.2 MANIFEST.json (schema)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L183",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_4_3_distribution_object_human_ops",
+      "label": "4.3 Distribution object (Human ops)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L202",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_4_4_what_product_will_need_later_out_of_s4b_code_in_plan",
+      "label": "4.4 What product will need later (out of S4b code, in plan)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L215",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_5_work_breakdown_s4b_coder",
+      "label": "5. Work breakdown (S4b coder)",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L226",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_recommended_harness_reuse",
+      "label": "Recommended harness reuse",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L237",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_suggested_dirs",
+      "label": "Suggested dirs",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L243",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_6_explicit_non_goals",
+      "label": "6. Explicit non-goals",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L260",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_7_exit_orchestrator",
+      "label": "7. Exit → Orchestrator",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L270",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_8_relationship_to_go_list_track_c",
+      "label": "8. Relationship to GO-LIST / Track C",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L279",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_plan_9_references",
+      "label": "9. References",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L287",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_p0_triage",
+      "label": "P0_TRIAGE.md",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/fix/P0_TRIAGE.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_p0_triage_s4b_p0_triage_notes",
+      "label": "S4b P0 Triage Notes",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/fix/P0_TRIAGE.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_p0_triage_public_options",
+      "label": "Public options",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/fix/P0_TRIAGE.md",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_p0_triage_smdesai_artifact",
+      "label": "smdesai artifact",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/fix/P0_TRIAGE.md",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_p0_triage_fluidaudio",
+      "label": "FluidAudio",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/fix/P0_TRIAGE.md",
+      "source_location": "L38",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_probes_readme",
+      "label": "README.md",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/fix/probes/README.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_canary_1b_fix_probes_readme_s4b_probe_sources",
+      "label": "S4b Probe Sources",
+      "file_type": "document",
+      "source_file": "docs/asr/canary-1b/fix/probes/README.md",
+      "source_location": "L1",
       "_origin": "ast"
     },
     {
@@ -36600,7 +37752,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L51",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36610,7 +37762,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L52",
+      "source_location": "L53",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36620,7 +37772,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L54",
+      "source_location": "L55",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36630,7 +37782,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L63",
+      "source_location": "L64",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36640,7 +37792,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L78",
+      "source_location": "L79",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36650,7 +37802,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L89",
+      "source_location": "L90",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36660,7 +37812,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L100",
+      "source_location": "L101",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36670,7 +37822,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L117",
+      "source_location": "L118",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36680,7 +37832,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L133",
+      "source_location": "L134",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36690,7 +37842,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L140",
+      "source_location": "L141",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36700,7 +37852,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L158",
+      "source_location": "L159",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36710,7 +37862,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L171",
+      "source_location": "L172",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36731,7 +37883,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L184",
+      "source_location": "L185",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36742,7 +37894,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L48",
+      "source_location": "L49",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36753,7 +37905,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L65",
+      "source_location": "L66",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36764,7 +37916,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L91",
+      "source_location": "L92",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36775,7 +37927,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L102",
+      "source_location": "L103",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36786,7 +37938,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L110",
+      "source_location": "L111",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36797,7 +37949,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L113",
+      "source_location": "L114",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36808,7 +37960,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L120",
+      "source_location": "L121",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36819,7 +37971,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L124",
+      "source_location": "L125",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36830,7 +37982,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L126",
+      "source_location": "L127",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36841,7 +37993,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L129",
+      "source_location": "L130",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36852,7 +38004,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L143",
+      "source_location": "L144",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36863,7 +38015,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L148",
+      "source_location": "L149",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36874,7 +38026,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L175",
+      "source_location": "L176",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36885,7 +38037,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L176",
+      "source_location": "L177",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36896,7 +38048,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L177",
+      "source_location": "L178",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36907,7 +38059,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L178",
+      "source_location": "L179",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36918,7 +38070,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L179",
+      "source_location": "L180",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -36929,7 +38081,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/script/checkpoint.sh",
-      "source_location": "L180",
+      "source_location": "L181",
       "weight": 1.0,
       "context": "call",
       "_origin": "ast"
@@ -116936,6 +118088,16 @@
       "_origin": "ast"
     },
     {
+      "source": "docs_asr_canary_1b_fix_package_manifest",
+      "target": "docs_asr_canary_1b_fix_package_manifest_sh__entry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/fix/package_manifest.sh",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
       "target": "accelerate",
       "relation": "imports",
@@ -118651,7 +119813,7 @@
     },
     {
       "source": "docs_canary_harness_canaryflashspike_melfrontend",
-      "target": "fftsetup",
+      "target": "docs_canary_harness_canaryflashspike_swift_fftsetup",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
@@ -118769,7 +119931,7 @@
     },
     {
       "source": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
-      "target": "unsafemutablepointer",
+      "target": "docs_canary_harness_canaryflashspike_swift_unsafemutablepointer",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
@@ -120288,6 +121450,2005 @@
       "confidence": "EXTRACTED",
       "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
       "source_location": "L401",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "accelerate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "coreml",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "foundation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "target": "localizederror",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L21",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_config",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L26",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_config",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L27",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_parseargs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L38",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_parseargs",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L38",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_parseargs",
+      "target": "docs_canary_harness_canarysmdesaispike_config",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L38",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_readwav",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L60",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L60",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L60",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L60",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_computeunits",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L133",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_computeunits",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L133",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_computeunits",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlcomputeunits",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L133",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_makefloatarray",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L141",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makefloatarray",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L141",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makefloatarray",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L141",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makefloatarray",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L141",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_makeintarray",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L149",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makeintarray",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L149",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makeintarray",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L149",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L155",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_run",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmodel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L155",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_run",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L155",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_run",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlfeaturevalue",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L155",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_floatvalues",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L163",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_floatvalues",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L163",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_floatvalues",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L163",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_scalarint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L168",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_scalarint",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L168",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_scalarint",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L168",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_modelpath",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L172",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_modelpath",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L172",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_modelpath",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_url",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L172",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_models",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L176",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmodel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L177",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L181",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L181",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models",
+      "target": "docs_canary_harness_canarysmdesaispike_models_load",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L183",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models_load",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L183",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models_load",
+      "target": "docs_canary_harness_canarysmdesaispike_models",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L183",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L229",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_fftsetup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L241",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L242",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "target": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L245",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "target": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L259",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L259",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L259",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L259",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "target": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_normalize",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L346",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_normalize",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_unsafemutablepointer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L346",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_normalize",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L346",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_normalize",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L346",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "target": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_buildmelfilterbank",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L364",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_buildmelfilterbank",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L364",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_buildmelfilterbank",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L364",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_makesine",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L413",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makesine",
+      "target": "sources_nativebolabol_services_whisperkittranscriptionengine_double",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L413",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makesine",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L413",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makesine",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L413",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_paddedwindow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L419",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_paddedwindow",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L419",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_paddedwindow",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L419",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L426",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmodel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L426",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L426",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L426",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L426",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_pearson",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L440",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_pearson",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L440",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_pearson",
+      "target": "sources_nativebolabol_services_whisperkittranscriptionengine_double",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L440",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_channelscores",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L458",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_channelscores",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L458",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_channelscores",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L458",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_channelscores",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L458",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_topchannels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L470",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_topchannels",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L470",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_topchannels",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L470",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_melenergy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L474",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_melenergy",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L474",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_melenergy",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L474",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_melenergy",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L474",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_frameenvelope",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L486",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_frameenvelope",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L486",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_frameenvelope",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L486",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L497",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L497",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "melextractor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L497",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L497",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_transposeencoder",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L535",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_transposeencoder",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L535",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_makeselfmask",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L546",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makeselfmask",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L546",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makeselfmask",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L546",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_argmax",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L553",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_argmax",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L553",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_argmax",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L553",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_decode",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L564",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_decode",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L564",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_decode",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L564",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_runasr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L570",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_models",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L570",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L570",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L570",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L570",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "melextractor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L570",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L637",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmodel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L637",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "target": "mlstate",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L637",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L637",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L637",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L637",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlfeaturevalue",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L637",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L653",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike",
+      "target": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L655",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_parseargs",
+      "target": "docs_canary_harness_canarysmdesaispike_config",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L39",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_parseargs",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L51",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L66",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L74",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L113",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makefloatarray",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L142",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makeintarray",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L150",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models_load",
+      "target": "docs_canary_harness_canarysmdesaispike_computeunits",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L185",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models_load",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmodel",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L187",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models_load",
+      "target": "docs_canary_harness_canarysmdesaispike_modelpath",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L188",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models_load",
+      "target": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L206",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models_load",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L210",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models_load",
+      "target": "docs_canary_harness_canarysmdesaispike_models",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L222",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_init",
+      "target": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L248",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_init",
+      "target": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_buildmelfilterbank",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L254",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "target": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L261",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L286",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "target": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_normalize",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L342",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_normalize",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L352",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_buildmelfilterbank",
+      "target": "sources_nativebolabol_services_whisperkittranscriptionengine_double",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L383",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_buildmelfilterbank",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L404",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makesine",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L415",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_paddedwindow",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L428",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L429",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlfeaturevalue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L430",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_makefloatarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L430",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_makeintarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L431",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L435",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "docs_canary_harness_canarysmdesaispike_scalarint",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L437",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_pearson",
+      "target": "sources_nativebolabol_services_whisperkittranscriptionengine_double",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L448",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_channelscores",
+      "target": "docs_canary_harness_canarysmdesaispike_floatvalues",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L459",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_melenergy",
+      "target": "docs_canary_harness_canarysmdesaispike_floatvalues",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L475",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "docs_canary_harness_canarysmdesaispike_makesine",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L498",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "docs_canary_harness_canarysmdesaispike_topchannels",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L500",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "docs_canary_harness_canarysmdesaispike_channelscores",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L500",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "docs_canary_harness_canarysmdesaispike_melenergy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L505",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "docs_canary_harness_canarysmdesaispike_frameenvelope",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L506",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "docs_canary_harness_canarysmdesaispike_pearson",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L507",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "docs_canary_harness_canarysmdesaispike_floatvalues",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L508",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "target": "sources_nativebolabol_services_whisperkittranscriptionengine_double",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L518",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_transposeencoder",
+      "target": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L541",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makeselfmask",
+      "target": "docs_canary_harness_canarysmdesaispike_makefloatarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L550",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_argmax",
+      "target": "docs_canary_harness_canarysmdesaispike_floatvalues",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L554",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L574",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlfeaturevalue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L575",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_makeintarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L576",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L580",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_scalarint",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L582",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_transposeencoder",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L583",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L601",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_argmax",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L614",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "docs_canary_harness_canarysmdesaispike_decode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L627",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_mlfeaturevalue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L640",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "target": "docs_canary_harness_canarysmdesaispike_makeintarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L642",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runstatefuldecoder",
+      "target": "docs_canary_harness_canarysmdesaispike_makeselfmask",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L643",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "docs_canary_harness_canarysmdesaispike_parseargs",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L656",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "docs_canary_harness_canarysmdesaispike_models_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L662",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "docs_canary_harness_canarysmdesaispike_readwav",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L664",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "docs_canary_harness_canarysmdesaispike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L666",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "sources_nativebolabol_services_whisperkittranscriptionengine_double",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L668",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L672",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "docs_canary_harness_canarysmdesaispike_runmelpreflight",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L674",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L679",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L681",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_canarysmdesaispike_main",
+      "target": "docs_canary_harness_canarysmdesaispike_runasr",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L691",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend",
+      "target": "docs_canary_harness_canarysmdesaispike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L238",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121934,6 +125095,58 @@
       "_origin": "ast"
     },
     {
+      "source": "script_qa_check_s4b_canary_fix",
+      "target": "script_qa_check_s4b_canary_fix_sh__entry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s4b_canary_fix.sh",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s4b_canary_fix",
+      "target": "script_qa_check_s4b_canary_fix_require_file",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s4b_canary_fix.sh",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s4b_canary_fix",
+      "target": "script_qa_check_s4b_canary_fix_require_text",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s4b_canary_fix.sh",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s4b_canary_fix_sh__entry",
+      "target": "script_qa_check_s4b_canary_fix_require_file",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s4b_canary_fix.sh",
+      "source_location": "L29",
+      "weight": 1.0,
+      "context": "call",
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s4b_canary_fix_sh__entry",
+      "target": "script_qa_check_s4b_canary_fix_require_text",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s4b_canary_fix.sh",
+      "source_location": "L44",
+      "weight": 1.0,
+      "context": "call",
+      "_origin": "ast"
+    },
+    {
       "source": "script_qa_check_s6_gigaam_spike",
       "target": "script_qa_check_s6_gigaam_spike_sh__entry",
       "relation": "contains",
@@ -122139,7 +125352,7 @@
     },
     {
       "source": "ai_workflow_kit_docs_ai_bug_report",
-      "target": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_3",
+      "target": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_4",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
@@ -122148,22 +125361,22 @@
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_3",
+      "source": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_4",
       "target": "ai_workflow_kit_docs_ai_bug_report_meta",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
-      "source_location": "L5",
+      "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_3",
+      "source": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_4",
       "target": "ai_workflow_kit_docs_ai_bug_report_bugs",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
-      "source_location": "L13",
+      "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -122173,17 +125386,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
-      "source_location": "L15",
+      "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_3",
+      "source": "ai_workflow_kit_docs_ai_bug_report_bug_report_bolabol_1_0_4",
       "target": "ai_workflow_kit_docs_ai_bug_report_summary_for_orchestrator",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/BUG_REPORT.md",
-      "source_location": "L28",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123318,6 +126531,66 @@
       "_origin": "ast"
     },
     {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_core_ml_fix_bolabol_hosted_package_step_s4b_coder",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1107",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_core_ml_fix_bolabol_hosted_package_step_s4b_coder",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_1109",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1109",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_1119",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1119",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_2_s4b_implementation_compliance",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1133",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_1146",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1146",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_1163",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1163",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "ai_workflow_kit_docs_ai_git_checkpoints",
       "target": "ai_workflow_kit_docs_ai_git_checkpoints_git_checkpoints_bolabol_1_0_3",
       "relation": "contains",
@@ -123429,7 +126702,7 @@
     },
     {
       "source": "ai_workflow_kit_docs_ai_kick_tester",
-      "target": "ai_workflow_kit_docs_ai_kick_tester_kick_шаблон_test_engineer_tester_qa_bolabol",
+      "target": "ai_workflow_kit_docs_ai_kick_tester_kick_шаблон_test_engineer_tester_qa_security_bolabol",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/KICK_TESTER.md",
@@ -123438,7 +126711,7 @@
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_kick_tester_kick_шаблон_test_engineer_tester_qa_bolabol",
+      "source": "ai_workflow_kit_docs_ai_kick_tester_kick_шаблон_test_engineer_tester_qa_security_bolabol",
       "target": "ai_workflow_kit_docs_ai_kick_tester_system_prompt_роль",
       "relation": "contains",
       "confidence": "EXTRACTED",
@@ -123448,12 +126721,12 @@
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_kick_tester_kick_шаблон_test_engineer_tester_qa_bolabol",
+      "source": "ai_workflow_kit_docs_ai_kick_tester_kick_шаблон_test_engineer_tester_qa_security_bolabol",
       "target": "ai_workflow_kit_docs_ai_kick_tester_task_задание_на_конкретный_шаг",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/KICK_TESTER.md",
-      "source_location": "L58",
+      "source_location": "L76",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123483,7 +126756,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L31",
+      "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123493,7 +126766,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L39",
+      "source_location": "L42",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123503,7 +126776,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L49",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123513,7 +126786,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L63",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123523,7 +126796,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L70",
+      "source_location": "L73",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123533,7 +126806,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L85",
+      "source_location": "L90",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123543,7 +126816,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L91",
+      "source_location": "L96",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123553,7 +126826,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L96",
+      "source_location": "L101",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123563,7 +126836,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L101",
+      "source_location": "L106",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123573,7 +126846,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L106",
+      "source_location": "L111",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123583,7 +126856,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L110",
+      "source_location": "L115",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123593,7 +126866,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L116",
+      "source_location": "L121",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123603,7 +126876,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L125",
+      "source_location": "L130",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123613,7 +126886,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L138",
+      "source_location": "L143",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123623,7 +126896,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L153",
+      "source_location": "L158",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -123633,7 +126906,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L166",
+      "source_location": "L171",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -124678,6 +127951,176 @@
       "_origin": "ast"
     },
     {
+      "source": "ai_workflow_kit_docs_ai_security",
+      "target": "ai_workflow_kit_docs_ai_security_security_testing_policy_bolabol_workflow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_security_testing_policy_bolabol_workflow",
+      "target": "ai_workflow_kit_docs_ai_security_principle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_security_testing_policy_bolabol_workflow",
+      "target": "ai_workflow_kit_docs_ai_security_who_does_what",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_security_testing_policy_bolabol_workflow",
+      "target": "ai_workflow_kit_docs_ai_security_mandatory_on_every_tester_turn_after_reviewer_approved",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_security_testing_policy_bolabol_workflow",
+      "target": "ai_workflow_kit_docs_ai_security_severity_workflow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_security_testing_policy_bolabol_workflow",
+      "target": "ai_workflow_kit_docs_ai_security_what_tester_must_never_do",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L49",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_security_testing_policy_bolabol_workflow",
+      "target": "ai_workflow_kit_docs_ai_security_minimal_local_repro_for_tests",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L57",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_security_testing_policy_bolabol_workflow",
+      "target": "ai_workflow_kit_docs_ai_security_existing_baseline_assets",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY.md",
+      "source_location": "L62",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_report",
+      "target": "ai_workflow_kit_docs_ai_security_report_security_report_bolabol",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_report_security_report_bolabol",
+      "target": "ai_workflow_kit_docs_ai_security_report_meta",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_report_security_report_bolabol",
+      "target": "ai_workflow_kit_docs_ai_security_report_scope_this_turn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_report_security_report_bolabol",
+      "target": "ai_workflow_kit_docs_ai_security_report_baseline_gates_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_report_security_report_bolabol",
+      "target": "ai_workflow_kit_docs_ai_security_report_findings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L39",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_report_findings",
+      "target": "ai_workflow_kit_docs_ai_security_report_sec_001_title",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_report_security_report_bolabol",
+      "target": "ai_workflow_kit_docs_ai_security_report_new_security_tests_qa_scripts_added",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L56",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_report_security_report_bolabol",
+      "target": "ai_workflow_kit_docs_ai_security_report_summary_for_orchestrator",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L62",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_security_report_security_report_bolabol",
+      "target": "ai_workflow_kit_docs_ai_security_report_handoff",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md",
+      "source_location": "L69",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "ai_workflow_kit_docs_ai_team_contract",
       "target": "ai_workflow_kit_docs_ai_team_contract_ai_team_contract_bolabol_1_0_3",
       "relation": "contains",
@@ -124729,11 +128172,11 @@
     },
     {
       "source": "ai_workflow_kit_docs_ai_team_contract_workflow_hub_orchestrator",
-      "target": "ai_workflow_kit_docs_ai_team_contract_who_does_what_when_tester_finds_a_product_bug",
+      "target": "ai_workflow_kit_docs_ai_team_contract_who_does_what_when_tester_finds_a_product_bug_or_security_issue",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L64",
+      "source_location": "L67",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -124743,7 +128186,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L78",
+      "source_location": "L82",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -124753,7 +128196,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L102",
+      "source_location": "L106",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -124763,7 +128206,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L113",
+      "source_location": "L117",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -124773,7 +128216,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L119",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -124783,7 +128226,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md",
-      "source_location": "L128",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125034,6 +128477,96 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
       "source_location": "L181",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_bolabol_asr_core_ml_step_cards_s0_s15",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L185",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_goal_187",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L187",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_why_s4_residual",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L196",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_two_allowed_fix_paths_pick_one_document_choice",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L211",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_requirements_221",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L221",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_target_files_239",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L239",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_251",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L251",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_done_259",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L259",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_verify_270",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L270",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125854,6 +129387,16 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L142",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_log_bolabol",
+      "target": "ai_workflow_kit_docs_decisions_adr_016_canary_1b_reopen_via_bolabol_fixed_core_ml_package_s4b",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L153",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -128508,6 +132051,146 @@
       "_origin": "ast"
     },
     {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_canary_1b_v2_core_ml_bolabol_s4b_spike_report",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_canary_1b_v2_core_ml_bolabol_s4b_spike_report",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_1_result",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_canary_1b_v2_core_ml_bolabol_s4b_spike_report",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_2_p0_triage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_2_p0_triage",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_public_options",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L26",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_2_p0_triage",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_smdesai_spike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_2_p0_triage",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_fluidaudio_analysis",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L75",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_canary_1b_v2_core_ml_bolabol_s4b_spike_report",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_3_path_chosen",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L90",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_canary_1b_v2_core_ml_bolabol_s4b_spike_report",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_4_preflight_evidence",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L113",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_4_preflight_evidence",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_mel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L118",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_4_preflight_evidence",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_asr_ast",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L131",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_4_preflight_evidence",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_platform_and_policy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L143",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_canary_1b_v2_core_ml_bolabol_s4b_spike_report",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_5_package",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L154",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_canary_1b_v2_core_ml_bolabol_s4b_spike_report",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_6_reproduction",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L206",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_bolabol_coreml_spike_canary_1b_v2_core_ml_bolabol_s4b_spike_report",
+      "target": "docs_asr_canary_1b_bolabol_coreml_spike_7_s7_constraints",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md",
+      "source_location": "L261",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "docs_asr_canary_1b_coreml_spike",
       "target": "docs_asr_canary_1b_coreml_spike_canary_1b_v2_fluidinference_core_ml_s4_spike_report",
       "relation": "contains",
@@ -128674,6 +132357,346 @@
       "confidence": "EXTRACTED",
       "source_file": "docs/asr/canary-1b/COREML_SPIKE.md",
       "source_location": "L183",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan",
+      "target": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_0_internet_survey_2026_08_04_other_canary_1b_core_ml_options",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_0_internet_survey_2026_08_04_other_canary_1b_core_ml_options",
+      "target": "docs_asr_canary_1b_fix_plan_0_1_core_ml_packages_aimed_at_canary_1b_v2_native_apple",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_0_internet_survey_2026_08_04_other_canary_1b_core_ml_options",
+      "target": "docs_asr_canary_1b_fix_plan_0_2_not_core_ml_not_bolabol_product_path_do_not_confuse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_0_internet_survey_2026_08_04_other_canary_1b_core_ml_options",
+      "target": "docs_asr_canary_1b_fix_plan_0_3_nuance_fluidinference_claims_working_benchmarks",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L39",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_0_internet_survey_2026_08_04_other_canary_1b_core_ml_options",
+      "target": "docs_asr_canary_1b_fix_plan_0_4_survey_conclusion_as_of_2026_08_04",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L53",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_1_what_is_actually_broken_must_fix",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L62",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_1_what_is_actually_broken_must_fix",
+      "target": "docs_asr_canary_1b_fix_plan_what_is_not_broken_do_not_waste_time",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L75",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_1_what_is_actually_broken_must_fix",
+      "target": "docs_asr_canary_1b_fix_plan_what_must_not_be_fixed_only_in_product_ui",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L83",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_2_fix_paths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L90",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_2_fix_paths",
+      "target": "docs_asr_canary_1b_fix_plan_path_a_full_core_ml_re_export_preferred_for_one_folder_on_cloud",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L92",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_2_fix_paths",
+      "target": "docs_asr_canary_1b_fix_plan_path_b_hybrid_flash_lesson",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L112",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_3_preflight_gate_go_checklist",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L133",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_3_preflight_gate_go_checklist",
+      "target": "docs_asr_canary_1b_fix_plan_3_1_mel_kills_f1",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L137",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_3_preflight_gate_go_checklist",
+      "target": "docs_asr_canary_1b_fix_plan_3_2_asr_kills_f3_end_to_end",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L145",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_3_preflight_gate_go_checklist",
+      "target": "docs_asr_canary_1b_fix_plan_3_3_platform_policy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L154",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_3_preflight_gate_go_checklist",
+      "target": "docs_asr_canary_1b_fix_plan_3_4_package_integrity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L163",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_4_cloud_packaging_for_our_cloud_not_hf",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L175",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_4_cloud_packaging_for_our_cloud_not_hf",
+      "target": "docs_asr_canary_1b_fix_plan_4_1_versioning",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L177",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_4_cloud_packaging_for_our_cloud_not_hf",
+      "target": "docs_asr_canary_1b_fix_plan_4_2_manifest_json_schema",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L183",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_4_cloud_packaging_for_our_cloud_not_hf",
+      "target": "docs_asr_canary_1b_fix_plan_4_3_distribution_object_human_ops",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L202",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_4_cloud_packaging_for_our_cloud_not_hf",
+      "target": "docs_asr_canary_1b_fix_plan_4_4_what_product_will_need_later_out_of_s4b_code_in_plan",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L215",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_5_work_breakdown_s4b_coder",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L226",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_5_work_breakdown_s4b_coder",
+      "target": "docs_asr_canary_1b_fix_plan_recommended_harness_reuse",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L237",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_5_work_breakdown_s4b_coder",
+      "target": "docs_asr_canary_1b_fix_plan_suggested_dirs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L243",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_6_explicit_non_goals",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L260",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_7_exit_orchestrator",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L270",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_8_relationship_to_go_list_track_c",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L279",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_plan_canary_1b_core_ml_fix_plan_s4b",
+      "target": "docs_asr_canary_1b_fix_plan_9_references",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/FIX_PLAN.md",
+      "source_location": "L287",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_p0_triage",
+      "target": "docs_asr_canary_1b_fix_p0_triage_s4b_p0_triage_notes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/fix/P0_TRIAGE.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_p0_triage_s4b_p0_triage_notes",
+      "target": "docs_asr_canary_1b_fix_p0_triage_public_options",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/fix/P0_TRIAGE.md",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_p0_triage_s4b_p0_triage_notes",
+      "target": "docs_asr_canary_1b_fix_p0_triage_smdesai_artifact",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/fix/P0_TRIAGE.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_p0_triage_s4b_p0_triage_notes",
+      "target": "docs_asr_canary_1b_fix_p0_triage_fluidaudio",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/fix/P0_TRIAGE.md",
+      "source_location": "L38",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_canary_1b_fix_probes_readme",
+      "target": "docs_asr_canary_1b_fix_probes_readme_s4b_probe_sources",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/canary-1b/fix/probes/README.md",
+      "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -136770,6 +140793,150 @@
       "confidence_score": 0.8,
       "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
       "source_location": "L344",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "sources_nativebolabol_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L61",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "int16",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "uint16",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_readwav",
+      "target": "int32",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L111",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makefloatarray",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L142",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_makeintarray",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L150",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_models_load",
+      "target": "sources_nativebolabol_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L204",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L287",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_extract",
+      "target": "vdsp_length",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L311",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_nativemelfrontend_normalize",
+      "target": "sources_nativebolabol_views_providerquickswitcher_providerquickswitcherlistview_row",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L351",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_preprocess",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_output",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L433",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canarysmdesaispike_runasr",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_output",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySmdesaiSpike.swift",
+      "source_location": "L611",
       "weight": 1.0,
       "_origin": "ast"
     },

@@ -1101,3 +1101,211 @@ git diff --check -- .
 **RESULT: `qa_green`**
 
 > Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S4b — Canary 1B Core ML fix + Bolabol-hosted package (Step S4b, coder)
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | S4b (CORE ML FIX / PACKAGE) |
+| Actor | Implementation Engineer / coder |
+| Date | 2026-08-04 |
+| Scope | P0 triage, Path B native mel, smdesai KV probe, Bolabol package, manifest, no-product boundary |
+| RESULT | `waiting_review` |
+
+## §1 — Inventory & Pass/Fail Summary
+
+- **Working Directory**: `/Users/pavan/Documents/AI Projects/Bolabol`.
+- **Graphify first**: completed against the existing graph before exploration:
+  - `graphify query "Canary Core ML FluidAudio spike harness" --graph graphify-out/graph.json` — PASS; existing S4/S5 harness/report/Core ML context found.
+  - `graphify query "CanaryFluidSpike Preprocessor mel" --graph graphify-out/graph.json` — PASS; existing Fluid/S5 mel frontend and harness context found.
+  - `graphify query "check_no_canary_product" --graph graphify-out/graph.json` — PASS; product-boundary QA script found.
+  No Graphify rebuild was performed.
+- **Reviewed context**: `FIX_PLAN.md`, `ASR_COREML_STEPS.md` S4b, `TEAM_CONTRACT.md`, `STATE.yaml` read-only, ADR-012/013/016, historical S4 report, and existing S4/S5/S6 harnesses.
+- **Survey**: HF API search returned only `FluidInference`, `alexwengg`, and `smdesai` as relevant Canary 1B-v2 Core ML trees; the FluidInference translation repo reuses the FluidInference weights.
+- **P0 smdesai**: revision `300285867b1757efddab01980c6be9b519bf68fd` downloaded to ignored `scratch/canary-1b-fix/smdesai/`. Preprocessor/encoder/cross-KV/stateful decoder all loaded and ran. The smdesai Core ML preprocessor failed mel preflight (`top3 overlap=2`, Pearson `0.019`, zero fraction `0.671`), so it is not packaged.
+- **P0 FluidAudio**: pinned 0.15.5 has no Canary API. Public `canary` branch `CanaryManager` uses a Core ML preprocessor, not native mel, and its legacy contract does not match smdesai KV. It is not used.
+- **Verdict**: **GO for the new Bolabol-owned Path B package candidate only**; FluidInference and alexwengg remain NO-GO and are not re-hosted.
+
+## §2 — S4b Implementation Compliance
+
+- [x] Path B selected and documented in `docs/asr/canary-1b/FIX_PLAN.md` and `BOLABOL_COREML_SPIKE.md`.
+- [x] New native Swift/Accelerate frontend in `docs/canary/harness/CanarySmdesaiSpike.swift`; no product target and no Python/external inference path.
+- [x] Native mel gate green: 1 kHz/4 kHz top-three overlap `0`; envelope Pearson `0.701` (`en_short`) and `0.683` (`en_fresh`); valid-region exact-zero fraction `0.000`.
+- [x] True valid lengths logged and propagated: `39946 -> 250 -> 32` and `64095 -> 401 -> 51`; fixed buffers are never used as valid lengths.
+- [x] Native Core ML KV decode green: EN short and second EN clip produce sensible EOS-terminated text; EN->FR AST produces EOS-terminated French text; no repeated-token tail.
+- [x] Package created at ignored `scratch/canary-1b-fix/package/bolabol-canary-1b-v2-coreml-r1/` with encoder, cross-KV, stateful decoder, `canary_spe.model`, `FRONTEND.md`, `LICENSE.txt`, `metadata.json`, and `MANIFEST.json`.
+- [x] Failed smdesai `canary_preprocessor.mlmodelc` is absent from the package; this is not a re-host of a red HF frontend.
+- [x] `docs/asr/canary-1b/fix/P0_TRIAGE.md`, `fix/probes/README.md`, and offline `fix/package_manifest.sh` added.
+- [x] Existing S4/S5/S6 harnesses remain unchanged; product `Sources/`, `Package.swift`, catalog, engine, UI, and download wiring remain Canary-free.
+- [x] `STATE.yaml`, `DECISIONS.md`, commit, and push were not changed by this handoff.
+
+## §3 — Verification
+
+| Command / evidence | Result |
+|---------------------|--------|
+| `xcrun swiftc -O -parse-as-library -target arm64-apple-macosx15.0 -o scratch/canary-1b-fix/bin/CanarySmdesaiSpike docs/canary/harness/CanarySmdesaiSpike.swift` | PASS |
+| smdesai Path B EN short CPU probe | PASS — exact `The quick brown fox jumps over the lazy dog.`, EOS true, `MEL_PREFLIGHT: PASS` |
+| smdesai Path B second EN CPU probe | PASS — sensible EN text, EOS true, `MEL_PREFLIGHT: PASS`, true lengths `64095 -> 401 -> 51` |
+| smdesai Path B EN->FR AST CPU probe | PASS — `Le renard brun saute par-dessus le chien paresseux.`, EOS true |
+| smdesai Path B `.cpuAndNeuralEngine` probe | PASS — native Core ML run completed; local ANE bundle recompilation warning was non-fatal and recorded in the report |
+| `docs/asr/canary-1b/fix/package_manifest.sh` + `MANIFEST.json` validation | PASS — 19 files, package approximately 1.8 GiB |
+| `VERIFY_S4B_PACKAGE=1 bash script/qa/check_s4b_canary_fix.sh` | PASS — every listed SHA-256 and byte size verified |
+| `swift test` | PASS — 503 tests in 4 suites |
+| `./script/qa/run_all.sh` | PASS — 24/24 |
+| `script/qa/check_no_canary_product.sh` | PASS — zero Canary product/module surface |
+| `bash -n script/qa/check_s4b_canary_fix.sh` | PASS |
+| `git diff --check -- .gitignore docs/asr/canary-1b docs/canary/harness script/qa AI_Workflow_Kit/docs/AI/FEEDBACK.md` | PASS |
+
+## §4 — Handoff
+
+- **GO boundary**: S4b GO applies to `bolabol-canary-1b-v2-coreml-r1` as a spike/package candidate, not to production integration. Human GO-list approval and S7–S9 remain required.
+- **Package policy**: host only the new Bolabol Path B layout on Bolabol CDN; do not upload FluidInference/alexwengg unchanged and do not claim the failed preprocessor is fixed.
+- **S7+ constraints**: custom adapter, macOS 15+ `MLState`, exact native frontend constants, VAD/chunks <=15 s, true sample/mel/encoder lengths, fresh decoder state per segment, native SentencePiece from `canary_spe.model`, and only verified EN ASR / EN->FR AST claims.
+- **Product boundary**: no catalog/download/UI/engine wiring and no changes under `Sources/` or `Package.swift`.
+- **Result**: `waiting_review`.
+
+**RESULT: `waiting_review`**
+
+> Готово. Вернись к оркестратору и скажи статус/приступай.
+
+---
+
+## S4b — Canary 1B Path B package GO (Independent Reviewer)
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Role | Verification Engineer / Reviewer |
+| Step | S4b (CORE ML FIX / PACKAGE — Path B) |
+| Date | 2026-08-04 |
+| Scope | Path B report, harness, spike, P0 triage, MANIFEST/SHA, product boundary, S4/S5/S6 preservation |
+| RESULT | `approved` |
+
+### Graphify and Scope Verification
+
+- Graphify was run first against the Orchestrator-rebuilt `graphify-out/graph.json` (no rebuild by this reviewer):
+  - `graphify query "CanarySmdesaiSpike Path B mel" --graph graphify-out/graph.json` — PASS; 46-node BFS traversal returns the S4b report, `FIX_PLAN.md`, the harness entry point, `NativeMelFrontend`, `runMelPreflight`, `preprocess`, `runASR`, `runStatefulDecoder`, Path A/B fix paths, and the Core ML/Foundation/Accelerate import edges.
+  - `graphify query "Canary Core ML FluidAudio spike harness" --graph graphify-out/graph.json` — PASS; 216-node traversal links the S4b report to the prior S4/S5 spike reports, `CanarySpike`/`CanaryFluidSpike`/`CanaryFlashSpike` harnesses, the GigaAM S6 harness, ADR/product-boundary context, and the FEEDBACK history.
+  - `graphify query "check_no_canary_product" --graph graphify-out/graph.json` — PASS; 2-node traversal resolves `script/qa/check_no_canary_product.sh`.
+- `git status -sb -- .` recorded the expected orchestrator/coder set: modified `.gitignore`, `FIX_PLAN.md`, and AI_Workflow_Kit docs; untracked `BOLABOL_COREML_SPIKE.md`, `docs/asr/canary-1b/fix/`, `docs/canary/harness/CanarySmdesaiSpike.swift`, `script/qa/check_s4b_canary_fix.sh`, plus Graphify cache. This reviewer modified only `FEEDBACK.md`.
+- `git diff --name-only -- Sources Tests docs script/qa` returned only `Bolabol/docs/asr/canary-1b/FIX_PLAN.md`; `git diff --name-only -- Sources` was empty — no product code touched.
+- Existing S4/S5/S6 harnesses (`CanaryFluidSpike`, `CanaryFlashSpike`, `GigaAMCoreMLSpike`) and their spike docs were untouched; the new `CanarySmdesaiSpike.swift` is the only harness addition.
+- `scratch/canary-1b-fix/` is gitignored (`.gitignore:6`) and `git ls-files -- 'scratch/canary-1b-fix/**'` returned zero tracked files; `git check-ignore -v` confirmed the package path is ignored.
+- The only Canary hits in `Sources/` are the pre-existing allowlisted items — `HelpSettingsView.swift` help copy, `OnboardingModelRecommendation.swift` pure S1b ranking helper, and `AppText.swift` i18n strings — exactly the surface `check_no_canary_product.sh` permits. No new catalog, engine, downloader, UI, or `Package.swift` wiring was introduced.
+
+### Acceptance Checklist
+
+| # | Requirement | Reviewer evidence | Result |
+|---|-------------|-------------------|--------|
+| 1 | Explicit GO/NO-GO + package id | `BOLABOL_COREML_SPIKE.md:5` has `**Status:** GO`; `:11` names `bolabol-canary-1b-v2-coreml-r1`; `:7` states the GO is not product approval. `check_s4b_canary_fix.sh:34` asserts `^\*\*Status:\*\* GO`. | PASS |
+| 2 | P0 triage: smdesai preprocessor excluded for cause; FI/alexwengg not re-hosted | `P0_TRIAGE.md` and report `§2` (`:24-88`) triage the three HF trees; smdesai preprocessor fails (`top3 overlap=2`, Pearson `0.019`, zero fraction `0.671`) and is excluded; FI (ADR-013) and alexwengg (ADR-012) are explicitly "Do not re-host". `metadata.json:10` records the smdesai export source revision. | PASS |
+| 3 | Path B native mel preflight (freq discrimination, envelope >0.5) | Harness `runMelPreflight` (`CanarySmdesaiSpike.swift:497-531`) requires `overlap <= 1`, top-channel delta `>= 5`, Pearson `> 0.5`, zero fraction `< 0.2`. Runtime printed native `overlap=0`, `frequency_discrimination=true`, Pearson `0.701`, zero fraction `0.000`, `MEL_PREFLIGHT: PASS` — matches report `§4` (`:118-129`) and `FRONTEND.md:33-38`. | PASS |
+| 4 | ASR/AST: EOS-terminated sensible transcripts (runtime spot-check, package present) | Runtime was AVAILABLE. Reviewer build `/tmp/CanarySmdesaiSpike-review` ran three Path B probes: EN short ASR -> `The quick brown fox jumps over the lazy dog.` (`EOS=true`, `repeated_tail=false`); EN->FR AST -> `Le renard brun saute par-dessus le chien paresseux.` (`EOS=true`); EN fresh ASR -> `The quick brown fox jumps over the lazy dog while the weather is nice today.` (`EOS=true`). All match the report `§4` table verbatim. | PASS, runtime AVAILABLE |
+| 5 | True valid-length (not padded buffer as valid) | Harness tracks `validSamples = min(samples.count, 240_000)` and native `frames = min(stftFrames, maxFrames)`; runtime printed `39946 -> 250 mel -> 32/188 enc` and `64095 -> 401 mel -> 51/188 enc` — lengths scale with duration, never the fixed 240,000/1501/188 buffers. `FRONTEND.md:20` and report `:149` forbid padded-buffer-as-valid. | PASS |
+| 6 | MANIFEST + SHA verify path (VERIFY_S4B_PACKAGE=1) | `MANIFEST.json` lists 19 files with sha256+sizeBytes; `VERIFY_S4B_PACKAGE=1 bash script/qa/check_s4b_canary_fix.sh` re-hashed every listed file and verified SHA-256 + byte size for all 19 — PASS. Manifest SHA `3a258e36…02a5` recorded in report `:188`. | PASS |
+| 7 | Failed preprocessor not in package | `check_s4b_canary_fix.sh:88` asserts `canary_preprocessor.mlmodelc` is absent; package tree has only `canary_encoder`, `canary_cross_kv`, `canary_decoder_kv`, `canary_spe.model`, `FRONTEND.md`, `LICENSE.txt`, `metadata.json`, `MANIFEST.json`. Report `:175-176` states the deliberate omission. | PASS |
+| 8 | Product boundary: check_no_canary_product; no Sources wiring | `check_no_canary_product.sh` PASS; `git diff --name-only -- Sources` empty; the only Canary references in `Sources/` are allowlisted help copy + S1b ranking helper. No catalog/download/engine/UI/`Package.swift` wiring. | PASS |
+| 9 | GO ≠ product ship; S7+ constraints listed | Report `§7` (`:261-279`) lists the S7+ constraints: custom adapter (no FluidAudio canary branch), macOS 15.0 `MLState` gate, exact Path B frontend constants, true lengths, <=15 s VAD/chunks, fresh `MLState` per segment, native SentencePiece from `canary_spe.model`, only verified EN ASR/EN->FR AST claims, Human GO-list + S7-S9 gate. `metadata.json:27-31` scopes `verified` to `["en"]` / `["en->fr"]`. | PASS |
+| 10 | swift test + run_all green; S4/S5/S6 dual-checks still green | `swift test` PASS (503 tests, 4 suites); `./script/qa/run_all.sh` PASS (24/24); `check_s4b_canary_fix.sh` chains `check_b6_canary_spike.sh` (S4/B6) and `check_no_canary_product.sh`, and `run_all.sh` includes `check_s6_gigaam_spike.sh` — S4/B6/S5/S6 contracts remain green. | PASS |
+
+### Commands and Results
+
+| Command | Result |
+|---------|--------|
+| `graphify query "CanarySmdesaiSpike Path B mel" --graph graphify-out/graph.json` | PASS, 46 nodes |
+| `graphify query "Canary Core ML FluidAudio spike harness" --graph graphify-out/graph.json` | PASS, 216 nodes |
+| `graphify query "check_no_canary_product" --graph graphify-out/graph.json` | PASS, 2 nodes |
+| `git status -sb -- .` | expected coder/orchestrator set; reviewer touched only FEEDBACK.md |
+| `git diff --name-only -- Sources Tests docs script/qa` | only `docs/asr/canary-1b/FIX_PLAN.md` tracked-modified |
+| `git diff --name-only -- Sources` | empty (no product code touched) |
+| `script/qa/check_no_canary_product.sh` | PASS |
+| `bash script/qa/check_s4b_canary_fix.sh` | PASS |
+| `VERIFY_S4B_PACKAGE=1 bash script/qa/check_s4b_canary_fix.sh` | PASS — 19 files, all SHA-256 + byte size verified |
+| `xcrun swiftc -O -parse-as-library -target arm64-apple-macosx15.0 -o /tmp/CanarySmdesaiSpike-review docs/canary/harness/CanarySmdesaiSpike.swift` | PASS, compiled clean (exit 0) |
+| `/tmp/CanarySmdesaiSpike-review en_short.wav … frontend=native task=asr src=en tgt=en compute=cpu` | PASS — `The quick brown fox jumps over the lazy dog.`, EOS true, `39946->250->32/188`, `ASR_PREFLIGHT: PASS`; smdesai Core ML preprocessor control printed `MEL_PREFLIGHT: FAIL` |
+| `/tmp/CanarySmdesaiSpike-review en_short.wav … task=ast src=en tgt=fr` | PASS — `Le renard brun saute par-dessus le chien paresseux.`, EOS true |
+| `/tmp/CanarySmdesaiSpike-review en_fresh.wav … task=asr src=en tgt=en` | PASS — sensible EN, EOS true, `64095->401->51/188` (valid length scales) |
+| `swift test` | PASS, 503 tests in 4 suites |
+| `./script/qa/run_all.sh` | PASS, 24/24 |
+| `git diff --check -- .` | only pre-existing trailing-whitespace lines in `AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md` (workflow doc, outside S4b scope) |
+
+### Whether Path B GO is justified
+
+The coder's GO for `bolabol-canary-1b-v2-coreml-r1` as a Path B spike/package candidate is **justified**. The report carries an explicit, bounded verdict; the smdesai Core ML preprocessor is excluded for a documented, reproduced cause (failed frequency/envelope/zero-fraction gate — independently reproduced here as the negative control); the native NeMo-aligned mel frontend passes the same gate and feeds the smdesai encoder/cross-KV/stateful decoder to produce EOS-terminated, sensible EN ASR and EN->FR AST text — independently reproduced on three probes. True valid lengths propagate through every stage and scale with audio duration, never the padded buffer. The package omits the failed preprocessor, freezes the frontend in `FRONTEND.md`, and ships an honest `MANIFEST.json`/`metadata.json`/`LICENSE.txt` with full SHA-256 verification green. No product wiring was introduced and S4/S5/S6 remain intact. This is spike/package GO only, not a product ship authorization.
+
+### Findings
+
+**Blocking:** none.
+
+**Non-blocking:**
+
+- The diagnostic `vocab.json` path inherited from the S4 corpus is only an id-to-piece map for readable spike output; it is not in the package and must not become a product dependency. `FRONTEND.md:42-45`, report `:257-259`, and `metadata.json` make this clear, and `check_s4b_canary_fix.sh` forbids Python/external paths. Carry a native SentencePiece decode assertion into S7+ QA once the adapter is written.
+- `check_s4b_canary_fix.sh` is a structural contract; it does not independently assert the mel arithmetic, EOS-id=3 loop guard, or per-segment `MLState` reset. Those were verified here from source plus the runtime spot-checks. Add dedicated assertions before S7+ product wiring if these become release gates.
+- Only EN ASR and EN->FR AST were verified. `metadata.json` honestly scopes `verified`; the 25-language upstream claim is not adopted. S7+ must re-run the gate for any additional language before claiming it.
+
+**INFO / residual risk:**
+
+- Runtime artifacts (full smdesai source incl. preprocessor, audio, vocab) were available and independently exercised on CPU. The `.cpuAndNeuralEngine` ANE bundle recompilation warning recorded by the coder is a non-fatal runtime warning, not a performance or correctness claim; S7+ must verify stateful Core ML behavior on the shipping Apple Silicon matrix.
+- `git diff --check` flagged trailing-whitespace lines only in `AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md`, a workflow doc outside the S4b scope (orchestrator/coder edit); no S4b code, harness, report, or QA script introduced whitespace errors.
+- S7+ must preserve the exact Path B frontend constants, true sample/mel/encoder lengths, <=15 s chunking, fresh decoder `MLState` per segment, native SentencePiece from `canary_spe.model`, macOS 15.0 gate, and Human GO-list approval. This approval is for the spike candidate only, not product ship.
+
+### Change List
+
+- No blocking change is required for S4b acceptance.
+- Carry native SentencePiece decode, mel-arithmetic, EOS/loop, and per-segment `MLState` assertions into S7+ QA hardening before relying on them as product release gates.
+- Re-verify stateful Core ML on the shipping Apple Silicon matrix and run the mel+ASR gate for any additional language before claiming it.
+
+**VERDICT: APPROVED**
+
+**RESULT: `approved`**
+
+> Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S4b — Feature QA after Reviewer APPROVED (Step S4b, tester)
+
+## Meta
+
+| Field | Value |
+|-------|-------|
+| Step | S4b (post-approval feature QA) |
+| Actor | tester |
+| Date | 2026-08-04 |
+| RESULT | `qa_green` |
+| bugs | 0 |
+
+### What was verified
+
+- Graphify first: `graphify query "CanarySmdesaiSpike" --graph graphify-out/graph.json` — PASS, 37-node traversal covering harness entry point, `NativeMelFrontend`, `Models.load`, stateful decode, and preflight helpers.
+- `docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md`: explicit `**Status:** GO` + package ID `bolabol-canary-1b-v2-coreml-r1`; FluidInference and alexwengg remain NO-GO.
+- `bash script/qa/check_s4b_canary_fix.sh` — PASS (report sections, harness native-only contracts, package boundary, gitignore, B6 dual-checks, no-product).
+- `VERIFY_S4B_PACKAGE=1 bash script/qa/check_s4b_canary_fix.sh` — PASS: full SHA-256 + size verification of all 19 manifest files (incl. 1.58 GB encoder weights).
+- `script/qa/check_no_canary_product.sh` — PASS: zero Canary product/module surface (ADR-012).
+- Preprocessor absent from the GO package (root and subdirs) — PASS; full smdesai extraction dir still holds it for diagnostics only.
+- Harness builds fresh: `swiftc -O -parse-as-library docs/canary/harness/CanarySmdesaiSpike.swift -framework CoreML -framework Accelerate` — PASS, `--help` functional.
+- Runtime EN executed (package present, audio present): documented Path B command with `modelRoot=scratch/canary-1b-fix/smdesai frontend=native compute=cpu` → `MEL_PREFLIGHT: PASS` (pearson 0.701, zero-fraction 0.000), transcript `The quick brown fox jumps over the lazy dog.`, `EOS=true`, no repetition tail, `ASR_PREFLIGHT: PASS` (8.4 s wall). Reproduces spike evidence.
+- `swift test` — PASS: 503 tests in 4 suites.
+- `./script/qa/run_all.sh` — PASS: 27 passed / 0 failed, incl. `check_sec_s4b_package_integrity.sh` (19/19) and the B6/S4/S5/S6 dual-checks.
+- `git check-ignore -v scratch/canary-1b-fix` — ignored via `.gitignore:6`; `git ls-files 'scratch/canary-1b-fix/**'` empty.
+- `git diff --check` — no new whitespace errors from this pass (pre-existing flags only in `KICK_TESTER.md`/`TEAM_CONTRACT.md`, outside my edits).
+
+### Gap-hunt findings & actions
+
+- **Fixed (script/qa only):** the new `check_sec_no_download_code.sh` Pattern 4 false-positived on the pre-existing sanctioned cloud surface `Sources/NativeBolabol/Services/CloudProviderModelCatalog.swift` (`fetchModels(` is a GET /models LLM catalog listing, not an ASR/CoreML weight download; file unchanged since the rename commit and enforced by `check_cloud_providers.sh`). Allowlisted that single file for Pattern 4 only. Defense in depth verified preserved: Patterns 1–3 unchanged, Pattern 1 still catches any future `downloadTask/dataTask` in that file, and a negative test confirms `downloadModelPackage`/`fetchCoreMLWeights` helpers still trip the guard. This was the only `run_all.sh` failure; it is a QA-tooling false positive, not a product bug.
+- **FG4 (non-blocking observation):** harness `Models.load` unconditionally loads `canary_preprocessor.mlmodelc`, which the GO package intentionally excludes — the harness cannot use the package dir directly as `modelRoot` even with `frontend=native`. Documented evidence uses `modelRoot=scratch/canary-1b-fix/smdesai` exactly as recorded in the spike doc, so evidence is consistent. S7+ integrator must not assume harness ⇄ package drop-in; the product adapter loads encoder/cross/decoder + native mel only.
+- No new Swift tests needed: product is Canary-free; all 503 product tests and the structural S4b contract gates cover the S4b surface.
+- `BUG_REPORT.md` not touched: zero product functional bugs found (role: feature QA only; no product `Sources/**` changes, no full security/vuln audit, no git commit/push).
+
+### Result
+
+S4b feature QA gate is **GREEN and verified on local machine** (not expected-green). Reviewer APPROVED evidence package reproduces: Path B GO for `bolabol-canary-1b-v2-coreml-r1` as spike/package candidate only; FI/alexwengg remain NO-GO; product remains Canary-free pending Human GO-list and S7–S9.
+
+**RESULT: `qa_green`**
+
+> Готово. Вернись к оркестратору и скажи статус.

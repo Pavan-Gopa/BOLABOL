@@ -15,9 +15,10 @@
 | **Orchestrator** | This session (hub) | no product code | STATE, DECISIONS, checkpoints, kick prompts, graphify |
 | **Implementation Engineer** | Coder (fresh terminal) | **yes** product | `target_files` only; FEEDBACK §1–4 |
 | **Verification Engineer** | Reviewer (fresh terminal) | no | `FEEDBACK.md` review verdict |
-| **Test Engineer** | Tester (fresh terminal) | **test / QA scripts only** (no product) | new/gap tests, `script/qa`, `REPORT.md`, `BUG_REPORT.md` |
+| **Test Engineer** | Tester (fresh terminal) | **feature test / QA scripts only** (no product) | feature tests, `script/qa`, `REPORT.md`, `BUG_REPORT.md` |
+| **Security Engineer** | Security (fresh terminal, **rare**) | **security probes / sec tests only** (no product) | `SECURITY_REPORT.md`, optional `check_sec_*.sh` / security unit tests |
 | **Architect** *(on demand)* | Orchestrator or dedicated | no product features | ADR → DECISIONS |
-| **Human** | Pavel | — | paste kicks, say «статус», approve product decisions |
+| **Human** | Pavel | — | paste kicks, say «статус», approve product decisions; request security audit when needed |
 
 ## Workflow (hub = Orchestrator)
 
@@ -48,32 +49,49 @@ After Reviewer **APPROVED**, Tester does **not** only re-run what Coder already 
 | Duty | Detail |
 |------|--------|
 | **1. Run full gate** | `swift test` + `./script/qa/run_all.sh` (or STATE-scoped suite) |
-| **2. Gap-hunt** | Compare step Done / plan §12 / coder_brief vs existing tests |
-| **3. Add tests** | Write missing unit/integration/qa scripts for **this step’s feature** |
-| **4. Report** | Green → `REPORT.md` (what ran + **what new tests added**); red product bug → `BUG_REPORT.md` (no product fix) |
+| **2. Gap-hunt** | Compare step Done / plan / coder_brief vs existing tests |
+| **3. Add tests** | Missing unit/integration/`script/qa` for **this step’s feature** |
+| **4. Report** | Green → `REPORT.md` (**new tests listed**); red product bug → `BUG_REPORT.md`. **No product fix.** |
 
 **Split with Coder:**
 
-- **Coder** ships feature + **minimum** tests so the change is not blind (happy path / invariants they own).
-- **Tester** is the coverage owner for the step: finds holes, edge cases, regression guards, surface QA scripts; may add many tests.
-- **Tester never** edits `Sources/**` product code (only `Tests/**`, `script/qa/**`).
+- **Coder** ships feature + **minimum** tests so the change is not blind.
+- **Tester** is the **feature coverage** owner for the step (edges, regression, surface QA).
+- **Tester never** edits `Sources/**` product code (only `Tests/**`, `script/qa/**`, report files).
+- **Cheap hygiene** already in `run_all` (e.g. `check_no_secrets.sh`) is enough for every step — **not** a full security campaign.
 
-If gap-hunt finds **product** defects → BUG_REPORT → Orchestrator kicks Coder.  
+If gap-hunt finds **product** defects → `BUG_REPORT.md` → Orchestrator kicks Coder.  
 If only coverage is thin → Tester **adds tests in the same turn**, re-runs, then REPORT green.
 
-### Who does what when Tester finds a product bug
+### Security Engineer (separate agent — **rare**)
+
+Full vuln hunt is **not** on every step (cost). Orchestrator kicks Security only when
+Human asks, pre-release / train close, or after a large attack-surface change.
+See `AI_Workflow_Kit/docs/AI/SECURITY.md` and `KICK_SECURITY.md`.
+
+| Duty | Detail |
+|------|--------|
+| Hunt | Network, keys, downloads, paths, workers, etc. (scoped or full per kick) |
+| Report | `SECURITY_REPORT.md` (`security_clean` \| `findings_open`) |
+| Guards | Optional `check_sec_*.sh` / security unit tests |
+| Product code | **Never** — only describe + suspect files |
+
+### Who does what when bugs or security findings appear
 
 | Actor | Action |
 |-------|--------|
-| **Tester** | Detects failure, writes `BUG_REPORT.md`, «вернись к оркестратору» |
-| **Orchestrator** | Reads bugs, opens fix/retry, **issues full Coder kick** |
+| **Tester** | Functional bugs → `BUG_REPORT.md`; «вернись к оркестратору» |
+| **Security** | SEC-* → `SECURITY_REPORT.md`; «вернись к оркестратору» |
+| **Orchestrator** | Reads reports; **full Coder fix kick** with BUG/SEC list + target_files |
 | **Coder** | **Only one who fixes product code** |
-| **Reviewer** | Re-reviews after Orchestrator issues Reviewer kick |
-| **Tester** | Re-runs suite + re-checks coverage after Orchestrator issues Tester kick |
+| **Reviewer** | Re-reviews after Orchestrator kick |
+| **Tester** | Re-runs feature gate after fix (every step path) |
+| **Security** | Re-pass only if Orchestrator/Human schedules another security kick |
 
-**Do not:** send bugs to Reviewer to "fix".  
+**Do not:** send bugs/SEC to Reviewer to "fix".  
 **Do not:** skip Orchestrator.  
-**Do not:** let workers open the next role without Orchestrator.
+**Do not:** merge Security into every Tester turn.  
+**Do not:** paste live API keys into reports.
 
 ## Hard rules
 

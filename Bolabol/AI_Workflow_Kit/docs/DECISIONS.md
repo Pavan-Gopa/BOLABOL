@@ -159,5 +159,15 @@
 **Package:** versioned id e.g. `bolabol-canary-1b-v2-coreml-r1` + `MANIFEST.json` SHA-256 per file + LICENSE.  
 **Rationale:** User wants large Canary; S4 proved HF int4 stack loads but does not ASR; Flash/GigaAM GO candidates do not replace a fixed 1B if export is repaired correctly.
 
+
+## ADR-017 — Canary 1B Path B package GO candidate (S4b)
+
+**Status:** Accepted as spike/package candidate (S4b 2026-08-04; Reviewer APPROVED with runtime; Tester qa_green)
+**Decision:** Record Bolabol-owned package **`bolabol-canary-1b-v2-coreml-r1`** (Path B: native NeMo-aligned mel + smdesai encoder / cross-KV / stateful decoder; **no** Core ML preprocessor) as a **GO candidate** for offline Canary 1B on Apple Silicon. Hosting target: **Bolabol CDN/cloud**, not re-host of failed HF trees. **Do not** product-wire catalog/engine/UI until Human GO list + S7–S9.
+**Evidence:** `docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md`; harness `docs/canary/harness/CanarySmdesaiSpike.swift`; `script/qa/check_s4b_canary_fix.sh` + VERIFY package SHA 19/19; Reviewer reproduced EN ASR + EN→FR AST EOS; Tester runtime reproduced EN short.
+**Still NO-GO (unchanged):** FluidInference + alexwengg 1B Core ML full packages including their preprocessors (ADR-012/013). smdesai **preprocessor** alone also fails mel preflight and is excluded from the package.
+**S7+ constraints:** custom adapter (not FluidAudio canary branch); macOS 15+ MLState; exact Path B frontend constants; true valid lengths; ≤15 s VAD chunks; fresh decoder state per segment; native SentencePiece from `canary_spe.model`; verified claims only EN ASR / EN→FR AST until re-gated.
+**1.0.4 next:** Human GO list may include Path B 1B alongside Flash (ADR-014) and GigaAM RU (ADR-015).
+
 ---
 *Add new ADRs at the bottom; do not rewrite history — supersede with new ADR if needed.*

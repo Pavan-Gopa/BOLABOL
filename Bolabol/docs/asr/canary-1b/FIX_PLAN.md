@@ -22,7 +22,7 @@ Survey (HF search `canary`+`coreml`, quantized tree of `nvidia/canary-1b-v2`, Fl
 |------|------|----------------|
 | [FluidInference/canary-1b-v2-coreml](https://huggingface.co/FluidInference/canary-1b-v2-coreml) | Official-looking int4 ANE package for FluidAudio | **S4 NO-GO** (ADR-013): mel F1 + decode loops in raw Core ML harness |
 | [alexwengg/canary-1b-v2-coreml](https://huggingface.co/alexwengg/canary-1b-v2-coreml) | Early community export (no card) | **B6 NO-GO** (ADR-012): same defect class |
-| [smdesai/canary-1b-v2-coreml](https://huggingface.co/smdesai/canary-1b-v2-coreml) | **Third** layout: `canary_preprocessor` + `canary_encoder` + **KV** `canary_decoder_kv` + `canary_cross_kv` + `canary_spe.model` (uploaded ~27d ago; **no model card**) | **Not yet spiked** — must be candidate **P0** in S4b before pure DIY |
+| [smdesai/canary-1b-v2-coreml](https://huggingface.co/smdesai/canary-1b-v2-coreml) | **Third** layout: `canary_preprocessor` + `canary_encoder` + **KV** `canary_decoder_kv` + `canary_cross_kv` + `canary_spe.model` (revision `3002858…`, no model card) | **P0 spiked:** Core ML preprocessor NO-GO; encoder/KV stack is a Path B candidate only |
 | [FluidInference/canary-speech-translation-coreml](https://huggingface.co/FluidInference/canary-speech-translation-coreml) | Docs/benchmarks only; **reuses same weights** as FluidInference 1B Core ML | Not a second weight set; claims FLEURS BLEU via **FluidAudio** path (see §0.3) |
 
 ### 0.2 Not Core ML / not Bolabol product path (do not confuse)
@@ -46,14 +46,16 @@ Implications for S4b:
 2. Possible that a **newer FluidAudio branch** works while pinned **0.15.5** does not expose Canary (S4 F6).
 3. Bolabol S4 still stands for **raw Core ML preprocessor → encoder → decoder** as we implemented it (mel preflight failed hard).
 
-**Action in S4b P0:** inspect FluidAudio Canary source (if available) — if they skip broken Preprocessor and use native mel, that **is Path B** and may unblock without full re-export. Do not assume HF README alone = GO for our engine.
+**S4b P0 result:** the public `canary` branch's `CanaryManager` explicitly loads and invokes a Core ML preprocessor (`audio_signal` -> `audio_features`) and does not implement a native mel frontend. The pinned `0.15.5` checkout contains no `CanaryManager` or `CanaryModels`. Therefore FluidAudio provides no Path B evidence and is not a package/runtime dependency for S4b.
+
+Do not assume HF README alone = GO for our engine.
 
 ### 0.4 Survey conclusion (as of 2026-08-04)
 
-- There is **no third publicly proven GO Core ML 1B** that Bolabol has validated.
-- Known **1B-v2 Core ML weight trees** on Hub: **FluidInference** (spiked NO-GO raw path), **alexwengg** (NO-GO), **smdesai** (KV layout, **untested**).
+- There is **no third publicly proven GO Core ML 1B export** that Bolabol can adopt as-is.
+- Known **1B-v2 Core ML weight trees** on Hub: **FluidInference** (spiked NO-GO raw path), **alexwengg** (NO-GO), **smdesai** (Core ML preprocessor NO-GO; encoder/KV usable only with the separately proven Path B frontend).
 - “Working” claims for FluidInference go through **FluidAudio**, not an independent third export.
-- Therefore S4b still needs either: (1) **evaluate smdesai**, (2) **FluidAudio Path B analysis**, or (3) **DIY re-export / native mel + Bolabol package**.
+- S4b P0/P1 result: smdesai's preprocessor reproduces the F1 class (`pearson=0.019`, valid-region zero fraction `0.671`), while native NeMo-style mel feeding its encoder/KV stack passes the mel gate and is the selected **Path B** package path.
 
 ---
 
@@ -120,6 +122,11 @@ For 1B:
 
 Use Path B if re-export of Preprocessor is blocked but Encoder/Decoder are trustworthy **when fed correct mel**.  
 Prove with probes: correct Swift mel → encoder embeddings must **not** be content-free (F2 green).
+
+**S4b selection:** Path B was selected after the smdesai preprocessor failed the
+same mel gate as the FluidInference export. The smdesai encoder + cross-KV +
+stateful KV decoder passed with the native frontend, so the Bolabol package
+omits `canary_preprocessor.mlmodelc` and carries `FRONTEND.md` instead.
 
 ---
 

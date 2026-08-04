@@ -1,4 +1,5 @@
 import Combine
+import CryptoKit
 import FluidAudio
 import Foundation
 import NativeBolabolCore
@@ -222,10 +223,23 @@ final class TranscriptionModelStore: ObservableObject {
                 }
 
             case .canaryCoreML, .gigaAMCoreML:
-                throw NSError(
-                    domain: "TranscriptionModelStore",
-                    code: 1,
-                    userInfo: [NSLocalizedDescriptionKey: "Download management for Canary and GigaAM models will be introduced in S8."]
+                let destination = destinationURL(for: model)
+                try fileManager.createDirectory(
+                    at: destination,
+                    withIntermediateDirectories: true
+                )
+                let progressHandler: @Sendable (Double) -> Void = { [weak self] fraction in
+                    Task { @MainActor [weak self] in
+                        self?.settings.markDownloading(
+                            modelID: model.id,
+                            progressFraction: fraction
+                        )
+                    }
+                }
+                downloadedURL = try await performGOModelDownload(
+                    model: model,
+                    destination: destination,
+                    progressHandler: progressHandler
                 )
             }
             settings.markDownloaded(
@@ -246,10 +260,16 @@ final class TranscriptionModelStore: ObservableObject {
     ) -> URL {
         switch model.backend {
         case .whisperKitCoreML:
-            modelsDirectory.appendingPathComponent(model.id, isDirectory: true)
-        case .fluidAudioCoreML, .canaryCoreML, .gigaAMCoreML:
-            parakeetModelsDirectory.appendingPathComponent(
+            return modelsDirectory.appendingPathComponent(model.id, isDirectory: true)
+        case .fluidAudioCoreML:
+            return parakeetModelsDirectory.appendingPathComponent(
                 model.modelFolderName,
+                isDirectory: true
+            )
+        case .canaryCoreML, .gigaAMCoreML:
+            let baseRoot = SharedModelsRoot.resolve(configuredRoot: modelsDirectory, fileManager: fileManager)
+            return baseRoot.appendingPathComponent(
+                model.relativeStorageSubpath,
                 isDirectory: true
             )
         }
@@ -270,6 +290,10 @@ final class TranscriptionModelStore: ObservableObject {
                     encoderPrecision: .int8
                 )
             }
+        }
+
+        if model.backend == .canaryCoreML || model.backend == .gigaAMCoreML {
+            return candidates.first { isCompleteGOModelFolder(at: $0, for: model) }
         }
 
         for candidate in candidates {
@@ -364,5 +388,268 @@ final class TranscriptionModelStore: ObservableObject {
             fileManager: fileManager
         )) ?? fileManager.temporaryDirectory
             .appendingPathComponent("NativeBolabol-Parakeet", isDirectory: true)
+    }
+
+    // MARK: - GO Model Downloads & Presence (ADR-018)
+
+    private func isCompleteGOModelFolder(
+        at directory: URL,
+        for model: TranscriptionModelDescriptor
+    ) -> Bool {
+        var isDir: ObjCBool = false
+        guard fileManager.fileExists(atPath: directory.path, isDirectory: &isDir), isDir.boolValue else {
+            return false
+        }
+        guard let contents = try? fileManager.contentsOfDirectory(atPath: directory.path) else {
+            return false
+        }
+        let visible = Set(contents.filter { !$0.hasPrefix(".") })
+
+        let hasCompiledModel = visible.contains { name in
+            var itemIsDir: ObjCBool = false
+            let itemURL = directory.appendingPathComponent(name, isDirectory: true)
+            return fileManager.fileExists(atPath: itemURL.path, isDirectory: &itemIsDir)
+                && itemIsDir.boolValue
+                && name.hasSuffix(".mlmodelc")
+        }
+        guard hasCompiledModel else { return false }
+
+        // Complete layout requirements for GO models (ADR-018):
+        // Supported layout metadata markers: manifest.json, tokenizer.json
+        let requiredItems: Set<String>
+        switch model.id {
+        case "canary-1b-v2-coreml":
+            requiredItems = [
+                "canary_encoder.mlmodelc",
+                "canary_cross_kv.mlmodelc",
+                "canary_decoder_kv.mlmodelc",
+                "canary_spe.model"
+            ]
+        case "canary-180m-flash-coreml":
+            requiredItems = [
+                "CanaryEncoder.mlmodelc",
+                "CanaryPrefill.mlmodelc",
+                "CanaryDecoder.mlmodelc",
+                "config.json",
+                "vocab.json"
+            ]
+        case "gigaam-v3-rnnt-coreml":
+            requiredItems = [
+                "Encoder.mlmodelc",
+                "Predictor.mlmodelc",
+                "JointDecision.mlmodelc",
+                "vocab.txt"
+            ]
+        default:
+            return true
+        }
+
+        return requiredItems.isSubset(of: visible)
+    }
+
+    private func performGOModelDownload(
+        model: TranscriptionModelDescriptor,
+        destination: URL,
+        progressHandler: @escaping @Sendable (Double) -> Void
+    ) async throws -> URL {
+        switch model.installSource {
+        case .huggingFace(let repoID):
+            return try await downloadHuggingFaceModel(
+                repoID: repoID,
+                destination: destination,
+                progressHandler: progressHandler
+            )
+        case .bolabolCDN(let packageID, let baseURL):
+            return try await downloadBolabolCDNPackage(
+                packageID: packageID,
+                baseURL: baseURL,
+                destination: destination,
+                progressHandler: progressHandler
+            )
+        case .fluidAudio:
+            throw NSError(
+                domain: "TranscriptionModelStore",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "FluidAudio install source handled via fluidAudioCoreML backend."]
+            )
+        }
+    }
+
+    private func downloadHuggingFaceModel(
+        repoID: String,
+        destination: URL,
+        progressHandler: @escaping @Sendable (Double) -> Void
+    ) async throws -> URL {
+        let apiURLString = "https://huggingface.co/api/models/\(repoID)/tree/main?recursive=true"
+        guard let apiURL = URL(string: apiURLString) else {
+            throw NSError(
+                domain: "TranscriptionModelStore",
+                code: 4,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid Hugging Face API URL for repo \(repoID)"]
+            )
+        }
+
+        struct HFItem: Codable {
+            let path: String
+            let type: String
+            let size: Int64?
+        }
+
+        let (data, response) = try await URLSession.shared.data(from: apiURL)
+        guard let httpRes = response as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) else {
+            throw NSError(
+                domain: "TranscriptionModelStore",
+                code: 5,
+                userInfo: [NSLocalizedDescriptionKey: "Failed to fetch file list for Hugging Face model \(repoID)"]
+            )
+        }
+
+        let items = try JSONDecoder().decode([HFItem].self, from: data)
+        let fileItems = items.filter { $0.type == "file" }
+        let totalBytes = fileItems.compactMap(\.size).reduce(0, +)
+        var downloadedBytes: Int64 = 0
+
+        for item in fileItems {
+            let localFileURL = destination.appendingPathComponent(item.path)
+            try fileManager.createDirectory(at: localFileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+            let expectedSize = item.size ?? 0
+            if fileManager.fileExists(atPath: localFileURL.path),
+               let attrs = try? fileManager.attributesOfItem(atPath: localFileURL.path),
+               let currentSize = attrs[.size] as? Int64,
+               expectedSize > 0 && currentSize == expectedSize {
+                downloadedBytes += expectedSize
+                let fraction = totalBytes > 0 ? Double(downloadedBytes) / Double(totalBytes) : 1.0
+                progressHandler(fraction)
+                continue
+            }
+
+            let downloadURLString = "https://huggingface.co/\(repoID)/resolve/main/\(item.path)"
+            guard let fileRemoteURL = URL(string: downloadURLString) else { continue }
+
+            let (tempURL, fileRes) = try await URLSession.shared.download(from: fileRemoteURL)
+            guard let fileHTTPRes = fileRes as? HTTPURLResponse, (200...299).contains(fileHTTPRes.statusCode) else {
+                throw NSError(
+                    domain: "TranscriptionModelStore",
+                    code: 6,
+                    userInfo: [NSLocalizedDescriptionKey: "Failed to download \(item.path) for Hugging Face model \(repoID)"]
+                )
+            }
+
+            if fileManager.fileExists(atPath: localFileURL.path) {
+                try fileManager.removeItem(at: localFileURL)
+            }
+            try fileManager.moveItem(at: tempURL, to: localFileURL)
+
+            downloadedBytes += expectedSize
+            let fraction = totalBytes > 0 ? Double(downloadedBytes) / Double(totalBytes) : 1.0
+            progressHandler(fraction)
+        }
+
+        return destination
+    }
+
+    private func downloadBolabolCDNPackage(
+        packageID: String,
+        baseURL: URL,
+        destination: URL,
+        progressHandler: @escaping @Sendable (Double) -> Void
+    ) async throws -> URL {
+        let manifestURL = baseURL.appendingPathComponent("\(packageID)/MANIFEST.json")
+        let (manifestData, manifestRes) = try await URLSession.shared.data(from: manifestURL)
+        guard let httpRes = manifestRes as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) else {
+            throw NSError(
+                domain: "TranscriptionModelStore",
+                code: 7,
+                userInfo: [NSLocalizedDescriptionKey: "Failed to download MANIFEST.json from Bolabol CDN for package \(packageID)"]
+            )
+        }
+
+        let localManifestURL = destination.appendingPathComponent("MANIFEST.json")
+        try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
+        try manifestData.write(to: localManifestURL, options: .atomic)
+
+        struct BolabolPackageManifest: Codable {
+            let packageId: String?
+            let files: [BolabolPackageManifestFile]
+        }
+        struct BolabolPackageManifestFile: Codable {
+            let path: String
+            let sha256: String
+            let sizeBytes: Int64
+        }
+
+        let manifest = try JSONDecoder().decode(BolabolPackageManifest.self, from: manifestData)
+        let totalBytes = manifest.files.reduce(0) { $0 + $1.sizeBytes }
+        var downloadedBytes: Int64 = 0
+
+        for file in manifest.files {
+            let localFileURL = destination.appendingPathComponent(file.path)
+            try fileManager.createDirectory(at: localFileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+            if fileManager.fileExists(atPath: localFileURL.path),
+               verifyFileSHA256(localFileURL, expectedHash: file.sha256) {
+                downloadedBytes += file.sizeBytes
+                let fraction = totalBytes > 0 ? Double(downloadedBytes) / Double(totalBytes) : 1.0
+                progressHandler(fraction)
+                continue
+            }
+
+            let fileRemoteURL = baseURL.appendingPathComponent("\(packageID)/\(file.path)")
+            let (tempURL, fileRes) = try await URLSession.shared.download(from: fileRemoteURL)
+            guard let fileHTTPRes = fileRes as? HTTPURLResponse, (200...299).contains(fileHTTPRes.statusCode) else {
+                throw NSError(
+                    domain: "TranscriptionModelStore",
+                    code: 8,
+                    userInfo: [NSLocalizedDescriptionKey: "Failed to download \(file.path) for Bolabol CDN package \(packageID)"]
+                )
+            }
+
+            if fileManager.fileExists(atPath: localFileURL.path) {
+                try fileManager.removeItem(at: localFileURL)
+            }
+            try fileManager.moveItem(at: tempURL, to: localFileURL)
+
+            guard verifyFileSHA256(localFileURL, expectedHash: file.sha256) else {
+                try? fileManager.removeItem(at: localFileURL)
+                throw NSError(
+                    domain: "TranscriptionModelStore",
+                    code: 9,
+                    userInfo: [NSLocalizedDescriptionKey: "SHA-256 integrity verification failed for \(file.path)"]
+                )
+            }
+
+            downloadedBytes += file.sizeBytes
+            let fraction = totalBytes > 0 ? Double(downloadedBytes) / Double(totalBytes) : 1.0
+            progressHandler(fraction)
+        }
+
+        return destination
+    }
+
+    private func verifyFileSHA256(_ fileURL: URL, expectedHash: String) -> Bool {
+        guard let computed = computeSHA256(for: fileURL) else { return false }
+        return computed.lowercased() == expectedHash.lowercased()
+    }
+
+    private func computeSHA256(for fileURL: URL) -> String? {
+        guard let stream = InputStream(url: fileURL) else { return nil }
+        stream.open()
+        defer { stream.close() }
+
+        var hasher = SHA256()
+        let bufferSize = 65536
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer { buffer.deallocate() }
+
+        while stream.hasBytesAvailable {
+            let bytesRead = stream.read(buffer, maxLength: bufferSize)
+            if bytesRead < 0 { return nil }
+            if bytesRead == 0 { break }
+            hasher.update(bufferPointer: UnsafeRawBufferPointer(start: buffer, count: bytesRead))
+        }
+
+        let digest = hasher.finalize()
+        return digest.map { String(format: "%02hhx", $0) }.joined()
     }
 }

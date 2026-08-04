@@ -30,6 +30,22 @@ if grep -rnE "FluidInference/canary-1b-v2-coreml|alexwengg/canary-1b-v2-coreml" 
   FAILED=1
 fi
 
+# 4. Sources/: Install source mapping must use authorized ADR-018 GO sources.
+if ! grep -q "aufklarer/Canary-180M-Flash-CoreML" Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift; then
+  echo "FAIL: Canary Flash install source mapping missing or incorrect"
+  FAILED=1
+fi
+
+if ! grep -q "huggingfinger0/gigaam-v3-coreml" Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift; then
+  echo "FAIL: GigaAM v3 install source mapping missing or incorrect"
+  FAILED=1
+fi
+
+if ! grep -q "bolabol-canary-1b-v2-coreml-r1" Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift; then
+  echo "FAIL: Canary 1B v2 CDN install source mapping missing or incorrect"
+  FAILED=1
+fi
+
 if [ "$FAILED" -ne 0 ]; then
   echo "FAIL: ADR-018 GO product surface contract broken"
   exit 1

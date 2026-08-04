@@ -194,7 +194,7 @@ func nativeTranscriptionCatalogUsesAdr018ChunkAndDownloadCapabilities() throws {
     #expect(flash.capabilities.minOSVersion == nil)
 
     #expect(canary1B.capabilities.maxChunkSeconds == 15.0)
-    #expect(canary1B.capabilities.approxDownloadBytes == 573_000_000)
+    #expect(canary1B.capabilities.approxDownloadBytes == 1_884_267_035)
     #expect(canary1B.capabilities.supportedLanguageCodes == ["en", "fr"])
     #expect(canary1B.capabilities.minOSVersion == .init(majorVersion: 15))
 
@@ -222,6 +222,26 @@ func nativeTranscriptionCatalogKeepsNoGoCanarySourcesOutOfGoEntries() throws {
         #expect(!repositoryID.contains("fluidinference"), "GO model \(id) must not install from FluidInference")
         #expect(!repositoryID.contains("alexwengg"), "GO model \(id) must not install from alexwengg")
     }
+}
+
+@Test
+func nativeTranscriptionCatalogMapsExplicitInstallSourcesAndStoragePaths() throws {
+    let catalog = TranscriptionModelCatalog.nativeWhisperKit
+
+    let flash = try #require(catalog.model(withID: "canary-180m-flash-coreml"))
+    #expect(flash.installSource == .huggingFace(repositoryID: "aufklarer/Canary-180M-Flash-CoreML"))
+    #expect(flash.relativeStorageSubpath == "canary/180m-flash")
+
+    let gigaAM = try #require(catalog.model(withID: "gigaam-v3-rnnt-coreml"))
+    #expect(gigaAM.installSource == .huggingFace(repositoryID: "huggingfinger0/gigaam-v3-coreml"))
+    #expect(gigaAM.relativeStorageSubpath == "gigaam/v3-rnnt")
+
+    let canary1B = try #require(catalog.model(withID: "canary-1b-v2-coreml"))
+    #expect(canary1B.installSource == .bolabolCDN(
+        packageID: "bolabol-canary-1b-v2-coreml-r1",
+        baseURL: TranscriptionModelDescriptor.defaultBolabolCDNBaseURL
+    ))
+    #expect(canary1B.relativeStorageSubpath == "canary/1b-v2")
 }
 
 @Test

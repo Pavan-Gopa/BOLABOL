@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785785543.0785275,
-    "ast_hash": "476b22d35ae8cb645fbccf1c8010a79b",
+    "mtime": 1785790492.9858398,
+    "ast_hash": "c0a195c28f93984ef26f6a96814c0022",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
-    "mtime": 1785783911.065332,
-    "ast_hash": "43dceb7fc84b83d6a257ac250feba9d3",
+    "mtime": 1785787780.454057,
+    "ast_hash": "61f82ab2222074f1a27070b75d117fbe",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REVIEW_TEMPLATE.md": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785785593.9305112,
-    "ast_hash": "dac88189f85a622559366a19654a867b",
+    "mtime": 1785792357.3585868,
+    "ast_hash": "2f6593717866a33b7e96d46b03600d43",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -220,8 +220,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/DECISIONS.md": {
-    "mtime": 1785784304.8736856,
-    "ast_hash": "20c0eea2eec75b4fc45572bd2f369629",
+    "mtime": 1785788471.027357,
+    "ast_hash": "3fee5099f5b56c006d7a68ea46dbccd4",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/PROJECT_CONTEXT.md": {
@@ -450,8 +450,8 @@
     "semantic_hash": "24d8a46de77e170cb07bb8b1b4a09c9b"
   },
   "script/qa/check_b6_canary_spike.sh": {
-    "mtime": 1785785426.1860065,
-    "ast_hash": "da0d80c635ed38c5e0723864bab36165",
+    "mtime": 1785787596.7555654,
+    "ast_hash": "5f713bb4ab885b02329c92da847243a9",
     "semantic_hash": ""
   },
   "docs/canary/COREML_SPIKE.md": {
@@ -1477,6 +1477,21 @@
   "docs/asr/canary-flash/COREML_SPIKE.md": {
     "mtime": 1785785499.6060724,
     "ast_hash": "039180cf88d76f4cc88e9efd4656b5c4",
+    "semantic_hash": ""
+  },
+  "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift": {
+    "mtime": 1785790041.2342849,
+    "ast_hash": "e189876df9f60a40ebaa5e62eac19dba",
+    "semantic_hash": ""
+  },
+  "script/qa/check_s6_gigaam_spike.sh": {
+    "mtime": 1785790080.8658872,
+    "ast_hash": "59aaffa8c83219cc1ca3f16e425b1b67",
+    "semantic_hash": ""
+  },
+  "docs/asr/gigaam-v3/COREML_SPIKE.md": {
+    "mtime": 1785790388.9330528,
+    "ast_hash": "1b29ab5890a7fa30f16ce40819cad89e",
     "semantic_hash": ""
   }
 }

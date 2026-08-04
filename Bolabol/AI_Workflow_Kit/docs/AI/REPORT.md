@@ -1203,3 +1203,83 @@ git diff --check -- .
 - No commit or push was performed.
 
 **RESULT: `qa_green`**
+
+---
+
+# Step S6 - Tester QA: GigaAM v3 RU Core ML spike
+
+| Field | Value |
+|-------|-------|
+| Step | S6 (SPIKE) |
+| Date | 2026-08-04 |
+| Status | **GREEN** |
+| RESULT | `qa_green` |
+| bugs_open | 0 |
+
+## Graphify context
+
+The required read-only query was run first against the supplied graph:
+
+```bash
+graphify query "GigaAMCoreMLSpike" --graph graphify-out/graph.json
+# PASS - 31-node traversal includes the harness entry point, frontend,
+# model loading, true-length calculation, RNNT decode, and helpers.
+```
+
+## Gap-hunt result
+
+| S6 contract | Result |
+|-------------|--------|
+| `COREML_SPIKE.md` exists with explicit `**Status:** GO` and selected candidate | PASS |
+| Report covers environment, artifact audit, load, RU ASR, latency, language, chunking, no Python, and verdict | PASS |
+| S6 harness is standalone native Swift/Core ML/Accelerate | PASS |
+| Fixed 30 s window and true valid mel/encoder frame arithmetic are source-guarded | PASS |
+| Blank id, max-symbol protection, and predictor state behavior are source-guarded | PASS |
+| S7+ RU-only, 16 kHz, chunk/reset, and no-product-wiring constraints are documented | PASS |
+| Product boundary remains closed | PASS - no GigaAM in `Package.swift`; only the pre-existing pure S1b ranking helper references GigaAM in `Sources/**`; no GigaAM/Canary engine, catalog, downloader, or UI wiring |
+| S4/S5 dual-check remains exact | PASS - S4 requires NO-GO and S5 requires GO |
+| Spike blobs are ignored and untracked | PASS |
+| Optional `ru_short` runtime | UNAVAILABLE - `scratch/gigaam-spike/` artifacts are absent in this checkout; structural green is not blocked |
+
+## Commands and results
+
+```bash
+bash -n script/qa/check_s6_gigaam_spike.sh
+# PASS
+
+bash script/qa/check_s6_gigaam_spike.sh
+# PASS - native harness, length/window, product-boundary, and blob contracts
+
+script/qa/check_no_canary_product.sh
+# PASS - zero Canary product/module surface
+
+script/qa/check_b6_canary_spike.sh
+# PASS - B6 + S4 NO-GO + S5 GO dual-check
+
+xcrun swiftc -O -parse-as-library -o /tmp/GigaAMCoreMLSpike-qa \
+  docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift
+# PASS
+
+swift test
+# PASS - 503 tests in 4 suites
+
+./script/qa/run_all.sh
+# PASS - Passed: 23  Failed: 0
+
+git check-ignore -v scratch/gigaam-spike
+# PASS - ignored by .gitignore
+
+git diff --check -- .
+# PASS
+```
+
+## QA delta and scope
+
+- Strengthened the existing `script/qa/check_s6_gigaam_spike.sh`; no new script and no new Swift tests were needed.
+- The S6 check now requires the expected GO outcome, verifies fixed-window/true-length/RNNT source invariants, invokes the existing product-boundary checks, rejects GigaAM package/source wiring outside the pure ranking helper, and checks ignored/untracked spike artifacts.
+- Tester did not modify `Sources/**`, `Package.swift`, `STATE.yaml`, or product wiring. The only QA code change is `script/qa/check_s6_gigaam_spike.sh`.
+- The GO verdict is for the RU-focused spike candidate only. It is not product integration approval; S7+ still requires the Human GO list and documented chunk/state constraints.
+- `BUG_REPORT.md` was not changed because the expected S6 GO and unavailable optional runtime are not product defects.
+- No commit or push was performed.
+
+**RESULT: `qa_green`**

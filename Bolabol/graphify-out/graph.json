@@ -5463,8 +5463,8 @@
       "label": "Darwin",
       "file_type": "code",
       "type": "module",
-      "source_file": "Sources/NativeBolabolPolishWorker/main.swift",
-      "source_location": "L1",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L23",
       "_origin": "ast"
     },
     {
@@ -28421,10 +28421,10 @@
       "_origin": "ast"
     },
     {
-      "id": "docs_canary_harness_canaryflashspike",
-      "label": "CanaryFlashSpike.swift",
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "label": "GigaAMCoreMLSpike.swift",
       "file_type": "code",
-      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
       "source_location": "L1",
       "_origin": "ast"
     },
@@ -28444,6 +28444,334 @@
       "type": "module",
       "source_file": "docs/canary/harness/CanarySpike.swift",
       "source_location": "L24",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "label": "SpikeError",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L28",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "label": "String",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_config",
+      "label": "Config",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L34",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_parseargs",
+      "label": "parseArgs()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L42",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "label": "readWav()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L60",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "label": "Float",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "label": "Int",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_makeshape",
+      "label": "makeShape()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L135",
+      "_origin": "ast"
+    },
+    {
+      "id": "nsnumber",
+      "label": "NSNumber",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_makefloatarray",
+      "label": "makeFloatArray()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L139",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "label": "MLMultiArray",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "label": "makeIntArray()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L150",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintscalar",
+      "label": "makeIntScalar()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L161",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_run",
+      "label": "run()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L165",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmodel",
+      "label": "MLModel",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlfeaturevalue",
+      "label": "MLFeatureValue",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_elementoffset",
+      "label": "elementOffset()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L175",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_floatvalue",
+      "label": "floatValue()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L181",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "label": "copyFloatArray()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L198",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_encoderframe",
+      "label": "encoderFrame()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L214",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_predictoroutputforjoint",
+      "label": "predictorOutputForJoint()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L220",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_predictorstate",
+      "label": "predictorState()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L226",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_memoryfootprintbytes",
+      "label": "memoryFootprintBytes()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L232",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_uint64",
+      "label": "UInt64",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend",
+      "label": "GigaAMMelFrontend",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L245",
+      "_origin": "ast"
+    },
+    {
+      "id": "vdsp_dft_setup",
+      "label": "vDSP_DFT_Setup",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_init",
+      "label": ".init()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L257",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_deinit",
+      "label": ".deinit()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L278",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "label": ".extract()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L282",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_makehtkfilterbank",
+      "label": ".makeHTKFilterbank()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L362",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "label": "GigaAMModels",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L402",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_computeunits",
+      "label": ".computeUnits()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L408",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlcomputeunits",
+      "label": "MLComputeUnits",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "label": ".load()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L418",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_decode",
+      "label": "decode()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L458",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_decoderesult",
+      "label": "DecodeResult",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L469",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_timeinterval",
+      "label": "TimeInterval",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "label": "decodeRNNT()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L477",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike",
+      "label": "GigaAMCoreMLSpike",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L556",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "label": ".main()",
+      "file_type": "code",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L558",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_canary_harness_canaryflashspike",
+      "label": "CanaryFlashSpike.swift",
+      "file_type": "code",
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L1",
       "_origin": "ast"
     },
     {
@@ -29915,6 +30243,30 @@
       "_origin": "ast"
     },
     {
+      "id": "script_qa_check_s6_gigaam_spike",
+      "label": "check_s6_gigaam_spike.sh",
+      "file_type": "code",
+      "source_file": "script/qa/check_s6_gigaam_spike.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "file"
+      },
+      "_origin": "ast"
+    },
+    {
+      "id": "script_qa_check_s6_gigaam_spike_sh__entry",
+      "label": "check_s6_gigaam_spike.sh script",
+      "file_type": "code",
+      "source_file": "script/qa/check_s6_gigaam_spike.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_entrypoint"
+      },
+      "_origin": "ast"
+    },
+    {
       "id": "script_qa_check_settings_surface",
       "label": "check_settings_surface.sh",
       "file_type": "code",
@@ -30387,7 +30739,7 @@
       "label": "§7 - Independent Reviewer Verification (S2)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L179",
+      "source_location": "L181",
       "_origin": "ast"
     },
     {
@@ -30395,15 +30747,15 @@
       "label": "Graphify Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L188",
+      "source_location": "L190",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_command_results_199",
+      "id": "ai_workflow_kit_docs_ai_feedback_command_results_201",
       "label": "Command Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L199",
+      "source_location": "L201",
       "_origin": "ast"
     },
     {
@@ -30411,31 +30763,31 @@
       "label": "S2 Acceptance Review",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L211",
+      "source_location": "L213",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_225",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_227",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L225",
+      "source_location": "L227",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_232",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_234",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L232",
+      "source_location": "L234",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_verdict_237",
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_239",
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L237",
+      "source_location": "L239",
       "_origin": "ast"
     },
     {
@@ -30443,7 +30795,7 @@
       "label": "§8 - Independent Tester QA (S2)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L247",
+      "source_location": "L249",
       "_origin": "ast"
     },
     {
@@ -30451,23 +30803,23 @@
       "label": "Gap-hunt result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L256",
+      "source_location": "L258",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_what_was_added_263",
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_added_265",
       "label": "What was added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L263",
+      "source_location": "L265",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_full_gate_271",
+      "id": "ai_workflow_kit_docs_ai_feedback_full_gate_273",
       "label": "Full gate",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L271",
+      "source_location": "L273",
       "_origin": "ast"
     },
     {
@@ -30475,7 +30827,7 @@
       "label": "Scope",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L281",
+      "source_location": "L283",
       "_origin": "ast"
     },
     {
@@ -30483,23 +30835,23 @@
       "label": "§9 - Independent Reviewer Verification (S3)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L294",
+      "source_location": "L296",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_graphify_results_303",
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_results_305",
       "label": "Graphify Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L303",
+      "source_location": "L305",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_command_results_313",
+      "id": "ai_workflow_kit_docs_ai_feedback_command_results_315",
       "label": "Command Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L313",
+      "source_location": "L315",
       "_origin": "ast"
     },
     {
@@ -30507,31 +30859,31 @@
       "label": "S3 Acceptance Review",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L325",
+      "source_location": "L327",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_339",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_341",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L339",
+      "source_location": "L341",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_345",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_347",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L345",
+      "source_location": "L347",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_verdict_350",
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_352",
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L350",
+      "source_location": "L352",
       "_origin": "ast"
     },
     {
@@ -30539,31 +30891,31 @@
       "label": "§10 - Independent Tester QA (S3)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L360",
+      "source_location": "L362",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_gap_hunt_result_369",
+      "id": "ai_workflow_kit_docs_ai_feedback_gap_hunt_result_371",
       "label": "Gap-hunt result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L369",
+      "source_location": "L371",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_what_was_added_376",
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_added_378",
       "label": "What was added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L376",
+      "source_location": "L378",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_full_gate_383",
+      "id": "ai_workflow_kit_docs_ai_feedback_full_gate_385",
       "label": "Full gate",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L383",
+      "source_location": "L385",
       "_origin": "ast"
     },
     {
@@ -30571,7 +30923,7 @@
       "label": "Scope and result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L394",
+      "source_location": "L396",
       "_origin": "ast"
     },
     {
@@ -30579,23 +30931,23 @@
       "label": "S4 — Spike Canary 1B v2 FluidInference Core ML (Step S4, coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L407",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_409",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L409",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_418",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_411",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L411",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_420",
       "label": "§1 — Inventory & Pass/Fail Summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L418",
+      "source_location": "L420",
       "_origin": "ast"
     },
     {
@@ -30603,15 +30955,15 @@
       "label": "§2 — S4 Spike Compliance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L430",
+      "source_location": "L432",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_441",
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_443",
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L441",
+      "source_location": "L443",
       "_origin": "ast"
     },
     {
@@ -30619,7 +30971,7 @@
       "label": "§4 — Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L454",
+      "source_location": "L456",
       "_origin": "ast"
     },
     {
@@ -30627,23 +30979,23 @@
       "label": "S4 - Independent Reviewer Verification (Canary 1B FluidInference Core ML)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L467",
+      "source_location": "L469",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_graphify_results_476",
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_results_478",
       "label": "Graphify Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L476",
+      "source_location": "L478",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_command_results_483",
+      "id": "ai_workflow_kit_docs_ai_feedback_command_results_485",
       "label": "Command Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L483",
+      "source_location": "L485",
       "_origin": "ast"
     },
     {
@@ -30651,31 +31003,31 @@
       "label": "Acceptance Review",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L497",
+      "source_location": "L499",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_512",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_514",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L512",
+      "source_location": "L514",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_519",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_521",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L519",
+      "source_location": "L521",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_verdict_525",
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_527",
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L525",
+      "source_location": "L527",
       "_origin": "ast"
     },
     {
@@ -30683,15 +31035,15 @@
       "label": "S4 Fix (Attempt 1) — Harness Valid-Length Correction + Evidence Reconciliation",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L535",
+      "source_location": "L537",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_537",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_539",
       "label": "Meta",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L537",
+      "source_location": "L539",
       "_origin": "ast"
     },
     {
@@ -30699,7 +31051,7 @@
       "label": "§1 — What changed (harness)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L547",
+      "source_location": "L549",
       "_origin": "ast"
     },
     {
@@ -30707,23 +31059,23 @@
       "label": "§2 — New lengths + re-run evidence (rev. 2, all from the fixed harness)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L556",
+      "source_location": "L558",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_569",
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_571",
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L569",
+      "source_location": "L571",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_582",
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_584",
       "label": "§4 — Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L582",
+      "source_location": "L584",
       "_origin": "ast"
     },
     {
@@ -30731,7 +31083,7 @@
       "label": "**S4 Re-review (after fix attempt 1)**",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L595",
+      "source_location": "L597",
       "_origin": "ast"
     },
     {
@@ -30739,7 +31091,7 @@
       "label": "Prior Blocking Item",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L604",
+      "source_location": "L606",
       "_origin": "ast"
     },
     {
@@ -30747,7 +31099,7 @@
       "label": "Spot-check Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L619",
+      "source_location": "L621",
       "_origin": "ast"
     },
     {
@@ -30755,7 +31107,7 @@
       "label": "Report and Provenance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L632",
+      "source_location": "L634",
       "_origin": "ast"
     },
     {
@@ -30763,31 +31115,31 @@
       "label": "Regression Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L638",
+      "source_location": "L640",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_654",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_656",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L654",
+      "source_location": "L656",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_660",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_662",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L660",
+      "source_location": "L662",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_verdict_666",
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_668",
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L666",
+      "source_location": "L668",
       "_origin": "ast"
     },
     {
@@ -30795,15 +31147,15 @@
       "label": "S4 - Independent Tester QA (Canary 1B FluidInference Core ML spike)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L678",
+      "source_location": "L680",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_680",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_682",
       "label": "Meta",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L680",
+      "source_location": "L682",
       "_origin": "ast"
     },
     {
@@ -30811,7 +31163,7 @@
       "label": "What was verified",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L690",
+      "source_location": "L692",
       "_origin": "ast"
     },
     {
@@ -30819,7 +31171,7 @@
       "label": "Gap found and added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L702",
+      "source_location": "L704",
       "_origin": "ast"
     },
     {
@@ -30827,7 +31179,7 @@
       "label": "Result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L709",
+      "source_location": "L711",
       "_origin": "ast"
     },
     {
@@ -30835,23 +31187,23 @@
       "label": "S5 — Spike Canary Flash ~180M Core ML (Step S5, coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L719",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_721",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L721",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_730",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_723",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L723",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_732",
       "label": "§1 — Inventory & Pass/Fail Summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L730",
+      "source_location": "L732",
       "_origin": "ast"
     },
     {
@@ -30859,23 +31211,167 @@
       "label": "§2 — S5 Spike Compliance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L742",
+      "source_location": "L744",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_753",
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_755",
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L753",
+      "source_location": "L755",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_767",
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_769",
       "label": "§4 — Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L767",
+      "source_location": "L769",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
+      "label": "S5 — Spike Canary Flash ~180M Core ML (Independent Reviewer)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L783",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_785",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L785",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification",
+      "label": "Graphify and Scope Verification",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L795",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist",
+      "label": "Acceptance Checklist",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L805",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_822",
+      "label": "Findings",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L822",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_go_decision",
+      "label": "GO Decision",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L837",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_841",
+      "label": "Change List",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L841",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
+      "label": "S5 - Independent Tester QA (Canary Flash ~180M Core ML spike)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L854",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_856",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L856",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_verified_866",
+      "label": "What was verified",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L866",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_879",
+      "label": "Gap found and added",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L879",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_result_887",
+      "label": "Result",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L887",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_step_s6_coder",
+      "label": "S6 — Spike GigaAM v3 RU Core ML (Step S6, coder)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L897",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_899",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L899",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_908",
+      "label": "§1 — Inventory & Pass/Fail Summary",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L908",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_2_s6_spike_compliance",
+      "label": "§2 — S6 Spike Compliance",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L920",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_936",
+      "label": "§3 — Verification",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L936",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_953",
+      "label": "§4 — Handoff",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L953",
       "_origin": "ast"
     },
     {
@@ -31895,6 +32391,46 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_ai_report_step_s5_tester_qa_canary_flash_180m_core_ml_spike",
+      "label": "Step S5 - Tester QA: Canary Flash (~180M) Core ML spike",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1131",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_graphify_context_1141",
+      "label": "Graphify context",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1141",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_result_1151",
+      "label": "Gap-hunt result",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1151",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_commands_and_results_1164",
+      "label": "Commands and results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1164",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_qa_delta_and_findings",
+      "label": "QA delta and findings",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1196",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_ai_review_template",
       "label": "REVIEW_TEMPLATE.md",
       "file_type": "document",
@@ -32900,6 +33436,14 @@
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L120",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_adr_014_canary_flash_180m_core_ml_go_candidate_s5_spike",
+      "label": "ADR-014 — Canary Flash 180M Core ML GO candidate (S5 spike)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L131",
       "_origin": "ast"
     },
     {
@@ -35380,6 +35924,174 @@
       "file_type": "document",
       "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
       "source_location": "L177",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike",
+      "label": "COREML_SPIKE.md",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "label": "GigaAM v3 RU Core ML - S6 Spike Report",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_evidence_provenance",
+      "label": "Evidence provenance",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_1_environment",
+      "label": "1. Environment",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L15",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_2_artifact_audit",
+      "label": "2. Artifact audit",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L28",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_2_1_candidate_search_and_selection",
+      "label": "2.1 Candidate search and selection",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L30",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_2_2_selected_artifact_contents",
+      "label": "2.2 Selected artifact contents",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L44",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_2_3_metadata_honesty_and_model_contract",
+      "label": "2.3 Metadata honesty and model contract",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L65",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_3_load",
+      "label": "3. Load",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L79",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_4_results",
+      "label": "4. Results",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L91",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_4_1_short_ru_audio_asr",
+      "label": "4.1 Short RU audio ASR",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L93",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_4_2_latency_and_ram",
+      "label": "4.2 Latency and RAM",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L104",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_4_3_language_honesty",
+      "label": "4.3 Language honesty",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L118",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_4_4_chunking_and_fixed_window",
+      "label": "4.4 Chunking and fixed window",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L126",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_4_5_no_python",
+      "label": "4.5 No Python",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L140",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_4_6_optional_en_other_languages",
+      "label": "4.6 Optional EN/other languages",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L148",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_5_defects_and_constraints_found",
+      "label": "5. Defects and constraints found",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L152",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_6_go_no_go_checklist",
+      "label": "6. GO/NO-GO checklist",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L164",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_7_go_recommendation_for_s7",
+      "label": "7. GO recommendation for S7+",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L179",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_8_artifacts",
+      "label": "8. Artifacts",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L189",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_asr_gigaam_v3_coreml_spike_9_reproduction",
+      "label": "9. Reproduction",
+      "file_type": "document",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L200",
       "_origin": "ast"
     },
     {
@@ -116060,6 +116772,1538 @@
       "_origin": "ast"
     },
     {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "accelerate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "coreml",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "darwin",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "foundation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "target": "localizederror",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L29",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_config",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L34",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_config",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L35",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_parseargs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_parseargs",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L42",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_parseargs",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_config",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L42",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L60",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L60",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L60",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L60",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makeshape",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L135",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeshape",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L135",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeshape",
+      "target": "nsnumber",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L135",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makefloatarray",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L139",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makefloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L139",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makefloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L139",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makefloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L139",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L150",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L150",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L150",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintscalar",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L161",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintscalar",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L161",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintscalar",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L161",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_run",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L165",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_run",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmodel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L165",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_run",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L165",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_run",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlfeaturevalue",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L165",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_elementoffset",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L175",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_elementoffset",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L175",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_elementoffset",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L175",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_floatvalue",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L181",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_floatvalue",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L181",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_floatvalue",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L181",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_floatvalue",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L181",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L198",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L198",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L198",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_encoderframe",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L214",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_encoderframe",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L214",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_encoderframe",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L214",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_predictoroutputforjoint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L220",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_predictoroutputforjoint",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L220",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_predictoroutputforjoint",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L220",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_predictorstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L226",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_predictorstate",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L226",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_predictorstate",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L226",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_memoryfootprintbytes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L232",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_memoryfootprintbytes",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_uint64",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L232",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L245",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend",
+      "target": "vdsp_dft_setup",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L253",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L254",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L257",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_deinit",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L278",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L282",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L282",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L282",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L282",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_makehtkfilterbank",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L362",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_makehtkfilterbank",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L362",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_makehtkfilterbank",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L362",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L402",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmodel",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L403",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L406",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L406",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_computeunits",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L408",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_computeunits",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L408",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_computeunits",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlcomputeunits",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L408",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L418",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L418",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L418",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_decode",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L458",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decode",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L458",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decode",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L458",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_decoderesult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L469",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decoderesult",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L470",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decoderesult",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_timeinterval",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L474",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L477",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L477",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L477",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L477",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_decoderesult",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L477",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L556",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L558",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_parseargs",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_config",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L43",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_parseargs",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L50",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L66",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L74",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L113",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeshape",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L136",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makefloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L142",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makefloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L144",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makefloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makeshape",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L144",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L153",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L155",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makeshape",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L155",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintscalar",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L162",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_floatvalue",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L184",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_floatvalue",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_elementoffset",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L195",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L200",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makeshape",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L200",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_floatvalue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L209",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_encoderframe",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L215",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_predictoroutputforjoint",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L221",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_predictorstate",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_copyfloatarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L227",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_memoryfootprintbytes",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L236",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_init",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L262",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_init",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_makehtkfilterbank",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L270",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L283",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlmultiarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L297",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makeshape",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L298",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_makehtkfilterbank",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_float",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L393",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_computeunits",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L414",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_computeunits",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L419",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L434",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_int",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L441",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L454",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makefloatarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L492",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L503",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L504",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlfeaturevalue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L505",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L512",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_encoderframe",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L515",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_predictoroutputforjoint",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L516",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_predictorstate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L534",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_decoderesult",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L545",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_parseargs",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L559",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L566",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L568",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_spikeerror",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L570",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L574",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L576",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L584",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_swift_mlfeaturevalue",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L585",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_decodernnt",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L593",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_decode",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L600",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaamcoremlspike_main",
+      "target": "docs_asr_gigaam_v3_gigaamcoremlspike_memoryfootprintbytes",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L608",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "docs_canary_harness_canaryflashspike",
       "target": "accelerate",
       "relation": "imports",
@@ -119526,6 +121770,16 @@
       "_origin": "ast"
     },
     {
+      "source": "script_qa_check_s6_gigaam_spike",
+      "target": "script_qa_check_s6_gigaam_spike_sh__entry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s6_gigaam_spike.sh",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "script_qa_check_settings_surface",
       "target": "script_qa_check_settings_surface_sh__entry",
       "relation": "contains",
@@ -119954,7 +122208,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L179",
+      "source_location": "L181",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -119964,17 +122218,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L188",
+      "source_location": "L190",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_7_independent_reviewer_verification_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_command_results_199",
+      "target": "ai_workflow_kit_docs_ai_feedback_command_results_201",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L199",
+      "source_location": "L201",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -119984,37 +122238,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L211",
+      "source_location": "L213",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_7_independent_reviewer_verification_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_225",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_227",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L225",
+      "source_location": "L227",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_7_independent_reviewer_verification_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_232",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_234",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L232",
+      "source_location": "L234",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_7_independent_reviewer_verification_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_verdict_237",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_239",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L237",
+      "source_location": "L239",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120024,7 +122278,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L247",
+      "source_location": "L249",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120034,27 +122288,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L256",
+      "source_location": "L258",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_8_independent_tester_qa_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_what_was_added_263",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_added_265",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L263",
+      "source_location": "L265",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_8_independent_tester_qa_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_full_gate_271",
+      "target": "ai_workflow_kit_docs_ai_feedback_full_gate_273",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L271",
+      "source_location": "L273",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120064,7 +122318,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L281",
+      "source_location": "L283",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120074,27 +122328,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L294",
+      "source_location": "L296",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_graphify_results_303",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_results_305",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L303",
+      "source_location": "L305",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_command_results_313",
+      "target": "ai_workflow_kit_docs_ai_feedback_command_results_315",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L313",
+      "source_location": "L315",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120104,37 +122358,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L325",
+      "source_location": "L327",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_339",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_341",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L339",
+      "source_location": "L341",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_345",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_347",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L345",
+      "source_location": "L347",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_verdict_350",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_352",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L350",
+      "source_location": "L352",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120144,37 +122398,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L360",
+      "source_location": "L362",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_10_independent_tester_qa_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_gap_hunt_result_369",
+      "target": "ai_workflow_kit_docs_ai_feedback_gap_hunt_result_371",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L369",
+      "source_location": "L371",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_10_independent_tester_qa_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_what_was_added_376",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_added_378",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L376",
+      "source_location": "L378",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_10_independent_tester_qa_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_full_gate_383",
+      "target": "ai_workflow_kit_docs_ai_feedback_full_gate_385",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L383",
+      "source_location": "L385",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120184,7 +122438,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L394",
+      "source_location": "L396",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120194,27 +122448,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L407",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_409",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L409",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_418",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_411",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L418",
+      "source_location": "L411",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_420",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L420",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120224,17 +122478,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L430",
+      "source_location": "L432",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_441",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_443",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L441",
+      "source_location": "L443",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120244,7 +122498,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L454",
+      "source_location": "L456",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120254,27 +122508,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L467",
+      "source_location": "L469",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_graphify_results_476",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_results_478",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L476",
+      "source_location": "L478",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_command_results_483",
+      "target": "ai_workflow_kit_docs_ai_feedback_command_results_485",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L483",
+      "source_location": "L485",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120284,37 +122538,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L497",
+      "source_location": "L499",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_512",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_514",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L512",
+      "source_location": "L514",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_519",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_521",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L519",
+      "source_location": "L521",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_verdict_525",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_527",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L525",
+      "source_location": "L527",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120324,17 +122578,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L535",
+      "source_location": "L537",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_fix_attempt_1_harness_valid_length_correction_evidence_reconciliation",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_537",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_539",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L537",
+      "source_location": "L539",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120344,7 +122598,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L547",
+      "source_location": "L549",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120354,27 +122608,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L556",
+      "source_location": "L558",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_fix_attempt_1_harness_valid_length_correction_evidence_reconciliation",
-      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_569",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_571",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L569",
+      "source_location": "L571",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_fix_attempt_1_harness_valid_length_correction_evidence_reconciliation",
-      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_582",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_584",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L582",
+      "source_location": "L584",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120384,7 +122638,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L595",
+      "source_location": "L597",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120394,7 +122648,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L604",
+      "source_location": "L606",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120404,7 +122658,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L619",
+      "source_location": "L621",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120414,7 +122668,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L632",
+      "source_location": "L634",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120424,37 +122678,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L638",
+      "source_location": "L640",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_654",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_656",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L654",
+      "source_location": "L656",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_660",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_662",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L660",
+      "source_location": "L662",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
-      "target": "ai_workflow_kit_docs_ai_feedback_verdict_666",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_668",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L666",
+      "source_location": "L668",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120464,17 +122718,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L678",
+      "source_location": "L680",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_tester_qa_canary_1b_fluidinference_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_680",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_682",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L680",
+      "source_location": "L682",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120484,7 +122738,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L690",
+      "source_location": "L692",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120494,7 +122748,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L702",
+      "source_location": "L704",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120504,7 +122758,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L709",
+      "source_location": "L711",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120514,27 +122768,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L719",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_721",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L721",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_730",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_723",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L730",
+      "source_location": "L723",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_732",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L732",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120544,27 +122798,207 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L742",
+      "source_location": "L744",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_753",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_755",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L753",
+      "source_location": "L755",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_767",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_769",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L767",
+      "source_location": "L769",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L783",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_785",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L785",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L795",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L805",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_822",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L822",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_go_decision",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L837",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_841",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L841",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L854",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_856",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L856",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_verified_866",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L866",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_879",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L879",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_result_887",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L887",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_step_s6_coder",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L897",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_899",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L899",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_908",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L908",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_2_s6_spike_compliance",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L920",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_936",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L936",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_953",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L953",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121779,6 +124213,56 @@
       "_origin": "ast"
     },
     {
+      "source": "ai_workflow_kit_docs_ai_report",
+      "target": "ai_workflow_kit_docs_ai_report_step_s5_tester_qa_canary_flash_180m_core_ml_spike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1131",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s5_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_graphify_context_1141",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1141",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s5_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_result_1151",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1151",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s5_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_commands_and_results_1164",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1164",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s5_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_qa_delta_and_findings",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1196",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "ai_workflow_kit_docs_ai_review_template",
       "target": "ai_workflow_kit_docs_ai_review_template_review_template_bolabol",
       "relation": "contains",
@@ -122985,6 +125469,16 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L120",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_log_bolabol",
+      "target": "ai_workflow_kit_docs_decisions_adr_014_canary_flash_180m_core_ml_go_candidate_s5_spike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L131",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125965,6 +128459,206 @@
       "confidence": "EXTRACTED",
       "source_file": "docs/asr/canary-flash/COREML_SPIKE.md",
       "source_location": "L177",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike",
+      "target": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_evidence_provenance",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_1_environment",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_2_artifact_audit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_2_artifact_audit",
+      "target": "docs_asr_gigaam_v3_coreml_spike_2_1_candidate_search_and_selection",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_2_artifact_audit",
+      "target": "docs_asr_gigaam_v3_coreml_spike_2_2_selected_artifact_contents",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L44",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_2_artifact_audit",
+      "target": "docs_asr_gigaam_v3_coreml_spike_2_3_metadata_honesty_and_model_contract",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L65",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_3_load",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L79",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_4_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L91",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_4_results",
+      "target": "docs_asr_gigaam_v3_coreml_spike_4_1_short_ru_audio_asr",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L93",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_4_results",
+      "target": "docs_asr_gigaam_v3_coreml_spike_4_2_latency_and_ram",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L104",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_4_results",
+      "target": "docs_asr_gigaam_v3_coreml_spike_4_3_language_honesty",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L118",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_4_results",
+      "target": "docs_asr_gigaam_v3_coreml_spike_4_4_chunking_and_fixed_window",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L126",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_4_results",
+      "target": "docs_asr_gigaam_v3_coreml_spike_4_5_no_python",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L140",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_4_results",
+      "target": "docs_asr_gigaam_v3_coreml_spike_4_6_optional_en_other_languages",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L148",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_5_defects_and_constraints_found",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L152",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_6_go_no_go_checklist",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L164",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_7_go_recommendation_for_s7",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L179",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_8_artifacts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L189",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_coreml_spike_gigaam_v3_ru_core_ml_s6_spike_report",
+      "target": "docs_asr_gigaam_v3_coreml_spike_9_reproduction",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/asr/gigaam-v3/COREML_SPIKE.md",
+      "source_location": "L200",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -133333,6 +136027,102 @@
       "_origin": "ast"
     },
     {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "sources_nativebolabol_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L61",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "int16",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "uint16",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_readwav",
+      "target": "int32",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L111",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_makeintarray",
+      "target": "int32",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L157",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_init",
+      "target": "vdsp_length",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L261",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammelfrontend_extract",
+      "target": "sources_nativebolabolcore_services_apptext_apptextkey_output",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L355",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_asr_gigaam_v3_gigaamcoremlspike_gigaammodels_load",
+      "target": "sources_nativebolabol_services_audiocueplayer_data",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift",
+      "source_location": "L432",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "docs_canary_harness_canaryflashspike_readwav",
       "target": "sources_nativebolabol_services_audiocueplayer_data",
       "relation": "calls",
@@ -133381,6 +136171,18 @@
       "_origin": "ast"
     },
     {
+      "source": "docs_canary_harness_canaryflashspike_melfrontend_extract",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L226",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "docs_canary_harness_canaryflashspike_melfrontend_normalizeperfeature",
       "target": "sources_nativebolabol_views_providerquickswitcher_providerquickswitcherlistview_row",
       "relation": "calls",
@@ -133401,6 +136203,30 @@
       "confidence_score": 0.8,
       "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
       "source_location": "L386",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_makei32",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L426",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryflashspike_makei32scalar",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFlashSpike.swift",
+      "source_location": "L433",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -133513,6 +136339,66 @@
       "_origin": "ast"
     },
     {
+      "source": "docs_canary_harness_canaryfluidspike_makef32",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
+      "source_location": "L193",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryfluidspike_makei32",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
+      "source_location": "L199",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryfluidspike_makei32scalar",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
+      "source_location": "L206",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryfluidspike_transposef32",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
+      "source_location": "L220",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryfluidspike_canaryfluidspike_main",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanaryFluidSpike.swift",
+      "source_location": "L344",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "docs_canary_harness_canaryspike_readwav",
       "target": "sources_nativebolabol_services_audiocueplayer_data",
       "relation": "calls",
@@ -133569,6 +136455,66 @@
       "confidence_score": 0.8,
       "source_file": "docs/canary/harness/CanarySpike.swift",
       "source_location": "L147",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryspike_makef16",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySpike.swift",
+      "source_location": "L172",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryspike_makeint32",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySpike.swift",
+      "source_location": "L186",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryspike_makeint32scalar",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySpike.swift",
+      "source_location": "L193",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryspike_transposef16",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySpike.swift",
+      "source_location": "L207",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_canary_harness_canaryspike_canaryspike_main",
+      "target": "nsnumber",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/canary/harness/CanarySpike.swift",
+      "source_location": "L313",
       "weight": 1.0,
       "_origin": "ast"
     },

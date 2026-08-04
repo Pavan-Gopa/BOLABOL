@@ -176,6 +176,8 @@ Tester did not modify `Sources/**`, `Package.swift`, `STATE.yaml`, or Graphify a
 
 ---
 
+---
+
 ## §7 - Independent Reviewer Verification (S2)
 
 | Field | Value |
@@ -847,8 +849,6 @@ The coder's **GO is justified for the S5 spike artifact**: the report has an exp
 
 > Готово. Вернись к оркестратору и скажи статус.
 
----
-
 ## S5 - Independent Tester QA (Canary Flash ~180M Core ML spike)
 
 ### Meta
@@ -885,6 +885,218 @@ The coder's **GO is justified for the S5 spike artifact**: the report has an exp
 ### Result
 
 S5 QA gate is **GREEN**. The approved evidence package remains **GO** for `aufklarer/Canary-180M-Flash-CoreML` as a spike candidate only; product integration remains out of scope for S5.
+
+**RESULT: `qa_green`**
+
+> Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S6 — Spike GigaAM v3 RU Core ML (Step S6, coder)
+
+## Meta
+
+| Field | Value |
+|-------|-------|
+| Step | S6 (SPIKE) |
+| Actor | coder |
+| Timestamp | 2026-08-04 |
+| RESULT | waiting_review |
+
+## §1 — Inventory & Pass/Fail Summary
+
+- **Working Directory**: `/Users/pavan/Documents/AI Projects/Bolabol`
+- **Required Graphify commands**: completed first against `graphify-out/graph.json`:
+  - `graphify query "GigaAM Core ML transcription spike" --graph graphify-out/graph.json` — PASS; existing S4/S5 harness/report context and GigaAM ranking references were found.
+  - `graphify query "check_no_canary_product" --graph graphify-out/graph.json` — PASS; `script/qa/check_no_canary_product.sh` found.
+  - `graphify explain "TranscriptionEngine" --graph graphify-out/graph.json` — PASS; existing `AppTextKey.transcriptionEngine` node found; no product GigaAM engine was added.
+- **Reviewed context**: `BOLABOL_ASR_COREML_INTEGRATION_PLAN.md` §§1.1/4, `STATE.yaml` (read-only), `TEAM_CONTRACT.md`, S4 NO-GO reports/ADR-012/013, S5 GO-candidate report/ADR-014, and the valid-length/no-unverified-WER lessons.
+- **Candidate choice**: audited all three plan §1.1 HF repositories. Selected `huggingfinger0/gigaam-v3-coreml` revision `db44a79c2244cb9eb8178e383bd1ee92ec7fea25` because it is the plan primary, RU-only, macOS 14 compatible, native `.mlmodelc`, and the smallest published payload (~213.1 MiB). `smkrv` and `vadimsuhanov` were documented as alternatives, not silently treated as runtime evidence.
+- **Verdict**: **GO for the S6 spike candidate**. The selected native Core ML bundle loaded on ANE/CPU/`.all`; two RU clips produced non-empty sensible text, one exact against its TTS reference; the 31.52 s probe showed the explicit 30 s cap and true valid-length accounting.
+- `STATE.yaml` was not changed. No product `Sources/**`, `Package.swift`, catalog, engine, UI, or download wiring was added. No commit, tag, or push was performed. No Graphify rebuild was performed.
+
+## §2 — S6 Spike Compliance
+
+- [x] `docs/asr/gigaam-v3/COREML_SPIKE.md` exists with explicit `**Status:** GO` and the ten-item checklist.
+- [x] Artifact audit documents URL/revision, all three candidates, sizes, hashes, metadata, selected candidate, and the fact that README/upstream WER claims were not used as evidence.
+- [x] `docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift` is a standalone native Swift/Core ML/Accelerate harness; it is not a product target.
+- [x] Harness verifies the selected Encoder/Predictor/JointDecision load and prints model feature names/shapes.
+- [x] Short RU ASR evidence: `ru_short.wav` exact non-empty transcript; `ru.wav` sensible RU transcript with the proper-noun variation documented honestly.
+- [x] Latency/RAM evidence: ANE, CPU, and `.all` runs with frontend/encoder/RNNT timings, decode RTFx, and `phys_footprint`.
+- [x] True valid lengths: valid mel frames are computed from real samples; only `ceil(validMelFrames / 4)` encoder frames are decoded; padded buffer size is never used as valid length.
+- [x] Window evidence: 31.52 s audio is capped at 480,000 samples / 30 s and the transcript truncation is reported; S7+ must segment before inference.
+- [x] Language honesty: RU-focused only; no EN/multilingual/AST/auto-detect claim.
+- [x] No Python inference path; `script/qa/check_s6_gigaam_spike.sh` guards external/Python/process patterns.
+- [x] `scratch/gigaam-spike/` contains model/audio/bin artifacts and is gitignored; blobs are not force-committed.
+- [x] S4/S5 harnesses and reports remain intact; the existing Canary dual-check was not weakened.
+- [x] ADR draft not written. The GO candidate and S7+ constraints are in the report; Orchestrator/Human owns any final ADR and GO list decision.
+
+## §3 — Verification
+
+| Command / evidence | Result |
+|---------------------|--------|
+| `graphify query` / `explain` three required commands | PASS; queries ran before exploration; no rebuild |
+| `xcrun swiftc -O -parse-as-library -o scratch/gigaam-spike/bin/GigaAMCoreMLSpike docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift` | PASS |
+| GigaAM harness `compute=ane` | PASS; RU transcripts, blank termination, 57-68x decode RTFx, 25-56 MiB observed footprint |
+| GigaAM harness `compute=cpu` | PASS; selected bundle loaded and decoded RU text |
+| GigaAM harness `compute=all` | PASS; selected bundle loaded and decoded RU text |
+| GigaAM over-window probe | PASS; 504,340 -> 480,000 samples, 2,999/3,000 valid mel frames, 750/750 valid encoder frames |
+| `bash script/qa/check_s6_gigaam_spike.sh` | PASS |
+| `script/qa/check_no_canary_product.sh` | PASS; zero Canary product/module surface |
+| `script/qa/check_no_python_in_sources.sh` | PASS |
+| `swift test` | PASS — 503 tests in 4 suites |
+| `./script/qa/run_all.sh` | PASS — 23/23 (S6 check included; existing B6/S4/S5 checks remain green) |
+| Model/audio/bin ignore check | PASS — `scratch/gigaam-spike/` is ignored by `.gitignore` |
+
+## §4 — Handoff
+
+- **Verdict summary**: S6 = **GO** for `huggingfinger0/gigaam-v3-coreml` as a **RU-focused native Core ML spike candidate**. This is not a product integration approval.
+- **Evidence summary**: model contract loaded on macOS 26.5.2 / Apple M4; `ru_short.wav` produced exact `Сегодня мы проверяем точность русской диктовки на компьютере Apple`; `ru.wav` produced sensible Russian text with one documented proper-noun variation; `.all`/CPU/ANE all ran; no Python path was used.
+- **S7+ constraints**: keep product claim RU-focused; reproduce the HTK log-mel frontend; require 16 kHz mono; VAD/chunk at <=30 s; reset RNNT state per chunk; decode only true valid encoder frames; do not claim WER, confidence, EN, multilingual, AST, or auto-detect from this spike.
+- **Human gate**: do not add GigaAM or Canary catalog/engine/UI/download wiring until the post-S4–S6 Human GO list and S7+ steps.
+- **Scope respected**: only `.gitignore`, the S6 report/harness, the S6 QA script, and this FEEDBACK handoff were touched; `STATE.yaml`, product Sources, `Package.swift`, S4/S5 artifacts, and `DECISIONS.md` were not changed; no commit/push.
+
+**RESULT: `waiting_review`**
+
+> Готово. Вернись к оркестратору и скажи статус/приступай.
+
+---
+
+## S6 - Spike GigaAM v3 RU Core ML (Independent Reviewer)
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Role | Verification Engineer / Reviewer |
+| Step | S6 (SPIKE) |
+| Date | 2026-08-04 |
+| Scope | Report, native Swift harness, S6 QA, product boundary, artifact hygiene, S4/S5 preservation |
+| RESULT | `approved` |
+
+### Graphify and Scope Verification
+
+- Graphify was run first against the supplied `graphify-out/graph.json`:
+  - `graphify query "GigaAM Core ML spike harness" --graph graphify-out/graph.json` - PASS; 152-node BFS traversal includes the S6 report, harness, RNNT symbols, S4/S5 context, and QA surface.
+  - `graphify query "GigaAMCoreMLSpike" --graph graphify-out/graph.json` - PASS; 31-node traversal includes the entry point, frontend, model loading, valid-frame calculation, RNNT decode, and helpers.
+  - `graphify query "check_no_canary_product" --graph graphify-out/graph.json` - PASS; 2-node traversal finds `script/qa/check_no_canary_product.sh`.
+- `git status -sb -- .` recorded the expected orchestrator/coder changes (including Graphify and `STATE.yaml` worktree state); this reviewer did not modify `STATE.yaml`, Graphify outputs, product Sources, Tests, `Package.swift`, S4/S5 artifacts, or `DECISIONS.md`.
+- `git diff --name-only -- Sources Tests docs script/qa .gitignore` showed only the tracked `.gitignore` diff; the new S6 report, harness, and QA script are untracked additions as expected. `git diff --name-only -- Sources` was empty.
+- Existing product references were distinguished from runtime wiring: the only GigaAM hit in `Sources` is the pre-existing pure S1b ranking helper and model ID. `TranscriptionModelDescriptor` has no GigaAM backend/catalog entry, `Package.swift` has no GigaAM/Canary module, and no GigaAM engine, downloader, or UI runtime surface is present. `check_no_canary_product.sh` passed.
+- S4/S5 artifacts and the existing `check_b6_canary_spike.sh` were unchanged; the B6/S4/S5 dual-check remained green.
+
+### Acceptance Checklist
+
+| # | Requirement | Reviewer evidence | Result |
+|---|-------------|-------------------|--------|
+| 1 | Explicit GO/NO-GO status | `COREML_SPIKE.md:4` has `**Status:** GO`; the report repeats the spike-only GO at `:225`. | PASS |
+| 2 | All ten checklist items with evidence | Report `§6` (`:164-177`) enumerates Environment, Artifact audit, Load, Short RU audio ASR, Latency/RAM, Language, Chunking/window, No Python, Optional EN/other scope, and Verdict, with supporting sections and reproduction commands. | PASS |
+| 3 | Candidate selection is documented | Report `§2.1` (`:30-42`) audits `huggingfinger0`, `smkrv`, and `vadimsuhanov`; selects pinned `huggingfinger0/gigaam-v3-coreml` for the plan-primary, RU-only, macOS 14 `.mlmodelc` contract and smallest payload, without treating the alternatives as runtime evidence. | PASS |
+| 4 | RU-focused language honesty | Report `§4.3`/`§4.6` (`:118-150`) permits only RU-focused claims and explicitly excludes EN, multilingual, AST, auto-detect, and WER claims. The runtime spot-checks were RU-only. | PASS |
+| 5 | True valid lengths, not padded buffer length | Harness `:282-359` derives mel frames from real samples; `:486` decodes `ceil(validMelFrames / 4)` bounded by the model output; runtime printed `373/3000 -> 94/750` and `572/3000 -> 143/750`. The encoder MIL contract uses custom stride-2 padding, consistent with the ceil calculation. | PASS |
+| 6 | Approximately 30 s window/chunking behavior | Harness `:245-252,285-296` caps at 480,000 samples; the over-window run printed `504340 -> 480000`, `2999/3000` mel frames, `750/750` encoder frames, and transcript truncation. Report `:126-138` requires VAD/chunking and no silent tail drop for S7+. | PASS |
+| 7 | No Python inference path | Harness imports only Swift/Foundation/CoreML/Accelerate; `check_s6_gigaam_spike.sh`, `check_b6_canary_spike.sh`, and `check_no_python_in_sources.sh` passed. No `Process` or external inference path is present. | PASS |
+| 8 | Model/audio/bin blobs ignored and untracked | `git check-ignore -v scratch/gigaam-spike` returned `.gitignore:5:scratch/gigaam-spike/`; `git ls-files '*.mlmodelc' '*.mlpackage' '*.bin' '*.wav'` returned zero tracked files. The local model payload SHA-256 values matched report `§2.2`. | PASS |
+| 9 | Product boundary | `check_no_canary_product.sh` passed; `TranscriptionModelCatalog` contains only the existing Whisper/Parakeet descriptors and no GigaAM backend/catalog entry; no product Sources diff or GigaAM/Canary engine wiring was introduced. The pure ranking reference is pre-existing and allowlisted, not runtime integration. | PASS |
+| 10 | S4/S5 dual-checks remain green | `script/qa/check_b6_canary_spike.sh` passed, preserving S4 explicit NO-GO and S5 explicit GO; `./script/qa/run_all.sh` passed with 23/23. | PASS |
+| 11 | Runtime spot-check if artifacts are present | Runtime was **AVAILABLE**. Reviewer build passed. `ru_short.wav` on ANE produced the exact transcript `Сегодня мы проверяем точность русской диктовки на компьютере Apple`, `94/94` blank-terminated frames, 65.2x RTFx, 22 MiB. `ru.wav` on CPU and `.all` produced sensible RU text with `143/143` blank-terminated frames, 55.2x/69.1x RTFx. `ru_long.wav` on ANE confirmed the 30 s cap and ended with the documented first-window truncation. | PASS, runtime AVAILABLE |
+| 12 | GO is evidence-based and not product approval | Native Core ML load/decode, bounded RU evidence, valid-length behavior, artifact hygiene, and all QA gates are green. Report `§7` (`:179-187`) carries the required S7+ constraints and the Human GO-list gate; S4 remains closed and S5 remains a candidate only. | PASS |
+
+### Commands and Results
+
+| Command | Result |
+|---------|--------|
+| `xcrun swiftc -O -parse-as-library -o /tmp/GigaAMCoreMLSpike-review docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift` | PASS, no compiler output |
+| `script/qa/check_no_canary_product.sh` | PASS |
+| `bash script/qa/check_s6_gigaam_spike.sh` | PASS |
+| `script/qa/check_b6_canary_spike.sh` | PASS |
+| `script/qa/check_no_python_in_sources.sh` | PASS |
+| `swift test` | PASS, 503 tests in 4 suites |
+| `./script/qa/run_all.sh` | PASS, 23/23 |
+| `git diff --check -- .` | PASS, including the reviewer append |
+
+### Findings
+
+**Blocking:** none.
+
+**Non-blocking:**
+
+- RTFx is run-sensitive. The reviewer repeat measured 55.2x on CPU versus the coder table's 68.4x, while ANE measured 65.2x versus 67.4x. The report correctly labels this as a spike measurement rather than a product SLA; S7+ should use a defined repeat/median protocol and avoid carrying the narrow range as a guarantee.
+- `check_s6_gigaam_spike.sh` is intentionally a structural contract. It does not independently assert the valid-frame arithmetic, GigaAM no-catalog boundary, or S7+ chunk/state rules; those were verified here from source/report plus the companion product and dual-check gates. Add dedicated assertions before product wiring if these invariants become release gates.
+
+**INFO / residual risk:**
+
+- Runtime artifacts were available and independently exercised. The observed proper-noun variation and lack of confidence/log-prob output remain correctly documented limitations; no WER or multilingual quality claim is supported.
+- S7+ must preserve the fixed RU-only capability, 16 kHz mono contract, true frame accounting, blank id 1024, per-segment predictor reset, <=30 s chunking, and Human GO-list approval. This approval is for the spike candidate only, not product ship.
+
+### GO Decision
+
+The coder's **GO is justified for the S6 spike candidate** `huggingfinger0/gigaam-v3-coreml`: the report has an explicit and bounded verdict, all ten checklist areas are evidenced, the candidate comparison is documented, the true valid-length correction is present, native runtime spot-checks pass on available artifacts, S4/S5 remain intact, and no product GigaAM/Canary wiring was introduced. This is not approval to add GigaAM to the product catalog, engine, downloader, UI, or Sources; that remains S7+ after the Human GO list.
+
+### Change List
+
+- No blocking change is required for S6 acceptance.
+- Carry the RTFx repeatability protocol and stronger valid-length/product-boundary assertions into S7+ QA hardening before relying on them as product release gates.
+
+**VERDICT: APPROVED**
+
+**RESULT: `approved`**
+
+> Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S6 - Independent Tester QA (GigaAM v3 RU Core ML spike)
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Role | Tester / QA |
+| Step | S6 (SPIKE) |
+| Date | 2026-08-04 |
+| RESULT | `qa_green` |
+| bugs | 0 |
+
+### Graphify and gap-hunt
+
+- Graphify was queried first: `graphify query "GigaAMCoreMLSpike" --graph graphify-out/graph.json` passed with a 31-node traversal covering the harness entry point, frontend, model loading, true-length calculation, RNNT decode, and helpers.
+- `docs/asr/gigaam-v3/COREML_SPIKE.md` has the required explicit `**Status:** GO`, selected candidate, evidence checklist, and S7+ product-boundary constraints.
+- `check_s6_gigaam_spike.sh` previously accepted either GO or NO-GO and did not guard the core fixed-window/true-length contract. Strengthened the existing script to require GO, assert the 30 s/3000-frame/480000-sample and `ceil(validMelFrames / 4)` source invariants, check blank/state/max-symbol behavior, enforce the GigaAM product boundary, and reject tracked spike artifacts.
+- `check_b6_canary_spike.sh` remains green and still requires S4 NO-GO plus S5 GO. `check_no_canary_product.sh`, `check_s1b_scope.sh`, and `check_no_python_in_sources.sh` remain green.
+
+### Commands and results
+
+```bash
+bash -n script/qa/check_s6_gigaam_spike.sh
+# PASS
+
+bash script/qa/check_s6_gigaam_spike.sh
+# PASS
+
+xcrun swiftc -O -parse-as-library -o /tmp/GigaAMCoreMLSpike-qa \
+  docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift
+# PASS
+
+swift test
+# PASS - 503 tests in 4 suites
+
+./script/qa/run_all.sh
+# PASS - Passed: 23  Failed: 0
+
+git check-ignore -v scratch/gigaam-spike
+# PASS - .gitignore:5
+
+git diff --check -- .
+# PASS
+```
+
+### Runtime and scope
+
+- Optional `ru_short` runtime is **UNAVAILABLE** in this checkout because `scratch/gigaam-spike/audio`, `models`, and `bin` artifacts are absent. This is not a failure; the structural gate is green and the prior reviewer runtime evidence remains the spike evidence.
+- No product `Sources/**`, `Package.swift`, `STATE.yaml`, or product GigaAM/Canary engine/catalog/UI/download wiring was changed. The pre-existing S1b pure ranking reference is the only GigaAM source reference and remains allowlisted.
+- `REPORT.md` received the S6 Tester section. No `Tests/**` change was needed and `BUG_REPORT.md` remains unchanged because the expected spike GO and unavailable optional runtime are not product defects.
+- No commit or push was performed.
 
 **RESULT: `qa_green`**
 

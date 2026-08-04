@@ -26,23 +26,26 @@ completed_steps:
   - S4b
 skipped_steps: []
 implementation:
-  status: pending
+  status: review_approved
   attempts: 0
 review:
-  status: pending
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: null
-  note: ''
+  verdict: approved
+  note: >-
+    S7 Reviewer APPROVED (FEEDBACK §S7): GO trio + honest capabilities + stub
+    engines + narrowed check_no_canary_product; 503 tests, 27/27 QA. Non-blocking
+    NB-1..NB-5 forwarded to Tester gap-hunt / S8+ backlog.
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
   suite: S7
   bugs_open: 0
-  note: ''
+  note: 'Tester kicked: full gate + gap-hunt (incl. Reviewer NB-2 test gaps)'
 security:
   next_run: deferred
   note: 'Full Security Engineer audit deferred to pre-release / Human request'
-next_actor: coder
+next_actor: tester
 track: PRODUCT
 prior_track: SPIKE_COMPLETE
 go_list:
@@ -61,9 +64,9 @@ excluded:
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S4b
+  last_pre_tag: bolabol/pre-S7
   last_post_tag: bolabol/S4b-done
-  last_commit: ee8fc85
+  last_commit: 6920341
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
@@ -73,5 +76,8 @@ coder_brief: |
   Flash + GigaAM + 1B Path B. Match ranking IDs. Update no-canary QA to allow GO
   catalog surface but forbid engines and NO-GO HF sources. No S8/S9.
 notes: |
-  Human GO list 2026-08-04: Flash + GigaAM + 1B Path B. ADR-018 accepted.
-  PRE S7 this turn.
+  S7 review APPROVED (FEEDBACK §S7, 2026-08-04). STATE synced by Orchestrator.
+  next_actor: tester — feature QA with gap-hunt; Reviewer NB-2 (runtimeBadge /
+  maxChunkSeconds assertions) is a Tester gap-hunt input. NB-1 (repo ids point
+  at NeMo origins) is S8 hazard, not S7 rework. After QA green: POST S7 checkpoint
+  → graphify rebuild → PRE S8 → kick Coder.

@@ -46,10 +46,13 @@ while IFS= read -r line; do
   [ -n "$line" ] || continue
   case "$line" in
     *OnboardingModelRecommendation.swift*) ;;
+    *TranscriptionModelDescriptor.swift*) ;;
+    *TranscriptionModelStore.swift*) ;;
+    *TranscriptionEngineStore.swift*) ;;
     *AppText.swift*) ;;
     *helpBilingual*) ;;
     *)
-      echo "FAIL: ASR candidate appears outside S1b/helper or help copy: $line"
+      echo "FAIL: ASR candidate appears outside S1b/helper/catalog or help copy: $line"
       FAILED=1
       ;;
   esac

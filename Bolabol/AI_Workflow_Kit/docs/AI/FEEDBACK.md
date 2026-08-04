@@ -6,66 +6,68 @@
 
 | Field | Value |
 |-------|-------|
-| Step | S3 |
+| Step | S7 |
 | Actor | coder |
-| Timestamp | 2026-08-03T18:40:00Z |
+| Timestamp | 2026-08-04T16:01:00Z |
 | RESULT | waiting_review |
 
 ## §1 — Inventory & Pass/Fail Summary
 
 - **Working Directory**: `/Users/pavan/Documents/AI Projects/Bolabol`
-- **Required Graphify commands**: completed against `graphify-out/graph.json` (not stale):
-  - `graphify explain "AppText" --graph graphify-out/graph.json` — node at `Sources/NativeBolabolCore/Services/AppText.swift L593`
-  - `graphify query "AppText locale maps onboarding models settings local models" --graph graphify-out/graph.json` — 275 nodes, AppTextKey/OnboardingView/Settings families present
-  - `graphify path "AppText" "OnboardingLocalizationTests" --graph graphify-out/graph.json` — 3-hop path via `.localized()`
-- **Reviewed context**: AGENTS.md chain, TEAM_CONTRACT.md, STATE.yaml (read-only), S3 card, integration plan §§3.1/3.5.6/9.4, prior FEEDBACK.md S1c/S2 sections.
-- **Inventory result**: of 569 EN keys, exactly **8 keys** lacked non-EN maps — all in scope (S1c onboarding model screen + S2 Settings local-models recommendation copy). All audited S1 language-step keys (`onboardingPrimaryLanguage*`, `onboardingAdditionalLanguage*`, `onboardingAdditionalSameAsPrimary`, `onboardingLanguageNote`) and B3 speech-pair keys were already 15/15; no new keys invented.
-- **Locales filled** (14 non-EN maps, matching the existing 15-locale table `en, ru, es, de, fr, it, pt, zh, ja, ko, ar, hi, uk, tr, pl`): `ru, es, de, fr, it, pt, zh, ja, ko, ar, hi, uk, tr, pl`.
-- **Keys touched**: `onboardingModelsTitle`, `onboardingModelsHint`, `onboardingModelsRecommended`, `onboardingModelsBestMatch`, `onboardingModelsChangeLater`, `settingsLocalModelsRecommendedTitle`, `settingsLocalModelsRecommendedHint`, `settingsLocalModelsAllTitle`.
-- `STATE.yaml` was not changed. No commit, tag, or push was performed.
+- **Required Graphify commands**: completed against `graphify-out/graph.json`:
+  - `graphify explain "TranscriptionModelDescriptor" --graph graphify-out/graph.json` — degree 42 node
+  - `graphify query "transcription model catalog backend" --graph graphify-out/graph.json` — 133 nodes
+  - `graphify path "OnboardingModelRecommendation" "TranscriptionModelDescriptor" --graph graphify-out/graph.json` — 2-hop path via `.topThree()`
+  - `graphify query "check_no_canary_product" --graph graphify-out/graph.json` — QA script node
+- **Reviewed context**: AGENTS.md chain, TEAM_CONTRACT.md, STATE.yaml (read-only), S7 step card in `ASR_COREML_STEPS.md`, integration plan §§2.1–2.3/4/5/9, ADR-018 GO list.
+- **Inventory result**: Data layer only for Step S7. Extended `TranscriptionModelDescriptor.Backend` with `canaryCoreML` and `gigaAMCoreML`. Introduced `ASRModelCapabilities` struct with honest flags. Updated catalog to include the 3 GO models (`canary-180m-flash-coreml`, `canary-1b-v2-coreml`, `gigaam-v3-rnnt-coreml`). Updated QA script `check_no_canary_product.sh` and dependent scope guards.
+- `STATE.yaml` was not changed (READ ONLY). No git commit, tag, or push was performed.
 
-## §2 — S3 Implementation Compliance
+## §2 — S7 Implementation Compliance
 
-- [x] All 8 in-scope keys now present in EN + 14 non-EN maps (15 total, verified by full-map scan).
-- [x] Honest translations preserve meaning: recommendations follow the **primary + additional** speech-language pair; recommendations are optional display order only.
-- [x] Non-EN "change later" copy names the real Settings → Local Models path using each locale's own localized section labels (`Настройки → Локальные модели`, `Ajustes → Modelos locales`, `设置 → 本地模型`, …).
-- [x] No "target always" / "target output" / "always output" / "force output" framing anywhere in the new strings (terminology scan clean; only pre-existing negated EN helpBilingual references remain).
-- [x] No change to ranking, Views, Stores, QA scripts, engines, catalog, or EN source strings (EN remains source of truth).
-- [x] Test expansion: S1c keys resolve non-empty/non-raw in all 15 locales, differ from EN in all 14 non-EN locales, avoid forbidden terminology in every locale, and the change-later copy names the real Settings path in every locale; same set of guarantees added for the S2 keys.
+- [x] `TranscriptionModelDescriptor.Backend` extended with `.canaryCoreML` and `.gigaAMCoreML` with runtime badges `"Canary · Core ML/ANE"` and `"GigaAM · Core ML/ANE"`.
+- [x] `ASRModelCapabilities` struct added with honest capability flags:
+  - `supportsAutoLanguageDetect`: false for Canary and GigaAM
+  - `supportedLanguageCodes`: `["en", "de", "fr", "es"]` for Flash, `["en", "fr"]` for 1B, `["ru"]` for GigaAM
+  - `supportsSpeechTranslation`: true for Flash and 1B, false for GigaAM
+  - `maxChunkSeconds`: 10.0 for Flash, 15.0 for 1B, 30.0 for GigaAM
+  - `minOSVersion`: macOS 15+ for 1B int4 (`OSVersion(majorVersion: 15)`), nil for Flash and GigaAM
+  - `approxDownloadBytes`: size in bytes
+  - `isRecommendedForPrimaryRU`: true for GigaAM
+  - `isRecommendedForEnDeFrEs`: true for Flash
+- [x] Three GO models added to `TranscriptionModelCatalog.nativeWhisperKit`:
+  - `canary-180m-flash-coreml` (backend: `.canaryCoreML`)
+  - `canary-1b-v2-coreml` (backend: `.canaryCoreML`, `modelRepositoryID`: `"bolabol-canary-1b-v2-coreml-r1"`, NOT HF FI/alexwengg)
+  - `gigaam-v3-rnnt-coreml` (backend: `.gigaAMCoreML`)
+- [x] Ranking IDs in `OnboardingModelRecommendation` resolve to exact catalog model IDs.
+- [x] `TranscriptionEngineStore` handles `.canaryCoreML` and `.gigaAMCoreML` returning `UnavailableTranscriptionEngine()` (no engines implemented yet in S7).
+- [x] `TranscriptionModelStore` updated destination folder handling and download placeholder for S8.
+- [x] QA script `check_no_canary_product.sh` updated for ADR-018: permits GO catalog/backend data layer surface, while continuing to forbid engine classes, Package targets, and NO-GO HF install sources.
+- [x] Updated dependent QA scope checks (`check_s1b_scope.sh`, `check_s6_gigaam_spike.sh`) and tests (`TranscriptionModelCatalogTests.swift`, `SettingsLocalizationTests.swift`).
 
 ## §3 — Verification
 
 | Command | Result |
 |---------|--------|
-| `swift test` | **PASS** — 506 tests in 4 suites (7 new S3 tests) |
-| `./script/qa/run_all.sh` | **PASS** — 21/21 |
+| `swift test` | **PASS** — 503 tests in 4 suites (all green) |
+| `./script/qa/run_all.sh` | **PASS** — 27/27 contract scripts green |
 | `git diff --check -- .` | **PASS** — no whitespace errors |
-| `git diff --name-only -- Sources Tests script/qa` | **PASS** — diff limited to the 3 target files |
-
-New S3 tests in `OnboardingLocalizationTests.swift`:
-- `onboardingModelKeysResolveInEveryLanguage` — S1c keys non-empty/non-raw across all 15 locales
-- `onboardingModelKeysDifferFromEnglishInEveryNonEnglishLocale` — no silent EN fallback in the 14 non-EN maps
-- `onboardingModelKeysAvoidTargetAlwaysOutputTerminology` — terminology guard across all locales
-- `onboardingModelsChangeLaterPointsToRealSettingsPathInEveryLocale` — localized Settings + Local Models path named in every locale
-
-New S3 tests in `SettingsLocalizationTests.swift`:
-- `s2SettingsLocalModelsKeysResolveInEveryLanguage` — S2 keys non-empty/non-raw across all 15 locales
-- `s2SettingsLocalModelsKeysDifferFromEnglishInEveryNonEnglishLocale` — no silent EN fallback
-- `s2SettingsLocalModelsCopyAvoidsTargetAlwaysOutputTerminology` — terminology guard across all locales
-
-`AppTextFullCoverageTests` needed no edits: its existing `everyAppTextKeyResolvesInEveryConcreteLanguage` cartesian suite now covers the new maps automatically.
 
 ## §4 — Changed Paths & Handoff
 
-- `Sources/NativeBolabolCore/Services/AppText.swift`
-- `Tests/NativeBolabolCoreTests/OnboardingLocalizationTests.swift`
+- `Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift`
+- `Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift`
+- `Sources/NativeBolabol/Stores/TranscriptionModelStore.swift`
+- `Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift`
 - `Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift`
+- `script/qa/check_no_canary_product.sh`
+- `script/qa/check_s1b_scope.sh`
+- `script/qa/check_s6_gigaam_spike.sh`
 - `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
-- S3 is strings + tests only: no ranking/View/Store/engine/catalog change, no new product features or keys, no Python, no S4+ spikes.
+
 - **RESULT: `waiting_review`**
 
 > Готово. Вернись к оркестратору и скажи статус/приступай.
-
 ---
 
 ## §5 — Independent Reviewer Verification (S1c Historical)
@@ -1305,6 +1307,134 @@ The coder's GO for `bolabol-canary-1b-v2-coreml-r1` as a Path B spike/package ca
 ### Result
 
 S4b feature QA gate is **GREEN and verified on local machine** (not expected-green). Reviewer APPROVED evidence package reproduces: Path B GO for `bolabol-canary-1b-v2-coreml-r1` as spike/package candidate only; FI/alexwengg remain NO-GO; product remains Canary-free pending Human GO-list and S7–S9.
+
+**RESULT: `qa_green`**
+
+> Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S7 — Catalog + backends + capabilities, data layer only (Independent Reviewer)
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Role | Verification Engineer / Reviewer |
+| Step | S7 (Track C data layer per ADR-018 GO list) |
+| Timestamp | 2026-08-04T10:46Z (16:16 +0530) |
+| Branch / checkpoint | `orchestrator/cloud-provider-stabilization`, HEAD `6920341` (`bolabol/pre-S7`), uncommitted working-tree diff |
+| Scope | 3 product sources, 2 test files, 3 QA scripts, FEEDBACK handoff — per STATE `target_files` |
+| RESULT | `approved` |
+
+### Graphify gate (run first — PASS)
+
+Graph reflects the fresh Coder diff; review proceeded on it.
+
+- `graphify-out/graph.json` mtime 16:03 > last Coder source edit 15:45; **4627 nodes** (as claimed by Orchestrator).
+- `graphify explain "TranscriptionModelDescriptor"` — degree-45 node at `Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift L64`, references new `ASRModelCapabilities` + `Backend`.
+- `graphify query "canaryCoreML gigaAMCoreML ASRModelCapabilities catalog"` — 120-node BFS; new S7 cluster present: `ASRModelCapabilities` (L3), `Backend` (L65), `TranscriptionModelCatalog` (L240), `.defaultCapabilities()` (L168), `UnavailableTranscriptionEngine`, both store nodes.
+- `graphify path "OnboardingModelRecommendation" "TranscriptionModelDescriptor"` — 2 hops via `.topThree()`.
+- `graphify query "check_no_canary_product"` — resolves `script/qa/check_no_canary_product.sh`.
+- Note (not staleness): GO catalog id **string literals** (`canary-180m-flash-coreml`, etc.) are not graph nodes — AST extraction does not index string literals; the enclosing new symbols prove freshness.
+
+### Command results
+
+| Command | Result |
+|---------|--------|
+| `git status -sb` | Expected S7 set + Orchestrator-owned `STATE.yaml`/`graphify-out` (see NB-5 on unrelated workspace noise) |
+| `git diff --stat -- .` | 9 in-scope files: descriptor +215, engine store +2, model store ±10, catalog tests ±36, localization tests ±3, 3 QA scripts, FEEDBACK; plus orchestrator STATE/graphify artifacts |
+| `git diff --check -- .` | **PASS** — no whitespace errors |
+| `swift test` | **PASS** — 503 tests in 4 suites, all green |
+| `./script/qa/run_all.sh` | **PASS** — 27 passed / 0 failed (incl. narrowed `check_no_canary_product`, `check_s1b_scope`, `check_s6_gigaam_spike`, `check_sec_no_download_code`) |
+| `grep -rnE "class \w*(Canary\|GigaAM)\w*" Sources Tests` | No engine classes anywhere |
+| `grep FluidInference\|alexwengg Sources` | Only pre-existing sanctioned `FluidInference/parakeet-tdt-0.6b-v3-coreml`; zero NO-GO canary refs |
+
+### S7 acceptance checklist
+
+| # | Item | Verdict | Evidence |
+|---|------|---------|----------|
+| 1 | Backend enum `canaryCoreML` + `gigaAMCoreML` with sensible badges | **PASS** | `TranscriptionModelDescriptor.swift` L68–69; badges `"Canary · Core ML/ANE"` / `"GigaAM · Core ML/ANE"` L77–80 |
+| 2 | Honest `ASRModelCapabilities` | **PASS** | auto-detect `false` for Canary/GigaAM; langs Flash `[en,de,fr,es]` / 1B `[en,fr]` / GigaAM `[ru]`; `maxChunkSeconds` 10/15/30; 1B `minOSVersion` macOS 15.0; `approxDownloadBytes` 180M/573M/450M; recommend flags RU→GigaAM, EN-DE-FR-ES→Flash |
+| 3 | Exactly the three GO ids; 1B = Bolabol Path B identity | **PASS** | catalog appends exactly 3 entries; `canary-1b-v2-coreml` → `modelRepositoryID: "bolabol-canary-1b-v2-coreml-r1"`, no FI/alexwengg; test asserts both |
+| 4 | Ranking IDs resolve exactly | **PASS** | `OnboardingModelRecommendation.modelID(for:)` strings match catalog ids verbatim (helper unchanged, pre-existing S1b) |
+| 5 | Engine store stubs only | **PASS** | `TranscriptionEngineStore.swift` L31–32 → `UnavailableTranscriptionEngine()`; no Core ML load path; grep confirms zero engine classes |
+| 6 | No S8/S9 productization | **PASS** | `download()` throws S8 placeholder for new backends before `markDownloaded` (no fake states); no Package.swift changes; no Settings redesign; `check_sec_no_download_code.sh` green |
+| 7 | `check_no_canary_product.sh` narrowed per ADR-018 | **PASS** | allows GO catalog/backend/capability surface; still forbids engine types (`CanaryCoreMLEngine|GigaAMCoreMLEngine|class Canary|class GigaAM`), `canary|gigaam` in `Package.swift`, NO-GO HF 1B sources |
+| 8 | Dependent QA adjusted, not weakened | **PASS** | `check_s1b_scope`/`check_s6_gigaam_spike` allowlist extended only to the 3 legitimate S7 files; any other location (e.g. a future engine file) still fails |
+| 9 | Tests cover GO trio / no NO-GO / honesty / badges | **PASS** (minor gaps → Tester) | `nativeTranscriptionCatalogContainsAdr018GoModelsWithHonestCapabilities` + order test + updated S2 ranking expectations; gaps: no `runtimeBadge` string or `maxChunkSeconds` assertions (NB-2) |
+| 10 | Diff scope reasonable, no drive-by | **PASS** | touch set == STATE target_files; existing WhisperKit/FluidAudio entries byte-identical; `snapshotGlob` default change proven inert (Parakeet passes `"**"` explicitly; whisper default preserved by ternary); HUD native-translation gate still requires `backend == .whisperKitCoreML` |
+
+### Findings
+
+**Blocking:** none.
+
+**Non-blocking:**
+
+- **NB-1 (S8 hazard — repo ids):** Flash `modelRepositoryID: "nvidia/canary-180m-flash"` (`TranscriptionModelDescriptor.swift:359`) and GigaAM `"salute-developers/gigaam-v3"` (L407) point at **NeMo origin repos**, not the ADR-018 Core ML GO sources (`aufklarer/Canary-180M-Flash-CoreML`, `huggingfinger0/gigaam-v3-coreml`). Inert in S7 (no download path consumes them for these backends — verified), but S8 must not use `modelRepositoryID` verbatim as an HF install source or it would fetch non-Core ML artifacts.
+- **NB-2 (test gaps for Tester):** no assertions on `runtimeBadge` strings or `maxChunkSeconds` values; NO-GO URL guard is QA-script-level only for Flash/GigaAM. Cheap additions for the Tester gap-hunt.
+- **NB-3 (copy):** user-facing `NSError` text leaks internal step id — `"Download management … will be introduced in S8."` (`TranscriptionModelStore.swift:224–229`). Prefer "coming soon" style copy when S8 lands.
+- **NB-4 (data-model gap, latent):** `languageSupport: .multilingual` on RU-only GigaAM and EN/FR-only 1B (enum has no RU-only case) makes `defaultLanguageCode == "auto"` (`TranscriptionModelSettings.resolvedLanguageCode`) and shows "Multi" in `LocalModelsSettingsView`. Honest truth lives in `capabilities.supportedLanguageCodes`; S9/S10 must consume `capabilities`, not `languageSupport`, for the new backends (consistent with ADR-004 no-auto rule).
+- **NB-5 (workspace note, not Coder fault):** monorepo working tree carries unrelated noise outside `Bolabol/` (SmartScribe deletions, VaniScript CPS changes, new untracked projects). Per ADR-010 the Orchestrator must keep checkpoint staging Bolabol-scoped; nothing here entered the S7 diff.
+- Cosmetic: missing blank line between `estimateBytes` and `clampRating`; Canary/GigaAM destination folders temporarily under `parakeetModelsDirectory` (accepted S8 placeholder).
+
+### Verdict
+
+S7 is a clean, honest, scope-disciplined data layer: GO trio present with exact ranking-id parity, engines stubbed, QA narrowed exactly along ADR-018 (GO surface allowed; engines, Package targets, NO-GO HF sources still forbidden), WhisperKit/Parakeet behavior provably unchanged, full gate green (503 tests, 27/27 QA). Non-blocking notes are forward-looking inputs for S8/S9/Tester, not rework requests.
+
+**RESULT: `approved`**
+
+> Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S7 - Independent Tester QA (Catalog + backends + capabilities)
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Role | Tester / Test Engineer |
+| Step | S7 (ADR-018 data layer only) |
+| Date | 2026-08-04 |
+| RESULT | `qa_green` |
+
+### Graphify gate
+
+Graphify was queried first against `graphify-out/graph.json` for the S7 catalog, backend, capability, recommendation, engine-store, and QA-guard relationships. The query resolved the current `TranscriptionModelDescriptor`, `ASRModelCapabilities`, catalog, `OnboardingModelRecommendation`, `UnavailableTranscriptionEngine`, and `check_no_canary_product` nodes.
+
+### Gap-hunt and additions
+
+Reviewer NB-2 was mapped to the existing tests before the gate:
+
+- Runtime badge string assertions were missing. Added exact assertions for all four backends.
+- `maxChunkSeconds` assertions were missing. Added exact 10.0 / 15.0 / 30.0 assertions, plus download-byte, language, and min-OS checks.
+- The NO-GO install-source guard existed only in QA scripts for the new entries. Added a catalog-level test rejecting `FluidInference` and `alexwengg` repositories for every S7 GO entry while preserving the sanctioned Parakeet FluidInference descriptor.
+- Existing WhisperKit and FluidAudio descriptors lacked a regression snapshot. Added exact public-surface coverage for all seven pre-S7 descriptors.
+
+New tests in `Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift`:
+
+- `nativeTranscriptionBackendsExposeStableRuntimeBadges`
+- `nativeTranscriptionCatalogUsesAdr018ChunkAndDownloadCapabilities`
+- `nativeTranscriptionCatalogKeepsNoGoCanarySourcesOutOfGoEntries`
+- `nativeTranscriptionCatalogPreservesExistingWhisperKitAndFluidAudioDescriptors`
+
+### Full gate
+
+| Command | Result |
+|---------|--------|
+| `swift test` | **PASS** - 507 tests in 4 suites |
+| `./script/qa/run_all.sh` | **PASS** - 27 passed / 0 failed |
+| `check_no_secrets.sh` via `run_all.sh` | **PASS** |
+| `check_sec_no_secrets_extended.sh` via `run_all.sh` | **PASS** |
+| `git diff --check -- .` | **PASS** |
+
+### Scope and verdict
+
+- No product `Sources/**`, `Package.swift`, `STATE.yaml`, or product logic was changed by Tester.
+- No QA script change was needed; existing ADR-018 structural guards remained green.
+- `BUG_REPORT.md` remains unchanged with `bugs_open: 0`; no product functional bug was found.
+- Full vulnerability hunting was not performed; only the required lightweight secret hygiene gate ran.
 
 **RESULT: `qa_green`**
 

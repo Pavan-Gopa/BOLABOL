@@ -531,13 +531,14 @@ func s2RecommendationRecalculatesWhenSpeechPairChanges() {
     )
 
     #expect(compactPair.map(\.id) == [
+        "canary-180m-flash-coreml",
         "whisperkit-large-v3-full",
         "whisperkit-large-v3-turbo"
     ])
     #expect(broadPair.map(\.id) == [
         "whisperkit-large-v3-full",
         "whisperkit-large-v3-turbo",
-        "parakeet-tdt-06b-v3"
+        "canary-1b-v2-coreml"
     ])
     #expect(compactPair.map(\.id) != broadPair.map(\.id))
 }

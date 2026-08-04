@@ -107,10 +107,12 @@ while IFS= read -r line; do
   [ -n "$line" ] || continue
   case "$line" in
     *Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift*) ;;
-    *) echo "FAIL: GigaAM product reference outside the pure ranking helper: $line"; FAILED=1 ;;
+    *Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift*) ;;
+    *Sources/NativeBolabol/Stores/TranscriptionModelStore.swift*) ;;
+    *Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift*) ;;
+    *) echo "FAIL: GigaAM product reference outside catalog/backend surface: $line"; FAILED=1 ;;
   esac
 done < <(grep -RIni --include='*.swift' "gigaam" Sources || true)
-
 if [ "$FAILED" -ne 0 ]; then
   echo "FAIL: S6 GigaAM spike contract broken"
   exit 1

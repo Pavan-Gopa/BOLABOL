@@ -1,9 +1,72 @@
 import Foundation
 
+public struct ASRModelCapabilities: Codable, Equatable, Sendable {
+    public var supportsAutoLanguageDetect: Bool
+    public var supportedLanguageCodes: [String]
+    public var supportsSpeechTranslation: Bool
+    public var maxChunkSeconds: Double
+    public var minOSVersion: OSVersion?
+    public var approxDownloadBytes: Int64
+    public var isRecommendedForPrimaryRU: Bool
+    public var isRecommendedForEnDeFrEs: Bool
+
+    public struct OSVersion: Codable, Equatable, Sendable, Comparable {
+        public var majorVersion: Int
+        public var minorVersion: Int
+        public var patchVersion: Int
+
+        public init(majorVersion: Int, minorVersion: Int = 0, patchVersion: Int = 0) {
+            self.majorVersion = majorVersion
+            self.minorVersion = minorVersion
+            self.patchVersion = patchVersion
+        }
+
+        public static func < (lhs: OSVersion, rhs: OSVersion) -> Bool {
+            if lhs.majorVersion != rhs.majorVersion {
+                return lhs.majorVersion < rhs.majorVersion
+            }
+            if lhs.minorVersion != rhs.minorVersion {
+                return lhs.minorVersion < rhs.minorVersion
+            }
+            return lhs.patchVersion < rhs.patchVersion
+        }
+
+        public var foundationVersion: OperatingSystemVersion {
+            OperatingSystemVersion(
+                majorVersion: majorVersion,
+                minorVersion: minorVersion,
+                patchVersion: patchVersion
+            )
+        }
+    }
+
+    public init(
+        supportsAutoLanguageDetect: Bool,
+        supportedLanguageCodes: [String],
+        supportsSpeechTranslation: Bool,
+        maxChunkSeconds: Double,
+        minOSVersion: OSVersion? = nil,
+        approxDownloadBytes: Int64,
+        isRecommendedForPrimaryRU: Bool = false,
+        isRecommendedForEnDeFrEs: Bool = false
+    ) {
+        self.supportsAutoLanguageDetect = supportsAutoLanguageDetect
+        self.supportedLanguageCodes = supportedLanguageCodes
+        self.supportsSpeechTranslation = supportsSpeechTranslation
+        self.maxChunkSeconds = maxChunkSeconds
+        self.minOSVersion = minOSVersion
+        self.approxDownloadBytes = approxDownloadBytes
+        self.isRecommendedForPrimaryRU = isRecommendedForPrimaryRU
+        self.isRecommendedForEnDeFrEs = isRecommendedForEnDeFrEs
+    }
+}
+
 public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Sendable {
     public enum Backend: String, Codable, Equatable, Sendable {
         case whisperKitCoreML
         case fluidAudioCoreML
+        case canaryCoreML
+        case gigaAMCoreML
 
         public var runtimeBadge: String {
             switch self {
@@ -11,6 +74,10 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
                 "WhisperKit · Core ML"
             case .fluidAudioCoreML:
                 "FluidAudio · Core ML/ANE"
+            case .canaryCoreML:
+                "Canary · Core ML/ANE"
+            case .gigaAMCoreML:
+                "GigaAM · Core ML/ANE"
             }
         }
     }
@@ -51,12 +118,13 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
     public var accuracy: Int
     public var speed: Int
     public var isRecommended: Bool
+    public var capabilities: ASRModelCapabilities
 
     public var modelFolderName: String {
         switch backend {
         case .whisperKitCoreML:
             "openai_whisper-\(modelName)"
-        case .fluidAudioCoreML:
+        case .fluidAudioCoreML, .canaryCoreML, .gigaAMCoreML:
             modelName
         }
     }
@@ -74,13 +142,14 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
         description: String,
         accuracy: Int,
         speed: Int,
-        isRecommended: Bool = false
+        isRecommended: Bool = false,
+        capabilities: ASRModelCapabilities? = nil
     ) {
         self.id = id
         self.displayName = displayName
         self.modelName = modelName
         self.modelRepositoryID = modelRepositoryID
-        self.snapshotGlob = snapshotGlob ?? "openai_whisper-\(modelName)/**"
+        self.snapshotGlob = snapshotGlob ?? (backend == .whisperKitCoreML ? "openai_whisper-\(modelName)/**" : "**")
         self.backend = backend
         self.languageSupport = languageSupport
         self.downloadSize = downloadSize
@@ -89,8 +158,76 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
         self.accuracy = Self.clampRating(accuracy)
         self.speed = Self.clampRating(speed)
         self.isRecommended = isRecommended
+        self.capabilities = capabilities ?? Self.defaultCapabilities(
+            backend: backend,
+            languageSupport: languageSupport,
+            downloadSize: downloadSize
+        )
     }
 
+    private static func defaultCapabilities(
+        backend: Backend,
+        languageSupport: LanguageSupport,
+        downloadSize: String
+    ) -> ASRModelCapabilities {
+        switch backend {
+        case .whisperKitCoreML:
+            let isMulti = languageSupport == .multilingual
+            return ASRModelCapabilities(
+                supportsAutoLanguageDetect: isMulti,
+                supportedLanguageCodes: isMulti ? ["auto", "en", "de", "fr", "es", "ru"] : ["en"],
+                supportsSpeechTranslation: false,
+                maxChunkSeconds: 30.0,
+                approxDownloadBytes: estimateBytes(from: downloadSize),
+                isRecommendedForPrimaryRU: false,
+                isRecommendedForEnDeFrEs: false
+            )
+        case .fluidAudioCoreML:
+            return ASRModelCapabilities(
+                supportsAutoLanguageDetect: true,
+                supportedLanguageCodes: ["auto", "en", "de", "fr", "es", "nl", "ru", "uk"],
+                supportsSpeechTranslation: false,
+                maxChunkSeconds: 30.0,
+                approxDownloadBytes: estimateBytes(from: downloadSize),
+                isRecommendedForPrimaryRU: false,
+                isRecommendedForEnDeFrEs: false
+            )
+        case .canaryCoreML:
+            return ASRModelCapabilities(
+                supportsAutoLanguageDetect: false,
+                supportedLanguageCodes: ["en", "de", "fr", "es"],
+                supportsSpeechTranslation: true,
+                maxChunkSeconds: 15.0,
+                approxDownloadBytes: estimateBytes(from: downloadSize),
+                isRecommendedForPrimaryRU: false,
+                isRecommendedForEnDeFrEs: false
+            )
+        case .gigaAMCoreML:
+            return ASRModelCapabilities(
+                supportsAutoLanguageDetect: false,
+                supportedLanguageCodes: ["ru"],
+                supportsSpeechTranslation: false,
+                maxChunkSeconds: 30.0,
+                approxDownloadBytes: estimateBytes(from: downloadSize),
+                isRecommendedForPrimaryRU: true,
+                isRecommendedForEnDeFrEs: false
+            )
+        }
+    }
+
+    private static func estimateBytes(from downloadSize: String) -> Int64 {
+        let cleaned = downloadSize.replacingOccurrences(of: "~", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = cleaned.components(separatedBy: " ")
+        guard parts.count >= 2, let value = Double(parts[0]) else { return 500_000_000 }
+        let unit = parts[1].uppercased()
+        if unit.contains("GB") {
+            return Int64(value * 1_000_000_000)
+        } else if unit.contains("MB") {
+            return Int64(value * 1_000_000)
+        }
+        return Int64(value)
+    }
     private static func clampRating(_ rating: Int) -> Int {
         min(max(rating, 1), 5)
     }
@@ -214,6 +351,78 @@ public extension TranscriptionModelCatalog {
                 accuracy: 5,
                 speed: 2,
                 isRecommended: true
+            ),
+            TranscriptionModelDescriptor(
+                id: "canary-180m-flash-coreml",
+                displayName: "Canary Flash (EN/DE/FR/ES)",
+                modelName: "canary-180m-flash-coreml",
+                modelRepositoryID: "nvidia/canary-180m-flash",
+                snapshotGlob: "**",
+                backend: .canaryCoreML,
+                languageSupport: .multilingual,
+                downloadSize: "~180 MB",
+                badge: "Compact · 4 languages",
+                description: "Compact fast Canary Flash model (~182M parameters) for English, German, French, and Spanish speech recognition and translation on Core ML.",
+                accuracy: 4,
+                speed: 5,
+                capabilities: ASRModelCapabilities(
+                    supportsAutoLanguageDetect: false,
+                    supportedLanguageCodes: ["en", "de", "fr", "es"],
+                    supportsSpeechTranslation: true,
+                    maxChunkSeconds: 10.0,
+                    minOSVersion: nil,
+                    approxDownloadBytes: 180_000_000,
+                    isRecommendedForPrimaryRU: false,
+                    isRecommendedForEnDeFrEs: true
+                )
+            ),
+            TranscriptionModelDescriptor(
+                id: "canary-1b-v2-coreml",
+                displayName: "Canary 1B v2",
+                modelName: "canary-1b-v2-coreml",
+                modelRepositoryID: "bolabol-canary-1b-v2-coreml-r1",
+                snapshotGlob: "**",
+                backend: .canaryCoreML,
+                languageSupport: .multilingual,
+                downloadSize: "~573 MB",
+                badge: "Multilingual · macOS 15+",
+                description: "Canary 1B v2 Core ML int4 package for Apple Neural Engine on macOS 15+. Verified English ASR and speech translation.",
+                accuracy: 4,
+                speed: 4,
+                capabilities: ASRModelCapabilities(
+                    supportsAutoLanguageDetect: false,
+                    supportedLanguageCodes: ["en", "fr"],
+                    supportsSpeechTranslation: true,
+                    maxChunkSeconds: 15.0,
+                    minOSVersion: ASRModelCapabilities.OSVersion(majorVersion: 15, minorVersion: 0, patchVersion: 0),
+                    approxDownloadBytes: 573_000_000,
+                    isRecommendedForPrimaryRU: false,
+                    isRecommendedForEnDeFrEs: false
+                )
+            ),
+            TranscriptionModelDescriptor(
+                id: "gigaam-v3-rnnt-coreml",
+                displayName: "GigaAM v3 (Russian)",
+                modelName: "gigaam-v3-rnnt-coreml",
+                modelRepositoryID: "salute-developers/gigaam-v3",
+                snapshotGlob: "**",
+                backend: .gigaAMCoreML,
+                languageSupport: .multilingual,
+                downloadSize: "~450 MB",
+                badge: "RU recommended",
+                description: "High-accuracy offline Russian ASR model based on GigaAM v3 RNNT architecture on Apple Neural Engine.",
+                accuracy: 5,
+                speed: 5,
+                capabilities: ASRModelCapabilities(
+                    supportsAutoLanguageDetect: false,
+                    supportedLanguageCodes: ["ru"],
+                    supportsSpeechTranslation: false,
+                    maxChunkSeconds: 30.0,
+                    minOSVersion: nil,
+                    approxDownloadBytes: 450_000_000,
+                    isRecommendedForPrimaryRU: true,
+                    isRecommendedForEnDeFrEs: false
+                )
             )
         ]
     )

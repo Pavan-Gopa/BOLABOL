@@ -6289,7 +6289,7 @@
       "label": ".cachedWhisperKitEngine()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L38",
+      "source_location": "L40",
       "_origin": "ast"
     },
     {
@@ -6297,7 +6297,7 @@
       "label": ".cachedParakeetEngine()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L58",
+      "source_location": "L60",
       "_origin": "ast"
     },
     {
@@ -6465,7 +6465,7 @@
       "label": ".destinationURL()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L238",
+      "source_location": "L244",
       "_origin": "ast"
     },
     {
@@ -6473,7 +6473,7 @@
       "label": ".completeLocalURL()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L252",
+      "source_location": "L258",
       "_origin": "ast"
     },
     {
@@ -6481,7 +6481,7 @@
       "label": ".activeDownloadedModel()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L287",
+      "source_location": "L293",
       "_origin": "ast"
     },
     {
@@ -6489,7 +6489,7 @@
       "label": ".findCompleteWhisperKitModel()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L300",
+      "source_location": "L306",
       "_origin": "ast"
     },
     {
@@ -6497,7 +6497,7 @@
       "label": ".saveSettings()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L319",
+      "source_location": "L325",
       "_origin": "ast"
     },
     {
@@ -6505,7 +6505,7 @@
       "label": ".loadSettings()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L324",
+      "source_location": "L330",
       "_origin": "ast"
     },
     {
@@ -6513,7 +6513,7 @@
       "label": ".defaultModelsDirectory()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L336",
+      "source_location": "L342",
       "_origin": "ast"
     },
     {
@@ -6521,7 +6521,7 @@
       "label": ".defaultParakeetModelsDirectory()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L355",
+      "source_location": "L361",
       "_origin": "ast"
     },
     {
@@ -14110,67 +14110,11 @@
       "_origin": "ast"
     },
     {
-      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
-      "label": "TranscriptionModelDescriptor",
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "label": "ASRModelCapabilities",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
       "source_location": "L3",
-      "_origin": "ast"
-    },
-    {
-      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
-      "label": "Backend",
-      "file_type": "code",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L4",
-      "_origin": "ast"
-    },
-    {
-      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_whisperkitcoreml",
-      "label": "whisperKitCoreML",
-      "file_type": "code",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L5",
-      "_origin": "ast"
-    },
-    {
-      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_fluidaudiocoreml",
-      "label": "fluidAudioCoreML",
-      "file_type": "code",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L6",
-      "_origin": "ast"
-    },
-    {
-      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport",
-      "label": "LanguageSupport",
-      "file_type": "code",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L18",
-      "_origin": "ast"
-    },
-    {
-      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport_english",
-      "label": "english",
-      "file_type": "code",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L19",
-      "_origin": "ast"
-    },
-    {
-      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport_multilingual",
-      "label": "multilingual",
-      "file_type": "code",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L20",
-      "_origin": "ast"
-    },
-    {
-      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_int",
-      "label": "Int",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
       "_origin": "ast"
     },
     {
@@ -14182,11 +14126,155 @@
       "_origin": "ast"
     },
     {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
+      "label": "String",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_int64",
+      "label": "Int64",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "label": "OSVersion",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_int",
+      "label": "Int",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion_init",
+      "label": ".init()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "operatingsystemversion",
+      "label": "OperatingSystemVersion",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities_init",
+      "label": ".init()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L43",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "label": "TranscriptionModelDescriptor",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L64",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "label": "Backend",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L65",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_whisperkitcoreml",
+      "label": "whisperKitCoreML",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L66",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_fluidaudiocoreml",
+      "label": "fluidAudioCoreML",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L67",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_canarycoreml",
+      "label": "canaryCoreML",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L68",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_gigaamcoreml",
+      "label": "gigaAMCoreML",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L69",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport",
+      "label": "LanguageSupport",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L85",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport_english",
+      "label": "english",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L86",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport_multilingual",
+      "label": "multilingual",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L87",
+      "_origin": "ast"
+    },
+    {
       "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_init",
       "label": ".init()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L64",
+      "source_location": "L132",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_defaultcapabilities",
+      "label": ".defaultCapabilities()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L168",
+      "_origin": "ast"
+    },
+    {
+      "id": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_estimatebytes",
+      "label": ".estimateBytes()",
+      "file_type": "code",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L218",
       "_origin": "ast"
     },
     {
@@ -14194,7 +14282,7 @@
       "label": ".clampRating()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L94",
+      "source_location": "L231",
       "_origin": "ast"
     },
     {
@@ -14202,7 +14290,7 @@
       "label": "TranscriptionModelCatalogError",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L99",
+      "source_location": "L236",
       "_origin": "ast"
     },
     {
@@ -14210,7 +14298,7 @@
       "label": "duplicateModelID",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L100",
+      "source_location": "L237",
       "_origin": "ast"
     },
     {
@@ -14218,7 +14306,7 @@
       "label": "TranscriptionModelCatalog",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L103",
+      "source_location": "L240",
       "_origin": "ast"
     },
     {
@@ -14226,7 +14314,7 @@
       "label": ".init()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L106",
+      "source_location": "L243",
       "_origin": "ast"
     },
     {
@@ -14234,7 +14322,7 @@
       "label": ".model()",
       "file_type": "code",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L121",
+      "source_location": "L258",
       "_origin": "ast"
     },
     {
@@ -27369,7 +27457,7 @@
       "label": "recommendedAndRemainingPartitionFullCatalog()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L545",
+      "source_location": "L546",
       "_origin": "ast"
     },
     {
@@ -27913,7 +28001,7 @@
       "label": "nativeTranscriptionCatalogRejectsDuplicateModelIDs()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L30",
+      "source_location": "L33",
       "_origin": "ast"
     },
     {
@@ -27921,7 +28009,7 @@
       "label": "transcriptionModelDownloadStateClampsProgressFraction()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L50",
+      "source_location": "L53",
       "_origin": "ast"
     },
     {
@@ -27929,7 +28017,7 @@
       "label": "transcriptionLanguagePreferenceResolvesAutoAndCustomCodes()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L59",
+      "source_location": "L62",
       "_origin": "ast"
     },
     {
@@ -27937,15 +28025,15 @@
       "label": "transcriptionLanguageHudLabelUsesFirstLetterOfDisplayName()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L67",
+      "source_location": "L70",
       "_origin": "ast"
     },
     {
-      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogdoesnotcontaincanaryproductorbackend",
-      "label": "nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend()",
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogcontainsadr018gomodelswithhonestcapabilities",
+      "label": "nativeTranscriptionCatalogContainsAdr018GoModelsWithHonestCapabilities()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L82",
+      "source_location": "L85",
       "_origin": "ast"
     },
     {
@@ -31171,11 +31259,11 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_2_s3_implementation_compliance",
-      "label": "§2 — S3 Implementation Compliance",
+      "id": "ai_workflow_kit_docs_ai_feedback_2_s7_implementation_compliance",
+      "label": "§2 — S7 Implementation Compliance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L27",
+      "source_location": "L26",
       "_origin": "ast"
     },
     {
@@ -31183,7 +31271,7 @@
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L36",
+      "source_location": "L48",
       "_origin": "ast"
     },
     {
@@ -31191,7 +31279,7 @@
       "label": "§4 — Changed Paths & Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L58",
+      "source_location": "L56",
       "_origin": "ast"
     },
     {
@@ -31199,7 +31287,7 @@
       "label": "§5 — Independent Reviewer Verification (S1c Historical)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L71",
+      "source_location": "L73",
       "_origin": "ast"
     },
     {
@@ -31207,7 +31295,7 @@
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L80",
+      "source_location": "L82",
       "_origin": "ast"
     },
     {
@@ -31215,7 +31303,7 @@
       "label": "Command Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L85",
+      "source_location": "L87",
       "_origin": "ast"
     },
     {
@@ -31223,7 +31311,7 @@
       "label": "S1c Acceptance Review",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L101",
+      "source_location": "L103",
       "_origin": "ast"
     },
     {
@@ -31231,7 +31319,7 @@
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L120",
+      "source_location": "L122",
       "_origin": "ast"
     },
     {
@@ -31239,7 +31327,7 @@
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L125",
+      "source_location": "L127",
       "_origin": "ast"
     },
     {
@@ -31247,7 +31335,7 @@
       "label": "§6 — Independent Tester QA (S1c Historical)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L135",
+      "source_location": "L137",
       "_origin": "ast"
     },
     {
@@ -31255,7 +31343,7 @@
       "label": "What was added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L144",
+      "source_location": "L146",
       "_origin": "ast"
     },
     {
@@ -31263,7 +31351,7 @@
       "label": "Full gate",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L151",
+      "source_location": "L153",
       "_origin": "ast"
     },
     {
@@ -31271,7 +31359,7 @@
       "label": "Manual verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L163",
+      "source_location": "L165",
       "_origin": "ast"
     },
     {
@@ -31279,7 +31367,7 @@
       "label": "§7 - Independent Reviewer Verification (S2)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L181",
+      "source_location": "L183",
       "_origin": "ast"
     },
     {
@@ -31287,15 +31375,15 @@
       "label": "Graphify Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L190",
+      "source_location": "L192",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_command_results_201",
+      "id": "ai_workflow_kit_docs_ai_feedback_command_results_203",
       "label": "Command Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L201",
+      "source_location": "L203",
       "_origin": "ast"
     },
     {
@@ -31303,31 +31391,31 @@
       "label": "S2 Acceptance Review",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L213",
+      "source_location": "L215",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_227",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_229",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L227",
+      "source_location": "L229",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_234",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_236",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L234",
+      "source_location": "L236",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_verdict_239",
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_241",
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L239",
+      "source_location": "L241",
       "_origin": "ast"
     },
     {
@@ -31335,7 +31423,7 @@
       "label": "§8 - Independent Tester QA (S2)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L249",
+      "source_location": "L251",
       "_origin": "ast"
     },
     {
@@ -31343,23 +31431,23 @@
       "label": "Gap-hunt result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L258",
+      "source_location": "L260",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_what_was_added_265",
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_added_267",
       "label": "What was added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L265",
+      "source_location": "L267",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_full_gate_273",
+      "id": "ai_workflow_kit_docs_ai_feedback_full_gate_275",
       "label": "Full gate",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L273",
+      "source_location": "L275",
       "_origin": "ast"
     },
     {
@@ -31367,7 +31455,7 @@
       "label": "Scope",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L283",
+      "source_location": "L285",
       "_origin": "ast"
     },
     {
@@ -31375,23 +31463,23 @@
       "label": "§9 - Independent Reviewer Verification (S3)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L296",
+      "source_location": "L298",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_graphify_results_305",
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_results_307",
       "label": "Graphify Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L305",
+      "source_location": "L307",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_command_results_315",
+      "id": "ai_workflow_kit_docs_ai_feedback_command_results_317",
       "label": "Command Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L315",
+      "source_location": "L317",
       "_origin": "ast"
     },
     {
@@ -31399,31 +31487,31 @@
       "label": "S3 Acceptance Review",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L327",
+      "source_location": "L329",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_341",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_343",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L341",
+      "source_location": "L343",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_347",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_349",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L347",
+      "source_location": "L349",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_verdict_352",
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_354",
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L352",
+      "source_location": "L354",
       "_origin": "ast"
     },
     {
@@ -31431,31 +31519,31 @@
       "label": "§10 - Independent Tester QA (S3)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L362",
+      "source_location": "L364",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_gap_hunt_result_371",
+      "id": "ai_workflow_kit_docs_ai_feedback_gap_hunt_result_373",
       "label": "Gap-hunt result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L371",
+      "source_location": "L373",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_what_was_added_378",
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_added_380",
       "label": "What was added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L378",
+      "source_location": "L380",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_full_gate_385",
+      "id": "ai_workflow_kit_docs_ai_feedback_full_gate_387",
       "label": "Full gate",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L385",
+      "source_location": "L387",
       "_origin": "ast"
     },
     {
@@ -31463,7 +31551,7 @@
       "label": "Scope and result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L396",
+      "source_location": "L398",
       "_origin": "ast"
     },
     {
@@ -31471,23 +31559,23 @@
       "label": "S4 — Spike Canary 1B v2 FluidInference Core ML (Step S4, coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L409",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_411",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L411",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_420",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_413",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L413",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_422",
       "label": "§1 — Inventory & Pass/Fail Summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L420",
+      "source_location": "L422",
       "_origin": "ast"
     },
     {
@@ -31495,15 +31583,15 @@
       "label": "§2 — S4 Spike Compliance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L432",
+      "source_location": "L434",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_443",
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_445",
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L443",
+      "source_location": "L445",
       "_origin": "ast"
     },
     {
@@ -31511,7 +31599,7 @@
       "label": "§4 — Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L456",
+      "source_location": "L458",
       "_origin": "ast"
     },
     {
@@ -31519,23 +31607,23 @@
       "label": "S4 - Independent Reviewer Verification (Canary 1B FluidInference Core ML)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L469",
+      "source_location": "L471",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_graphify_results_478",
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_results_480",
       "label": "Graphify Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L478",
+      "source_location": "L480",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_command_results_485",
+      "id": "ai_workflow_kit_docs_ai_feedback_command_results_487",
       "label": "Command Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L485",
+      "source_location": "L487",
       "_origin": "ast"
     },
     {
@@ -31543,31 +31631,31 @@
       "label": "Acceptance Review",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L499",
+      "source_location": "L501",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_514",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_516",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L514",
+      "source_location": "L516",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_521",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_523",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L521",
+      "source_location": "L523",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_verdict_527",
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_529",
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L527",
+      "source_location": "L529",
       "_origin": "ast"
     },
     {
@@ -31575,15 +31663,15 @@
       "label": "S4 Fix (Attempt 1) — Harness Valid-Length Correction + Evidence Reconciliation",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L537",
+      "source_location": "L539",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_539",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_541",
       "label": "Meta",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L539",
+      "source_location": "L541",
       "_origin": "ast"
     },
     {
@@ -31591,7 +31679,7 @@
       "label": "§1 — What changed (harness)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L549",
+      "source_location": "L551",
       "_origin": "ast"
     },
     {
@@ -31599,23 +31687,23 @@
       "label": "§2 — New lengths + re-run evidence (rev. 2, all from the fixed harness)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L558",
+      "source_location": "L560",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_571",
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_573",
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L571",
+      "source_location": "L573",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_584",
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_586",
       "label": "§4 — Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L584",
+      "source_location": "L586",
       "_origin": "ast"
     },
     {
@@ -31623,7 +31711,7 @@
       "label": "**S4 Re-review (after fix attempt 1)**",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L597",
+      "source_location": "L599",
       "_origin": "ast"
     },
     {
@@ -31631,7 +31719,7 @@
       "label": "Prior Blocking Item",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L606",
+      "source_location": "L608",
       "_origin": "ast"
     },
     {
@@ -31639,7 +31727,7 @@
       "label": "Spot-check Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L621",
+      "source_location": "L623",
       "_origin": "ast"
     },
     {
@@ -31647,7 +31735,7 @@
       "label": "Report and Provenance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L634",
+      "source_location": "L636",
       "_origin": "ast"
     },
     {
@@ -31655,31 +31743,31 @@
       "label": "Regression Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L640",
+      "source_location": "L642",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_656",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_658",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L656",
+      "source_location": "L658",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_662",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_664",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L662",
+      "source_location": "L664",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_verdict_668",
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_670",
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L668",
+      "source_location": "L670",
       "_origin": "ast"
     },
     {
@@ -31687,15 +31775,15 @@
       "label": "S4 - Independent Tester QA (Canary 1B FluidInference Core ML spike)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L680",
+      "source_location": "L682",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_682",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_684",
       "label": "Meta",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L682",
+      "source_location": "L684",
       "_origin": "ast"
     },
     {
@@ -31703,7 +31791,7 @@
       "label": "What was verified",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L692",
+      "source_location": "L694",
       "_origin": "ast"
     },
     {
@@ -31711,7 +31799,7 @@
       "label": "Gap found and added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L704",
+      "source_location": "L706",
       "_origin": "ast"
     },
     {
@@ -31719,7 +31807,7 @@
       "label": "Result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L711",
+      "source_location": "L713",
       "_origin": "ast"
     },
     {
@@ -31727,23 +31815,23 @@
       "label": "S5 — Spike Canary Flash ~180M Core ML (Step S5, coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L721",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_723",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L723",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_732",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_725",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L725",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_734",
       "label": "§1 — Inventory & Pass/Fail Summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L732",
+      "source_location": "L734",
       "_origin": "ast"
     },
     {
@@ -31751,23 +31839,23 @@
       "label": "§2 — S5 Spike Compliance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L744",
+      "source_location": "L746",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_755",
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_757",
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L755",
+      "source_location": "L757",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_769",
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_771",
       "label": "§4 — Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L769",
+      "source_location": "L771",
       "_origin": "ast"
     },
     {
@@ -31775,15 +31863,15 @@
       "label": "S5 — Spike Canary Flash ~180M Core ML (Independent Reviewer)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L783",
+      "source_location": "L785",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_785",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_787",
       "label": "Meta",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L785",
+      "source_location": "L787",
       "_origin": "ast"
     },
     {
@@ -31791,7 +31879,7 @@
       "label": "Graphify and Scope Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L795",
+      "source_location": "L797",
       "_origin": "ast"
     },
     {
@@ -31799,15 +31887,15 @@
       "label": "Acceptance Checklist",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L805",
+      "source_location": "L807",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_822",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_824",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L822",
+      "source_location": "L824",
       "_origin": "ast"
     },
     {
@@ -31815,15 +31903,15 @@
       "label": "GO Decision",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L837",
+      "source_location": "L839",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_841",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_843",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L841",
+      "source_location": "L843",
       "_origin": "ast"
     },
     {
@@ -31831,39 +31919,39 @@
       "label": "S5 - Independent Tester QA (Canary Flash ~180M Core ML spike)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L852",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_854",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L854",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_what_was_verified_864",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_856",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L856",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_verified_866",
       "label": "What was verified",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L864",
+      "source_location": "L866",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_877",
+      "id": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_879",
       "label": "Gap found and added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L877",
+      "source_location": "L879",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_result_885",
+      "id": "ai_workflow_kit_docs_ai_feedback_result_887",
       "label": "Result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L885",
+      "source_location": "L887",
       "_origin": "ast"
     },
     {
@@ -31871,23 +31959,23 @@
       "label": "S6 — Spike GigaAM v3 RU Core ML (Step S6, coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L895",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_897",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L897",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_906",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_899",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L899",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_908",
       "label": "§1 — Inventory & Pass/Fail Summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L906",
+      "source_location": "L908",
       "_origin": "ast"
     },
     {
@@ -31895,23 +31983,23 @@
       "label": "§2 — S6 Spike Compliance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L918",
+      "source_location": "L920",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_934",
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_936",
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L934",
+      "source_location": "L936",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_951",
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_953",
       "label": "§4 — Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L951",
+      "source_location": "L953",
       "_origin": "ast"
     },
     {
@@ -31919,31 +32007,31 @@
       "label": "S6 - Spike GigaAM v3 RU Core ML (Independent Reviewer)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L965",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_967",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L967",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_977",
-      "label": "Graphify and Scope Verification",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_969",
+      "label": "Meta",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L977",
+      "source_location": "L969",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_988",
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_979",
+      "label": "Graphify and Scope Verification",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L979",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_990",
       "label": "Acceptance Checklist",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L988",
+      "source_location": "L990",
       "_origin": "ast"
     },
     {
@@ -31951,31 +32039,31 @@
       "label": "Commands and Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1005",
+      "source_location": "L1007",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_1018",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_1020",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1018",
+      "source_location": "L1020",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_go_decision_1032",
+      "id": "ai_workflow_kit_docs_ai_feedback_go_decision_1034",
       "label": "GO Decision",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1032",
+      "source_location": "L1034",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_1036",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_1038",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1036",
+      "source_location": "L1038",
       "_origin": "ast"
     },
     {
@@ -31983,15 +32071,15 @@
       "label": "S6 - Independent Tester QA (GigaAM v3 RU Core ML spike)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1049",
+      "source_location": "L1051",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_1051",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_1053",
       "label": "Meta",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1051",
+      "source_location": "L1053",
       "_origin": "ast"
     },
     {
@@ -31999,15 +32087,15 @@
       "label": "Graphify and gap-hunt",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1061",
+      "source_location": "L1063",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1068",
+      "id": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1070",
       "label": "Commands and results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1068",
+      "source_location": "L1070",
       "_origin": "ast"
     },
     {
@@ -32015,7 +32103,7 @@
       "label": "Runtime and scope",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1094",
+      "source_location": "L1096",
       "_origin": "ast"
     },
     {
@@ -32023,23 +32111,23 @@
       "label": "S4b — Canary 1B Core ML fix + Bolabol-hosted package (Step S4b, coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1107",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_1109",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L1109",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_1119",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_1111",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1111",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_1121",
       "label": "§1 — Inventory & Pass/Fail Summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1119",
+      "source_location": "L1121",
       "_origin": "ast"
     },
     {
@@ -32047,23 +32135,23 @@
       "label": "§2 — S4b Implementation Compliance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1133",
+      "source_location": "L1135",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_1146",
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_1148",
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1146",
+      "source_location": "L1148",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_1163",
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_1165",
       "label": "§4 — Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1163",
+      "source_location": "L1165",
       "_origin": "ast"
     },
     {
@@ -32071,39 +32159,39 @@
       "label": "S4b — Canary 1B Path B package GO (Independent Reviewer)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1177",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_1179",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L1179",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_1189",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_1181",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1181",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_1191",
       "label": "Graphify and Scope Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1189",
+      "source_location": "L1191",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_1201",
+      "id": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_1203",
       "label": "Acceptance Checklist",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1201",
+      "source_location": "L1203",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1216",
+      "id": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1218",
       "label": "Commands and Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1216",
+      "source_location": "L1218",
       "_origin": "ast"
     },
     {
@@ -32111,23 +32199,23 @@
       "label": "Whether Path B GO is justified",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1237",
+      "source_location": "L1239",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_findings_1241",
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_1243",
       "label": "Findings",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1241",
+      "source_location": "L1243",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_change_list_1257",
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_1259",
       "label": "Change List",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1257",
+      "source_location": "L1259",
       "_origin": "ast"
     },
     {
@@ -32135,23 +32223,23 @@
       "label": "S4b — Feature QA after Reviewer APPROVED (Step S4b, tester)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1271",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_1273",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L1273",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_what_was_verified_1283",
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_1275",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1275",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_verified_1285",
       "label": "What was verified",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1283",
+      "source_location": "L1285",
       "_origin": "ast"
     },
     {
@@ -32159,15 +32247,71 @@
       "label": "Gap-hunt findings & actions",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1298",
+      "source_location": "L1300",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_result_1305",
+      "id": "ai_workflow_kit_docs_ai_feedback_result_1307",
       "label": "Result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1305",
+      "source_location": "L1307",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s7_catalog_backends_capabilities_data_layer_only_independent_reviewer",
+      "label": "S7 — Catalog + backends + capabilities, data layer only (Independent Reviewer)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1317",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_1319",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1319",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_gate_run_first_pass",
+      "label": "Graphify gate (run first — PASS)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1330",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_command_results_1341",
+      "label": "Command results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1341",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s7_acceptance_checklist",
+      "label": "S7 acceptance checklist",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1353",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_1368",
+      "label": "Findings",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1368",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_1381",
+      "label": "Verdict",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1381",
       "_origin": "ast"
     },
     {
@@ -33211,11 +33355,75 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_asr_coreml_steps_s3",
-      "label": "S3+",
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_s3_track_b_closed",
+      "label": "S3+ (Track B closed)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
       "source_location": "L181",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_s7_catalog_backends_capabilities_data_layer_only",
+      "label": "S7 — Catalog + backends + capabilities (data layer only)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L186",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_goal_188",
+      "label": "Goal",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L188",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_go_models_adr_018",
+      "label": "GO models (ADR-018)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L193",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_requirements_203",
+      "label": "Requirements",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L203",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_target_files_expected_adjust_via_graphify_if_needed",
+      "label": "target_files (expected — adjust via graphify if needed)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L213",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_224",
+      "label": "Out of scope",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L224",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_done_232",
+      "label": "Done",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L232",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_verify_240",
+      "label": "Verify",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L240",
       "_origin": "ast"
     },
     {
@@ -33223,15 +33431,15 @@
       "label": "S4b — Canary 1B Core ML fix + Bolabol-hosted package",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L185",
+      "source_location": "L248",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_asr_coreml_steps_goal_187",
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_goal_250",
       "label": "Goal",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L187",
+      "source_location": "L250",
       "_origin": "ast"
     },
     {
@@ -33239,7 +33447,7 @@
       "label": "Why (S4 residual)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L196",
+      "source_location": "L259",
       "_origin": "ast"
     },
     {
@@ -33247,47 +33455,47 @@
       "label": "Two allowed fix paths (pick one; document choice)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L211",
+      "source_location": "L274",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_asr_coreml_steps_requirements_221",
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_requirements_284",
       "label": "Requirements",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L221",
+      "source_location": "L284",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_asr_coreml_steps_target_files_239",
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_target_files_302",
       "label": "target_files",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L239",
+      "source_location": "L302",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_251",
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_314",
       "label": "Out of scope",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L251",
+      "source_location": "L314",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_asr_coreml_steps_done_259",
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_done_322",
       "label": "Done",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L259",
+      "source_location": "L322",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_asr_coreml_steps_verify_270",
+      "id": "ai_workflow_kit_docs_asr_coreml_steps_verify_333",
       "label": "Verify",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L270",
+      "source_location": "L333",
       "_origin": "ast"
     },
     {
@@ -33976,6 +34184,14 @@
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L163",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_adr_018_human_go_list_for_track_c_s7",
+      "label": "ADR-018 — Human GO list for Track C (S7+)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L173",
       "_origin": "ast"
     },
     {
@@ -59915,7 +60131,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L35",
+      "source_location": "L37",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -59926,7 +60142,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L35",
+      "source_location": "L37",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -59937,7 +60153,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L36",
+      "source_location": "L38",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -59948,7 +60164,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L38",
+      "source_location": "L40",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -59958,7 +60174,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L38",
+      "source_location": "L40",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -59969,7 +60185,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L38",
+      "source_location": "L40",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -59980,7 +60196,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L58",
+      "source_location": "L60",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -59990,7 +60206,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L58",
+      "source_location": "L60",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -60001,7 +60217,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L58",
+      "source_location": "L60",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -60046,7 +60262,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L50",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60057,7 +60273,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift",
-      "source_location": "L70",
+      "source_location": "L72",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60537,7 +60753,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L238",
+      "source_location": "L244",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60547,7 +60763,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L238",
+      "source_location": "L244",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -60558,7 +60774,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L238",
+      "source_location": "L244",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -60569,7 +60785,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L252",
+      "source_location": "L258",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60579,7 +60795,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L252",
+      "source_location": "L258",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -60590,7 +60806,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L252",
+      "source_location": "L258",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -60601,7 +60817,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L287",
+      "source_location": "L293",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60611,7 +60827,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L287",
+      "source_location": "L293",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -60622,7 +60838,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L300",
+      "source_location": "L306",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60632,7 +60848,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L300",
+      "source_location": "L306",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -60643,7 +60859,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L300",
+      "source_location": "L306",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -60654,7 +60870,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L319",
+      "source_location": "L325",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60664,7 +60880,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L324",
+      "source_location": "L330",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60674,7 +60890,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L324",
+      "source_location": "L330",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -60685,7 +60901,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L324",
+      "source_location": "L330",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -60696,7 +60912,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L336",
+      "source_location": "L342",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60706,7 +60922,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L336",
+      "source_location": "L342",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -60717,7 +60933,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L336",
+      "source_location": "L342",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -60728,7 +60944,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L355",
+      "source_location": "L361",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60738,7 +60954,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L355",
+      "source_location": "L361",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -60749,7 +60965,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L355",
+      "source_location": "L361",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -60926,7 +61142,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L229",
+      "source_location": "L235",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60937,7 +61153,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L253",
+      "source_location": "L259",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60948,7 +61164,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L256",
+      "source_location": "L262",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60959,7 +61175,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L279",
+      "source_location": "L285",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60970,7 +61186,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L289",
+      "source_location": "L295",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60981,7 +61197,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L294",
+      "source_location": "L300",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60992,7 +61208,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L330",
+      "source_location": "L336",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87047,7 +87263,7 @@
     },
     {
       "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor",
-      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
@@ -87056,17 +87272,7 @@
       "_origin": "ast"
     },
     {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
-      "target": "identifiable",
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
       "target": "codable",
       "relation": "implements",
       "confidence": "EXTRACTED",
@@ -87076,7 +87282,7 @@
       "_origin": "ast"
     },
     {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
       "target": "equatable",
       "relation": "implements",
       "confidence": "EXTRACTED",
@@ -87086,7 +87292,7 @@
       "_origin": "ast"
     },
     {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
       "target": "sendable",
       "relation": "implements",
       "confidence": "EXTRACTED",
@@ -87096,78 +87302,41 @@
       "_origin": "ast"
     },
     {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor",
-      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
-      "relation": "contains",
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_bool",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
       "source_location": "L4",
       "weight": 1.0,
+      "context": "field",
       "_origin": "ast"
     },
     {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
-      "target": "string",
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
-      "target": "codable",
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
-      "target": "equatable",
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
-      "target": "sendable",
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
-      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_whisperkitcoreml",
-      "relation": "case_of",
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
       "source_location": "L5",
       "weight": 1.0,
+      "context": "field",
       "_origin": "ast"
     },
     {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
-      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_fluidaudiocoreml",
-      "relation": "case_of",
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "target": "sources_nativebolabol_services_whisperkittranscriptionengine_double",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0,
+      "context": "field",
       "_origin": "ast"
     },
     {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
-      "target": "string",
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
@@ -87177,9 +87346,81 @@
       "_origin": "ast"
     },
     {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_int64",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L9",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
       "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor",
-      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
       "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "target": "codable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "target": "equatable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "target": "sendable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "target": "sources_nativebolabolcore_models_generalsettings_comparable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L14",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion_init",
+      "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
       "source_location": "L18",
@@ -87187,12 +87428,260 @@
       "_origin": "ast"
     },
     {
-      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport",
-      "target": "string",
-      "relation": "implements",
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion_init",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_int",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
       "source_location": "L18",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "target": "operatingsystemversion",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L34",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L43",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities_init",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_bool",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L43",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities_init",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L43",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities_init",
+      "target": "sources_nativebolabol_services_whisperkittranscriptionengine_double",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L43",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities_init",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L43",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities_init",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_int64",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L43",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L64",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "target": "identifiable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L64",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "target": "codable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L64",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "target": "equatable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L64",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "target": "sendable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L64",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L65",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L65",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "target": "codable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L65",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "target": "equatable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L65",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "target": "sendable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L65",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_whisperkitcoreml",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L66",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_fluidaudiocoreml",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L67",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_canarycoreml",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L68",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend_gigaamcoreml",
+      "relation": "case_of",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L69",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L71",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L85",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87202,7 +87691,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L18",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87212,7 +87701,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L18",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87222,7 +87711,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L18",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87232,7 +87721,7 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L19",
+      "source_location": "L86",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87242,28 +87731,28 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L20",
+      "source_location": "L87",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport",
-      "target": "string",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L22",
+      "source_location": "L89",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
     },
     {
       "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
-      "target": "string",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L41",
+      "source_location": "L108",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -87274,7 +87763,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L46",
+      "source_location": "L113",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -87285,7 +87774,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L47",
+      "source_location": "L114",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -87296,7 +87785,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L51",
+      "source_location": "L118",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -87307,7 +87796,18 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L53",
+      "source_location": "L120",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L121",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -87318,17 +87818,17 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L64",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_init",
-      "target": "string",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L64",
+      "source_location": "L132",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -87339,7 +87839,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L64",
+      "source_location": "L132",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -87350,7 +87850,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L64",
+      "source_location": "L132",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -87361,7 +87861,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L64",
+      "source_location": "L132",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -87372,9 +87872,106 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L64",
+      "source_location": "L132",
       "weight": 1.0,
       "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_init",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L132",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_defaultcapabilities",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L168",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_defaultcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_backend",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L168",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_defaultcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_languagesupport",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L168",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_defaultcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L168",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_defaultcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L168",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_estimatebytes",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L218",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_estimatebytes",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L218",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_estimatebytes",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_int64",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L218",
+      "weight": 1.0,
+      "context": "return_type",
       "_origin": "ast"
     },
     {
@@ -87383,7 +87980,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L94",
+      "source_location": "L231",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87393,7 +87990,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L94",
+      "source_location": "L231",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -87404,7 +88001,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L99",
+      "source_location": "L236",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87414,7 +88011,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L99",
+      "source_location": "L236",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87424,7 +88021,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L99",
+      "source_location": "L236",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87434,7 +88031,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L99",
+      "source_location": "L236",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87444,17 +88041,17 @@
       "relation": "case_of",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L100",
+      "source_location": "L237",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodelcatalogerror",
-      "target": "string",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L100",
+      "source_location": "L237",
       "weight": 1.0,
       "context": "type",
       "_origin": "ast"
@@ -87465,7 +88062,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L103",
+      "source_location": "L240",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87475,7 +88072,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L103",
+      "source_location": "L240",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87485,7 +88082,7 @@
       "relation": "implements",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L103",
+      "source_location": "L240",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87495,7 +88092,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L104",
+      "source_location": "L241",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast"
@@ -87506,7 +88103,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L106",
+      "source_location": "L243",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87516,7 +88113,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L106",
+      "source_location": "L243",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -87527,17 +88124,17 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L121",
+      "source_location": "L258",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodelcatalog_model",
-      "target": "string",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_string",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L121",
+      "source_location": "L258",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast"
@@ -87548,7 +88145,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L121",
+      "source_location": "L258",
       "weight": 1.0,
       "context": "return_type",
       "_origin": "ast"
@@ -87560,7 +88157,62 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L89",
+      "source_location": "L158",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_init",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_defaultcapabilities",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L161",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_defaultcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L176",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_defaultcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_estimatebytes",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L181",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_estimatebytes",
+      "target": "sources_nativebolabol_services_whisperkittranscriptionengine_double",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L222",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor_estimatebytes",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_swift_int64",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L225",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87571,7 +88223,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L110",
+      "source_location": "L247",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -87582,7 +88234,29 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
-      "source_location": "L131",
+      "source_location": "L268",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodelcatalog",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_asrmodelcapabilities",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L368",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodelcatalog",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_osversion",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift",
+      "source_location": "L397",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116104,7 +116778,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L545",
+      "source_location": "L546",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116936,7 +117610,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L30",
+      "source_location": "L33",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116946,7 +117620,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L50",
+      "source_location": "L53",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116956,7 +117630,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L59",
+      "source_location": "L62",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -116966,17 +117640,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L67",
+      "source_location": "L70",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests",
-      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogdoesnotcontaincanaryproductorbackend",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogcontainsadr018gomodelswithhonestcapabilities",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L82",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125134,11 +125808,11 @@
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_2_s3_implementation_compliance",
+      "target": "ai_workflow_kit_docs_ai_feedback_2_s7_implementation_compliance",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125148,7 +125822,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L36",
+      "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125158,7 +125832,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L58",
+      "source_location": "L56",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125168,7 +125842,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L71",
+      "source_location": "L73",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125178,7 +125852,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L80",
+      "source_location": "L82",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125188,7 +125862,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L85",
+      "source_location": "L87",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125198,7 +125872,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L101",
+      "source_location": "L103",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125208,7 +125882,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L120",
+      "source_location": "L122",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125218,7 +125892,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L125",
+      "source_location": "L127",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125228,7 +125902,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L135",
+      "source_location": "L137",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125238,7 +125912,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L144",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125248,7 +125922,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L151",
+      "source_location": "L153",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125258,7 +125932,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L163",
+      "source_location": "L165",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125268,7 +125942,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L181",
+      "source_location": "L183",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125278,17 +125952,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L190",
+      "source_location": "L192",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_7_independent_reviewer_verification_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_command_results_201",
+      "target": "ai_workflow_kit_docs_ai_feedback_command_results_203",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L201",
+      "source_location": "L203",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125298,37 +125972,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L213",
+      "source_location": "L215",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_7_independent_reviewer_verification_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_227",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_229",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L227",
+      "source_location": "L229",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_7_independent_reviewer_verification_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_234",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_236",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L234",
+      "source_location": "L236",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_7_independent_reviewer_verification_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_verdict_239",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_241",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L239",
+      "source_location": "L241",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125338,7 +126012,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L249",
+      "source_location": "L251",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125348,27 +126022,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L258",
+      "source_location": "L260",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_8_independent_tester_qa_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_what_was_added_265",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_added_267",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L265",
+      "source_location": "L267",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_8_independent_tester_qa_s2",
-      "target": "ai_workflow_kit_docs_ai_feedback_full_gate_273",
+      "target": "ai_workflow_kit_docs_ai_feedback_full_gate_275",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L273",
+      "source_location": "L275",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125378,7 +126052,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L283",
+      "source_location": "L285",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125388,27 +126062,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L296",
+      "source_location": "L298",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_graphify_results_305",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_results_307",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L305",
+      "source_location": "L307",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_command_results_315",
+      "target": "ai_workflow_kit_docs_ai_feedback_command_results_317",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L315",
+      "source_location": "L317",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125418,37 +126092,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L327",
+      "source_location": "L329",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_341",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_343",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L341",
+      "source_location": "L343",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_347",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_349",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L347",
+      "source_location": "L349",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_9_independent_reviewer_verification_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_verdict_352",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_354",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L352",
+      "source_location": "L354",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125458,37 +126132,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L362",
+      "source_location": "L364",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_10_independent_tester_qa_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_gap_hunt_result_371",
+      "target": "ai_workflow_kit_docs_ai_feedback_gap_hunt_result_373",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L371",
+      "source_location": "L373",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_10_independent_tester_qa_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_what_was_added_378",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_added_380",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L378",
+      "source_location": "L380",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_10_independent_tester_qa_s3",
-      "target": "ai_workflow_kit_docs_ai_feedback_full_gate_385",
+      "target": "ai_workflow_kit_docs_ai_feedback_full_gate_387",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L385",
+      "source_location": "L387",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125498,7 +126172,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L396",
+      "source_location": "L398",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125508,27 +126182,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L409",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_411",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L411",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_420",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_413",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L420",
+      "source_location": "L413",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_422",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L422",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125538,17 +126212,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L432",
+      "source_location": "L434",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_443",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_445",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L443",
+      "source_location": "L445",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125558,7 +126232,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L456",
+      "source_location": "L458",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125568,27 +126242,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L469",
+      "source_location": "L471",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_graphify_results_478",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_results_480",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L478",
+      "source_location": "L480",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_command_results_485",
+      "target": "ai_workflow_kit_docs_ai_feedback_command_results_487",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L485",
+      "source_location": "L487",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125598,37 +126272,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L499",
+      "source_location": "L501",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_514",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_516",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L514",
+      "source_location": "L516",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_521",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_523",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L521",
+      "source_location": "L523",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_reviewer_verification_canary_1b_fluidinference_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_verdict_527",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_529",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L527",
+      "source_location": "L529",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125638,17 +126312,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L537",
+      "source_location": "L539",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_fix_attempt_1_harness_valid_length_correction_evidence_reconciliation",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_539",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_541",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L539",
+      "source_location": "L541",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125658,7 +126332,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L549",
+      "source_location": "L551",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125668,27 +126342,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L558",
+      "source_location": "L560",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_fix_attempt_1_harness_valid_length_correction_evidence_reconciliation",
-      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_571",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_573",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L571",
+      "source_location": "L573",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_fix_attempt_1_harness_valid_length_correction_evidence_reconciliation",
-      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_584",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_586",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L584",
+      "source_location": "L586",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125698,7 +126372,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L597",
+      "source_location": "L599",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125708,7 +126382,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L606",
+      "source_location": "L608",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125718,7 +126392,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L621",
+      "source_location": "L623",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125728,7 +126402,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L634",
+      "source_location": "L636",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125738,37 +126412,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L640",
+      "source_location": "L642",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_656",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_658",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L656",
+      "source_location": "L658",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_662",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_664",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L662",
+      "source_location": "L664",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_re_review_after_fix_attempt_1",
-      "target": "ai_workflow_kit_docs_ai_feedback_verdict_668",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_670",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L668",
+      "source_location": "L670",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125778,17 +126452,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L680",
+      "source_location": "L682",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4_independent_tester_qa_canary_1b_fluidinference_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_682",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_684",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L682",
+      "source_location": "L684",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125798,7 +126472,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L692",
+      "source_location": "L694",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125808,7 +126482,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L704",
+      "source_location": "L706",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125818,7 +126492,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L711",
+      "source_location": "L713",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125828,27 +126502,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L721",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_723",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L723",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_732",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_725",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L732",
+      "source_location": "L725",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_734",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L734",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125858,27 +126532,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L744",
+      "source_location": "L746",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_755",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_757",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L755",
+      "source_location": "L757",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_769",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_771",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L769",
+      "source_location": "L771",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125888,17 +126562,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L783",
+      "source_location": "L785",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_785",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_787",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L785",
+      "source_location": "L787",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125908,7 +126582,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L795",
+      "source_location": "L797",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125918,17 +126592,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L805",
+      "source_location": "L807",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_822",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_824",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L822",
+      "source_location": "L824",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125938,17 +126612,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L837",
+      "source_location": "L839",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s5_spike_canary_flash_180m_core_ml_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_841",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_843",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L841",
+      "source_location": "L843",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -125958,47 +126632,47 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L852",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_854",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L854",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_what_was_verified_864",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_856",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L864",
+      "source_location": "L856",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_877",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_verified_866",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L877",
+      "source_location": "L866",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_result_885",
+      "target": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_879",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L885",
+      "source_location": "L879",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_result_887",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L887",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126008,27 +126682,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L895",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_897",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L897",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_906",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_899",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L906",
+      "source_location": "L899",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_908",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L908",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126038,27 +126712,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L918",
+      "source_location": "L920",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_934",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_936",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L934",
+      "source_location": "L936",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_951",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_953",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L951",
+      "source_location": "L953",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126068,37 +126742,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L965",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_967",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L967",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_977",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_969",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L977",
+      "source_location": "L969",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_988",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_979",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L988",
+      "source_location": "L979",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_990",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L990",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126108,37 +126782,37 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1005",
+      "source_location": "L1007",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_1018",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_1020",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1018",
+      "source_location": "L1020",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_go_decision_1032",
+      "target": "ai_workflow_kit_docs_ai_feedback_go_decision_1034",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1032",
+      "source_location": "L1034",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_1036",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_1038",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1036",
+      "source_location": "L1038",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126148,17 +126822,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1049",
+      "source_location": "L1051",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s6_independent_tester_qa_gigaam_v3_ru_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_1051",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_1053",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1051",
+      "source_location": "L1053",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126168,17 +126842,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1061",
+      "source_location": "L1063",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s6_independent_tester_qa_gigaam_v3_ru_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1068",
+      "target": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1070",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1068",
+      "source_location": "L1070",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126188,7 +126862,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1094",
+      "source_location": "L1096",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126198,27 +126872,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1107",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_core_ml_fix_bolabol_hosted_package_step_s4b_coder",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_1109",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L1109",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_1119",
+      "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_core_ml_fix_bolabol_hosted_package_step_s4b_coder",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_1111",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1119",
+      "source_location": "L1111",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_1121",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1121",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126228,27 +126902,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1133",
+      "source_location": "L1135",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_1146",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_1148",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1146",
+      "source_location": "L1148",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_1163",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_1165",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1163",
+      "source_location": "L1165",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126258,47 +126932,47 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1177",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_path_b_package_go_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_1179",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L1179",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_path_b_package_go_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_1189",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_1181",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1189",
+      "source_location": "L1181",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_path_b_package_go_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_1201",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_1191",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1201",
+      "source_location": "L1191",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_path_b_package_go_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1216",
+      "target": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_1203",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1216",
+      "source_location": "L1203",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_path_b_package_go_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1218",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1218",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126308,27 +126982,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1237",
+      "source_location": "L1239",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_path_b_package_go_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_findings_1241",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_1243",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1241",
+      "source_location": "L1243",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s4b_canary_1b_path_b_package_go_independent_reviewer",
-      "target": "ai_workflow_kit_docs_ai_feedback_change_list_1257",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_1259",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1257",
+      "source_location": "L1259",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -126338,47 +127012,117 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1271",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_1273",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L1273",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_meta_1273",
-      "target": "ai_workflow_kit_docs_ai_feedback_what_was_verified_1283",
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_1275",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1283",
+      "source_location": "L1275",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_meta_1273",
+      "source": "ai_workflow_kit_docs_ai_feedback_meta_1275",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_verified_1285",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1285",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_meta_1275",
       "target": "ai_workflow_kit_docs_ai_feedback_gap_hunt_findings_actions",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1298",
+      "source_location": "L1300",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_feedback_meta_1273",
-      "target": "ai_workflow_kit_docs_ai_feedback_result_1305",
+      "source": "ai_workflow_kit_docs_ai_feedback_meta_1275",
+      "target": "ai_workflow_kit_docs_ai_feedback_result_1307",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L1305",
+      "source_location": "L1307",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s7_catalog_backends_capabilities_data_layer_only_independent_reviewer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1317",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_catalog_backends_capabilities_data_layer_only_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_1319",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1319",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_catalog_backends_capabilities_data_layer_only_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_gate_run_first_pass",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1330",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_catalog_backends_capabilities_data_layer_only_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_command_results_1341",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1341",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_catalog_backends_capabilities_data_layer_only_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_s7_acceptance_checklist",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1353",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_catalog_backends_capabilities_data_layer_only_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_1368",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1368",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_catalog_backends_capabilities_data_layer_only_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_1381",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1381",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -127564,7 +128308,7 @@
     },
     {
       "source": "ai_workflow_kit_docs_asr_coreml_steps_bolabol_asr_core_ml_step_cards_s0_s15",
-      "target": "ai_workflow_kit_docs_asr_coreml_steps_s3",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_s3_track_b_closed",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
@@ -127574,21 +128318,101 @@
     },
     {
       "source": "ai_workflow_kit_docs_asr_coreml_steps_bolabol_asr_core_ml_step_cards_s0_s15",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_s7_catalog_backends_capabilities_data_layer_only",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L186",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s7_catalog_backends_capabilities_data_layer_only",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_goal_188",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L188",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s7_catalog_backends_capabilities_data_layer_only",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_go_models_adr_018",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L193",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s7_catalog_backends_capabilities_data_layer_only",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_requirements_203",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L203",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s7_catalog_backends_capabilities_data_layer_only",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_target_files_expected_adjust_via_graphify_if_needed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L213",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s7_catalog_backends_capabilities_data_layer_only",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_224",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L224",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s7_catalog_backends_capabilities_data_layer_only",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_done_232",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L232",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_s7_catalog_backends_capabilities_data_layer_only",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_verify_240",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
+      "source_location": "L240",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_asr_coreml_steps_bolabol_asr_core_ml_step_cards_s0_s15",
       "target": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L185",
+      "source_location": "L248",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
-      "target": "ai_workflow_kit_docs_asr_coreml_steps_goal_187",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_goal_250",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L187",
+      "source_location": "L250",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -127598,7 +128422,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L196",
+      "source_location": "L259",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -127608,57 +128432,57 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L211",
+      "source_location": "L274",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
-      "target": "ai_workflow_kit_docs_asr_coreml_steps_requirements_221",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_requirements_284",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L221",
+      "source_location": "L284",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
-      "target": "ai_workflow_kit_docs_asr_coreml_steps_target_files_239",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_target_files_302",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L239",
+      "source_location": "L302",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
-      "target": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_251",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_out_of_scope_314",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L251",
+      "source_location": "L314",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
-      "target": "ai_workflow_kit_docs_asr_coreml_steps_done_259",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_done_322",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L259",
+      "source_location": "L322",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_asr_coreml_steps_s4b_canary_1b_core_ml_fix_bolabol_hosted_package",
-      "target": "ai_workflow_kit_docs_asr_coreml_steps_verify_270",
+      "target": "ai_workflow_kit_docs_asr_coreml_steps_verify_333",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md",
-      "source_location": "L270",
+      "source_location": "L333",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -128499,6 +129323,16 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L163",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_log_bolabol",
+      "target": "ai_workflow_kit_docs_decisions_adr_018_human_go_list_for_track_c_s7",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -133438,7 +134272,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L320",
+      "source_location": "L326",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -133450,7 +134284,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L328",
+      "source_location": "L334",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -138970,7 +139804,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L549",
+      "source_location": "L550",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -139162,7 +139996,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L32",
+      "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -139174,7 +140008,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L46",
+      "source_location": "L49",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -141538,7 +142372,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L225",
+      "source_location": "L231",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -141550,7 +142384,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L231",
+      "source_location": "L237",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -141562,7 +142396,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L270",
+      "source_location": "L276",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -141574,7 +142408,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L311",
+      "source_location": "L317",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -141586,7 +142420,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L348",
+      "source_location": "L354",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -141598,7 +142432,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift",
-      "source_location": "L356",
+      "source_location": "L362",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -149530,7 +150364,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift",
-      "source_location": "L552",
+      "source_location": "L553",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150034,7 +150868,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L45",
+      "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150046,7 +150880,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L52",
+      "source_location": "L55",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150058,7 +150892,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L61",
+      "source_location": "L64",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150070,7 +150904,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L62",
+      "source_location": "L65",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150082,7 +150916,19 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L69",
+      "source_location": "L72",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogcontainsadr018gomodelswithhonestcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodelcatalog_model",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L89",
       "weight": 1.0,
       "_origin": "ast"
     },

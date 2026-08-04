@@ -27981,11 +27981,51 @@
       "_origin": "ast"
     },
     {
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface",
+      "label": "TranscriptionDescriptorSurface",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_swift_string",
+      "label": "String",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_swift_int",
+      "label": "Int",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_swift_bool",
+      "label": "Bool",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface_init",
+      "label": ".init()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L19",
+      "_origin": "ast"
+    },
+    {
       "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncataloguseswhisperkitrecommendedmodelbydefault",
       "label": "nativeTranscriptionCatalogUsesWhisperKitRecommendedModelByDefault()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L4",
+      "source_location": "L66",
       "_origin": "ast"
     },
     {
@@ -27993,7 +28033,7 @@
       "label": "nativeTranscriptionCatalogUsesExpectedModelOrder()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L15",
+      "source_location": "L77",
       "_origin": "ast"
     },
     {
@@ -28001,7 +28041,7 @@
       "label": "nativeTranscriptionCatalogRejectsDuplicateModelIDs()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L33",
+      "source_location": "L95",
       "_origin": "ast"
     },
     {
@@ -28009,7 +28049,7 @@
       "label": "transcriptionModelDownloadStateClampsProgressFraction()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L53",
+      "source_location": "L115",
       "_origin": "ast"
     },
     {
@@ -28017,7 +28057,7 @@
       "label": "transcriptionLanguagePreferenceResolvesAutoAndCustomCodes()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L62",
+      "source_location": "L124",
       "_origin": "ast"
     },
     {
@@ -28025,7 +28065,7 @@
       "label": "transcriptionLanguageHudLabelUsesFirstLetterOfDisplayName()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L70",
+      "source_location": "L132",
       "_origin": "ast"
     },
     {
@@ -28033,7 +28073,39 @@
       "label": "nativeTranscriptionCatalogContainsAdr018GoModelsWithHonestCapabilities()",
       "file_type": "code",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L85",
+      "source_location": "L147",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptionbackendsexposestableruntimebadges",
+      "label": "nativeTranscriptionBackendsExposeStableRuntimeBadges()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L176",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogusesadr018chunkanddownloadcapabilities",
+      "label": "nativeTranscriptionCatalogUsesAdr018ChunkAndDownloadCapabilities()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L184",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogkeepsnogocanarysourcesoutofgoentries",
+      "label": "nativeTranscriptionCatalogKeepsNoGoCanarySourcesOutOfGoEntries()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L207",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogpreservesexistingwhisperkitandfluidaudiodescriptors",
+      "label": "nativeTranscriptionCatalogPreservesExistingWhisperKitAndFluidAudioDescriptors()",
+      "file_type": "code",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L227",
       "_origin": "ast"
     },
     {
@@ -32315,6 +32387,54 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_ai_feedback_s7_independent_tester_qa_catalog_backends_capabilities",
+      "label": "S7 - Independent Tester QA (Catalog + backends + capabilities)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1391",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_1393",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1393",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_gate",
+      "label": "Graphify gate",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1402",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_gap_hunt_and_additions",
+      "label": "Gap-hunt and additions",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1406",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_full_gate_1422",
+      "label": "Full gate",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1422",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_scope_and_verdict",
+      "label": "Scope and verdict",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1432",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_ai_git_checkpoints",
       "label": "GIT_CHECKPOINTS.md",
       "file_type": "document",
@@ -32760,6 +32880,46 @@
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
       "source_location": "L107",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_s7_feature_qa_report",
+      "label": "S7 Feature QA Report",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L117",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_1_feature_gate",
+      "label": "1. Feature gate",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L124",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_2_gap_hunt_mapping",
+      "label": "2. Gap-hunt mapping",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L133",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_3_new_tests_added",
+      "label": "3. New tests added",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L145",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_4_scope_and_verdict",
+      "label": "4. Scope and verdict",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L154",
       "_origin": "ast"
     },
     {
@@ -117586,11 +117746,129 @@
     },
     {
       "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests",
-      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncataloguseswhisperkitrecommendedmodelbydefault",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
       "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface",
+      "target": "equatable",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L10",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_swift_bool",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "field",
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface_init",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L19",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface_init",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_swift_string",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L35",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface_init",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_swift_int",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L35",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface_init",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_swift_bool",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L35",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncataloguseswhisperkitrecommendedmodelbydefault",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -117600,7 +117878,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L15",
+      "source_location": "L77",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -117610,7 +117888,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L33",
+      "source_location": "L95",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -117620,7 +117898,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L53",
+      "source_location": "L115",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -117630,7 +117908,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L62",
+      "source_location": "L124",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -117640,7 +117918,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L70",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -117650,7 +117928,69 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L85",
+      "source_location": "L147",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptionbackendsexposestableruntimebadges",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L176",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogusesadr018chunkanddownloadcapabilities",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L184",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogkeepsnogocanarysourcesoutofgoentries",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L207",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogpreservesexistingwhisperkitandfluidaudiodescriptors",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L227",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogrejectsduplicatemodelids",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L97",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogpreservesexistingwhisperkitandfluidaudiodescriptors",
+      "target": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_transcriptiondescriptorsurface",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L238",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -127127,6 +127467,66 @@
       "_origin": "ast"
     },
     {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s7_independent_tester_qa_catalog_backends_capabilities",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1391",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_independent_tester_qa_catalog_backends_capabilities",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_1393",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1393",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_independent_tester_qa_catalog_backends_capabilities",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_gate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1402",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_independent_tester_qa_catalog_backends_capabilities",
+      "target": "ai_workflow_kit_docs_ai_feedback_gap_hunt_and_additions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1406",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_independent_tester_qa_catalog_backends_capabilities",
+      "target": "ai_workflow_kit_docs_ai_feedback_full_gate_1422",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1422",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s7_independent_tester_qa_catalog_backends_capabilities",
+      "target": "ai_workflow_kit_docs_ai_feedback_scope_and_verdict",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1432",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "ai_workflow_kit_docs_ai_git_checkpoints",
       "target": "ai_workflow_kit_docs_ai_git_checkpoints_git_checkpoints_bolabol_1_0_3",
       "relation": "contains",
@@ -127613,6 +128013,56 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
       "source_location": "L107",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_s4b_feature_qa_report",
+      "target": "ai_workflow_kit_docs_ai_report_s7_feature_qa_report",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L117",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_s7_feature_qa_report",
+      "target": "ai_workflow_kit_docs_ai_report_1_feature_gate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L124",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_s7_feature_qa_report",
+      "target": "ai_workflow_kit_docs_ai_report_2_gap_hunt_mapping",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L133",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_s7_feature_qa_report",
+      "target": "ai_workflow_kit_docs_ai_report_3_new_tests_added",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L145",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_s7_feature_qa_report",
+      "target": "ai_workflow_kit_docs_ai_report_4_scope_and_verdict",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -139990,25 +140440,13 @@
     },
     {
       "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogrejectsduplicatemodelids",
-      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L35",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogrejectsduplicatemodelids",
       "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodelcatalog",
       "relation": "calls",
       "context": "call",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L49",
+      "source_location": "L111",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150868,7 +151306,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L48",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150880,7 +151318,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L55",
+      "source_location": "L117",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150892,7 +151330,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L64",
+      "source_location": "L126",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150904,7 +151342,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L65",
+      "source_location": "L127",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150916,7 +151354,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L72",
+      "source_location": "L134",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -150928,7 +151366,43 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
-      "source_location": "L89",
+      "source_location": "L151",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogusesadr018chunkanddownloadcapabilities",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodelcatalog_model",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L187",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogkeepsnogocanarysourcesoutofgoentries",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodelcatalog_model",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L217",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_nativebolabolcoretests_transcriptionmodelcatalogtests_nativetranscriptioncatalogkeepsnogocanarysourcesoutofgoentries",
+      "target": "sources_nativebolabolcore_models_transcriptionmodeldescriptor_transcriptionmodeldescriptor",
+      "relation": "references",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift",
+      "source_location": "L218",
       "weight": 1.0,
       "_origin": "ast"
     },

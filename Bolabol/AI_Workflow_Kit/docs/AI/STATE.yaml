@@ -1,16 +1,19 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S7
+current_step: S8
 step_description: >-
-  Track C data layer for ADR-018 GO list: backend enum canaryCoreML +
-  gigaAMCoreML; descriptors + capabilities + catalog entries for Flash,
-  GigaAM RU, and Canary 1B Path B (bolabol package). No download UI, no engines.
+  Download + presence + storage paths + progress UI for the ADR-018 GO trio:
+  explicit install-source mapping (Flash→aufklarer HF, GigaAM→huggingfinger0 HF,
+  1B→Bolabol CDN package), SharedModelsRoot canary/1b-v2, canary/180m-flash,
+  gigaam/v3-rnnt, complete-folder presence, resume + SHA-256 manifest (1B),
+  disk warning, Settings progress states. No engines (S9), no card redesign (S10).
 target_files:
+  - Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
   - Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
-  - Sources/NativeBolabolCore/Models/
+  - Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift
   - Tests/NativeBolabolCoreTests/
-  - script/qa/check_no_canary_product.sh
+  - script/qa/
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 completed_steps:
   - S0
@@ -24,28 +27,26 @@ completed_steps:
   - S5
   - S6
   - S4b
+  - S7
 skipped_steps: []
 implementation:
-  status: review_approved
+  status: pending
   attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: >-
-    S7 Reviewer APPROVED (FEEDBACK §S7): GO trio + honest capabilities + stub
-    engines + narrowed check_no_canary_product; 503 tests, 27/27 QA. Non-blocking
-    NB-1..NB-5 forwarded to Tester gap-hunt / S8+ backlog.
+  verdict: null
+  note: ''
 qa:
   status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: S7
+  suite: S8
   bugs_open: 0
-  note: 'Tester kicked: full gate + gap-hunt (incl. Reviewer NB-2 test gaps)'
+  note: ''
 security:
   next_run: deferred
   note: 'Full Security Engineer audit deferred to pre-release / Human request'
-next_actor: tester
+next_actor: coder
 track: PRODUCT
 prior_track: SPIKE_COMPLETE
 go_list:
@@ -64,20 +65,26 @@ excluded:
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S7
-  last_post_tag: bolabol/S4b-done
-  last_commit: 6920341
+  last_pre_tag: bolabol/pre-S8
+  last_post_tag: bolabol/S7-done
+  last_commit: e0b2edc
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  Implement S7 only (ADR-018). Data layer: backends, capabilities, catalog for
-  Flash + GigaAM + 1B Path B. Match ranking IDs. Update no-canary QA to allow GO
-  catalog surface but forbid engines and NO-GO HF sources. No S8/S9.
+  Implement S8 only (step card in ASR_COREML_STEPS.md). Download + presence +
+  storage paths + progress UI for the GO trio. Explicit install-source mapping:
+  Flash → HF aufklarer/Canary-180M-Flash-CoreML, GigaAM → HF
+  huggingfinger0/gigaam-v3-coreml, 1B → Bolabol CDN package
+  bolabol-canary-1b-v2-coreml-r1 (S4b MANIFEST/SHA-256). Do NOT use
+  modelRepositoryID (NeMo origins) as install source (Reviewer NB-1). Storage
+  roots per plan §2.3; complete-folder presence; resume; disk warning for 1B;
+  Settings progress states; remove S7 placeholder throw (no step-id leak in
+  copy). No engines (S9), no card redesign/banners (S10), no HUD (S11).
 notes: |
-  S7 review APPROVED (FEEDBACK §S7, 2026-08-04). STATE synced by Orchestrator.
-  next_actor: tester — feature QA with gap-hunt; Reviewer NB-2 (runtimeBadge /
-  maxChunkSeconds assertions) is a Tester gap-hunt input. NB-1 (repo ids point
-  at NeMo origins) is S8 hazard, not S7 rework. After QA green: POST S7 checkpoint
-  → graphify rebuild → PRE S8 → kick Coder.
+  S7 cycle closed: review APPROVED + Tester qa_green (507 tests, 4 new). POST
+  bolabol/S7-done @ e0b2edc (LOCAL ONLY — monorepo remote push DISABLED; Human
+  must push when enabled). Graphify rebuilt after POST (4654 nodes). S8 step
+  card written. next_actor: coder for S8. NB-4 (languageSupport vs
+  capabilities) remains S9/S10 backlog.

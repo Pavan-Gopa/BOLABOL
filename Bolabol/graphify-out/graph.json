@@ -30267,6 +30267,18 @@
       "_origin": "ast"
     },
     {
+      "id": "script_qa_check_s6_gigaam_spike_require_literal",
+      "label": "require_literal()",
+      "file_type": "code",
+      "source_file": "script/qa/check_s6_gigaam_spike.sh",
+      "source_location": "L14",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast"
+    },
+    {
       "id": "script_qa_check_settings_surface",
       "label": "check_settings_surface.sh",
       "file_type": "code",
@@ -31291,39 +31303,39 @@
       "label": "S5 - Independent Tester QA (Canary Flash ~180M Core ML spike)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L852",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_854",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L854",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_856",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L856",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_what_was_verified_866",
+      "id": "ai_workflow_kit_docs_ai_feedback_what_was_verified_864",
       "label": "What was verified",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L866",
+      "source_location": "L864",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_879",
+      "id": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_877",
       "label": "Gap found and added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L879",
+      "source_location": "L877",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_result_887",
+      "id": "ai_workflow_kit_docs_ai_feedback_result_885",
       "label": "Result",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L887",
+      "source_location": "L885",
       "_origin": "ast"
     },
     {
@@ -31331,23 +31343,23 @@
       "label": "S6 — Spike GigaAM v3 RU Core ML (Step S6, coder)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L895",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_897",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L897",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_meta_899",
-      "label": "Meta",
-      "file_type": "document",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L899",
-      "_origin": "ast"
-    },
-    {
-      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_908",
+      "id": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_906",
       "label": "§1 — Inventory & Pass/Fail Summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L908",
+      "source_location": "L906",
       "_origin": "ast"
     },
     {
@@ -31355,23 +31367,127 @@
       "label": "§2 — S6 Spike Compliance",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L920",
+      "source_location": "L918",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_936",
+      "id": "ai_workflow_kit_docs_ai_feedback_3_verification_934",
       "label": "§3 — Verification",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L936",
+      "source_location": "L934",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_953",
+      "id": "ai_workflow_kit_docs_ai_feedback_4_handoff_951",
       "label": "§4 — Handoff",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L953",
+      "source_location": "L951",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "label": "S6 - Spike GigaAM v3 RU Core ML (Independent Reviewer)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L965",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_967",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L967",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_977",
+      "label": "Graphify and Scope Verification",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L977",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_988",
+      "label": "Acceptance Checklist",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L988",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_commands_and_results",
+      "label": "Commands and Results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1005",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_1018",
+      "label": "Findings",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1018",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_go_decision_1032",
+      "label": "GO Decision",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1032",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_change_list_1036",
+      "label": "Change List",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1036",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_s6_independent_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "label": "S6 - Independent Tester QA (GigaAM v3 RU Core ML spike)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1049",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_1051",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1051",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_and_gap_hunt",
+      "label": "Graphify and gap-hunt",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1061",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1068",
+      "label": "Commands and results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1068",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_runtime_and_scope",
+      "label": "Runtime and scope",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1094",
       "_origin": "ast"
     },
     {
@@ -32431,6 +32547,46 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_ai_report_step_s6_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "label": "Step S6 - Tester QA: GigaAM v3 RU Core ML spike",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1209",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_graphify_context_1219",
+      "label": "Graphify context",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1219",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_result_1229",
+      "label": "Gap-hunt result",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1229",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_commands_and_results_1244",
+      "label": "Commands and results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1244",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_qa_delta_and_scope",
+      "label": "QA delta and scope",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1276",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_ai_review_template",
       "label": "REVIEW_TEMPLATE.md",
       "file_type": "document",
@@ -33444,6 +33600,14 @@
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L131",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_adr_015_gigaam_v3_ru_core_ml_go_candidate_s6_spike",
+      "label": "ADR-015 — GigaAM v3 RU Core ML GO candidate (S6 spike)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L142",
       "_origin": "ast"
     },
     {
@@ -121780,6 +121944,27 @@
       "_origin": "ast"
     },
     {
+      "source": "script_qa_check_s6_gigaam_spike",
+      "target": "script_qa_check_s6_gigaam_spike_require_literal",
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s6_gigaam_spike.sh",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "script_qa_check_s6_gigaam_spike_sh__entry",
+      "target": "script_qa_check_s6_gigaam_spike_require_literal",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "script/qa/check_s6_gigaam_spike.sh",
+      "source_location": "L52",
+      "weight": 1.0,
+      "context": "call",
+      "_origin": "ast"
+    },
+    {
       "source": "script_qa_check_settings_surface",
       "target": "script_qa_check_settings_surface_sh__entry",
       "relation": "contains",
@@ -122898,47 +123083,47 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L852",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_854",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L854",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_856",
+      "target": "ai_workflow_kit_docs_ai_feedback_what_was_verified_864",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L856",
+      "source_location": "L864",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_what_was_verified_866",
+      "target": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_877",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L866",
+      "source_location": "L877",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_gap_found_and_added_879",
+      "target": "ai_workflow_kit_docs_ai_feedback_result_885",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L879",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_s5_independent_tester_qa_canary_flash_180m_core_ml_spike",
-      "target": "ai_workflow_kit_docs_ai_feedback_result_887",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L887",
+      "source_location": "L885",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -122948,27 +123133,27 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L895",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_897",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L897",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_meta_899",
+      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_906",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L899",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_1_inventory_pass_fail_summary_908",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L908",
+      "source_location": "L906",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -122978,27 +123163,157 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L920",
+      "source_location": "L918",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_936",
+      "target": "ai_workflow_kit_docs_ai_feedback_3_verification_934",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L936",
+      "source_location": "L934",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
-      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_953",
+      "target": "ai_workflow_kit_docs_ai_feedback_4_handoff_951",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
-      "source_location": "L953",
+      "source_location": "L951",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L965",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_967",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L967",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_and_scope_verification_977",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L977",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_acceptance_checklist_988",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L988",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_commands_and_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1005",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_1018",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1018",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_go_decision_1032",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1032",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_spike_gigaam_v3_ru_core_ml_independent_reviewer",
+      "target": "ai_workflow_kit_docs_ai_feedback_change_list_1036",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1036",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_s6_independent_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1049",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_independent_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_1051",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1051",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_independent_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_and_gap_hunt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1061",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_independent_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_commands_and_results_1068",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1068",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_s6_independent_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_feedback_runtime_and_scope",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L1094",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -124263,6 +124578,56 @@
       "_origin": "ast"
     },
     {
+      "source": "ai_workflow_kit_docs_ai_report",
+      "target": "ai_workflow_kit_docs_ai_report_step_s6_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1209",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s6_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_graphify_context_1219",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1219",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s6_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_result_1229",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1229",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s6_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_commands_and_results_1244",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1244",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_step_s6_tester_qa_gigaam_v3_ru_core_ml_spike",
+      "target": "ai_workflow_kit_docs_ai_report_qa_delta_and_scope",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L1276",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "ai_workflow_kit_docs_ai_review_template",
       "target": "ai_workflow_kit_docs_ai_review_template_review_template_bolabol",
       "relation": "contains",
@@ -125479,6 +125844,16 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L131",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_log_bolabol",
+      "target": "ai_workflow_kit_docs_decisions_adr_015_gigaam_v3_ru_core_ml_go_candidate_s6_spike",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L142",
       "weight": 1.0,
       "_origin": "ast"
     },

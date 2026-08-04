@@ -180,4 +180,99 @@ APP_VERSION=1.0.4 ./script/build_and_run.sh --verify
 
 ## S3+
 
-See master plan §4.
+See master plan §4 (S4–S15 Track B/C). Spikes S4–S6 closed 2026-08-04; product Track C starts after Human GO list.
+
+## S4b — Canary 1B Core ML fix + Bolabol-hosted package
+
+### Goal
+
+Produce a **fixed** Canary 1B v2 Core ML artifact that passes ASR preflight (unlike
+FluidInference / alexwengg NO-GO exports), package it for **Bolabol cloud download**
+(not Hugging Face), re-spike to **GO**, and leave a cloud-ready layout + manifest
+for later S7+ product wiring.
+
+Authoritative detail: `docs/asr/canary-1b/FIX_PLAN.md`.
+
+### Why (S4 residual)
+
+S4 NO-GO (ADR-013) is **export failure**, not “no large Canary ever”:
+
+| ID | Defect | Fix ownership |
+|----|--------|----------------|
+| F1 | Core ML Preprocessor mel broken (no freq discrimination; envelope corr ≈0.009) | **Exporter / frontend** |
+| F2 | Encoder embeddings content-free (cos(diff EN)≈0.97) | Usually follows F1; re-validate after F1 |
+| F3 | Decoder loops, never EOS | Re-validate after F1; decoder re-export only if still broken |
+| F4 | README WER/RTFx unreproducible | Auto-clears if F1–F3 pass |
+| F5 | Same class as alexwengg B6 | Do not reuse those HF packages |
+| F6 | FluidAudio 0.15.5 has no matching Canary API | Ship **Bolabol adapter/engine** later (S7–S9), not FluidAudio canary branch |
+
+App Settings/UI **cannot** fix F1–F3. Host may be custom CDN; **bytes must be a new GO package**.
+
+### Two allowed fix paths (pick one; document choice)
+
+**Path A — Preferred for cloud package completeness**  
+Re-export / fix **Preprocessor.mlmodelc** (and re-export Encoder/Decoder/Projection if mel contract changes) via mobius/coremltools from `nvidia/canary-1b-v2`, so the hosted folder is a self-contained Core ML set.
+
+**Path B — Flash-style hybrid (acceptable if A blocked)**  
+Verified **native Swift/Accelerate NeMo-aligned mel** in harness/engine + Core ML Encoder/Decoder/Projection only. Host package then includes mel contract docs + non-preprocessor models; product engine must implement the same mel. Prefer A if both work.
+
+Do **not** ship FluidInference preprocessor as-is.
+
+### Requirements
+
+1. Baseline: read S4 `docs/asr/canary-1b/COREML_SPIKE.md` rev.2 + ADR-012/013 (do not reopen broken HF as primary).
+2. Implement Path A or B; work under `docs/asr/canary-1b/fix/`, harness under `docs/canary/harness/` or `docs/asr/canary-1b/`, artifacts under `scratch/canary-1b-fix/` (gitignored).
+3. Preflight **all must PASS** before GO:
+   - Mel: 1 kHz vs 4 kHz narrow-band discrimination; pearson(mel, envelope) **> 0.5**
+   - ASR EN short: non-empty sensible transcript, **EOS true**, no infinite loop
+   - ≥1 second language or AST attempt documented (honest scope)
+   - True **valid-length** (never padded buffer size as valid)
+   - Load on CPU and ANE (or document OS gate, e.g. int4 → macOS 15+)
+   - No Python in inference path
+4. Cloud package under `scratch/canary-1b-fix/package/` (or documented path):
+   - frozen layout + `MANIFEST.json` (version id, sizes, **SHA-256** per file, license, min OS)
+   - upload notes for Human CDN (URL placeholders OK; real secrets not in repo)
+5. Write `docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md` with explicit **GO** or **NO-GO** and evidence.
+6. Optional ADR draft if GO (Orchestrator finalizes).
+7. Product Sources remain free of Canary production wiring (S7+ after GO + Human list).
+
+### target_files
+
+```yaml
+- docs/asr/canary-1b/FIX_PLAN.md
+- docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md
+- docs/asr/canary-1b/fix/
+- docs/canary/harness/
+- scratch/canary-1b-fix/
+- script/qa/
+- AI_Workflow_Kit/docs/DECISIONS.md
+```
+
+### Out of scope
+
+- Product catalog / download UI / CanaryCoreMLEngine production (S7–S10)
+- Reopening FluidInference/alexwengg packages as GO without re-export
+- FluidAudio unmerged `canary` branch as product dependency
+- Canary Flash / GigaAM product wiring (separate GO list)
+- git commit / push (Orchestrator)
+
+### Done
+
+- [ ] Path A or B chosen and documented
+- [ ] F1 preflight green (mel)
+- [ ] F3 preflight green (EOS + sensible EN transcript)
+- [ ] Cloud package layout + MANIFEST.json with SHA-256
+- [ ] `BOLABOL_COREML_SPIKE.md` Status GO or NO-GO with evidence
+- [ ] Product Sources still Canary-production-free
+- [ ] `swift test` green; QA dual-checks still green
+- [ ] FEEDBACK `waiting_review`
+
+### Verify
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+# harness build + preflight runs per FIX_PLAN.md
+swift test
+./script/qa/run_all.sh
+script/qa/check_no_canary_product.sh
+```

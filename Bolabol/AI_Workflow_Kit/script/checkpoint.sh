@@ -42,10 +42,11 @@ resolve_step() {
   local step="${1:-}"
   if [[ "$step" =~ ^B([0-9]|1[0-2])$ ]] \
     || [[ "$step" =~ ^S([0-9]|1[0-5])$ ]] \
-    || [[ "$step" =~ ^S1(b|c)$ ]]; then
+    || [[ "$step" =~ ^S1(b|c)$ ]] \
+    || [[ "$step" =~ ^S4b$ ]]; then
     return 0
   fi
-  die "step must be B0..B12, S0..S15, S1b, or S1c; got: ${step:-empty}"
+  die "step must be B0..B12, S0..S15, S1b, S1c, or S4b; got: ${step:-empty}"
 }
 
 pre_tag_for()  { echo "${PRODUCT_PREFIX}/pre-${1}"; }
@@ -158,10 +159,10 @@ cmd_rollback() {
 usage() {
   cat <<'EOF'
 Usage:
-  ./AI_Workflow_Kit/script/checkpoint.sh pre <B0..B12|S0..S15|S1b|S1c>
-  ./AI_Workflow_Kit/script/checkpoint.sh post <B0..B12|S0..S15|S1b|S1c> [description]
+  ./AI_Workflow_Kit/script/checkpoint.sh pre <B0..B12|S0..S15|S1b|S1c|S4b>
+  ./AI_Workflow_Kit/script/checkpoint.sh post <B0..B12|S0..S15|S1b|S1c|S4b> [description]
   ./AI_Workflow_Kit/script/checkpoint.sh list
-  ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post <B0..B12>
+  ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post <B0..B12|S0..S15|S1b|S1c|S4b>
 
 Stages only Bolabol/ under the monorepo (never whole AI Projects tree).
 Tags: bolabol/pre-<step>, bolabol/<step>-done

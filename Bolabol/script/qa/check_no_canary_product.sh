@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
-# ADR-012 invariant: zero Canary PRODUCT surface (no false capabilities).
-#  1) Package.swift: no canary product/target/module naming surface anywhere.
-#  2) Sources/: "canary" is tolerated as B4 i18n help copy — AppText.swift
-#     locale maps and helpBilingual* key references — plus S1b's pure ranking
-#     helper, which contains model IDs but no runtime integration. Any other
-#     canary hit (engine type, backend case, catalog entry, module) fails.
-# Structural complement to the catalog unit test
-# (nativeTranscriptionCatalogDoesNotContainCanaryProductOrBackend) and
-# check_b6_canary_spike.sh (docs NO-GO). No product Sources touched.
+# ADR-018 GO surface contract (S7):
+# 1) Package.swift: no canary/gigaam product/target/module naming surface anywhere.
+# 2) Sources/: GO catalog entries, backend cases, capabilities, and recommendation logic ALLOWED.
+# 3) STILL FORBIDDEN:
+#    - Canary/GigaAM engine types in Sources/ (e.g. CanaryCoreMLEngine, GigaAMCoreMLEngine).
+#    - NO-GO HuggingFace 1B download sources in Sources/ (FluidInference/canary-1b-v2-coreml or alexwengg).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -15,28 +12,27 @@ cd "$ROOT"
 
 FAILED=0
 
-# 1. Package.swift: canary forbidden in products, targets, and dependencies.
-if grep -in "canary" Package.swift; then
-  echo "FAIL: canary product/module/target name found in Package.swift"
+# 1. Package.swift: canary and gigaam forbidden in products, targets, and dependencies.
+if grep -inE "canary|gigaam" Package.swift; then
+  echo "FAIL: canary or gigaam product/module/target name found in Package.swift"
   FAILED=1
 fi
 
-# 2. Sources/: canary allowed only as i18n help copy (AppText.swift maps or
-#    helpBilingual* key references) or the pure S1b ranking helper. Everything
-#    else is a product leak.
-while IFS= read -r line; do
-  [ -n "$line" ] || continue
-  case "$line" in
-    *AppText.swift*) continue ;;
-    *helpBilingual*) continue ;;
-    *Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift*) continue ;;
-    *) echo "FAIL: canary outside i18n help copy: $line"; FAILED=1 ;;
-  esac
-done < <(grep -rin "canary" Sources --include='*.swift' || true)
+# 2. Sources/: Engine types forbidden.
+if grep -rnE "CanaryCoreMLEngine|GigaAMCoreMLEngine|class Canary|class GigaAM|struct CanaryCoreMLEngine|struct GigaAMCoreMLEngine" Sources --include='*.swift'; then
+  echo "FAIL: Canary or GigaAM engine types found in Sources"
+  FAILED=1
+fi
+
+# 3. Sources/: NO-GO HuggingFace 1B install sources forbidden (must use bolabol-canary-1b-v2-coreml-r1 package).
+if grep -rnE "FluidInference/canary-1b-v2-coreml|alexwengg/canary-1b-v2-coreml" Sources --include='*.swift'; then
+  echo "FAIL: NO-GO HuggingFace 1B package source found in Sources"
+  FAILED=1
+fi
 
 if [ "$FAILED" -ne 0 ]; then
-  echo "FAIL: ADR-012 no-product-Canary contract broken"
+  echo "FAIL: ADR-018 GO product surface contract broken"
   exit 1
 fi
 
-echo "OK: zero Canary product/module surface (ADR-012) — i18n help copy plus pure S1b ranking helper"
+echo "OK: ADR-018 GO catalog/backend surface permitted; engines and NO-GO 1B HF sources forbidden"

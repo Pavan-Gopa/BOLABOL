@@ -220,8 +220,14 @@ final class TranscriptionModelStore: ObservableObject {
                         )
                     }
                 }
-            }
 
+            case .canaryCoreML, .gigaAMCoreML:
+                throw NSError(
+                    domain: "TranscriptionModelStore",
+                    code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Download management for Canary and GigaAM models will be introduced in S8."]
+                )
+            }
             settings.markDownloaded(
                 modelID: model.id,
                 localURL: downloadedURL
@@ -241,7 +247,7 @@ final class TranscriptionModelStore: ObservableObject {
         switch model.backend {
         case .whisperKitCoreML:
             modelsDirectory.appendingPathComponent(model.id, isDirectory: true)
-        case .fluidAudioCoreML:
+        case .fluidAudioCoreML, .canaryCoreML, .gigaAMCoreML:
             parakeetModelsDirectory.appendingPathComponent(
                 model.modelFolderName,
                 isDirectory: true

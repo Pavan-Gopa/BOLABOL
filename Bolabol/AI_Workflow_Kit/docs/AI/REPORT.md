@@ -111,3 +111,51 @@ These are **low/medium severity**, all non-blocking.
 No product functional bugs found → **no BUG_REPORT**. The single `run_all.sh` red was a QA-script false positive (new `check_sec_no_download_code.sh` vs. pre-existing sanctioned cloud catalog), fixed in `script/qa/` only.
 
 Out of scope this pass (per role): product `Sources/**` changes, full security/vuln audit (Security Engineer), git commit/push.
+
+---
+
+## S7 Feature QA Report
+
+**Date:** 2026-08-04
+**Tester:** Test Engineer (feature QA; full vulnerability hunt out of scope)
+**Scope:** S7 Catalog + backends + capabilities, data layer only
+**Status:** **qa_green**
+
+### 1. Feature gate
+
+| Command | Result |
+|---|---|
+| `swift test` | **PASS** — 507 tests in 4 suites |
+| `./script/qa/run_all.sh` | **PASS** — 27 passed / 0 failed |
+| `check_no_secrets.sh` via `run_all.sh` | **PASS** |
+| `check_sec_no_secrets_extended.sh` via `run_all.sh` | **PASS** |
+
+### 2. Gap-hunt mapping
+
+| S7 requirement | Evidence |
+|---|---|
+| Backend cases exist | Existing catalog coverage plus new exact runtime-badge test for WhisperKit, FluidAudio, Canary, and GigaAM. |
+| Three GO descriptors and honest capabilities | Existing GO trio/order test; new exact 10/15/30 second chunk limits, language lists, download sizes, and macOS 15 capability assertions. |
+| Ranking IDs resolve to catalog entries | Existing `OnboardingModelRecommendation` matrix and S2 ranking tests pass against the current catalog IDs. |
+| QA permits GO surface and blocks engines/NO-GO sources | `check_no_canary_product.sh`, dependent scope checks, and all 27 contract scripts pass. New backends remain unavailable-engine stubs by existing product contract. |
+| Reviewer NB-2 runtime badges and chunk values | Covered by `nativeTranscriptionBackendsExposeStableRuntimeBadges` and `nativeTranscriptionCatalogUsesAdr018ChunkAndDownloadCapabilities`. |
+| FI/alexwengg install-source guard in catalog | Covered by `nativeTranscriptionCatalogKeepsNoGoCanarySourcesOutOfGoEntries` for all three GO entries; the sanctioned existing Parakeet FluidInference descriptor is excluded from this GO-only guard. |
+| Existing WhisperKit/FluidAudio regression | `nativeTranscriptionCatalogPreservesExistingWhisperKitAndFluidAudioDescriptors` snapshots the seven pre-S7 descriptors, including repository IDs, globs, badges, descriptions, ratings, and backend metadata. |
+
+### 3. New tests added
+
+Added to `Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift`:
+
+- `nativeTranscriptionBackendsExposeStableRuntimeBadges`
+- `nativeTranscriptionCatalogUsesAdr018ChunkAndDownloadCapabilities`
+- `nativeTranscriptionCatalogKeepsNoGoCanarySourcesOutOfGoEntries`
+- `nativeTranscriptionCatalogPreservesExistingWhisperKitAndFluidAudioDescriptors`
+
+### 4. Scope and verdict
+
+- Tester changed only the test file, this report, and the Tester section in `FEEDBACK.md`.
+- No `Sources/**`, `Package.swift`, `STATE.yaml`, or product code was changed.
+- `BUG_REPORT.md` remains unchanged with `bugs_open: 0`; no product defect was found.
+- Security coverage was limited to the existing lightweight secret checks in the gate, as required for Tester.
+
+**RESULT: `qa_green`**

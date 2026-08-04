@@ -28,6 +28,8 @@ final class TranscriptionEngineStore: ObservableObject {
                 return cachedWhisperKitEngine(for: activeModel)
             case .fluidAudioCoreML:
                 return cachedParakeetEngine(for: activeModel)
+            case .canaryCoreML, .gigaAMCoreML:
+                return UnavailableTranscriptionEngine()
             }
         }
     }

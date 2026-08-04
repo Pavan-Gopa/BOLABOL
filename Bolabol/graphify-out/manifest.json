@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/BUG_REPORT.md": {
-    "mtime": 1785844362.0912416,
-    "ast_hash": "18070faec00327142854e341063e4b0c",
+    "mtime": 1785850963.9475486,
+    "ast_hash": "1627430edd4773846fd022d3b9c9eef6",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/COVERAGE.md": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785848955.1280656,
-    "ast_hash": "81a61448cf23148519fc47f1553fd3a6",
+    "mtime": 1785851087.3213396,
+    "ast_hash": "76fd3b39d1313e3c6a3127c44f3033db",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
-    "mtime": 1785841389.6382012,
-    "ast_hash": "a4e485f3f78dd78cf06f9bb93bd2e75e",
+    "mtime": 1785851100.811168,
+    "ast_hash": "b19fe9982ad2fb7f795c3c13ee4e86d9",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REVIEW_TEMPLATE.md": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785849027.5650823,
-    "ast_hash": "a46a338b9fe3ad85f89e8e0154321197",
+    "mtime": 1785850328.456501,
+    "ast_hash": "fa69381b30743b37882bdc26dd088182",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -1565,8 +1565,8 @@
     "semantic_hash": ""
   },
   "script/qa/check_s8_download_contract.sh": {
-    "mtime": 1785844269.0677924,
-    "ast_hash": "528661a17502eb93ee66770e345b9b9a",
+    "mtime": 1785850875.0348234,
+    "ast_hash": "8fb02988ad4ba7e1456f053c0abb3762",
     "semantic_hash": ""
   }
 }

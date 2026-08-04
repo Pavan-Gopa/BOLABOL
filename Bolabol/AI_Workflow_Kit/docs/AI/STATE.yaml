@@ -1,19 +1,19 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S8
+current_step: S9
 step_description: >-
-  Download + presence + storage paths + progress UI for the ADR-018 GO trio:
-  explicit install-source mapping (Flash→aufklarer HF, GigaAM→huggingfinger0 HF,
-  1B→Bolabol CDN package), SharedModelsRoot canary/1b-v2, canary/180m-flash,
-  gigaam/v3-rnnt, complete-folder presence, resume + SHA-256 manifest (1B),
-  disk warning, Settings progress states. No engines (S9), no card redesign (S10).
+  Engines: CanaryCoreMLEngine (Flash + 1B Path B) + GigaAMCoreMLEngine wired to
+  TranscriptionEngineStore, replacing UnavailableTranscriptionEngine stubs.
+  Spike constraints enforced (compute units, native frontends, true lengths,
+  chunk caps, state resets, explicit language via capabilities). Gate: offline
+  dictate produces text. No UI cards (S10), no HUD matrix (S11).
 target_files:
-  - Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
-  - Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
-  - Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift
+  - Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift
+  - Sources/NativeBolabol/Engines/
+  - Sources/NativeBolabolCore/
   - Tests/NativeBolabolCoreTests/
-  - script/qa/
+  - script/qa/check_no_canary_product.sh
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 completed_steps:
   - S0
@@ -28,34 +28,29 @@ completed_steps:
   - S6
   - S4b
   - S7
+  - S8
 skipped_steps: []
 implementation:
-  status: waiting_review
-  attempts: 1
+  status: pending
+  attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
-  note: >-
-    S8 Fix (Attempt 1) re-review APPROVED (FEEDBACK): BUG-001 + BUG-002 resolved,
-    Tester contract unweakened, no regressions, zero findings. 513 tests, 28/28 QA.
-    Tester re-run next.
+  verdict: null
+  note: ''
 qa:
-  status: pending_rerun
-  last_report: AI_Workflow_Kit/docs/AI/BUG_REPORT.md
-  suite: S8
-  bugs_open: 2
-  note: >-
-    Fix round 1 approved by Reviewer. Tester re-run required: full gate +
-    confirm BUG-001/BUG-002 closed (S8DownloadContractTests +
-    check_s8_download_contract.sh green) before bugs_open → 0.
+  status: pending
+  last_report: AI_Workflow_Kit/docs/AI/REPORT.md
+  suite: S9
+  bugs_open: 0
+  note: ''
 security:
   next_run: recommended_after_S9
   note: >-
     S8 introduced first real CDN/HF model-download path (SECURITY.md trigger:
     "first CDN download path"). Recommend Security campaign after S9 engines wire
     the download path, or at pre-release — Human decides.
-next_actor: tester
+next_actor: coder
 track: PRODUCT
 prior_track: SPIKE_COMPLETE
 go_list:
@@ -74,28 +69,32 @@ excluded:
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S8
-  last_post_tag: bolabol/S7-done
-  last_commit: 95e05db
+  last_pre_tag: bolabol/pre-S9
+  last_post_tag: bolabol/S8-done
+  last_commit: 3659a72
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  Implement S8 only (step card in ASR_COREML_STEPS.md). Download + presence +
-  storage paths + progress UI for the GO trio. Explicit install-source mapping:
-  Flash → HF aufklarer/Canary-180M-Flash-CoreML, GigaAM → HF
-  huggingfinger0/gigaam-v3-coreml, 1B → Bolabol CDN package
-  bolabol-canary-1b-v2-coreml-r1 (S4b MANIFEST/SHA-256). Do NOT use
-  modelRepositoryID (NeMo origins) as install source (Reviewer NB-1). Storage
-  roots per plan §2.3; complete-folder presence; resume; disk warning for 1B;
-  Settings progress states; remove S7 placeholder throw (no step-id leak in
-  copy). No engines (S9), no card redesign/banners (S10), no HUD (S11).
+  Implement S9 only (step card in ASR_COREML_STEPS.md). Real Core ML engines for
+  the ADR-018 GO backends, wired into TranscriptionEngineStore (remove
+  UnavailableTranscriptionEngine stubs): CanaryCoreMLEngine (Flash + 1B Path B)
+  and GigaAMCoreMLEngine. Port frontend/decode logic from the verified spike
+  harnesses: CanaryFlashSpike.swift (Flash), CanarySmdesaiSpike.swift (1B Path
+  B), GigaAMCoreMLSpike.swift (GigaAM). Enforce spike constraints: Flash
+  .cpuAndNeuralEngine only + NeMo mel frontend + true lengths + <=10s chunks;
+  1B macOS 15+ MLState gate + Path B frontend constants + <=15s chunks + fresh
+  MLState per segment + native SentencePiece from canary_spe.model; GigaAM HTK
+  log-mel + 16kHz mono + <=30s chunks + RNNT state reset per chunk + blank 1024.
+  Explicit language only (no auto-detect); consume capabilities, NOT
+  languageSupport (NB-4). Load from S8 storage roots, require S8 complete-folder
+  presence. Honest errors (missing model / unsupported OS). Narrow
+  check_no_canary_product.sh per ADR-018 (engines allowed from S9; still forbid
+  NO-GO HF sources + Python). No S10 UI cards/banners, no S11 HUD matrix.
 notes: |
-  S7 cycle closed: POST bolabol/S7-done @ e0b2edc (LOCAL ONLY — monorepo remote
-  push DISABLED; Human must push when enabled). PRE bolabol/pre-S8 @ 95e05db.
-  S8 bug loop: Tester RED → Coder fix round 1 → Reviewer re-review APPROVED
-  (zero findings, 513 tests, 28/28 QA). next_actor: tester — re-run full gate,
-  confirm BUG-001/BUG-002 closed, update BUG_REPORT bugs_open → 0. If green:
-  POST S8 → graphify → PRE S9 → kick Coder. NB-4 remains S9/S10 backlog.
-  Security campaign recommended after S9.
+  S8 cycle closed with bug loop: POST bolabol/S8-done @ 3659a72 (LOCAL ONLY —
+  monorepo remote push DISABLED; Human must push when enabled). Graphify rebuilt
+  after POST (4723 nodes). S9 step card written. next_actor: coder for S9.
+  NB-4 must be honored in S9 (capabilities, not languageSupport). Security
+  campaign recommended after S9 (first CDN download path + engines now live).

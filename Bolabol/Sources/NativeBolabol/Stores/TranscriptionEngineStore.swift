@@ -9,8 +9,9 @@ final class TranscriptionEngineStore: ObservableObject {
         TranscriptionEngineStore()
     }
 
-    /// Resolves the local Whisper engine when backend is local and a model is active.
-    /// For Gemini cloud, callers must use `GeminiCloudDictationEngine` instead.
+    /// Resolves the active local transcription engine when backend is local and
+    /// a model is active. For Gemini cloud, callers must use
+    /// `GeminiCloudDictationEngine` instead.
     func activeEngine(
         modelStore: TranscriptionModelStore
     ) -> any TranscriptionEngine {
@@ -28,14 +29,18 @@ final class TranscriptionEngineStore: ObservableObject {
                 return cachedWhisperKitEngine(for: activeModel)
             case .fluidAudioCoreML:
                 return cachedParakeetEngine(for: activeModel)
-            case .canaryCoreML, .gigaAMCoreML:
-                return UnavailableTranscriptionEngine()
+            case .canaryCoreML:
+                return cachedCanaryEngine(for: activeModel)
+            case .gigaAMCoreML:
+                return cachedGigaAMEngine(for: activeModel)
             }
         }
     }
 
     private var whisperKitEngines: [String: WhisperKitTranscriptionEngine] = [:]
     private var parakeetEngines: [String: ParakeetTranscriptionEngine] = [:]
+    private var canaryEngines: [String: CanaryCoreMLEngine] = [:]
+    private var gigaAMEngines: [String: GigaAMCoreMLEngine] = [:]
 
     private func cachedWhisperKitEngine(
         for activeModel: ActiveTranscriptionModel
@@ -74,6 +79,46 @@ final class TranscriptionEngineStore: ObservableObject {
             modelFolderURL: activeModel.modelFolderURL
         )
         parakeetEngines[cacheKey] = engine
+        return engine
+    }
+
+    private func cachedCanaryEngine(
+        for activeModel: ActiveTranscriptionModel
+    ) -> CanaryCoreMLEngine {
+        let cacheKey = [
+            activeModel.model.id,
+            activeModel.modelFolderURL.path
+        ].joined(separator: "|")
+
+        if let cachedEngine = canaryEngines[cacheKey] {
+            return cachedEngine
+        }
+
+        let engine = CanaryCoreMLEngine(
+            model: activeModel.model,
+            modelFolderURL: activeModel.modelFolderURL
+        )
+        canaryEngines[cacheKey] = engine
+        return engine
+    }
+
+    private func cachedGigaAMEngine(
+        for activeModel: ActiveTranscriptionModel
+    ) -> GigaAMCoreMLEngine {
+        let cacheKey = [
+            activeModel.model.id,
+            activeModel.modelFolderURL.path
+        ].joined(separator: "|")
+
+        if let cachedEngine = gigaAMEngines[cacheKey] {
+            return cachedEngine
+        }
+
+        let engine = GigaAMCoreMLEngine(
+            model: activeModel.model,
+            modelFolderURL: activeModel.modelFolderURL
+        )
+        gigaAMEngines[cacheKey] = engine
         return engine
     }
 }

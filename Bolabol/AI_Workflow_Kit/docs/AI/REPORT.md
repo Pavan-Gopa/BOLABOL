@@ -1,3 +1,72 @@
+# S9 BUG-003 Fix Feature QA Report
+
+**Date:** 2026-08-05
+**Tester:** Test Engineer (independent feature QA; full security audit out of scope)
+**Scope:** S9 BUG-003 fix rerun, Path B decoder input contract, and ADR-018 runtime coverage
+**Status:** **qa_green**
+
+---
+
+## 1. Graphify gate
+
+The required query ran before source study:
+
+```text
+graphify query "S9 BUG-003 Canary 1B Path B decoder pos rank one runtime smoke TranscriptionEngineStore" --graph graphify-out/graph.json
+```
+
+Result: **PASS**, 361 related nodes found. The traversal resolved the real `CanaryCoreMLEngine` Path B decoder, `TranscriptionEngineStore`, `S9RuntimeSmokeTests`, the product position seam, and the BUG-003 handoff.
+
+## 2. Scratch assets
+
+All documented assets required by the opt-in smokes were present:
+
+- Flash: `scratch/canary-flash-spike/models/CanaryFlash/` and `scratch/canary-flash-spike/audio/en_short.wav`.
+- Canary 1B Path B: `scratch/canary-1b-fix/package/bolabol-canary-1b-v2-coreml-r1/` and `scratch/canary-flash-spike/audio/en_short.wav`. The package contains `canary_encoder.mlmodelc`, `canary_cross_kv.mlmodelc`, `canary_decoder_kv.mlmodelc`, and `canary_spe.model`; no preprocessor is required.
+- GigaAM: `scratch/gigaam-spike/models/` and `scratch/gigaam-spike/audio/ru_short.wav`.
+
+No fake fixture or duplicated product parser/builder was created.
+
+## 3. Feature gate results
+
+| Command | Result |
+|---|---|
+| `swift test --filter canary1BDecoderPositionUsesRankOneProductInput` | **PASS** - 1 test; real product seam returned int32 rank-1 `[1]` and the expected position value |
+| `swift test` | **PASS** - 555 tests in 15 suites |
+| `./script/qa/run_all.sh` | **PASS** - 29/29 checks |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter canary1BOfflineDictationProducesTextWhenScratchIsEnabled` | **PASS** - real Path B returned `The quick brown fox jumps over the lazy dog.` |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | **PASS** - 4 tests; Flash, 1B, and GigaAM returned non-empty text and the position regression passed |
+| `bash script/qa/check_s9_engine_contract.sh` | **PASS** - S9 constraints, product regression mapping, and token-shape guard |
+
+SwiftPM emitted existing dependency identity/resource warnings during Swift test planning; they did not affect the result. The default `swift test` run printed the expected opt-in smoke availability messages; the two explicit opt-in commands above executed the real assets.
+
+## 4. Independent gap-hunt mapping
+
+| S9 / BUG-003 requirement | Existing coverage and independent result |
+|---|---|
+| Product `pos` regression | `S9RuntimeSmokeTests.canary1BDecoderPositionUsesRankOneProductInput` calls `CanaryCoreMLEngine.pathBDecoderPositionArray(position:)` and asserts dtype, rank/shape `[1]`, and value. **PASS**. |
+| Preserve token contract `[1, 1]` | New `check_s9_engine_contract.sh` guard checks the product decoder call `makeI32([token])` and the real `makeI32` int32 builder shape `[1, values.count]`, which is `[1, 1]` for one token. **PASS**. |
+| BUG-003 real Path B behavior | Dedicated opt-in smoke loads the real package and returns non-empty English text. **PASS**; this is the independent closure evidence. |
+| All three runtime smokes | `S9RuntimeSmokeTests` covers Flash, Canary 1B, GigaAM, and the position regression. **PASS**, 4/4. |
+| Flash constraints | Product uses `.cpuAndNeuralEngine`, true encoder `length`, capability max chunk 10 seconds, and product chunk tests cover the 160,000-sample boundary. Source guard and tests **PASS**. |
+| Canary 1B constraints | Product has the macOS 15+/`MLState` gate, native Path B frontend, true `mel_length`/`encoder_length`, 15-second chunking, fresh state per segment, and native `SentencePieceModel` from `canary_spe.model`. Source guard, edge tests, regression, and runtime **PASS**. |
+| GigaAM constraints | Product uses RU-only capability validation, HTK frontend at 16 kHz, 30-second chunking, fresh RNNT decode per chunk, valid encoder frames, and blank ID 1024. Source guard, language/chunk tests, and runtime **PASS**. |
+| Explicit language through capabilities | Canary and GigaAM product language seams reject nil/unsupported requests; capability tests disable auto-detect for all three GO models. **PASS**. |
+| Native-only runtime | `check_no_python_in_sources.sh`, `check_no_canary_product.sh`, S4b/S6 guards, and `check_sec_no_download_code.sh` all passed through `run_all.sh`. No Python runtime was introduced. **PASS**. |
+| No S10+ expansion | S9 changes remain in engine/store/test/QA surfaces; existing S8 download, security allowlist, HUD, and product-boundary guards passed. No S10/S11 UI/HUD/catalog/download implementation was added by this QA rerun. **PASS**. |
+
+## 5. New tests and QA
+
+- Added QA-only assertions to `script/qa/check_s9_engine_contract.sh` for the real BUG-003 product seam, the preserved product token call, and the int32 array builder contract.
+- No Swift test-side token builder was added: the product token builder is private, and duplicating it would not test product behavior. The existing regression remains a direct call to the real product seam.
+- Existing S9 tests provide the remaining construction, store wiring, missing/incomplete folder, language, OS, dtype, chunk, and runtime coverage. This is a no-fake, minimal gap closure.
+
+## 6. BUG-003 closure
+
+The former failure was reproduced in the prior QA run with the real package and the rank-2 `pos` error. This independent rerun now passes the real product regression and the real Canary 1B Path B runtime smoke, with the expected non-empty transcript. BUG-003 is therefore **CLOSED**. No other open S9 product defect was found; `bugs_open` is **0**.
+
+---
+
 # S4b Feature QA Report
 
 **Date:** 2026-08-04

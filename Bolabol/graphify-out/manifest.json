@@ -1,8 +1,8 @@
 {
   "Package.swift": {
-    "mtime": 1785743538.0721118,
-    "ast_hash": "fc9e5c2fb47eee3b4e267fd0a62e8c57",
-    "semantic_hash": "fc9e5c2fb47eee3b4e267fd0a62e8c57"
+    "mtime": 1785859483.1613834,
+    "ast_hash": "66a77f31330823a588561a95a348b185",
+    "semantic_hash": ""
   },
   "script/build_and_run.sh": {
     "mtime": 1785743538.04764,
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/BUG_REPORT.md": {
-    "mtime": 1785850963.9475486,
-    "ast_hash": "1627430edd4773846fd022d3b9c9eef6",
+    "mtime": 1785874823.6844642,
+    "ast_hash": "cbd4aacaa38285c89f3e038243558d7a",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/COVERAGE.md": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1785851087.3213396,
-    "ast_hash": "76fd3b39d1313e3c6a3127c44f3033db",
+    "mtime": 1785874957.8269272,
+    "ast_hash": "929162b265c038c5a7af18edb3bee0aa",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
-    "mtime": 1785851100.811168,
-    "ast_hash": "b19fe9982ad2fb7f795c3c13ee4e86d9",
+    "mtime": 1785874866.7837365,
+    "ast_hash": "7c19276996873b66d48a901e567464e8",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REVIEW_TEMPLATE.md": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1785850328.456501,
-    "ast_hash": "fa69381b30743b37882bdc26dd088182",
+    "mtime": 1785874288.0581877,
+    "ast_hash": "25e1450efa724fd60d5765e4ccbc4770",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "script/qa/check_no_canary_product.sh": {
-    "mtime": 1785843069.310981,
-    "ast_hash": "331abdafca3632638c50c0c8febf9ba5",
+    "mtime": 1785855000.970634,
+    "ast_hash": "10f03c340ca2e5eb0cce99f65185300c",
     "semantic_hash": ""
   },
   "script/qa/check_no_python_in_sources.sh": {
@@ -595,8 +595,8 @@
     "semantic_hash": "b53ba26db89f69aefd3c4910efebe959"
   },
   "Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift": {
-    "mtime": 1785838484.0699923,
-    "ast_hash": "5f16d6338ea0db9a808a048b37ee2cd6",
+    "mtime": 1785854957.2303433,
+    "ast_hash": "3ea519109ae7583b60846c1c7dd2ab30",
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift": {
@@ -1340,8 +1340,8 @@
     "semantic_hash": "1faec7573299d690826048f8d7840b05"
   },
   "AI_Workflow_Kit/docs/ASR_COREML_STEPS.md": {
-    "mtime": 1785842738.0408313,
-    "ast_hash": "32c3daa8447d2d15ea15c0f36cc44e40",
+    "mtime": 1785851331.094933,
+    "ast_hash": "df6730db170b51141dfc3c485abdb7f4",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/BOLABOL_STEPS.md": {
@@ -1440,8 +1440,8 @@
     "semantic_hash": ""
   },
   "script/qa/check_s1b_scope.sh": {
-    "mtime": 1785838632.159157,
-    "ast_hash": "248ff9012968a575b652db4f351992ae",
+    "mtime": 1785855988.0742002,
+    "ast_hash": "0e46ea42821e867d8f102d0185809b8d",
     "semantic_hash": ""
   },
   "script/qa/check_s1c_onboarding_models.sh": {
@@ -1485,8 +1485,8 @@
     "semantic_hash": ""
   },
   "script/qa/check_s6_gigaam_spike.sh": {
-    "mtime": 1785838637.6635191,
-    "ast_hash": "704bd71f53da3aaa407108bd6c3c6b35",
+    "mtime": 1785856100.6258533,
+    "ast_hash": "7296a7f8a674267fbf083d992f7b200f",
     "semantic_hash": ""
   },
   "docs/asr/gigaam-v3/COREML_SPIKE.md": {
@@ -1567,6 +1567,41 @@
   "script/qa/check_s8_download_contract.sh": {
     "mtime": 1785850875.0348234,
     "ast_hash": "8fb02988ad4ba7e1456f053c0abb3762",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift": {
+    "mtime": 1785871422.2340763,
+    "ast_hash": "0abcba00aeee2e62383dde67051d118b",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Engines/GigaAMCoreMLEngine.swift": {
+    "mtime": 1785866446.0464516,
+    "ast_hash": "8c94ef82fe8441034072bf0cb24b618f",
+    "semantic_hash": ""
+  },
+  "Tests/NativeBolabolCoreTests/CoreMLEngineTests.swift": {
+    "mtime": 1785868334.3615685,
+    "ast_hash": "2135937adf1982c43d7639644521596c",
+    "semantic_hash": ""
+  },
+  "Tests/NativeBolabolCoreTests/EngineConstructionTests.swift": {
+    "mtime": 1785868343.0203774,
+    "ast_hash": "b039e59ab74c5e33ba756904851ac9de",
+    "semantic_hash": ""
+  },
+  "Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift": {
+    "mtime": 1785868402.177935,
+    "ast_hash": "7bcee5fe5cf5e8bddda7deb09d582257",
+    "semantic_hash": ""
+  },
+  "Tests/NativeBolabolCoreTests/S9RuntimeSmokeTests.swift": {
+    "mtime": 1785871422.234339,
+    "ast_hash": "7a3a64c955b2e7fe41f50e0944f98641",
+    "semantic_hash": ""
+  },
+  "script/qa/check_s9_engine_contract.sh": {
+    "mtime": 1785874649.6627986,
+    "ast_hash": "e1670cfbf2f2d777f9a41d45d2cbb0d1",
     "semantic_hash": ""
   }
 }

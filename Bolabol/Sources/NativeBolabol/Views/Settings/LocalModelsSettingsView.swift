@@ -156,6 +156,8 @@ private struct TranscriptionModelRow: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var transcriptionModelStore: TranscriptionModelStore
     let model: TranscriptionModelDescriptor
+    @State private var showingDiskWarning = false
+
 
     var body: some View {
         let state = transcriptionModelStore.installationState(for: model)
@@ -246,13 +248,27 @@ private struct TranscriptionModelRow: View {
         switch state.status {
         case .notDownloaded:
             Button {
-                Task {
-                    await transcriptionModelStore.download(model)
+                if model.capabilities.approxDownloadBytes > 1_000_000_000 {
+                    showingDiskWarning = true
+                } else {
+                    Task {
+                        await transcriptionModelStore.download(model)
+                    }
                 }
             } label: {
                 Label(generalSettingsStore.text(.download), systemImage: "arrow.down.circle")
             }
             .buttonStyle(.borderedProminent)
+            .alert("Large Model Download", isPresented: $showingDiskWarning) {
+                Button("Download (\(model.downloadSize))") {
+                    Task {
+                        await transcriptionModelStore.download(model)
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("\(model.displayName) requires approximately \(model.downloadSize) of disk space. Do you want to proceed?")
+            }
 
         case .downloading:
             VStack(alignment: .trailing, spacing: 6) {

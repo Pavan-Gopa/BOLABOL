@@ -159,3 +159,38 @@ Added to `Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift`:
 - Security coverage was limited to the existing lightweight secret checks in the gate, as required for Tester.
 
 **RESULT: `qa_green`**
+
+---
+
+## S8 re-run
+
+**Date:** 2026-08-04
+**Tester:** Test Engineer (post-fix feature gate; full vulnerability hunt out of scope)
+**Scope:** S8 Download + presence + storage paths + progress UI, fix round 1
+**Status:** **qa_green**
+
+### Gate results
+
+Graphify was queried first against `graphify-out/graph.json` for the S8 download, presence, package-size, storage, and regression-contract relationships. The query resolved the S8 tests, `TranscriptionModelStore`, `TranscriptionModelDescriptor`, and the QA guard.
+
+| Command | Result |
+|---|---|
+| `swift test` | **PASS** - 513 tests in 4 suites |
+| `./script/qa/run_all.sh` | **PASS** - 28 passed / 0 failed |
+| `check_s8_download_contract.sh` via `run_all.sh` | **PASS** |
+
+### Bug closure
+
+- **BUG-001 CLOSED:** `canary-1b-v2-coreml` advertises `approxDownloadBytes == 1_884_267_035` and `~1.88 GB`; the `>1_000_000_000` Settings warning condition therefore triggers. `s8CanaryOneBAdvertisesPackageSizeAboveDiskWarningThreshold` is green.
+- **BUG-002 CLOSED:** `isCompleteGOModelFolder` uses `requiredItems.isSubset(of: visible)` with the complete layouts for 1B, Flash, and GigaAM. Missing any bundle or vocabulary/metadata item, including an empty folder, is rejected; the 1B layout does not require `canary_preprocessor.mlmodelc`. `s8PresenceFixturesRejectEmptyFoldersAndIncompleteModelAssets` and the executable-target S8 contract are green.
+
+### Regression and gap-hunt
+
+- Install-source mapping, `SharedModelsRoot` storage paths, resume/SHA-256 hooks, and Settings progress states remain green.
+- Existing WhisperKit/FluidAudio catalog coverage, engine routing, and HUD-A markers remain green.
+- The gap-hunt strengthened `check_s8_download_contract.sh` with an explicit subset-semantics assertion covering missing-any-required-asset rejection across all three GO layouts. No new product bug was found.
+- Security verification remained limited to the lightweight checks already included in the gate.
+
+### Verdict
+
+**RESULT: `qa_green`** - BUG-001 and BUG-002 are closed; current `BUG_REPORT.md` has `bugs_open: 0`.

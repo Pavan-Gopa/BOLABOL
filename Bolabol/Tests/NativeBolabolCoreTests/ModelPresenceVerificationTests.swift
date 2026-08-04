@@ -53,3 +53,60 @@ func modelPresenceRequiresWhisperKitCompiledModelAndMetadata() throws {
     try FileManager.default.removeItem(at: root.appendingPathComponent("config.json"))
     #expect(!LocalModelPresence.isCompleteWhisperKitModel(at: root))
 }
+
+@Test
+func s8PresenceFixturesRejectEmptyFoldersAndIncompleteModelAssets() throws {
+    let whisperRoot = FileManager.default.temporaryDirectory
+        .appendingPathComponent("NativeBolabolS8WhisperPresence-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: whisperRoot) }
+
+    try FileManager.default.createDirectory(at: whisperRoot, withIntermediateDirectories: true)
+    #expect(!LocalModelPresence.isCompleteWhisperKitModel(at: whisperRoot))
+
+    try #"{}"#.write(
+        to: whisperRoot.appendingPathComponent("config.json"),
+        atomically: true,
+        encoding: .utf8
+    )
+    #expect(!LocalModelPresence.isCompleteWhisperKitModel(at: whisperRoot))
+
+    try FileManager.default.createDirectory(
+        at: whisperRoot.appendingPathComponent("AudioEncoder.mlmodelc", isDirectory: true),
+        withIntermediateDirectories: true
+    )
+    #expect(LocalModelPresence.isCompleteWhisperKitModel(at: whisperRoot))
+
+    let mlxRoot = FileManager.default.temporaryDirectory
+        .appendingPathComponent("NativeBolabolS8MLXPresence-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: mlxRoot) }
+
+    try FileManager.default.createDirectory(at: mlxRoot, withIntermediateDirectories: true)
+    try #"{"model_type":"qwen2"}"#.write(
+        to: mlxRoot.appendingPathComponent("config.json"),
+        atomically: true,
+        encoding: .utf8
+    )
+    try Data([1]).write(to: mlxRoot.appendingPathComponent("model.safetensors"))
+    #expect(!LocalModelPresence.isCompleteMLXModel(at: mlxRoot))
+
+    try #"{}"#.write(
+        to: mlxRoot.appendingPathComponent("tokenizer.json"),
+        atomically: true,
+        encoding: .utf8
+    )
+    #expect(LocalModelPresence.isCompleteMLXModel(at: mlxRoot))
+}
+
+@Test
+func sharedModelsRootResolvesADR018GoModelSubpaths() throws {
+    let catalog = TranscriptionModelCatalog.nativeWhisperKit
+
+    let flash = try #require(catalog.model(withID: "canary-180m-flash-coreml"))
+    #expect(flash.relativeStorageSubpath == "canary/180m-flash")
+
+    let gigaAM = try #require(catalog.model(withID: "gigaam-v3-rnnt-coreml"))
+    #expect(gigaAM.relativeStorageSubpath == "gigaam/v3-rnnt")
+
+    let canary1B = try #require(catalog.model(withID: "canary-1b-v2-coreml"))
+    #expect(canary1B.relativeStorageSubpath == "canary/1b-v2")
+}

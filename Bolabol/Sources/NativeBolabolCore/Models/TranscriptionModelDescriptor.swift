@@ -105,6 +105,14 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
         }
     }
 
+/// Explicit install source for transcription models (ADR-018 requirement).
+/// Decouples download origins from upstream metadata repository IDs.
+public enum ModelInstallSource: Equatable, Sendable, Codable {
+    case huggingFace(repositoryID: String)
+    case bolabolCDN(packageID: String, baseURL: URL)
+    case fluidAudio(version: String)
+}
+
     public var id: String
     public var displayName: String
     public var modelName: String
@@ -126,6 +134,50 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
             "openai_whisper-\(modelName)"
         case .fluidAudioCoreML, .canaryCoreML, .gigaAMCoreML:
             modelName
+        }
+    }
+
+    /// Configurable base URL for Bolabol CDN hosted packages.
+    public static let defaultBolabolCDNBaseURL: URL = {
+        if let envURLString = ProcessInfo.processInfo.environment["BOLABOL_CDN_BASE_URL"],
+           let url = URL(string: envURLString) {
+            return url
+        }
+        return URL(string: "https://cdn.bolabol.app/models/")!
+    }()
+
+    /// Resolved install source mapping per ADR-018 §2.3.
+    public var installSource: ModelInstallSource {
+        switch id {
+        case "canary-180m-flash-coreml":
+            return .huggingFace(repositoryID: "aufklarer/Canary-180M-Flash-CoreML")
+        case "gigaam-v3-rnnt-coreml":
+            return .huggingFace(repositoryID: "huggingfinger0/gigaam-v3-coreml")
+        case "canary-1b-v2-coreml":
+            return .bolabolCDN(
+                packageID: "bolabol-canary-1b-v2-coreml-r1",
+                baseURL: Self.defaultBolabolCDNBaseURL
+            )
+        default:
+            if backend == .fluidAudioCoreML {
+                return .fluidAudio(version: "v3")
+            } else {
+                return .huggingFace(repositoryID: modelRepositoryID)
+            }
+        }
+    }
+
+    /// Relative storage subpath under SharedModelsRoot per plan §2.3.
+    public var relativeStorageSubpath: String {
+        switch id {
+        case "canary-1b-v2-coreml":
+            return "canary/1b-v2"
+        case "canary-180m-flash-coreml":
+            return "canary/180m-flash"
+        case "gigaam-v3-rnnt-coreml":
+            return "gigaam/v3-rnnt"
+        default:
+            return modelFolderName
         }
     }
 
@@ -384,7 +436,7 @@ public extension TranscriptionModelCatalog {
                 snapshotGlob: "**",
                 backend: .canaryCoreML,
                 languageSupport: .multilingual,
-                downloadSize: "~573 MB",
+                downloadSize: "~1.88 GB",
                 badge: "Multilingual · macOS 15+",
                 description: "Canary 1B v2 Core ML int4 package for Apple Neural Engine on macOS 15+. Verified English ASR and speech translation.",
                 accuracy: 4,
@@ -395,7 +447,7 @@ public extension TranscriptionModelCatalog {
                     supportsSpeechTranslation: true,
                     maxChunkSeconds: 15.0,
                     minOSVersion: ASRModelCapabilities.OSVersion(majorVersion: 15, minorVersion: 0, patchVersion: 0),
-                    approxDownloadBytes: 573_000_000,
+                    approxDownloadBytes: 1_884_267_035,
                     isRecommendedForPrimaryRU: false,
                     isRecommendedForEnDeFrEs: false
                 )

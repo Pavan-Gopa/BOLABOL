@@ -320,6 +320,97 @@ swift test
 ./script/qa/run_all.sh
 ```
 
+## S9 — Engines: CanaryCoreMLEngine + GigaAMCoreMLEngine
+
+### Goal
+
+Replace S7 `UnavailableTranscriptionEngine` stubs with real Core ML engines for
+the ADR-018 GO backends and wire them into `TranscriptionEngineStore`.
+Gate: **offline dictate produces text** for all three GO models (local models,
+no network, no Python).
+
+Reference implementations (verified spike harnesses — port frontend/decode logic):
+- Flash: `docs/canary/harness/CanaryFlashSpike.swift` + `docs/asr/canary-flash/COREML_SPIKE.md` §7
+- 1B Path B: `docs/canary/harness/CanarySmdesaiSpike.swift` + `docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md` §7
+- GigaAM: `docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift` + `docs/asr/gigaam-v3/COREML_SPIKE.md` §7
+
+### Spike constraints (authoritative — must hold in product)
+
+Flash (S5):
+- `.cpuAndNeuralEngine` only (`.all` crashes MPSGraph)
+- NeMo mel frontend contract exactly as harness; pass TRUE mel-frame count as `length`
+- 10 s fixed window → audio > 10 s must be VAD/chunk-segmented, no cross-window context
+- Language tokens en/de/fr/es; AST verified only en→de
+
+1B Path B (S4b):
+- macOS 15+ gate (`MLState`); on macOS 14 engine reports unavailable (capabilities.minOSVersion)
+- Exact Path B native frontend constants; true sample/mel/encoder lengths
+- VAD/chunks ≤ 15 s; fresh `MLState` per segment
+- Native SentencePiece decode from `canary_spe.model` (no Python, no vocab.json product dependency)
+- Verified claims only: EN ASR + EN→FR AST
+
+GigaAM (S6):
+- RU-focused only; HTK log-mel frontend; 16 kHz mono
+- VAD/chunks ≤ 30 s; reset RNNT state per chunk; decode only true valid encoder frames
+- Blank id 1024; no WER/confidence/EN/multilingual/AST/auto-detect claims
+
+All:
+- No auto language detect (capabilities.supportsAutoLanguageDetect == false) —
+  engine takes explicit language; S9/S10 consume `capabilities`, NOT
+  `languageSupport` (Reviewer NB-4)
+- Load from S8 storage roots; require S8 complete-folder presence before run
+
+### Requirements
+
+1. `CanaryCoreMLEngine` (backend `.canaryCoreML`): Flash + 1B model paths per
+   constraints above; model selection by catalog id
+2. `GigaAMCoreMLEngine` (backend `.gigaAMCoreML`): RNNT decode per constraints
+3. `TranscriptionEngineStore` returns real engines for GO backends (stubs removed)
+4. Engine errors are honest: missing/incomplete model → clear «download the model»
+   style error (no fake states); macOS 14 + 1B → unavailable reason
+5. QA: narrow `check_no_canary_product.sh` per ADR-018 (engine modules allowed
+   from S9; still forbid NO-GO HF sources, Python, non-GO engines);
+   keep `check_sec_no_download_code.sh` allowlist intact
+6. Unit tests: engine construction per backend/model, language validation against
+   capabilities, chunking boundaries, unavailable paths (macOS 14 / missing model)
+
+### target_files (expected — adjust via graphify if needed)
+
+```yaml
+- Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift
+- Sources/NativeBolabol/Engines/ (new engine files)
+- Sources/NativeBolabolCore/ (shared frontend/decode types if needed)
+- Tests/NativeBolabolCoreTests/
+- script/qa/check_no_canary_product.sh
+- AI_Workflow_Kit/docs/AI/FEEDBACK.md
+```
+
+### Out of scope
+
+- S10 Local Models UI cards / OS banners / clamp banners
+- S11 HUD + session language matrix (HUD letters, GigaAM fixed RU display)
+- S12 ranking wiring to Settings recommended strip
+- Speech translation UI wiring beyond engine AST capability (Flash/1B AST path
+  may exist in engine, HUD/session wiring is S11)
+- Polish worker changes
+
+### Done
+
+- [ ] CanaryCoreMLEngine + GigaAMCoreMLEngine wired in TranscriptionEngineStore; stubs gone
+- [ ] Spike constraints enforced (compute units, frontends, true lengths, chunk caps, state resets)
+- [ ] Explicit language only; capabilities consumed, not languageSupport
+- [ ] Honest errors: missing model / incomplete folder / unsupported OS
+- [ ] No Python; QA narrowed per ADR-018 and green
+- [ ] swift test + run_all green; FEEDBACK waiting_review
+
+### Verify
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+swift test
+./script/qa/run_all.sh
+```
+
 ## S4b — Canary 1B Core ML fix + Bolabol-hosted package
 
 ### Goal

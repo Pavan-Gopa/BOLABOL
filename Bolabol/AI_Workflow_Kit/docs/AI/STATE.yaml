@@ -76,8 +76,8 @@ working_roots:
   - Bolabol
 checkpoint:
   last_pre_tag: bolabol/pre-S9
-  last_post_tag: bolabol/S8-done
-  last_commit: 3659a72
+  last_post_tag: bolabol/S9-done
+  last_commit: 2cfbc72
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md

@@ -245,6 +245,81 @@ swift test
 ./script/qa/run_all.sh
 ```
 
+## S8 — Download + presence + storage paths + progress UI
+
+### Goal
+
+Make the three ADR-018 GO models actually installable: download (with resume),
+storage roots, complete-folder presence check, and download progress UI in
+Settings → Local Models. No engines yet (S9), no card redesign / banners (S10).
+
+Gate: **install complete-folder works** for all three GO models.
+
+### Install sources (ADR-018 — authoritative)
+
+| id | Source | Notes |
+|----|--------|-------|
+| `canary-180m-flash-coreml` | HF `aufklarer/Canary-180M-Flash-CoreML` | NOT `nvidia/canary-180m-flash` (NeMo origin, non-Core ML) |
+| `gigaam-v3-rnnt-coreml` | HF `huggingfinger0/gigaam-v3-coreml` | NOT `salute-developers/gigaam-v3` (NeMo origin) |
+| `canary-1b-v2-coreml` | Bolabol CDN package `bolabol-canary-1b-v2-coreml-r1` | Path B (S4b, ADR-017); MANIFEST.json + SHA-256; CDN base URL placeholder OK, must be explicit/configurable — no fake download |
+
+Reviewer NB-1 (S7): `modelRepositoryID` for Flash/GigaAM currently points at
+NeMo origin repos — S8 must NOT use it verbatim as install source. Introduce an
+explicit install-source field/mapping per backend.
+
+### Requirements
+
+1. Storage roots (plan §2.3): SharedModelsRoot → `canary/1b-v2/`,
+   `canary/180m-flash/`, `gigaam/v3-rnnt/`. Move the S7 temporary
+   `parakeetModelsDirectory` placeholders for the new backends to real roots.
+2. Complete-folder presence check per model (all required `.mlmodelc` +
+   vocab/`canary_spe.model` per package layout; 1B = S4b package layout minus
+   the excluded preprocessor).
+3. Download with resume reusing the existing model-install path where possible;
+   1B via CDN package manifest (`docs/asr/canary-1b/fix/package_manifest.sh`,
+   `MANIFEST.json` SHA-256 contract); verify integrity after download.
+4. Disk warning for 1B (~1.8 GB package) before download starts.
+5. Progress UI: Settings → Local Models rows show Downloading (progress),
+   Ready, Failed (retry), Not installed — same pattern as Whisper/Parakeet.
+6. Replace the S7 placeholder `download()` throw for the new backends
+   (NB-3: user-facing text must not leak internal step ids).
+7. Honest states only — no fake progress / fake downloaded states.
+
+### target_files (expected — adjust via graphify if needed)
+
+```yaml
+- Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
+- Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift  # install-source mapping only
+- Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift   # progress states only
+- Tests/NativeBolabolCoreTests/
+- script/qa/ (guard install sources != NO-GO HF / NeMo origins)
+- AI_Workflow_Kit/docs/AI/FEEDBACK.md
+```
+
+### Out of scope
+
+- S9 engines (CanaryCoreMLEngine / GigaAMCoreMLEngine)
+- S10 card redesign, OS banners, clamp banners
+- S11 HUD matrix
+- Any use of FluidInference/alexwengg/smdesai trees as install sources
+
+### Done
+
+- [ ] Explicit install-source mapping: Flash→aufklarer, GigaAM→huggingfinger0, 1B→Bolabol CDN package
+- [ ] Storage roots per plan §2.3; presence = complete-folder check
+- [ ] Resume works; 1B SHA-256 manifest verified after download
+- [ ] Disk warning for 1B; progress/ready/failed/retry states in Settings
+- [ ] No fake states; placeholder S8 throw removed; no step-id leak in copy
+- [ ] swift test + run_all green; FEEDBACK waiting_review
+
+### Verify
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+swift test
+./script/qa/run_all.sh
+```
+
 ## S4b — Canary 1B Core ML fix + Bolabol-hosted package
 
 ### Goal

@@ -37185,6 +37185,158 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "label": "ADR-019 — S10 Local Models UI capability and banner contract",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L195",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_decision",
+      "label": "Decision",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L199",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_rationale",
+      "label": "Rationale",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L223",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_exact_s10_boundaries",
+      "label": "Exact S10 boundaries",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L243",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_in_scope",
+      "label": "In scope",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L245",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_explicitly_deferred_to_s11_hud_session_matrix",
+      "label": "Explicitly deferred to S11 — HUD/session matrix",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L261",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_explicitly_deferred_to_s12_settings_recommendation_ranking_wiring",
+      "label": "Explicitly deferred to S12 — Settings recommendation/ranking wiring",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L277",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_out_of_scope_entirely_for_s10",
+      "label": "Out of scope entirely for S10",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L285",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_ux_card_and_real_state_contract",
+      "label": "UX card and real-state contract",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L297",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_banner_clamp_and_language_truth_contract",
+      "label": "Banner, clamp, and language-truth contract",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L330",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_truth_sources_and_precedence",
+      "label": "Truth sources and precedence",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L332",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_canary_clamp",
+      "label": "Canary clamp",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L348",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_gigaam_tip_and_no_auto_notice",
+      "label": "GigaAM tip and no-auto notice",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L388",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_recommended_future_s10_target_files",
+      "label": "Recommended future S10 target files",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L417",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_mandatory_product_files",
+      "label": "Mandatory product files",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L425",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_mandatory_test_files",
+      "label": "Mandatory test files",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L440",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_no_s10_qa_script_change",
+      "label": "No S10 QA-script change",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L455",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_acceptance_matrix_and_definition_of_done",
+      "label": "Acceptance matrix and Definition of Done",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L463",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_decisions_risks_open_questions",
+      "label": "Risks / open questions",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L503",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_project_context",
       "label": "PROJECT_CONTEXT.md",
       "file_type": "document",
@@ -140162,6 +140314,196 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
       "source_location": "L173",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_log_bolabol",
+      "target": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L195",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "target": "ai_workflow_kit_docs_decisions_decision",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L199",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "target": "ai_workflow_kit_docs_decisions_rationale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L223",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "target": "ai_workflow_kit_docs_decisions_exact_s10_boundaries",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L243",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_exact_s10_boundaries",
+      "target": "ai_workflow_kit_docs_decisions_in_scope",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L245",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_exact_s10_boundaries",
+      "target": "ai_workflow_kit_docs_decisions_explicitly_deferred_to_s11_hud_session_matrix",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L261",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_exact_s10_boundaries",
+      "target": "ai_workflow_kit_docs_decisions_explicitly_deferred_to_s12_settings_recommendation_ranking_wiring",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L277",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_exact_s10_boundaries",
+      "target": "ai_workflow_kit_docs_decisions_out_of_scope_entirely_for_s10",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L285",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "target": "ai_workflow_kit_docs_decisions_ux_card_and_real_state_contract",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L297",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "target": "ai_workflow_kit_docs_decisions_banner_clamp_and_language_truth_contract",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L330",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_banner_clamp_and_language_truth_contract",
+      "target": "ai_workflow_kit_docs_decisions_truth_sources_and_precedence",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L332",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_banner_clamp_and_language_truth_contract",
+      "target": "ai_workflow_kit_docs_decisions_canary_clamp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L348",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_banner_clamp_and_language_truth_contract",
+      "target": "ai_workflow_kit_docs_decisions_gigaam_tip_and_no_auto_notice",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L388",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "target": "ai_workflow_kit_docs_decisions_recommended_future_s10_target_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L417",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_recommended_future_s10_target_files",
+      "target": "ai_workflow_kit_docs_decisions_mandatory_product_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L425",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_recommended_future_s10_target_files",
+      "target": "ai_workflow_kit_docs_decisions_mandatory_test_files",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L440",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_recommended_future_s10_target_files",
+      "target": "ai_workflow_kit_docs_decisions_no_s10_qa_script_change",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L455",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "target": "ai_workflow_kit_docs_decisions_acceptance_matrix_and_definition_of_done",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L463",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_decisions_adr_019_s10_local_models_ui_capability_and_banner_contract",
+      "target": "ai_workflow_kit_docs_decisions_risks_open_questions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/DECISIONS.md",
+      "source_location": "L503",
       "weight": 1.0,
       "_origin": "ast"
     },

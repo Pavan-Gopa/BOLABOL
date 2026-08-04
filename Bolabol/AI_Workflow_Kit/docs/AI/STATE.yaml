@@ -1,16 +1,22 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S9
+current_step: S10
 step_description: >-
-  Engines: CanaryCoreMLEngine (Flash + 1B Path B) + GigaAMCoreMLEngine wired to
-  TranscriptionEngineStore, replacing UnavailableTranscriptionEngine stubs.
-  Spike constraints enforced (compute units, native frontends, true lengths,
-  chunk caps, state resets, explicit language via capabilities). Gate: offline
-  dictate produces text. No UI cards (S10), no HUD matrix (S11).
+  Settings → Local Models capability-driven cards, banners, and the Canary 1B
+  macOS gate for the ADR-018 GO trio. Render only real S8 installation state and
+  S7 capabilities; explicit source-language clamp is non-persisting. No HUD or
+  session language routing (S11), Settings ranking (S12), catalog/download
+  implementation, or engine changes.
 target_files:
-  - Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift
-  - Tests/NativeBolabolCoreTests/S9RuntimeSmokeTests.swift
+  - Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift
+  - Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
+  - Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
+  - Sources/NativeBolabolCore/Services/AppText.swift
+  - Tests/NativeBolabolCoreTests/CoreMLEngineTests.swift
+  - Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
+  - Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift
+  - Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 completed_steps:
   - S0
@@ -29,34 +35,29 @@ completed_steps:
   - S9
 skipped_steps: []
 implementation:
-  status: done
-  attempts: 2
+  status: pending
+  attempts: 0
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved
+  verdict: null
   note: >-
-    Independent Reviewer approved the BUG-003 fix on 2026-08-05. The review
-    verified the real product decoder seam, rank-1 int32 pos regression test,
-    full gate, and all three opt-in real runtime smokes. Tester must now perform
-    independent feature QA and confirm BUG-003 closure.
+    Awaiting independent review after the first S10 implementation handoff.
 qa:
-  status: green
+  status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: S9
+  suite: S10
   bugs_open: 0
   note: >-
-    Independent Tester QA rerun is green: the product rank regression, full
-    suite (555 tests), full QA gate (29/29), dedicated real Path B smoke, and
-    all three S9 runtime smokes passed. BUG-003 is CLOSED; no open S9 product
-    defects remain.
+    Awaiting S10 feature QA after Reviewer approval. Tester owns gap-hunt and
+    feature coverage; no full security campaign is required for this UI step.
 security:
   next_run: deferred_human_testing
   note: >-
     Human decision 2026-08-04: Security campaign deferred — Human will manually
     test the app first; Security kick after that (Human + Orchestrator decide
     scope). Trigger context: S8 first CDN download path + S9 live engines.
-next_actor: architect
+next_actor: coder
 track: PRODUCT
 prior_track: SPIKE_COMPLETE
 go_list:
@@ -75,7 +76,7 @@ excluded:
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S9
+  last_pre_tag: bolabol/pre-S10
   last_post_tag: bolabol/S9-done
   last_commit: 2cfbc72
 plan_files:
@@ -83,15 +84,14 @@ plan_files:
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  Fix BUG-003 only. The real Canary 1B Path B runtime smoke loads the GO package
-  but fails before decoding because product code creates pos with rank 2 ([1, 1])
-  while the Core ML decoder requires rank 1. Reconcile the product input shape
-  with the verified S4b Path B harness/model contract; preserve all strict S9
-  constraints and existing Flash/GigaAM behavior. Add or adjust only minimum
-  non-fake regression coverage needed to prove the product sends the required
-  shape, then run the opt-in real smoke when documented scratch assets exist.
-  Do not change S10+ UI/HUD work, catalog/download behavior, Tester findings,
-  BUG_REPORT.md, or workflow state.
+  Implement ADR-019 only. Complete Settings → Local Models presentation for the
+  ADR-018 GO trio using real S7 capabilities and S8 store state: exact localized
+  cards/badges, capability-based non-persisting source choices and notices,
+  real state precedence, and the computed 1B macOS gate in both the View and
+  Settings action path. Keep all legacy Whisper/Parakeet behavior unchanged.
+  Add focused capability, localization, and non-mutation regressions. Do not
+  add a persisted UI/install state, alter GO catalog/source/download/storage
+  contracts or engines, add script/qa, or do S11 HUD/session or S12 ranking.
 notes: |
   S8 cycle closed: POST bolabol/S8-done @ 3659a72 (LOCAL ONLY — monorepo remote
   push DISABLED; Human must push when enabled). PRE bolabol/pre-S9 @ ca10a95.
@@ -104,8 +104,8 @@ notes: |
    fresh build are reported green. Graphify was rebuilt (4,988 nodes) and the
    independent Reviewer approved BUG-003. Independent Tester QA then passed:
    555 tests, 29/29 QA checks, the real Path B smoke, and all three runtime
-   smokes; BUG-003 is closed and S9 is complete. Graphify POST rebuild is
-   required. S10 is named in the authoritative ASR plan but lacks a detailed
-   executable card, so Architect must first produce a design-only scope packet.
-   Security remains deferred until Human manual testing and a green S9 feature
-   gate.
+   smokes; BUG-003 is closed and S9 is complete at POST bolabol/S9-done @
+   2cfbc72 (LOCAL ONLY — remote push DISABLED). Graphify was rebuilt after POST.
+   Architect handoff appended ADR-019 (S10 capability/UI/banner contract) with
+   no product changes. S10 begins from PRE bolabol/pre-S10. Security remains
+   deferred until Human manual testing and a green S9 feature gate.

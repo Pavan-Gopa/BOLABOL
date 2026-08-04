@@ -178,9 +178,72 @@ swift test
 APP_VERSION=1.0.4 ./script/build_and_run.sh --verify
 ```
 
-## S3+
+## S3+ (Track B closed)
 
-See master plan §4 (S4–S15 Track B/C). Spikes S4–S6 closed 2026-08-04; product Track C starts after Human GO list.
+Spikes S4–S6 + S4b closed. Human GO list **ADR-018** (Flash + GigaAM + 1B Path B).  
+Track C: S7→S15.
+
+## S7 — Catalog + backends + capabilities (data layer only)
+
+### Goal
+
+Add product **data layer** for ADR-018 GO models so they appear in catalogs /
+ranking IDs without yet implementing download UI or engines (S8/S9).
+
+### GO models (ADR-018)
+
+| id | displayName | backend | languages / notes |
+|----|-------------|---------|-------------------|
+| `canary-180m-flash-coreml` | Canary Flash (EN/DE/FR/ES) | `canaryCoreML` | en,de,fr,es; S5 package |
+| `canary-1b-v2-coreml` | Canary 1B v2 (Path B) | `canaryCoreML` | verified EN (+ EN→FR AST claim); **Bolabol package** `bolabol-canary-1b-v2-coreml-r1`, **not** HF FI/alexwengg |
+| `gigaam-v3-rnnt-coreml` | GigaAM v3 (Russian) | `gigaAMCoreML` | **ru only** |
+
+Existing WhisperKit / FluidAudio (Parakeet) unchanged.
+
+### Requirements
+
+1. Extend `TranscriptionModelDescriptor.Backend` with `canaryCoreML` and `gigaAMCoreML` (names per plan §2.1).
+2. Add `ASRModelCapabilities` (or equivalent) with honest flags: no auto-detect for Canary/GigaAM; language lists; maxChunkSeconds (Flash ~10s, 1B ~15s, GigaAM ~30s); minOS (1B Path B macOS 15+ if MLState); download size estimates; recommend flags for RU / EN-DE-FR-ES.
+3. Catalog entries for the three GO ids; folder/package names align with plan §2.3 / S4b package layout (document CDN base later in S8 — placeholders OK).
+4. Ranking helper already references GO ids (S1b) — ensure catalog `id` strings match `OnboardingModelRecommendation` exactly.
+5. Unit tests: catalog contains exactly the GO trio + existing models; **no** FluidInference/alexwengg product download URLs; capabilities honesty; backend badges.
+6. Update `script/qa/check_no_canary_product.sh` (or successor): **allow** GO catalog/backend/capability surface; still **forbid** engine types, Package canary targets, and NO-GO HF as install source until S8/S9 policy is explicit.
+7. **No** download manager changes, **no** Core ML engine classes, **no** Settings card redesign beyond what catalog feeds automatically (S8–S10).
+
+### target_files (expected — adjust via graphify if needed)
+
+```yaml
+- Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
+- Sources/NativeBolabolCore/Models/ (capabilities + catalog files as they exist)
+- Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift  # only if id mismatch
+- Tests/NativeBolabolCoreTests/ (catalog/capability tests)
+- script/qa/check_no_canary_product.sh  # or check_go_catalog_surface.sh
+- AI_Workflow_Kit/docs/AI/FEEDBACK.md
+```
+
+### Out of scope
+
+- S8 download/presence UI
+- S9 CanaryCoreMLEngine / GigaAMCoreMLEngine
+- S10 Settings cards polish / OS banners (beyond data needed for later)
+- S11 HUD matrix
+- Product wiring of NO-GO HF 1B packages
+
+### Done
+
+- [ ] Backend cases exist
+- [ ] Three GO descriptors in catalog with honest capabilities
+- [ ] Ranking IDs resolve to catalog entries when present
+- [ ] Tests green; QA allows GO surface, blocks engines/NO-GO sources
+- [ ] FEEDBACK waiting_review
+
+### Verify
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+swift test
+./script/qa/run_all.sh
+```
 
 ## S4b — Canary 1B Core ML fix + Bolabol-hosted package
 

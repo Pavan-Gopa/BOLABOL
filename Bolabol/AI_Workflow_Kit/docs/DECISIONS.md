@@ -169,5 +169,26 @@
 **S7+ constraints:** custom adapter (not FluidAudio canary branch); macOS 15+ MLState; exact Path B frontend constants; true valid lengths; ≤15 s VAD chunks; fresh decoder state per segment; native SentencePiece from `canary_spe.model`; verified claims only EN ASR / EN→FR AST until re-gated.
 **1.0.4 next:** Human GO list may include Path B 1B alongside Flash (ADR-014) and GigaAM RU (ADR-015).
 
+
+## ADR-018 — Human GO list for Track C (S7+)
+
+**Status:** Accepted 2026-08-04 (Human decision in Orchestrator session)  
+**Decision:** Product integration (S7→S15) **ships data/engine/UI paths** for these spike-green models only:
+
+| Product id (plan §5) | Source / package | Backend family | Languages (honest) |
+|----------------------|------------------|----------------|--------------------|
+| `canary-180m-flash-coreml` | aufklarer/Canary-180M-Flash-CoreML (S5, ADR-014) | `canaryCoreML` | en, de, fr, es (+ AST per S5 verified scope) |
+| `gigaam-v3-rnnt-coreml` | huggingfinger0/gigaam-v3-coreml (S6, ADR-015) | `gigaAMCoreML` | **ru only** |
+| `canary-1b-v2-coreml` | **Bolabol Path B** package `bolabol-canary-1b-v2-coreml-r1` (S4b, ADR-017) — **CDN, not HF FI/alexwengg** | `canaryCoreML` | EN ASR + EN→FR AST verified; expand only after re-gate |
+
+**Explicitly excluded from product catalog:**  
+- FluidInference / alexwengg Canary 1B full Core ML trees (ADR-012/013 remain NO-GO)  
+- smdesai Core ML preprocessor (failed mel; Path B uses native mel only)
+
+**S7 scope note:** Data layer (backends, descriptors, capabilities, catalog) first; download (S8) and engines (S9) follow.  
+**QA:** `check_no_canary_product.sh` (ADR-012 zero product surface) is **superseded for GO catalog entries** starting S7 — replace/narrow so GO model IDs + backend cases are allowed; still forbid engine modules / Package targets until S9, and forbid re-introducing NO-GO HF packages as download sources.
+
+**Rationale:** Human: «GO list: Flash + GigaAM + 1B Path B — всё spike-green».
+
 ---
 *Add new ADRs at the bottom; do not rewrite history — supersede with new ADR if needed.*

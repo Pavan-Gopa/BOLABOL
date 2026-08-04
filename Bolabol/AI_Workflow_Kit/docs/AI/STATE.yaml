@@ -1,13 +1,17 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: GO-LIST
+current_step: S7
 step_description: >-
-  Human gate: choose which GO candidates enter product Track C (S7+).
-  Candidates: Canary Flash (ADR-014), GigaAM v3 RU (ADR-015), Canary 1B Path B
-  package bolabol-canary-1b-v2-coreml-r1 (ADR-017). HF FluidInference/alexwengg
-  1B remain NO-GO. Security full audit deferred (separate rare agent).
-target_files: []
+  Track C data layer for ADR-018 GO list: backend enum canaryCoreML +
+  gigaAMCoreML; descriptors + capabilities + catalog entries for Flash,
+  GigaAM RU, and Canary 1B Path B (bolabol package). No download UI, no engines.
+target_files:
+  - Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
+  - Sources/NativeBolabolCore/Models/
+  - Tests/NativeBolabolCoreTests/
+  - script/qa/check_no_canary_product.sh
+  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 completed_steps:
   - S0
   - S1
@@ -22,44 +26,52 @@ completed_steps:
   - S4b
 skipped_steps: []
 implementation:
-  status: blocked_on_human
+  status: pending
   attempts: 0
 review:
-  status: n/a
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
   verdict: null
-  note: 'Awaiting Human GO list for S7+'
+  note: ''
 qa:
-  status: green
+  status: pending
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: S4b
+  suite: S7
   bugs_open: 0
-  note: 'S4b qa_green 503 tests, run_all 27/27, package SHA 19/19, runtime EN'
+  note: ''
 security:
   next_run: deferred
-  note: >-
-    Separate Security Engineer (KICK_SECURITY.md). Schedule pre-release or on
-    Human request — not every step. Interim S4b findings in SECURITY_REPORT are
-    backlog only.
-next_actor: human
-track: SPIKE_COMPLETE
-prior_track: C1B_FIX
+  note: 'Full Security Engineer audit deferred to pre-release / Human request'
+next_actor: coder
+track: PRODUCT
+prior_track: SPIKE_COMPLETE
+go_list:
+  - id: canary-180m-flash-coreml
+    adr: ADR-014
+    source: aufklarer/Canary-180M-Flash-CoreML
+  - id: gigaam-v3-rnnt-coreml
+    adr: ADR-015
+    source: huggingfinger0/gigaam-v3-coreml
+  - id: canary-1b-v2-coreml
+    adr: ADR-017
+    source: bolabol-canary-1b-v2-coreml-r1 Path B (Bolabol CDN package)
+excluded:
+  - FluidInference/canary-1b-v2-coreml
+  - alexwengg/canary-1b-v2-coreml
 working_roots:
   - Bolabol
 checkpoint:
   last_pre_tag: bolabol/pre-S4b
   last_post_tag: bolabol/S4b-done
-  last_commit: pending
+  last_commit: ee8fc85
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
-  - docs/asr/canary-1b/FIX_PLAN.md
+  - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  Do not start S7 until Human GO list is recorded. Candidates:
-  - Flash: aufklarer/Canary-180M-Flash-CoreML (ADR-014)
-  - GigaAM RU: huggingfinger0/gigaam-v3-coreml (ADR-015)
-  - Canary 1B Path B: bolabol-canary-1b-v2-coreml-r1 (ADR-017) — Bolabol CDN package
-  - NOT: FluidInference/alexwengg 1B full packages (ADR-012/013)
+  Implement S7 only (ADR-018). Data layer: backends, capabilities, catalog for
+  Flash + GigaAM + 1B Path B. Match ranking IDs. Update no-canary QA to allow GO
+  catalog surface but forbid engines and NO-GO HF sources. No S8/S9.
 notes: |
-  S4b POST pending this turn. Path B package ready for CDN; product wiring S7+.
-  Security role split from Tester; full audit deferred.
+  Human GO list 2026-08-04: Flash + GigaAM + 1B Path B. ADR-018 accepted.
+  PRE S7 this turn.

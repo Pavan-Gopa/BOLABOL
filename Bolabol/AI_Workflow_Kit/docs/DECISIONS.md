@@ -137,6 +137,16 @@
 **Contrast:** Canary 1B paths remain NO-GO (ADR-012, ADR-013).
 **1.0.4 next:** complete S6 GigaAM spike, then Human GO list for which models enter S7+.
 
+
+
+## ADR-015 — GigaAM v3 RU Core ML GO candidate (S6 spike)
+
+**Status:** Accepted as spike candidate (S6 2026-08-04; Reviewer APPROVED with runtime; Tester qa_green)
+**Decision:** Record `https://huggingface.co/huggingfinger0/gigaam-v3-coreml` as a **GO spike candidate** for Bolabol 1.0.4 **RU-focused** offline ASR only. **Do not** product-wire catalog/engine/UI/download until Human GO list after S4–S6 and steps S7+.
+**Evidence:** `docs/asr/gigaam-v3/COREML_SPIKE.md` + `docs/asr/gigaam-v3/GigaAMCoreMLSpike.swift`; `script/qa/check_s6_gigaam_spike.sh` requires `**Status:** GO` + window/true-length invariants; product boundary green; Reviewer runtime exact RU short transcript.
+**Constraints for S7+:** RU-only claim; 16 kHz mono; HTK log-mel frontend; VAD/chunk ≤30 s; per-segment predictor reset; decode only valid encoder frames; blank id 1024; no WER/EN/multilingual/AST/auto-detect claims from this spike; RTFx median protocol if published.
+**Contrast:** Canary 1B NO-GO (ADR-012/013); Canary Flash GO candidate (ADR-014).
+**1.0.4 next:** Human GO list → Track C S7+ for approved models only.
+
 ---
 *Add new ADRs at the bottom; do not rewrite history — supersede with new ADR if needed.*
-

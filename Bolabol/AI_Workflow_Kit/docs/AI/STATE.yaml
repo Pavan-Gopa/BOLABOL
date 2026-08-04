@@ -1,19 +1,12 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S6
+current_step: GO-LIST
 step_description: >-
-  Spike GigaAM v3 RU Core ML: evaluate community HF Core ML exports for
-  RU-focused offline ASR; load, short audio ASR, latency/RAM, lang honesty,
-  chunking, no Python; write GO/NO-GO at docs/asr/gigaam-v3/COREML_SPIKE.md.
-  No product catalog wiring (S7+ after Human GO list).
-target_files:
-  - docs/asr/gigaam-v3/COREML_SPIKE.md
-  - docs/canary/harness/
-  - docs/asr/
-  - scratch/gigaam-spike/
-  - script/qa/
-  - AI_Workflow_Kit/docs/DECISIONS.md
+  Human gate after Track B spikes (S4–S6): choose which GO candidates enter
+  product integration Track C (S7+). Spikes complete; no product wiring until
+  Human confirms the GO list.
+target_files: []
 completed_steps:
   - S0
   - S1
@@ -24,41 +17,40 @@ completed_steps:
   - S3
   - S4
   - S5
+  - S6
 skipped_steps: []
 implementation:
-  status: pending
+  status: blocked_on_human
   attempts: 0
 review:
-  status: pending
+  status: n/a
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
   verdict: null
-  note: ''
+  note: 'Track B complete; awaiting Human GO list'
 qa:
-  status: pending
+  status: green
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
   suite: S6
   bugs_open: 0
-  note: ''
-next_actor: coder
-track: SPIKE
-prior_track: UX
+  note: 'S6 qa_green 503 tests, QA 23/23; runtime optional UNAVAILABLE for Tester'
+next_actor: human
+track: SPIKE_COMPLETE
+prior_track: SPIKE
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S5
-  last_post_tag: bolabol/S4-done
-  last_commit: 3f3f2a0
+  last_pre_tag: bolabol/pre-S6
+  last_post_tag: bolabol/S6-done
+  last_commit: pending
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
 coder_brief: |
-  S6 spike only: evaluate GigaAM v3 RU Core ML for Bolabol offline RU ASR.
-  Candidates from plan §1.1 (e.g. huggingfinger0 / smkrv / vadimsuhanov Core ML
-  repos). Produce docs/asr/gigaam-v3/COREML_SPIKE.md with GO or NO-GO.
-  Checklist: load · short RU audio ASR · latency/RAM · honest language claim
-  (RU-focused only) · chunking · no Python · window behavior. Do NOT product-wire
-  GigaAM or Canary (S7+). S4 Canary 1B NO-GO; S5 Flash GO candidate — do not
-  reopen as product. Keep Sources Canary/GigaAM product-free.
+  Do not start S7 until Human GO list is recorded. Candidates:
+  - Canary Flash (ADR-014 GO): aufklarer/Canary-180M-Flash-CoreML EN/DE/FR/ES
+  - GigaAM v3 RU (ADR-015 GO): huggingfinger0/gigaam-v3-coreml RU-only
+  - Canary 1B: NO-GO (ADR-012/013) — do not ship
 notes: |
-  S5 qa_green: Flash GO; dual-check requires S5 GO + S4 NO-GO; runtime EN short
-  exact transcript EOS true; 503 tests QA 22/22. POST/PRE this turn.
+  Track B closed. S4 NO-GO, S5 GO candidate, S6 GO candidate.
+  Human must choose ship set for S7+ (Flash / GigaAM / both / neither).
+  Whisper/Parakeet remain default shipping ASR until integration.

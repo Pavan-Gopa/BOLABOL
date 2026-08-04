@@ -191,4 +191,322 @@
 **Rationale:** Human: «GO list: Flash + GigaAM + 1B Path B — всё spike-green».
 
 ---
+
+## ADR-019 — S10 Local Models UI capability and banner contract
+
+**Status:** Proposed for S10 implementation
+
+### Decision
+
+S10 completes the **Settings → Local Models** path for the three ADR-018 GO
+models, using the already-shipped S7 catalog/capabilities, S8
+download/presence/progress state, and S9 engines. It adds only card
+presentation, capability-derived availability, truthful language notices, and
+the Canary 1B macOS gate. It does not create a persisted UI state, alter the
+catalog/install sources, reimplement downloads or engines, or wire a HUD or
+session language matrix.
+
+The only S10 model cards introduced or materially changed are the ADR-018 GO
+cards:
+
+| Model id | Exact title | Exact EN subtitle | Required badges | Install source that may be represented |
+|---|---|---|---|---|
+| `canary-180m-flash-coreml` | **Canary Flash (EN/DE/FR/ES)** | **Fast offline ASR for English, German, French, and Spanish · Core ML/ANE.** | **Compact · 4 languages**; **No auto-detect**; existing runtime badge **Canary · Core ML/ANE** | GO Flash package only; never present the NeMo origin as an install choice. |
+| `gigaam-v3-rnnt-coreml` | **GigaAM v3 (Russian)** | **Offline Russian ASR · Core ML/ANE. Russian only; no automatic language detection.** | **Russian only**; **No auto-detect**; existing runtime badge **GigaAM · Core ML/ANE** | `huggingfinger0/gigaam-v3-coreml` only. |
+| `canary-1b-v2-coreml` | **Canary 1B v2** | **Verified English ASR and English → French speech translation · Core ML/ANE.** | **macOS 15+**; **No auto-detect**; existing runtime badge **Canary · Core ML/ANE** | Bolabol-owned Path B package `bolabol-canary-1b-v2-coreml-r1` from the Bolabol CDN only. |
+
+The Canary 1B card must never offer, name, link to, or imply an alternative
+FluidInference/alexwengg Canary 1B tree or an smdesai preprocessor. The three
+new ASR paths remain Core ML only: no Python, NeMo runtime, PyTorch, or ONNX
+runtime can be introduced by card copy, controls, dependencies, or actions.
+
+### Rationale
+
+ADR-018 accepts exactly Flash, GigaAM RU, and Canary 1B Path B for the 1.0.4
+train. S7 already exposes their real `ASRModelCapabilities`; S8 already owns
+the installation lifecycle and complete-folder checks; S9 already owns the
+runtime hard gate. The former `LanguageSupport` enum is deliberately too
+coarse for these models: GigaAM and 1B currently carry `.multilingual`, whose
+legacy default is `auto`, even though neither accepts automatic language
+detection. FEEDBACK S7 NB-4 therefore makes `capabilities` mandatory for new
+backend presentation and decisions.
+
+The 1B generic capability token list includes `en` and `fr`, but it does not
+encode operation direction. ADR-017/018 are narrower and authoritative for
+user-facing claims: **English ASR** and **English → French speech
+translation** only. S10 must use the capability object for auto-detect, min
+OS, package size, and language-token bounds, while applying this accepted
+ADR-018 operation scope as a narrowing constraint. It must not infer French
+ASR, arbitrary translation directions, or broader multilingual support from
+`supportsSpeechTranslation == true`.
+
+### Exact S10 boundaries
+
+#### In scope
+
+1. `LocalModelsSettingsView` presentation for the three GO cards, including
+   exact subtitles/badges above, real installation actions, language notices,
+   and the computed macOS availability gate.
+2. A single capability/OS predicate usable by the view and store action path.
+   It is computed from `ASRModelCapabilities.minOSVersion` and the current
+   `ProcessInfo` OS version; it is **not** saved in
+   `TranscriptionModelSettings` and is not an installation-state enum case.
+3. Synchronous action guards so an unsupported OS cannot start/retry the 1B
+   download or activate/use it through the Settings path. Existing complete
+   local files remain removable.
+4. Capability-derived banner/copy logic and full 15-locale `AppText` maps.
+5. Focused unit/policy, localization, and regression verification defined
+   below.
+
+#### Explicitly deferred to S11 — HUD/session matrix
+
+- HUD **A** versus explicit language letters, source-letter cycling, fixed RU
+  HUD behavior, and all session/request routing.
+- Writing a session's explicit source language to
+  `TranscriptionModelSettings.languagePreference`, including any interaction
+  with `TranscriptionLanguageRouter` or `ContentView`.
+- Any change to `HotkeySessionOverlayManager`, `HotkeySettingsView`,
+  `TranscriptionLanguageRouting`, `ContentView`, the two S9 engines, or their
+  runtime smoke semantics.
+
+S10 may state what a later Canary session will be limited to, but it must not
+pretend that the HUD matrix has been implemented. In particular, it must not
+silently rewrite the user's primary/additional pair or turn `auto` into an
+implicit Canary/GigaAM route.
+
+#### Explicitly deferred to S12 — Settings recommendation/ranking wiring
+
+- Changes to `OnboardingModelRecommendation`, its table, ordering, or any
+  recommendation/ranking persistence.
+- New Settings recommendation behaviour. The existing S2 recommended section
+  and its current `topThree(primary, additional)` rendering remain unchanged;
+  S10 must neither duplicate ranking logic in a card nor re-order the catalog.
+
+#### Out of scope entirely for S10
+
+- Rewriting S7 descriptors/catalog IDs/capabilities, S8 sources/download/
+  storage/presence/progress implementation, or S9 engines.
+- Onboarding cards, cloud/Gemini behaviour, polish MLX paths, package/dependency
+  changes, release notes, or Help content expansion (S14 owns Help content).
+- Any product source/install choice for excluded FluidInference/alexwengg 1B
+  packages or the smdesai preprocessor.
+- Any new `unsupportedOS`, `clamped`, `readyForLanguage`, or similar persisted
+  `TranscriptionModelInstallationState` case. Presentation may only derive
+  from real store state, real folder presence, capabilities, and current OS.
+
+### UX card and real-state contract
+
+All cards stay in the existing full catalog and retain the existing card
+interaction pattern. `Whisper` and `Parakeet` titles, subtitles, badges,
+`languageSupport` display, download/delete/use controls, selected behavior,
+and HUD A/auto behavior are unchanged. The S10 capability-specific rendering
+applies only to the three GO IDs above; it must not change the legacy cards.
+
+For the GO cards, the language label is formatted from the supported codes in
+`capabilities` (using existing speech-language display conventions), never
+from `model.languageSupport.displayName`. The 1B exact subtitle is the
+ADR-018 narrowing rule above, not a generic claim inferred from its legacy
+`.multilingual` field or translation boolean.
+
+| Visible card state | Real source | Required action/presentation |
+|---|---|---|
+| **Not installed** | `TranscriptionModelStore.installationState(for:) == .notDownloaded` after `reconcileModelStates()` | Show **Download** when OS-compatible. Preserve the existing large-download confirmation for 1B, but localize all of its title, message, confirmation, and cancel copy. |
+| **Downloading** | Real `.downloading(progressFraction:)` from `TranscriptionModelSettings.installationStates`; duplicate work remains prevented by `downloadingModelIDs` | Show existing real progress indicator and percentage/indeterminate label. Do not add a synthetic cancel, ready, or retry state. |
+| **Ready** | `.downloaded(localURL:)` **and** `hasLocalFiles(for:)`/`activeDownloadedModel()` resolves a complete folder | Show **Use**, or **Selected** only when this is the real active downloaded model and the OS gate is met. Keep **Delete**. |
+| **Failed** | Real `.failed(errorMessage)` from the store | Show **Retry** and the real bounded error message. Do not replace it with a fabricated reason. Existing residual files may still be deleted. |
+| **Incomplete/missing folder** | Existing S8/S9 `completeLocalURL(for:)`/GO required-assets check fails; `reconcileModelStates()` removes stale downloaded/failed state | Do not show Ready, Selected, or Use. Render the resulting real **Not installed** state; no new “corrupt” product state. |
+| **Unsupported OS** | `capabilities.minOSVersion != nil` and current `ASRModelCapabilities.OSVersion < minOSVersion` | This is a computed presentation/action gate, not a persisted install state. It has visual/action precedence over the rows above. |
+
+For the only current OS-gated model, Canary 1B, the card remains visible on
+older macOS and reads: **“Requires macOS 15 or later. This Mac can’t download
+or use this model.”** It keeps its exact capabilities and any existing local
+files visible enough to permit **Delete**, but it must disable or omit
+**Download**, **Retry**, and **Use**. It must not say “available”, become a
+hidden catalog gap, fall back to another runtime, or relabel an installed
+folder as ready/selected. Flash and GigaAM have no `minOSVersion` gate unless a
+future capability value says otherwise; S10 must not hard-code a model-ID OS
+exception in the view.
+
+### Banner, clamp, and language-truth contract
+
+#### Truth sources and precedence
+
+1. The only model inventory is ADR-018's three GO IDs plus the existing
+   catalog. Excluded sources cannot appear.
+2. `ASRModelCapabilities` is the product truth for `minOSVersion`,
+   `supportsAutoLanguageDetect`, supported explicit language-token bounds,
+   download size, and backend/runtime presentation. `languageSupport` is not a
+   truth source for any new backend language label, auto-detect decision,
+   banner, or clamp.
+3. ADR-017/018 narrow Canary 1B user-visible operation claims to English ASR
+   and English → French speech translation. This narrows, but never expands,
+   the descriptor capability bounds.
+4. S8 real installation state/presence and the current OS decide whether an
+   action can execute. A banner never fabricates installation success or an
+   engine fallback.
+
+#### Canary clamp
+
+“Clamp” has one precise S10 meaning: it computes the **non-persisted set of
+explicit source-language choices available to the selected Canary model from
+the user's configured primary/additional pair**. It does **not** change either
+saved field, does not change the UI language, does not choose a translation
+outcome, and does not write a session language (the latter is S11).
+
+For a normalized, de-duplicated ordered pair `[primary, additional]`, derive:
+
+```text
+effectiveCanarySourceChoices = configuredPair ∩ verifiedASRSourceChoices
+```
+
+- Flash `verifiedASRSourceChoices` is its capability list: `en`, `de`, `fr`,
+  `es`.
+- Canary 1B's verified ASR source choice is `en`. The accepted `en → fr`
+  speech-translation claim is a fixed verified operation; it does not turn
+  `fr` into a French-ASR claim or a second generic ASR source choice.
+
+If exactly one configured member survives, the card shows a clamp warning:
+**“This Canary model can use [supported language] from your primary and
+additional languages. [unsupported language] is not supported for this model.
+ Your language settings were not changed.”** Use remains available once the
+model is otherwise Ready/OS-compatible; S11 will consume the explicit session
+choice. If both members survive, no clamp warning is needed. If neither
+member survives (including nil/blank/missing inputs in a policy test), show a
+hard language block: **“This Canary model needs a supported primary or
+additional language. Choose one in Settings → Hotkey → Your Languages.”** The
+card remains downloadable/deleteable but **Use** is disabled/not offered until
+the stored pair supplies a supported explicit source. No fallback language is
+invented.
+
+When `primary == additional`, de-duplicate before the intersection: a
+supported single language is a valid one-choice result and does not create a
+false two-language switch. A supported primary with an unsupported additional
+clamps only the available model-specific choice set; an unsupported primary
+with a supported additional exposes only that supported additional choice.
+The persisted pair remains exactly as the user configured it in both cases.
+
+#### GigaAM tip and no-auto notice
+
+GigaAM has no Canary-style automatic pair replacement. Whenever
+`primary != "ru"`, show the soft tip: **“GigaAM is optimized for Russian.
+It recognizes Russian only and does not change your primary or additional
+languages. Choose Russian explicitly in Settings → Hotkey → Transcription
+Language before dictating.”** This remains a soft tip even if additional is
+`ru`; it must never silently replace primary with Russian, rewrite additional,
+or claim automatic detection.
+
+Every Canary or GigaAM card also presents the informational no-auto notice:
+**“Automatic language detection is not available for this model. See
+Settings → Help → Language modes.”** The Help destination already exists.
+S10 only provides this truthful path/copy; it does not add a Help view feature
+or HUD implementation.
+
+The categories are deliberately distinct:
+
+| Category | Trigger | Behaviour |
+|---|---|---|
+| **Hard block** | Canary 1B current OS below `minOSVersion`; or selected Canary has no configured supported explicit source | OS: block download/retry/use. Language: block use only. Preserve the card and real files/state. |
+| **Clamp warning** | Selected Canary has one supported configured source and one unsupported configured member | Expose only the surviving non-persisted source choice; explain exactly what was excluded and that saved languages are unchanged. |
+| **Soft tip** | GigaAM primary is not `ru` | Give the Russian-only/manual-selection guidance; do not alter selection or language fields. |
+| **Informational notice** | Any Canary/GigaAM card because capability says no auto-detect | State no automatic detection and provide the existing Help path. |
+
+All new copy must call the two values **primary** and **additional**. UI copy
+must not use or translate the phrases “target always output”, “target output”,
+or “always output”, and must not imply that additional is an output promise.
+
+### Recommended future S10 target files
+
+These are the proposed Coder scope, derived from the GraphiFy links from
+`LocalModelsSettingsView` to `TranscriptionModelStore`,
+`TranscriptionModelDescriptor`/`ASRModelCapabilities`,
+`TranscriptionModelSettings`, and the existing settings/capability test
+surfaces. Exact changes are limited to the following.
+
+#### Mandatory product files
+
+| File | Why it is an S10 target |
+|---|---|
+| `Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift` | Owns catalog card rows, real installation actions/progress, current selected presentation, and the existing S2 full-catalog/recommended rendering. Add only GO-specific capability labels, computed state precedence, action disabling, banners, and localized large-download alert. Keep Whisper/Parakeet branch and recommendation grouping unchanged. |
+| `Sources/NativeBolabol/Stores/TranscriptionModelStore.swift` | Owns the real installation state, reconciliation, download/retry, `hasLocalFiles`, and activation path used by this view. Add only a testable capability/OS availability query plus guards for Settings-initiated download/retry/activation. It must continue to use S8's existing source, progress, SHA/presence, and storage implementations without modification. |
+| `Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift` | Home of `ASRModelCapabilities` and `OSVersion`. Add only pure, non-persisting capability predicates/projections needed to compare current OS and evaluate explicit supported source codes. Do not change GO IDs, capabilities payloads, catalog order, source mapping, storage paths, legacy `LanguageSupport`, or download metadata. |
+| `Sources/NativeBolabolCore/Services/AppText.swift` | Add all card/badge/state/banner/OS-gate/no-auto/help-path/large-download strings as `AppTextKey`s with non-empty maps for all 15 concrete locales. The exact 1B verified scope and primary/additional terminology must live in localized copy, not raw Swift strings. |
+
+The core predicate/projection may be a minimal extension in
+`TranscriptionModelDescriptor.swift`; it must be pure input/output logic over
+descriptor capabilities, primary/additional codes, and supplied OS version.
+It must not become a new persisted `TranscriptionModelSettings` field or an
+invented installation state.
+
+#### Mandatory test files
+
+| File | Why it is an S10 target |
+|---|---|
+| `Tests/NativeBolabolCoreTests/CoreMLEngineTests.swift` | Extend the existing capability contract tests with simulated below-minimum/equal/above-minimum OS comparisons and capability-based language/no-auto assertions. The test must demonstrate that `.multilingual` is not read for GigaAM/1B S10 decisions. |
+| `Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift` | Add an explicit S10 Local Models key set and assert all 15 locales resolve non-empty/non-raw/non-English fallback values, retain primary/additional terminology, include the Help path, and exclude prohibited output-promise wording. |
+| `Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift` | Add regression coverage that computed S10 clamp/OS presentation does not mutate `primary`/`additional`, `languagePreference`, installation state, or active model merely by rendering/evaluating availability. |
+| `Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift` | Retain/extend only if needed to prove S10's store gate does not weaken S9's real unsupported-OS and incomplete-folder rejection. It is a regression seam, not a place to reimplement S10 UI policy. |
+
+`Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift`,
+`S8DownloadContractTests.swift`, and `S9RuntimeSmokeTests.swift` are mandatory
+regression reads/runs, but are **not** expected S10 edit targets unless a
+focused test proves an actual contract gap. In particular, do not weaken their
+GO source, no-NO-GO-source, storage, complete-folder, or runtime smoke guards.
+
+#### No S10 QA-script change
+
+No `script/qa/**` change is required or authorized for this card. Existing QA
+already protects the allowed GO surface and runtime boundary; unit/localization
+tests provide the S10-specific contract. A proposed new QA guard is justified
+only by a newly demonstrated static gap and must be separately approved, not
+added as speculative scope.
+
+### Acceptance matrix and Definition of Done
+
+| Area | Coder/Reviewer/Tester acceptance evidence |
+|---|---|
+| GO inventory and source safety | Exactly Flash, GigaAM RU, and Bolabol CDN Path B 1B receive S10-specific cards. No FluidInference/alexwengg 1B or smdesai preprocessor appears as text/source/action. Existing catalog/source tests remain green. |
+| Exact cards | The three titles, subtitles, badges, runtime badge, and actions match this ADR. 1B claims only English ASR plus English → French speech translation; GigaAM is Russian only; Flash names only EN/DE/FR/ES. |
+| Installation states | Deterministic fixtures/manual checks cover not installed, downloading with known and nil progress, ready/use, selected real complete model, failed/retry/error, and incomplete folder reconciliation. No synthetic state exists. |
+| OS gate | Simulated OS `< 15.0`, `15.0`, and later values prove the capability predicate. On `< 15.0`, 1B stays visible, says macOS 15+, cannot download/retry/use, and can delete local files; Flash/GigaAM remain ungated. S9 engine OS rejection remains green. |
+| Capability language contract | Tests cover Flash `(en, es)` (no clamp), `(en, ru)` and `(ru, es)` (one surviving explicit source), `(ru, uk)` (hard language block), same-as-primary, and nil/empty defensive inputs. They cover 1B English-only verified ASR source projection, its English → French operation wording, no French-ASR claim, and no auto-detect. They cover GigaAM RU-only/no-auto truth independently of legacy `.multilingual`. |
+| Clamp / soft tip | Clamp never writes primary/additional, UI language, language preference, installation state, or active model. GigaAM primary `!= ru` yields only the soft Russian tip; it never auto-replaces either language. No-auto notice supplies `Settings → Help → Language modes` for every Canary/GigaAM card. |
+| Existing behaviour | Existing Whisper/Parakeet cards, S2 recommended/remaining partition, download/use/delete flows, and HUD A/auto behavior are unchanged. Existing catalog snapshot and S8/S9 presence/runtime tests remain green. |
+| Localization | Every new `AppTextKey` has all 15 concrete locale maps, no raw-key/empty/silent English fallback, primary/additional wording remains distinct where applicable, and no prohibited output-promise terminology appears. No new visible English literals remain in the card/alert/banner path. |
+| Scope discipline | Diff contains only mandatory S10 product/test/i18n files (plus worker feedback if requested by the orchestrator). It contains no engine, catalog payload, onboarding, HUD/session, ranking, Package.swift, QA-script, STATE, checkpoint, commit, or push change. |
+
+Future Coder verification commands:
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+swift test --filter CoreMLCapabilitiesTests
+swift test --filter CapabilitiesContractTests
+swift test --filter S10
+swift test
+./script/qa/run_all.sh
+./script/build_and_run.sh
+
+# Required only when the documented scratch assets are present; preserves S9
+# real-runtime confidence without making S10 depend on a fake fixture.
+BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests
+
+git diff --check -- \
+  Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift \
+  Sources/NativeBolabol/Stores/TranscriptionModelStore.swift \
+  Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift \
+  Sources/NativeBolabolCore/Services/AppText.swift \
+  Tests/NativeBolabolCoreTests/CoreMLEngineTests.swift \
+  Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift \
+  Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift \
+  Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift
+```
+
+### Risks / open questions
+
+None block S10 design. The only apparent ambiguity—Canary 1B's generic `en`/
+`fr` token list versus its narrower verified operation—is resolved here by the
+accepted ADR-017/018 scope: never claim French ASR or a broader AST matrix.
+Expanding any 1B language or translation claim requires a new spike/re-gate
+and a superseding ADR; it is not an S10 UI decision.
+
+---
 *Add new ADRs at the bottom; do not rewrite history — supersede with new ADR if needed.*

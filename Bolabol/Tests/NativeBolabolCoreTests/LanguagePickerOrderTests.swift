@@ -19,7 +19,6 @@ func languagePickerOrderPutsEnglishFirstExcludingSystemSentinel() {
 func languagePickerOrderRussianIsNotSecond() {
     #expect(LanguagePickerOrder.orderedSpeechCodes.count >= 3)
     #expect(LanguagePickerOrder.orderedSpeechCodes[0] == "en")
-    #expect(LanguagePickerOrder.orderedSpeechCodes[1] == "fr")
     #expect(LanguagePickerOrder.orderedSpeechCodes[1] != "ru")
     #expect(LanguagePickerOrder.orderedSpeechCodes[2] != "ru")
 }
@@ -57,14 +56,16 @@ func languagePickerOrderSpeechCodesCoverEveryUIListEntry() {
             .map(\.rawValue)
     )
 
-    #expect(speechCodes == uiCodes)
+    #expect(uiCodes.isSubset(of: speechCodes))
 }
 
 @Test
 func languagePickerOrderSpeechListIsExactCanonicalSequence() {
     #expect(LanguagePickerOrder.orderedSpeechCodes == [
         "en", // English
-        "fr", "de", "it", "pl", "pt", "ru", "es", "tr", "uk", // Europe
+        "bg", "hr", "cs", "da", "nl", "et", "fi", "fr", "de", "el",
+        "hu", "it", "lv", "lt", "mt", "pl", "pt", "ro", "ru", "sk", "sl",
+        "es", "sv", "tr", "uk", // Europe
         "ar", "zh", "hi", "ja", "ko" // Asia & other
     ])
 }
@@ -73,7 +74,7 @@ func languagePickerOrderSpeechListIsExactCanonicalSequence() {
 func languagePickerOrderSpeechLanguagesHaveEndonymDisplayNames() {
     let languages = LanguagePickerOrder.speechLanguages
 
-    #expect(languages.count == 15)
+    #expect(languages.count == 31)
     #expect(languages.first { $0.code == "en" }?.displayName == "English")
     #expect(languages.first { $0.code == "de" }?.displayName == "Deutsch")
     #expect(languages.first { $0.code == "ru" }?.displayName == "Русский")

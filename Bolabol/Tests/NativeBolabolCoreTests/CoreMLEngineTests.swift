@@ -37,7 +37,7 @@ struct CoreMLCapabilitiesTests {
     @Test
     func canary1BCapabilitiesListVerifiedLanguages() {
         let model = TranscriptionModelDescriptor.canary1BGO
-        #expect(model.capabilities.supportedLanguageCodes == ["en", "fr"])
+        #expect(model.capabilities.supportedLanguageCodes == CanaryLanguageCatalog.oneBV2LanguageCodes)
         #expect(model.capabilities.supportsAutoLanguageDetect == false)
     }
 
@@ -154,19 +154,19 @@ struct CoreMLCapabilitiesTests {
         let sameAsPrimary = flash.sourceLanguageProjection(primary: "en", additional: "en")
         let missing = flash.sourceLanguageProjection(primary: nil, additional: "")
 
-        #expect(enEs.effectiveChoices == ["en", "es"])
+        #expect(enEs.effectiveChoices == ["en"])
         #expect(!enEs.isClamped)
         #expect(enRu.effectiveChoices == ["en"])
-        #expect(enRu.isClamped)
-        #expect(ruEs.effectiveChoices == ["es"])
-        #expect(ruEs.isClamped)
+        #expect(!enRu.isClamped)
+        #expect(ruEs.isHardBlocked)
+        #expect(!ruEs.isClamped)
         #expect(ruUk.isHardBlocked)
         #expect(sameAsPrimary.effectiveChoices == ["en"])
         #expect(!sameAsPrimary.isClamped)
         #expect(missing.isHardBlocked)
 
-        #expect(oneB.verifiedASRSourceChoices == ["en"])
-        #expect(oneB.effectiveCanarySourceChoices(primary: "fr", additional: "en") == ["en"])
+        #expect(oneB.verifiedASRSourceChoices == CanaryLanguageCatalog.oneBV2LanguageCodes)
+        #expect(oneB.effectiveCanarySourceChoices(primary: "fr", additional: "en") == ["fr"])
     }
 
     @Test
@@ -178,7 +178,7 @@ struct CoreMLCapabilitiesTests {
 
         #expect(gigaAM.verifiedASRSourceChoices == ["ru"])
         #expect(gigaAM.capabilities.supportsAutoLanguageDetect == false)
-        #expect(oneB.verifiedASRSourceChoices == ["en"])
+        #expect(oneB.verifiedASRSourceChoices == CanaryLanguageCatalog.oneBV2LanguageCodes)
         #expect(oneB.capabilities.supportsAutoLanguageDetect == false)
     }
 

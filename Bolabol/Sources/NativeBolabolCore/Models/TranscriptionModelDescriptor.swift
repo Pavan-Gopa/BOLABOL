@@ -1,9 +1,55 @@
 import Foundation
 
+public enum CanaryLanguageCatalog {
+    /// NVIDIA Canary 1B v2 ASR language set from the upstream model card.
+    public static let oneBV2LanguageCodes = [
+        "bg", "hr", "cs", "da", "nl", "en", "et", "fi", "fr", "de",
+        "el", "hu", "it", "lv", "lt", "mt", "pl", "pt", "ro", "sk",
+        "sl", "es", "sv", "ru", "uk"
+    ]
+
+    public static let flashLanguageCodes = ["en", "de", "fr", "es"]
+
+    /// Canary AST supports non-English <-> English and English <-> non-English
+    /// directions. It does not support arbitrary non-English pairs.
+    public static func speechTranslationDirections(
+        for languageCodes: [String]
+    ) -> [SpeechTranslationDirection] {
+        languageCodes.flatMap { source in
+            languageCodes.compactMap { target in
+                guard source != target,
+                      source == "en" || target == "en"
+                else {
+                    return nil
+                }
+                return SpeechTranslationDirection(
+                    sourceLanguageCode: source,
+                    targetLanguageCode: target
+                )
+            }
+        }
+    }
+}
+
+public struct SpeechTranslationDirection: Codable, Equatable, Sendable {
+    public let sourceLanguageCode: String
+    public let targetLanguageCode: String
+
+    public init(sourceLanguageCode: String, targetLanguageCode: String) {
+        self.sourceLanguageCode = sourceLanguageCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        self.targetLanguageCode = targetLanguageCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+    }
+}
+
 public struct ASRModelCapabilities: Codable, Equatable, Sendable {
     public var supportsAutoLanguageDetect: Bool
     public var supportedLanguageCodes: [String]
     public var supportsSpeechTranslation: Bool
+    public var supportedSpeechTranslationDirections: [SpeechTranslationDirection]
     public var maxChunkSeconds: Double
     public var minOSVersion: OSVersion?
     public var approxDownloadBytes: Int64
@@ -44,6 +90,7 @@ public struct ASRModelCapabilities: Codable, Equatable, Sendable {
         supportsAutoLanguageDetect: Bool,
         supportedLanguageCodes: [String],
         supportsSpeechTranslation: Bool,
+        supportedSpeechTranslationDirections: [SpeechTranslationDirection] = [],
         maxChunkSeconds: Double,
         minOSVersion: OSVersion? = nil,
         approxDownloadBytes: Int64,
@@ -53,11 +100,55 @@ public struct ASRModelCapabilities: Codable, Equatable, Sendable {
         self.supportsAutoLanguageDetect = supportsAutoLanguageDetect
         self.supportedLanguageCodes = supportedLanguageCodes
         self.supportsSpeechTranslation = supportsSpeechTranslation
+        self.supportedSpeechTranslationDirections = supportedSpeechTranslationDirections
         self.maxChunkSeconds = maxChunkSeconds
         self.minOSVersion = minOSVersion
         self.approxDownloadBytes = approxDownloadBytes
         self.isRecommendedForPrimaryRU = isRecommendedForPrimaryRU
         self.isRecommendedForEnDeFrEs = isRecommendedForEnDeFrEs
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case supportsAutoLanguageDetect
+        case supportedLanguageCodes
+        case supportsSpeechTranslation
+        case supportedSpeechTranslationDirections
+        case maxChunkSeconds
+        case minOSVersion
+        case approxDownloadBytes
+        case isRecommendedForPrimaryRU
+        case isRecommendedForEnDeFrEs
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            supportsAutoLanguageDetect: try container.decode(Bool.self, forKey: .supportsAutoLanguageDetect),
+            supportedLanguageCodes: try container.decode([String].self, forKey: .supportedLanguageCodes),
+            supportsSpeechTranslation: try container.decode(Bool.self, forKey: .supportsSpeechTranslation),
+            supportedSpeechTranslationDirections: try container.decodeIfPresent(
+                [SpeechTranslationDirection].self,
+                forKey: .supportedSpeechTranslationDirections
+            ) ?? [],
+            maxChunkSeconds: try container.decode(Double.self, forKey: .maxChunkSeconds),
+            minOSVersion: try container.decodeIfPresent(OSVersion.self, forKey: .minOSVersion),
+            approxDownloadBytes: try container.decode(Int64.self, forKey: .approxDownloadBytes),
+            isRecommendedForPrimaryRU: try container.decodeIfPresent(Bool.self, forKey: .isRecommendedForPrimaryRU) ?? false,
+            isRecommendedForEnDeFrEs: try container.decodeIfPresent(Bool.self, forKey: .isRecommendedForEnDeFrEs) ?? false
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(supportsAutoLanguageDetect, forKey: .supportsAutoLanguageDetect)
+        try container.encode(supportedLanguageCodes, forKey: .supportedLanguageCodes)
+        try container.encode(supportsSpeechTranslation, forKey: .supportsSpeechTranslation)
+        try container.encode(supportedSpeechTranslationDirections, forKey: .supportedSpeechTranslationDirections)
+        try container.encode(maxChunkSeconds, forKey: .maxChunkSeconds)
+        try container.encodeIfPresent(minOSVersion, forKey: .minOSVersion)
+        try container.encode(approxDownloadBytes, forKey: .approxDownloadBytes)
+        try container.encode(isRecommendedForPrimaryRU, forKey: .isRecommendedForPrimaryRU)
+        try container.encode(isRecommendedForEnDeFrEs, forKey: .isRecommendedForEnDeFrEs)
     }
 }
 
@@ -78,6 +169,28 @@ public extension ASRModelCapabilities {
                 return nil
             }
             return code
+        }
+    }
+
+    func supportsSpeechTranslation(from source: String, to target: String) -> Bool {
+        let normalizedSource = source.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let normalizedTarget = target.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return supportedSpeechTranslationDirections.contains {
+            $0.sourceLanguageCode == normalizedSource
+                && $0.targetLanguageCode == normalizedTarget
+        }
+    }
+
+    func speechTranslationTargets(from source: String) -> [String] {
+        let normalizedSource = source.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        var seen = Set<String>()
+        return supportedSpeechTranslationDirections.compactMap { direction in
+            guard direction.sourceLanguageCode == normalizedSource,
+                  seen.insert(direction.targetLanguageCode).inserted
+            else {
+                return nil
+            }
+            return direction.targetLanguageCode
         }
     }
 }
@@ -103,26 +216,24 @@ public struct ASRSourceLanguageProjection: Equatable, Sendable {
         additional: String?
     ) {
         let verified = Set(verifiedSourceChoices.map(Self.normalize))
-        let slots = [primary, additional].map(Self.normalizeOptional)
-        var configured = [String]()
-        var seen = Set<String>()
-        for code in slots.compactMap(\.self) where seen.insert(code).inserted {
-            configured.append(code)
-        }
-
         var effective = [String]()
         var unsupported = [String]()
-        for code in configured {
-            if verified.contains(code) {
-                effective.append(code)
+        let primaryCode = Self.normalizeOptional(primary)
+        let additionalCode = Self.normalizeOptional(additional)
+
+        if let primaryCode {
+            if verified.contains(primaryCode) {
+                effective = [primaryCode]
             } else {
-                unsupported.append(code)
+                unsupported = [primaryCode]
             }
+        } else if let additionalCode {
+            unsupported = [additionalCode]
         }
 
         self.effectiveChoices = effective
         self.unsupportedConfiguredLanguages = unsupported
-        self.hasMissingConfiguredLanguage = slots.contains(where: { $0 == nil })
+        self.hasMissingConfiguredLanguage = primaryCode == nil || additionalCode == nil
     }
 
     private static func normalizeOptional(_ code: String?) -> String? {
@@ -203,19 +314,13 @@ public enum ModelInstallSource: Equatable, Sendable, Codable {
     public var isRecommended: Bool
     public var capabilities: ASRModelCapabilities
 
-    /// Verified ASR source choices for the current GO operation scope. Canary
-    /// 1B advertises `fr` as a capability token for its verified EN → FR
-    /// translation operation, not as a French-ASR source.
+    /// Explicit ASR source choices from the model capability contract.
     public var verifiedASRSourceChoices: [String] {
-        let explicitCapabilities = capabilities.explicitSupportedLanguageCodes
-        guard backend == .canaryCoreML,
-              capabilities.minOSVersion != nil,
-              capabilities.supportsSpeechTranslation,
-              Set(explicitCapabilities) == Set(["en", "fr"]) else {
-            return explicitCapabilities
-        }
+        capabilities.explicitSupportedLanguageCodes
+    }
 
-        return explicitCapabilities.filter { $0 == "en" }
+    public func supportedSpeechTranslationTargets(from source: String) -> [String] {
+        capabilities.speechTranslationTargets(from: source)
     }
 
     public func sourceLanguageProjection(
@@ -355,8 +460,11 @@ public enum ModelInstallSource: Equatable, Sendable, Codable {
         case .canaryCoreML:
             return ASRModelCapabilities(
                 supportsAutoLanguageDetect: false,
-                supportedLanguageCodes: ["en", "de", "fr", "es"],
+                supportedLanguageCodes: CanaryLanguageCatalog.flashLanguageCodes,
                 supportsSpeechTranslation: true,
+                supportedSpeechTranslationDirections: CanaryLanguageCatalog.speechTranslationDirections(
+                    for: CanaryLanguageCatalog.flashLanguageCodes
+                ),
                 maxChunkSeconds: 15.0,
                 approxDownloadBytes: estimateBytes(from: downloadSize),
                 isRecommendedForPrimaryRU: false,
@@ -529,6 +637,9 @@ public extension TranscriptionModelCatalog {
                     supportsAutoLanguageDetect: false,
                     supportedLanguageCodes: ["en", "de", "fr", "es"],
                     supportsSpeechTranslation: true,
+                    supportedSpeechTranslationDirections: CanaryLanguageCatalog.speechTranslationDirections(
+                        for: CanaryLanguageCatalog.flashLanguageCodes
+                    ),
                     maxChunkSeconds: 10.0,
                     minOSVersion: nil,
                     approxDownloadBytes: 180_000_000,
@@ -546,13 +657,16 @@ public extension TranscriptionModelCatalog {
                 languageSupport: .multilingual,
                 downloadSize: "~1.88 GB",
                 badge: "Multilingual · macOS 15+",
-                description: "Canary 1B v2 Core ML int4 package for Apple Neural Engine on macOS 15+. Verified English ASR and speech translation.",
+                 description: "Canary 1B v2 Core ML int4 package for Apple Neural Engine on macOS 15+. Multilingual ASR across 25 languages with explicit source language and bidirectional English speech translation.",
                 accuracy: 4,
                 speed: 4,
                 capabilities: ASRModelCapabilities(
                     supportsAutoLanguageDetect: false,
-                    supportedLanguageCodes: ["en", "fr"],
+                    supportedLanguageCodes: CanaryLanguageCatalog.oneBV2LanguageCodes,
                     supportsSpeechTranslation: true,
+                    supportedSpeechTranslationDirections: CanaryLanguageCatalog.speechTranslationDirections(
+                        for: CanaryLanguageCatalog.oneBV2LanguageCodes
+                    ),
                     maxChunkSeconds: 15.0,
                     minOSVersion: ASRModelCapabilities.OSVersion(majorVersion: 15, minorVersion: 0, patchVersion: 0),
                     approxDownloadBytes: 1_884_267_035,

@@ -46,6 +46,7 @@ private let settingsKeys: [AppTextKey] = [
     .showVariant, .generateMarkdown, .model, .pasteFromClipboard,
     .pasteFromClipboardHelp, .hotkeyOptionHint, .translationWindowLabel,
     .translationWindowDesc, .quickTranslationLabel, .quickTranslationDesc,
+    .translationSourceLanguage, .translationTargetLanguage,
     .openSettingsLabel, .openSettingsDesc, .transcriptionEngine, .engine,
     .localModelsHint, .googleAPI, .geminiModel, .googleAPIBody,
     .scanForLocalModels, .scanForLocalModelsBody, .scanning, .scan,
@@ -92,6 +93,11 @@ private let s10LocalModelsKeys: [AppTextKey] = [
     .localModelsLargeDownloadTitle,
     .localModelsLargeDownloadMessage,
     .localModelsLargeDownloadConfirm,
+    .localModelsCanary1BEnglishRequired,
+    .localModelsPackageUnavailable,
+    .localModelsDownloadHostFailure,
+    .transcriptionSessionTranslationUnavailable,
+    .transcriptionSessionEngineMismatch,
 ]
 
 @Test
@@ -157,13 +163,12 @@ func S10LocalModelsCopyIsHonestAboutCapabilitiesAndLanguagePair() {
 
     #expect(flash.contains("English") && flash.contains("German") && flash.contains("French") && flash.contains("Spanish"))
     #expect(gigaAM.contains("Russian only") && gigaAM.contains("Core ML/ANE"))
-    #expect(oneB.contains("English ASR") && oneB.contains("English → French speech translation"))
+    #expect(oneB.contains("25 languages") && oneB.contains("bidirectional English speech translation"))
     #expect(flashBadge == "Compact · 4 languages")
     #expect(gigaBadge == "Russian only")
     #expect(oneBBadge == "macOS 15+")
     #expect(noAutoBadge == "No auto-detect")
-    #expect(!oneB.lowercased().contains("french asr"))
-    #expect(!oneB.lowercased().contains("multilingual"))
+    #expect(oneB.lowercased().contains("multilingual"))
     #expect(clamp.contains("primary") && clamp.contains("additional") && clamp.contains("not supported"))
     #expect(block.contains("primary") && block.contains("additional"))
     #expect(gigaTip.contains("primary") && gigaTip.contains("additional"))

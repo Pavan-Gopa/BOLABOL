@@ -32,16 +32,20 @@ struct ContentView: View {
     @State private var translationTranslatedText = ""
     @AppStorage("translation.targetLanguage") private var translationTargetLanguage = "English"
     @AppStorage("translation.providerID") private var translationProviderID = ""
+    @AppStorage("translation.canarySourceLanguage") private var translationCanarySourceLanguage = ""
+    @AppStorage("translation.canaryTargetLanguage") private var translationCanaryTargetLanguage = ""
     @State private var pendingHotkeyTarget: HotkeyTarget?
     @State private var pendingHotkeyOutputMode: HotkeyOutputMode?
     @State private var pendingHotkeySourcePID: pid_t?
     @State private var pendingHotkeyFocusedElement: AXUIElement?
+    @State private var sessionWarningMessage: String?
     @State private var settingsWindow: NSWindow?
     @State private var lastSettingsToggleTime: Date = .distantPast
     @State private var isTogglingHotkeyRecording = false
     @State private var hotkeyOwnerID = UUID()
     @State private var hotkeySessionOverlayManager = HotkeySessionOverlayManager()
     @State private var providerQuickSwitcher = ProviderQuickSwitcher()
+    @State private var pendingHotkeySession: TranscriptionEngineSession?
     @State private var pendingHotkeyForceTargetLanguage = false
     @AppStorage("hud.forceTargetLanguage") private var persistentHUDForceTargetLanguage = false
 
@@ -86,13 +90,17 @@ struct ContentView: View {
                     audioRecorder: translationAudioRecorder,
                     providerID: $translationProviderID,
                     targetLanguage: $translationTargetLanguage,
+                    canarySourceLanguageCode: $translationCanarySourceLanguage,
+                    canaryTargetLanguageCode: $translationCanaryTargetLanguage,
                     originalText: $translationOriginalText,
                     translatedText: $translationTranslatedText,
                     onTranslate: translateText,
-                    onRecordingCompleted: transcribeForTranslation
+                    onRecordingCompleted: transcribeForTranslation,
+                    onCanaryTranslation: transcribeAndTranslateWithCanary
                 )
                 .environmentObject(generalSettingsStore)
                 .environmentObject(polishingEngineStore)
+                .environmentObject(transcriptionModelStore)
                 .environmentObject(glossaryStore)
             }
             .sheet(isPresented: $isShowingOnboarding) {
@@ -151,6 +159,23 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 820, minHeight: 580)
+        .alert(
+            generalSettingsStore.text(.transcriptionFailed),
+            isPresented: Binding(
+                get: { sessionWarningMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        sessionWarningMessage = nil
+                    }
+                }
+            )
+        ) {
+            Button(generalSettingsStore.text(.close), role: .cancel) {
+                sessionWarningMessage = nil
+            }
+        } message: {
+            Text(sessionWarningMessage ?? "")
+        }
     }
 
 
@@ -260,6 +285,9 @@ struct ContentView: View {
         isShowingTranslation = true
 
         guard !source.isEmpty else { return }
+        guard TranslationModalView.localCanaryModelID(from: translationProviderID) == nil else {
+            return
+        }
         guard !translationProviderID.isEmpty else {
             translationTranslatedText = generalSettingsStore.text(.noTranslationProvider)
             return
@@ -302,16 +330,23 @@ struct ContentView: View {
                 audioRecorder: translationAudioRecorder,
                 providerID: $translationProviderID,
                 targetLanguage: $translationTargetLanguage,
+                canarySourceLanguageCode: $translationCanarySourceLanguage,
+                canaryTargetLanguageCode: $translationCanaryTargetLanguage,
                 originalText: $translationOriginalText,
                 translatedText: $translationTranslatedText,
                 generalSettingsStore: generalSettingsStore,
                 polishingEngineStore: polishingEngineStore,
+                transcriptionModelStore: transcriptionModelStore,
                 glossaryStore: glossaryStore,
                 onTranslate: translateText,
-                onRecordingCompleted: transcribeForTranslation
+                onRecordingCompleted: transcribeForTranslation,
+                onCanaryTranslation: transcribeAndTranslateWithCanary
             )
 
             guard !source.isEmpty else { return }
+            guard TranslationModalView.localCanaryModelID(from: translationProviderID) == nil else {
+                return
+            }
             guard !translationProviderID.isEmpty else {
                 translationTranslatedText = generalSettingsStore.text(.noTranslationProvider)
                 return
@@ -452,6 +487,10 @@ struct ContentView: View {
         targetLanguage: String,
         providerID: String
     ) async throws -> PolishingResult {
+        if let modelID = TranslationModalView.localCanaryModelID(from: providerID) {
+            throw localizedSessionError(.translationUnsupported(modelID: modelID))
+        }
+
         let prompt = try TranslationPrompt.render(text: text, targetLanguage: targetLanguage)
 
         // Resolve engine: per-model MLX tag vs. cloud provider ID
@@ -521,30 +560,104 @@ struct ContentView: View {
             return glossaryStore.apply(to: result.text, target: .source).text
         }
 
-        let engine = transcriptionEngineStore.activeEngine(modelStore: transcriptionModelStore)
-        let languageCode = transcriptionModelStore.resolvedLanguageCode
-        // Native translation is only available on multilingual Whisper; Parakeet
-        // and English-only Whisper translate via the polishing pass instead.
-        let isMultilingual = activeModelSupportsNativeTranslation
-        let route = TranscriptionLanguageRouter.route(
-            resolvedLanguageCode: languageCode,
-            isMultilingualModel: isMultilingual
+        let resolution = makeLocalSession(
+            forceTargetLanguage: false,
+            hotkeySession: false
         )
-        let result = try await engine.transcribe(
-            TranscriptionRequest(
-                audioFileURL: recording.fileURL,
-                forcedLanguageCode: route.forcedLanguageCode,
-                translateToEnglish: route.translateToEnglish
+        switch resolution {
+        case .available(let session):
+            let workflow = RecordingTranscriptionWorkflow(
+                noteStore: noteStore,
+                engine: session.engine,
+                glossarySettingsProvider: { glossaryStore.settings }
             )
+            let result = try await workflow.transcribeAudio(
+                audioFileURL: recording.fileURL,
+                plan: session.plan
+            )
+            return glossaryStore.apply(to: result.text, target: .source).text
+        case .unavailable(let reason):
+            throw localizedSessionError(reason)
+        }
+    }
+
+    private func transcribeAndTranslateWithCanary(
+        _ recording: AudioRecording,
+        providerID: String,
+        sourceLanguageCode: String,
+        targetLanguageCode: String
+    ) async throws -> CanaryTranslationOutput {
+        guard let modelID = TranslationModalView.localCanaryModelID(from: providerID),
+              let model = transcriptionModelStore.models.first(where: { $0.id == modelID })
+        else {
+            throw localizedSessionError(.translationUnsupported(modelID: "Canary"))
+        }
+
+        let sourceResolution = transcriptionEngineStore.makeSpeechTranslationSession(
+            modelStore: transcriptionModelStore,
+            model: model,
+            sourceLanguageCode: sourceLanguageCode,
+            targetLanguageCode: sourceLanguageCode
         )
-        return glossaryStore.apply(to: result.text, target: .source).text
+        let sourceSession: TranscriptionEngineSession
+        switch sourceResolution {
+        case .available(let session):
+            sourceSession = session
+        case .unavailable(let reason):
+            throw localizedSessionError(reason)
+        }
+
+        let translationResolution = transcriptionEngineStore.makeSpeechTranslationSession(
+            modelStore: transcriptionModelStore,
+            model: model,
+            sourceLanguageCode: sourceLanguageCode,
+            targetLanguageCode: targetLanguageCode
+        )
+        let translationSession: TranscriptionEngineSession
+        switch translationResolution {
+        case .available(let session):
+            translationSession = session
+        case .unavailable(let reason):
+            throw localizedSessionError(reason)
+        }
+
+        let sourceResult = try await sourceSession.engine.transcribe(
+            sourceSession.plan.request(audioFileURL: recording.fileURL)
+        )
+        let translatedResult = try await translationSession.engine.transcribe(
+            translationSession.plan.request(audioFileURL: recording.fileURL)
+        )
+
+        usageStatisticsStore.record(
+            modelID: sourceResult.diagnostics.backendName,
+            modelName: sourceResult.diagnostics.backendName,
+            diagnostics: sourceResult.diagnostics
+        )
+        usageStatisticsStore.record(
+            modelID: translatedResult.diagnostics.backendName,
+            modelName: translatedResult.diagnostics.backendName,
+            diagnostics: translatedResult.diagnostics
+        )
+
+        return CanaryTranslationOutput(
+            sourceText: glossaryStore.apply(
+                to: sourceResult.text,
+                target: .source
+            ).text,
+            translatedText: glossaryStore.apply(
+                to: translatedResult.text,
+                target: .translation,
+                language: targetLanguageCode
+            ).text
+        )
     }
 
     private func transcribeRecording(
         _ recording: AudioRecording,
         hotkeyTarget: HotkeyTarget?,
         outputMode: HotkeyOutputMode?,
-        forceTargetLanguage: Bool = false
+        forceTargetLanguage: Bool = false,
+        session: TranscriptionEngineSession? = nil
     ) {
         Task { @MainActor in
             // Cloud · Google Gemini: fast audio-to-Raw first, followed by an
@@ -559,42 +672,59 @@ struct ContentView: View {
                 return
             }
 
+            let resolution: TranscriptionEngineSessionResolution
+            if let session {
+                resolution = .available(session)
+            } else {
+                resolution = makeLocalSession(
+                    forceTargetLanguage: forceTargetLanguage,
+                    hotkeySession: hotkeyTarget != nil
+                )
+            }
+
+            guard case .available(let resolvedSession) = resolution else {
+                let reason: TranscriptionSessionUnavailableReason
+                if case .unavailable(let unavailableReason) = resolution {
+                    reason = unavailableReason
+                    sessionWarningMessage = sessionUnavailableMessage(for: reason)
+                } else {
+                    return
+                }
+                let workflow = RecordingTranscriptionWorkflow(
+                    noteStore: noteStore,
+                    engine: UnavailableTranscriptionEngine(),
+                    glossarySettingsProvider: { glossaryStore.settings }
+                )
+                _ = await workflow.transcribeRecording(
+                    recording,
+                    resolution: .unavailable(reason)
+                )
+                finishHotkeySessionIfNeeded(target: hotkeyTarget)
+                return
+            }
+
             let workflow = RecordingTranscriptionWorkflow(
                 noteStore: noteStore,
-                engine: transcriptionEngineStore.activeEngine(
-                    modelStore: transcriptionModelStore
-                ),
+                engine: resolvedSession.engine,
                 glossarySettingsProvider: { glossaryStore.settings }
             )
-            let languageCode: String
-            if forceTargetLanguage {
-                // E / target mode: output must be the configured target language.
-                languageCode = targetLanguageCode
-            } else if hotkeyTarget != nil {
-                // A / auto mode on hotkey: always auto-detect spoken language.
-                languageCode = "auto"
-            } else {
-                languageCode = transcriptionModelStore.resolvedLanguageCode
+            let plan = resolvedSession.plan
+            if let warning = plan.sourceLanguageWarning {
+                sessionWarningMessage = languageWarningMessage(for: warning)
             }
-            // Native translation is only available on multilingual Whisper; Parakeet
-            // and English-only Whisper translate via the polishing pass instead.
-            let isMultilingual = activeModelSupportsNativeTranslation
-            let route = TranscriptionLanguageRouter.route(
-                resolvedLanguageCode: languageCode,
-                isMultilingualModel: isMultilingual,
-                forceTargetLanguage: forceTargetLanguage
-            )
+            let languageCode = plan.requestedLanguageCode
+            let route = plan.route
+            let sessionForceTargetLanguage = plan.isWhisperTargetMode
 
             let noteID = await workflow.transcribeRecording(
                 recording,
-                forcedLanguageCode: route.forcedLanguageCode,
-                translateToEnglish: route.translateToEnglish
+                plan: plan
             )
 
             // Target language display name for any post-Whisper LLM translation.
             let autoTranslationTargetLanguage = route.autoTranslateTargetLanguageCode.map {
                 TranscriptionLanguageOption.displayName(for: $0)
-            } ?? (forceTargetLanguage ? TranscriptionLanguageOption.displayName(for: languageCode) : nil)
+            } ?? (sessionForceTargetLanguage ? TranscriptionLanguageOption.displayName(for: languageCode) : nil)
 
             // Raw + force-target:
             // - English target: Whisper `task: .translate` already produced English.
@@ -603,7 +733,7 @@ struct ContentView: View {
             //   language natively, so we must run a translation pass (translation
             //   provider / polishing engine) before inserting raw text.
             if let hotkeyTarget, hotkeyTarget == .raw {
-                if forceTargetLanguage,
+                if sessionForceTargetLanguage,
                    let targetCode = route.autoTranslateTargetLanguageCode,
                    let rawText = noteStore.note(withID: noteID)?.rawText,
                    !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -619,7 +749,7 @@ struct ContentView: View {
                     )
                 } else {
                     NativeBolabolLog.hotkey.info(
-                        "Raw hotkey path forceTargetLanguage=\(forceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) (Whisper only)"
+                        "Raw hotkey path forceTargetLanguage=\(sessionForceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) (legacy route)"
                     )
                 }
                 selectedVariant = .raw
@@ -634,18 +764,18 @@ struct ContentView: View {
                 rawText,
                 targetLanguageCode: languageCode
             )
-            let needsTranslation = forceTargetLanguage
+            let needsTranslation = sessionForceTargetLanguage
                 && (route.autoTranslateTargetLanguageCode != nil || rawTextLooksForeign)
 
             NativeBolabolLog.hotkey.info(
-                "Transcription routing forceTargetLanguage=\(forceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) autoTranslationTarget=\(autoTranslationTargetLanguage ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) needsTranslation=\(needsTranslation) rawLooksForeign=\(rawTextLooksForeign)"
+                "Transcription routing forceTargetLanguage=\(sessionForceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) autoTranslationTarget=\(autoTranslationTargetLanguage ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) needsTranslation=\(needsTranslation) rawLooksForeign=\(rawTextLooksForeign)"
             )
             // Variant B: only native-translation models (multilingual Whisper)
             // pre-translate the raw text here. For Parakeet / English-only Whisper
             // the raw transcript stays in the source language and the translation is
             // produced by the polishing pass below (the target language is forwarded
             // to `polish` via `polishingTargetLang`).
-            let needsRawPreTranslation = activeModelSupportsNativeTranslation && needsTranslation
+            let needsRawPreTranslation = plan.supportsNativeWhisperTranslation && needsTranslation
             if needsRawPreTranslation,
                let targetLanguageName = autoTranslationTargetLanguage,
                !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -675,7 +805,7 @@ struct ContentView: View {
 
             let requestedVariants = hotkeyTarget?.requestedPolishingVariants ?? [.variantOne, .variantTwo]
             selectedVariant = hotkeyTarget?.processingVariant ?? requestedVariants.first ?? .variantOne
-            let polishingTargetLang = forceTargetLanguage ? targetLanguageCode : nil
+            let polishingTargetLang = sessionForceTargetLanguage ? targetLanguageCode : nil
             await polish(noteID, variants: requestedVariants, targetLanguage: polishingTargetLang)
             selectedVariant = hotkeyTarget?.processingVariant ?? selectedVariant
             applyHotkeyOutputIfNeeded(for: noteID, target: hotkeyTarget, mode: outputMode)
@@ -724,6 +854,13 @@ struct ContentView: View {
         rawText: String,
         targetLanguage: String
     ) async {
+        if TranslationModalView.localCanaryModelID(from: translationProviderID) != nil {
+            NativeBolabolLog.polishing.info(
+                "Skipped text auto-translation because Canary requires an audio speech-translation session."
+            )
+            return
+        }
+
         // Resolve the translation engine the same way the in-app Translation
         // modal does: prefer the user-selected translation provider (which may be
         // a local MLX model tagged "local-mlx:<modelID>"), and only fall back to
@@ -787,6 +924,10 @@ struct ContentView: View {
     private func resolveTranslationEngine(providerID: String) -> (any PolishingEngine)? {
         let trimmed = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
+
+        if TranslationModalView.localCanaryModelID(from: trimmed) != nil {
+            return nil
+        }
 
         if let modelID = TranslationModalView.localMLXModelID(from: trimmed) {
             guard let model = polishingEngineStore.allModels.first(where: { $0.id == modelID }) else {
@@ -917,11 +1058,39 @@ struct ContentView: View {
             pendingHotkeySourcePID = sourceApplication?.processIdentifier
             pendingHotkeyFocusedElement = AccessibilityPermissionService.focusedElement()
             let resolvedTarget = settings.target
-            let languageControlEnabled = isHUDLanguageControlEnabled(for: resolvedTarget)
-            if !languageControlEnabled {
+            let requestedForceTargetLanguage = effectiveHUDForceTargetLanguage
+            let session: TranscriptionEngineSession?
+            if transcriptionModelStore.settings.backend == .geminiCloud {
+                session = nil
+            } else {
+                let resolution = makeLocalSession(
+                    forceTargetLanguage: requestedForceTargetLanguage,
+                    hotkeySession: true
+                )
+                guard case .available(let resolvedSession) = resolution else {
+                    if case .unavailable(let reason) = resolution {
+                        sessionWarningMessage = sessionUnavailableMessage(for: reason)
+                        NativeBolabolLog.hotkey.error(
+                            "Hotkey session unavailable reason=\(reason.localizedDescription, privacy: .public)"
+                        )
+                    }
+                    HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
+                    return
+                }
+                session = resolvedSession
+            }
+
+            if let warning = session?.plan.sourceLanguageWarning {
+                sessionWarningMessage = languageWarningMessage(for: warning)
+            }
+
+            let languageControlEnabled = session?.plan.languageControlEnabled
+                ?? isHUDLanguageControlEnabled(for: resolvedTarget)
+            if !languageControlEnabled && !isExplicitCoreMLBackend {
                 persistentHUDForceTargetLanguage = false
             }
-            let forceTargetLanguage = effectiveHUDForceTargetLanguage
+            let forceTargetLanguage = session?.plan.isWhisperTargetMode ?? requestedForceTargetLanguage
+            pendingHotkeySession = session
             pendingHotkeyTarget = resolvedTarget
             pendingHotkeyOutputMode = settings.mode
             pendingHotkeyForceTargetLanguage = forceTargetLanguage
@@ -945,7 +1114,8 @@ struct ContentView: View {
                     onOriginChange: persistOverlayOrigin,
                     onLanguageTap: handleOverlayLanguageTap,
                     onTargetTap: handleOverlayTargetTap,
-                    onScroll: handleOverlayProviderScroll
+                    onScroll: handleOverlayProviderScroll,
+                    sessionPlan: session?.plan
                 )
                 hotkeySessionOverlayManager.update(
                     spectrumBands: audioRecorder.frequencyBands,
@@ -957,6 +1127,7 @@ struct ContentView: View {
                 pendingHotkeyFocusedElement = nil
                 pendingHotkeyTarget = nil
                 pendingHotkeyOutputMode = nil
+                pendingHotkeySession = nil
                 pendingHotkeyForceTargetLanguage = false
                 hotkeySessionOverlayManager.hide()
                 HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
@@ -993,18 +1164,27 @@ struct ContentView: View {
                 mode: .processing,
                 settings: generalSettingsStore.settings.overlay,
                 showsControls: false,
-                onOriginChange: persistOverlayOrigin
+                onOriginChange: persistOverlayOrigin,
+                sessionPlan: pendingHotkeySession?.plan
             )
             let target = pendingHotkeyTarget ?? settings.target
             let mode = pendingHotkeyOutputMode ?? settings.mode
-            let forceTargetValue = effectiveHUDForceTargetLanguage
+            let session = pendingHotkeySession
+            let forceTargetValue = session?.plan.isWhisperTargetMode ?? effectiveHUDForceTargetLanguage
             pendingHotkeyTarget = nil
             pendingHotkeyOutputMode = nil
+            pendingHotkeySession = nil
             pendingHotkeyForceTargetLanguage = forceTargetValue
             NativeBolabolLog.hotkey.info(
                 "Stopped hotkey recording target=\(target.rawValue, privacy: .public) mode=\(mode.rawValue, privacy: .public) forceTargetLanguage=\(forceTargetValue) capturedSourcePID=\(pendingHotkeySourcePID ?? -1, privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
             )
-            transcribeRecording(recording, hotkeyTarget: target, outputMode: mode, forceTargetLanguage: forceTargetValue)
+            transcribeRecording(
+                recording,
+                hotkeyTarget: target,
+                outputMode: mode,
+                forceTargetLanguage: forceTargetValue,
+                session: session
+            )
         }
     }
 
@@ -1189,6 +1369,87 @@ struct ContentView: View {
         }
     }
 
+    private var isExplicitCoreMLBackend: Bool {
+        guard let backend = transcriptionModelStore.activeModel?.backend else { return false }
+        return backend == .canaryCoreML || backend == .gigaAMCoreML
+    }
+
+    /// Builds the one local session route used by hotkey, main-window and
+    /// translation-recording entry points. Core ML ignores the legacy Whisper
+    /// target preference and always resolves from the canonical pair.
+    private func makeLocalSession(
+        forceTargetLanguage: Bool,
+        hotkeySession: Bool
+    ) -> TranscriptionEngineSessionResolution {
+        if isExplicitCoreMLBackend {
+            return transcriptionEngineStore.makeSession(
+                modelStore: transcriptionModelStore,
+                operation: .ordinaryASR
+            )
+        }
+
+        let operation: TranscriptionSessionOperation = forceTargetLanguage
+            ? .whisperTarget(languageCode: targetLanguageCode)
+            : .ordinaryASR
+        let legacyLanguageCode = forceTargetLanguage
+            ? targetLanguageCode
+            : (hotkeySession ? "auto" : transcriptionModelStore.resolvedLanguageCode)
+        return transcriptionEngineStore.makeSession(
+            modelStore: transcriptionModelStore,
+            operation: operation,
+            legacyLanguageCode: legacyLanguageCode
+        )
+    }
+
+    private func localizedSessionError(
+        _ reason: TranscriptionSessionUnavailableReason
+    ) -> NSError {
+        NSError(
+            domain: "NativeBolabol.TranscriptionSession",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: sessionUnavailableMessage(for: reason)]
+        )
+    }
+
+    private func sessionUnavailableMessage(
+        for reason: TranscriptionSessionUnavailableReason
+    ) -> String {
+        switch reason {
+        case .noActiveModel:
+            generalSettingsStore.text(.noLocalModelSelected)
+        case .incompleteModel:
+            generalSettingsStore.text(.localModelsPackageUnavailable)
+        case .unsupportedOS:
+            generalSettingsStore.text(.localModelsRequiresMacOS)
+        case .invalidCapabilities:
+            generalSettingsStore.text(.localModelsPackageUnavailable)
+        case .noSupportedSource:
+            generalSettingsStore.text(.localModelsCanaryLanguageBlock)
+        case .unsupportedSourceLanguage(_, let requestedCode, let supportedCodes):
+            generalSettingsStore.formattedText(
+                .localModelsCanaryClampWarning,
+                supportedCodes.map(TranscriptionLanguageOption.displayName(for:)).joined(separator: ", "),
+                TranscriptionLanguageOption.displayName(for: requestedCode)
+            )
+        case .englishSourceRequired:
+            generalSettingsStore.text(.localModelsCanary1BEnglishRequired)
+        case .translationUnsupported, .unsupportedOperation:
+            generalSettingsStore.text(.transcriptionSessionTranslationUnavailable)
+        case .engineIdentityMismatch:
+            generalSettingsStore.text(.transcriptionSessionEngineMismatch)
+        }
+    }
+
+    private func languageWarningMessage(
+        for warning: TranscriptionSessionLanguageWarning
+    ) -> String {
+        generalSettingsStore.formattedText(
+            .localModelsCanaryClampWarning,
+            TranscriptionLanguageOption.displayName(for: warning.effectiveSourceLanguageCode),
+            TranscriptionLanguageOption.displayName(for: warning.primaryLanguageCode)
+        )
+    }
+
     /// Target language code used when the HUD is in E (force target) mode.
     ///
     /// Priority:
@@ -1292,6 +1553,15 @@ struct ContentView: View {
         if transcriptionModelStore.settings.backend == .geminiCloud {
             return true
         }
+        if isExplicitCoreMLBackend {
+            guard case .available(let session) = makeLocalSession(
+                forceTargetLanguage: false,
+                hotkeySession: false
+            ) else {
+                return false
+            }
+            return session.plan.isCanaryTargetSwitchable
+        }
         if activeModelSupportsNativeTranslation {
             return true
         }
@@ -1300,12 +1570,27 @@ struct ContentView: View {
     }
 
     private var effectiveHUDForceTargetLanguage: Bool {
-        isHUDLanguageControlEnabled && persistentHUDForceTargetLanguage
+        guard !isExplicitCoreMLBackend else { return false }
+        return isHUDLanguageControlEnabled && persistentHUDForceTargetLanguage
     }
 
     /// Toggles the transcription language mode between auto-detection
     /// and the configured target language, persisting the selection for future sessions.
     private func handleOverlayLanguageTap() {
+        if let session = pendingHotkeySession,
+           session.plan.backend == .canaryCoreML {
+            guard session.plan.isCanaryTargetSwitchable else { return }
+            let switched = session.plan.toggledCanaryTarget()
+            pendingHotkeySession = session.replacing(plan: switched)
+            pendingHotkeyForceTargetLanguage = false
+            hotkeySessionOverlayManager.update(sessionPlan: switched)
+            return
+        }
+
+        if isExplicitCoreMLBackend {
+            return
+        }
+
         guard isHUDLanguageControlEnabled else {
             persistentHUDForceTargetLanguage = false
             pendingHotkeyForceTargetLanguage = false
@@ -1339,7 +1624,7 @@ struct ContentView: View {
         // polishing variants. Re-evaluate it after every target change and reset the
         // forced target language when the control becomes unavailable (e.g. on RAW).
         let languageControlEnabled = isHUDLanguageControlEnabled(for: next)
-        if !languageControlEnabled {
+        if !languageControlEnabled && !isExplicitCoreMLBackend {
             persistentHUDForceTargetLanguage = false
             pendingHotkeyForceTargetLanguage = false
         }
@@ -1347,7 +1632,8 @@ struct ContentView: View {
             languageMode: persistentHUDForceTargetLanguage ? .target : .auto,
             hotkeyTarget: next,
             targetLanguageLabel: autoTranslationLanguageLabel,
-            languageControlEnabled: languageControlEnabled
+            languageControlEnabled: languageControlEnabled,
+            sessionPlan: isExplicitCoreMLBackend ? pendingHotkeySession?.plan : nil
         )
     }
 

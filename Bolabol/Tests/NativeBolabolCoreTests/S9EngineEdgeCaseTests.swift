@@ -88,7 +88,7 @@ private func setS9SpeechLanguages(
 
 struct S9CanaryLanguageEdgeCaseTests {
     @Test
-    func canary1BLanguageMatrixCoversNilUnsupportedAndASTSources() async throws {
+    func canary1BLanguageMatrixCoversExplicit25LanguageSourcesAndASTDirections() async throws {
         let model = try #require(
             TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-1b-v2-coreml")
         )
@@ -104,23 +104,37 @@ struct S9CanaryLanguageEdgeCaseTests {
         }
         await #expect(throws: CanaryTranscriptionError.self) {
             try await engine.resolveLanguage(
-                TranscriptionRequest(forcedLanguageCode: "de")
-            )
-        }
-        await #expect(throws: CanaryTranscriptionError.self) {
-            try await engine.resolveLanguage(
-                TranscriptionRequest(forcedLanguageCode: "ru")
+                TranscriptionRequest(forcedLanguageCode: "ko")
             )
         }
 
-        for sourceLanguage in ["en", "fr"] {
+        for sourceLanguage in CanaryLanguageCatalog.oneBV2LanguageCodes {
             let resolved = try await engine.resolveLanguage(
                 TranscriptionRequest(
                     forcedLanguageCode: sourceLanguage,
-                    translateToEnglish: true
+                    targetLanguageCode: sourceLanguage
                 )
             )
             #expect(resolved == sourceLanguage)
+        }
+
+        let russianToEnglish = try await engine.resolveLanguage(
+            TranscriptionRequest(
+                forcedLanguageCode: "ru",
+                translateToEnglish: true,
+                targetLanguageCode: "en"
+            )
+        )
+        #expect(russianToEnglish == "ru")
+
+        await #expect(throws: CanaryTranscriptionError.self) {
+            try await engine.resolveTargetLanguage(
+                TranscriptionRequest(
+                    forcedLanguageCode: "ru",
+                    targetLanguageCode: "de"
+                ),
+                sourceLanguage: "ru"
+            )
         }
     }
 

@@ -62,6 +62,7 @@ struct SettingsView: View {
         .environmentObject(PolishingEngineStore.live())
         .environmentObject(PromptTemplateStore.live())
         .environmentObject(TranscriptionModelStore.live())
+        .environmentObject(TranscriptionEngineStore.live())
         .environmentObject(HotkeySettingsStore.live())
         .environmentObject(GeneralSettingsStore.live())
         .environmentObject(UsageStatisticsStore.live())

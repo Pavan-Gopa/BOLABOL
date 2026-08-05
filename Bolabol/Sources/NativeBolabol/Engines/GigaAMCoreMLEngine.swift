@@ -436,6 +436,10 @@ private final class GigaAMMelFrontend {
             dataType: .float32
         )
         let output = features.dataPointer.bindMemory(to: Float.self, capacity: melBins * windowFrames)
+        let paddedMelValue = log(1e-9 as Float)
+        for index in 0..<(melBins * windowFrames) {
+            output[index] = paddedMelValue
+        }
 
         var frame = [Float](repeating: 0, count: nFFT)
         var real = [Float](repeating: 0, count: nFFT / 2)
@@ -445,7 +449,10 @@ private final class GigaAMMelFrontend {
         var power = [Float](repeating: 0, count: nFFT / 2 + 1)
         var mel = [Float](repeating: 0, count: melBins)
 
-        for time in 0..<windowFrames {
+        // The encoder input is fixed at 3000 columns, but only valid frames
+        // need frontend work. The remaining columns retain the log-floor value
+        // produced by the contract's zero-padded audio.
+        for time in 0..<validFrames {
             let start = time * hopLength
             for index in 0..<nFFT {
                 frame[index] = padded[start + index] * hannWindow[index]

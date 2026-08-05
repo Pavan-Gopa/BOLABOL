@@ -2,6 +2,266 @@
 
 > Workers fill sections on handoff. Orchestrator reads this every status check.
 
+## Canary Translation Window: Local Provider and Explicit Source/Target
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | Option+1 and in-app translation modal Canary 1B integration |
+| Actor | coder |
+| Timestamp | 2026-08-05T20:25:00Z |
+| RESULT | waiting_review |
+
+### Findings and Fixes
+
+- Both the in-app translation sheet and the Option+1 floating translation window now share the same Canary-aware provider/model controls.
+- A complete installed `canary-1b-v2-coreml` package appears directly as `Canary 1B v2` in the translation provider list. It is a local provider tag, not NVIDIA, Google, OpenRouter, or another cloud provider; no API key is needed.
+- Selecting Canary shows two controls only for that provider: `Source language` and `Target language`. Source options are the model's 25 explicit languages; target options are filtered to the model's valid English↔non-English AST directions.
+- Google, OpenAI, Qwen, OpenRouter, custom, and local MLX translation behavior remains on the existing target-only text path. They do not receive the new source-language control.
+- Canary translation uses a separate immutable Core ML session with the modal's explicit pair and does not read or mutate the global speech-language pair. The recording path performs source ASR and the requested speech translation, then displays both results.
+- Canary is an audio speech-translation model, not a text LLM. If selected text or clipboard text is used with Canary, the operation is rejected honestly; use a local MLX/Qwen or cloud text provider for text translation.
+- Updated the S1b and S6 structural allowlists for the accepted ADR-018/019/020 product routing and UI surfaces. The no-go package, Python-runtime, and source-boundary checks remain enforced.
+
+### Verification
+
+| Command | Result |
+|---------|--------|
+| `swift test` | PASS - 587 tests in 15 suites |
+| `swift test --filter S11SessionRoutingTests` | PASS - 9 tests, including modal `en → ru` pair isolation |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS - 9/9; real Canary 1B `en → ru` returned Russian text: `Быстрый коричневый лис перепрыгивает через ленивого собаку.` |
+| `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests` | PASS - 9/9 suite; installed Canary Flash/1B/GigaAM product sessions returned non-empty text |
+| `./script/build_and_run.sh --verify` | PASS - Release app and polish worker built and app bundle verification completed |
+| `./script/qa/run_all.sh` | PASS - 29/29 checks |
+| `git diff --check -- <translation target paths>` | PASS |
+
+### Remaining Blockers
+
+- Canary 1B must already be installed for the provider row to appear; live CDN validation still needs the approved CDN base URL.
+- No Russian user recording was available for a source-Russian runtime smoke; the direct target-token path was validated with English audio translated to Russian.
+- The package metadata intentionally proves only the executed `en` ASR and `en -> fr` AST checks; the 25-language catalog and direction matrix are not a substitute for a full audio matrix run.
+- The selected-text Canary path intentionally remains unsupported because Canary requires audio input; text translation continues through Qwen/MLX or cloud providers.
+
+**RESULT: `waiting_review`**
+
+## Post-S11 Canary 1B Multilingual Routing and Verification
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | Canary 1B 25-language capability/routing correction and runtime verification |
+| Actor | coder |
+| Timestamp | 2026-08-05T19:34:00Z |
+| RESULT | waiting_review |
+
+### Findings and Fixes
+
+- Canary 1B capabilities now use the upstream 25-language set: `bg`, `hr`, `cs`, `da`, `nl`, `en`, `et`, `fi`, `fr`, `de`, `el`, `hu`, `it`, `lv`, `lt`, `mt`, `pl`, `pt`, `ro`, `sk`, `sl`, `es`, `sv`, `ru`, and `uk`.
+- Core ML routing keeps Primary as the source language, disables auto-detection for Canary, and exposes only AST directions that include English. Unsupported Primary values are blocked with a supported-language notice; Additional is no longer used as a silent source fallback.
+- Canary 1B Path B now maps explicit language token IDs for all 25 source languages. Flash retains its four-language capability set and source/English target switching.
+- Speech pickers now expose all 31 configured speech entries with endonym display names. The UI-language picker remains limited to the app's existing 15 localized interface languages.
+- Canary is audio-only. Selected-text translation still uses `PolishingEngine`; the user chose a separate text model, but has not provided its exact model ID.
+
+### Verification
+
+| Command | Result |
+|---------|--------|
+| `swift test` | PASS - 585 tests in 15 suites |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS - 8/8 scratch/runtime tests; Flash short and long, Canary 1B English smoke, GigaAM, and rank-1 decoder regression |
+| `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests` | PASS - 8/8 installed Release tests; Flash, Canary 1B, GigaAM, and product session paths returned non-empty text |
+| `./script/qa/run_all.sh` | 27/29 PASS; only stale `check_s1b_scope.sh` and `check_s6_gigaam_spike.sh` remain red |
+| `bash -n script/build_and_run.sh` | PASS |
+
+### Remaining Blockers
+
+- Live Canary 1B download validation still needs a human-approved CDN base URL; no fallback hostname was invented.
+- Runtime smoke currently proves Canary 1B with English audio. Russian audio runtime validation remains to be run when a suitable recording is available.
+- Selected-text translation remains blocked on the exact separate text-model ID.
+- Existing `metadata.json` verification claims are narrower than the new capability catalog and should not be treated as runtime proof for all 25 languages.
+
+**RESULT: `waiting_review`**
+
+## Canary Flash VAD and HUD Source/Target Routing
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | Post-S11 Canary Flash long-audio fix and HUD language routing verification |
+| Actor | coder |
+| Timestamp | 2026-08-05T18:15:00Z |
+| RESULT | verified |
+
+### Findings and Fixes
+
+- The long-recording Flash failure was window-level EOS/truncation: a natural microphone recording could lose its leading speech when decoded as one full ten-second window. The product Flash path now uses VAD-derived chunks with 20 ms RMS frames, a 240 ms silence boundary, 120 ms speech-boundary padding, and a six-second preferred chunk size. Canary 1B Path B keeps its existing fixed-window chunking.
+- The direct Flash spike reproduced the old behavior: the first ten seconds of the user recording returned empty text while the final short tail returned only `EU entire project.`. The product VAD path then produced 28 words from the same 26.5-second user recording; the long scratch regression produces 50 words.
+- Canary HUD routing now keeps the configured source pair fixed for the session. It selects the first supported configured source, warns when it falls back from unsupported Primary to Additional, and returns a typed unavailable result when neither source is supported. It never auto-detects or mutates persisted settings.
+- For Canary speech translation, the language control toggles the target between the fixed source and English. The request keeps `forcedLanguageCode` at the source and changes only `translateToEnglish`; Canary 1B remains fixed English ASR and GigaAM remains fixed Russian ASR.
+- Removed the unused Flash elapsed-time local introduced by the VAD change. Remaining compiler warnings are pre-existing async/throwing annotations and the unrelated AVFoundation deprecation.
+
+### Verification
+
+| Command | Result |
+|---------|--------|
+| `swift test` | PASS - 585 tests in 15 suites |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS - 8/8 scratch/runtime tests; Flash short and long, Canary 1B, GigaAM, and rank-1 decoder regression |
+| `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests` | PASS - 8/8 installed tests; Flash, Canary 1B, GigaAM, and product session paths returned non-empty text |
+| `./script/build_and_run.sh --verify` | PASS - Release app and polish worker built, signed, and Bolabol process verified |
+| `./script/qa/run_all.sh` | 27/29 PASS; only stale `check_s1b_scope.sh` and `check_s6_gigaam_spike.sh` remain red |
+| `bash -n script/build_and_run.sh` | PASS |
+| `git diff --check -- Sources/NativeBolabol Sources/NativeBolabolCore Tests/NativeBolabolCoreTests AI_Workflow_Kit/docs/AI/FEEDBACK.md script/build_and_run.sh` | PASS |
+
+### Remaining Blockers
+
+- The two failing QA checks are stale scope allowlists that reject the accepted ADR-018/ADR-019/ADR-020 Canary and GigaAM presentation/routing surface. No QA script was changed.
+- Live Canary 1B download validation remains blocked until a human-approved CDN base URL is provided. No fallback hostname was invented.
+- The current verified Flash artifact has no Russian ASR capability. With `Primary=ru, Additional=en`, the session falls back to English with a warning and the R/E target control is disabled because the effective source is English. Russian R/E requires a verified Russian-capable model.
+
+**RESULT: `verified`**
+
+## Runtime Follow-up - Settings Crash, GO Model Smoke, and Canary Package Validation
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | Post-S11 runtime bugfix, installed-model verification, and scratch-package validation |
+| Actor | coder |
+| Timestamp | 2026-08-05T10:55:10Z |
+| RESULT | waiting_review |
+
+### Findings and Fixes
+
+- Settings crash root cause was confirmed from the report: `HotkeySettingsView` reads `@EnvironmentObject TranscriptionEngineStore`, but the macOS `Settings` scene omitted that object. SwiftUI therefore raised `EnvironmentObject.error()` at `HotkeySettingsView.swift:445`. The Settings scene now injects the shared store; the Settings preview does too.
+- Added a source regression test, `settingsSceneInjectsTranscriptionEngineStore()`, so this dependency cannot be removed silently.
+- GigaAM's fixed `[1,64,3000]` input now zero-initializes the padded region and computes frontend frames only through the true valid frame count. Padded columns are not decoded; the RNNT contract is unchanged.
+- `script/build_and_run.sh` now builds Release by default, matching the runtime path used for user-facing app verification. LLDB/debug remains available with `./script/build_and_run.sh --debug` or `BOLABOL_BUILD_CONFIGURATION=debug`.
+- The approved scratch Canary 1B package at `scratch/canary-1b-fix/package/bolabol-canary-1b-v2-coreml-r1` has all 19 manifest entries verified for SHA-256 and byte size. Its layout matches the product Path B loader: three `.mlmodelc` components plus `canary_spe.model`, `metadata.json`, and `MANIFEST.json`.
+- That exact package is installed locally at `AI_LOCAL_MODELS/whisperkit/canary/1b-v2`. Scratch direct smoke, installed-engine smoke, and product `TranscriptionModelStore` → `TranscriptionEngineStore.makeSession` smoke all return `The quick brown fox jumps over the lazy dog.` for English audio.
+- Canary Flash also passes the full product model/session path with explicit English routing. No additional Flash runtime defect reproduced in the verified local path.
+
+### Installed Model Evidence
+
+- Installed local model folders on this host:
+  - Canary Flash: `AI_LOCAL_MODELS/whisperkit/canary/180m-flash`, about 244 MB, complete.
+  - GigaAM: `AI_LOCAL_MODELS/whisperkit/gigaam/v3-rnnt`, about 214 MB, complete.
+  - Canary 1B: `AI_LOCAL_MODELS/whisperkit/canary/1b-v2`, approximately 1.8 GB, complete and SHA-verified from the approved scratch package.
+- The installed Canary Flash product engine produces `The quick brown fox jumps over the lazy dog.`. The installed GigaAM product engine produces `Сегодня мы проверяем точность русской диктовки на компьютере Apple`.
+- On this Apple M4 host, the latest installed-model smoke measured Flash cold/warm `0.767s/0.115s`, Canary 1B `0.372s/0.211s`, and GigaAM `0.252s/0.124s` for the short clips. The earlier Debug product run measured GigaAM about `1.17s/1.02s`; the large difference is build optimization/host-loop overhead, not model file size. The standalone optimized spike measured about `0.07s` RNNT decode.
+
+### Changed Paths
+
+- `Sources/NativeBolabol/App/NativeBolabolApp.swift`
+- `Sources/NativeBolabol/Engines/GigaAMCoreMLEngine.swift`
+- `Sources/NativeBolabol/Views/Settings/SettingsView.swift`
+- `Tests/NativeBolabolCoreTests/ReleaseIdentityTests.swift`
+- `Tests/NativeBolabolCoreTests/S9RuntimeSmokeTests.swift`
+- `script/build_and_run.sh`
+- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+
+### Verification
+
+| Command | Result |
+|---------|--------|
+| `swift test` | PASS - 584 tests in 15 suites |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS - scratch Flash, Canary 1B, GigaAM, and rank-1 decoder smoke |
+| `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests` | PASS - installed Flash, Canary 1B, GigaAM, and product session paths return non-empty text; timings recorded above |
+| `./script/build_and_run.sh --verify` | PASS - Release NativeBolabol and NativeBolabolPolishWorker built, signed, and app process verified |
+| `./script/qa/run_all.sh` | 27/29 PASS; only stale `check_s1b_scope.sh` and `check_s6_gigaam_spike.sh` remain red |
+| `bash -n script/build_and_run.sh` | PASS |
+| `git diff --check -- <runtime follow-up target paths>` | PASS |
+
+### Remaining Blocker
+
+- `BLOCKED_BY_INFRA_INPUT` remains only for live CDN validation: no human-approved CDN base URL is available. The local package and product runtime are validated from the approved scratch artifact; no fallback hostname or alternate source was added.
+
+**RESULT: `waiting_review`**
+
+## S11 - ADR-020 Immutable Session Routing and Canary 1B DNS Failure
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | S11 - ADR-020 immutable Core ML session plan and Canary 1B download failure policy |
+| Actor | coder |
+| Timestamp | 2026-08-05T07:57:43Z |
+| RESULT | waiting_review |
+
+### Inventory and Graphify Gate
+
+- Working directory: `/Users/pavan/Documents/AI Projects/Bolabol`.
+- Mandatory first query completed before source study:
+  `graphify query "ADR-020 S11 immutable session plan Canary GigaAM explicit forced language HUD ContentView Sidebar AudioPlaybackModal RecordingTranscriptionWorkflow DNS -1003" --graph graphify-out/graph.json`.
+- Follow-up Graphify `explain` and `path` queries traced `TranscriptionLanguageRouting.swift`, `ContentView.swift`, `RecordingTranscriptionWorkflow.swift`, `TranscriptionModelStore.swift`, and the hotkey overlay surface.
+- Read-only context reviewed: `STATE.yaml`, `TEAM_CONTRACT.md`, ADR-017 through ADR-020 in `DECISIONS.md`, the S11 section in `FEEDBACK.md`, integration plan sections §2.4 and §3.4/Track C, and S8-S11 in `ASR_COREML_STEPS.md`.
+- `STATE.yaml` was not edited by S11; its PRE-S11 checkpoint change was pre-existing orchestrator state.
+
+### ADR-020 Compliance
+
+- Added pure `TranscriptionSessionResolver` inputs and immutable `TranscriptionSessionSnapshot`/`TranscriptionSessionPlan` values. Model, folder, backend, engine identity, capabilities, OS/presence facts, speech pair, operation, HUD state, route, and exact request are captured together for one session.
+- Added typed `TranscriptionSessionOperation` cases for ordinary ASR, Whisper target translation, and speech translation. Core ML sessions never use implicit `auto` language routing.
+- Implemented the required source matrix: Canary Flash uses only configured supported primary/additional sources; Canary 1B is English ASR only; GigaAM is fixed Russian ASR and rejects translation; Whisper and Parakeet retain their existing auto behavior.
+- Added session-local Flash source switching without mutating persisted primary/additional settings. The HUD and ContentView, Sidebar, AudioPlaybackModal, hotkey overlay, and hotkey settings now consume the same session plan state.
+- `TranscriptionEngineStore.makeSession` creates the engine and route from one active-model snapshot. `RecordingTranscriptionWorkflow` sends the exact frozen request, rejects engine identity drift, and does not invoke an engine for typed-unavailable sessions.
+- Added manifest/SHA-aware Canary 1B download handling with injected `URLSession`. DNS `NSURLErrorDomain -1003` is terminal and localized, Retry remains bounded, empty/untrusted files are removed, and verified files are preserved. No CDN endpoint was invented or changed.
+- Added five localized session/download strings to all 15 locale maps: Canary 1B English requirement, package unavailable, download host failure, translation unavailable, and engine mismatch.
+- Added focused S11, workflow, mode, model-store, S8, and localization coverage without changing engine sources, protocols, package targets, or persisted settings schema.
+
+### Changed Paths
+
+- `Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift`
+- `Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift`
+- `Sources/NativeBolabol/Stores/TranscriptionModelStore.swift`
+- `Sources/NativeBolabol/Views/AudioPlaybackModalView.swift`
+- `Sources/NativeBolabol/Views/ContentView.swift`
+- `Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift`
+- `Sources/NativeBolabol/Views/SidebarView.swift`
+- `Sources/NativeBolabolCore/Models/TranscriptionLanguageMode.swift`
+- `Sources/NativeBolabolCore/Services/AppText.swift`
+- `Sources/NativeBolabolCore/Services/RecordingTranscriptionWorkflow.swift`
+- `Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift`
+- `Tests/NativeBolabolCoreTests/RecordingTranscriptionWorkflowTests.swift`
+- `Tests/NativeBolabolCoreTests/S8DownloadContractTests.swift`
+- `Tests/NativeBolabolCoreTests/S11SessionRoutingTests.swift`
+- `Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift`
+- `Tests/NativeBolabolCoreTests/TranscriptionLanguageModeTests.swift`
+- `Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift`
+- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+
+### Verification
+
+| Command | Result |
+|---------|--------|
+| `swift test` | PASS - 580 tests in 15 suites |
+| `swift test --filter S11SessionRoutingTests` | PASS - 8 tests |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS - 4/4 real scratch smokes; Canary Flash, Canary 1B, GigaAM, and rank-1 decoder position |
+| `./script/qa/run_all.sh` | 27/29 PASS; 2 stale scope checks remain red |
+| `./script/build_and_run.sh` | PASS - NativeBolabol and NativeBolabolPolishWorker built; app signing step completed |
+| `git diff --check -- Sources/NativeBolabol Sources/NativeBolabolCore Tests/NativeBolabolCoreTests` | PASS |
+
+### QA Note
+
+- `check_s1b_scope.sh` flags required S11 Core ML routing and UI references in `TranscriptionLanguageRouting.swift`, `ContentView.swift`, `HotkeySessionOverlayManager.swift`, `HotkeySettingsView.swift`, and `LocalModelsSettingsView.swift` because its allowlist is still S1b-era.
+- `check_s6_gigaam_spike.sh` reuses that stale boundary and additionally rejects the required GigaAM settings, HUD, resolver, and localized AppText presentation surface.
+- `check_s8_download_contract.sh`, `check_s9_engine_contract.sh`, security checks, localization checks, and all other QA steps pass. No QA script was changed and no source-hiding workaround was introduced.
+
+### Infrastructure Blocker
+
+- `BLOCKED_BY_INFRA_INPUT`: the human-approved CDN base URL for Canary 1B is still not provided. The DNS `-1003` path is covered deterministically, but live download verification cannot be performed without that approved endpoint.
+- No fallback hostname, alternate repository, or silent model substitution was added.
+
+### Scope Confirmation
+
+- No changes to `STATE.yaml`, `DECISIONS.md`, `Package.swift`, `EngineProtocols.swift`, `Sources/NativeBolabol/Engines/**`, catalog IDs/order, approved install sources, CDN endpoint, commits, tags, or pushes.
+- The broader workspace contains unrelated pre-existing changes; they were not reverted or modified.
+
+**RESULT: `waiting_review`**
+
+> S11 implementation and verification are complete. Review the two stale QA allowlist failures and provide the approved CDN base URL before live Canary 1B download validation.
+
 ## S10 — Coder Handoff
 
 ### Meta
@@ -2564,3 +2824,17 @@ implementation.
 - **NEXT_ACTOR: `orchestrator`**
 - **QA: `blocked_pending_S11_routing_and_1B_download_disposition`**
 - **DECISION: `ADR-020_proposed`**
+
+---
+
+## Graph Context Tooling Research Handoff
+
+| Field | Value |
+|---|---|
+| Actor | tooling research |
+| Timestamp | 2026-08-05T12:25:16Z |
+| RESULT | `tooling_research_complete` |
+| RECOMMENDATION | `native-first` |
+| SWIFT_SUPPORT_GRAFT | `absent` |
+| PILOT_REQUIRED | `yes` |
+| REPORT | `AI_Workflow_Kit/docs/AI/GRAPH_CONTEXT_TOOLING_EVALUATION.md` |

@@ -2,6 +2,17 @@
 set -euo pipefail
 
 MODE="${1:-run}"
+BUILD_CONFIGURATION="${BOLABOL_BUILD_CONFIGURATION:-}"
+if [[ -z "$BUILD_CONFIGURATION" ]]; then
+  case "$MODE" in
+    --debug|debug)
+      BUILD_CONFIGURATION="debug"
+      ;;
+    *)
+      BUILD_CONFIGURATION="release"
+      ;;
+  esac
+fi
 SWIFT_PRODUCT_NAME="NativeBolabol"
 APP_NAME="Bolabol"
 DISPLAY_NAME="Bolabol"
@@ -34,10 +45,10 @@ pkill -x "$WORKER_NAME" >/dev/null 2>&1 || true
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
 pkill -x "$SWIFT_PRODUCT_NAME" >/dev/null 2>&1 || true
 
-swift build --arch arm64 --product "$SWIFT_PRODUCT_NAME"
-swift build --arch arm64 --product "$WORKER_NAME"
-BUILD_BINARY="$(swift build --arch arm64 --show-bin-path)/$SWIFT_PRODUCT_NAME"
-BUILD_WORKER_BINARY="$(swift build --arch arm64 --show-bin-path)/$WORKER_NAME"
+swift build -c "$BUILD_CONFIGURATION" --arch arm64 --product "$SWIFT_PRODUCT_NAME"
+swift build -c "$BUILD_CONFIGURATION" --arch arm64 --product "$WORKER_NAME"
+BUILD_BINARY="$(swift build -c "$BUILD_CONFIGURATION" --arch arm64 --show-bin-path)/$SWIFT_PRODUCT_NAME"
+BUILD_WORKER_BINARY="$(swift build -c "$BUILD_CONFIGURATION" --arch arm64 --show-bin-path)/$WORKER_NAME"
 
 metal_toolchain_id() {
   if printf '__METAL_VERSION__\n' | xcrun -sdk macosx metal -E -x metal -P - >/dev/null 2>&1; then

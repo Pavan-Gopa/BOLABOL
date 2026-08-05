@@ -42,7 +42,8 @@ final class HotkeySessionOverlayManager {
         onOriginChange: ((OverlayHUDOrigin) -> Void)? = nil,
         onLanguageTap: (() -> Void)? = nil,
         onTargetTap: (() -> Void)? = nil,
-        onScroll: ((_ deltaY: CGFloat) -> Void)? = nil
+        onScroll: ((_ deltaY: CGFloat) -> Void)? = nil,
+        sessionPlan: TranscriptionSessionPlan? = nil
     ) {
         let styleChanged = state.style != settings.style
         let modeChanged = state.mode != mode
@@ -56,6 +57,9 @@ final class HotkeySessionOverlayManager {
         state.targetLanguageLabel = targetLanguageLabel
         state.showsControls = showsControls
         state.languageControlEnabled = languageControlEnabled
+        if let sessionPlan {
+            apply(sessionPlan: sessionPlan, legacyLanguageControlEnabled: languageControlEnabled)
+        }
         if mode == .processing || settings.style != .vertical {
             state.dragOffset = .zero
         }
@@ -83,7 +87,8 @@ final class HotkeySessionOverlayManager {
         hotkeyTarget: HotkeyTarget? = nil,
         targetLanguageLabel: String? = nil,
         showsControls: Bool? = nil,
-        languageControlEnabled: Bool? = nil
+        languageControlEnabled: Bool? = nil,
+        sessionPlan: TranscriptionSessionPlan? = nil
     ) {
         if let mode {
             let modeChanged = state.mode != mode
@@ -132,6 +137,12 @@ final class HotkeySessionOverlayManager {
         if let languageControlEnabled {
             state.languageControlEnabled = languageControlEnabled
         }
+        if let sessionPlan {
+            apply(
+                sessionPlan: sessionPlan,
+                legacyLanguageControlEnabled: languageControlEnabled ?? state.languageControlEnabled
+            )
+        }
     }
 
     func hide() {
@@ -149,6 +160,18 @@ final class HotkeySessionOverlayManager {
     func currentHUDFrame() -> NSRect? {
         guard state.isVisible, let panel else { return nil }
         return panel.frame
+    }
+
+    private func apply(
+        sessionPlan: TranscriptionSessionPlan,
+        legacyLanguageControlEnabled: Bool
+    ) {
+        state.languageMode = sessionPlan.languageMode
+        state.targetLanguageLabel = sessionPlan.hudLanguageLabel
+        state.languageControlEnabled = sessionPlan.backend == .canaryCoreML
+            || sessionPlan.backend == .gigaAMCoreML
+            ? sessionPlan.languageControlEnabled
+            : legacyLanguageControlEnabled
     }
 
     private func makePanel() -> DraggableOverlayPanel {
@@ -841,8 +864,8 @@ private struct HotkeySessionOverlayView: View {
             } else {
                 HStack(spacing: OverlayHUDLayout.classicButtonSpectrumGap * visualScale) {
                     controlSlot(
-                        label: state.languageMode == .auto ? "A" : state.targetLanguageLabel,
-                        isActive: state.languageMode == .target,
+                        label: languageButtonLabel,
+                        isActive: languageButtonIsActive,
                         isEnabled: state.languageControlEnabled
                     )
 
@@ -863,8 +886,8 @@ private struct HotkeySessionOverlayView: View {
             } else {
                 HStack(spacing: OverlayHUDLayout.techButtonSpectrumGap * visualScale) {
                     controlSlot(
-                        label: state.languageMode == .auto ? "A" : state.targetLanguageLabel,
-                        isActive: state.languageMode == .target,
+                        label: languageButtonLabel,
+                        isActive: languageButtonIsActive,
                         isEnabled: state.languageControlEnabled
                     )
 
@@ -885,8 +908,8 @@ private struct HotkeySessionOverlayView: View {
             } else {
                 VStack(spacing: OverlayHUDLayout.verticalButtonSpectrumGap * visualScale) {
                     controlSlot(
-                        label: state.languageMode == .auto ? "A" : state.targetLanguageLabel,
-                        isActive: state.languageMode == .target,
+                        label: languageButtonLabel,
+                        isActive: languageButtonIsActive,
                         isEnabled: state.languageControlEnabled
                     )
 
@@ -905,6 +928,22 @@ private struct HotkeySessionOverlayView: View {
                     )
                 }
             }
+        }
+    }
+
+    private var languageButtonLabel: String {
+        if state.languageMode == .unavailable {
+            return "!"
+        }
+        return state.languageMode == .auto ? "A" : state.targetLanguageLabel
+    }
+
+    private var languageButtonIsActive: Bool {
+        switch state.languageMode {
+        case .auto, .unavailable:
+            false
+        case .target, .switchable, .fixed:
+            true
         }
     }
 

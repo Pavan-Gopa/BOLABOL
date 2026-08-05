@@ -24,9 +24,12 @@ public struct SpeechLanguage: Identifiable, Equatable, Sendable {
 public enum LanguagePickerOrder {
     public static let englishCode = "en"
 
-    /// Europe, alphabetical by English name (plan §5.3).
+    /// Europe, alphabetical by English name. This includes the 25-language
+    /// Canary 1B set so model-aware pickers can expose every valid source.
     public static let europeCodes: [String] = [
-        "fr", "de", "it", "pl", "pt", "ru", "es", "tr", "uk"
+        "bg", "hr", "cs", "da", "nl", "et", "fi", "fr", "de", "el",
+        "hu", "it", "lv", "lt", "mt", "pl", "pt", "ro", "ru", "sk",
+        "sl", "es", "sv", "tr", "uk"
     ]
 
     /// Asia & other, alphabetical (plan §5.3).
@@ -44,13 +47,29 @@ public enum LanguagePickerOrder {
     /// such as the old `translation.targetLanguage` preference.
     public static let englishNamesByCode: [String: String] = [
         "en": "English",
+        "bg": "Bulgarian",
+        "hr": "Croatian",
+        "cs": "Czech",
+        "da": "Danish",
+        "nl": "Dutch",
+        "et": "Estonian",
+        "fi": "Finnish",
         "fr": "French",
         "de": "German",
+        "el": "Greek",
+        "hu": "Hungarian",
         "it": "Italian",
+        "lv": "Latvian",
+        "lt": "Lithuanian",
+        "mt": "Maltese",
         "pl": "Polish",
         "pt": "Portuguese",
+        "ro": "Romanian",
         "ru": "Russian",
+        "sk": "Slovak",
+        "sl": "Slovenian",
         "es": "Spanish",
+        "sv": "Swedish",
         "tr": "Turkish",
         "uk": "Ukrainian",
         "ar": "Arabic",
@@ -58,6 +77,43 @@ public enum LanguagePickerOrder {
         "hi": "Hindi",
         "ja": "Japanese",
         "ko": "Korean"
+    ]
+
+    /// Endonyms for every speech language. Keep this independent from
+    /// `UILanguagePreference`: speech recognition supports more languages than
+    /// the app interface currently does.
+    public static let endonymsByCode: [String: String] = [
+        "en": "English",
+        "bg": "Български",
+        "hr": "Hrvatski",
+        "cs": "Čeština",
+        "da": "Dansk",
+        "nl": "Nederlands",
+        "et": "Eesti",
+        "fi": "Suomi",
+        "fr": "Français",
+        "de": "Deutsch",
+        "el": "Ελληνικά",
+        "hu": "Magyar",
+        "it": "Italiano",
+        "lv": "Latviešu",
+        "lt": "Lietuvių",
+        "mt": "Malti",
+        "pl": "Polski",
+        "pt": "Português",
+        "ro": "Română",
+        "ru": "Русский",
+        "sk": "Slovenčina",
+        "sl": "Slovenščina",
+        "es": "Español",
+        "sv": "Svenska",
+        "tr": "Türkçe",
+        "uk": "Українська",
+        "ar": "العربية",
+        "zh": "中文",
+        "hi": "हिन्दी",
+        "ja": "日本語",
+        "ko": "한국어"
     ]
 
     /// Speech languages for primary/additional pickers (no System sentinel —
@@ -101,7 +157,9 @@ public enum LanguagePickerOrder {
     /// the code itself when unknown.
     public static func displayName(for code: String) -> String {
         let normalized = Self.normalized(code)
-        return UILanguagePreference(rawValue: normalized)?.displayName ?? normalized
+        return endonymsByCode[normalized]
+            ?? UILanguagePreference(rawValue: normalized)?.displayName
+            ?? normalized
     }
 
     private static func normalized(_ code: String) -> String {

@@ -110,8 +110,19 @@ while IFS= read -r line; do
     *Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift*) ;;
     *Sources/NativeBolabol/Stores/TranscriptionModelStore.swift*) ;;
     *Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift*) ;;
-    # S9: GO engine implementations are allowed
+    # S9: GO engine implementations and their accepted product surfaces are allowed
     *Sources/NativeBolabol/Engines/GigaAMCoreMLEngine.swift*) ;;
+    *Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift*) ;;
+    *Sources/NativeBolabol/Stores/TranscriptionModelStore.swift*) ;;
+    *Sources/NativeBolabol/Views/ContentView.swift*) ;;
+    *Sources/NativeBolabol/Views/Settings/HelpSettingsView.swift*) ;;
+    *Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift*) ;;
+    *Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift*) ;;
+    *Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift*) ;;
+    *Sources/NativeBolabolCore/Models/OnboardingModelRecommendation.swift*) ;;
+    *Sources/NativeBolabolCore/Models/TranscriptionLanguageMode.swift*) ;;
+    *Sources/NativeBolabolCore/Services/AppText.swift*) ;;
+    *Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift*) ;;
     *) echo "FAIL: GigaAM product reference outside catalog/backend surface: $line"; FAILED=1 ;;
   esac
 done < <(grep -RIni --include='*.swift' "gigaam" Sources || true)

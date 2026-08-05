@@ -7,6 +7,7 @@ struct HotkeySettingsView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var accessibilityPermissionStore: AccessibilityPermissionStore
     @EnvironmentObject private var transcriptionModelStore: TranscriptionModelStore
+    @EnvironmentObject private var transcriptionEngineStore: TranscriptionEngineStore
 
     var body: some View {
         Form {
@@ -161,8 +162,8 @@ struct HotkeySettingsView: View {
                         .padding(.top, -10)
                         .padding(.bottom, -6)
 
-                    Picker(generalSettingsStore.text(.primaryLanguage), selection: primaryLanguageSelection) {
-                        ForEach(LanguagePickerOrder.speechLanguages) { language in
+                     Picker(generalSettingsStore.text(.primaryLanguage), selection: primaryLanguageSelection) {
+                         ForEach(availableSpeechLanguages) { language in
                             Text(language.displayName)
                                 .tag(language.code)
                         }
@@ -176,8 +177,8 @@ struct HotkeySettingsView: View {
                         .opacity(0.5)
                         .padding(.vertical, 4)
 
-                    Picker(generalSettingsStore.text(.additionalLanguage), selection: additionalLanguageSelection) {
-                        ForEach(LanguagePickerOrder.speechLanguages) { language in
+                     Picker(generalSettingsStore.text(.additionalLanguage), selection: additionalLanguageSelection) {
+                         ForEach(availableSpeechLanguages) { language in
                             Text(language.displayName)
                                 .tag(language.code)
                         }
@@ -206,26 +207,51 @@ struct HotkeySettingsView: View {
                             Text(generalSettingsStore.text(.hotkeyTargetLanguage))
                                 .font(.headline)
 
-                            Picker(generalSettingsStore.text(.transcriptionLanguage), selection: languageSelection) {
-                                Text(generalSettingsStore.text(.autoDetect)).tag("auto")
-                                ForEach(TranscriptionLanguageOption.builtIn) { language in
-                                    Text("\(language.displayName) (\(language.code))")
-                                        .tag(language.code)
+                            if let activeCoreMLSession {
+                                switch activeCoreMLSession {
+                                case .available(let session):
+                                    let sourceText = session.plan.sourceLanguageChoices
+                                        .map(LanguagePickerOrder.displayName(for:))
+                                        .joined(separator: " / ")
+                                    LabeledContent(
+                                        generalSettingsStore.text(.resolvedLanguage),
+                                        value: sourceText
+                                    )
+                                    Text(generalSettingsStore.formattedText(
+                                        .localModelsNoAutomaticLanguageNotice,
+                                        generalSettingsStore.text(.localModelsLanguageModesHelpPath)
+                                    ))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                case .unavailable(let reason):
+                                    Text(unavailableMessage(for: reason))
+                                        .font(.caption)
+                                        .foregroundStyle(.orange)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
-                                Text(generalSettingsStore.text(.customCode)).tag("custom")
+                            } else {
+                                Picker(generalSettingsStore.text(.transcriptionLanguage), selection: languageSelection) {
+                                    Text(generalSettingsStore.text(.autoDetect)).tag("auto")
+                                    ForEach(TranscriptionLanguageOption.builtIn) { language in
+                                        Text("\(language.displayName) (\(language.code))")
+                                            .tag(language.code)
+                                    }
+                                    Text(generalSettingsStore.text(.customCode)).tag("custom")
+                                }
+
+                                if transcriptionModelStore.languageSelectionTag == "custom" {
+                                    TextField(generalSettingsStore.text(.languageCode), text: customLanguageCode)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+
+                                LabeledContent(generalSettingsStore.text(.resolvedLanguage), value: transcriptionModelStore.resolvedLanguageCode)
+
+                                Text(generalSettingsStore.text(.transcriptionLanguageHint))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
-
-                            if transcriptionModelStore.languageSelectionTag == "custom" {
-                                TextField(generalSettingsStore.text(.languageCode), text: customLanguageCode)
-                                    .textFieldStyle(.roundedBorder)
-                            }
-
-                            LabeledContent(generalSettingsStore.text(.resolvedLanguage), value: transcriptionModelStore.resolvedLanguageCode)
-
-                            Text(generalSettingsStore.text(.transcriptionLanguageHint))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -410,6 +436,56 @@ struct HotkeySettingsView: View {
         )
     }
 
+    private var activeCoreMLSession: TranscriptionEngineSessionResolution? {
+        guard let model = transcriptionModelStore.activeModel,
+              model.backend == .canaryCoreML || model.backend == .gigaAMCoreML
+        else {
+            return nil
+        }
+        return transcriptionEngineStore.makeSession(
+            modelStore: transcriptionModelStore,
+            operation: .ordinaryASR
+        )
+    }
+
+    private var availableSpeechLanguages: [SpeechLanguage] {
+        guard let model = transcriptionModelStore.activeModel,
+              model.backend == .canaryCoreML || model.backend == .gigaAMCoreML
+        else {
+            return LanguagePickerOrder.speechLanguages
+        }
+
+        let supported = Set(model.capabilities.explicitSupportedLanguageCodes)
+        return LanguagePickerOrder.speechLanguages.filter { supported.contains($0.code) }
+    }
+
+    private func unavailableMessage(
+        for reason: TranscriptionSessionUnavailableReason
+    ) -> String {
+        switch reason {
+        case .noActiveModel:
+            generalSettingsStore.text(.noLocalModelSelected)
+        case .incompleteModel, .invalidCapabilities:
+            generalSettingsStore.text(.localModelsPackageUnavailable)
+        case .unsupportedOS:
+            generalSettingsStore.text(.localModelsRequiresMacOS)
+        case .noSupportedSource:
+            generalSettingsStore.text(.localModelsCanaryLanguageBlock)
+        case .unsupportedSourceLanguage(_, let requestedCode, let supportedCodes):
+            generalSettingsStore.formattedText(
+                .localModelsCanaryClampWarning,
+                supportedCodes.map(TranscriptionLanguageOption.displayName(for:)).joined(separator: ", "),
+                TranscriptionLanguageOption.displayName(for: requestedCode)
+            )
+        case .englishSourceRequired:
+            generalSettingsStore.text(.localModelsCanary1BEnglishRequired)
+        case .translationUnsupported, .unsupportedOperation:
+            generalSettingsStore.text(.transcriptionSessionTranslationUnavailable)
+        case .engineIdentityMismatch:
+            generalSettingsStore.text(.transcriptionSessionEngineMismatch)
+        }
+    }
+
     private var customLanguageCode: Binding<String> {
         Binding(
             get: { transcriptionModelStore.customLanguageCode },
@@ -479,4 +555,5 @@ struct HotkeySettingsView: View {
         .environmentObject(GeneralSettingsStore.live())
         .environmentObject(AccessibilityPermissionStore.live())
         .environmentObject(TranscriptionModelStore.live())
+        .environmentObject(TranscriptionEngineStore.live())
 }

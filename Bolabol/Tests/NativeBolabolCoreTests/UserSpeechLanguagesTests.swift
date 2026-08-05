@@ -23,12 +23,12 @@ func userSpeechLanguagesDefaultsMapAdditionalLocales() {
 }
 
 @Test
-func userSpeechLanguagesDefaultsFallBackToEnglishForUnknownLocale() {
+func userSpeechLanguagesDefaultsMapCanaryLanguageLocale() {
     let languages = UserSpeechLanguages.makeDefaults(systemLocale: Locale(identifier: "nl_NL"))
 
-    #expect(languages.primaryLanguageCode == "en")
+    #expect(languages.primaryLanguageCode == "nl")
     #expect(languages.additionalLanguageCode == "en")
-    #expect(languages.usesSameAdditionalAsPrimary)
+    #expect(!languages.usesSameAdditionalAsPrimary)
 }
 
 @Test
@@ -208,9 +208,9 @@ func userSpeechLanguagesMigrationIgnoresUnknownLegacyValues() {
         systemLocale: Locale(identifier: "nl_NL")
     )
 
-    #expect(languages.primaryLanguageCode == "en")
+    #expect(languages.primaryLanguageCode == "nl")
     #expect(languages.additionalLanguageCode == "en")
-    #expect(languages.usesSameAdditionalAsPrimary)
+    #expect(!languages.usesSameAdditionalAsPrimary)
 }
 
 @Test

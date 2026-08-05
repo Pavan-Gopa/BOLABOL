@@ -5,6 +5,17 @@ import Foundation
 import NativeBolabolCore
 import WhisperKit
 
+private struct BolabolPackageManifest: Codable {
+    let packageId: String?
+    let files: [BolabolPackageManifestFile]
+}
+
+private struct BolabolPackageManifestFile: Codable {
+    let path: String
+    let sha256: String
+    let sizeBytes: Int64
+}
+
 @MainActor
 final class TranscriptionModelStore: ObservableObject {
     /// Legacy transcription settings blob key. Internal so GeneralSettingsStore
@@ -16,6 +27,7 @@ final class TranscriptionModelStore: ObservableObject {
     private let fileManager: FileManager
     private let modelsDirectory: URL
     private let parakeetModelsDirectory: URL
+    private let urlSession: URLSession
 
     @Published private(set) var settings: TranscriptionModelSettings {
         didSet {
@@ -29,7 +41,8 @@ final class TranscriptionModelStore: ObservableObject {
         userDefaults: UserDefaults = .standard,
         fileManager: FileManager = .default,
         modelsDirectory: URL? = nil,
-        parakeetModelsDirectory: URL? = nil
+        parakeetModelsDirectory: URL? = nil,
+        urlSession: URLSession = .shared
     ) {
         self.catalog = catalog
         self.userDefaults = userDefaults
@@ -40,6 +53,7 @@ final class TranscriptionModelStore: ObservableObject {
             ?? (modelsDirectory == nil
                 ? Self.defaultParakeetModelsDirectory(fileManager: fileManager)
                 : resolvedModelsDirectory)
+        self.urlSession = urlSession
         
         var loadedSettings = Self.loadSettings(from: userDefaults)
         loadedSettings.resetInterruptedDownloads()
@@ -82,6 +96,10 @@ final class TranscriptionModelStore: ObservableObject {
 
     var resolvedLanguageCode: String {
         settings.resolvedLanguageCode(catalog: catalog)
+    }
+
+    var currentSessionOSVersion: ASRModelCapabilities.OSVersion {
+        Self.currentOSVersion()
     }
 
     var languageSelectionTag: String {
@@ -278,9 +296,15 @@ final class TranscriptionModelStore: ObservableObject {
             }
             finishDownload(model, localURL: downloadedURL)
         } catch {
+            if model.id == "canary-1b-v2-coreml" {
+                cleanupCanary1BArtifacts(
+                    at: destinationURL(for: model),
+                    packageID: "bolabol-canary-1b-v2-coreml-r1"
+                )
+            }
             settings.markFailed(
                 modelID: model.id,
-                errorMessage: error.localizedDescription
+                errorMessage: boundedDownloadError(for: model, error: error)
             )
         }
     }
@@ -348,6 +372,22 @@ final class TranscriptionModelStore: ObservableObject {
         guard let model = activeModel,
               let localURL = completeLocalURL(for: model)
         else {
+            return nil
+        }
+
+        return ActiveTranscriptionModel(
+            model: model,
+            modelFolderURL: localURL
+        )
+    }
+
+    /// Resolves any complete local model without changing the active model.
+    /// Translation can select Canary independently from the transcription model
+    /// used by the rest of the app.
+    func downloadedModel(
+        for model: TranscriptionModelDescriptor
+    ) -> ActiveTranscriptionModel? {
+        guard let localURL = completeLocalURL(for: model) else {
             return nil
         }
 
@@ -557,7 +597,7 @@ final class TranscriptionModelStore: ObservableObject {
             let size: Int64?
         }
 
-        let (data, response) = try await URLSession.shared.data(from: apiURL)
+        let (data, response) = try await urlSession.data(from: apiURL)
         guard let httpRes = response as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) else {
             throw NSError(
                 domain: "TranscriptionModelStore",
@@ -589,7 +629,7 @@ final class TranscriptionModelStore: ObservableObject {
             let downloadURLString = "https://huggingface.co/\(repoID)/resolve/main/\(item.path)"
             guard let fileRemoteURL = URL(string: downloadURLString) else { continue }
 
-            let (tempURL, fileRes) = try await URLSession.shared.download(from: fileRemoteURL)
+            let (tempURL, fileRes) = try await urlSession.download(from: fileRemoteURL)
             guard let fileHTTPRes = fileRes as? HTTPURLResponse, (200...299).contains(fileHTTPRes.statusCode) else {
                 throw NSError(
                     domain: "TranscriptionModelStore",
@@ -618,7 +658,7 @@ final class TranscriptionModelStore: ObservableObject {
         progressHandler: @escaping @Sendable (Double) -> Void
     ) async throws -> URL {
         let manifestURL = baseURL.appendingPathComponent("\(packageID)/MANIFEST.json")
-        let (manifestData, manifestRes) = try await URLSession.shared.data(from: manifestURL)
+        let (manifestData, manifestRes) = try await urlSession.data(from: manifestURL)
         guard let httpRes = manifestRes as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) else {
             throw NSError(
                 domain: "TranscriptionModelStore",
@@ -627,21 +667,14 @@ final class TranscriptionModelStore: ObservableObject {
             )
         }
 
+        let manifest = try validatedManifest(
+            data: manifestData,
+            packageID: packageID
+        )
         let localManifestURL = destination.appendingPathComponent("MANIFEST.json")
         try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
         try manifestData.write(to: localManifestURL, options: .atomic)
 
-        struct BolabolPackageManifest: Codable {
-            let packageId: String?
-            let files: [BolabolPackageManifestFile]
-        }
-        struct BolabolPackageManifestFile: Codable {
-            let path: String
-            let sha256: String
-            let sizeBytes: Int64
-        }
-
-        let manifest = try JSONDecoder().decode(BolabolPackageManifest.self, from: manifestData)
         let totalBytes = manifest.files.reduce(0) { $0 + $1.sizeBytes }
         var downloadedBytes: Int64 = 0
 
@@ -658,7 +691,7 @@ final class TranscriptionModelStore: ObservableObject {
             }
 
             let fileRemoteURL = baseURL.appendingPathComponent("\(packageID)/\(file.path)")
-            let (tempURL, fileRes) = try await URLSession.shared.download(from: fileRemoteURL)
+            let (tempURL, fileRes) = try await urlSession.download(from: fileRemoteURL)
             guard let fileHTTPRes = fileRes as? HTTPURLResponse, (200...299).contains(fileHTTPRes.statusCode) else {
                 throw NSError(
                     domain: "TranscriptionModelStore",
@@ -687,6 +720,138 @@ final class TranscriptionModelStore: ObservableObject {
         }
 
         return destination
+    }
+
+    private func validatedManifest(
+        data: Data,
+        packageID: String
+    ) throws -> BolabolPackageManifest {
+        let manifest = try JSONDecoder().decode(BolabolPackageManifest.self, from: data)
+        guard (manifest.packageId == nil || manifest.packageId == packageID),
+              !manifest.files.isEmpty,
+              manifest.files.allSatisfy(isSafeManifestFile)
+        else {
+            throw NSError(
+                domain: "TranscriptionModelStore",
+                code: 10,
+                userInfo: [NSLocalizedDescriptionKey: "The model manifest is invalid."]
+            )
+        }
+        return manifest
+    }
+
+    private func isSafeManifestFile(_ file: BolabolPackageManifestFile) -> Bool {
+        let path = file.path
+        let components = path.split(separator: "/", omittingEmptySubsequences: false)
+        let hash = file.sha256.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !path.isEmpty
+            && !path.hasPrefix("/")
+            && !components.contains("..")
+            && !components.contains("")
+            && file.sizeBytes >= 0
+            && hash.count == 64
+            && hash.allSatisfy { $0.isHexDigit }
+    }
+
+    private func trustedManifest(
+        at destination: URL,
+        packageID: String
+    ) -> BolabolPackageManifest? {
+        let manifestURL = destination.appendingPathComponent("MANIFEST.json")
+        guard let data = try? Data(contentsOf: manifestURL) else { return nil }
+        return try? validatedManifest(data: data, packageID: packageID)
+    }
+
+    /// A DNS failure before the first trusted manifest must not leave an empty
+    /// Ready-looking package behind. Once a trusted manifest exists, retain
+    /// only files that still pass its SHA-256 contract for a later user retry.
+    private func cleanupCanary1BArtifacts(
+        at destination: URL,
+        packageID: String
+    ) {
+        guard fileManager.fileExists(atPath: destination.path) else { return }
+
+        guard let manifest = trustedManifest(at: destination, packageID: packageID) else {
+            try? fileManager.removeItem(at: destination)
+            return
+        }
+
+        let verifiedPaths = Set<String>(manifest.files.compactMap { file in
+            let fileURL = destination.appendingPathComponent(file.path)
+            guard fileManager.fileExists(atPath: fileURL.path),
+                  verifyFileSHA256(fileURL, expectedHash: file.sha256)
+            else {
+                try? fileManager.removeItem(at: fileURL)
+                return nil
+            }
+            return file.path
+        })
+        let allowedPaths = verifiedPaths.union(["MANIFEST.json"])
+
+        func prune(_ directory: URL, relativePrefix: String) {
+            guard let contents = try? fileManager.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: [.isDirectoryKey]
+            ) else { return }
+
+            for item in contents {
+                let relativePath = relativePrefix.isEmpty
+                    ? item.lastPathComponent
+                    : relativePrefix + "/" + item.lastPathComponent
+                var directoryFlag = ObjCBool(false)
+                let isDirectory = fileManager.fileExists(
+                    atPath: item.path,
+                    isDirectory: &directoryFlag
+                ) && directoryFlag.boolValue
+                if isDirectory {
+                    let containsAllowedDescendant = allowedPaths.contains {
+                        $0.hasPrefix(relativePath + "/")
+                    }
+                    if containsAllowedDescendant {
+                        prune(item, relativePrefix: relativePath)
+                    } else {
+                        try? fileManager.removeItem(at: item)
+                    }
+                } else if !allowedPaths.contains(relativePath) {
+                    try? fileManager.removeItem(at: item)
+                }
+            }
+        }
+
+        prune(destination, relativePrefix: "")
+    }
+
+    private func boundedDownloadError(
+        for model: TranscriptionModelDescriptor,
+        error: Error
+    ) -> String {
+        guard model.id == "canary-1b-v2-coreml", isCannotFindHost(error) else {
+            return error.localizedDescription
+        }
+        return AppText.localized(
+            .localModelsDownloadHostFailure,
+            language: currentUILanguage
+        )
+    }
+
+    private func isCannotFindHost(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCannotFindHost {
+            return true
+        }
+        if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Error {
+            return isCannotFindHost(underlying)
+        }
+        return false
+    }
+
+    private var currentUILanguage: UILanguagePreference {
+        guard let data = userDefaults.data(forKey: GeneralSettingsStore.settingsDefaultsKey),
+              let settings = try? JSONDecoder().decode(GeneralSettings.self, from: data)
+        else {
+            return .system
+        }
+        return settings.uiLanguage
     }
 
     private func verifyFileSHA256(_ fileURL: URL, expectedHash: String) -> Bool {

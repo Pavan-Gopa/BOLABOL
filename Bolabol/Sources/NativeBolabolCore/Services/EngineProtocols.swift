@@ -69,15 +69,20 @@ public struct TranscriptionRequest: Equatable, Sendable {
     /// When `true`, the engine should use Whisper's `translate` task to
     /// produce English output regardless of the spoken language.
     public var translateToEnglish: Bool
+    /// Explicit speech-translation target for engines with directional AST
+    /// capabilities, such as Canary. `nil` means ordinary ASR.
+    public var targetLanguageCode: String?
 
     public init(
         audioFileURL: URL? = nil,
         forcedLanguageCode: String? = nil,
-        translateToEnglish: Bool = false
+        translateToEnglish: Bool = false,
+        targetLanguageCode: String? = nil
     ) {
         self.audioFileURL = audioFileURL
         self.forcedLanguageCode = forcedLanguageCode
         self.translateToEnglish = translateToEnglish
+        self.targetLanguageCode = targetLanguageCode
     }
 }
 

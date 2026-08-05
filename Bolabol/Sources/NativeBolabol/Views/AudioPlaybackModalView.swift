@@ -353,19 +353,35 @@ struct AudioPlaybackModalView: View {
         isPresented = false
 
         Task { @MainActor in
-            let workflow = RecordingTranscriptionWorkflow(
-                noteStore: noteStore,
-                engine: transcriptionEngineStore.activeEngine(modelStore: transcriptionModelStore),
-                glossarySettingsProvider: { glossaryStore.settings }
+            let resolution = transcriptionEngineStore.makeSession(
+                modelStore: transcriptionModelStore,
+                operation: .ordinaryASR,
+                legacyLanguageCode: transcriptionModelStore.resolvedLanguageCode
             )
-
-            let languageCode = transcriptionModelStore.resolvedLanguageCode
-            let forcedLanguageCode = languageCode == "auto" ? nil : languageCode
-            await workflow.retranscribeExistingNote(
-                noteID: note.id,
-                audioFileURL: audioRecording.fileURL,
-                forcedLanguageCode: forcedLanguageCode
-            )
+            switch resolution {
+            case .available(let session):
+                let workflow = RecordingTranscriptionWorkflow(
+                    noteStore: noteStore,
+                    engine: session.engine,
+                    glossarySettingsProvider: { glossaryStore.settings }
+                )
+                await workflow.retranscribeExistingNote(
+                    noteID: note.id,
+                    audioFileURL: audioRecording.fileURL,
+                    plan: session.plan
+                )
+            case .unavailable(let reason):
+                let workflow = RecordingTranscriptionWorkflow(
+                    noteStore: noteStore,
+                    engine: UnavailableTranscriptionEngine(),
+                    glossarySettingsProvider: { glossaryStore.settings }
+                )
+                await workflow.retranscribeExistingNote(
+                    noteID: note.id,
+                    audioFileURL: audioRecording.fileURL,
+                    resolution: .unavailable(reason)
+                )
+            }
 
             if !requestedVariants.isEmpty && polishingEngineStore.canAutoPolishAfterTranscription {
                 let polishingWorkflow = PolishingWorkflow(
@@ -380,5 +396,3 @@ struct AudioPlaybackModalView: View {
         }
     }
 }
-
-

@@ -74,6 +74,7 @@ struct NativeBolabolApp: App {
                 .environmentObject(polishingEngineStore)
                 .environmentObject(promptTemplateStore)
                 .environmentObject(transcriptionModelStore)
+                .environmentObject(transcriptionEngineStore)
                 .environmentObject(hotkeySettingsStore)
                 .environmentObject(generalSettingsStore)
                 .environmentObject(usageStatisticsStore)

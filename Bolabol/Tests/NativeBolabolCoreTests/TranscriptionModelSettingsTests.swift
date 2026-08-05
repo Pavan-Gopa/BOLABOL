@@ -162,7 +162,7 @@ func S10PresentationPolicyDoesNotMutateSavedSettings() throws {
         on: ASRModelCapabilities.OSVersion(majorVersion: 14)
     )
 
-    #expect(projection.isHardBlocked)
+    #expect(!projection.isHardBlocked)
     #expect(!belowMinimum)
     #expect(settings == originalSettings)
     #expect(speechLanguages == originalSpeechLanguages)
@@ -190,4 +190,40 @@ func S10ClampDeduplicatesWithoutChangingTheConfiguredPair() throws {
     #expect(projection.effectiveChoices == ["en"])
     #expect(!projection.isClamped)
     #expect(speechLanguages == before)
+}
+
+@Test
+func S11SessionRoutingDoesNotPersistPairOrLegacyLanguagePreference() throws {
+    let model = try #require(
+        TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-180m-flash-coreml")
+    )
+    let settings = TranscriptionModelSettings(
+        activeModelID: model.id,
+        languagePreference: .language("ru"),
+        installationStates: [model.id: .downloaded(localURL: URL(fileURLWithPath: "/tmp/flash"))]
+    )
+    let pair = UserSpeechLanguages(primaryLanguageCode: "en", additionalLanguageCode: "de")
+    let originalSettings = settings
+    let originalPair = pair
+
+    let resolution = TranscriptionSessionResolver.resolve(
+        activeModel: model,
+        modelFolderURL: URL(fileURLWithPath: "/tmp/flash"),
+        engineIdentity: "flash-engine",
+        currentOSVersion: ASRModelCapabilities.OSVersion(majorVersion: 15),
+        hasCompleteModel: true,
+        primaryLanguageCode: pair.primaryLanguageCode,
+        additionalLanguageCode: pair.additionalLanguageCode,
+        operation: .ordinaryASR
+    )
+    guard case .available(let plan) = resolution else {
+        Issue.record("Expected an explicit Flash plan")
+        return
+    }
+    _ = plan.toggledCanaryTarget()
+
+    #expect(settings == originalSettings)
+    #expect(pair == originalPair)
+    #expect(settings.languagePreference == .language("ru"))
+    #expect(settings.activeModelID == model.id)
 }

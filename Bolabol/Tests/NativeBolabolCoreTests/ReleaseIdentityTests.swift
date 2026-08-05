@@ -26,9 +26,21 @@ func releaseScriptsBuildBolabolAppWithoutNativePrefix() throws {
 func debugRunScriptBuildsAppAndWorkerProductsSeparately() throws {
     let source = try String(contentsOfFile: "script/build_and_run.sh", encoding: .utf8)
 
-    #expect(source.contains("swift build --arch arm64 --product \"$SWIFT_PRODUCT_NAME\""))
-    #expect(source.contains("swift build --arch arm64 --product \"$WORKER_NAME\""))
+    #expect(source.contains("swift build -c \"$BUILD_CONFIGURATION\" --arch arm64 --product \"$SWIFT_PRODUCT_NAME\""))
+    #expect(source.contains("swift build -c \"$BUILD_CONFIGURATION\" --arch arm64 --product \"$WORKER_NAME\""))
     #expect(!source.contains("swift build --arch arm64 --product \"$SWIFT_PRODUCT_NAME\" --product \"$WORKER_NAME\""))
+}
+
+@Test
+func settingsSceneInjectsTranscriptionEngineStore() throws {
+    let source = try String(
+        contentsOfFile: "Sources/NativeBolabol/App/NativeBolabolApp.swift",
+        encoding: .utf8
+    )
+    let settingsStart = try #require(source.range(of: "Settings {\n"))
+    let settingsSource = source[settingsStart.lowerBound...]
+
+    #expect(settingsSource.contains(".environmentObject(transcriptionEngineStore)"))
 }
 
 @Test

@@ -16,7 +16,7 @@ import NativeBolabolCore
 ///
 /// Spike constraints (authoritative):
 /// - `.cpuAndNeuralEngine` only — `.all` crashes MPSGraph on Flash.
-/// - Explicit language from `capabilities.supportedLanguageCodes`; no auto-detect.
+/// - Explicit source and target language tokens; no auto-detect.
 /// - Audio longer than `capabilities.maxChunkSeconds` is segmented; no
 ///   cross-window context.
 /// - 1B Path B requires macOS 15+ (stateful `MLState` decoder).
@@ -70,10 +70,15 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
         }
 
         let maxChunkSamples = Int(model.capabilities.maxChunkSeconds * 16_000.0)
-        let chunks = Self.chunk(samples: samples, maxSamples: maxChunkSamples)
+        let chunks: [[Float]]
+        switch variant {
+        case .flash:
+            chunks = Self.flashChunks(samples: samples, maxSamples: maxChunkSamples)
+        case .pathB:
+            chunks = Self.chunk(samples: samples, maxSamples: maxChunkSamples)
+        }
 
         var allText = ""
-        let startedAt = Date()
 
         for chunkSamples in chunks {
             let text: String
@@ -97,7 +102,6 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
             allText += (allText.isEmpty ? "" : " ") + text
         }
 
-        let elapsed = Date().timeIntervalSince(startedAt)
         let text = allText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
             throw CanaryTranscriptionError.emptyResult
@@ -250,11 +254,117 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
         return chunks
     }
 
+    /// Flash is an offline utterance model. Natural microphone speech can be
+    /// decoded as EOS on a full ten-second window even when shorter speech
+    /// spans from the same recording decode correctly. Split at real pauses so
+    /// one bad window cannot discard the leading part of a long dictation.
+    nonisolated internal static func flashChunks(
+        samples: [Float],
+        maxSamples: Int
+    ) -> [[Float]] {
+        guard !samples.isEmpty else { return [] }
+
+        let frameSamples = 320 // 20 ms at 16 kHz
+        let minimumSilenceSamples = 3_840 // 240 ms
+        let paddingSamples = 1_920 // 120 ms on each speech boundary
+        let minimumSpeechSamples = 4_800 // 300 ms
+        let preferredChunkSamples = min(maxSamples, 96_000) // 6 seconds
+        let frameCount = (samples.count + frameSamples - 1) / frameSamples
+
+        var frameRMS = [Float](repeating: 0, count: frameCount)
+        var peakRMS: Float = 0
+        for frame in 0..<frameCount {
+            let start = frame * frameSamples
+            let end = min(start + frameSamples, samples.count)
+            var sum: Float = 0
+            for index in start..<end {
+                let value = samples[index]
+                sum += value * value
+            }
+            let rms = sqrt(sum / Float(max(1, end - start)))
+            frameRMS[frame] = rms
+            peakRMS = max(peakRMS, rms)
+        }
+
+        // The floor keeps quiet microphone recordings eligible while the
+        // relative term rejects a low-level room/noise bed.
+        let speechThreshold = max(0.0025, peakRMS * 0.08)
+        var speechRanges: [(start: Int, end: Int)] = []
+        var rangeStart: Int?
+        var silenceStart: Int?
+
+        for frame in 0..<frameCount {
+            let frameStart = frame * frameSamples
+            let isSpeech = frameRMS[frame] >= speechThreshold
+            if isSpeech {
+                if rangeStart == nil {
+                    rangeStart = max(0, frameStart - paddingSamples)
+                }
+                silenceStart = nil
+                continue
+            }
+
+            guard let currentStart = rangeStart else { continue }
+            if silenceStart == nil {
+                silenceStart = frameStart
+            }
+            guard let currentSilenceStart = silenceStart,
+                  frameStart - currentSilenceStart >= minimumSilenceSamples
+            else {
+                continue
+            }
+
+            let currentEnd = min(samples.count, currentSilenceStart + paddingSamples)
+            if currentEnd - currentStart >= minimumSpeechSamples {
+                speechRanges.append((currentStart, currentEnd))
+            }
+            rangeStart = nil
+            silenceStart = nil
+        }
+
+        if let currentStart = rangeStart {
+            let currentEnd = samples.count
+            if currentEnd - currentStart >= minimumSpeechSamples {
+                speechRanges.append((currentStart, currentEnd))
+            }
+        }
+
+        guard !speechRanges.isEmpty else {
+            return chunk(samples: samples, maxSamples: maxSamples)
+        }
+
+        var chunks: [[Float]] = []
+        var currentStart = speechRanges[0].start
+        var currentEnd = speechRanges[0].end
+
+        func appendCurrent() {
+            guard currentEnd > currentStart else { return }
+            var start = currentStart
+            while start < currentEnd {
+                let end = min(start + maxSamples, currentEnd)
+                chunks.append(Array(samples[start..<end]))
+                start = end
+            }
+        }
+
+        for range in speechRanges.dropFirst() {
+            let combinedEnd = range.end
+            if combinedEnd - currentStart > preferredChunkSamples {
+                appendCurrent()
+                currentStart = range.start
+            }
+            currentEnd = combinedEnd
+        }
+        appendCurrent()
+
+        return chunks.isEmpty ? chunk(samples: samples, maxSamples: maxSamples) : chunks
+    }
+
     // MARK: - Language Resolution
 
     // Internal seam for language validation contract testing (BLOCK-S9-002)
     internal func resolveLanguage(_ request: TranscriptionRequest) throws -> String {
-        let supported = model.capabilities.supportedLanguageCodes
+        let supported = model.capabilities.explicitSupportedLanguageCodes
         guard !supported.isEmpty else {
             throw CanaryTranscriptionError.noSupportedLanguages
         }
@@ -265,11 +375,41 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
             throw CanaryTranscriptionError.unsupportedLanguage("nil (explicit language required)")
         }
 
-        guard supported.contains(forced) else {
-            throw CanaryTranscriptionError.unsupportedLanguage(forced)
+        let normalized = forced.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard supported.contains(normalized) else {
+            throw CanaryTranscriptionError.unsupportedLanguage(normalized)
         }
 
-        return forced
+        return normalized
+    }
+
+    // Internal seam for directional speech-translation contract tests.
+    internal func resolveTargetLanguage(
+        _ request: TranscriptionRequest,
+        sourceLanguage: String
+    ) throws -> String {
+        let requested = (request.targetLanguageCode
+            ?? (request.translateToEnglish ? "en" : sourceLanguage))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+
+        guard requested != sourceLanguage else {
+            return sourceLanguage
+        }
+
+        guard model.capabilities.supportsSpeechTranslation,
+              model.capabilities.supportsSpeechTranslation(
+                  from: sourceLanguage,
+                  to: requested
+              )
+        else {
+            throw CanaryTranscriptionError.unsupportedSpeechTranslation(
+                source: sourceLanguage,
+                target: requested
+            )
+        }
+
+        return requested
     }
 
     // MARK: - Flash Transcription
@@ -280,12 +420,7 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
         }
 
         let language = try resolveLanguage(request)
-        let targetLanguage: String
-        if request.translateToEnglish && model.capabilities.supportsSpeechTranslation {
-            targetLanguage = "en"
-        } else {
-            targetLanguage = language
-        }
+        let targetLanguage = try resolveTargetLanguage(request, sourceLanguage: language)
 
         guard state.languageTokenIds[language] != nil else {
             throw CanaryTranscriptionError.unsupportedLanguage(language)
@@ -362,12 +497,7 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
         }
 
         let language = try resolveLanguage(request)
-        let targetLanguage: String
-        if request.translateToEnglish && model.capabilities.supportsSpeechTranslation {
-            targetLanguage = "en"
-        } else {
-            targetLanguage = language
-        }
+        let targetLanguage = try resolveTargetLanguage(request, sourceLanguage: language)
 
         guard state.languageTokenIds[language] != nil else {
             throw CanaryTranscriptionError.unsupportedLanguage(language)
@@ -392,9 +522,14 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
         }
 
         // Language IDs for Path B
+        guard let sourceLanguageTokenID = state.languageTokenIds[language],
+              let targetLanguageTokenID = state.languageTokenIds[targetLanguage]
+        else {
+            throw CanaryTranscriptionError.unsupportedLanguage(targetLanguage)
+        }
         let seed = [16053, 7, 4, 16,
-                    state.languageTokenIds[language] ?? 64,
-                    state.languageTokenIds[targetLanguage] ?? 64,
+                    sourceLanguageTokenID,
+                    targetLanguageTokenID,
                     5, 9, 11, 13]
 
         // Fresh MLState per segment (macOS 15+)
@@ -688,7 +823,11 @@ private extension CanaryCoreMLEngine {
 
             // Language token IDs (Path B uses the same Canary convention)
             let languageTokenIds: [String: Int] = [
-                "en": 64, "fr": 71, "de": 78, "es": 171, "ru": 157
+                "bg": 46, "hr": 58, "cs": 59, "da": 60, "nl": 62,
+                "en": 64, "et": 66, "fi": 70, "fr": 71, "de": 78,
+                "el": 79, "hu": 89, "it": 99, "lv": 117, "lt": 120,
+                "mt": 127, "pl": 150, "pt": 151, "ro": 154, "ru": 157,
+                "sk": 167, "sl": 168, "es": 171, "sv": 175, "uk": 192
             ]
             let eosId = 3
 
@@ -1269,6 +1408,7 @@ internal enum CanaryTranscriptionError: LocalizedError, Equatable {
     case invalidModelConfig
     case unsupportedOS(required: ASRModelCapabilities.OSVersion, current: ASRModelCapabilities.OSVersion)
     case unsupportedLanguage(String)
+    case unsupportedSpeechTranslation(source: String, target: String)
     case noSupportedLanguages
     case encoderFailed
     case frontendFailed(String)
@@ -1295,6 +1435,8 @@ internal enum CanaryTranscriptionError: LocalizedError, Equatable {
             "Canary 1B requires macOS \(required.majorVersion).\(required.minorVersion) or later (current: \(current.majorVersion).\(current.minorVersion))."
         case .unsupportedLanguage(let code):
             "Language '\(code)' is not supported by this Canary model."
+        case .unsupportedSpeechTranslation(let source, let target):
+            "Canary cannot translate speech from '\(source)' to '\(target)' with this model."
         case .noSupportedLanguages:
             "This Canary model has no supported languages configured."
         case .encoderFailed:

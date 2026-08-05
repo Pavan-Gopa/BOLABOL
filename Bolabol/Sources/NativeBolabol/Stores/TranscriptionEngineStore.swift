@@ -2,6 +2,22 @@ import Foundation
 import NativeBolabolCore
 
 @MainActor
+struct TranscriptionEngineSession {
+    let engine: any TranscriptionEngine
+    let plan: TranscriptionSessionPlan
+
+    func replacing(plan: TranscriptionSessionPlan) -> TranscriptionEngineSession {
+        TranscriptionEngineSession(engine: engine, plan: plan)
+    }
+}
+
+@MainActor
+enum TranscriptionEngineSessionResolution {
+    case available(TranscriptionEngineSession)
+    case unavailable(TranscriptionSessionUnavailableReason)
+}
+
+@MainActor
 final class TranscriptionEngineStore: ObservableObject {
     /// Apple Speech is intentionally never used as a fallback.
 
@@ -24,16 +40,124 @@ final class TranscriptionEngineStore: ObservableObject {
                 return UnavailableTranscriptionEngine()
             }
 
-            switch activeModel.model.backend {
-            case .whisperKitCoreML:
-                return cachedWhisperKitEngine(for: activeModel)
-            case .fluidAudioCoreML:
-                return cachedParakeetEngine(for: activeModel)
-            case .canaryCoreML:
-                return cachedCanaryEngine(for: activeModel)
-            case .gigaAMCoreML:
-                return cachedGigaAMEngine(for: activeModel)
+            return engine(for: activeModel)
+        }
+    }
+
+    /// Resolves the engine and immutable route from the same active model
+    /// snapshot. No caller may pair a route from a newer model with this
+    /// engine after the session begins.
+    func makeSession(
+        modelStore: TranscriptionModelStore,
+        operation: TranscriptionSessionOperation,
+        legacyLanguageCode: String? = nil
+    ) -> TranscriptionEngineSessionResolution {
+        guard modelStore.settings.backend == .localWhisper else {
+            return .unavailable(.noActiveModel)
+        }
+
+        guard let activeModel = modelStore.activeModel else {
+            return .unavailable(.noActiveModel)
+        }
+
+        let hasCompleteModel = modelStore.hasLocalFiles(for: activeModel)
+        guard modelStore.isModelAvailable(for: activeModel),
+              hasCompleteModel,
+              let downloadedModel = modelStore.activeDownloadedModel()
+        else {
+            return unavailableResolution(
+                for: activeModel,
+                modelStore: modelStore,
+                operation: operation,
+                legacyLanguageCode: legacyLanguageCode,
+                hasCompleteModel: hasCompleteModel
+            )
+        }
+
+        let engine = engine(for: downloadedModel)
+        let resolution = TranscriptionSessionResolver.resolve(
+            activeModel: downloadedModel.model,
+            modelFolderURL: downloadedModel.modelFolderURL,
+            engineIdentity: engine.id,
+            currentOSVersion: modelStore.currentSessionOSVersion,
+            hasCompleteModel: true,
+            primaryLanguageCode: modelStore.speechLanguages.primaryLanguageCode,
+            additionalLanguageCode: modelStore.speechLanguages.additionalLanguageCode,
+            operation: operation,
+            legacyLanguageCode: legacyLanguageCode
+        )
+
+        switch resolution {
+        case .available(let plan):
+            return .available(TranscriptionEngineSession(engine: engine, plan: plan))
+        case .unavailable(let reason):
+            return .unavailable(reason)
+        }
+    }
+
+    /// Creates a Canary speech-translation session from the modal's explicit
+    /// source/target pair without changing the app's active transcription model
+    /// or persisted speech-language settings.
+    func makeSpeechTranslationSession(
+        modelStore: TranscriptionModelStore,
+        model: TranscriptionModelDescriptor,
+        sourceLanguageCode: String,
+        targetLanguageCode: String
+    ) -> TranscriptionEngineSessionResolution {
+        guard model.backend == .canaryCoreML else {
+            return .unavailable(.translationUnsupported(modelID: model.id))
+        }
+
+        let source = sourceLanguageCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let target = targetLanguageCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let operation = TranscriptionSessionOperation.speechTranslation(
+            sourceLanguageCode: source,
+            targetLanguageCode: target
+        )
+        let hasCompleteModel = modelStore.hasLocalFiles(for: model)
+
+        guard modelStore.isModelAvailable(for: model),
+              hasCompleteModel,
+              let downloadedModel = modelStore.downloadedModel(for: model)
+        else {
+            let resolution = TranscriptionSessionResolver.resolve(
+                activeModel: model,
+                modelFolderURL: modelStore.installationState(for: model).localURL,
+                currentOSVersion: modelStore.currentSessionOSVersion,
+                hasCompleteModel: hasCompleteModel,
+                primaryLanguageCode: source,
+                additionalLanguageCode: target,
+                operation: operation
+            )
+            switch resolution {
+            case .available:
+                return .unavailable(.incompleteModel(modelID: model.id))
+            case .unavailable(let reason):
+                return .unavailable(reason)
             }
+        }
+
+        let engine = engine(for: downloadedModel)
+        let resolution = TranscriptionSessionResolver.resolve(
+            activeModel: downloadedModel.model,
+            modelFolderURL: downloadedModel.modelFolderURL,
+            engineIdentity: engine.id,
+            currentOSVersion: modelStore.currentSessionOSVersion,
+            hasCompleteModel: true,
+            primaryLanguageCode: source,
+            additionalLanguageCode: target,
+            operation: operation
+        )
+
+        switch resolution {
+        case .available(let plan):
+            return .available(TranscriptionEngineSession(engine: engine, plan: plan))
+        case .unavailable(let reason):
+            return .unavailable(reason)
         }
     }
 
@@ -41,6 +165,45 @@ final class TranscriptionEngineStore: ObservableObject {
     private var parakeetEngines: [String: ParakeetTranscriptionEngine] = [:]
     private var canaryEngines: [String: CanaryCoreMLEngine] = [:]
     private var gigaAMEngines: [String: GigaAMCoreMLEngine] = [:]
+
+    private func engine(
+        for activeModel: ActiveTranscriptionModel
+    ) -> any TranscriptionEngine {
+        switch activeModel.model.backend {
+        case .whisperKitCoreML:
+            cachedWhisperKitEngine(for: activeModel)
+        case .fluidAudioCoreML:
+            cachedParakeetEngine(for: activeModel)
+        case .canaryCoreML:
+            cachedCanaryEngine(for: activeModel)
+        case .gigaAMCoreML:
+            cachedGigaAMEngine(for: activeModel)
+        }
+    }
+
+    private func unavailableResolution(
+        for model: TranscriptionModelDescriptor,
+        modelStore: TranscriptionModelStore,
+        operation: TranscriptionSessionOperation,
+        legacyLanguageCode: String?,
+        hasCompleteModel: Bool
+    ) -> TranscriptionEngineSessionResolution {
+        let resolution = TranscriptionSessionResolver.resolve(
+            activeModel: model,
+            currentOSVersion: modelStore.currentSessionOSVersion,
+            hasCompleteModel: hasCompleteModel,
+            primaryLanguageCode: modelStore.speechLanguages.primaryLanguageCode,
+            additionalLanguageCode: modelStore.speechLanguages.additionalLanguageCode,
+            operation: operation,
+            legacyLanguageCode: legacyLanguageCode
+        )
+        switch resolution {
+        case .available:
+            return .unavailable(.incompleteModel(modelID: model.id))
+        case .unavailable(let reason):
+            return .unavailable(reason)
+        }
+    }
 
     private func cachedWhisperKitEngine(
         for activeModel: ActiveTranscriptionModel

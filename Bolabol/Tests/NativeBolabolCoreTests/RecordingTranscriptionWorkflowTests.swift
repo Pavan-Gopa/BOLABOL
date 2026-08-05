@@ -106,6 +106,112 @@ func recordingTranscriptionWorkflowPassesTranslateToEnglishToEngine() async {
 
 @MainActor
 @Test
+func recordingTranscriptionWorkflowPassesTheExactS11PlanRequest() async throws {
+    let store = NoteStore()
+    let recording = AudioRecording(
+        fileURL: URL(fileURLWithPath: "/tmp/native-bolabol-plan.wav"),
+        createdAt: Date(timeIntervalSince1970: 1_775_065_000),
+        duration: 4,
+        sampleRate: 48_000,
+        channelCount: 1,
+        suggestedTitle: "Plan note"
+    )
+    let model = try #require(
+        TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-180m-flash-coreml")
+    )
+    let resolution = TranscriptionSessionResolver.resolve(
+        activeModel: model,
+        modelFolderURL: URL(fileURLWithPath: "/tmp/bolabol-plan-model"),
+        engineIdentity: "workflow-plan-engine",
+        currentOSVersion: ASRModelCapabilities.OSVersion(majorVersion: 15),
+        hasCompleteModel: true,
+        primaryLanguageCode: "de",
+        additionalLanguageCode: "en",
+        operation: .ordinaryASR
+    )
+    guard case .available(let plan) = resolution else {
+        Issue.record("Expected a valid Flash session plan")
+        return
+    }
+
+    let engine = CapturingTranscriptionEngine(id: "workflow-plan-engine")
+    let workflow = RecordingTranscriptionWorkflow(noteStore: store, engine: engine)
+    _ = await workflow.transcribeRecording(recording, plan: plan, now: recording.createdAt)
+
+    #expect(engine.calls == 1)
+    #expect(engine.lastRequest?.audioFileURL == recording.fileURL)
+    #expect(engine.lastRequest?.forcedLanguageCode == "de")
+    #expect(engine.lastRequest?.translateToEnglish == false)
+}
+
+@MainActor
+@Test
+func recordingTranscriptionWorkflowDoesNotCallEngineForUnavailableSession() async {
+    let store = NoteStore()
+    let recording = AudioRecording(
+        fileURL: URL(fileURLWithPath: "/tmp/native-bolabol-unavailable.wav"),
+        createdAt: Date(timeIntervalSince1970: 1_775_066_000),
+        duration: 4,
+        sampleRate: 48_000,
+        channelCount: 1,
+        suggestedTitle: "Unavailable note"
+    )
+    let engine = CapturingTranscriptionEngine(id: "must-not-call")
+    let workflow = RecordingTranscriptionWorkflow(noteStore: store, engine: engine)
+    let reason = TranscriptionSessionUnavailableReason.englishSourceRequired(
+        modelID: "canary-1b-v2-coreml"
+    )
+
+    let noteID = await workflow.transcribeRecording(
+        recording,
+        resolution: .unavailable(reason),
+        now: recording.createdAt
+    )
+
+    #expect(engine.calls == 0)
+    #expect(store.note(withID: noteID)?.transcriptionStatus.phase == .failed)
+}
+
+@MainActor
+@Test
+func recordingTranscriptionWorkflowRejectsEngineIdentityMismatchBeforeCall() async throws {
+    let store = NoteStore()
+    let recording = AudioRecording(
+        fileURL: URL(fileURLWithPath: "/tmp/native-bolabol-mismatch.wav"),
+        createdAt: Date(timeIntervalSince1970: 1_775_067_000),
+        duration: 4,
+        sampleRate: 48_000,
+        channelCount: 1,
+        suggestedTitle: "Mismatch note"
+    )
+    let model = try #require(
+        TranscriptionModelCatalog.nativeWhisperKit.model(withID: "gigaam-v3-rnnt-coreml")
+    )
+    let resolution = TranscriptionSessionResolver.resolve(
+        activeModel: model,
+        modelFolderURL: URL(fileURLWithPath: "/tmp/bolabol-mismatch-model"),
+        engineIdentity: "plan-engine",
+        currentOSVersion: ASRModelCapabilities.OSVersion(majorVersion: 15),
+        hasCompleteModel: true,
+        primaryLanguageCode: "en",
+        additionalLanguageCode: "ru",
+        operation: .ordinaryASR
+    )
+    guard case .available(let plan) = resolution else {
+        Issue.record("Expected a valid GigaAM session plan")
+        return
+    }
+
+    let engine = CapturingTranscriptionEngine(id: "different-engine")
+    let workflow = RecordingTranscriptionWorkflow(noteStore: store, engine: engine)
+    let noteID = await workflow.transcribeRecording(recording, plan: plan, now: recording.createdAt)
+
+    #expect(engine.calls == 0)
+    #expect(store.note(withID: noteID)?.transcriptionStatus.phase == .failed)
+}
+
+@MainActor
+@Test
 func recordingTranscriptionWorkflowAppliesEnabledGlossaryBeforeSavingTranscript() async {
     let store = NoteStore()
     let recording = AudioRecording(
@@ -237,6 +343,26 @@ private struct TranslateCheckingTranscriptionEngine: TranscriptionEngine {
         #expect(request.forcedLanguageCode == nil)
         return TranscriptionResult(
             text: "Translated.",
+            diagnostics: EngineDiagnostics(backendName: displayName)
+        )
+    }
+}
+
+private final class CapturingTranscriptionEngine: @unchecked Sendable, TranscriptionEngine {
+    let id: String
+    let displayName = "Capturing Test Engine"
+    private(set) var calls = 0
+    private(set) var lastRequest: TranscriptionRequest?
+
+    init(id: String) {
+        self.id = id
+    }
+
+    func transcribe(_ request: TranscriptionRequest) async throws -> TranscriptionResult {
+        calls += 1
+        lastRequest = request
+        return TranscriptionResult(
+            text: "Captured.",
             diagnostics: EngineDiagnostics(backendName: displayName)
         )
     }

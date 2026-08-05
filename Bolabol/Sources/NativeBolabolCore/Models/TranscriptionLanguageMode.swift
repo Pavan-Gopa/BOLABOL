@@ -1,13 +1,16 @@
 import Foundation
 
-/// Language selection mode exposed by the HUD control button.
+/// Ephemeral language presentation state exposed by the HUD.
 ///
-/// - `auto`: the transcription language is detected automatically from the user's speech.
-/// - `target`: the transcription is auto-translated into the configured target language
-///   (the same behavior as the secondary "force target language" hotkey).
+/// `auto` and `target` remain the legacy Whisper-compatible values. The
+/// explicit states are used by the immutable Canary/GigaAM session plan and
+/// never become persisted settings.
 public enum TranscriptionLanguageMode: String, CaseIterable, Codable, Equatable, Identifiable, Sendable {
     case auto
     case target
+    case switchable = "explicit-switchable"
+    case fixed = "explicit-fixed"
+    case unavailable
 
     public var id: String { rawValue }
 
@@ -17,6 +20,16 @@ public enum TranscriptionLanguageMode: String, CaseIterable, Codable, Equatable,
             .target
         case .target:
             .auto
+        case .switchable, .fixed, .unavailable:
+            self
         }
+    }
+
+    public static var automatic: TranscriptionLanguageMode { .auto }
+    public static var explicitSwitchable: TranscriptionLanguageMode { .switchable }
+    public static var explicitFixed: TranscriptionLanguageMode { .fixed }
+
+    public var isExplicit: Bool {
+        self == .target || self == .switchable || self == .fixed
     }
 }

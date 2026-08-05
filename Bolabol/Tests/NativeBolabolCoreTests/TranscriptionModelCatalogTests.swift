@@ -195,7 +195,7 @@ func nativeTranscriptionCatalogUsesAdr018ChunkAndDownloadCapabilities() throws {
 
     #expect(canary1B.capabilities.maxChunkSeconds == 15.0)
     #expect(canary1B.capabilities.approxDownloadBytes == 1_884_267_035)
-    #expect(canary1B.capabilities.supportedLanguageCodes == ["en", "fr"])
+    #expect(canary1B.capabilities.supportedLanguageCodes == CanaryLanguageCatalog.oneBV2LanguageCodes)
     #expect(canary1B.capabilities.minOSVersion == .init(majorVersion: 15))
 
     #expect(gigaAM.capabilities.maxChunkSeconds == 30.0)

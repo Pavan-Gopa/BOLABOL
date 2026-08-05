@@ -30,7 +30,7 @@ final class FloatingTranslationWindowManager {
         glossaryStore: GlossaryStore,
         onTranslate: @escaping (String, String, String) async throws -> PolishingResult,
         onRecordingCompleted: @escaping (AudioRecording) async throws -> String,
-        onCanaryTranslation: @escaping (AudioRecording, String, String, String) async throws -> CanaryTranslationOutput
+        onCanaryTranslation: @escaping (AudioRecording, String, String, String) async throws -> SpeechTranslationResult
     ) {
         let currentPanel: NSPanel
         if let existing = panel {
@@ -96,7 +96,7 @@ final class FloatingTranslationWindowManager {
         glossaryStore: GlossaryStore,
         onTranslate: @escaping (String, String, String) async throws -> PolishingResult,
         onRecordingCompleted: @escaping (AudioRecording) async throws -> String,
-        onCanaryTranslation: @escaping (AudioRecording, String, String, String) async throws -> CanaryTranslationOutput
+        onCanaryTranslation: @escaping (AudioRecording, String, String, String) async throws -> SpeechTranslationResult
     ) {
         if isVisible {
             close()

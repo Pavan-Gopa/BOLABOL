@@ -2,11 +2,6 @@ import AppKit
 import NativeBolabolCore
 import SwiftUI
 
-struct CanaryTranslationOutput: Equatable, Sendable {
-    let sourceText: String
-    let translatedText: String
-}
-
 @MainActor
 struct TranslationModalView: View {
     struct Provider: Identifiable, Equatable {
@@ -56,7 +51,7 @@ struct TranslationModalView: View {
     @Binding var translatedText: String
     let onTranslate: (String, String, String) async throws -> PolishingResult
     let onRecordingCompleted: (AudioRecording) async throws -> String
-    let onCanaryTranslation: (AudioRecording, String, String, String) async throws -> CanaryTranslationOutput
+    let onCanaryTranslation: (AudioRecording, String, String, String) async throws -> SpeechTranslationResult
 
     @State private var selectedOriginalText = ""
     @State private var selectedTranslatedText = ""
@@ -255,111 +250,114 @@ struct TranslationModalView: View {
     }
 
     private var controls: some View {
-        HStack(spacing: 16) {
-            // 1. Provider Dropdown (Left)
-            HStack(spacing: 6) {
-                Text(generalSettingsStore.text(.provider))
-                    .foregroundStyle(.secondary)
-                    .font(.subheadline)
+        HStack(spacing: 10) {
+            labeledProviderPicker
 
-                Picker(generalSettingsStore.text(.provider), selection: $providerID) {
-                    ForEach(providers) { provider in
-                        Text(provider.displayName).tag(provider.id)
-                    }
-                }
-                .labelsHidden()
-                .frame(maxWidth: 220, alignment: .leading)
-            }
-
-            // 2. Model Dropdown (Center) — Strictly Favorite models only
             if let activeKind = activeProviderKind {
-                let favs = favoriteModels(for: activeKind)
-                let currentModelID = polishingEngineStore.apiSettings.configuration(for: activeKind).textModel
-
-                HStack(spacing: 6) {
-                    Text(generalSettingsStore.text(.model))
-                        .foregroundStyle(.secondary)
-                        .font(.subheadline)
-
-                    if favs.isEmpty {
-                        Text(modelDisplayName(id: currentModelID, kind: activeKind))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
-                    } else {
-                        Picker(generalSettingsStore.text(.model), selection: selectedModelBinding(for: activeKind)) {
-                            ForEach(favs, id: \.id) { model in
-                                Text(model.displayName).tag(model.id)
-                            }
-                        }
-                        .labelsHidden()
-                        .frame(maxWidth: 220, alignment: .leading)
-                    }
-                }
+                labeledModelPicker(for: activeKind)
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 0)
 
             if isCanaryProvider {
                 canaryLanguageControls
             } else {
-                // 3. Target Language Dropdown (Right)
-                HStack(spacing: 6) {
-                    Text(generalSettingsStore.text(.targetLanguage))
-                        .foregroundStyle(.secondary)
-                        .font(.subheadline)
-
-                    Picker(generalSettingsStore.text(.targetLanguage), selection: $targetLanguage) {
-                        ForEach(Self.defaultLanguages) { language in
-                            Text(language.displayName).tag(language.id)
-                        }
-                    }
-                    .labelsHidden()
-                    .frame(width: 140, alignment: .leading)
-                }
+                languagePickerControl(
+                    title: generalSettingsStore.text(.targetLanguage),
+                    selection: $targetLanguage,
+                    options: Self.defaultLanguages,
+                    width: 124
+                )
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 2)
     }
 
-    private var canaryLanguageControls: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 6) {
-                Text(generalSettingsStore.text(.translationSourceLanguage))
-                    .foregroundStyle(.secondary)
-                    .font(.subheadline)
-
-                Picker(
-                    generalSettingsStore.text(.translationSourceLanguage),
-                    selection: $canarySourceLanguageCode
-                ) {
-                    ForEach(canarySourceOptions) { language in
-                        Text(language.displayName).tag(language.id)
-                    }
+    private var labeledProviderPicker: some View {
+        HStack(spacing: 5) {
+            compactControlLabel(generalSettingsStore.text(.provider))
+            Picker(generalSettingsStore.text(.provider), selection: $providerID) {
+                ForEach(providers) { provider in
+                    Text(provider.displayName).tag(provider.id)
                 }
-                .labelsHidden()
-                .frame(width: 150, alignment: .leading)
             }
+            .labelsHidden()
+            .frame(width: 152, alignment: .leading)
+        }
+        .layoutPriority(1)
+    }
 
-            HStack(spacing: 6) {
-                Text(generalSettingsStore.text(.translationTargetLanguage))
+    private func labeledModelPicker(for kind: APIProviderKind) -> some View {
+        let favs = favoriteModels(for: kind)
+        let currentModelID = polishingEngineStore.apiSettings.configuration(for: kind).textModel
+
+        return HStack(spacing: 5) {
+            compactControlLabel(generalSettingsStore.text(.model))
+            if favs.isEmpty {
+                Text(modelDisplayName(id: currentModelID, kind: kind))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                    .font(.subheadline)
-
-                Picker(
-                    generalSettingsStore.text(.translationTargetLanguage),
-                    selection: $canaryTargetLanguageCode
-                ) {
-                    ForEach(canaryTargetOptions) { language in
-                        Text(language.displayName).tag(language.id)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+            } else {
+                Picker(generalSettingsStore.text(.model), selection: selectedModelBinding(for: kind)) {
+                    ForEach(favs, id: \.id) { model in
+                        Text(model.displayName).tag(model.id)
                     }
                 }
                 .labelsHidden()
-                .frame(width: 150, alignment: .leading)
+                .frame(width: 152, alignment: .leading)
             }
         }
+        .layoutPriority(1)
+    }
+
+    private var canaryLanguageControls: some View {
+        HStack(spacing: 8) {
+            languagePickerControl(
+                title: generalSettingsStore.text(.translationSourceLanguage),
+                selection: $canarySourceLanguageCode,
+                options: canarySourceOptions,
+                width: 124
+            )
+            languagePickerControl(
+                title: generalSettingsStore.text(.translationTargetLanguage),
+                selection: $canaryTargetLanguageCode,
+                options: canaryTargetOptions,
+                width: 124
+            )
+        }
+        .layoutPriority(1)
+    }
+
+    private func languagePickerControl(
+        title: String,
+        selection: Binding<String>,
+        options: [LanguageOption],
+        width: CGFloat
+    ) -> some View {
+        HStack(spacing: 5) {
+            compactControlLabel(title)
+            Picker(title, selection: selection) {
+                ForEach(options) { language in
+                    Text(language.displayName).tag(language.id)
+                }
+            }
+            .labelsHidden()
+            .frame(width: width, alignment: .leading)
+        }
+    }
+
+    private func compactControlLabel(_ title: String) -> some View {
+        Text(title)
+            .foregroundStyle(.secondary)
+            .font(.caption)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
     }
 
     // MARK: – Footer
@@ -502,7 +500,7 @@ struct TranslationModalView: View {
             return
         }
         guard !isCanaryProvider else {
-            errorMessage = generalSettingsStore.text(.transcriptionSessionTranslationUnavailable)
+            errorMessage = generalSettingsStore.text(.localModelsCanary1BSubtitle)
             return
         }
         isTranslating = true

@@ -34,6 +34,7 @@ struct ContentView: View {
     @AppStorage("translation.providerID") private var translationProviderID = ""
     @AppStorage("translation.canarySourceLanguage") private var translationCanarySourceLanguage = ""
     @AppStorage("translation.canaryTargetLanguage") private var translationCanaryTargetLanguage = ""
+    @State private var canarySpeechTranslationRuntimeStore = CanarySpeechTranslationRuntimeStore()
     @State private var pendingHotkeyTarget: HotkeyTarget?
     @State private var pendingHotkeyOutputMode: HotkeyOutputMode?
     @State private var pendingHotkeySourcePID: pid_t?
@@ -586,69 +587,49 @@ struct ContentView: View {
         providerID: String,
         sourceLanguageCode: String,
         targetLanguageCode: String
-    ) async throws -> CanaryTranslationOutput {
+    ) async throws -> SpeechTranslationResult {
         guard let modelID = TranslationModalView.localCanaryModelID(from: providerID),
               let model = transcriptionModelStore.models.first(where: { $0.id == modelID })
         else {
             throw localizedSessionError(.translationUnsupported(modelID: "Canary"))
         }
 
-        let sourceResolution = transcriptionEngineStore.makeSpeechTranslationSession(
-            modelStore: transcriptionModelStore,
-            model: model,
-            sourceLanguageCode: sourceLanguageCode,
-            targetLanguageCode: sourceLanguageCode
-        )
-        let sourceSession: TranscriptionEngineSession
-        switch sourceResolution {
-        case .available(let session):
-            sourceSession = session
-        case .unavailable(let reason):
-            throw localizedSessionError(reason)
+        guard model.backend == .canaryCoreML,
+              transcriptionModelStore.isModelAvailable(for: model),
+              let downloadedModel = transcriptionModelStore.downloadedModel(for: model)
+        else {
+            throw localizedSessionError(.translationUnsupported(modelID: model.id))
         }
 
-        let translationResolution = transcriptionEngineStore.makeSpeechTranslationSession(
-            modelStore: transcriptionModelStore,
-            model: model,
-            sourceLanguageCode: sourceLanguageCode,
-            targetLanguageCode: targetLanguageCode
-        )
-        let translationSession: TranscriptionEngineSession
-        switch translationResolution {
-        case .available(let session):
-            translationSession = session
-        case .unavailable(let reason):
-            throw localizedSessionError(reason)
-        }
-
-        let sourceResult = try await sourceSession.engine.transcribe(
-            sourceSession.plan.request(audioFileURL: recording.fileURL)
-        )
-        let translatedResult = try await translationSession.engine.transcribe(
-            translationSession.plan.request(audioFileURL: recording.fileURL)
+        let runtime = canarySpeechTranslationRuntimeStore.runtime(for: downloadedModel)
+        let result = try await runtime.translate(
+            SpeechTranslationRequest(
+                audioFileURL: recording.fileURL,
+                sourceLanguageCode: sourceLanguageCode,
+                targetLanguageCode: targetLanguageCode
+            )
         )
 
         usageStatisticsStore.record(
-            modelID: sourceResult.diagnostics.backendName,
-            modelName: sourceResult.diagnostics.backendName,
-            diagnostics: sourceResult.diagnostics
+            modelID: result.sourceDiagnostics.backendName,
+            modelName: result.sourceDiagnostics.backendName,
+            diagnostics: result.sourceDiagnostics
         )
         usageStatisticsStore.record(
-            modelID: translatedResult.diagnostics.backendName,
-            modelName: translatedResult.diagnostics.backendName,
-            diagnostics: translatedResult.diagnostics
+            modelID: result.translationDiagnostics.backendName,
+            modelName: result.translationDiagnostics.backendName,
+            diagnostics: result.translationDiagnostics
         )
 
-        return CanaryTranslationOutput(
-            sourceText: glossaryStore.apply(
-                to: sourceResult.text,
-                target: .source
-            ).text,
+        return SpeechTranslationResult(
+            sourceText: glossaryStore.apply(to: result.sourceText, target: .source).text,
             translatedText: glossaryStore.apply(
-                to: translatedResult.text,
+                to: result.translatedText,
                 target: .translation,
                 language: targetLanguageCode
-            ).text
+            ).text,
+            sourceDiagnostics: result.sourceDiagnostics,
+            translationDiagnostics: result.translationDiagnostics
         )
     }
 

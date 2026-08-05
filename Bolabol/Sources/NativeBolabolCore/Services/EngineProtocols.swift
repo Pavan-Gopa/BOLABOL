@@ -63,6 +63,53 @@ public protocol ModelPreparingPolishingEngine: PolishingEngine {
     ) async -> ModelPreparationSnapshot
 }
 
+/// A speech-to-text translation request owned by a translation runtime.
+///
+/// This is intentionally separate from `TranscriptionRequest`: a translation
+/// runtime has an explicit source/target pair and must not inherit the main
+/// dictation session's language or model selection.
+public struct SpeechTranslationRequest: Equatable, Sendable {
+    public var audioFileURL: URL
+    public var sourceLanguageCode: String
+    public var targetLanguageCode: String
+
+    public init(
+        audioFileURL: URL,
+        sourceLanguageCode: String,
+        targetLanguageCode: String
+    ) {
+        self.audioFileURL = audioFileURL
+        self.sourceLanguageCode = sourceLanguageCode
+        self.targetLanguageCode = targetLanguageCode
+    }
+}
+
+public struct SpeechTranslationResult: Equatable, Sendable {
+    public var sourceText: String
+    public var translatedText: String
+    public var sourceDiagnostics: EngineDiagnostics
+    public var translationDiagnostics: EngineDiagnostics
+
+    public init(
+        sourceText: String,
+        translatedText: String,
+        sourceDiagnostics: EngineDiagnostics,
+        translationDiagnostics: EngineDiagnostics
+    ) {
+        self.sourceText = sourceText
+        self.translatedText = translatedText
+        self.sourceDiagnostics = sourceDiagnostics
+        self.translationDiagnostics = translationDiagnostics
+    }
+}
+
+public protocol SpeechTranslationEngine: Sendable {
+    var id: String { get }
+    var displayName: String { get }
+
+    func translate(_ request: SpeechTranslationRequest) async throws -> SpeechTranslationResult
+}
+
 public struct TranscriptionRequest: Equatable, Sendable {
     public var audioFileURL: URL?
     public var forcedLanguageCode: String?

@@ -75,6 +75,17 @@ private func makeS9Defaults() -> (defaults: UserDefaults, suiteName: String) {
     return (UserDefaults(suiteName: suiteName)!, suiteName)
 }
 
+private func setS9SpeechLanguages(
+    _ speechLanguages: UserSpeechLanguages,
+    in defaults: UserDefaults
+) throws {
+    let settings = GeneralSettings(speechLanguages: speechLanguages)
+    defaults.set(
+        try JSONEncoder().encode(settings),
+        forKey: "general.settings"
+    )
+}
+
 struct S9CanaryLanguageEdgeCaseTests {
     @Test
     func canary1BLanguageMatrixCoversNilUnsupportedAndASTSources() async throws {
@@ -271,5 +282,182 @@ struct S9StorePresenceIntegrationTests {
                 #expect(engine is UnavailableTranscriptionEngine)
             }
         }
+    }
+
+    @Test
+    func storeSettingsActionsRespectCapabilityOSGateAndKeepDeleteAvailable() async throws {
+        var model = try #require(
+            TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-1b-v2-coreml")
+        )
+        model.capabilities.minOSVersion = ASRModelCapabilities.OSVersion(majorVersion: 99)
+        let catalog = try TranscriptionModelCatalog(models: [model])
+        let root = try makeS9TemporaryRoot(prefix: "bolabol-s10-os-gate")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let expectedFolder = try makeS9GOModelFolder(for: model, under: root)
+
+        let (defaults, suiteName) = makeS9Defaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let modelStore = TranscriptionModelStore(
+            catalog: catalog,
+            userDefaults: defaults,
+            fileManager: .default,
+            modelsDirectory: root
+        )
+
+        #expect(modelStore.hasLocalFiles(for: model))
+        #expect(modelStore.settings.installationState(for: model.id).status == .downloaded)
+        modelStore.activate(model)
+        #expect(modelStore.settings.activeModelID == nil)
+
+        await modelStore.download(model)
+        #expect(modelStore.settings.activeModelID == nil)
+        #expect(modelStore.settings.installationState(for: model.id).status == .downloaded)
+
+        modelStore.remove(model)
+        #expect(!FileManager.default.fileExists(atPath: expectedFolder.path))
+        #expect(modelStore.settings.installationState(for: model.id).status == .notDownloaded)
+    }
+
+    @Test
+    func S10LanguageBlockKeepsRealDownloadProgressAndRetryActions() throws {
+        let model = try #require(
+            TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-180m-flash-coreml")
+        )
+        let catalog = try TranscriptionModelCatalog(models: [model])
+        let root = try makeS9TemporaryRoot(prefix: "bolabol-s10-language-actions")
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let (defaults, suiteName) = makeS9Defaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        try setS9SpeechLanguages(
+            UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "uk"),
+            in: defaults
+        )
+        let modelStore = TranscriptionModelStore(
+            catalog: catalog,
+            userDefaults: defaults,
+            fileManager: .default,
+            modelsDirectory: root
+        )
+        let projection = model.sourceLanguageProjection(
+            primary: modelStore.speechLanguages.primaryLanguageCode,
+            additional: modelStore.speechLanguages.additionalLanguageCode
+        )
+        let isOSCompatible = modelStore.isModelAvailable(for: model)
+
+        #expect(projection.isHardBlocked)
+        #expect(isOSCompatible)
+        #expect(modelStore.installationState(for: model).status == .notDownloaded)
+        #expect(
+            LocalModelsActionPolicy.action(
+                for: modelStore.installationState(for: model),
+                isOSCompatible: isOSCompatible,
+                isLanguageBlocked: projection.isHardBlocked,
+                isActive: false,
+                isGOModel: true,
+                hasCompleteLocalFiles: modelStore.hasLocalFiles(for: model)
+            ) == .download
+        )
+
+        var settings = TranscriptionModelSettings()
+        settings.markDownloading(modelID: model.id, progressFraction: 0.41)
+        let knownProgress = settings.installationState(for: model.id)
+        #expect(
+            LocalModelsActionPolicy.action(
+                for: knownProgress,
+                isOSCompatible: isOSCompatible,
+                isLanguageBlocked: projection.isHardBlocked,
+                isActive: false,
+                isGOModel: true,
+                hasCompleteLocalFiles: false
+            ) == .downloading(progressFraction: 0.41)
+        )
+
+        settings.markDownloading(modelID: model.id, progressFraction: nil)
+        let indeterminateProgress = settings.installationState(for: model.id)
+        #expect(
+            LocalModelsActionPolicy.action(
+                for: indeterminateProgress,
+                isOSCompatible: isOSCompatible,
+                isLanguageBlocked: projection.isHardBlocked,
+                isActive: false,
+                isGOModel: true,
+                hasCompleteLocalFiles: false
+            ) == .downloading(progressFraction: nil)
+        )
+
+        let errorMessage = "real download failed: connection reset"
+        settings.markFailed(modelID: model.id, errorMessage: errorMessage)
+        let failed = settings.installationState(for: model.id)
+        #expect(
+            LocalModelsActionPolicy.action(
+                for: failed,
+                isOSCompatible: isOSCompatible,
+                isLanguageBlocked: projection.isHardBlocked,
+                isActive: false,
+                isGOModel: true,
+                hasCompleteLocalFiles: false
+            ) == .retry(errorMessage: errorMessage)
+        )
+    }
+
+    @Test
+    func S10LanguageBlockedCompletionDoesNotAutoSelectAndKeepsDelete() throws {
+        let model = try #require(
+            TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-180m-flash-coreml")
+        )
+        let catalog = try TranscriptionModelCatalog(models: [model])
+        let root = try makeS9TemporaryRoot(prefix: "bolabol-s10-language-completion")
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let (defaults, suiteName) = makeS9Defaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        try setS9SpeechLanguages(
+            UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "uk"),
+            in: defaults
+        )
+        let modelStore = TranscriptionModelStore(
+            catalog: catalog,
+            userDefaults: defaults,
+            fileManager: .default,
+            modelsDirectory: root
+        )
+        #expect(modelStore.installationState(for: model).status == .notDownloaded)
+
+        let completedFolder = try makeS9GOModelFolder(for: model, under: root)
+        modelStore.finishDownload(model, localURL: completedFolder)
+
+        let state = modelStore.installationState(for: model)
+        let projection = model.sourceLanguageProjection(
+            primary: modelStore.speechLanguages.primaryLanguageCode,
+            additional: modelStore.speechLanguages.additionalLanguageCode
+        )
+        #expect(state.status == .downloaded)
+        #expect(modelStore.hasLocalFiles(for: model))
+        #expect(modelStore.settings.activeModelID == nil)
+        #expect(modelStore.activeModel == nil)
+        #expect(modelStore.activeModelForPresentation == nil)
+        #expect(
+            LocalModelsActionPolicy.action(
+                for: state,
+                isOSCompatible: modelStore.isModelAvailable(for: model),
+                isLanguageBlocked: projection.isHardBlocked,
+                isActive: false,
+                isGOModel: true,
+                hasCompleteLocalFiles: modelStore.hasLocalFiles(for: model)
+            ) == .none
+        )
+        #expect(
+            LocalModelsActionPolicy.canDelete(
+                state: state,
+                isGOModel: true,
+                hasCompleteLocalFiles: modelStore.hasLocalFiles(for: model),
+                hasAnyLocalFiles: modelStore.hasAnyLocalFiles(for: model)
+            )
+        )
+
+        modelStore.remove(model)
+        #expect(!FileManager.default.fileExists(atPath: completedFolder.path))
+        #expect(modelStore.installationState(for: model).status == .notDownloaded)
     }
 }

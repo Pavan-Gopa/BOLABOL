@@ -59,6 +59,27 @@ final class TranscriptionModelStore: ObservableObject {
         settings.activeModel(catalog: catalog)
     }
 
+    /// The active model that can honestly be presented as usable in Settings.
+    /// Persisted settings are left untouched when the current OS is below a
+    /// model capability's minimum or when its folder is no longer complete.
+    var activeModelForPresentation: TranscriptionModelDescriptor? {
+        guard let model = activeModel else { return nil }
+        if model.backend == .canaryCoreML || model.backend == .gigaAMCoreML {
+            guard isModelAvailable(for: model), hasLocalFiles(for: model) else {
+                return nil
+            }
+        }
+        guard !isLanguageBlocked(for: model) else { return nil }
+        return model
+    }
+
+    func isModelAvailable(
+        for model: TranscriptionModelDescriptor,
+        on osVersion: ASRModelCapabilities.OSVersion? = nil
+    ) -> Bool {
+        model.capabilities.isAvailable(on: osVersion ?? Self.currentOSVersion())
+    }
+
     var resolvedLanguageCode: String {
         settings.resolvedLanguageCode(catalog: catalog)
     }
@@ -115,6 +136,7 @@ final class TranscriptionModelStore: ObservableObject {
     }
 
     func activate(_ model: TranscriptionModelDescriptor) {
+        guard isModelAvailable(for: model) else { return }
         reconcileModelStates()
         guard hasLocalFiles(for: model) else { return }
         _ = settings.activate(modelID: model.id, catalog: catalog)
@@ -152,6 +174,17 @@ final class TranscriptionModelStore: ObservableObject {
         completeLocalURL(for: model) != nil
     }
 
+    /// True when a real destination or recorded local URL exists, including a
+    /// partial download that can still be removed from the card.
+    func hasAnyLocalFiles(for model: TranscriptionModelDescriptor) -> Bool {
+        if let localURL = settings.installationState(for: model.id).localURL,
+           fileManager.fileExists(atPath: localURL.path) {
+            return true
+        }
+
+        return fileManager.fileExists(atPath: destinationURL(for: model).path)
+    }
+
     func reconcileModelStates() {
         settings.resetInterruptedDownloads()
         for model in catalog.models {
@@ -167,6 +200,7 @@ final class TranscriptionModelStore: ObservableObject {
     }
 
     func download(_ model: TranscriptionModelDescriptor) async {
+        guard isModelAvailable(for: model) else { return }
         guard !downloadingModelIDs.contains(model.id) else { return }
 
         downloadingModelIDs.insert(model.id)
@@ -242,11 +276,7 @@ final class TranscriptionModelStore: ObservableObject {
                     progressHandler: progressHandler
                 )
             }
-            settings.markDownloaded(
-                modelID: model.id,
-                localURL: downloadedURL
-            )
-            _ = settings.activate(modelID: model.id, catalog: catalog)
+            finishDownload(model, localURL: downloadedURL)
         } catch {
             settings.markFailed(
                 modelID: model.id,
@@ -388,6 +418,38 @@ final class TranscriptionModelStore: ObservableObject {
             fileManager: fileManager
         )) ?? fileManager.temporaryDirectory
             .appendingPathComponent("NativeBolabol-Parakeet", isDirectory: true)
+    }
+
+    private static func currentOSVersion() -> ASRModelCapabilities.OSVersion {
+        let version = ProcessInfo.processInfo.operatingSystemVersion
+        return ASRModelCapabilities.OSVersion(
+            majorVersion: version.majorVersion,
+            minorVersion: version.minorVersion,
+            patchVersion: version.patchVersion
+        )
+    }
+
+    /// Completes the real S8 installation state without auto-selecting a
+    /// Canary whose configured source pair is hard-blocked by S10.
+    func finishDownload(
+        _ model: TranscriptionModelDescriptor,
+        localURL: URL
+    ) {
+        settings.markDownloaded(
+            modelID: model.id,
+            localURL: localURL
+        )
+        if !isLanguageBlocked(for: model) {
+            _ = settings.activate(modelID: model.id, catalog: catalog)
+        }
+    }
+
+    private func isLanguageBlocked(for model: TranscriptionModelDescriptor) -> Bool {
+        guard model.backend == .canaryCoreML else { return false }
+        return model.sourceLanguageProjection(
+            primary: speechLanguages.primaryLanguageCode,
+            additional: speechLanguages.additionalLanguageCode
+        ).isHardBlocked
     }
 
     // MARK: - GO Model Downloads & Presence (ADR-018)

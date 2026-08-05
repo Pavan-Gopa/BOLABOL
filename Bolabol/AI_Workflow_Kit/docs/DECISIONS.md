@@ -510,3 +510,495 @@ and a superseding ADR; it is not an S10 UI decision.
 
 ---
 *Add new ADRs at the bottom; do not rewrite history — supersede with new ADR if needed.*
+
+---
+
+## ADR-020 — S11 explicit Core ML session routing and 1B download failure policy
+
+**Status:** Proposed for S11 runtime-blocker implementation
+
+### Decision
+
+S10 remains presentation-correct and `BLOCK-S10-001` remains closed, but feature
+QA is blocked by a separate S11 runtime defect. S11 must introduce one
+capability-aware **session plan** that binds the selected local model, backend,
+operation, explicit ASR source, HUD representation, and eventual
+`TranscriptionRequest`. Every local transcription entry point must use that
+plan. The existing Whisper-oriented auto/target router must no longer be the
+only route constructor for Canary or GigaAM.
+
+The session plan is an ephemeral snapshot. It is computed from the active,
+complete model descriptor, its `ASRModelCapabilities`, current OS, the user's
+canonical primary/additional speech-language pair, and the explicitly requested
+operation. It is not a new installation state and is not silently persisted.
+For every Canary/GigaAM ASR request it produces a non-empty, non-`auto`
+`forcedLanguageCode`; an invalid combination produces an unavailable session
+with a truthful reason and **no engine call**.
+
+Canary/GigaAM remain Core ML only. Whisper/Parakeet retain their current
+auto-detect and HUD **A** behavior. No Python, NeMo runtime, PyTorch, ONNX, new
+runtime dependency, S12 ranking behavior, or prohibited Canary 1B source is
+introduced.
+
+### A. Root-cause model
+
+The live result is caused by an architectural disconnect, not by incomplete
+Flash/GigaAM packages and not by an S10 card defect:
+
+1. **Selected Local Model / backend.** `TranscriptionModelStore` persists
+   `activeModelID`; `TranscriptionEngineStore.activeEngine` correctly maps the
+   active descriptor backend to WhisperKit, Parakeet, `CanaryCoreMLEngine`, or
+   `GigaAMCoreMLEngine`. The engine selection edge is present and is not the
+   observed failure.
+2. **Capabilities.** S7 descriptors correctly say
+   `supportsAutoLanguageDetect == false`, Flash supports explicit
+   `en/de/fr/es`, Path B 1B has an English-only verified ASR source projection,
+   and GigaAM supports explicit `ru`. S10 consumes those capabilities for card,
+   OS, source-projection, and activation presentation. The runtime router does
+   not consume them.
+3. **Legacy resolved language.** `TranscriptionModelSettings.languagePreference`
+   defaults to `.auto`. `resolvedLanguageCode` falls back through legacy
+   `LanguageSupport.defaultLanguageCode`; both new backends still carry the
+   coarse `.multilingual`, whose default is `auto`. This API therefore returns
+   `auto` even when the selected descriptor explicitly forbids auto detection.
+4. **Hotkey override.** The current `ContentView` hotkey path goes further: for
+   an ordinary hotkey session (`hotkeyTarget != nil`, target-language mode off)
+   it assigns `languageCode = "auto"` unconditionally. It calls
+   `TranscriptionLanguageRouter.route(resolvedLanguageCode:isMultilingualModel:
+   forceTargetLanguage:)`, which only knows a language string and Whisper-style
+   native-translation eligibility. It receives no model id, backend,
+   capabilities, or primary/additional pair. By design, `auto` becomes
+   `forcedLanguageCode == nil`.
+5. **HUD/session UI.** `TranscriptionLanguageMode` models only Whisper's
+   `.auto ↔ .target` semantics. `HotkeySessionOverlayManager` renders either
+   **A** or a target-language letter, not an explicit ASR source. The current
+   `isHUDLanguageControlEnabled` predicate is based on Gemini/Whisper native
+   translation or polishing availability, not on ASR source capabilities. For
+   a raw Canary/GigaAM session it disables the control and resets target mode,
+   explaining the live `languageControlEnabled=false`; disabled state still
+   does not supply the required explicit source.
+6. **Request construction.** `ContentView` passes the legacy route fields into
+   `RecordingTranscriptionWorkflow`, which constructs
+   `TranscriptionRequest(forcedLanguageCode: nil, ...)`. The translation
+   recording path uses the same router. `SidebarView` and
+   `AudioPlaybackModalView` bypass that router but repeat the same defect with
+   `resolvedLanguageCode == "auto" ? nil : languageCode` during re-transcription.
+7. **Engine requirements.** Both new Core ML engines correctly reject a nil or
+   unsupported explicit source. Canary documents that a HUD A/nil request is an
+   error; GigaAM additionally rejects translation. The workflow catches the
+   error and leaves the note's raw text empty; hotkey output then truthfully
+   skips an empty string. Empty output is the downstream symptom, not proof that
+   an auto request succeeded.
+
+This distinguishes three independent facts:
+
+- **S10 presentation correctness:** ADR-019 cards, capability notices, OS gate,
+  real S8 actions/progress, non-mutating projection, and the accepted
+  `BLOCK-S10-001` fix remain valid. S10 explicitly deferred HUD, session, and
+  request routing to S11.
+- **S11 missing runtime routing:** capabilities stop at Settings presentation;
+  the actual session/request path is still Whisper-only and can emit nil/auto
+  for engines that require an explicit source.
+- **Canary 1B DNS/download blocker:** the 1B folder is empty because its Path B
+  manifest request failed before any bytes with DNS `NoSuchRecord`,
+  `NSURLErrorDomain` code `-1003`, `failed to connect 12:8`, and `0/0 bytes`.
+  That network/configuration failure is separate from the route defect. It
+  cannot be repaired by language routing or represented as installed.
+
+The retained live log and observed folders are evidence for this decision only;
+they are not product assets. The complete Flash and GigaAM layouts establish
+that those two reproductions reached the routing boundary. The empty 1B folder
+establishes that 1B did not reach its engine boundary.
+
+### B. Explicit routing contract
+
+#### Common request invariant
+
+The route resolver receives a frozen active descriptor, the canonical
+primary/additional pair, the requested operation, and availability/presence
+facts. It returns either a valid session plan or a typed unavailable reason.
+For `.canaryCoreML` and `.gigaAMCoreML`, a valid ASR plan must satisfy:
+
+```text
+forcedLanguageCode != nil
+forcedLanguageCode is normalized, non-empty, and != "auto"
+forcedLanguageCode is an allowed verified ASR source for this model/operation
+translateToEnglish == false for ordinary ASR
+```
+
+The engine validators remain the final safety net. The router must prevent the
+invalid call; it must not weaken a validator so nil/auto appears successful.
+
+#### Whisper / Parakeet
+
+- Preserve existing auto-detect behavior and HUD **A** behavior.
+- Whisper retains its explicit recognition preference and its existing
+  Whisper-only X→English translation semantics.
+- Parakeet continues to auto-detect internally; a stale explicit Whisper
+  preference must not become a restrictive Parakeet source hint.
+- Existing `TranscriptionLanguageRouter` regression behavior remains available
+  for these backends. Its auto result may remain
+  `forcedLanguageCode == nil`; that result is never reused for Canary/GigaAM.
+
+#### Canary Flash
+
+Verified explicit ASR source set: **EN/DE/FR/ES**. Normalize and deduplicate the
+configured primary/additional pair while preserving slot order. The first
+surviving primary is the initial session source; otherwise the surviving
+additional is initial. Only user-configured pair values may become Flash source
+choices; do not manufacture another supported default.
+
+| Configured pair case | Effective session behavior | HUD / request |
+|---|---|---|
+| Both supported and distinct | Choices are `[primary, additional]`; initial source is primary; a HUD tap switches only between those two. | Show the active explicit source letter; request always forces that source. Never show/send A. |
+| Exactly one supported | Use the one surviving configured language, regardless of which slot supplied it. | Fixed explicit letter; no fake switch; force that code. |
+| Neither supported | Session is unavailable for Flash. | Explain that Flash needs EN/DE/FR/ES in Primary or Additional; make no request. |
+| Same-as-primary | Deduplicate to one explicit source. | Fixed letter; no duplicate toggle and no auto. |
+| One missing/blank and the other supported | Treat the missing slot as absent and use the supported slot. | Fixed explicit route. |
+| Both missing/blank | No configured source exists. | Unavailable; make no request. |
+| Unsupported configured primary/additional, including defensive `auto` input | Exclude each unsupported value; then apply the one/none rules above. | Show the unsupported-combination reason when none survive; never silently substitute or rewrite. |
+
+Pair evaluation is pure. It does not modify primary, additional,
+`languagePreference`, active model, or installation state.
+
+#### Canary 1B Path B
+
+- The only verified ASR source is explicit **English**. A valid ASR request is
+  `forcedLanguageCode = "en"` and `translateToEnglish = false`.
+- English must survive the primary/additional projection. If neither configured
+  slot is English, the ASR session is unavailable and tells the user to add
+  English; it does not pretend that French is an ASR source and does not
+  auto-select English behind the user's saved pair.
+- **English → French speech translation is a narrow operation**, not French
+  ASR and not a primary↔additional source toggle. An additional value of `fr`
+  does not create a French source or an **F** source HUD state.
+- The current request flag is named and implemented as
+  `translateToEnglish`; it cannot honestly encode EN→FR and must not be
+  repurposed. The runtime-blocker implementation may expose 1B English ASR as
+  above. If it also exposes the verified translation operation, it must first
+  add a typed operation/target contract whose only 1B translation route is
+  source `en` → target `fr`, wire it through the workflow and engine, and add
+  real runtime evidence. Until that distinct operation exists, EN→FR remains a
+  truthful capability statement but no control may imply the operation ran.
+- macOS 15+ and S8 complete-folder rules are prerequisites to session creation.
+  Failure of either rule is unavailable, not a fallback model and not a fake
+  ready state.
+- The install source remains only the Bolabol-owned Path B package from the
+  Bolabol CDN. FluidInference/alexwengg and the excluded smdesai preprocessor
+  remain forbidden.
+
+#### GigaAM
+
+- Every valid session is explicit Russian ASR:
+  `forcedLanguageCode = "ru"`, `translateToEnglish = false`.
+- HUD shows a fixed Russian representation (**R**, following the existing Latin
+  HUD-label rule), never **A** and never a second source.
+- No primary/additional toggle is offered because the engine is RU-only. A
+  configured additional language must not become a fake switch.
+- If configured primary is not RU, keep ADR-019's clear, non-mutating user tip:
+  the selected model transcribes Russian only and the session will use RU. This
+  is a soft truth notice, not an implicit edit of primary/additional and not a
+  claim that another configured language is supported.
+- A translation request or a source other than RU is unavailable and must not
+  reach the engine as a plausible success.
+
+### C. Session/HUD state machine
+
+#### Source of truth
+
+At session start, create one immutable `TranscriptionSessionPlan` (name may
+follow repository conventions) from:
+
+```text
+active complete model descriptor + backend + capabilities + model id
+current OS availability
+current primary/additional speech-language pair
+explicit requested operation
+legacy languagePreference only for the existing Whisper path
+```
+
+The plan owns the active source for that session, the permitted source choices,
+the exact request fields, HUD presentation, and an unavailable reason when
+invalid. `ContentView`, the workflow, and re-transcription entry points consume
+the same resolver; no view reconstructs `auto ? nil : code` independently.
+
+For a running hotkey session, the plan is the source of session language truth.
+The model store and user settings remain sources for the **next** plan. This
+prevents the HUD label, request, and engine descriptor from observing different
+moments of mutable settings.
+
+#### Persistence policy
+
+- Capability clamping, session creation, HUD display, and a Canary HUD source
+  tap never write `TranscriptionModelSettings.languagePreference`.
+- `languagePreference` remains the existing persisted Whisper recognition
+  preference and is written only by an explicit user action on the legacy
+  Whisper/Parakeet-compatible Recognition Language control. It is not repaired
+  on model activation and is not used as a Canary/GigaAM source fallback.
+- When a Canary/GigaAM model is active, `HotkeySettingsView` presents the
+  capability-derived current session source contract alongside the canonical
+  Primary/Additional controls; it must not present Auto as a usable Core ML
+  engine route. Editing Primary/Additional is an explicit user action through
+  `GeneralSettingsStore`, not a router side effect.
+- The existing persisted Whisper HUD target-mode preference must not be read as
+  a Canary source choice. Canary source cycling is session-local. GigaAM/1B
+  fixed displays do not persist a fake toggle state.
+- No `clamped`, `fixedRU`, `readyForLanguage`, DNS-ready, or similar state is
+  added to persisted model settings or installation state.
+
+#### HUD behavior
+
+The overlay needs a presentation state richer than current `.auto/.target`:
+automatic, explicit-switchable source, explicit-fixed source, and unavailable.
+Rendering and hit testing consume that state. A disabled explicit control still
+renders its real source letter; `languageControlEnabled == false` must no longer
+implicitly mean “render A”. Tooltips/accessibility text name the active source
+and, for switchable Flash, the next source.
+
+#### Transitions
+
+| Event / guard | Next state | Request and HUD | Persistence |
+|---|---|---|---|
+| Begin Whisper/Parakeet session | Existing automatic/legacy route | Preserve HUD A and existing request semantics. | Existing explicit legacy settings only. |
+| Begin Flash; two supported distinct pair values | Explicit-switchable, active primary | Force primary; show its letter. | None. |
+| Tap Flash source control | Explicit-switchable, active other configured source | Rebuild only the pending session request fields; show other letter; never nil/auto. | None. |
+| Begin Flash; exactly one supported value or same-as-primary | Explicit-fixed | Force sole source; fixed letter, no fake tap. | None. |
+| Begin Flash; no supported configured value | Unavailable | Clear reason; do not record/invoke engine as a usable session. | None. |
+| Begin 1B; macOS 15+, complete folder, English in pair | Explicit-fixed EN ASR | Force EN; fixed **E**. | None. |
+| Begin 1B without English, on unsupported OS, or incomplete package | Unavailable with the specific language/OS/package reason | No request and no fallback. | Preserve real settings/state. |
+| Begin GigaAM with complete folder | Explicit-fixed RU | Force RU; fixed **R**, even when primary is not RU; show soft RU-only notice. | None. |
+| Model or pair changes while recording | Current plan remains frozen; next session uses new inputs | Current HUD/request stay consistent. If the frozen package is deleted/unavailable before invocation, fail truthfully; never switch engine silently. | Only the user's explicit settings action persists. |
+| Session ends/cancels | Discard plan | Hide HUD; next session recomputes. | No session-language write. |
+| DNS/download failure | Installation `.failed` for this attempt, package incomplete | Show bounded truthful error and Retry; no session plan for 1B. | Never mark downloaded/active. |
+
+### D. Product implementation boundary
+
+GraphiFy connects `ContentView` to `TranscriptionModelStore`,
+`TranscriptionEngineStore`, `TranscriptionLanguageRouter`,
+`RecordingTranscriptionWorkflow`, `TranscriptionRequest`, and
+`HotkeySessionOverlayManager`; it connects the workflow request to both Core ML
+engines. A second graph traversal connects the Path B descriptor/install source
+to `TranscriptionModelStore.downloadBolabolCDNPackage`, Local Models Retry, and
+complete-folder tests. The implementation therefore cannot be a HUD-only patch.
+
+#### Mandatory product files
+
+| File | Required S11/download responsibility |
+|---|---|
+| `Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift` | Add the pure backend/model/capability-aware session resolver and typed unavailable reasons while preserving the existing Whisper/Parakeet route contract. This is the single source for route/request/HUD projection. |
+| `Sources/NativeBolabolCore/Models/TranscriptionLanguageMode.swift` | Replace or extend the two-state Whisper-only representation with automatic, explicit-switchable, explicit-fixed, and unavailable presentation semantics. It remains ephemeral unless an existing legacy value explicitly requires compatibility. |
+| `Sources/NativeBolabol/Stores/TranscriptionModelStore.swift` | Supply the active descriptor, canonical speech pair, OS/presence facts to the resolver; remove all Core ML reliance on legacy `resolvedLanguageCode`; implement the truthful `-1003` classification, retry seam, and incomplete-artifact policy without weakening S8 SHA/storage semantics. |
+| `Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift` | Resolve an engine and its descriptor/runtime identity as one session binding so a mid-session model change cannot pair an old route with a new engine. Preserve existing engine caches and no-fallback behavior. |
+| `Sources/NativeBolabolCore/Services/RecordingTranscriptionWorkflow.swift` | Accept/construct requests from the validated session plan rather than independent optional language fields; keep failure status honest. Ordinary Core ML ASR must never be able to lose its explicit source here. |
+| `Sources/NativeBolabol/Views/ContentView.swift` | Replace both hotkey and translation-recording call sites, freeze the model/route at session start, drive the HUD from it, handle source taps, and remove the unconditional hotkey `"auto"` route for Canary/GigaAM. Whisper/Parakeet branches remain behaviorally unchanged. |
+| `Sources/NativeBolabol/Views/SidebarView.swift` | Route re-transcription through the shared session resolver; remove its direct `auto → nil` construction. |
+| `Sources/NativeBolabol/Views/AudioPlaybackModalView.swift` | Route modal re-transcription through the same resolver; remove its duplicate `auto → nil` construction. |
+| `Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift` | Render the plan's actual source label and switchability independently of Whisper target mode; a fixed disabled explicit source must not render A. Keep all three HUD styles and hit-test behavior aligned. |
+| `Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift` | Make the active model's session-language contract truthful: preserve existing Whisper/Parakeet Auto UI, show capability-derived explicit source behavior for Canary/GigaAM, and leave Primary/Additional and legacy preference unmodified unless the user edits their owning control. |
+| `Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift` | Keep capabilities and source projections authoritative; accept only a Human-approved Path B CDN configuration correction. Do not add a guessed endpoint or alternate source. |
+| `Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift` | Map the classified DNS/hostname failure to localized failed/Retry presentation while retaining real progress/Delete/action precedence from S8/S10. |
+| `Sources/NativeBolabolCore/Services/AppText.swift` | Add localized unsupported-combination, fixed-source, unavailable-session, and DNS/hostname failure text for all supported UI locales; do not expose secrets or raw internal URLs. |
+
+`Sources/NativeBolabolCore/Services/EngineProtocols.swift` is a mandatory edit
+**only if** the Coder implements 1B EN→FR in the same S11 change: the request
+must gain a typed speech-translation target rather than overloading
+`translateToEnglish`. If this file is not changed, the S11 blocker scope is
+English ASR only for 1B and no UI/control may claim to execute EN→FR.
+
+The Canary/GigaAM engine decoding code is not the root-cause fix. Existing
+explicit-language, OS, translation, missing-file, and empty-result guards stay
+strict. `CanaryCoreMLEngine.swift`, `GigaAMCoreMLEngine.swift`, and
+`WhisperKitTranscriptionEngine.swift` are edited only when required by an
+approved typed operation contract; no frontend, compute-unit, chunking, state,
+or decoding change is authorized by this ADR.
+
+#### Mandatory tests
+
+| File | Required evidence |
+|---|---|
+| `Tests/NativeBolabolCoreTests/TranscriptionLanguageRoutingTests.swift` | Backend route matrix, all Flash pair cases, fixed GigaAM RU, 1B English-only, typed unavailable reasons, and existing Whisper/Parakeet auto regressions. |
+| `Tests/NativeBolabolCoreTests/S11SessionRoutingTests.swift` (new) | Session snapshot/state transitions, HUD projection/switchability, mid-session immutability, no persistence writes, and no request for unavailable model/language/OS/package combinations. |
+| `Tests/NativeBolabolCoreTests/RecordingTranscriptionWorkflowTests.swift` | The exact plan request reaches the engine; every new Core ML ASR request is non-nil/non-auto; failures remain failures rather than empty success. |
+| `Tests/NativeBolabolCoreTests/TranscriptionLanguageModeTests.swift` | Automatic versus switchable/fixed/unavailable presentation transitions and compatibility for existing A behavior. |
+| `Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift` | Capability routing and HUD taps do not rewrite primary/additional, `languagePreference`, active model, or installation state. |
+| `Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift` | Preserve engine rejection of nil/auto/unsupported sources, GigaAM translation rejection, 1B OS gate, and incomplete-folder behavior; add route-to-engine assertions without weakening S9. |
+| `Tests/NativeBolabolCoreTests/S8DownloadContractTests.swift` | Injected `URLError(.cannotFindHost)` / `NSURLErrorDomain -1003`, no automatic fallback, truthful Retry state, no downloaded/active state, empty/unverified cleanup, verified-partial resume, manifest/SHA preservation, and prohibited-source absence. |
+| `Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift` | All new session/DNS/error strings resolve in all supported locales with no raw key, empty value, secret, or prohibited source name. |
+| `Tests/NativeBolabolCoreTests/S9RuntimeSmokeTests.swift` | Continue real explicit EN/RU engine smokes; add installed-root/session-plan coverage when the test seam can consume real installed folders without weakening scratch opt-in. |
+
+#### Optional tests only if evidence proves a gap
+
+- `EngineConstructionTests.swift`: extend only if the mandatory S9 edge tests do
+  not already cover a changed engine/request API.
+- `HUDLayoutAndComposerTests.swift`: extend only if the new shared HUD language
+  presentation changes geometry/provider composition; source-state behavior
+  belongs in `S11SessionRoutingTests`.
+- `TranscriptionModelCatalogTests.swift` and `CoreMLEngineTests.swift`: edit only
+  if the approved CDN configuration seam or capability projection changes their
+  contract. They remain mandatory regression runs.
+- Add focused `SidebarView`/`AudioPlaybackModalView` UI tests only if the shared
+  resolver tests plus Reviewer call-site inspection cannot prove both direct
+  re-transcription paths use the plan. Do not introduce a UI-test framework or
+  dependency solely for this ADR.
+
+#### Explicitly forbidden / out of scope
+
+- `Package.swift`, `script/qa/**`, orchestration `STATE.yaml`, onboarding,
+  release/version files, and S12 recommendation/ranking code.
+- Any Python, NeMo runtime, PyTorch, ONNX, new runtime dependency, Apple Speech
+  fallback, or silent fallback to a different local model.
+- Any FluidInference/alexwengg/smdesai install fallback, endpoint, package tree,
+  or user-facing source choice for Canary 1B.
+- Changes to S9 frontend constants, compute units, chunk limits, true-length
+  handling, RNNT/decoder state, SentencePiece, or engine smoke success criteria
+  unless a separately reproduced engine defect is reviewed.
+- New persisted fake session/availability/installation states; silent changes to
+  primary/additional or `languagePreference`; French-ASR or broader 1B claims.
+- QA-script remediation, S12 ranking, and broad Help/release work. Existing
+  legacy QA allowlist debt remains a separate Tester/orchestrator item.
+
+### E. Canary 1B DNS/download mitigation
+
+`NSURLErrorDomain -1003` / `URLError.cannotFindHost` is a hostname-resolution
+failure for the resolved Path B base configuration. It is not an HTTP status,
+manifest parse result, checksum result, completed download, or evidence that an
+alternate host should be tried.
+
+Policy:
+
+1. **Terminal current attempt.** A `-1003` manifest or file request ends that
+   attempt immediately. Do not spin in an automatic retry loop: an immediate
+   retry cannot repair an absent DNS record or wrong configured hostname.
+2. **Truthful UI.** Map it to a bounded localized error such as “Bolabol could
+   not resolve the model download host. Check DNS/network availability and try
+   again.” Do not display Ready/Selected, `100%`, or a generic success. Do not
+   print the full URL, credentials, query parameters, or secrets.
+3. **User Retry.** Keep the real Retry action. A user-triggered Retry performs a
+   fresh DNS/manifest request after configuration/connectivity may have changed.
+   It may resume only files already verified against a successfully obtained
+   Path B manifest; it never switches source.
+4. **No prohibited fallback.** Failure must not try FluidInference,
+   alexwengg, smdesai, Hugging Face search, a NeMo origin, or an invented mirror.
+   If the approved Path B source is unavailable, 1B remains unavailable.
+5. **Cleanup and resume.** If failure occurs before a trusted manifest is
+   obtained, remove the newly created empty destination and any unverified temp
+   manifest/file. If a trusted manifest was obtained, delete temp or
+   SHA-mismatched files and retain only manifest-matching, SHA-verified completed
+   files that S8 can safely resume. In every partial case the complete-folder
+   predicate is false. Delete remains able to remove real partial files.
+6. **S8 integrity remains authoritative.** Download completion requires every
+   manifest entry, its expected size/SHA-256, the required Path B layout, and
+   the normal complete-folder reconciliation. Network success alone is not
+   model readiness; an empty folder is never readiness.
+
+The live log proves DNS failure but does not prove whether the intended DNS
+record is missing, the current distribution resolved the wrong base
+configuration, or the deployment manifest path is unpublished. Therefore the
+root cause must be corrected at the authoritative Bolabol CDN deployment and/or
+its non-secret product configuration; it must not be guessed in source.
+
+Before Coder changes a base URL or manifest mapping, Human/Orchestrator must
+supply or confirm these validation inputs:
+
+- the approved Path B CDN base configuration (no secret/token in source or
+  feedback);
+- package id `bolabol-canary-1b-v2-coreml-r1` and its published
+  `MANIFEST.json` path contract;
+- confirmation that DNS, TLS, and package hosting are deployed for the intended
+  distribution environment.
+
+Coder validates the supplied configuration without inventing an endpoint:
+
+1. Resolve only the approved configured host and confirm DNS/TLS from the same
+   network context used for the app.
+2. Fetch `MANIFEST.json` using the supplied base configuration and known package
+   id into a temporary path; validate JSON/package identity and never echo
+   credentials. A development override such as `BOLABOL_CDN_BASE_URL` may be
+   used for validation, but the shipped app must receive an approved,
+   deterministic non-secret configuration rather than depending on an
+   undeclared shell environment.
+3. Exercise the real store download into an isolated model root; verify every
+   manifest SHA and the complete-folder predicate before activation.
+4. Repeat with an injected `cannotFindHost` failure and prove the truthful
+   failed/Retry/no-fallback/cleanup behavior.
+
+If the approved endpoint/configuration input is absent, Coder records that as a
+required Human/deployment input and implements only the honest failure policy;
+Coder must not fabricate a hostname. Orchestrator/Human then classifies 1B as a
+known infrastructure blocker or withholds it from a release claim. It is never
+classified as downloaded.
+
+### F. Acceptance matrix and tests
+
+| Area | Future Coder / Reviewer / Tester acceptance evidence |
+|---|---|
+| Route ownership | One session resolver consumes descriptor/backend/capabilities/pair/operation. No Canary/GigaAM entry point uses legacy `resolvedLanguageCode` or reconstructs `auto → nil`. Reviewer inspects `ContentView`, workflow, Sidebar, and audio modal call sites. |
+| Whisper / Parakeet regression | Unit and live tests preserve Whisper/Parakeet auto detection and HUD A. Parakeet receives no stale restrictive hint; Whisper target-to-English behavior remains unchanged. |
+| Flash pair matrix | Tests cover both supported distinct (and both HUD directions), primary-only supported, additional-only supported, neither supported, same-as-primary, primary blank, additional blank, both blank, and unsupported/`auto` defensive values. Every valid request forces EN/DE/FR/ES; invalid cases make no request. |
+| No-auto Core ML invariant | Route, workflow spy-engine, and engine-edge tests assert non-nil/non-empty/non-`auto` for Flash, 1B, and GigaAM. Engine rejection of nil/auto remains green. |
+| GigaAM fixed RU | Any valid session forces RU, shows fixed R, offers no secondary switch, rejects translation, and gives a clear non-mutating RU-only notice when primary is not RU. |
+| Canary 1B | English in the pair yields fixed explicit EN ASR; no English yields unavailable. French never appears as ASR/HUD source. EN→FR is tested only if a distinct typed operation is implemented; no test may call `translateToEnglish` proof of EN→FR. macOS 15+ and complete-folder gates remain. |
+| Session consistency | Tests freeze model/source at start, change model/pair mid-session, and prove current HUD/request remain aligned while the next session recomputes. Deletion/unavailability before invocation fails without fallback. No session transition mutates persisted language/model/install settings. |
+| Unavailable paths | Missing/incomplete package, unsupported OS, unsupported pair, no active model, and deleted model produce distinct truthful failures and no engine call. Unsupported combinations cannot look successful. |
+| Runtime smoke | With real files, Flash explicit language and GigaAM RU produce non-empty text; 1B explicit EN does so only after a real complete Path B install on macOS 15+. Existing S9 frontend/chunk/state smoke remains unchanged. |
+| Live app manual matrix | Fresh built `Bolabol.app`: Flash EN/DE/FR/ES pair cases and HUD switch; GigaAM with primary RU and non-RU; 1B EN and no-EN pair; Whisper/Parakeet A; Sidebar/audio-modal re-transcription; mid-session pair/model change; missing/incomplete/unsupported-OS errors. Capture model id/backend, capability auto flag, session source mode, forced request language, and non-empty/failed result without secrets. |
+| 1B DNS/retry/source safety | Injected `-1003` test and live approved-host test show failed/Retry, zero fake progress/readiness, cleanup rules, same-source retry, and no FI/alexwengg/smdesai/HF fallback. A corrected real download proves manifest/SHA/complete-folder before activation. |
+| Full gates | Focused tests, full `swift test`, `run_all`, real runtime smoke, fresh build, and Human/Tester live reproduction are recorded. Static QA debt is reported honestly; no QA script is edited in this implementation. |
+
+Future verification commands:
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+
+swift test --filter TranscriptionLanguageRoutingTests
+swift test --filter S11SessionRoutingTests
+swift test --filter RecordingTranscriptionWorkflowTests
+swift test --filter TranscriptionLanguageModeTests
+swift test --filter TranscriptionModelSettingsTests
+swift test --filter S8DownloadContractTests
+swift test --filter S9EngineEdgeCaseTests
+swift test --filter S9RuntimeSmokeTests
+swift test
+./script/qa/run_all.sh
+
+# Requires the documented real scratch assets; does not replace live-app QA.
+BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests
+
+# Builds and launches the fresh app used for the manual matrix.
+./script/build_and_run.sh
+
+# In a second shell, capture only Bolabol runtime routing/transcription evidence.
+log stream --style compact --predicate \
+  'subsystem == "com.pavan.NativeBolabol" AND (category == "hotkey" OR category == "transcription")'
+
+# CDN validation only after Human supplies the approved non-secret base value.
+: "${BOLABOL_CDN_BASE_URL:?Human-approved Path B CDN base URL is required}"
+curl --fail --show-error --location \
+  "${BOLABOL_CDN_BASE_URL%/}/bolabol-canary-1b-v2-coreml-r1/MANIFEST.json" \
+  --output /tmp/bolabol-canary-1b-MANIFEST.json
+plutil -lint /tmp/bolabol-canary-1b-MANIFEST.json
+```
+
+These commands are future acceptance instructions, not a success claim. No
+runtime success is accepted without a fresh real `Bolabol.app` reproduction.
+
+### G. Ordering and QA gate
+
+**Yes: S10 feature QA remains blocked** in this order until all three gates are
+handled:
+
+1. S11 capability-aware runtime/session/request routing is implemented and
+   independently reviewed, including all non-HUD entry points and no-auto
+   assertions.
+2. Canary 1B DNS/download mitigation is either corrected against a
+   Human-approved live Path B CDN configuration and real package, or truthfully
+   classified by Human/Orchestrator as an unresolved infrastructure/release
+   blocker. Classification does not convert 1B to ready and does not permit a
+   prohibited fallback or a green download claim.
+3. Tester then runs the full feature QA/manual matrix on a fresh build,
+   including real installed-model smoke and the truthful 1B failure/success
+   path appropriate to gate 2.
+
+Only after independent review and Tester evidence may the orchestrator decide
+the S10/S11 completion status. The previous S10 approval does not prove runtime
+success, and this ADR itself makes no such claim.

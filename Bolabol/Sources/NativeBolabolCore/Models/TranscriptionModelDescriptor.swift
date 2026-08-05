@@ -61,6 +61,81 @@ public struct ASRModelCapabilities: Codable, Equatable, Sendable {
     }
 }
 
+public extension ASRModelCapabilities {
+    /// Evaluates the capability gate against an explicitly supplied OS version.
+    /// The result is computed only and is never part of persisted model state.
+    func isAvailable(on osVersion: OSVersion) -> Bool {
+        guard let minOSVersion else { return true }
+        return osVersion >= minOSVersion
+    }
+
+    /// Explicit source-language tokens, excluding the legacy `auto` token.
+    var explicitSupportedLanguageCodes: [String] {
+        var seen = Set<String>()
+        return supportedLanguageCodes.compactMap { rawCode in
+            let code = rawCode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard !code.isEmpty, code != "auto", seen.insert(code).inserted else {
+                return nil
+            }
+            return code
+        }
+    }
+}
+
+/// Non-persisted source-language projection used by the S10 Local Models UI.
+public struct ASRSourceLanguageProjection: Equatable, Sendable {
+    public let effectiveChoices: [String]
+    public let unsupportedConfiguredLanguages: [String]
+    public let hasMissingConfiguredLanguage: Bool
+
+    public var isHardBlocked: Bool {
+        effectiveChoices.isEmpty
+    }
+
+    public var isClamped: Bool {
+        effectiveChoices.count == 1
+            && (!unsupportedConfiguredLanguages.isEmpty || hasMissingConfiguredLanguage)
+    }
+
+    public init(
+        verifiedSourceChoices: [String],
+        primary: String?,
+        additional: String?
+    ) {
+        let verified = Set(verifiedSourceChoices.map(Self.normalize))
+        let slots = [primary, additional].map(Self.normalizeOptional)
+        var configured = [String]()
+        var seen = Set<String>()
+        for code in slots.compactMap(\.self) where seen.insert(code).inserted {
+            configured.append(code)
+        }
+
+        var effective = [String]()
+        var unsupported = [String]()
+        for code in configured {
+            if verified.contains(code) {
+                effective.append(code)
+            } else {
+                unsupported.append(code)
+            }
+        }
+
+        self.effectiveChoices = effective
+        self.unsupportedConfiguredLanguages = unsupported
+        self.hasMissingConfiguredLanguage = slots.contains(where: { $0 == nil })
+    }
+
+    private static func normalizeOptional(_ code: String?) -> String? {
+        guard let code else { return nil }
+        let normalized = normalize(code)
+        return normalized.isEmpty ? nil : normalized
+    }
+
+    private static func normalize(_ code: String) -> String {
+        code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+}
+
 public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Sendable {
     public enum Backend: String, Codable, Equatable, Sendable {
         case whisperKitCoreML
@@ -127,6 +202,39 @@ public enum ModelInstallSource: Equatable, Sendable, Codable {
     public var speed: Int
     public var isRecommended: Bool
     public var capabilities: ASRModelCapabilities
+
+    /// Verified ASR source choices for the current GO operation scope. Canary
+    /// 1B advertises `fr` as a capability token for its verified EN → FR
+    /// translation operation, not as a French-ASR source.
+    public var verifiedASRSourceChoices: [String] {
+        let explicitCapabilities = capabilities.explicitSupportedLanguageCodes
+        guard backend == .canaryCoreML,
+              capabilities.minOSVersion != nil,
+              capabilities.supportsSpeechTranslation,
+              Set(explicitCapabilities) == Set(["en", "fr"]) else {
+            return explicitCapabilities
+        }
+
+        return explicitCapabilities.filter { $0 == "en" }
+    }
+
+    public func sourceLanguageProjection(
+        primary: String?,
+        additional: String?
+    ) -> ASRSourceLanguageProjection {
+        ASRSourceLanguageProjection(
+            verifiedSourceChoices: verifiedASRSourceChoices,
+            primary: primary,
+            additional: additional
+        )
+    }
+
+    public func effectiveCanarySourceChoices(
+        primary: String?,
+        additional: String?
+    ) -> [String] {
+        sourceLanguageProjection(primary: primary, additional: additional).effectiveChoices
+    }
 
     public var modelFolderName: String {
         switch backend {

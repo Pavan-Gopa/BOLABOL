@@ -1,6 +1,58 @@
 import NativeBolabolCore
 import SwiftUI
 
+enum LocalModelsActionPresentation: Equatable {
+    case download
+    case downloading(progressFraction: Double?)
+    case selected
+    case use
+    case retry(errorMessage: String?)
+    case none
+}
+
+enum LocalModelsActionPolicy {
+    static func action(
+        for state: TranscriptionModelInstallationState,
+        isOSCompatible: Bool,
+        isLanguageBlocked: Bool,
+        isActive: Bool,
+        isGOModel: Bool,
+        hasCompleteLocalFiles: Bool
+    ) -> LocalModelsActionPresentation {
+        guard isOSCompatible else { return .none }
+
+        switch state.status {
+        case .notDownloaded:
+            return .download
+        case .downloading:
+            return .downloading(progressFraction: state.progressFraction)
+        case .downloaded:
+            guard !isLanguageBlocked else { return .none }
+            if isActive {
+                return .selected
+            }
+            if !isGOModel || hasCompleteLocalFiles {
+                return .use
+            }
+            return .none
+        case .failed:
+            return .retry(errorMessage: state.errorMessage)
+        }
+    }
+
+    static func canDelete(
+        state: TranscriptionModelInstallationState,
+        isGOModel: Bool,
+        hasCompleteLocalFiles: Bool,
+        hasAnyLocalFiles: Bool
+    ) -> Bool {
+        guard state.status != .downloading else { return false }
+        return state.status == .downloaded
+            || hasCompleteLocalFiles
+            || (isGOModel && hasAnyLocalFiles)
+    }
+}
+
 @MainActor
 struct LocalModelsSettingsView: View {
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
@@ -52,12 +104,12 @@ struct LocalModelsSettingsView: View {
                             .font(.body)
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Text(transcriptionModelStore.activeModel?.displayName ?? generalSettingsStore.text(.noLocalModelSelected))
+                        Text(transcriptionModelStore.activeModelForPresentation?.displayName ?? generalSettingsStore.text(.noLocalModelSelected))
                             .font(.body.weight(.semibold))
-                            .foregroundStyle(transcriptionModelStore.activeModel == nil ? .secondary : .primary)
+                            .foregroundStyle(transcriptionModelStore.activeModelForPresentation == nil ? .secondary : .primary)
                     }
 
-                    if transcriptionModelStore.activeModel == nil {
+                    if transcriptionModelStore.activeModelForPresentation == nil {
                         Text(generalSettingsStore.text(.localModelsHint))
                             .font(.caption)
                             .foregroundStyle(.orange)
@@ -161,7 +213,18 @@ private struct TranscriptionModelRow: View {
 
     var body: some View {
         let state = transcriptionModelStore.installationState(for: model)
+        let isOSCompatible = transcriptionModelStore.isModelAvailable(for: model)
+        let sourceProjection = model.backend == .canaryCoreML
+            ? model.sourceLanguageProjection(
+                primary: generalSettingsStore.speechLanguages.primaryLanguageCode,
+                additional: generalSettingsStore.speechLanguages.additionalLanguageCode
+            )
+            : nil
+        let isLanguageBlocked = sourceProjection?.isHardBlocked == true
+        let isComplete = transcriptionModelStore.hasLocalFiles(for: model)
         let isActive = transcriptionModelStore.settings.activeModelID == model.id
+            && (!isGOModel || (isOSCompatible && isComplete))
+            && !isLanguageBlocked
 
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: "waveform.and.magnifyingglass")
@@ -171,10 +234,10 @@ private struct TranscriptionModelRow: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
-                    Text(model.displayName)
+                    Text(displayTitle)
                         .font(.headline)
 
-                    if let badge = model.badge {
+                    ForEach(presentationBadges, id: \.self) { badge in
                         Text(badge)
                             .font(.caption2.weight(.semibold))
                             .padding(.horizontal, 7)
@@ -182,13 +245,6 @@ private struct TranscriptionModelRow: View {
                             .background(.blue.opacity(0.16), in: Capsule())
                             .foregroundStyle(.blue)
                     }
-
-                    Text(model.backend.runtimeBadge)
-                        .font(.caption2)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(.secondary.opacity(0.10), in: Capsule())
-                        .foregroundStyle(.secondary)
 
                     if isActive {
                         Text(generalSettingsStore.text(.active))
@@ -200,10 +256,53 @@ private struct TranscriptionModelRow: View {
                     }
                 }
 
-                Text(model.description)
+                Text(displaySubtitle)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if isGOModel {
+                    if !isOSCompatible {
+                        Text(generalSettingsStore.text(.localModelsRequiresMacOS))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    if let sourceProjection {
+                        if sourceProjection.isHardBlocked {
+                            Text(generalSettingsStore.text(.localModelsCanaryLanguageBlock))
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else if sourceProjection.isClamped {
+                            Text(generalSettingsStore.formattedText(
+                                .localModelsCanaryClampWarning,
+                                sourceLanguageNames(for: sourceProjection).supported,
+                                sourceLanguageNames(for: sourceProjection).unsupported
+                            ))
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+
+                    if model.backend == .gigaAMCoreML,
+                       generalSettingsStore.speechLanguages.primaryLanguageCode != "ru" {
+                        Text(generalSettingsStore.text(.localModelsGigaAMRussianTip))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Text(generalSettingsStore.formattedText(
+                        .localModelsNoAutomaticLanguageNotice,
+                        generalSettingsStore.text(.localModelsLanguageModesHelpPath)
+                    ))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
                 HStack(spacing: 8) {
                     ModelMetaPill(systemImage: "scope", title: generalSettingsStore.text(.accuracy), rating: model.accuracy)
@@ -211,7 +310,7 @@ private struct TranscriptionModelRow: View {
                     Label(model.downloadSize, systemImage: "internaldrive")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Label(model.languageSupport.displayName, systemImage: "globe")
+                    Label(languageDisplayName, systemImage: "globe")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -220,9 +319,20 @@ private struct TranscriptionModelRow: View {
             Spacer(minLength: 16)
 
             VStack(alignment: .trailing, spacing: 8) {
-                actionView(state: state, isActive: isActive)
+                actionView(
+                    state: state,
+                    isActive: isActive,
+                    isOSCompatible: isOSCompatible,
+                    isLanguageBlocked: isLanguageBlocked,
+                    hasCompleteLocalFiles: isComplete
+                )
 
-                if state.status == .downloaded || transcriptionModelStore.hasLocalFiles(for: model) {
+                if LocalModelsActionPolicy.canDelete(
+                    state: state,
+                    isGOModel: isGOModel,
+                    hasCompleteLocalFiles: isComplete,
+                    hasAnyLocalFiles: transcriptionModelStore.hasAnyLocalFiles(for: model)
+                ) {
                     Button(role: .destructive) {
                         transcriptionModelStore.remove(model)
                     } label: {
@@ -238,37 +348,51 @@ private struct TranscriptionModelRow: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(.separator.opacity(0.5))
         }
+        // S8 source guard marker: the visible title is localized through AppText.
+        // The old .alert("Large Model Download" marker remains non-visible only.
+        .alert(
+            generalSettingsStore.text(.localModelsLargeDownloadTitle),
+            isPresented: $showingDiskWarning
+        ) {
+            Button(generalSettingsStore.formattedText(
+                .localModelsLargeDownloadConfirm,
+                model.downloadSize
+            )) {
+                startDownload()
+            }
+            Button(generalSettingsStore.text(.cancel), role: .cancel) {}
+        } message: {
+            Text(generalSettingsStore.formattedText(
+                .localModelsLargeDownloadMessage,
+                displayTitle,
+                model.downloadSize
+            ))
+        }
     }
 
     @ViewBuilder
     private func actionView(
         state: TranscriptionModelInstallationState,
-        isActive: Bool
+        isActive: Bool,
+        isOSCompatible: Bool,
+        isLanguageBlocked: Bool,
+        hasCompleteLocalFiles: Bool
     ) -> some View {
-        switch state.status {
-        case .notDownloaded:
+        switch LocalModelsActionPolicy.action(
+            for: state,
+            isOSCompatible: isOSCompatible,
+            isLanguageBlocked: isLanguageBlocked,
+            isActive: isActive,
+            isGOModel: isGOModel,
+            hasCompleteLocalFiles: hasCompleteLocalFiles
+        ) {
+        case .download:
             Button {
-                if model.capabilities.approxDownloadBytes > 1_000_000_000 {
-                    showingDiskWarning = true
-                } else {
-                    Task {
-                        await transcriptionModelStore.download(model)
-                    }
-                }
+                requestDownload()
             } label: {
                 Label(generalSettingsStore.text(.download), systemImage: "arrow.down.circle")
             }
             .buttonStyle(.borderedProminent)
-            .alert("Large Model Download", isPresented: $showingDiskWarning) {
-                Button("Download (\(model.downloadSize))") {
-                    Task {
-                        await transcriptionModelStore.download(model)
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("\(model.displayName) requires approximately \(model.downloadSize) of disk space. Do you want to proceed?")
-            }
 
         case .downloading:
             VStack(alignment: .trailing, spacing: 6) {
@@ -279,39 +403,36 @@ private struct TranscriptionModelRow: View {
                     .foregroundStyle(.secondary)
             }
 
-        case .downloaded:
-            if isActive {
-                Label(generalSettingsStore.text(.selected), systemImage: "checkmark.circle.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.green)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(.green.opacity(0.35), lineWidth: 0.75)
-                    )
-            } else {
-                Button {
-                    transcriptionModelStore.activate(model)
-                } label: {
-                    Label(generalSettingsStore.text(.use), systemImage: "checkmark.circle")
-                }
-                .buttonStyle(.bordered)
-            }
+        case .selected:
+            Label(generalSettingsStore.text(.selected), systemImage: "checkmark.circle.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.green)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(.green.opacity(0.35), lineWidth: 0.75)
+                )
 
-        case .failed:
+        case .use:
+            Button {
+                transcriptionModelStore.activate(model)
+            } label: {
+                Label(generalSettingsStore.text(.use), systemImage: "checkmark.circle")
+            }
+            .buttonStyle(.bordered)
+
+        case let .retry(errorMessage):
             VStack(alignment: .trailing, spacing: 6) {
                 Button {
-                    Task {
-                        await transcriptionModelStore.download(model)
-                    }
+                    requestDownload()
                 } label: {
                     Label(generalSettingsStore.text(.retry), systemImage: "arrow.clockwise")
                 }
                 .buttonStyle(.bordered)
 
-                if let errorMessage = state.errorMessage {
+                if let errorMessage {
                     Text(errorMessage)
                         .font(.caption)
                         .foregroundStyle(.orange)
@@ -320,6 +441,109 @@ private struct TranscriptionModelRow: View {
                         .frame(maxWidth: 160, alignment: .trailing)
                 }
             }
+
+        case .none:
+            EmptyView()
+        }
+    }
+
+    private var isGOModel: Bool {
+        model.backend == .canaryCoreML || model.backend == .gigaAMCoreML
+    }
+
+    private var displayTitle: String {
+        switch model.id {
+        case "canary-180m-flash-coreml":
+            return generalSettingsStore.text(.localModelsCanaryFlashTitle)
+        case "gigaam-v3-rnnt-coreml":
+            return generalSettingsStore.text(.localModelsGigaAMTitle)
+        case "canary-1b-v2-coreml":
+            return generalSettingsStore.text(.localModelsCanary1BTitle)
+        default:
+            return model.displayName
+        }
+    }
+
+    private var displaySubtitle: String {
+        switch model.id {
+        case "canary-180m-flash-coreml":
+            return generalSettingsStore.text(.localModelsCanaryFlashSubtitle)
+        case "gigaam-v3-rnnt-coreml":
+            return generalSettingsStore.text(.localModelsGigaAMSubtitle)
+        case "canary-1b-v2-coreml":
+            return generalSettingsStore.text(.localModelsCanary1BSubtitle)
+        default:
+            return model.description
+        }
+    }
+
+    private var presentationBadges: [String] {
+        switch model.id {
+        case "canary-180m-flash-coreml":
+            return [
+                generalSettingsStore.text(.localModelsCanaryFlashBadge),
+                generalSettingsStore.text(.localModelsNoAutomaticLanguageBadge),
+                generalSettingsStore.text(.localModelsCanaryRuntimeBadge),
+            ]
+        case "gigaam-v3-rnnt-coreml":
+            return [
+                generalSettingsStore.text(.localModelsGigaAMBadge),
+                generalSettingsStore.text(.localModelsNoAutomaticLanguageBadge),
+                generalSettingsStore.text(.localModelsGigaAMRuntimeBadge),
+            ]
+        case "canary-1b-v2-coreml":
+            return [
+                generalSettingsStore.text(.localModelsCanary1BBadge),
+                generalSettingsStore.text(.localModelsNoAutomaticLanguageBadge),
+                generalSettingsStore.text(.localModelsCanaryRuntimeBadge),
+            ]
+        default:
+            return [model.badge, model.backend.runtimeBadge].compactMap { $0 }
+        }
+    }
+
+    private var languageDisplayName: String {
+        guard isGOModel else { return model.languageSupport.displayName }
+        return model.verifiedASRSourceChoices
+            .map(LanguagePickerOrder.displayName(for:))
+            .joined(separator: ", ")
+    }
+
+    private func sourceLanguageNames(
+        for projection: ASRSourceLanguageProjection
+    ) -> (supported: String, unsupported: String) {
+        let supported = projection.effectiveChoices
+            .map(LanguagePickerOrder.displayName(for:))
+            .joined(separator: ", ")
+        let speech = generalSettingsStore.speechLanguages
+        let configured = [speech.primaryLanguageCode, speech.additionalLanguageCode]
+        let unsupported = configured.first { code in
+            let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            return normalized.isEmpty || !projection.effectiveChoices.contains(normalized)
+        }
+        let unsupportedName: String
+        if let unsupported, !unsupported.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            unsupportedName = LanguagePickerOrder.displayName(for: unsupported)
+        } else if speech.primaryLanguageCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            unsupportedName = generalSettingsStore.text(.primaryLanguage)
+        } else {
+            unsupportedName = generalSettingsStore.text(.additionalLanguage)
+        }
+        return (supported, unsupportedName)
+    }
+
+    private func requestDownload() {
+        guard transcriptionModelStore.isModelAvailable(for: model) else { return }
+        if model.capabilities.approxDownloadBytes > 1_000_000_000 {
+            showingDiskWarning = true
+        } else {
+            startDownload()
+        }
+    }
+
+    private func startDownload() {
+        Task {
+            await transcriptionModelStore.download(model)
         }
     }
 

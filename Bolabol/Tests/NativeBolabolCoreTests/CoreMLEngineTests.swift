@@ -100,6 +100,21 @@ struct CoreMLCapabilitiesTests {
     }
 
     @Test
+    func capabilityOSGateComparesBelowEqualAndAboveVersions() {
+        let model = TranscriptionModelDescriptor.canary1BGO
+        let capabilities = model.capabilities
+        let below = ASRModelCapabilities.OSVersion(majorVersion: 14, minorVersion: 6)
+        let equal = ASRModelCapabilities.OSVersion(majorVersion: 15)
+        let above = ASRModelCapabilities.OSVersion(majorVersion: 15, minorVersion: 1)
+
+        #expect(!capabilities.isAvailable(on: below))
+        #expect(capabilities.isAvailable(on: equal))
+        #expect(capabilities.isAvailable(on: above))
+        #expect(TranscriptionModelDescriptor.flashGO.capabilities.isAvailable(on: below))
+        #expect(TranscriptionModelDescriptor.gigaAMGO.capabilities.isAvailable(on: below))
+    }
+
+    @Test
     func flashHasNoOSVersionGate() {
         let model = TranscriptionModelDescriptor.flashGO
         #expect(model.capabilities.minOSVersion == nil)
@@ -125,6 +140,46 @@ struct CoreMLCapabilitiesTests {
         let model = TranscriptionModelDescriptor.gigaAMGO
         #expect(model.capabilities.isRecommendedForPrimaryRU == true)
         #expect(model.capabilities.isRecommendedForEnDeFrEs == false)
+    }
+
+    @Test
+    func S10CanarySourceProjectionUsesVerifiedASRChoices() {
+        let flash = TranscriptionModelDescriptor.flashGO
+        let oneB = TranscriptionModelDescriptor.canary1BGO
+
+        let enEs = flash.sourceLanguageProjection(primary: "en", additional: "es")
+        let enRu = flash.sourceLanguageProjection(primary: "en", additional: "ru")
+        let ruEs = flash.sourceLanguageProjection(primary: "ru", additional: "es")
+        let ruUk = flash.sourceLanguageProjection(primary: "ru", additional: "uk")
+        let sameAsPrimary = flash.sourceLanguageProjection(primary: "en", additional: "en")
+        let missing = flash.sourceLanguageProjection(primary: nil, additional: "")
+
+        #expect(enEs.effectiveChoices == ["en", "es"])
+        #expect(!enEs.isClamped)
+        #expect(enRu.effectiveChoices == ["en"])
+        #expect(enRu.isClamped)
+        #expect(ruEs.effectiveChoices == ["es"])
+        #expect(ruEs.isClamped)
+        #expect(ruUk.isHardBlocked)
+        #expect(sameAsPrimary.effectiveChoices == ["en"])
+        #expect(!sameAsPrimary.isClamped)
+        #expect(missing.isHardBlocked)
+
+        #expect(oneB.verifiedASRSourceChoices == ["en"])
+        #expect(oneB.effectiveCanarySourceChoices(primary: "fr", additional: "en") == ["en"])
+    }
+
+    @Test
+    func S10LanguageAndAutoDecisionsIgnoreLegacyMultilingual() {
+        var gigaAM = TranscriptionModelDescriptor.gigaAMGO
+        gigaAM.languageSupport = .multilingual
+        var oneB = TranscriptionModelDescriptor.canary1BGO
+        oneB.languageSupport = .multilingual
+
+        #expect(gigaAM.verifiedASRSourceChoices == ["ru"])
+        #expect(gigaAM.capabilities.supportsAutoLanguageDetect == false)
+        #expect(oneB.verifiedASRSourceChoices == ["en"])
+        #expect(oneB.capabilities.supportsAutoLanguageDetect == false)
     }
 
     // MARK: - Backend metadata

@@ -136,3 +136,58 @@ func transcriptionModelSettingsCanResetInterruptedDownloads() {
     #expect(settings.installationState(for: "whisperkit-small-en").status == .notDownloaded)
     #expect(settings.installationState(for: "whisperkit-small-en").progressFraction == nil)
 }
+
+@Test
+func S10PresentationPolicyDoesNotMutateSavedSettings() throws {
+    let model = try #require(
+        TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-1b-v2-coreml")
+    )
+    let settings = TranscriptionModelSettings(
+        activeModelID: model.id,
+        languagePreference: .language("ru"),
+        installationStates: [model.id: .downloaded(localURL: URL(fileURLWithPath: "/tmp/canary-1b"))]
+    )
+    let speechLanguages = UserSpeechLanguages(
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "fr"
+    )
+    let originalSettings = settings
+    let originalSpeechLanguages = speechLanguages
+
+    let projection = model.sourceLanguageProjection(
+        primary: speechLanguages.primaryLanguageCode,
+        additional: speechLanguages.additionalLanguageCode
+    )
+    let belowMinimum = model.capabilities.isAvailable(
+        on: ASRModelCapabilities.OSVersion(majorVersion: 14)
+    )
+
+    #expect(projection.isHardBlocked)
+    #expect(!belowMinimum)
+    #expect(settings == originalSettings)
+    #expect(speechLanguages == originalSpeechLanguages)
+    #expect(settings.activeModelID == model.id)
+    #expect(settings.languagePreference == .language("ru"))
+    #expect(settings.installationState(for: model.id).status == .downloaded)
+}
+
+@Test
+func S10ClampDeduplicatesWithoutChangingTheConfiguredPair() throws {
+    let model = try #require(
+        TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-180m-flash-coreml")
+    )
+    let speechLanguages = UserSpeechLanguages(
+        primaryLanguageCode: "en",
+        additionalLanguageCode: "en"
+    )
+    let before = speechLanguages
+
+    let projection = model.sourceLanguageProjection(
+        primary: speechLanguages.primaryLanguageCode,
+        additional: speechLanguages.additionalLanguageCode
+    )
+
+    #expect(projection.effectiveChoices == ["en"])
+    #expect(!projection.isClamped)
+    #expect(speechLanguages == before)
+}

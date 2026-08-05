@@ -2,6 +2,77 @@
 
 > Workers fill sections on handoff. Orchestrator reads this every status check.
 
+## S10 — Coder Handoff
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | S10 — ADR-019 Local Models UI capability and banner contract |
+| Actor | coder |
+| Timestamp | 2026-08-04T21:30:26Z |
+| RESULT | waiting_review |
+
+### Inventory and Graphify Gate
+
+- Working directory: `/Users/pavan/Documents/AI Projects/Bolabol`.
+- Mandatory first query completed before source study:
+  `graphify query "ADR-019 S10 Local Models UI capability banner clamp OS gate TranscriptionModelStore" --graph graphify-out/graph.json` — 405 nodes found.
+- Read-only context reviewed: `STATE.yaml`; ADR-017, ADR-018, and the complete ADR-019 in `DECISIONS.md`; integration plan §3.2, §3.3, and S10 in §4; latest S9 QA/reviewer evidence in `FEEDBACK.md`; and the targeted S10 product/test files.
+- No GraphiFy rebuild was run.
+
+### ADR-019 Compliance
+
+- Added pure, non-persisted capability policy for explicit OS comparison, verified ASR source choices, normalized/deduplicated primary/additional clamp projection, hard language block, and one-language clamp warning.
+- Canary 1B source projection is English ASR only; its verified English → French speech-translation wording does not expose French ASR or generic translation directions.
+- GO-only card presentation is capability-derived and localized for Flash, GigaAM, and Canary 1B. Required badges include compact/language scope, no auto-detect, runtime, Russian-only, and macOS 15+ as applicable.
+- Preserved Whisper/Parakeet card labels, `languageSupport` display, action flow, selected behavior, S2 grouping, and HUD/auto behavior.
+- Added computed `minOSVersion` gate in both View and Store action paths. Unsupported OS keeps Canary 1B visible, blocks download/retry/use/activation, and leaves real local files removable.
+- Preserved real S8 installation states and reconcile behavior; no new installation-state enum case or persisted field was added. Downloading progress supports known and nil progress without synthetic actions; failed keeps real bounded error text and retry.
+- Added localized no-auto Help path, GigaAM Russian soft tip, clamp/block notices, and large-download confirmation copy with concrete maps for all 15 locales.
+- No FluidInference, alexwengg, or smdesai install/action surface was added. No Python, NeMo runtime, PyTorch, ONNX, or dependency changes were made.
+
+### Changed Paths
+
+- `Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift`
+- `Sources/NativeBolabol/Stores/TranscriptionModelStore.swift`
+- `Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift`
+- `Sources/NativeBolabolCore/Services/AppText.swift`
+- `Tests/NativeBolabolCoreTests/CoreMLEngineTests.swift`
+- `Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift`
+- `Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift`
+- `Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift`
+- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+
+### Verification
+
+| Command | Result |
+|---------|--------|
+| `swift test --filter CoreMLCapabilitiesTests` | PASS — 18 tests |
+| `swift test --filter CapabilitiesContractTests` | PASS — 3 tests |
+| `swift test --filter S10` | PASS — 6 tests |
+| `swift test --filter SettingsLocalizationTests` | PASS — 23 tests |
+| `swift test` | PASS — 563 tests in 15 suites |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS — 4/4 real scratch smokes; Flash, Canary 1B, GigaAM, and rank-1 position regression |
+| `./script/qa/run_all.sh` | 27/29 PASS; 2 stale scope checks remain red |
+| `./script/build_and_run.sh` | PASS — NativeBolabol and NativeBolabolPolishWorker built; app signing step completed |
+| `git diff --check -- <S10 target paths>` | PASS |
+
+### QA Note
+
+- `check_s1b_scope.sh` flags the ADR-019-required GO references in `LocalModelsSettingsView.swift` as outside its S1b-era allowlist.
+- `check_s6_gigaam_spike.sh` reuses that stale S1b boundary and additionally flags the required GigaAM Settings/AppText presentation surface.
+- These are workflow static-allowlist conflicts with the accepted S10 scope. No `script/qa/**` file was changed, and no source hiding/workaround was introduced.
+
+### Scope Confirmation
+
+- No changes to engines, catalog IDs/order/capabilities payload, install sources, download metadata, storage paths, `Package.swift`, onboarding, HUD, ContentView, session routing, ranking, Help content, `STATE.yaml`, `DECISIONS.md`, checkpoints, `REPORT.md`, `BUG_REPORT.md`, commits, or pushes.
+- `S9EngineEdgeCaseTests.swift` was changed only for the focused store OS-action guard regression; existing unsupported-OS and incomplete-folder tests remain intact.
+
+**RESULT: `waiting_review`**
+
+> Готово. Вернись к оркестратору и скажи статус/приступай.
+
 ## Meta
 
 | Field | Value |
@@ -312,6 +383,84 @@ Graphify was queried first against `graphify-out/graph.json` for S9 engines, lan
 Product implementation conforms to S1c and `swift test` is green. The single red QA result is an independently confirmed stale S1b scope gate, not a product/test defect.
 
 Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S10 — Independent Reviewer Verification
+
+### Meta
+
+| Field | Value |
+|---|---|
+| Step | S10 — ADR-019 Local Models UI capability and banner contract |
+| Actor | independent reviewer |
+| Review base | `bolabol/pre-S10` (`6676737`) |
+| Graph | `graphify-out/graph.json` — 5,072 nodes / 11,614 links |
+
+### Graphify gate
+
+- Mandatory first query executed before source review:
+  `graphify query "S10 capability availability clamp language choice OS gate LocalModelsSettingsView TranscriptionModelStore" --graph graphify-out/graph.json`.
+- Result: 382 nodes. The graph contains the required current S10 paths/nodes: `LocalModelsSettingsView` (10 nodes), `TranscriptionModelStore` (34), `TranscriptionModelDescriptor`/`ASRModelCapabilities` (34), and `AppText` (594). Its timestamp is later than the S10 source edits. Graph is not stale; review continued.
+
+### Diff and scope review
+
+- Executed `git diff --name-status bolabol/pre-S10 -- .`, the required targeted diff, and `git diff --check -- .`.
+- Product/test diff is confined to the eight ADR-019 target files. Expected orchestration artifacts are `AI_Workflow_Kit/docs/AI/FEEDBACK.md`, Orchestrator-owned `AI_Workflow_Kit/docs/AI/STATE.yaml`, and rebuilt Graphify output. There are no changes in `Package.swift`, `script/qa/**`, engines, `ContentView`, HUD/session/routing, onboarding, catalog ordering, or S12 recommendation persistence.
+- `git diff --check -- .`: **PASS** (no whitespace errors).
+- No persisted `unsupportedOS`, `clamped`, `readyForLanguage`, corrupt, or other synthetic installation state was introduced.
+
+### ADR-019 acceptance review
+
+| Area | Independent result | Evidence |
+|---|---|---|
+| GO-only inventory and truthful claims | PASS | GO presentation is limited to Flash, GigaAM, and Path B 1B. Flash is EN/DE/FR/ES; GigaAM is RU-only; 1B copy is restricted to English ASR and English → French speech translation. No FI/alexwengg/smdesai action/source surface or Python/NeMo/PyTorch/ONNX dependency scope was added. |
+| Capability truth source and no-auto policy | PASS | `ASRModelCapabilities` drives OS availability and explicit choices; tests prove GigaAM/1B behavior remains no-auto despite legacy `.multilingual`. GO labels use verified capability-derived choices rather than `languageSupport`. |
+| OS gate and store guard | PASS | `minOSVersion` comparison is generic/capability-derived in both View and Store action paths. It blocks download/activate below minimum, retains Delete for real files, and does not hard-code a 1B exception in the View. Below/equal/above tests and S9 store regression are green. |
+| Real S8 states and complete-folder reconciliation | PASS | Existing not-downloaded/downloading (known/nil)/downloaded/failed states remain. GO complete-folder checks and reconcile return incomplete folders to real not-installed; no fabricated ready/selected state is introduced. |
+| Clamp projection and non-mutation | PARTIAL — see BLOCK-S10-001 | Projection normalizes/deduplicates and intersects verified sources: Flash is EN/DE/FR/ES and 1B is EN-only ASR; French is not exposed as 1B French ASR. Pair/settings non-mutation is covered. However, the required hard-block action precedence is wrong. |
+| GigaAM/no-auto notices and localization | PASS | GigaAM primary != `ru` is a soft non-mutating tip; all Canary/GigaAM cards include the localized `Settings → Help → Language modes` no-auto path. 21 new `AppTextKey`s have non-empty, non-raw maps in all 15 locales; no new visible raw English literals occur in card/banner/alert paths. |
+| Regression and deferred boundaries | PASS | Whisper/Parakeet, S2 grouping, S8 presence, S9 engine/runtime behavior remain green. No S11 HUD/session work or S12 ranking work was added. |
+
+### Blocking finding
+
+- **BLOCK-S10-001 — hard language block incorrectly hides Download, Retry, and real downloading progress.**
+  - `LocalModelsSettingsView.swift` computes `isLanguageBlocked` from the Canary source projection (lines 168–174), then `actionView` returns `EmptyView()` when either `!isOSCompatible` **or** `isLanguageBlocked` (lines 317–326). Thus, with a valid OS but neither configured source supported (for example Flash `ru`/`uk`), `.notDownloaded` loses **Download**, `.failed` loses **Retry**, and `.downloading` loses its real progress UI; only Delete remains separately available.
+  - ADR-019 explicitly distinguishes these gates: OS blocks download/retry/use, whereas language blocks **Use only** and the card remains downloadable/deleteable (`DECISIONS.md` lines 368–379 and 404–411). It also requires real download/failed/progress state presentation (lines 311–317).
+  - Existing tests prove the pure hard-block projection but do not cover the required UI/action policy, so the defect was not caught.
+
+### Required Coder change list
+
+1. In `Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift`, separate OS and language action precedence. An unsupported OS may suppress Download/Retry/Use; a language hard block must preserve real Download, Retry, and downloading progress/Delete, while suppressing only Use/Selected semantics.
+2. Do not permit a language-blocked downloaded model to become truthfully selected/active merely because it was downloaded. `TranscriptionModelStore.download(_:)` currently auto-activates after completion; adjust the permitted S10 action flow only as needed so the restored Download path cannot violate the language block. Preserve the existing OS action guard and all S8 download/presence behavior.
+3. Add focused regression coverage for Canary hard-language-block states: not-installed still offers Download, downloading displays known/nil real progress, failed offers Retry with its bounded error, complete downloaded model does not offer Use/Selected, and Delete remains available. Retain the existing non-mutation, OS-gate, incomplete-folder, and no-auto coverage.
+
+### Independent command results
+
+| Command | Result |
+|---|---|
+| `swift test --filter CoreMLCapabilitiesTests` | PASS — 18 tests / 1 suite |
+| `swift test --filter CapabilitiesContractTests` | PASS — 3 tests / 1 suite |
+| `swift test --filter S10` | PASS — 6 tests / 1 suite |
+| `swift test --filter SettingsLocalizationTests` | PASS — 23 tests (Swift Testing reported 0 XCTest suites) |
+| `swift test` | PASS — 563 tests / 15 suites |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS — 4 tests / 1 suite; Flash and 1B returned `The quick brown fox jumps over the lazy dog.`; GigaAM returned `Сегодня мы проверяем точность русской диктовки на компьютере Apple`. Documented scratch assets existed. |
+| `./script/build_and_run.sh` | PASS — NativeBolabol and NativeBolabolPolishWorker built; app bundle was signed/replaced. |
+| `git diff --check -- .` | PASS |
+| `./script/qa/run_all.sh` | **NOT PASS** — 27 passed / 2 failed |
+| `bash script/qa/check_s1b_scope.sh` | FAIL — historical S1b allowlist rejects ADR-019-required Canary/GigaAM references in `LocalModelsSettingsView.swift`. |
+| `bash script/qa/check_s6_gigaam_spike.sh` | FAIL — inherits `check_s1b_scope.sh` and additionally rejects ADR-019-required GigaAM Settings/AppText presentation. |
+
+### QA allowlist investigation
+
+- The two red QA checks are **stale, non-blocking legacy allowlist debt**, not evidence of an unauthorized source, forbidden package/runtime, or S10 scope leak. `check_s1b_scope.sh` scans every `gigaam|canary` source reference but only allows the historical helper/catalog/store/AppText/engine locations; `check_s6_gigaam_spike.sh` reuses that rule and has an even older GigaAM catalog/backend allowlist. Those pre-Track-C spike boundaries conflict with ADR-019's accepted mandatory `LocalModelsSettingsView` and `AppText` presentation scope.
+- Therefore the two failures must not be called a green full gate: `run_all` remains **27/29** until Tester independently confirms/remediates the QA debt by an authorized workflow. They are not the reason for this review rejection.
+
+### Findings summary and verdict
+
+- **Blocking:** BLOCK-S10-001 — real product UX/action-policy defect and missing mandatory coverage.
+- **Non-blocking:** legacy S1b/S6 allowlist debt leaves `run_all` at 27/29; no QA scripts were changed in S10.
+- **RESULT: `changes_requested`**
 
 ## §6 — Independent Tester QA (S1c Historical)
 
@@ -695,10 +844,6 @@ S3 meets the 15-locale map, terminology, fallback, Settings-path, scope, and tes
 - **Candidates for Tester**: extend `check_b6_canary_spike.sh` S4 dual-check expectations if needed; no product tests affected (0 product diff).
 
 **RESULT: `waiting_review`**
-
-> Готово. Вернись к оркестратору и скажи статус.
-
----
 
 ## S4 - Independent Reviewer Verification (Canary 1B FluidInference Core ML)
 
@@ -2104,3 +2249,318 @@ The real Canary 1B Path B runtime now returns non-empty text with the documented
 **RESULT: `qa_green`**
 
 Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## S10 Fix Attempt 1 — BLOCK-S10-001
+
+### Meta
+
+| Field | Value |
+|---|---|
+| Step | S10 Fix Attempt 1 |
+| Blocker | BLOCK-S10-001 |
+| Review base | `bolabol/pre-S10` (`6676737`) |
+| Graph | `graphify-out/graph.json` — 5,082 nodes / 11,624 edges |
+
+### Graphify query/result
+
+- Mandatory first query executed before source review:
+  `graphify query "BLOCK-S10-001 LocalModelsSettingsView hard language block Download Retry progress auto activate" --graph graphify-out/graph.json`.
+- Result: BFS depth 2, 169 nodes found. The traversal connected `LocalModelsSettingsView`, `TranscriptionModelStore`, `TranscriptionModelInstallationState`, `TranscriptionModelDescriptor`, ADR-019, the S9 store-presence tests, and the existing download/activation paths.
+- No Graphify rebuild was run; Orchestrator owns the rebuild before re-review.
+
+### Changed paths
+
+- `Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift`
+- `Sources/NativeBolabol/Stores/TranscriptionModelStore.swift`
+- `Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift`
+- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+
+### Fix
+
+- OS precedence remains the outer capability gate: an unsupported OS suppresses Download, Retry, Use, and Selected presentation; the existing Store OS guard remains in force. Delete remains independently derived from real local files.
+- A valid-OS language hard block now suppresses only downloaded Use/Selected semantics. Real `.notDownloaded` still presents Download, real `.downloading` still presents `ProgressView(value: state.progressFraction)` for known and nil progress, and real `.failed` still presents Retry with its actual bounded error message.
+- Delete continues to use real complete/partial local-file presence and is not gated by the language projection.
+- Download completion still records the real downloaded state and all S8 source, SHA, storage, presence, and progress behavior is unchanged. It skips the existing auto-activation only when the completed Canary has no supported configured explicit source, so a language-blocked download cannot become active/selected merely because it finished.
+- Presentation also hides an already-active hard-blocked Canary from the usable/selected Settings presentation without mutating saved active model, language preference, or the configured speech pair.
+
+### Focused regression matrix
+
+| Command | Result |
+|---|---|
+| `swift test --filter CoreMLCapabilitiesTests` | **PASS** — 18 tests / 1 suite |
+| `swift test --filter CapabilitiesContractTests` | **PASS** — 3 tests / 1 suite |
+| `swift test --filter S10` | **PASS** — 8 tests / 2 suites |
+| `swift test --filter TranscriptionModelSettingsTests` | **PASS** — 9 tests |
+| `swift test --filter S9EngineEdgeCaseTests` | **PASS** — 9 tests / 3 suites |
+| `swift test` | **PASS** — 565 tests / 15 suites |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | **PASS** — 4 tests / 1 suite; Flash and 1B returned `The quick brown fox jumps over the lazy dog.`; GigaAM returned `Сегодня мы проверяем точность русской диктовки на компьютере Apple` |
+| `./script/build_and_run.sh` | **PASS** — NativeBolabol and NativeBolabolPolishWorker built; app signature was replaced |
+| `git diff --check -- [S10 target paths]` | **PASS** |
+
+Focused policy coverage uses real Store state and complete-folder fixtures for valid-OS hard-language-block Canary: Download remains available while not installed; known and nil real progress remain visible; Retry preserves the real error; completion produces downloaded state without active/selected state; and Delete remains available for real local files. Existing non-mutation, below/equal/above OS gate, incomplete-folder, no-auto, and S9 unsupported-OS store rejection coverage remains green.
+
+### QA gate
+
+`./script/qa/run_all.sh` finished **27/29**, not green. The only two failures are the documented stale, non-blocking legacy allowlist debt:
+
+- `check_s1b_scope.sh` rejects the ADR-019-required Canary/GigaAM Settings presentation references in `LocalModelsSettingsView.swift`.
+- `check_s6_gigaam_spike.sh` inherits that stale S1b rejection and additionally rejects the ADR-019-required GigaAM Settings/AppText presentation.
+
+No QA script was changed or bypassed.
+
+### Scope confirmation
+
+This attempt fixes BLOCK-S10-001 only. No changes were made to `AI_Workflow_Kit/docs/AI/STATE.yaml`, `AI_Workflow_Kit/docs/DECISIONS.md`, `REPORT.md`, `BUG_REPORT.md`, `script/qa/**`, engines, `Package.swift`, catalog IDs/order/capability payloads, source mapping, storage implementation, HUD/session/routing, onboarding, ranking, or S11/S12 surfaces. Graphify rebuild remains deferred to Orchestrator.
+
+**RESULT: `waiting_review`**
+
+## S10 Fix Attempt 1 — Independent Re-review
+
+### Meta
+
+| Field | Value |
+|---|---|
+| Step | S10 — ADR-019 Local Models UI capability and banner contract |
+| Attempt | Fix Attempt 1 re-review |
+| Actor | independent reviewer |
+| Original blocker | BLOCK-S10-001 |
+| Review base | `bolabol/pre-S10` (`6676737`) |
+| Graph | `graphify-out/graph.json` — 5,105 nodes / 11,693 links |
+
+### Graphify result
+
+- Mandatory first query was executed before source review:
+  `graphify query "S10 Fix Attempt 1 hard language block download retry progress auto activation" --graph graphify-out/graph.json`.
+- Result: BFS depth 2, 210 nodes found. The graph contains the current S10 Fix Attempt 1 symbols and paths, including `S10 Fix Attempt 1 — BLOCK-S10-001`, `LocalModelsActionPresentation`, `TranscriptionModelStore`, `TranscriptionModelDescriptor`, `ASRSourceLanguageProjection`, and the focused S10 tests. Graph is current and the review continued.
+
+### Reviewed scope
+
+- Read `STATE.yaml`, the complete ADR-019, the prior `## S10 — Independent Reviewer Verification` section, and `## S10 Fix Attempt 1 — BLOCK-S10-001`.
+- Independently reviewed the eight S10 product/test targets: `LocalModelsSettingsView.swift`, `TranscriptionModelStore.swift`, `TranscriptionModelDescriptor.swift`, `AppText.swift`, `CoreMLEngineTests.swift`, `SettingsLocalizationTests.swift`, `TranscriptionModelSettingsTests.swift`, and `S9EngineEdgeCaseTests.swift`.
+- `git diff --name-status bolabol/pre-S10 -- .` shows the expected Coder S10 target changes plus Orchestrator-owned `STATE.yaml` and GraphiFy artifacts. No `Package.swift` or `script/qa/**` change is present. The reviewer changed only this feedback file.
+- `git diff --check -- .`: **PASS**.
+
+### BLOCK-S10-001 acceptance
+
+| Requirement | Independent result | Evidence |
+|---|---|---|
+| OS precedence | **PASS** | `LocalModelsActionPolicy` applies `isOSCompatible` before every action state, so unsupported OS blocks Download, Retry, downloading progress, Use, and Selected. Store `download` and `activate` retain the capability OS guard. `canDelete` is independently derived from real local presence/state, and the S9 store fixture confirms an unsupported model cannot activate/download while an existing complete folder remains removable. |
+| Valid OS + hard language block | **PASS** | Language projection is checked only for Canary. With a valid OS, `.notDownloaded` returns Download, `.downloading` returns the real known or nil progress, and `.failed` returns Retry with the bounded real error. Only downloaded Use/Selected semantics are suppressed; Delete is evaluated separately and remains available. |
+| No auto-activation or hidden mutation | **PASS** | `finishDownload` records the real downloaded state but skips activation when the Canary source projection is hard-blocked. `activeModelForPresentation` hides an unusable active presentation without rewriting persisted settings. Regression assertions retain `activeModelID == nil`, no active/presented model, downloaded installation state, unchanged language settings, and available Delete after completion. |
+| Regression coverage | **PASS** | Focused fixtures cover not-installed Download, known and nil downloading progress, failed Retry/error, downloaded-but-language-blocked no Use/Selected, Delete, unsupported-OS action guards, incomplete folders, non-mutation, and S9 unsupported-OS engine rejection. |
+
+### Command results
+
+| Command | Result |
+|---|---|
+| `swift test --filter CoreMLCapabilitiesTests` | **PASS** — 18 tests / 1 suite |
+| `swift test --filter CapabilitiesContractTests` | **PASS** — 3 tests / 1 suite |
+| `swift test --filter S10` | **PASS** — 8 tests / 2 suites |
+| `swift test --filter TranscriptionModelSettingsTests` | **PASS** — 9 tests / 0 Swift Testing suites |
+| `swift test --filter S9EngineEdgeCaseTests` | **PASS** — 9 tests / 3 suites |
+| `swift test` | **PASS** — 565 tests / 15 suites |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | **PASS** — 4 tests / 1 suite; Canary Flash and Canary 1B produced `The quick brown fox jumps over the lazy dog.`; GigaAM produced `Сегодня мы проверяем точность русской диктовки на компьютере Apple`. Scratch assets were present. |
+| `./script/qa/run_all.sh` | **NOT PASS** — 27 passed / 2 failed (29 checks total) |
+| `./script/build_and_run.sh` | **PASS** — `NativeBolabol` and `NativeBolabolPolishWorker` built; the app bundle signature was replaced. |
+| `git diff --check -- .` | **PASS** |
+
+### Legacy QA debt
+
+- `run_all.sh` remains **27/29**, not a green full gate. The only failures are `check_s1b_scope.sh` and `check_s6_gigaam_spike.sh`.
+- These are stale, non-blocking legacy allowlist checks that reject ADR-019-required Local Models/AppText Canary and GigaAM presentation references. No QA script was changed or bypassed, and the failures do not reopen BLOCK-S10-001.
+
+### Deferred S11 runtime evidence
+
+- The live Bolabol v1.0.3 incident remains recorded as post-S10 evidence only: `forcedLanguageCode=none`, `resolvedLanguageCode=auto`, `languageControlEnabled=false`, and the Whisper-only route still resolves to `auto`, producing empty resolved text. Flash/GigaAM local packages are complete.
+- S11 must accept the HUD/session language matrix, explicit Canary primary/additional source selection, the fixed GigaAM RU route, and prohibition of an `auto` route for new Core ML engines. This is deferred evidence, not a BLOCK-S10-001 finding.
+- Canary 1B is not separately downloaded: its local folder is empty and the live log recorded `NSURLErrorDomain -1003` hostname/DNS resolution failure. That is a separate download/runtime investigation after S10/S11 routing, outside this re-review.
+
+### Conclusion
+
+- **BLOCK-S10-001: accepted.** Fix Attempt 1 correctly separates OS action gating from valid-OS language projection, preserves real S8 installation controls/progress/Delete, and prevents language-blocked download completion from auto-selecting the Canary model.
+- **RESULT: `approved`**
+
+---
+
+## S11 runtime blocker — Architect design investigation and ADR-020 handoff
+
+### Meta
+
+| Field | Value |
+|---|---|
+| Actor | Architect |
+| Work type | Design-only runtime-blocker investigation |
+| Output | `AI_Workflow_Kit/docs/DECISIONS.md` — ADR-020 |
+| ADR status | Proposed for S11 runtime-blocker implementation |
+| Product changes | None |
+| QA status | Blocked pending the ordered ADR-020 gates |
+
+### GraphiFy gate
+
+- The required first query was executed before source inspection:
+  `graphify query "Canary GigaAM runtime auto language empty text S11 session routing HUD TranscriptionLanguageRouter 1B DNS download" --graph graphify-out/graph.json`.
+- Initial traversal: BFS depth 2, 443 nodes. It connected the relevant runtime
+  cluster: `ContentView`, `TranscriptionLanguageRouter`,
+  `TranscriptionRequest`, `TranscriptionModelSettings`,
+  `ASRModelCapabilities`, `TranscriptionEngineStore`,
+  `HotkeySessionCoordinator`, `CanaryCoreMLEngine`, and
+  `GigaAMCoreMLEngine`.
+- Narrow follow-up traversals connected the route/request/HUD path and the Path
+  B descriptor/CDN manifest/download/complete-folder path. No Sources tree dump
+  and no GraphiFy rebuild were used for the investigation.
+
+### Authoritative inputs reviewed
+
+- `AI_Workflow_Kit/docs/AI/STATE.yaml`.
+- `BOLABOL_ASR_COREML_INTEGRATION_PLAN.md` §3.3, §3.4, and Track C S7–S15.
+- `AI_Workflow_Kit/docs/DECISIONS.md` ADR-017, ADR-018, and ADR-019,
+  including the explicit S11 deferrals.
+- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`: S10 Independent Reviewer
+  Verification, `BLOCK-S10-001`, its independent re-review, and Deferred S11
+  runtime evidence.
+- `AI_Workflow_Kit/docs/ASR_COREML_STEPS.md` S7/S8/S9 constraints.
+- Targeted source and test files identified by GraphiFy, including all real
+  request construction and re-transcription entry points.
+- `/tmp/bolabol-live-current-build-20260805.log` as retained evidence only.
+
+### Confirmed architectural root cause
+
+The investigation separates S10 presentation, S11 routing, and the Canary 1B
+download failure:
+
+1. `TranscriptionEngineStore.activeEngine` correctly maps the selected active
+   descriptor to Canary or GigaAM; engine selection itself is not the observed
+   defect.
+2. S7/S10 capabilities correctly declare no auto-detect and the supported
+   explicit source sets. Those capabilities currently stop at Settings
+   presentation and do not control runtime request construction.
+3. `TranscriptionModelSettings.languagePreference` defaults to `.auto`, while
+   both new backend descriptors retain coarse legacy `.multilingual` language
+   support. Consequently `resolvedLanguageCode` can resolve to `auto` despite
+   `supportsAutoLanguageDetect == false`.
+4. The hotkey path in `ContentView` explicitly assigns `"auto"` for an ordinary
+   hotkey session. The existing `TranscriptionLanguageRouter` receives only a
+   resolved string plus Whisper-oriented translation flags; it receives no
+   selected backend/model, capabilities, or primary/additional pair. It
+   therefore converts `auto` to `forcedLanguageCode == nil`.
+5. `SidebarView` and `AudioPlaybackModalView` bypass the router but reproduce
+   the same `auto → nil` request during re-transcription.
+6. The HUD state is only Whisper-style `.auto ↔ .target`. Its enablement is
+   translation/polishing-driven, not ASR-source-capability-driven, which explains
+   the live `languageControlEnabled=false` without supplying an explicit source.
+7. Canary/GigaAM engine guards correctly reject nil/unsupported languages. They
+   must remain strict. The workflow records a failure/empty raw text, and the
+   hotkey output path then skips the empty text.
+
+This matches the live route evidence:
+`forcedLanguageCode=none`, `resolvedLanguageCode=auto`,
+`languageControlEnabled=false`, the Whisper-only auto route, and skipped empty
+hotkey output. The complete local Flash/GigaAM folders establish that those
+reproductions reached the routing boundary rather than failing model presence.
+
+The Canary 1B folder is separately empty. The live log records DNS
+`NoSuchRecord`, `NSURLErrorDomain -1003`, `failed to connect 12:8`, and HTTP
+load failure at `0/0 bytes`. This is a distinct download/configuration blocker;
+it is not evidence of an installed model or a routing result.
+
+### ADR-020 output
+
+Append-only ADR-020 was added to the end of
+`AI_Workflow_Kit/docs/DECISIONS.md`:
+
+`## ADR-020 — S11 explicit Core ML session routing and 1B download failure policy`
+
+It defines all requested contracts:
+
+- a capability-aware, immutable per-session plan binding selected model,
+  backend, operation, explicit source, HUD state, and request;
+- unchanged Whisper/Parakeet auto-detect and HUD A behavior;
+- the full Canary Flash primary/additional matrix, with no auto request;
+- Canary 1B explicit English-only ASR, macOS 15+, complete-folder enforcement,
+  and EN→FR as a separate narrow operation rather than French ASR;
+- fixed explicit RU routing and fixed R HUD representation for GigaAM, with no
+  fake secondary switch and no silent pair mutation;
+- session/HUD transitions, mid-session snapshot behavior, no persisted fake
+  state, and no silent `languagePreference` or primary/additional rewrite;
+- mandatory product entry points beyond HUD appearance, mandatory and optional
+  tests, and explicitly forbidden/out-of-scope paths;
+- an honest `NSURLErrorDomain -1003` terminal-attempt policy, user Retry,
+  truthful localized UI, incomplete/unverified cleanup, verified partial resume,
+  preserved manifest/SHA/complete-folder semantics, and no prohibited fallback;
+- a required Human/Orchestrator validation input when the approved Path B CDN
+  configuration is absent. No endpoint, hostname, secret, or mirror was
+  invented;
+- unit, runtime smoke, real installed-model, fresh-app manual, DNS/retry, full
+  `swift test`, `run_all`, and build acceptance evidence.
+
+The investigation also found that the current request boolean is specifically
+`translateToEnglish`; it cannot honestly express Canary 1B EN→FR. ADR-020
+therefore forbids reusing that boolean as proof of EN→FR. The blocking S11 path
+may ship explicit 1B English ASR; exposing EN→FR requires a distinct typed
+operation/target contract and fresh real runtime evidence.
+
+### Proposed implementation boundary
+
+Mandatory runtime ownership in ADR-020 covers:
+
+- `TranscriptionLanguageRouting.swift`;
+- `TranscriptionLanguageMode.swift`;
+- `TranscriptionModelStore.swift`;
+- `TranscriptionEngineStore.swift`;
+- `RecordingTranscriptionWorkflow.swift`;
+- `ContentView.swift`;
+- `SidebarView.swift`;
+- `AudioPlaybackModalView.swift`;
+- `HotkeySessionOverlayManager.swift`;
+- `HotkeySettingsView.swift`;
+- capability/CDN configuration and Local Models/AppText paths only as required
+  by the approved routing and DNS policies.
+
+`EngineProtocols.swift` and engine implementation changes are conditional only
+on implementing the distinct typed EN→FR operation. Existing Core ML language,
+OS, model-presence, frontend, chunking, and runtime guards must not be weakened.
+
+Mandatory tests cover every backend route, all Flash pair cases, no-auto for
+all new Core ML engines, GigaAM fixed RU, 1B English-only, existing
+Whisper/Parakeet auto behavior, session persistence/mid-session behavior,
+workflow request propagation, real runtime smoke, and 1B DNS/retry/no-fallback
+semantics.
+
+### QA ordering decision
+
+S10 feature QA remains blocked until, in order:
+
+1. S11 capability-aware runtime/session/request routing is implemented and
+   independently reviewed.
+2. Canary 1B DNS/download mitigation is corrected against a Human-approved
+   live Path B configuration, or truthfully classified as an unresolved
+   infrastructure/release blocker without a fake ready/downloaded state.
+3. Tester runs the complete feature QA/manual matrix on a fresh build with real
+   installed-model evidence.
+
+The previous S10 approval does not prove runtime success. This design-only
+investigation does not claim Canary Flash, GigaAM, or Canary 1B now works in the
+live app; a fresh real `Bolabol.app` reproduction is mandatory after
+implementation.
+
+### Scope and verification
+
+- Architect product-code changes: **none**.
+- No changes were made by Architect to `Sources/**`, `Tests/**`,
+  `Package.swift`, `script/qa/**`, or `AI_Workflow_Kit/docs/AI/STATE.yaml`.
+- No commit or push was performed.
+- Existing unrelated working-tree changes were left untouched.
+- ADR verification: one ADR-020 occurrence after ADR-019; append-only 492-line
+  decision addition; `git diff --check -- AI_Workflow_Kit/docs/DECISIONS.md`
+  passed.
+- Product tests/build were not rerun for a documentation-only architecture
+  investigation and are specified as future acceptance commands in ADR-020.
+
+### Handoff
+
+- **RESULT: `architect_complete`**
+- **NEXT_ACTOR: `orchestrator`**
+- **QA: `blocked_pending_S11_routing_and_1B_download_disposition`**
+- **DECISION: `ADR-020_proposed`**

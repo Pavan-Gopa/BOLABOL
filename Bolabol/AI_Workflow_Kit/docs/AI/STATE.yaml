@@ -1,22 +1,36 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: S10
+current_step: S11
 step_description: >-
-  Settings → Local Models capability-driven cards, banners, and the Canary 1B
-  macOS gate for the ADR-018 GO trio. Render only real S8 installation state and
-  S7 capabilities; explicit source-language clamp is non-persisting. No HUD or
-  session language routing (S11), Settings ranking (S12), catalog/download
-  implementation, or engine changes.
+  ADR-020 capability-aware, immutable session routing for Canary/GigaAM across
+  hotkey, workflow, Sidebar, audio-modal, Settings, and HUD entry points. Every
+  Core ML ASR request must carry an explicit verified source; Whisper/Parakeet
+  retain auto/HUD A. Add truthful Canary 1B DNS -1003 failure, Retry, cleanup,
+  and no-fallback policy without inventing or changing the CDN endpoint.
 target_files:
-  - Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift
+  - Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift
+  - Sources/NativeBolabolCore/Models/TranscriptionLanguageMode.swift
   - Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
+  - Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift
+  - Sources/NativeBolabolCore/Services/RecordingTranscriptionWorkflow.swift
+  - Sources/NativeBolabol/Views/ContentView.swift
+  - Sources/NativeBolabol/Views/SidebarView.swift
+  - Sources/NativeBolabol/Views/AudioPlaybackModalView.swift
+  - Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift
+  - Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift
   - Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
+  - Sources/NativeBolabol/Views/Settings/LocalModelsSettingsView.swift
   - Sources/NativeBolabolCore/Services/AppText.swift
-  - Tests/NativeBolabolCoreTests/CoreMLEngineTests.swift
-  - Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
+  - Tests/NativeBolabolCoreTests/TranscriptionLanguageRoutingTests.swift
+  - Tests/NativeBolabolCoreTests/S11SessionRoutingTests.swift
+  - Tests/NativeBolabolCoreTests/RecordingTranscriptionWorkflowTests.swift
+  - Tests/NativeBolabolCoreTests/TranscriptionLanguageModeTests.swift
   - Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift
   - Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift
+  - Tests/NativeBolabolCoreTests/S8DownloadContractTests.swift
+  - Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
+  - Tests/NativeBolabolCoreTests/S9RuntimeSmokeTests.swift
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 completed_steps:
   - S0
@@ -42,15 +56,19 @@ review:
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
   verdict: null
   note: >-
-    Awaiting independent review after the first S10 implementation handoff.
+    ADR-020 design handoff is complete. Independent review is required after the
+    S11 Coder handoff and mandatory Orchestrator Graphify rebuild.
 qa:
-  status: pending
+  status: blocked
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
   suite: S10
   bugs_open: 0
   note: >-
-    Awaiting S10 feature QA after Reviewer approval. Tester owns gap-hunt and
-    feature coverage; no full security campaign is required for this UI step.
+    Per ADR-020, combined S10/S11 feature QA remains blocked until S11 routing is
+    implemented and independently reviewed, then Canary 1B is either validated
+    against a Human-approved live CDN configuration or truthfully classified as
+    an unresolved infrastructure/release blocker. Tester then owns the complete
+    fresh-build manual matrix and stale S1b/S6 allowlist remediation.
 security:
   next_run: deferred_human_testing
   note: >-
@@ -84,14 +102,19 @@ plan_files:
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  Implement ADR-019 only. Complete Settings → Local Models presentation for the
-  ADR-018 GO trio using real S7 capabilities and S8 store state: exact localized
-  cards/badges, capability-based non-persisting source choices and notices,
-  real state precedence, and the computed 1B macOS gate in both the View and
-  Settings action path. Keep all legacy Whisper/Parakeet behavior unchanged.
-  Add focused capability, localization, and non-mutation regressions. Do not
-  add a persisted UI/install state, alter GO catalog/source/download/storage
-  contracts or engines, add script/qa, or do S11 HUD/session or S12 ranking.
+  Implement ADR-020's minimal S11 blocker scope: one immutable capability-aware
+  session plan shared by hotkey, recording workflow, Sidebar, and audio-modal
+  re-transcription. Canary Flash uses only supported configured primary/additional
+  sources and HUD explicit fixed/switchable letters; Canary 1B exposes explicit
+  EN ASR only when English survives the pair plus OS/presence gates; GigaAM is
+  fixed explicit RU. No Canary/GigaAM request may emit nil/blank/auto or silently
+  fall back. Preserve Whisper/Parakeet auto and HUD A. Add truthful terminal
+  cannotFindHost/-1003 failed+Retry cleanup/no-fallback behavior, but do not
+  invent or alter a CDN endpoint without Human-approved configuration. Do not
+  implement EN→FR, edit engines/EngineProtocols, script/qa, ranking, release,
+  dependencies, or persisted fake state. Add ADR-020 mandatory focused tests,
+  run full gates, real S9 smokes, and a fresh build; report live-CDN validation
+  as blocked if the approved endpoint input remains absent.
 notes: |
   S8 cycle closed: POST bolabol/S8-done @ 3659a72 (LOCAL ONLY — monorepo remote
   push DISABLED; Human must push when enabled). PRE bolabol/pre-S9 @ ca10a95.
@@ -107,5 +130,30 @@ notes: |
    smokes; BUG-003 is closed and S9 is complete at POST bolabol/S9-done @
    2cfbc72 (LOCAL ONLY — remote push DISABLED). Graphify was rebuilt after POST.
    Architect handoff appended ADR-019 (S10 capability/UI/banner contract) with
-   no product changes. S10 begins from PRE bolabol/pre-S10. Security remains
-   deferred until Human manual testing and a green S9 feature gate.
+   no product changes. S10 begins from PRE bolabol/pre-S10. Coder implementation
+   handoff reports focused suites, full swift test (563), real S9 smoke, and
+   build green; run_all is 27/29 because legacy S1b/S6 scope allowlists flag
+   accepted S10 paths. Graphify rebuilt (5072 nodes) before independent review.
+   Reviewer returned changes_requested: BLOCK-S10-001 must restore real S8
+   install controls/progress under Canary hard-language block while preventing
+   auto-activation; focused coverage is missing. Coder Fix Attempt 1 reports
+   565 tests, real S9 smoke, and build green; Reviewer re-review approved the
+   fix. Legacy S1b/S6 allowlist failures are a proven static QA gap now queued
+   for minimal Tester remediation. User-confirmed current dist/Bolabol.app v1.0.3 runtime
+   reproduction on 2026-08-05 confirmed Canary Flash/GigaAM route with
+   forcedLanguageCode=none and resolvedLanguageCode=auto (Whisper only), then
+   empty text. Flash/GigaAM package layouts in AI_LOCAL_MODELS are complete;
+   Canary 1B is not downloaded because its CDN hostname resolution failed and
+   its local folder is empty. Tester is paused; Architect must resolve exact
+   S11 runtime-routing/download mitigation before Coder is dispatched. Security
+   remains deferred until Human manual testing and a green S9 feature gate.
+   Architect completed a design-only investigation and appended proposed ADR-020,
+   confirming the runtime root cause: active engine selection is correct, but
+   legacy Whisper-oriented routing converts auto to nil before Canary/GigaAM
+   requests; Sidebar and audio-modal re-transcription duplicate the defect. ADR-020
+   requires an immutable explicit-source session plan across every entry point,
+   preserves Whisper/Parakeet auto, and treats Canary 1B -1003 as a separate
+   truthful infrastructure/download failure with no guessed endpoint or fallback.
+   Combined S10/S11 QA stays blocked through implementation, independent review,
+   CDN disposition, and Tester fresh-build manual matrix. Graphify rebuilt after
+   Architect handoff: 5,573 nodes / 12,462 edges.

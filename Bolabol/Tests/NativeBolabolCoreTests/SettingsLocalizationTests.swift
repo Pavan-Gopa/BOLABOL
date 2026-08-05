@@ -70,6 +70,30 @@ private let settingsKeys: [AppTextKey] = [
     .helpBilingualHUD, .helpBilingualAutoEngines, .helpBilingualPolishNote
 ]
 
+private let s10LocalModelsKeys: [AppTextKey] = [
+    .localModelsCanaryFlashTitle,
+    .localModelsCanaryFlashSubtitle,
+    .localModelsCanaryFlashBadge,
+    .localModelsCanaryRuntimeBadge,
+    .localModelsNoAutomaticLanguageBadge,
+    .localModelsGigaAMTitle,
+    .localModelsGigaAMSubtitle,
+    .localModelsGigaAMBadge,
+    .localModelsGigaAMRuntimeBadge,
+    .localModelsCanary1BTitle,
+    .localModelsCanary1BSubtitle,
+    .localModelsCanary1BBadge,
+    .localModelsNoAutomaticLanguageNotice,
+    .localModelsLanguageModesHelpPath,
+    .localModelsCanaryClampWarning,
+    .localModelsCanaryLanguageBlock,
+    .localModelsGigaAMRussianTip,
+    .localModelsRequiresMacOS,
+    .localModelsLargeDownloadTitle,
+    .localModelsLargeDownloadMessage,
+    .localModelsLargeDownloadConfirm,
+]
+
 @Test
 func everySettingsKeyIsLocalizedInEveryLanguage() {
     #expect(!settingsKeys.isEmpty, "Expected settings keys to exist in AppTextKey")
@@ -86,6 +110,71 @@ func everySettingsKeyIsLocalizedInEveryLanguage() {
                 value != key.rawValue,
                 "Settings key \(key.rawValue) fell back to its raw key for \(language.rawValue)"
             )
+        }
+    }
+}
+
+@Test
+func S10LocalModelsKeysResolveInEveryLocaleWithoutSilentFallback() {
+    let english = UILanguagePreference.english
+    let intentionallySharedKeyNames: Set<String> = [
+        AppTextKey.localModelsCanaryRuntimeBadge.rawValue,
+        AppTextKey.localModelsGigaAMRuntimeBadge.rawValue,
+        AppTextKey.localModelsCanaryFlashTitle.rawValue,
+        AppTextKey.localModelsCanary1BTitle.rawValue,
+        AppTextKey.localModelsCanary1BBadge.rawValue,
+    ]
+
+    for language in concreteLanguages {
+        for key in s10LocalModelsKeys {
+            let value = AppText.localized(key, language: language)
+            #expect(!value.isEmpty, "S10 key \(key.rawValue) is empty for \(language.rawValue)")
+            #expect(value != key.rawValue, "S10 key \(key.rawValue) fell back to raw key")
+            if language != english, !intentionallySharedKeyNames.contains(key.rawValue) {
+                #expect(
+                    value != AppText.localized(key, language: english),
+                    "S10 key \(key.rawValue) silently fell back to English for \(language.rawValue)"
+                )
+            }
+        }
+    }
+}
+
+@Test
+func S10LocalModelsCopyIsHonestAboutCapabilitiesAndLanguagePair() {
+    let english = UILanguagePreference.english
+    let flash = AppText.localized(.localModelsCanaryFlashSubtitle, language: english)
+    let gigaAM = AppText.localized(.localModelsGigaAMSubtitle, language: english)
+    let oneB = AppText.localized(.localModelsCanary1BSubtitle, language: english)
+    let flashBadge = AppText.localized(.localModelsCanaryFlashBadge, language: english)
+    let gigaBadge = AppText.localized(.localModelsGigaAMBadge, language: english)
+    let oneBBadge = AppText.localized(.localModelsCanary1BBadge, language: english)
+    let noAutoBadge = AppText.localized(.localModelsNoAutomaticLanguageBadge, language: english)
+    let clamp = AppText.localized(.localModelsCanaryClampWarning, language: english).lowercased()
+    let block = AppText.localized(.localModelsCanaryLanguageBlock, language: english).lowercased()
+    let gigaTip = AppText.localized(.localModelsGigaAMRussianTip, language: english).lowercased()
+    let helpPath = AppText.localized(.localModelsLanguageModesHelpPath, language: english)
+
+    #expect(flash.contains("English") && flash.contains("German") && flash.contains("French") && flash.contains("Spanish"))
+    #expect(gigaAM.contains("Russian only") && gigaAM.contains("Core ML/ANE"))
+    #expect(oneB.contains("English ASR") && oneB.contains("English → French speech translation"))
+    #expect(flashBadge == "Compact · 4 languages")
+    #expect(gigaBadge == "Russian only")
+    #expect(oneBBadge == "macOS 15+")
+    #expect(noAutoBadge == "No auto-detect")
+    #expect(!oneB.lowercased().contains("french asr"))
+    #expect(!oneB.lowercased().contains("multilingual"))
+    #expect(clamp.contains("primary") && clamp.contains("additional") && clamp.contains("not supported"))
+    #expect(block.contains("primary") && block.contains("additional"))
+    #expect(gigaTip.contains("primary") && gigaTip.contains("additional"))
+    #expect(helpPath == "Settings → Help → Language modes")
+
+    for language in concreteLanguages {
+        for key in s10LocalModelsKeys {
+            let value = AppText.localized(key, language: language).lowercased()
+            #expect(!value.contains("target always output"))
+            #expect(!value.contains("target output"))
+            #expect(!value.contains("always output"))
         }
     }
 }

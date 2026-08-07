@@ -100,9 +100,9 @@ excluded:
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-S11
+  last_pre_tag: bolabol/pre-ADR021-ASR-ONLY-CLEANUP
   last_post_tag: bolabol/S9-done
-  last_commit: 845a9ed
+  last_commit: f47489a
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md

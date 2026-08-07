@@ -20,17 +20,13 @@ final class FloatingTranslationWindowManager {
         audioRecorder: AudioRecorder,
         providerID: Binding<String>,
         targetLanguage: Binding<String>,
-        canarySourceLanguageCode: Binding<String>,
-        canaryTargetLanguageCode: Binding<String>,
         originalText: Binding<String>,
         translatedText: Binding<String>,
         generalSettingsStore: GeneralSettingsStore,
         polishingEngineStore: PolishingEngineStore,
-        transcriptionModelStore: TranscriptionModelStore,
         glossaryStore: GlossaryStore,
         onTranslate: @escaping (String, String, String) async throws -> PolishingResult,
-        onRecordingCompleted: @escaping (AudioRecording) async throws -> String,
-        onCanaryTranslation: @escaping (AudioRecording, String, String, String) async throws -> SpeechTranslationResult
+        onRecordingCompleted: @escaping (AudioRecording) async throws -> String
     ) {
         let currentPanel: NSPanel
         if let existing = panel {
@@ -57,17 +53,13 @@ final class FloatingTranslationWindowManager {
             audioRecorder: audioRecorder,
             providerID: providerID,
             targetLanguage: targetLanguage,
-            canarySourceLanguageCode: canarySourceLanguageCode,
-            canaryTargetLanguageCode: canaryTargetLanguageCode,
             originalText: originalText,
             translatedText: translatedText,
             onTranslate: onTranslate,
-            onRecordingCompleted: onRecordingCompleted,
-            onCanaryTranslation: onCanaryTranslation
+            onRecordingCompleted: onRecordingCompleted
         )
         .environmentObject(generalSettingsStore)
         .environmentObject(polishingEngineStore)
-        .environmentObject(transcriptionModelStore)
         .environmentObject(glossaryStore)
 
         currentPanel.contentView = NSHostingView(rootView: contentView)
@@ -86,17 +78,13 @@ final class FloatingTranslationWindowManager {
         audioRecorder: AudioRecorder,
         providerID: Binding<String>,
         targetLanguage: Binding<String>,
-        canarySourceLanguageCode: Binding<String>,
-        canaryTargetLanguageCode: Binding<String>,
         originalText: Binding<String>,
         translatedText: Binding<String>,
         generalSettingsStore: GeneralSettingsStore,
         polishingEngineStore: PolishingEngineStore,
-        transcriptionModelStore: TranscriptionModelStore,
         glossaryStore: GlossaryStore,
         onTranslate: @escaping (String, String, String) async throws -> PolishingResult,
-        onRecordingCompleted: @escaping (AudioRecording) async throws -> String,
-        onCanaryTranslation: @escaping (AudioRecording, String, String, String) async throws -> SpeechTranslationResult
+        onRecordingCompleted: @escaping (AudioRecording) async throws -> String
     ) {
         if isVisible {
             close()
@@ -105,17 +93,13 @@ final class FloatingTranslationWindowManager {
                 audioRecorder: audioRecorder,
                 providerID: providerID,
                 targetLanguage: targetLanguage,
-                canarySourceLanguageCode: canarySourceLanguageCode,
-                canaryTargetLanguageCode: canaryTargetLanguageCode,
                 originalText: originalText,
                 translatedText: translatedText,
                 generalSettingsStore: generalSettingsStore,
                 polishingEngineStore: polishingEngineStore,
-                transcriptionModelStore: transcriptionModelStore,
                 glossaryStore: glossaryStore,
                 onTranslate: onTranslate,
-                onRecordingCompleted: onRecordingCompleted,
-                onCanaryTranslation: onCanaryTranslation
+                onRecordingCompleted: onRecordingCompleted
             )
         }
     }

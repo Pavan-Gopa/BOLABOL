@@ -4,34 +4,24 @@ import NativeBolabolCore
 import Testing
 
 @Test
-func speechTranslationRequestKeepsAnExplicitPairSeparateFromDictationSettings() {
-    let request = SpeechTranslationRequest(
-        audioFileURL: URL(fileURLWithPath: "/tmp/translation.wav"),
-        sourceLanguageCode: " ru ",
-        targetLanguageCode: " en "
+func translationRuntimeUsesAnExplicitTextPrompt() throws {
+    let prompt = try TranslationPrompt.render(
+        text: "Keep this meaning.",
+        targetLanguage: "French"
     )
 
-    #expect(request.sourceLanguageCode == " ru ")
-    #expect(request.targetLanguageCode == " en ")
-    #expect(request.audioFileURL.path == "/tmp/translation.wav")
+    #expect(prompt.contains("Translate the provided text to French"))
+    #expect(prompt.contains("Keep this meaning."))
+    #expect(!prompt.contains("speech"))
 }
 
 @Test
-@MainActor
-func translationRuntimeStoreCachesByModelAndFolderWithoutUsingTheMainStore() throws {
-    let model = try #require(
-        TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-1b-v2-coreml")
+func translationRuntimeHasNoCanarySpeechTranslationSurface() throws {
+    let source = try String(
+        contentsOfFile: "Sources/NativeBolabol/Views/TranslationModalView.swift",
+        encoding: .utf8
     )
-    let activeModel = ActiveTranscriptionModel(
-        model: model,
-        modelFolderURL: URL(fileURLWithPath: "/tmp/canary-translation-runtime")
-    )
-    let store = CanarySpeechTranslationRuntimeStore()
 
-    let first = store.runtime(for: activeModel)
-    let second = store.runtime(for: activeModel)
-
-    #expect(first.id == "canary-speech-translation:canary-1b-v2-coreml")
-    #expect(first.id == second.id)
-    #expect(first.displayName.contains("Speech Translation"))
+    #expect(!source.contains("Canary"))
+    #expect(!source.contains("SpeechTranslation"))
 }

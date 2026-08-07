@@ -103,6 +103,18 @@ func promptTemplateVariantTwoDefaultEmphasizesLongDictationRewriteAndRepeatRemov
 }
 
 @Test
+func promptTemplateVariantTwoDefaultDefinesOptionalHumorRuntimeControl() {
+    #expect(PromptTemplate.variantTwoDefault.body.contains("HUMOR CONTROL (OPTIONAL)"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("HUMOR_LEVEL"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("RUNTIME CONTROL"))
+    #expect(PromptTemplate.variantTwoDefault.body.components(separatedBy: "RUNTIME CONTROL:").count - 1 == 0)
+    #expect(PromptTemplate.variantTwoDefault.body.components(separatedBy: "HUMOR_LEVEL:").count - 1 == 0)
+    #expect(PromptTemplate.variantTwoDefault.body.contains("Playful, Casual + Humor, and Warm & Respectful"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("selected base mode's natural non-humorous character"))
+    #expect(PromptTemplate.variantTwoDefault.body.contains("If no RUNTIME CONTROL block is present"))
+}
+
+@Test
 func promptTemplateMarkdownDefaultProducesStructuredMarkdown() {
     #expect(PromptTemplate.markdownDefault.body.contains("valid Markdown"))
     #expect(PromptTemplate.markdownDefault.body.contains("headings"))

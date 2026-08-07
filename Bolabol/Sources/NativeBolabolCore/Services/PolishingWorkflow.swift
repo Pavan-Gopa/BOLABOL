@@ -6,6 +6,8 @@ public final class PolishingWorkflow {
     private let engine: any PolishingEngine
     private let templateProvider: (ProcessingVariant) -> PromptTemplate
     private let messageProvider: (AppTextKey) -> String
+    private let humorLevel: HumorLevel?
+    private let humorPromptMode: HumorPromptMode
 
     public init(
         noteStore: NoteStore,
@@ -15,12 +17,42 @@ public final class PolishingWorkflow {
         },
         messageProvider: @escaping (AppTextKey) -> String = {
             AppText.localized($0, language: .english)
-        }
+        },
+        humorLevel: HumorLevel? = nil,
+        humorPromptMode: HumorPromptMode = .playful
     ) {
         self.noteStore = noteStore
         self.engine = engine
         self.templateProvider = templateProvider
         self.messageProvider = messageProvider
+        self.humorLevel = humorLevel
+        self.humorPromptMode = humorPromptMode
+    }
+
+    /// Shared production construction seam for every user-facing polish path.
+    /// Humor is enabled only when the HUD/Settings slider is enabled; the
+    /// workflow itself still limits the transient block to Variant 2.
+    public static func make(
+        noteStore: NoteStore,
+        engine: any PolishingEngine,
+        templateProvider: @escaping (ProcessingVariant) -> PromptTemplate = {
+            .defaultTemplate(for: $0)
+        },
+        messageProvider: @escaping (AppTextKey) -> String = {
+            AppText.localized($0, language: .english)
+        },
+        humorSliderEnabled: Bool,
+        humorLevel: HumorLevel,
+        humorPromptMode: HumorPromptMode
+    ) -> PolishingWorkflow {
+        PolishingWorkflow(
+            noteStore: noteStore,
+            engine: engine,
+            templateProvider: templateProvider,
+            messageProvider: messageProvider,
+            humorLevel: humorSliderEnabled ? humorLevel : nil,
+            humorPromptMode: humorPromptMode
+        )
     }
 
     @discardableResult
@@ -89,7 +121,20 @@ public final class PolishingWorkflow {
         template: PromptTemplate,
         languageGuard: PolishingLanguageGuard?
     ) async throws -> PolishingResult {
-        let guardedTemplate = languageGuard?.applying(to: template, strict: false) ?? template
+        let configuredTemplate: PromptTemplate
+        if variant == .variantTwo, let humorLevel {
+            configuredTemplate = template.applying(
+                runtimeStyleControls: HumorRuntimeStyleControls(
+                    level: humorLevel,
+                    mode: humorPromptMode
+                )
+            )
+        } else {
+            configuredTemplate = template
+        }
+
+        let guardedTemplate = languageGuard?.applying(to: configuredTemplate, strict: false)
+            ?? configuredTemplate
         var result = try await engine.polish(
             PolishingRequest(
                 rawText: rawText,
@@ -102,7 +147,7 @@ public final class PolishingWorkflow {
             return result
         }
 
-        let strictTemplate = languageGuard.applying(to: template, strict: true)
+        let strictTemplate = languageGuard.applying(to: configuredTemplate, strict: true)
         result = try await engine.polish(
             PolishingRequest(
                 rawText: rawText,

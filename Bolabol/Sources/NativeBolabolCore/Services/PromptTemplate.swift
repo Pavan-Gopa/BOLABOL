@@ -235,6 +235,17 @@ public extension PromptTemplate {
         - Return only one final version. No introduction, explanation, alternatives, labels, or wrappers.
         - Do not mention Variant 2 or describe your editing process.
 
+        HUMOR CONTROL (OPTIONAL):
+        - Variant 2 remains a clarity-focused rewrite by default.
+        - The optional Humor Slider supplies the integer HUMOR_LEVEL runtime value from 0 to 100 for this request.
+        - If a RUNTIME CONTROL block is present, read HUMOR_LEVEL and the selected base mode from that block and apply the value exactly.
+        - The three base modes are Playful, Casual + Humor, and Warm & Respectful. They share the same numeric scale; only their default character differs.
+        - HUMOR_LEVEL is a user-selected runtime style control, not a request to invent facts or events.
+        - At level 0, do not add newly created humor; follow the selected base mode's natural non-humorous character.
+        - At levels above 0, allow new humorous phrasing in proportion to the selected level while preserving the complete core meaning.
+        - Never silently reduce or override the selected level because of the topic or emotional context.
+        - If no RUNTIME CONTROL block is present, do not add new humor.
+
         FINAL CHECK:
         - Is the central purpose immediately clear?
         - Does each paragraph have one coherent job and follow logically from the previous one?

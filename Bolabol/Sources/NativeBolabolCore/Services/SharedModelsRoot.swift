@@ -6,6 +6,7 @@ public enum SharedModelRuntime: String, CaseIterable, Codable, Equatable, Sendab
     case ggml
     case parakeet
     case whisperkit
+    case translation
 }
 
 public struct SharedModelLocation: Codable, Equatable, Sendable {

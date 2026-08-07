@@ -56,7 +56,6 @@ while IFS= read -r line; do
     *helpBilingual*) ;;
     # S9: GO engine implementations and their accepted product surfaces are allowed
     *Engines/CanaryCoreMLEngine.swift*) ;;
-    *Services/CanarySpeechTranslationRuntime.swift*) ;;
     *Engines/GigaAMCoreMLEngine.swift*) ;;
     *Services/FloatingTranslationWindowManager.swift*) ;;
     *Services/HotkeySessionOverlayManager.swift*) ;;

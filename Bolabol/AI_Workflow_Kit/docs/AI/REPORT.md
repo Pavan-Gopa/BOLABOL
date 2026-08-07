@@ -1,3 +1,339 @@
+# HUD-HUMOR-PROMPTS Exhaustive Application QA
+
+**Date:** 2026-08-07
+**Actor:** Independent Test Engineer / Exhaustive QA Engineer
+**Result:** **`bugs`**
+**Open defects:** BUG-HHP-001 through BUG-HHP-008
+**Scope:** HUD Variant 2 humor, HUD prompt switching, Reviewer fixes, application-wide regression/stress/coverage/script/runtime pass
+
+## Environment
+
+| Item | Value |
+|------|-------|
+| Host | macOS 26.5.2 (25F84), arm64 |
+| Swift | Apple Swift 6.3.3, target arm64-apple-macosx26.0 |
+| Package target | macOS 14+, SwiftPM |
+| Graph | Existing `graphify-out/graph.json`, stated current 6,043 nodes / 13,704 edges; no rebuild |
+| Cloud | No paid/network provider request executed |
+| User data | Existing dirty `UserData/Glossaries/SmartScribe-glossary_Tech+.json` observed at baseline; never read, edited, or removed by QA |
+| Models | Existing scratch and installed models used read-only by opt-in smokes; no download/delete/mutation |
+
+## GraphiFy gate
+
+All five required queries ran before broad source inspection, followed by targeted explain/path calls:
+
+| Query | Executable result |
+|-------|-------------------|
+| HUD humor/session/workflow/provider policy, budget 5000 | 467 nodes; resolved `HumorSessionState`, `HumorSessionSnapshot`, `HUDInteractionPolicy`, `PolishingWorkflow.make`, ContentView freeze/update helpers and focused tests |
+| All entry points/buttons/settings/panels/alerts, budget 6000 | 729 nodes; resolved onboarding, ContentView, HUD, notes, glossary, translation, model stores and settings surfaces |
+| Tests/scripts/uncovered services/stores/error/persistence, budget 6000 | 256 nodes; highlighted application stores/views with little behavioral coverage |
+| Lifecycle/crash/race/cancellation/cleanup, budget 5000 | 475 nodes; resolved app lifecycle, hotkey manager, overlay panel, timers/tasks, audio and download lifecycles |
+| Localization/a11y/keyboard/reduced motion/screens, budget 4000 | 214 nodes; resolved 15-locale tests, HUD a11y policy and untested AppKit interactions |
+| `graphify explain HumorSessionState` | Degree 13; ContentView creates/updates/freezes state; tests call real freeze seam |
+| `graphify explain HUDInteractionPolicy` | Pure hit-testing and accessibility-hidden policy |
+| `graphify path HumorSessionState PolishingWorkflow` | 3 hops through shared humor model; product wiring separately confirmed at call sites |
+| `graphify path HotkeySessionOverlayManager PromptTemplateStore` | 2 hops through ContentView |
+
+GraphiFy CLI warned that installed package 0.9.33 is newer than skill 0.9.20. The graph remained queryable; no rebuild/install was attempted.
+
+## Baseline and isolation
+
+| Check | Result |
+|-------|--------|
+| `git status --short --untracked-files=all` | Dirty monorepo with existing Bolabol product/test/GraphiFy/UserData changes plus unrelated sibling-project changes; preserved as-is |
+| `git diff --stat` | 437 pre-existing changed files across parent monorepo |
+| `git diff --check` | Exit 1 due unrelated `VaniScript/.../CloudAudioTranscriptionEngine.swift:744` blank line at EOF |
+| Scoped `git diff --check -- Tests script/qa AI reports` | Exit 0 before report insertion |
+
+Safe temporary root: `/var/folders/x0/5c_9ph9s67bd4vplgt29f_sh0000gn/T/opencode/bolabol-hhp-qa.0u9pSB`.
+
+- App launch used isolated `HOME`, `CFFIXED_USER_HOME`, and `TMPDIR` under that root.
+- Note/audio regressions created UUID-named temporary roots and removed them with `defer`.
+- QA self-tests used `mktemp -d` and quoted traps.
+- The main temporary root was removed and verified absent at the end.
+- No real UserDefaults suite, Keychain credential, note/glossary file, model folder, or production download was changed.
+
+## Application coverage inventory
+
+| Subsystem | Public/user entry points | Existing tests | Existing QA scripts | Automated coverage | Manual-only coverage | Missing happy / negative / boundary / lifecycle | Proposed or added |
+|-----------|--------------------------|----------------|---------------------|--------------------|----------------------|-----------------------------------------------|-------------------|
+| Startup/lifecycle | app launch, status item, main/settings windows, quit | `ReleaseIdentityTests` | package/release/store/UI guards | Build/source identity only | window reopen, status item, quit-in-flight, focus | AppDelegate behavior, crash-loop, single instance, worker shutdown | Isolated 5-second release launch; retain future UI harness gap |
+| Onboarding | 8 steps, Back/Next, Try modes, languages/models/permissions/theme | onboarding recommendation/localization/language tests | S1c/S2/S3 guards | Strong pure/static | navigation/layout/permission UI | Try Record consumer missing; window/VO paths | Added `onboardingTryRecordNotificationHasAProductionConsumer` |
+| Permissions | microphone/accessibility requests/deep link | prompt-state and selected-text tests | surface guards | Prompt-once model only | OS dialogs/revocation/degraded UI | service/store lifecycle, revoked mid-session | Manual protocol; no safe OS permission reset |
+| Recording/audio | main/note/translation record, import/drop, playback | recording workflow, audio model, routing | pipeline/hotkey guards | Core workflow strong | real mic/device changes/playback UI | recorder/importer/device disconnect/multichannel | Runtime ASR from files; residual audio harness gap |
+| Global hotkeys | primary/secondary/translation/settings | settings/coordinator tests | hotkey HUD guard | Model/ownership strong | Carbon registration/conflicts/secure input | registration cleanup, repeats, focus loss | Existing deterministic coordinator repeated 20x |
+| HUD | listening/processing, language/target/provider/prompt/humor | HUD layout/spectrum/provider/session/a11y tests | HUD/provider/new humor guard | Strong pure/static | real panel hover/click/focus/screens/reduced motion | AppKit panel lifecycle and non-finite scroll | Added non-finite regression + production wiring guard |
+| Transcription routing | hotkey/main/sidebar/audio/import/cloud | S9/S11/routing/catalog/engine tests | S8/S9/pipeline guards | Strong | live UI route labels | contradictory Canary translation contract | Added ADR-021 regression; real GO smokes |
+| Local models | install/retry/delete/select/readiness | S8/S9 presence/download/catalog | S4b/S8/S9/security guards | Strong fixtures/contracts | low disk/network UI/cancel active | live transport cancellation, delete-active | Existing no-download policy preserved; no production download |
+| Polishing | V1/V2, note/sidebar/audio/hotkey, local/cloud | workflow/policy/sanitizer/model tests | polishing/cloud guards | Strong core | live MLX/cloud cancellation/alerts | idempotence, stale concurrent completion | Added humor translation/idempotence/stress coverage |
+| Prompts | default/V1/V2/custom slots/settings/HUD | 29 prompt tests plus humor tests | request policy/new HUD guard | Strong model/persistence | HUD click/focus/long visual labels | repeated runtime block; AppKit selection lifecycle | Added empty/long/Unicode/multiline/idempotence tests |
+| Providers | local/cloud/model picker/HUD switch | API/provider/retry/switcher tests | cloud/provider guards | Strong models | live HTTP/keychain/menu UI | malformed transport/stale menu/NaN | Added non-finite switcher regression |
+| Notes | create/edit/delete/clear/archive/audio/retranscribe | `NoteStoreTests` | workspace/store guards | Good CRUD/persistence | destructive dialog interaction | retention ownership and imported-source deletion | Added two critical red regressions |
+| Glossaries | CRUD/import/export/merge/rewrite | glossary store/rewriter/starter tests | settings/UI guards | Good | popovers/file panels | malformed CSV/JSON simultaneous edits | Existing temp-backed tests; future malformed import tests |
+| Translation | modal/floating/selection/record/copy/glossary | prompt/selected-text/runtime tests | no-NLLB/cloud checks | Partial | windows/focus/clipboard/timeout | ADR contradiction, hard-coded copy, stale results | Added ADR/localization regressions; fixed always-green NLLB check |
+| Focused insertion | hotkey output, AX/clipboard fallback | range snapshot tests | hotkey/pipeline guards | Pure range only | real AX/secure field/clipboard restore | dispatcher AX seam appears unexercised | Residual risk; no OS-safe harness |
+| Settings | all tabs and controls | model defaults/migrations/localization | settings/surface/store checks | Strong model/static | keyboard/VO/alerts/relaunch | application-store corruption/keychain failure | Humor observer regression added |
+| Localization | all 15 AppText maps | full/settings/onboarding/archive tests | S3/i18n/localization checks | Strong AppText | visual truncation/RTL | hard-coded SwiftUI literals | Added Translation literal regression |
+| Persistence/migrations | notes/glossary/settings/prompts/models | extensive Codable/store tests | model/presence guards | Good Core, weak app stores | forced termination recovery | corrupt UserDefaults/keychain/concurrent writes | Temp fixture strategy; no real preferences touched |
+| Alerts/error UX | transcription, download, glossary, notes, model sheets | localization/model state tests | settings/localization guards | Static inventory | Escape/stack/retry/focus/secret leakage | behavior harness absent | Inventory below; manual items NOT_EXECUTED |
+| Concurrency/stress | session freeze/provider/prompt/model/note tasks | coordinator/workflow async tests | repeat runner | Deterministic Core stress | AppKit/task-generation races | stale completions and app-store concurrent writes | 100 freeze cycles; 140 repeated suite runs; sanitizers |
+
+## Humor slider feature matrix
+
+| # | Scenario | Result / evidence |
+|---|----------|-------------------|
+| 1-3 | Defaults, legacy decode, round trip | PASS: `HotkeySettingsTests` 11/11 |
+| 4-7 | Disabled/enabled, V1 isolation, V2 injection | PASS except repeated application: real workflow/factory tests |
+| 8-10 | Exactly one runtime marker/level; static prose excluded | PASS for one application; **FAIL on repeat**, BUG-HHP-001 |
+| 11 | Every humor mode | PASS: all cases and factory mode loop |
+| 12 | 0/20/40/60/80/100 | PASS |
+| 13-17 | below 0, above 100, NaN, +inf, -inf | PASS: clamp and non-finite fallback |
+| 18-19 | 10/30/50/70/90 and explicit rounding | PASS: ties away from zero |
+| 20 | Repeated application no duplicate | **FAIL**, 2 runtime blocks, BUG-HHP-001 |
+| 21-25 | empty, long, Unicode, multiline, marker-like prose | PASS: new edge-body matrix; 10,000 repeated sections |
+| 26-27 | listening update and processing freeze | HUD update PASS; Settings update **FAIL**, BUG-HHP-002; freeze semantics PASS |
+| 28-30 | settings/prompt/variant mutation after freeze | PASS for immutable value snapshot; settings-listening gap remains BUG-HHP-002 |
+| 31-35 | cancel/failure/finish cleanup, retry/new session | PASS by existing source/session contract plus 100 fresh cycles; AppKit path not directly instantiated |
+| 36-37 | live preference survives cancel; frozen request unchanged | PASS: explicit contract test |
+| 38-40 | Content/Sidebar/Audio use same factory | PASS static new guard and production factory test |
+| 41-42 | local/cloud snapshot without paid call | PASS static Content forwarding; cloud network NOT_CALLED |
+| 43-45 | raw/translation/disabled do not receive humor | PASS: raw excluded; Translation modal uses V1 pass-through; disabled omits both markers |
+| 46 | rapid slider updates deterministic | PASS through 100 state update/freeze cycles |
+| 47 | 100 freeze/clear cycles | PASS; no state leakage |
+| 48 | concurrent settings writes | NOT_EXECUTED: app store is MainActor/private and no injectable safe concurrent seam; no claim of coverage |
+| 49 | current-level accessibility metadata | PASS: label/value/adjustable policy |
+| 50 | localization in all 15 locales | PASS: 23 Settings localization tests and full locale map tests |
+
+## HUD prompt/provider interaction matrix
+
+| # | Scenario | Result / evidence |
+|---|----------|-------------------|
+| 1-4 | default, V1, V2, custom slots | PASS: fixed five-slot `PromptSlot` model and 29 prompt tests |
+| 5-7 | empty list, one slot, maximum slots | N/A for product prompt bar: enum always exposes exactly five; provider empty/one/many policy PASS |
+| 8-9 | current selection and selected/unselected a11y | PASS pure metadata tests |
+| 10 | left click | STATIC PASS: button updates active slot and invokes handler |
+| 11-12 | right click, scroll | N/A for prompt buttons by accepted contract; right-click/model and scroll remain provider controls and are tested |
+| 13-18 | precise/non-precise/below/exact/accumulate/reverse | PASS provider model |
+| 19-20 | first/last boundary | PASS wrapping model |
+| 21-24 | rapid click/alternation/scroll burst | Core deterministic selection PASS; real AppKit click burst NOT_EXECUTED |
+| 25-27 | interaction during hide/re-show | NOT_EXECUTED: no AppKit harness; static hide clears hover/timer |
+| 28-30 | hover enter/exit/hide without exit | STATIC PASS: handlers and hide reset; real pointer NOT_EXECUTED |
+| 31-32 | stale callback/generation guard | STATIC PASS in overlay layout generation; callback race NOT_EXECUTED |
+| 33-35 | hidden hit-test/a11y and visible hit-test | PASS pure policy and source guard |
+| 36-39 | Escape/outside/focus/no input after dismiss | NOT_EXECUTED; provider timer dismissal is static-only, no focus harness |
+| 40-41 | prompt/provider orthogonality | STATIC PASS: separate handlers/models |
+| 42-45 | pending/frozen/cancel/retry selection | PASS value snapshot/source lifecycle; AppKit click lifecycle not executed |
+| 46 | empty prompt body | PASS fallback/edge runtime-body tests |
+| 47-49 | long/localized/Unicode/RTL names | Localization resolution PASS; visual fit/RTL focus NOT_EXECUTED |
+| 50-51 | 100 show/hide and selection cycles | Freeze/selection model stress PASS; actual panel show/hide NOT_EXECUTED |
+| 52-53 | no monitor/timer/task accumulation | Static: no prompt monitor; provider timer invalidated/replaced. Runtime leak instrumentation NOT_EXECUTED |
+| 54 | Reduced Motion | NOT_EXECUTED; source currently uses unconditional animations, residual risk |
+| 55-59 | multi-monitor/scale/edge/small/full-screen | Position clamp source inspected; visual tests NOT_EXECUTED |
+| 60 | VoiceOver focus order | Metadata PASS; actual focus order NOT_EXECUTED |
+| Additional | non-finite scroll | **FAIL**, BUG-HHP-003 |
+
+## Application regression summary
+
+| Area | Result |
+|------|--------|
+| Startup/release | Release build/sign/verify PASS; isolated binary stayed alive 5 seconds; full UI lifecycle not automated |
+| Onboarding | Localization/recommendations PASS; Try Record consumer **FAIL**, BUG-HHP-006 |
+| Permissions | Pure prompt state PASS; real OS dialogs/revocation NOT_EXECUTED |
+| Recording/audio | Workflow/routing PASS; real runtime files PASS; mic/device/playback UI NOT_EXECUTED |
+| Hotkeys | Settings/coordinator PASS 20/20; Carbon registration manual-only |
+| HUD | Core layout/a11y PASS; idempotence/settings snapshot/non-finite defects open |
+| Routing/models | Unit contracts plus all three real engines PASS; Canary translation architecture **FAIL** |
+| Polishing/prompts | Factory/V1/V2/modes/translation edge PASS; repeat idempotence **FAIL** |
+| Providers | Models/retry/list PASS; non-finite delta **FAIL**; no paid calls |
+| Notes | CRUD/persistence PASS; two critical retention/ownership defects open |
+| Glossary | Existing CRUD/CSV/rewrite suite PASS; manual popovers/file panels not executed |
+| Translation | Prompt/cloud boundary PASS; ADR and localization regressions open |
+| Settings/localization | 15-locale model tests PASS; Translation literals and humor observer open |
+| Persistence/concurrency | Core persistence and 100-cycle stress PASS; app-store/keychain concurrency remains blocked by seam |
+
+## New tests added
+
+`Tests/NativeBolabolCoreTests/HumorStyleControlTests.swift`:
+
+- `runtimeControlsRemainIdempotentWhenAppliedRepeatedly` - red BUG-HHP-001.
+- `runtimeControlsHandleEmptyLongUnicodeAndMarkerLikePromptBodies` - green.
+- `humorSessionRunsOneHundredFreezeAndFreshSessionCyclesWithoutStateLeakage` - green.
+- `humorRuntimeControlCoexistsWithTranslationWithoutLeakingIntoRawOrVariantOne` - green.
+
+`Tests/NativeBolabolCoreTests/HUDProviderSwitcherFeatureTests.swift`:
+
+- `hudProviderSwitcherIgnoresNonFiniteScrollWithoutPoisoningLaterInput` - red BUG-HHP-003.
+
+`Tests/NativeBolabolCoreTests/NoteStoreTests.swift`:
+
+- `audioRetentionLimitCountsOnlyAudioNotesAndPreservesTextNotes` - red BUG-HHP-004.
+- `deletingImportedAudioNoteNeverDeletesTheUsersSourceFile` - red BUG-HHP-005.
+
+New `Tests/NativeBolabolCoreTests/ApplicationWideRegressionContractTests.swift`:
+
+- `contentViewSettingsHumorLevelChangeUpdatesThePendingListeningSnapshot` - red BUG-HHP-002.
+- `onboardingTryRecordNotificationHasAProductionConsumer` - red BUG-HHP-006.
+- `acceptedADR021KeepsCanaryOutOfTheTranslationRuntime` - red BUG-HHP-007.
+- `translationUserFeedbackAndGlossaryActionsUseLocalizedCopy` - red BUG-HHP-008.
+
+No failing test was skipped, weakened, or removed.
+
+## QA scripts
+
+| Script | Change | Self-test / result |
+|--------|--------|--------------------|
+| `check_hud_humor_prompt_contract.sh` | New; three production factories, pending listening level, hit-testing/a11y | Negative self-test PASS; repository FAIL BUG-HHP-002; auto-included by `run_all` glob |
+| `coverage_inventory.sh` | New reproducible LLVM source coverage report; `--refresh` option | Report generated after manual profraw merge because failing tests prevent SwiftPM final profile merge |
+| `repeat_critical_suites.sh` | New deterministic no-sleep flake runner | 20 iterations, 140 runs, honest aggregate exit |
+| `check_sec_no_download_code.sh` | Fixed Pattern 3 always-empty filter, evaluated Pattern 4, path-safe loop, fail on missing Sources, no missing-`rg` false green | Negative self-test PASS; repository PASS |
+| `check_no_nllb_translation.sh` | Fixed missing-`rg` always-green behavior by using available grep; added empty-scan failure | Negative self-test PASS; repository PASS |
+| `check_s1b_scope.sh` | Not changed by Tester | FAIL reflects BUG-HHP-007; do not allowlist product defect |
+| `check_s6_gigaam_spike.sh` | Not changed by Tester | FAIL inherited from S1b/BUG-HHP-007; GigaAM spike checks themselves pass |
+| `check_s9_engine_contract.sh` | Not changed by Tester | FAIL exposes ASR-only expected names replaced by AST tests, part of BUG-HHP-007 |
+
+All 30 current `check_*.sh` files are discovered by `run_all.sh`; no dead script exists. Audit found additional low-priority comment/string-only fragility in several historical checks; these remain residual test-infrastructure risk rather than being broadly rewritten in a product-bug turn.
+
+## Coverage summary
+
+`swift test --enable-code-coverage` executed all 617 tests present at that point and failed on the 18 then-known issues. Because SwiftPM did not merge `default.profdata` after a red run, the two emitted `.profraw` files were merged with `xcrun llvm-profdata merge`; `coverage_inventory.sh` then produced:
+
+| Metric | Coverage |
+|--------|----------|
+| Source regions | 22.73% (2,461 / 10,826) |
+| Source functions | 21.52% (933 / 4,336) |
+| Source lines | 16.96% (7,677 / 45,270) |
+| `HumorStyleControl.swift` lines | 77.39% |
+| `PolishingWorkflow.swift` lines | 98.38% |
+| `ProviderQuickSwitcherModel.swift` lines | 100% |
+| `NoteStore.swift` lines | 81.25% |
+| `ContentView`, overlay manager, most SwiftUI views | 0% behavioral line coverage |
+
+The percentage is not treated as proof of quality. The key finding is the large 0% application/UI/store surface despite strong Core tests.
+
+## Sanitizer and stress results
+
+| Command | Exit | Tests | Duration | Result |
+|---------|------|-------|----------|--------|
+| `swift test --sanitize=thread` | 1 | 617, 18 known issues | 107.40s | FAIL due product regressions; no ThreadSanitizer diagnostic emitted |
+| `swift test --sanitize=address` | 1 | 617, 18 known issues | 121.20s | FAIL due product regressions; no AddressSanitizer diagnostic emitted |
+| `bash script/qa/repeat_critical_suites.sh 20` | 1 | 140 suite-runs | 267.70s | 100 PASS, 40 expected FAIL: Humor + HUDProvider each failed 20/20; no additional nondeterminism |
+| Full suite repeat 1 | 1 | 617 / 18 issues | 3.37s | Same failures |
+| Full suite repeat 2 | 1 | 617 / 18 issues | 1.02s | Same failures |
+| Full suite repeat 3 | 1 | 617 / 18 issues | 1.02s | Same failures |
+
+The final localization regression increased the final suite to 618 tests / 21 issues; it was separately reproduced and included in the final full run.
+
+## Focused command results
+
+| Command | Exit | Executed / unavailable | Duration | Result / artifacts |
+|---------|------|------------------------|----------|--------------------|
+| `swift test --filter HumorStyleControlTests` | 1 | 13 / 0 | 9.51s | 12 pass; idempotence test fails with 2 issues |
+| `swift test --filter PromptTemplateTests` | 0 | 29 / 0 | 1.06s | PASS |
+| `swift test --filter HotkeySettingsTests` | 0 | 11 / 0 | 1.05s | PASS |
+| `swift test --filter SettingsLocalizationTests` | 0 | 23 / 0 | 1.04s | PASS |
+| `swift test --filter HUDProviderSwitcherFeatureTests` | 1 | 15 / 0 | 1.10s | 14 pass; non-finite regression fails with 7 issues |
+| `swift test --filter HUDLayoutAndComposerTests` | 0 | 13 / 0 | 1.04s | PASS |
+| `swift test --filter ApplicationWideRegressionContractTests` | 1 | 4 / 0 | 8.16s | 9 issues across snapshot/onboarding/ADR/localization |
+| `swift test --filter audioRetentionLimitCountsOnlyAudioNotesAndPreservesTextNotes` | 1 | 1 / 0 | 10.26s (parallel SwiftPM wait included) | BUG-HHP-004 |
+| `swift test --filter deletingImportedAudioNoteNeverDeletesTheUsersSourceFile` | 1 | 1 / 0 | 11.00s (parallel SwiftPM wait included) | BUG-HHP-005 |
+| `bash script/qa/check_hud_humor_prompt_contract.sh --self-test` | 0 | 2 negative mutations | <1s | PASS |
+| `bash script/qa/check_hud_humor_prompt_contract.sh` | 1 | source contract | 0.03s | BUG-HHP-002 |
+| `check_sec_no_download_code.sh --self-test` | 0 | 3 negative mutations | <1s | PASS |
+| `check_no_nllb_translation.sh --self-test` | 0 | 1 negative mutation | <1s | PASS |
+
+Warnings on test/build planning: duplicate `mlx-swift` package identity and one unhandled FluidAudio `benchmark.md` resource.
+
+## Full build and gate results
+
+| Command | Exit | Tests / checks | Duration | Result |
+|---------|------|----------------|----------|--------|
+| Final `swift test` | 1 | **618 tests**, 21 issues; 4 opt-in runtime functions print UNAVAILABLE in default env | 0.94s | FAIL, deterministic product regressions |
+| `swift test --enable-code-coverage` | 1 | 617, 18 issues at time of run | 88.97s | FAIL; raw profiles preserved and merged for report |
+| `swift build` | 0 | N/A | 2.98s | PASS |
+| `swift build -c release` | 0 | N/A | 2.37s | PASS |
+| `./script/qa/run_all.sh` | 1 | 31 steps: **26 pass / 5 fail** | 13.76s | FAIL: Swift suite, new humor guard, S1b, S6, S9 |
+| `./script/build_and_run.sh --verify` | 0 | app + worker | 5.68s | PASS; `dist/Bolabol.app` rebuilt/signed |
+| Repository-wide `git diff --check` | 1 | N/A | <1s | BLOCKED by unrelated VaniScript EOF blank line |
+| Scoped QA-path `git diff --check` | 0 | N/A | <1s | PASS |
+
+Release compilation additionally warned about redundant `await`/`try` in Canary and deprecated `AVAsset.duration`; none blocked the build.
+
+## Real local engine smokes
+
+| Command | Exit | Tests | Duration | Evidence |
+|---------|------|-------|----------|----------|
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | 0 | 8/8 | 59.03s | Flash: `The quick brown fox jumps over the lazy dog.`; Flash long: 50 words; 1B same expected English; GigaAM non-empty Russian; rank-one position PASS |
+| `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests` | 0 | 8 framework tests; 4 scratch-only paths unavailable under this env | 332.77s including release test build | Installed Flash cold 28.050s/warm 0.090s; 1B cold 2.173s/warm 0.211s; GigaAM cold 9.151s/warm 0.118s; all expected language/non-empty |
+
+No model substitution was observed: output logs identify each exact installed model ID. Malformed/unsupported request rejection remains covered by unit language/capability tests, not these happy-path runtime smokes.
+
+## Manual release matrix
+
+The signed release binary was launched directly with isolated `HOME`, `CFFIXED_USER_HOME`, and `TMPDIR`. It remained alive for 5 seconds and terminated cleanly on the QA signal. No `Bolabol*.ips` or `Bolabol*.crash` report exists in `~/Library/Logs/DiagnosticReports`.
+
+| Manual item | Status | Evidence / reason |
+|-------------|--------|-------------------|
+| App launches / no immediate crash | PASS (bounded smoke) | Isolated release process alive after 5s; no crash report |
+| Status item / main window | NOT_EXECUTED | No safe visual automation/UI inspection tool in session |
+| Settings and every tab/control | NOT_EXECUTED | Would require interactive GUI and risk real preference mutation |
+| HUD show/hide/hover/prompt/humor/provider | NOT_EXECUTED | Requires global hotkey/mouse/permission automation; Core/source checks reported separately |
+| Hotkey registration | NOT_EXECUTED | Carbon/system conflict testing unavailable in isolated harness |
+| Recording start/cancel | NOT_EXECUTED | No permission-safe real microphone interaction |
+| Note creation / delete confirmations | NOT_EXECUTED | Real user data must not be mutated |
+| V1/V2 live polish | NOT_EXECUTED | No isolated UI store harness; no paid cloud call allowed |
+| Accessibility labels/focus/reduced motion | NOT_EXECUTED | VoiceOver/UI automation unavailable |
+| Alerts/panel dismissal/focus restoration | NOT_EXECUTED | Requires interactive AppKit harness |
+
+## Alerts, sheets, popovers, and errors inventory
+
+| Surface | Trigger/actions | Automated result | Manual gap |
+|---------|-----------------|------------------|------------|
+| Content transcription failure alert | `sessionWarningMessage`; localized title/message; localized Close cancel clears state | Static/localization PASS | repeat stacking/Escape/focus NOT_EXECUTED |
+| Large model download alert | >1 GB warning; localized confirm starts download; localized Cancel | Descriptor/S8/static PASS | disk/network/cancel UI NOT_EXECUTED |
+| Clear glossary alert | localized Cancel + destructive Clear; clears filters/status | Static/localization PASS | Escape/focus/repeat NOT_EXECUTED |
+| Sidebar Clear All confirmation | localized destructive Clear All + Cancel | Static localization; NoteStore behavior tested | UI cancel/Escape NOT_EXECUTED; deletion bugs affect underlying behavior |
+| Translation and onboarding sheets | Content bindings; dismiss notification clears both | Static source | focus restoration/reopen NOT_EXECUTED |
+| Audio playback sheet | note selection opens modal; binding clears on dismiss | Static source | close-during-playback NOT_EXECUTED |
+| API model picker sheet | provider model list, selected binding, close binding | Provider tests/static | timeout/error/reopen/focus NOT_EXECUTED |
+| Glossary draft sheets/popovers | selected text, custom language, merge picker | Glossary Core tests | pointer/keyboard/escape NOT_EXECUTED |
+| Inline recorder/model/provider errors | bounded model states and localized recorder copy in tested areas | Model/settings tests PASS | long path/secret leakage visual audit NOT_EXECUTED |
+
+## Accessibility results
+
+- PASS: hidden HUD prompt/humor controls share one hit-testing/accessibility-hidden policy.
+- PASS: prompt slot metadata exposes full label, selected/unselected value, hint, button and selected traits.
+- PASS: humor slider exposes localized label, percent value and adjustable action.
+- PASS: all new humor/prompt AppText keys resolve in 15 locales.
+- FAIL: Translation user-facing copy bypasses AppText, BUG-HHP-008.
+- NOT_EXECUTED: VoiceOver focus order, Full Keyboard Access, screen reader visibility in a live panel, contrast, Reduced Motion, multi-monitor and RTL visual layout.
+
+## Legacy QA triage
+
+| Script | Independent classification | Action |
+|--------|----------------------------|--------|
+| `check_s1b_scope.sh` | Broad historical allowlist is stale, but current failure points at real BUG-HHP-007 | Left red; no allowlist added |
+| `check_s6_gigaam_spike.sh` | S6 report/harness checks pass; failure is inherited from S1b/BUG-HHP-007 | Left red; no product bug hidden |
+| `check_s9_engine_contract.sh` | Exact names are brittle, but replacements explicitly changed ASR-only tests to AST and contradict ADR-021 | Left red; no stale AST names blessed |
+| `check_sec_no_download_code.sh` | Proven false-green test infrastructure | Fixed with three negative self-tests; repository green |
+| `check_no_nllb_translation.sh` | `rg` absent, old `2>/dev/null || true` made it always green | Fixed with grep and negative self-test; repository green |
+
+## Blocked and residual risks
+
+- Eight product defects remain open; two meet the project definition of critical data loss.
+- UI automation is absent, so button-by-button AppKit interaction, focus, VoiceOver, permissions, multi-monitor, Reduced Motion, secure input, playback and destructive-dialog cancellation are not claimed as passed.
+- Main application views and many app stores are at 0% measured line coverage.
+- Concurrent UserDefaults/keychain writes and stale async completion require injectable product seams or a dedicated UI/integration harness.
+- Historical shell checks still contain comment/string-only false-positive/false-negative risk beyond the two corrected severe cases.
+- Repository-wide `git diff --check` remains blocked by an unrelated sibling-project line; scoped QA changes are clean.
+
+## Final verdict
+
+**RESULT: `bugs`**
+
+Builds, signed release verification, localization suites, most focused suites, both real local-engine smoke modes, negative QA self-tests and deterministic stress evidence completed. `qa_green` is prohibited because BUG-HHP-001 through BUG-HHP-008 are open, final `swift test` is red (618 tests / 21 issues), and `run_all` is red (26/31 steps pass).
+
+---
+
 # S9 BUG-003 Fix Feature QA Report
 
 **Date:** 2026-08-05

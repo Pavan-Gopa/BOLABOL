@@ -222,7 +222,7 @@ func transcriptionBackendsBothSupportRawHotkeyTarget() {
     #expect(!backend.shortDescription.isEmpty)
     #expect(backend.id == backend.rawValue)
   }
-  #expect(TranscriptionBackend.localWhisper.displayName.contains("Whisper"))
+  #expect(TranscriptionBackend.localWhisper.displayName == "Local")
   #expect(TranscriptionBackend.geminiCloud.displayName.contains("Google"))
 }
 

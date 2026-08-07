@@ -55,7 +55,7 @@ Apple Silicon only · macOS 14+ · **WhisperKit** / **Parakeet** local ASR · **
 ### Bolabol 1.0.3 (in development)
 
 - **Primary + additional** languages (onboarding + Settings); not “always translate to second language”.
-- **Canary Core ML** ASR/AST ([canary-1b-v2-coreml](https://huggingface.co/alexwengg/canary-1b-v2-coreml)); **no Python** — Core ML + MLX polish only.
+- **Canary Core ML** ASR only ([canary-1b-v2-coreml](https://huggingface.co/nvidia/canary-1b-v2)); **no Python** — Core ML + MLX polish only. Text-to-text translation uses the selected cloud API or an existing local MLX model.
 - Canary HUD: primary letter (e.g. **R**) ↔ additional (e.g. **E**); **A** off. Parakeet/Whisper keep auto (**A**).
 - Plan: [`BOLABOL_1.0.3_IMPLEMENTATION_PLAN.md`](BOLABOL_1.0.3_IMPLEMENTATION_PLAN.md).
 
@@ -184,9 +184,9 @@ Customizable prompt slots: default + slots `1`–`4` + Markdown (`M`) in **Setti
 
 ### 6. Translation
 
-- Modal translator from the main toolbar  
-- Local MLX or cloud providers as engine  
-- Dictate into the modal, paste from clipboard, copy result  
+- Modal translator from the main toolbar
+- Local MLX or cloud providers as engine
+- Dictate into the modal, paste from clipboard, copy result
 - Floating / quick translation windows  
 - Auto-translation language for ⇧⌥S  
 
@@ -244,7 +244,7 @@ First-run flow covers backend/model choice, microphone, speech recognition, and 
 ### In progress
 
 - **Primary + additional** languages; onboarding, Settings, Help, 15 locales.  
-- **Canary Core ML** ASR/AST; HUD primary↔additional; auto remains for Parakeet/Whisper.  
+- **Canary Core ML** ASR only; HUD primary↔additional; text translation uses cloud APIs or existing local MLX models.
 
 ### From v1.0.2
 
@@ -299,7 +299,7 @@ NOTARIZE=1 APP_VERSION=1.0.3 ./script/build_release_dmg.sh
 | `NativeBolabolCore` | Shared models, stores, services |
 | Tests | `NativeBolabolCoreTests` |
 
-Architecture: SwiftUI-first UI; Whisper → WhisperKit Core ML; Parakeet → FluidAudio Core ML/ANE; polish → MLX Swift in a separate worker process.
+Architecture: SwiftUI-first UI; Whisper → WhisperKit Core ML; Parakeet → FluidAudio Core ML/ANE; text translation → cloud APIs or existing local MLX engines; polish → MLX Swift in a separate worker process.
 
 Checklist: [`docs/RELEASE.md`](docs/RELEASE.md)
 

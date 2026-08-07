@@ -78,7 +78,7 @@ struct LocalModelsSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Backend: Local Whisper vs Cloud Gemini (no Apple Speech)
+            // Backend: Local vs Cloud Gemini (no Apple Speech)
             VStack(alignment: .leading, spacing: 10) {
                 Text(generalSettingsStore.text(.transcriptionEngine))
                     .font(.caption.weight(.bold))
@@ -125,10 +125,10 @@ struct LocalModelsSettingsView: View {
             )
             .padding(.trailing, 12)
 
-            // Models list — only this scrolls (local Whisper catalog)
-            if transcriptionModelStore.settings.backend == .localWhisper {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
+            // Models list — only this scrolls (local speech catalog)
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    if transcriptionModelStore.settings.backend == .localWhisper {
                         // Recommended section (topThree from shared helper)
                         if !recommendedModels.isEmpty {
                             SectionHeader(
@@ -151,13 +151,12 @@ struct LocalModelsSettingsView: View {
                             }
                         }
                     }
-                    .padding(.vertical, 4)
-                    .padding(.trailing, 12)
+
                 }
-                .overlayScrollbar()
-            } else {
-                Spacer(minLength: 0)
+                .padding(.vertical, 4)
+                .padding(.trailing, 12)
             }
+            .overlayScrollbar()
         }
         .onAppear {
             transcriptionModelStore.reconcileModelStates()

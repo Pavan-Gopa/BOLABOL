@@ -34,62 +34,81 @@ final class GlobalHotkeyManager {
         unregister()
         guard settings.enabled else { return }
 
-        do {
-            try register(
-                primary: settings.hotkey,
-                secondary: settings.secondaryHotkey,
-                tertiary: settings.tertiaryHotkey,
-                settings: settings.settingsHotkey
-            )
-        } catch {
-            NativeBolabolLog.models.error(
-                "Failed to register global hotkeys: \(error.localizedDescription, privacy: .public)"
-            )
-        }
+        register(
+            primary: settings.hotkey,
+            secondary: settings.secondaryHotkey,
+            tertiary: settings.tertiaryHotkey,
+            settings: settings.settingsHotkey
+        )
     }
 
-    private func register(primary: String, secondary: String, tertiary: String, settings: String) throws {
-        let primaryCombo = try HotkeyCombination(primary)
-        let secondaryCombo = try HotkeyCombination(secondary)
+    private func register(primary: String, secondary: String, tertiary: String, settings: String) {
+        let primaryCombo = try? HotkeyCombination(primary)
+        let secondaryCombo = try? HotkeyCombination(secondary)
 
         // Track registered combinations to prevent duplicate registrations
         // (Carbon silently fails when the same key+modifier combo is registered twice).
         var registeredCombos: Set<HotkeyComboKey> = []
 
         // Register primary hotkey (ID 1)
-        let primaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 1)
-        var primaryRef: EventHotKeyRef?
-        let primaryStatus = RegisterEventHotKey(
-            primaryCombo.keyCode,
-            primaryCombo.carbonModifiers,
-            primaryID,
-            GetApplicationEventTarget(),
-            0,
-            &primaryRef
-        )
-        guard primaryStatus == noErr, let primaryRef else {
-            throw GlobalHotkeyError.registrationFailed(primaryStatus)
-        }
-        self.primaryHotKeyRef = primaryRef
-        registeredCombos.insert(HotkeyComboKey(keyCode: primaryCombo.keyCode, modifiers: primaryCombo.carbonModifiers))
-
-        // Register secondary hotkey (ID 2) — full translation modal
-        let secondaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 2)
-        var secondaryRef: EventHotKeyRef?
-        let secondaryStatus = RegisterEventHotKey(
-            secondaryCombo.keyCode,
-            secondaryCombo.carbonModifiers,
-            secondaryID,
-            GetApplicationEventTarget(),
-            0,
-            &secondaryRef
-        )
-        if secondaryStatus == noErr, let secondaryRef {
-            self.secondaryHotKeyRef = secondaryRef
-            registeredCombos.insert(HotkeyComboKey(keyCode: secondaryCombo.keyCode, modifiers: secondaryCombo.carbonModifiers))
+        if let primaryCombo {
+            let primaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 1)
+            var primaryRef: EventHotKeyRef?
+            let primaryStatus = RegisterEventHotKey(
+                primaryCombo.keyCode,
+                primaryCombo.carbonModifiers,
+                primaryID,
+                GetApplicationEventTarget(),
+                0,
+                &primaryRef
+            )
+            if primaryStatus == noErr, let primaryRef {
+                self.primaryHotKeyRef = primaryRef
+                registeredCombos.insert(
+                    HotkeyComboKey(keyCode: primaryCombo.keyCode, modifiers: primaryCombo.carbonModifiers)
+                )
+                NativeBolabolLog.models.info(
+                    "Registered primary hotkey \(primary, privacy: .public) keyCode=\(primaryCombo.keyCode) modifiers=\(primaryCombo.carbonModifiers)"
+                )
+            } else {
+                NativeBolabolLog.models.warning(
+                    "Failed to register primary hotkey \(primary, privacy: .public): \(primaryStatus)"
+                )
+            }
         } else {
             NativeBolabolLog.models.warning(
-                "Failed to register secondary hotkey \(secondary, privacy: .public): \(secondaryStatus)"
+                "Failed to parse primary hotkey: \(primary, privacy: .public)"
+            )
+        }
+
+        // Register secondary hotkey (ID 2) — full translation modal
+        if let secondaryCombo {
+            let secondaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 2)
+            var secondaryRef: EventHotKeyRef?
+            let secondaryStatus = RegisterEventHotKey(
+                secondaryCombo.keyCode,
+                secondaryCombo.carbonModifiers,
+                secondaryID,
+                GetApplicationEventTarget(),
+                0,
+                &secondaryRef
+            )
+            if secondaryStatus == noErr, let secondaryRef {
+                self.secondaryHotKeyRef = secondaryRef
+                registeredCombos.insert(
+                    HotkeyComboKey(keyCode: secondaryCombo.keyCode, modifiers: secondaryCombo.carbonModifiers)
+                )
+                NativeBolabolLog.models.info(
+                    "Registered translation hotkey \(secondary, privacy: .public) keyCode=\(secondaryCombo.keyCode) modifiers=\(secondaryCombo.carbonModifiers)"
+                )
+            } else {
+                NativeBolabolLog.models.warning(
+                    "Failed to register secondary hotkey \(secondary, privacy: .public): \(secondaryStatus)"
+                )
+            }
+        } else {
+            NativeBolabolLog.models.warning(
+                "Failed to parse secondary hotkey: \(secondary, privacy: .public)"
             )
         }
 
@@ -114,12 +133,19 @@ final class GlobalHotkeyManager {
                 if tertiaryStatus == noErr, let tertiaryRef {
                     self.tertiaryHotKeyRef = tertiaryRef
                     registeredCombos.insert(tertiaryKey)
+                    NativeBolabolLog.models.info(
+                        "Registered quick translation hotkey \(tertiary, privacy: .public) keyCode=\(tertiaryCombo.keyCode) modifiers=\(tertiaryCombo.carbonModifiers)"
+                    )
                 } else {
                     NativeBolabolLog.models.warning(
                         "Failed to register tertiary hotkey \(tertiary, privacy: .public): \(tertiaryStatus)"
                     )
                 }
             }
+        } else {
+            NativeBolabolLog.models.warning(
+                "Failed to parse tertiary hotkey: \(tertiary, privacy: .public)"
+            )
         }
 
         // Register settings hotkey (ID 4)
@@ -308,10 +334,12 @@ final class GlobalHotkeyManager {
                             }
                         }
                     } else if hotKeyID.id == 2 && eventKind == UInt32(kEventHotKeyPressed) {
+                        NativeBolabolLog.hotkey.info("Translation hotkey triggered (ID 2)")
                         Task { @MainActor in
                             NotificationCenter.default.post(name: .nativeBolabolTargetHotkeyTriggered, object: nil)
                         }
                     } else if hotKeyID.id == 3 && eventKind == UInt32(kEventHotKeyPressed) {
+                        NativeBolabolLog.hotkey.info("Quick translation hotkey triggered (ID 3)")
                         Task { @MainActor in
                             NotificationCenter.default.post(name: .nativeBolabolQuickTranslationHotkeyTriggered, object: nil)
                         }

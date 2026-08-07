@@ -228,12 +228,20 @@ struct SidebarView: View {
             let requestedVariants = target.requestedPolishingVariants
 
             if !requestedVariants.isEmpty && polishingEngineStore.canAutoPolishAfterTranscription {
-                let polishingWorkflow = PolishingWorkflow(
+                let polishingWorkflow = PolishingWorkflow.make(
                     noteStore: noteStore,
                     engine: polishingEngineStore.activeEngine,
                     templateProvider: { variant in
                         promptTemplateStore.template(for: variant)
-                    }
+                    },
+                    messageProvider: { key in
+                        generalSettingsStore.text(key)
+                    },
+                    humorSliderEnabled: hotkeySettingsStore.settings.humorSliderEnabled,
+                    humorLevel: hotkeySettingsStore.settings.humorSliderEnabled
+                        ? hotkeySettingsStore.settings.humorLevel
+                        : .none,
+                    humorPromptMode: hotkeySettingsStore.settings.humorPromptMode
                 )
                 await polishingWorkflow.polishNote(note.id, variants: requestedVariants)
             }

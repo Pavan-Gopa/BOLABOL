@@ -88,7 +88,7 @@ private func setS9SpeechLanguages(
 
 struct S9CanaryLanguageEdgeCaseTests {
     @Test
-    func canary1BLanguageMatrixCoversExplicit25LanguageSourcesAndASTDirections() async throws {
+    func canary1BLanguageMatrixCoversExplicit25LanguageASRSources() async throws {
         let model = try #require(
             TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-1b-v2-coreml")
         )
@@ -118,28 +118,10 @@ struct S9CanaryLanguageEdgeCaseTests {
             #expect(resolved == sourceLanguage)
         }
 
-        let russianToEnglish = try await engine.resolveLanguage(
-            TranscriptionRequest(
-                forcedLanguageCode: "ru",
-                translateToEnglish: true,
-                targetLanguageCode: "en"
-            )
-        )
-        #expect(russianToEnglish == "ru")
-
-        await #expect(throws: CanaryTranscriptionError.self) {
-            try await engine.resolveTargetLanguage(
-                TranscriptionRequest(
-                    forcedLanguageCode: "ru",
-                    targetLanguageCode: "de"
-                ),
-                sourceLanguage: "ru"
-            )
-        }
     }
 
     @Test
-    func canaryFlashLanguageMatrixAcceptsAllASTSourceLanguages() async throws {
+    func canaryFlashLanguageMatrixAcceptsAllASRSourceLanguages() async throws {
         let model = try #require(
             TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-180m-flash-coreml")
         )
@@ -151,8 +133,7 @@ struct S9CanaryLanguageEdgeCaseTests {
         for sourceLanguage in ["en", "de", "fr", "es"] {
             let resolved = try await engine.resolveLanguage(
                 TranscriptionRequest(
-                    forcedLanguageCode: sourceLanguage,
-                    translateToEnglish: true
+                    forcedLanguageCode: sourceLanguage
                 )
             )
             #expect(resolved == sourceLanguage)

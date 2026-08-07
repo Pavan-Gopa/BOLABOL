@@ -37,16 +37,27 @@ final class HotkeySessionOverlayManager {
         languageMode: TranscriptionLanguageMode = .auto,
         hotkeyTarget: HotkeyTarget = .note,
         targetLanguageLabel: String = "E",
+        activePromptSlot: PromptSlot = .default,
+        promptSlotNames: [PromptSlot: String] = [:],
+        humorLevel: HumorLevel = .none,
+        humorSliderEnabled: Bool = false,
+        humorAccessibilityLabel: String? = nil,
+        promptSlotSelectedLabel: String? = nil,
+        promptSlotUnselectedLabel: String? = nil,
+        promptSlotSwitchHint: String? = nil,
         showsControls: Bool = false,
         languageControlEnabled: Bool = true,
         onOriginChange: ((OverlayHUDOrigin) -> Void)? = nil,
         onLanguageTap: (() -> Void)? = nil,
         onTargetTap: (() -> Void)? = nil,
+        onPromptSlotChange: ((PromptSlot) -> Void)? = nil,
+        onHumorLevelChange: ((HumorLevel) -> Void)? = nil,
         onScroll: ((_ deltaY: CGFloat) -> Void)? = nil,
         sessionPlan: TranscriptionSessionPlan? = nil
     ) {
         let styleChanged = state.style != settings.style
         let modeChanged = state.mode != mode
+        state.isHovered = false
         state.isVisible = true
         state.mode = mode
         state.scale = settings.scale
@@ -55,6 +66,26 @@ final class HotkeySessionOverlayManager {
         state.languageMode = languageMode
         state.hotkeyTarget = hotkeyTarget
         state.targetLanguageLabel = targetLanguageLabel
+        state.activePromptSlot = activePromptSlot
+        state.promptSlotNames = promptSlotNames
+        state.promptSlotChangeHandler = onPromptSlotChange
+        state.humorLevel = humorLevel
+        state.humorSliderEnabled = humorSliderEnabled
+        if let humorAccessibilityLabel {
+            state.humorAccessibilityLabel = humorAccessibilityLabel
+        }
+        if let promptSlotSelectedLabel {
+            state.promptSlotSelectedLabel = promptSlotSelectedLabel
+        }
+        if let promptSlotUnselectedLabel {
+            state.promptSlotUnselectedLabel = promptSlotUnselectedLabel
+        }
+        if let promptSlotSwitchHint {
+            state.promptSlotSwitchHint = promptSlotSwitchHint
+        }
+        state.humorLevelChangeHandler = onHumorLevelChange
+        state.languageTapHandler = onLanguageTap
+        state.targetTapHandler = onTargetTap
         state.showsControls = showsControls
         state.languageControlEnabled = languageControlEnabled
         if let sessionPlan {
@@ -86,6 +117,10 @@ final class HotkeySessionOverlayManager {
         languageMode: TranscriptionLanguageMode? = nil,
         hotkeyTarget: HotkeyTarget? = nil,
         targetLanguageLabel: String? = nil,
+        activePromptSlot: PromptSlot? = nil,
+        promptSlotNames: [PromptSlot: String]? = nil,
+        humorLevel: HumorLevel? = nil,
+        humorSliderEnabled: Bool? = nil,
         showsControls: Bool? = nil,
         languageControlEnabled: Bool? = nil,
         sessionPlan: TranscriptionSessionPlan? = nil
@@ -124,15 +159,31 @@ final class HotkeySessionOverlayManager {
         if let languageMode {
             state.languageMode = languageMode
         }
+        var shouldRefreshLayout = false
         if let hotkeyTarget {
             state.hotkeyTarget = hotkeyTarget
+            shouldRefreshLayout = true
         }
         if let targetLanguageLabel {
             state.targetLanguageLabel = targetLanguageLabel
         }
+        if let activePromptSlot {
+            state.activePromptSlot = activePromptSlot
+        }
+        if let promptSlotNames {
+            state.promptSlotNames = promptSlotNames
+        }
+        if let humorLevel {
+            state.humorLevel = humorLevel
+        }
+        if let humorSliderEnabled {
+            state.humorSliderEnabled = humorSliderEnabled
+            shouldRefreshLayout = true
+        }
         if let showsControls {
             state.showsControls = showsControls
             panel?.updateControlsVisibility(showsControls)
+            shouldRefreshLayout = true
         }
         if let languageControlEnabled {
             state.languageControlEnabled = languageControlEnabled
@@ -143,11 +194,24 @@ final class HotkeySessionOverlayManager {
                 legacyLanguageControlEnabled: languageControlEnabled ?? state.languageControlEnabled
             )
         }
+        if shouldRefreshLayout {
+            panel?.updateLayout(
+                settings: OverlayHUDSettings(
+                    scale: state.scale,
+                    capsuleOpacity: state.capsuleOpacity,
+                    style: state.style
+                ),
+                restoreStoredOrigin: false,
+                animated: true
+            )
+        }
     }
 
     func hide() {
         state.isVisible = false
+        state.isHovered = false
         state.dragOffset = .zero
+        panel?.invalidatePendingLayoutCallbacks()
         panel?.orderOut(nil)
     }
 
@@ -155,8 +219,6 @@ final class HotkeySessionOverlayManager {
         AudioCuePlayer.shared.play(cue, settings: settings)
     }
 
-    /// Current on-screen frame of the HUD panel, used to anchor the provider
-    /// quick switcher. Nil while the HUD is hidden.
     func currentHUDFrame() -> NSRect? {
         guard state.isVisible, let panel else { return nil }
         return panel.frame
@@ -180,7 +242,9 @@ final class HotkeySessionOverlayManager {
             initialSize: OverlayHUDLayout.panelSize(
                 for: state.scale,
                 style: state.style,
-                mode: state.mode
+                mode: state.mode,
+                showsPromptBar: state.showsPromptBar,
+                showsHumorSlider: state.showsHumorControl
             )
         )
         panel.isOpaque = false
@@ -190,13 +254,6 @@ final class HotkeySessionOverlayManager {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.originDidChange = { [weak self] origin in
             self?.originChangeHandler?(origin)
-        }
-        panel.onLeftTap = { [weak self] in
-            guard self?.state.languageControlEnabled == true else { return }
-            self?.languageTapHandler?()
-        }
-        panel.onRightTap = { [weak self] in
-            self?.targetTapHandler?()
         }
         panel.onScroll = { [weak self] delta in
             self?.scrollHandler?(delta)
@@ -216,16 +273,33 @@ private final class OverlayState: ObservableObject {
     @Published var languageMode: TranscriptionLanguageMode = .auto
     @Published var hotkeyTarget: HotkeyTarget = .note
     @Published var targetLanguageLabel: String = "E"
+    @Published var activePromptSlot: PromptSlot = .default
+    @Published var promptSlotNames: [PromptSlot: String] = [:]
+    @Published var humorLevel: HumorLevel = .none
+    @Published var humorSliderEnabled = false
+    @Published var humorAccessibilityLabel = ""
+    @Published var promptSlotSelectedLabel = ""
+    @Published var promptSlotUnselectedLabel = ""
+    @Published var promptSlotSwitchHint = ""
     @Published var showsControls: Bool = false
     @Published var languageControlEnabled: Bool = true
     @Published var isVisible: Bool = false
     @Published var dragOffset: CGSize = .zero
+    @Published var isHovered: Bool = false
+    var languageTapHandler: (() -> Void)?
+    var targetTapHandler: (() -> Void)?
+    var promptSlotChangeHandler: ((PromptSlot) -> Void)?
+    var humorLevelChangeHandler: ((HumorLevel) -> Void)?
+
+    var showsPromptBar: Bool {
+        showsControls && mode == .listening && (hotkeyTarget == .note || hotkeyTarget == .x2)
+    }
+
+    var showsHumorControl: Bool {
+        showsControls && mode == .listening && hotkeyTarget == .x2 && humorSliderEnabled
+    }
 }
 
-/// Shared layout constants so the SwiftUI rendering and the AppKit hit-testing
-/// of the HUD control buttons stay perfectly aligned. The two circular control
-/// buttons live *inside* the capsule at its inner edges, with the minimal
-/// spectrum sitting between them.
 private enum OverlayHUDLayout {
     static let baseWidth: CGFloat = 142
     static let baseHeight: CGFloat = 42
@@ -236,18 +310,43 @@ private enum OverlayHUDLayout {
     static let classicButtonSpectrumGap: CGFloat = 2.5
     static let techButtonSpectrumGap: CGFloat = 3
     static let verticalButtonSpectrumGap: CGFloat = 3
+    static let humorSliderBaseWidth: CGFloat = 90
+    static let humorSliderVerticalWidth: CGFloat = 42
 
     static let minScale: Double = 0.8
     static let maxScale: Double = 1.6
 
-    /// Below 100%, the HUD contracts gently. Above 100%, it gains useful
-    /// waveform space mostly along its primary axis instead of being uniformly
-    /// magnified. This keeps controls readable without producing an oversized
-    /// floating panel.
+    static func promptBarHeight(for scale: Double) -> CGFloat {
+        18 * visualScale(for: scale)
+    }
+
+    static func promptBarSpacing(for scale: Double) -> CGFloat {
+        4 * visualScale(for: scale)
+    }
+
+    static func humorControlHeight(for scale: Double) -> CGFloat {
+        24 * visualScale(for: scale)
+    }
+
+    static func humorControlSpacing(for scale: Double) -> CGFloat {
+        4 * visualScale(for: scale)
+    }
+
+    static func humorSliderWidth(for scale: Double, style: OverlayHUDStyle) -> CGFloat {
+        switch style {
+        case .vertical:
+            humorSliderVerticalWidth * visualScale(for: scale)
+        case .capsule, .tech:
+            humorSliderBaseWidth * visualScale(for: scale)
+        }
+    }
+
     static func panelSize(
         for scale: Double,
         style: OverlayHUDStyle,
-        mode: HotkeySessionOverlayManager.Mode
+        mode: HotkeySessionOverlayManager.Mode,
+        showsPromptBar: Bool = false,
+        showsHumorSlider: Bool = false
     ) -> CGSize {
         let below = CGFloat(normalized(scale, from: minScale, to: 1))
         let above = CGFloat(smoothStep(normalized(scale, from: 1, to: maxScale)))
@@ -275,7 +374,14 @@ private enum OverlayHUDLayout {
         }
 
         guard mode == .processing else {
-            return listeningSize
+            var totalHeight = listeningSize.height
+            if showsPromptBar {
+                totalHeight += promptBarSpacing(for: scale) + promptBarHeight(for: scale)
+            }
+            if showsHumorSlider {
+                totalHeight += humorControlSpacing(for: scale) + humorControlHeight(for: scale)
+            }
+            return CGSize(width: listeningSize.width, height: totalHeight)
         }
 
         switch style {
@@ -369,92 +475,10 @@ private enum OverlayHUDLayout {
     private static func smoothStep(_ value: Double) -> Double {
         value * value * (3 - 2 * value)
     }
-
-    /// Visual frames of the left (language) and right (target) control buttons
-    /// expressed in the coordinate space of the overlay content view.
-    static func controlButtonFrames(
-        in bounds: CGRect,
-        scale rawScale: Double,
-        style: OverlayHUDStyle
-    ) -> (left: CGRect, right: CGRect) {
-        let scale = visualScale(for: rawScale)
-        let diameter = controlDiameter(for: rawScale, style: style)
-        let inset =
-            (shadowPad + (style == .capsule ? 4 : 5))
-            * scale
-
-        switch style {
-        case .capsule:
-            let centerY = bounds.midY
-            return (
-                CGRect(
-                    x: bounds.minX + inset,
-                    y: centerY - diameter / 2,
-                    width: diameter,
-                    height: diameter
-                ),
-                CGRect(
-                    x: bounds.maxX - inset - diameter,
-                    y: centerY - diameter / 2,
-                    width: diameter,
-                    height: diameter
-                )
-            )
-        case .tech:
-            let centerY = bounds.midY
-            return (
-                CGRect(
-                    x: bounds.minX + inset,
-                    y: centerY - diameter / 2,
-                    width: diameter,
-                    height: diameter
-                ),
-                CGRect(
-                    x: bounds.maxX - inset - diameter,
-                    y: centerY - diameter / 2,
-                    width: diameter,
-                    height: diameter
-                )
-            )
-        case .vertical:
-            let x = bounds.midX - diameter / 2
-            return (
-                CGRect(
-                    x: x,
-                    y: bounds.maxY - inset - diameter,
-                    width: diameter,
-                    height: diameter
-                ),
-                CGRect(x: x, y: bounds.minY + inset, width: diameter, height: diameter)
-            )
-        }
-    }
-
-    /// Slightly enlarged frames used for tap hit-testing to make the small
-    /// circular buttons easier to hit.
-    static func controlButtonHitFrames(
-        in bounds: CGRect,
-        scale: Double,
-        style: OverlayHUDStyle
-    ) -> (left: CGRect, right: CGRect) {
-        let frames = controlButtonFrames(in: bounds, scale: scale, style: style)
-        return (
-            frames.left.insetBy(dx: -6, dy: -6),
-            frames.right.insetBy(dx: -6, dy: -6)
-        )
-    }
 }
 
 private final class DraggableOverlayPanel: NSPanel {
     var originDidChange: ((OverlayHUDOrigin) -> Void)?
-    var onLeftTap: (() -> Void)? {
-        get { rootView.onLeftTap }
-        set { rootView.onLeftTap = newValue }
-    }
-    var onRightTap: (() -> Void)? {
-        get { rootView.onRightTap }
-        set { rootView.onRightTap = newValue }
-    }
     var onScroll: ((_ deltaY: CGFloat) -> Void)? {
         get { rootView.onScroll }
         set { rootView.onScroll = newValue }
@@ -463,8 +487,7 @@ private final class DraggableOverlayPanel: NSPanel {
     private let overlayState: OverlayState
     private let rootView: OverlayRootView
     private var hasPlacedFrame = false
-    private var dragStartFrameOrigin: CGPoint?
-    private var dragStartMouseLocation: CGPoint?
+    private var layoutGeneration = 0
 
     init(overlayState: OverlayState, initialSize: CGSize) {
         self.overlayState = overlayState
@@ -475,25 +498,36 @@ private final class DraggableOverlayPanel: NSPanel {
             backing: .buffered,
             defer: false
         )
+        isMovableByWindowBackground = true
         contentView = rootView
         rootView.translatesAutoresizingMaskIntoConstraints = false
-        rootView.onMouseDown = { [weak self] screenPoint in
-            self?.beginDrag(at: screenPoint)
-        }
-        rootView.onMouseDragged = { [weak self] screenPoint in
-            self?.updateDrag(to: screenPoint)
-        }
-        rootView.onMouseUp = { [weak self] in
-            self?.endDrag()
-        }
         setContentSize(initialSize)
     }
 
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 
+    override func sendEvent(_ event: NSEvent) {
+        // Capture the wheel before SwiftUI hit-testing can route it to an inner
+        // control instead of the HUD's scroll handler.
+        if event.type == .scrollWheel {
+            let delta = event.hasPreciseScrollingDeltas
+                ? event.scrollingDeltaY * 3.0
+                : ProviderQuickSwitcherModel.nonPreciseHUDScrollDelta(event.scrollingDeltaY)
+            if abs(delta) > 0.001 {
+                onScroll?(delta)
+                return
+            }
+        }
+        super.sendEvent(event)
+    }
+
     func updateControlsVisibility(_ visible: Bool) {
         rootView.showsControls = visible
+    }
+
+    func invalidatePendingLayoutCallbacks() {
+        layoutGeneration += 1
     }
 
     func prepareForDisplay(
@@ -510,10 +544,29 @@ private final class DraggableOverlayPanel: NSPanel {
         guard !hasPlacedFrame else { return }
 
         let visibleFrame = screenVisibleFrame()
-        let origin =
-            settings.origin(for: settings.style).map(CGPoint.init(origin:))
-            ?? bottomCenterOrigin(for: frame.size, visibleFrame: visibleFrame)
-        setFrameOrigin(clamp(origin: origin, size: frame.size, visibleFrame: visibleFrame))
+        let baseHeight = OverlayHUDLayout.panelSize(
+            for: settings.scale,
+            style: settings.style,
+            mode: overlayState.mode,
+            showsPromptBar: false,
+            showsHumorSlider: false
+        ).height
+        let currentTopOffset = overlayState.showsPromptBar
+            ? (OverlayHUDLayout.promptBarHeight(for: settings.scale) + OverlayHUDLayout.promptBarSpacing(for: settings.scale))
+            : 0
+
+        let origin: CGPoint
+        if let storedOrigin = settings.origin(for: settings.style) {
+            let pillTopY = CGFloat(storedOrigin.y) + baseHeight
+            origin = clamp(
+                origin: CGPoint(x: CGFloat(storedOrigin.x), y: pillTopY + currentTopOffset - frame.height),
+                size: frame.size,
+                visibleFrame: visibleFrame
+            )
+        } else {
+            origin = bottomCenterOrigin(for: frame.size, visibleFrame: visibleFrame)
+        }
+        setFrameOrigin(origin)
         hasPlacedFrame = true
     }
 
@@ -522,10 +575,14 @@ private final class DraggableOverlayPanel: NSPanel {
         restoreStoredOrigin: Bool,
         animated: Bool = false
     ) {
+        layoutGeneration += 1
+        let generation = layoutGeneration
         let newSize = OverlayHUDLayout.panelSize(
             for: settings.scale,
             style: settings.style,
-            mode: overlayState.mode
+            mode: overlayState.mode,
+            showsPromptBar: overlayState.showsPromptBar,
+            showsHumorSlider: overlayState.showsHumorControl
         )
         let previousFrame = frame
         let previousCenter = CGPoint(x: previousFrame.midX, y: previousFrame.midY)
@@ -536,20 +593,41 @@ private final class DraggableOverlayPanel: NSPanel {
         }
 
         let visibleFrame = screenVisibleFrame()
+        let baseHeight = OverlayHUDLayout.panelSize(
+            for: settings.scale,
+            style: settings.style,
+            mode: overlayState.mode,
+            showsPromptBar: false,
+            showsHumorSlider: false
+        ).height
+
+        let previousTopOffset = overlayState.showsPromptBar
+            ? (OverlayHUDLayout.promptBarHeight(for: settings.scale) + OverlayHUDLayout.promptBarSpacing(for: settings.scale))
+            : 0
+        let newTopOffset = overlayState.showsPromptBar
+            ? (OverlayHUDLayout.promptBarHeight(for: settings.scale) + OverlayHUDLayout.promptBarSpacing(for: settings.scale))
+            : 0
+
+        let previousPillTop = previousFrame.maxY - previousTopOffset
         let newOrigin: CGPoint
         if restoreStoredOrigin, let storedOrigin = settings.origin(for: settings.style) {
+            let pillTopY = CGFloat(storedOrigin.y) + baseHeight
+            let topAlignedOrigin = CGPoint(
+                x: CGFloat(storedOrigin.x),
+                y: pillTopY + newTopOffset - newSize.height
+            )
             newOrigin = clamp(
-                origin: CGPoint(origin: storedOrigin),
+                origin: topAlignedOrigin,
                 size: newSize,
                 visibleFrame: visibleFrame
             )
         } else {
-            let centeredOrigin = CGPoint(
+            let topAlignedOrigin = CGPoint(
                 x: previousCenter.x - newSize.width / 2,
-                y: previousCenter.y - newSize.height / 2
+                y: previousPillTop + newTopOffset - newSize.height
             )
             newOrigin = clamp(
-                origin: centeredOrigin,
+                origin: topAlignedOrigin,
                 size: newSize,
                 visibleFrame: visibleFrame
             )
@@ -567,47 +645,27 @@ private final class DraggableOverlayPanel: NSPanel {
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             animator().setFrame(newFrame, display: true)
         } completionHandler: { [weak self] in
-            Task { @MainActor in
-                self?.persistCurrentOrigin()
+            Task { @MainActor [weak self] in
+                guard let self, self.layoutGeneration == generation else { return }
+                self.persistCurrentOrigin()
             }
         }
     }
 
-    private func beginDrag(at screenPoint: CGPoint) {
-        overlayState.dragOffset = .zero
-        dragStartMouseLocation = screenPoint
-        dragStartFrameOrigin = frame.origin
-    }
-
-    private func updateDrag(to screenPoint: CGPoint) {
-        guard let dragStartMouseLocation, let dragStartFrameOrigin else { return }
-        let visibleFrame = screenVisibleFrame()
-        let delta = CGPoint(
-            x: screenPoint.x - dragStartMouseLocation.x,
-            y: screenPoint.y - dragStartMouseLocation.y
-        )
-        let proposedOrigin = CGPoint(
-            x: dragStartFrameOrigin.x + delta.x,
-            y: dragStartFrameOrigin.y + delta.y
-        )
-        if overlayState.style == .vertical, overlayState.mode == .listening {
-            overlayState.dragOffset = CGSize(
-                width: min(7, max(-7, -delta.x * 0.08)),
-                height: min(4.5, max(-4.5, delta.y * 0.045))
-            )
-        }
-        setFrameOrigin(clamp(origin: proposedOrigin, size: frame.size, visibleFrame: visibleFrame))
-    }
-
-    private func endDrag() {
-        dragStartMouseLocation = nil
-        dragStartFrameOrigin = nil
-        overlayState.dragOffset = .zero
-        persistCurrentOrigin()
-    }
-
     private func persistCurrentOrigin() {
-        originDidChange?(OverlayHUDOrigin(x: Double(frame.origin.x), y: Double(frame.origin.y)))
+        let baseHeight = OverlayHUDLayout.panelSize(
+            for: overlayState.scale,
+            style: overlayState.style,
+            mode: overlayState.mode,
+            showsPromptBar: false,
+            showsHumorSlider: false
+        ).height
+        let currentTopOffset = overlayState.showsPromptBar
+            ? (OverlayHUDLayout.promptBarHeight(for: overlayState.scale) + OverlayHUDLayout.promptBarSpacing(for: overlayState.scale))
+            : 0
+        let pillTopY = frame.maxY - currentTopOffset
+        let baseOriginY = pillTopY - baseHeight
+        originDidChange?(OverlayHUDOrigin(x: Double(frame.origin.x), y: Double(baseOriginY)))
     }
 
     private func screenVisibleFrame() -> CGRect {
@@ -615,164 +673,96 @@ private final class DraggableOverlayPanel: NSPanel {
     }
 }
 
-private final class OverlayRootView: NSView {
-    var onMouseDown: ((CGPoint) -> Void)?
-    var onMouseDragged: ((CGPoint) -> Void)?
-    var onMouseUp: (() -> Void)?
+private final class HUDHostingView: NSHostingView<HotkeySessionOverlayView> {
     var onScroll: ((_ deltaY: CGFloat) -> Void)?
-    var onLeftTap: (() -> Void)? {
-        get { captureView.onLeftTap }
-        set { captureView.onLeftTap = newValue }
-    }
-    var onRightTap: (() -> Void)? {
-        get { captureView.onRightTap }
-        set { captureView.onRightTap = newValue }
-    }
-    var showsControls: Bool = false {
-        didSet { captureView.showsControls = showsControls }
-    }
 
-    private let hostingView: NSHostingView<HotkeySessionOverlayView>
-    private let captureView = OverlayMouseCaptureView()
+    override func scrollWheel(with event: NSEvent) {
+        let delta = event.hasPreciseScrollingDeltas
+            ? event.scrollingDeltaY * 3.0
+            : ProviderQuickSwitcherModel.nonPreciseHUDScrollDelta(event.scrollingDeltaY)
+        if abs(delta) > 0.001 {
+            onScroll?(delta)
+        }
+        super.scrollWheel(with: event)
+    }
+}
+
+private final class OverlayRootView: NSView {
+    var onScroll: ((_ deltaY: CGFloat) -> Void)? {
+        get { hostingView.onScroll }
+        set { hostingView.onScroll = newValue }
+    }
+    var showsControls: Bool = false
+
+    private let state: OverlayState
+    private let hostingView: HUDHostingView
+    private var trackingArea: NSTrackingArea?
 
     init(state: OverlayState) {
-        hostingView = NSHostingView(rootView: HotkeySessionOverlayView(state: state))
+        self.state = state
+        self.hostingView = HUDHostingView(rootView: HotkeySessionOverlayView(state: state))
         super.init(frame: .zero)
         wantsLayer = true
         layer?.backgroundColor = .clear
 
         hostingView.translatesAutoresizingMaskIntoConstraints = false
-        captureView.translatesAutoresizingMaskIntoConstraints = false
-        captureView.onMouseDown = { [weak self] point in self?.onMouseDown?(point) }
-        captureView.onMouseDragged = { [weak self] point in self?.onMouseDragged?(point) }
-        captureView.onMouseUp = { [weak self] in self?.onMouseUp?() }
-        captureView.onScroll = { [weak self] delta in self?.onScroll?(delta) }
-        captureView.controlFramesProvider = { [weak state] bounds in
-            guard let state else {
-                return OverlayHUDLayout.controlButtonHitFrames(
-                    in: bounds,
-                    scale: 1,
-                    style: .capsule
-                )
-            }
-            return OverlayHUDLayout.controlButtonHitFrames(
-                in: bounds,
-                scale: state.scale,
-                style: state.style
-            )
-        }
-
         addSubview(hostingView)
-        addSubview(captureView)
 
         NSLayoutConstraint.activate([
             hostingView.leadingAnchor.constraint(equalTo: leadingAnchor),
             hostingView.trailingAnchor.constraint(equalTo: trailingAnchor),
             hostingView.topAnchor.constraint(equalTo: topAnchor),
-            hostingView.bottomAnchor.constraint(equalTo: bottomAnchor),
-            captureView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            captureView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            captureView.topAnchor.constraint(equalTo: topAnchor),
-            captureView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            hostingView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
     }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-private final class OverlayMouseCaptureView: NSView {
-    var onMouseDown: ((CGPoint) -> Void)?
-    var onMouseDragged: ((CGPoint) -> Void)?
-    var onMouseUp: (() -> Void)?
-    var onLeftTap: (() -> Void)?
-    var onRightTap: (() -> Void)?
-    var onScroll: ((_ deltaY: CGFloat) -> Void)?
-    var showsControls = false
-    var controlFramesProvider: ((CGRect) -> (left: CGRect, right: CGRect))?
-
-    /// Movement (in view points) beyond which a press becomes a drag instead of a tap.
-    private static let dragThreshold: CGFloat = 4
-
-    private var downScreenPoint: CGPoint?
-    private var downViewPoint: CGPoint?
-    private var didDrag = false
-
-    override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
-        wantsLayer = true
-        layer?.backgroundColor = NSColor.clear.cgColor
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        downScreenPoint = NSEvent.mouseLocation
-        downViewPoint = convert(event.locationInWindow, from: nil)
-        didDrag = false
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        guard let downScreenPoint, let downViewPoint else { return }
-        let viewPoint = convert(event.locationInWindow, from: nil)
-        let distance = hypot(viewPoint.x - downViewPoint.x, viewPoint.y - downViewPoint.y)
-
-        if !didDrag, distance > Self.dragThreshold {
-            didDrag = true
-            // Begin dragging from the original press location so the window
-            // does not jump when the threshold is first exceeded.
-            onMouseDown?(downScreenPoint)
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea {
+            removeTrackingArea(trackingArea)
         }
+        let options: NSTrackingArea.Options = [
+            .mouseEnteredAndExited,
+            .mouseMoved,
+            .activeAlways,
+            .inVisibleRect
+        ]
+        let newArea = NSTrackingArea(rect: bounds, options: options, owner: self, userInfo: nil)
+        addTrackingArea(newArea)
+        trackingArea = newArea
+    }
 
-        if didDrag {
-            onMouseDragged?(NSEvent.mouseLocation)
+    override func mouseEntered(with event: NSEvent) {
+        super.mouseEntered(with: event)
+        state.isHovered = true
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        super.mouseMoved(with: event)
+        if !state.isHovered {
+            state.isHovered = true
         }
     }
 
-    override func mouseUp(with event: NSEvent) {
-        let wasDrag = didDrag
-        let tapPoint = downViewPoint
-        downScreenPoint = nil
-        downViewPoint = nil
-        didDrag = false
-
-        if wasDrag {
-            onMouseUp?()
-        } else if let tapPoint {
-            handleTap(at: tapPoint)
+    override func mouseExited(with event: NSEvent) {
+        super.mouseExited(with: event)
+        let point = convert(event.locationInWindow, from: nil)
+        if !bounds.contains(point) {
+            state.isHovered = false
         }
     }
 
     override func scrollWheel(with event: NSEvent) {
-        // Normalize line-based mouse-wheel deltas so one notch maps to one
-        // discrete step; trackpads already deliver precise pixel deltas.
         let delta = event.hasPreciseScrollingDeltas
-            ? event.scrollingDeltaY
-            : event.scrollingDeltaY * ProviderQuickSwitcherModel.defaultStepThreshold
+            ? event.scrollingDeltaY * 3.0
+            : ProviderQuickSwitcherModel.nonPreciseHUDScrollDelta(event.scrollingDeltaY)
         if abs(delta) > 0.001 {
             onScroll?(delta)
         }
     }
 
-    private func handleTap(at point: CGPoint) {
-        guard showsControls else { return }
-        let hitFrames =
-            controlFramesProvider?(bounds)
-            ?? OverlayHUDLayout.controlButtonHitFrames(
-                in: bounds,
-                scale: 1,
-                style: .capsule
-            )
-        if hitFrames.left.contains(point) {
-            onLeftTap?()
-        } else if hitFrames.right.contains(point) {
-            onRightTap?()
-        }
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
 
@@ -790,9 +780,101 @@ private struct HotkeySessionOverlayView: View {
     }
 
     private var hudContent: some View {
+        VStack(spacing: 0) {
+            if state.showsPromptBar {
+                promptBar
+                    .transition(
+                        .asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .move(edge: .bottom).combined(with: .opacity)
+                        )
+                    )
+                Spacer(minLength: OverlayHUDLayout.promptBarSpacing(for: state.scale))
+            }
+
+            hudPill
+
+            if state.showsHumorControl {
+                Spacer(minLength: OverlayHUDLayout.humorControlSpacing(for: state.scale))
+                humorSlider
+                    .transition(
+                        .asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        )
+                    )
+            }
+        }
+        .frame(
+            width: max(1, panelSize.width - shadowInset * 2),
+            height: max(1, panelSize.height - shadowInset * 2)
+        )
+        .animation(.easeInOut(duration: 0.24), value: state.showsPromptBar)
+        .animation(.easeInOut(duration: 0.24), value: state.showsHumorControl)
+        .animation(.easeInOut(duration: 0.24), value: state.style)
+        .animation(.easeInOut(duration: 0.2), value: state.showsControls)
+        .animation(.easeInOut(duration: 0.2), value: state.mode)
+        .animation(
+            .spring(response: 0.36, dampingFraction: 0.52, blendDuration: 0.04),
+            value: state.dragOffset
+        )
+    }
+
+    private var promptBar: some View {
+        HStack(spacing: 3 * visualScale) {
+            ForEach(PromptSlot.allCases) { slot in
+                promptSlotButton(slot: slot)
+            }
+        }
+        .frame(height: OverlayHUDLayout.promptBarHeight(for: state.scale))
+        .opacity(state.isHovered ? 0.95 : 0.0)
+        .allowsHitTesting(HUDInteractionPolicy.allowsHitTesting(isVisible: state.isHovered))
+        .accessibilityHidden(HUDInteractionPolicy.isAccessibilityHidden(isVisible: state.isHovered))
+        .animation(.easeInOut(duration: 0.2), value: state.isHovered)
+    }
+
+    private func promptSlotButton(slot: PromptSlot) -> some View {
+        let isSelected = state.activePromptSlot == slot
+        let slotName = state.promptSlotNames[slot] ?? slot.title
+        let accessibility = HUDAccessibilityMetadataPolicy.promptSlot(
+            name: slotName,
+            isSelected: isSelected,
+            selectedState: state.promptSlotSelectedLabel,
+            unselectedState: state.promptSlotUnselectedLabel,
+            switchHint: state.promptSlotSwitchHint
+        )
+
+        return Button {
+            state.activePromptSlot = slot
+            state.promptSlotChangeHandler?(slot)
+        } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: 4 * visualScale, style: .continuous)
+                    .fill(isSelected ? Color.accentColor : Color.white.opacity(0.12))
+                RoundedRectangle(cornerRadius: 4 * visualScale, style: .continuous)
+                    .strokeBorder(isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.25), lineWidth: 1 * visualScale)
+                Text(slot.shortTitle)
+                    .font(.system(size: 11 * visualScale, weight: .bold, design: .rounded))
+                    .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.85))
+            }
+            .frame(width: 17 * visualScale, height: 17 * visualScale)
+        }
+        .buttonStyle(.plain)
+        .help(slotName)
+        .accessibilityLabel(Text(accessibility.label))
+        .accessibilityValue(Text(accessibility.value))
+        .accessibilityHint(Text(accessibility.hint))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAddTraits(accessibility.isSelected ? .isSelected : [])
+    }
+
+    private var hudPill: some View {
         layoutContent
             .padding(contentPadding)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(
+                width: max(1, pillSize.width - shadowInset * 2),
+                height: max(1, pillSize.height - shadowInset * 2)
+            )
             .background {
                 if state.style != .vertical {
                     ZStack {
@@ -849,6 +931,100 @@ private struct HotkeySessionOverlayView: View {
             )
     }
 
+    private var humorSlider: some View {
+        let accessibility = HUDAccessibilityMetadataPolicy.humorSlider(
+            label: state.humorAccessibilityLabel,
+            level: state.humorLevel
+        )
+        return humorSliderContainer
+            .opacity(state.isHovered ? 0.95 : 0.0)
+            .allowsHitTesting(HUDInteractionPolicy.allowsHitTesting(isVisible: state.isHovered))
+            .accessibilityHidden(HUDInteractionPolicy.isAccessibilityHidden(isVisible: state.isHovered))
+            .animation(.easeInOut(duration: 0.2), value: state.isHovered)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(accessibility.label))
+            .accessibilityValue(Text(accessibility.value))
+            .accessibilityAdjustableAction { direction in
+                adjustHumorLevel(direction)
+            }
+    }
+
+    private var humorSliderContainer: some View {
+        humorSliderVisual
+            .padding(.horizontal, 6 * visualScale)
+            .padding(.vertical, 2 * visualScale)
+            .background {
+                Capsule(style: .continuous)
+                    .fill(Color.black.opacity(0.50))
+            }
+            .overlay {
+                Capsule(style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.25), lineWidth: 0.75 * visualScale)
+            }
+            .frame(
+                width: OverlayHUDLayout.humorSliderWidth(for: state.scale, style: state.style) + 12 * visualScale,
+                height: OverlayHUDLayout.humorControlHeight(for: state.scale)
+            )
+    }
+
+    private func adjustHumorLevel(_ direction: AccessibilityAdjustmentDirection) {
+        let step = 20
+        let nextValue: Int
+        if direction == .increment {
+            nextValue = state.humorLevel.rawValue + step
+        } else if direction == .decrement {
+            nextValue = state.humorLevel.rawValue - step
+        } else {
+            return
+        }
+        let nextLevel = HumorLevel.nearest(Double(nextValue))
+        let currentLevel = state.humorLevel
+        guard nextLevel.rawValue != currentLevel.rawValue else { return }
+        state.humorLevel = nextLevel
+        state.humorLevelChangeHandler?(nextLevel)
+    }
+
+    private var humorSliderVisual: some View {
+        VStack(spacing: 1 * visualScale) {
+            Slider(value: humorLevelBinding, in: 0...100, step: 20)
+                .labelsHidden()
+                .controlSize(.mini)
+                .tint(tint.opacity(0.85))
+                .frame(
+                    width: OverlayHUDLayout.humorSliderWidth(for: state.scale, style: state.style),
+                    height: 12 * visualScale
+                )
+
+            humorSliderMarks
+            .frame(width: OverlayHUDLayout.humorSliderWidth(for: state.scale, style: state.style))
+        }
+    }
+
+    private var humorSliderMarks: some View {
+        HStack(spacing: 0) {
+            ForEach(HumorLevel.allCases) { level in
+                Rectangle()
+                    .fill(.white.opacity(0.55))
+                    .frame(width: 1, height: 3.0 * visualScale)
+                if level != .standUp {
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
+
+    private var humorLevelBinding: Binding<Double> {
+        Binding(
+            get: { Double(state.humorLevel.rawValue) },
+            set: { rawValue in
+                let nextLevel = HumorLevel.nearest(rawValue)
+                guard nextLevel != state.humorLevel else { return }
+                state.humorLevel = nextLevel
+                state.humorLevelChangeHandler?(nextLevel)
+            }
+        )
+    }
+
     @ViewBuilder
     private var layoutContent: some View {
         switch state.style {
@@ -866,7 +1042,11 @@ private struct HotkeySessionOverlayView: View {
                     controlSlot(
                         label: languageButtonLabel,
                         isActive: languageButtonIsActive,
-                        isEnabled: state.languageControlEnabled
+                        isEnabled: state.languageControlEnabled,
+                        action: {
+                            guard state.languageControlEnabled else { return }
+                            state.languageTapHandler?()
+                        }
                     )
 
                     classicSpectrum(barCount: spectrumBarCount)
@@ -874,7 +1054,10 @@ private struct HotkeySessionOverlayView: View {
 
                     controlSlot(
                         label: state.hotkeyTarget.hudLabel,
-                        isActive: state.hotkeyTarget != .raw
+                        isActive: state.hotkeyTarget != .raw,
+                        action: {
+                            state.targetTapHandler?()
+                        }
                     )
                 }
             }
@@ -888,7 +1071,11 @@ private struct HotkeySessionOverlayView: View {
                     controlSlot(
                         label: languageButtonLabel,
                         isActive: languageButtonIsActive,
-                        isEnabled: state.languageControlEnabled
+                        isEnabled: state.languageControlEnabled,
+                        action: {
+                            guard state.languageControlEnabled else { return }
+                            state.languageTapHandler?()
+                        }
                     )
 
                     techSpectrum
@@ -896,7 +1083,10 @@ private struct HotkeySessionOverlayView: View {
 
                     controlSlot(
                         label: state.hotkeyTarget.hudLabel,
-                        isActive: state.hotkeyTarget != .raw
+                        isActive: state.hotkeyTarget != .raw,
+                        action: {
+                            state.targetTapHandler?()
+                        }
                     )
                 }
             }
@@ -910,7 +1100,11 @@ private struct HotkeySessionOverlayView: View {
                     controlSlot(
                         label: languageButtonLabel,
                         isActive: languageButtonIsActive,
-                        isEnabled: state.languageControlEnabled
+                        isEnabled: state.languageControlEnabled,
+                        action: {
+                            guard state.languageControlEnabled else { return }
+                            state.languageTapHandler?()
+                        }
                     )
 
                     verticalSpectrum
@@ -920,7 +1114,10 @@ private struct HotkeySessionOverlayView: View {
 
                     controlSlot(
                         label: state.hotkeyTarget.hudLabel,
-                        isActive: state.hotkeyTarget != .raw
+                        isActive: state.hotkeyTarget != .raw,
+                        action: {
+                            state.targetTapHandler?()
+                        }
                     )
                     .offset(
                         x: state.dragOffset.width,
@@ -1027,7 +1224,19 @@ private struct HotkeySessionOverlayView: View {
         OverlayHUDLayout.panelSize(
             for: state.scale,
             style: state.style,
-            mode: state.mode
+            mode: state.mode,
+            showsPromptBar: state.showsPromptBar,
+            showsHumorSlider: state.showsHumorControl
+        )
+    }
+
+    private var pillSize: CGSize {
+        OverlayHUDLayout.panelSize(
+            for: state.scale,
+            style: state.style,
+            mode: state.mode,
+            showsPromptBar: false,
+            showsHumorSlider: false
         )
     }
 
@@ -1105,12 +1314,19 @@ private struct HotkeySessionOverlayView: View {
     private func controlSlot(
         label: String,
         isActive: Bool,
-        isEnabled: Bool = true
+        isEnabled: Bool = true,
+        action: (() -> Void)? = nil
     ) -> some View {
         if state.showsControls {
-            controlButton(label: label, isActive: isActive)
-                .opacity(isEnabled ? 1 : 0.34)
-                .transition(.opacity.combined(with: .scale(scale: 0.85)))
+            Button {
+                action?()
+            } label: {
+                controlButton(label: label, isActive: isActive)
+            }
+            .buttonStyle(.plain)
+            .opacity(isEnabled ? 1 : 0.34)
+            .disabled(!isEnabled)
+            .transition(.opacity.combined(with: .scale(scale: 0.85)))
         } else {
             Color.clear
                 .frame(
@@ -1181,10 +1397,6 @@ private struct HotkeySessionOverlayView: View {
     }
 }
 
-/// Minimal equalizer-style spectrum for the hotkey HUD: a small set of vertical
-/// rounded bars centered in the available width. While listening it mirrors the
-/// live microphone spectrum; while processing it renders a symmetric travelling
-/// wave so the user can see that polishing is in progress.
 private struct MinimalBarSpectrumView: View {
     let bands: [Float]
     let color: Color

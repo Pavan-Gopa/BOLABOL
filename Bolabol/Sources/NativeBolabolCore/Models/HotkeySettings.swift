@@ -65,6 +65,63 @@ public enum HotkeyTarget: String, CaseIterable, Codable, Equatable, Identifiable
     }
 }
 
+/// Pure interaction policy shared by transient HUD controls and their
+/// accessibility tree. Invisible hover-only controls are not interactive.
+public enum HUDInteractionPolicy {
+    public static func allowsHitTesting(isVisible: Bool) -> Bool {
+        isVisible
+    }
+
+    public static func isAccessibilityHidden(isVisible: Bool) -> Bool {
+        !isVisible
+    }
+}
+
+public struct HUDPromptAccessibilityMetadata: Equatable, Sendable {
+    public let label: String
+    public let value: String
+    public let hint: String
+    public let isSelected: Bool
+
+    public init(label: String, value: String, hint: String, isSelected: Bool) {
+        self.label = label
+        self.value = value
+        self.hint = hint
+        self.isSelected = isSelected
+    }
+}
+
+public struct HUDSliderAccessibilityMetadata: Equatable, Sendable {
+    public let label: String
+    public let value: String
+
+    public init(label: String, value: String) {
+        self.label = label
+        self.value = value
+    }
+}
+
+public enum HUDAccessibilityMetadataPolicy {
+    public static func promptSlot(
+        name: String,
+        isSelected: Bool,
+        selectedState: String,
+        unselectedState: String,
+        switchHint: String
+    ) -> HUDPromptAccessibilityMetadata {
+        HUDPromptAccessibilityMetadata(
+            label: name,
+            value: isSelected ? selectedState : unselectedState,
+            hint: switchHint,
+            isSelected: isSelected
+        )
+    }
+
+    public static func humorSlider(label: String, level: HumorLevel) -> HUDSliderAccessibilityMetadata {
+        HUDSliderAccessibilityMetadata(label: label, value: "\(level.rawValue)%")
+    }
+}
+
 public enum HotkeyOutputMode: String, CaseIterable, Codable, Equatable, Identifiable, Sendable {
     case clipboard
     case typing
@@ -98,6 +155,16 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
     public var secondaryHotkey: String
     public var tertiaryHotkey: String
     public var settingsHotkey: String
+    public var humorSliderEnabled: Bool
+    /// One shared humor value for all three humor prompt modes.
+    public var humorLevel: HumorLevel
+    public var humorPromptMode: HumorPromptMode
+
+    /// Backward-compatible name for settings written by the first slider build.
+    public var variantTwoHumorLevel: HumorLevel {
+        get { humorLevel }
+        set { humorLevel = newValue }
+    }
 
     public init(
         enabled: Bool = false,
@@ -107,7 +174,10 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         hotkey: String = HotkeySettings.defaultPrimaryHotkey,
         secondaryHotkey: String = HotkeySettings.defaultSecondaryHotkey,
         tertiaryHotkey: String = HotkeySettings.defaultTertiaryHotkey,
-        settingsHotkey: String = HotkeySettings.defaultSettingsHotkey
+        settingsHotkey: String = HotkeySettings.defaultSettingsHotkey,
+        humorSliderEnabled: Bool = false,
+        humorLevel: HumorLevel = .none,
+        humorPromptMode: HumorPromptMode = .playful
     ) {
         self.enabled = enabled
         self.target = target
@@ -117,6 +187,9 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         self.secondaryHotkey = Self.normalizeMacModifiers(secondaryHotkey)
         self.tertiaryHotkey = Self.normalizeMacModifiers(tertiaryHotkey)
         self.settingsHotkey = Self.normalizeMacModifiers(settingsHotkey)
+        self.humorSliderEnabled = humorSliderEnabled
+        self.humorLevel = humorLevel
+        self.humorPromptMode = humorPromptMode
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -128,6 +201,11 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         case secondaryHotkey
         case tertiaryHotkey
         case settingsHotkey
+        case humorSliderEnabled
+        case humorLevel
+        case humorPromptMode
+        // Written by the initial Variant 2-only slider implementation.
+        case variantTwoHumorLevel
     }
 
     public init(from decoder: Decoder) throws {
@@ -146,6 +224,13 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         self.settingsHotkey = Self.normalizeMacModifiers(
             try container.decodeIfPresent(String.self, forKey: .settingsHotkey) ?? Self.defaultSettingsHotkey
         )
+        self.humorSliderEnabled = try container.decodeIfPresent(Bool.self, forKey: .humorSliderEnabled) ?? false
+        let savedHumorLevel = try container.decodeIfPresent(Int.self, forKey: .humorLevel)
+            ?? container.decodeIfPresent(Int.self, forKey: .variantTwoHumorLevel)
+            ?? HumorLevel.none.rawValue
+        self.humorLevel = HumorLevel(clamping: savedHumorLevel)
+        self.humorPromptMode = try container.decodeIfPresent(HumorPromptMode.self, forKey: .humorPromptMode)
+            ?? .playful
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -158,6 +243,9 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         try container.encode(Self.normalizeMacModifiers(secondaryHotkey), forKey: .secondaryHotkey)
         try container.encode(Self.normalizeMacModifiers(tertiaryHotkey), forKey: .tertiaryHotkey)
         try container.encode(Self.normalizeMacModifiers(settingsHotkey), forKey: .settingsHotkey)
+        try container.encode(humorSliderEnabled, forKey: .humorSliderEnabled)
+        try container.encode(humorLevel.rawValue, forKey: .humorLevel)
+        try container.encode(humorPromptMode, forKey: .humorPromptMode)
     }
 
     public static let cyrillicToLatinKeyMap: [String: String] = [

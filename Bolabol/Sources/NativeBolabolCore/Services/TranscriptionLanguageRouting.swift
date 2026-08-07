@@ -22,9 +22,9 @@ public struct TranscriptionLanguageRoute: Equatable, Sendable {
 /// The operation requested when a local transcription session is created.
 ///
 /// `ordinaryASR` preserves the normal recording path. `speechTranslation` is
-/// used by the dedicated Canary translation window and carries its own explicit
-/// source/target pair; it must never inherit the persisted speech settings.
-/// The Whisper-target case preserves the existing Whisper translation/LLM path.
+/// retained for older callers, but Canary descriptors reject it because Canary
+/// is ASR-only; text translation uses a separate runtime. The Whisper-target
+/// case preserves the existing Whisper translation/LLM path.
 public enum TranscriptionSessionOperation: Equatable, Sendable {
     case ordinaryASR
     case whisperTarget(languageCode: String)
@@ -593,7 +593,7 @@ public enum TranscriptionSessionResolver {
             requestedLanguageCode = normalizedLanguageCode(targetLanguageCode)
             hudLabel = TranscriptionLanguageOption.hudLabel(for: requestedLanguageCode)
         case .speechTranslation:
-            return .unavailable(.unsupportedOperation(modelID: model.id))
+            return .unavailable(.translationUnsupported(modelID: model.id))
         }
 
         return .available(

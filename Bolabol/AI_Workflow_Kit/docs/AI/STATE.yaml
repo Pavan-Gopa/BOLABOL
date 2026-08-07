@@ -6,11 +6,14 @@ step_description: >-
   Polish the third vertical HUD style, Vertical Pulse. Fit the complete D/1/2/3/4
   prompt row without clipping, keep the main capsule at a pixel-stable screen
   anchor while R/1/2 and accessory controls change, and add a right-click language
-  menu on the left language control using all configured settings languages. The
-  selected target must respect ADR-022: no Canary/GigaAM speech translation.
+  menu on the left language control using all configured settings languages. Restore
+  explicit Canary source switching between supported Primary and Additional languages;
+  Canary 1B with ru/en must switch R/E instead of being fixed to R. Translation-target
+  selection must still respect ADR-022: no Canary/GigaAM speech translation.
 target_files:
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
   - Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift
+  - Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift
   - Sources/NativeBolabol/Views/ContentView.swift
   - Sources/NativeBolabolCore/Models/GeneralSettings.swift
   - Sources/NativeBolabolCore/Models/UserSpeechLanguages.swift
@@ -20,6 +23,7 @@ target_files:
   - Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift
   - Tests/NativeBolabolCoreTests/HUDProviderSwitcherFeatureTests.swift
   - Tests/NativeBolabolCoreTests/NewFeatureRegressionTests.swift
+  - Tests/NativeBolabolCoreTests/S11SessionRoutingTests.swift
   - Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
   - Tests/NativeBolabolCoreTests/UserSpeechLanguagesTests.swift
   - Tests/NativeBolabolCoreTests/TranscriptionLanguageRoutingTests.swift
@@ -48,15 +52,18 @@ review:
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
   verdict: null
   note: >-
-    ADR-022 remains independently approved and must not regress. New Human-provided
-    Vertical Pulse screenshot shows the prompt row clipping D and 4 and the capsule
-    jumping when R/1/2 changes. Implement fixed-anchor accessory layout and the
-    right-click full-language target menu before a fresh independent review.
+    ADR-022 ASR-only separation remains authoritative and must not regress. New
+    Human-provided Vertical Pulse screenshots show the prompt row clipping D and 4,
+    the capsule jumping when R/1/2 changes, and Canary 1B ru/en incorrectly fixed to
+    R. Root cause is the current resolver's fixed Primary-only Canary plan plus the
+    explicit-Core-ML early return in handleOverlayLanguageTap. Restore supported
+    Primary/Additional source switching and implement fixed-anchor layout plus the
+    context-correct right-click language menu before a fresh independent review.
 qa:
   status: blocked
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
   suite: HUD-HUMOR-PROMPTS
-  bugs_open: 1
+  bugs_open: 2
   note: >-
     Final ADR-022 closure rerun is paused by Human-requested HUD scope. After Coder
     and Reviewer, Tester must rerun all prior BUG-HHP/ADR-022 coverage plus a
@@ -99,11 +106,14 @@ coder_brief: |
   five D/1/2/3/4 buttons centered with no clipping. Keep the main HUD capsule at an
   invariant screen anchor while raw/Variant 1/Variant 2, prompt row, language row,
   and the Variant 2 humor slider appear or disappear; no bounce, jump, or panel
-  recenter. Left click retains the existing compact language action. Right click
-  on the left language glyph opens a complete localized menu from configured
-  Settings languages and selects a target for Whisper-native or post-ASR text
-  translation only. Auto-capable ASR remains auto; non-auto source uses Primary.
-  Canary/GigaAM remain ADR-022 ASR-only. Preserve all other HUD styles.
+  recenter. Restore Canary's explicit ASR source selector: build ordered, deduplicated
+  choices from supported Primary and Additional settings languages; ru/en Canary 1B
+  starts at R and left click switches R/E by replacing the pending immutable session
+  plan and forcedLanguageCode. One supported choice is fixed; GigaAM remains fixed R.
+  Right click opens a localized menu whose meaning follows the backend: explicit
+  Canary source selection versus Whisper/post-ASR translation target selection.
+  Auto-capable ASR remains auto. Canary/GigaAM remain ADR-022 ASR-only and never
+  receive a translation operation or target. Preserve all other HUD styles.
 notes: |
   S8 cycle closed: POST bolabol/S8-done @ 3659a72 (LOCAL ONLY — monorepo remote
   push DISABLED; Human must push when enabled). PRE bolabol/pre-S9 @ ca10a95.

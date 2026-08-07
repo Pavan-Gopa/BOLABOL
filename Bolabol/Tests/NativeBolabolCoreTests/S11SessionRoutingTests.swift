@@ -16,7 +16,8 @@ private func s11Resolve(
     additional: String?,
     operation: TranscriptionSessionOperation = .asr,
     os: ASRModelCapabilities.OSVersion = s11OS15,
-    complete: Bool = true
+    complete: Bool = true,
+    sourceLanguageOverride: String? = nil
 ) throws -> TranscriptionSessionResolution {
     let model = try s11Model(modelID)
     return TranscriptionSessionResolver.resolve(
@@ -28,7 +29,8 @@ private func s11Resolve(
         primaryLanguageCode: primary,
         additionalLanguageCode: additional,
         operation: operation,
-        legacyLanguageCode: "auto"
+        legacyLanguageCode: "auto",
+        sourceLanguageOverride: sourceLanguageOverride
     )
 }
 
@@ -39,21 +41,24 @@ func s11CanaryFlashPairMatrixUsesOnlyConfiguredSupportedSources() throws {
         Issue.record("Flash en/de should be available")
         return
     }
-    #expect(bothPlan.languageMode == .fixed)
+    #expect(bothPlan.languageMode == .switchable)
+    #expect(bothPlan.languageControlEnabled)
     #expect(bothPlan.sourceLanguageCode == "en")
     #expect(bothPlan.hudLanguageLabel == "E")
     #expect(bothPlan.request.forcedLanguageCode == "en")
     #expect(!bothPlan.request.translateToEnglish)
     #expect(bothPlan.route.postASRTextTranslationTargetLanguageCode == nil)
 
-    #expect(bothPlan.sourceLanguageChoices == ["en"])
+    #expect(bothPlan.sourceLanguageChoices == ["en", "de"])
 
     let german = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "de", additional: "fr")
     guard case .available(let germanPlan) = german else {
         Issue.record("Flash de/fr should provide a fixed German source")
         return
     }
-    #expect(germanPlan.sourceLanguageChoices == ["de"])
+    #expect(germanPlan.languageMode == .switchable)
+    #expect(germanPlan.languageControlEnabled)
+    #expect(germanPlan.sourceLanguageChoices == ["de", "fr"])
     #expect(germanPlan.sourceLanguageCode == "de")
     #expect(germanPlan.hudLanguageLabel == "G")
     #expect(germanPlan.route.postASRTextTranslationTargetLanguageCode == nil)
@@ -117,21 +122,113 @@ func s11CanaryOneBUsesExplicitMultilingualSourceASR() throws {
         Issue.record("Canary 1B en/fr should provide an English ASR plan")
         return
     }
-    #expect(plan.languageMode == .fixed)
-    #expect(plan.sourceLanguageChoices == ["en"])
+    #expect(plan.languageMode == .switchable)
+    #expect(plan.languageControlEnabled)
+    #expect(plan.sourceLanguageChoices == ["en", "fr"])
     #expect(plan.sourceLanguageCode == "en")
     #expect(plan.hudLanguageLabel == "E")
     #expect(plan.request.forcedLanguageCode == "en")
     #expect(!plan.request.translateToEnglish)
     #expect(plan.route.postASRTextTranslationTargetLanguageCode == nil)
 
+    let englishOverride = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en",
+        sourceLanguageOverride: "en"
+    )
+    guard case .available(let englishPlan) = englishOverride else {
+        Issue.record("Canary 1B ru/en source override should be available")
+        return
+    }
+    #expect(englishPlan.languageMode == .switchable)
+    #expect(englishPlan.sourceLanguageChoices == ["ru", "en"])
+    #expect(englishPlan.sourceLanguageCode == "en")
+    #expect(englishPlan.hudLanguageLabel == "E")
+    #expect(englishPlan.request.forcedLanguageCode == "en")
+    #expect(!englishPlan.request.translateToEnglish)
+    #expect(englishPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let italianOverride = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en",
+        sourceLanguageOverride: "it"
+    )
+    guard case .available(let italianPlan) = italianOverride else {
+        Issue.record("Canary 1B full-catalog Italian override should be available")
+        return
+    }
+    #expect(italianPlan.sourceLanguageChoices == ["ru", "en"])
+    #expect(italianPlan.sourceLanguageCode == "it")
+    #expect(italianPlan.requestedLanguageCode == "it")
+    #expect(italianPlan.hudLanguageLabel == "I")
+    #expect(italianPlan.request.forcedLanguageCode == "it")
+    #expect(!italianPlan.request.translateToEnglish)
+    #expect(italianPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let unsupportedOverride = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en",
+        sourceLanguageOverride: "xx"
+    )
+    guard case .unavailable(.unsupportedSourceLanguage(
+        _,
+        let requestedOverride,
+        let overrideSupportedCodes
+    )) = unsupportedOverride else {
+        Issue.record("Canary 1B must reject an unsupported full-catalog override")
+        return
+    }
+    #expect(requestedOverride == "xx")
+    #expect(overrideSupportedCodes == CanaryLanguageCatalog.oneBV2LanguageCodes)
+
+    let russianAgain = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en",
+        sourceLanguageOverride: "ru"
+    )
+    guard case .available(let russianAgainPlan) = russianAgain else {
+        Issue.record("Canary 1B source cycle should return to Russian")
+        return
+    }
+    #expect(russianAgainPlan.sourceLanguageChoices == ["ru", "en"])
+    #expect(russianAgainPlan.sourceLanguageCode == "ru")
+    #expect(russianAgainPlan.hudLanguageLabel == "R")
+    #expect(russianAgainPlan.request.forcedLanguageCode == "ru")
+    #expect(!russianAgainPlan.request.translateToEnglish)
+
+    let unsupportedPrimary = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "xx",
+        additional: "en"
+    )
+    guard case .unavailable(.unsupportedSourceLanguage(
+        let blockedModelID,
+        let blockedCode,
+        let blockedSupportedCodes
+    )) = unsupportedPrimary else {
+        Issue.record("Canary 1B must not fall back from an unsupported Primary")
+        return
+    }
+    #expect(blockedModelID == "canary-1b-v2-coreml")
+    #expect(blockedCode == "xx")
+    #expect(blockedSupportedCodes == CanaryLanguageCatalog.oneBV2LanguageCodes)
+
     let russian = try s11Resolve(modelID: "canary-1b-v2-coreml", primary: "ru", additional: "en")
     guard case .available(let russianPlan) = russian else {
         Issue.record("Canary 1B ru/en should provide a Russian ASR plan")
         return
     }
+    #expect(russianPlan.languageMode == .switchable)
+    #expect(russianPlan.languageControlEnabled)
+    #expect(russianPlan.sourceLanguageChoices == ["ru", "en"])
     #expect(russianPlan.sourceLanguageCode == "ru")
     #expect(russianPlan.hudLanguageLabel == "R")
+    #expect(russianPlan.request.forcedLanguageCode == "ru")
+    #expect(!russianPlan.request.translateToEnglish)
     #expect(russianPlan.route.postASRTextTranslationTargetLanguageCode == nil)
 
     let frenchOnly = try s11Resolve(modelID: "canary-1b-v2-coreml", primary: "fr", additional: "de")
@@ -166,6 +263,52 @@ func s11CanaryOneBUsesExplicitMultilingualSourceASR() throws {
         Issue.record("Canary 1B incomplete folder must be unavailable")
         return
     }
+}
+
+@Test
+func s11CanarySourceReplacementKeepsFrozenSessionInputs() throws {
+    let initial = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en"
+    )
+    guard case .available(let initialPlan) = initial else {
+        Issue.record("Canary 1B should provide a replacement source plan")
+        return
+    }
+
+    let replacement = TranscriptionSessionResolver.replacingCanarySource(
+        in: initialPlan,
+        with: "it"
+    )
+    guard case .available(let replacementPlan) = replacement else {
+        Issue.record("Canary 1B should accept a full-catalog replacement source")
+        return
+    }
+
+    #expect(replacementPlan.model == initialPlan.model)
+    #expect(replacementPlan.modelFolderURL == initialPlan.modelFolderURL)
+    #expect(replacementPlan.engineIdentity == initialPlan.engineIdentity)
+    #expect(replacementPlan.operation == initialPlan.operation)
+    #expect(replacementPlan.sourceLanguageChoices == initialPlan.sourceLanguageChoices)
+    #expect(replacementPlan.sourceLanguageCode == "it")
+    #expect(replacementPlan.request.forcedLanguageCode == "it")
+    #expect(!replacementPlan.request.translateToEnglish)
+    #expect(replacementPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let rejected = TranscriptionSessionResolver.replacingCanarySource(
+        in: initialPlan,
+        with: "xx"
+    )
+    #expect(
+        rejected == .unavailable(
+            .unsupportedSourceLanguage(
+                modelID: initialPlan.modelID,
+                requestedCode: "xx",
+                supportedCodes: CanaryLanguageCatalog.oneBV2LanguageCodes
+            )
+        )
+    )
 }
 
 @Test
@@ -282,6 +425,7 @@ func s11SessionPlanFreezesModelAndPairUntilNextSession() throws {
     #expect(firstPlan.modelID == "canary-180m-flash-coreml")
     #expect(firstPlan.backend == .canaryCoreML)
     #expect(firstPlan.sourceLanguageCode == "en")
+    #expect(firstPlan.sourceLanguageChoices == ["en", "de"])
     #expect(firstPlan.request.forcedLanguageCode == "en")
     #expect(nextPlan.modelID == "gigaam-v3-rnnt-coreml")
     #expect(nextPlan.request.forcedLanguageCode == "ru")
@@ -341,6 +485,27 @@ func s11EngineBindingFreezesDescriptorBackendAndEngineIdentity() throws {
         Issue.record("Flash should produce an engine-bound session")
         return
     }
+
+    let switched = engineStore.makeSession(
+        modelStore: modelStore,
+        operation: .asr,
+        sourceLanguageOverride: "fr"
+    )
+    guard case .available(let switchedSession) = switched else {
+        Issue.record("Flash source override should produce a replacement session")
+        return
+    }
+    #expect(switchedSession.plan.sourceLanguageChoices == ["en", "de"])
+    #expect(switchedSession.plan.sourceLanguageCode == "fr")
+    #expect(switchedSession.plan.hudLanguageLabel == "F")
+    #expect(switchedSession.plan.request.forcedLanguageCode == "fr")
+    #expect(!switchedSession.plan.request.translateToEnglish)
+    #expect(switchedSession.plan.route.postASRTextTranslationTargetLanguageCode == nil)
+    #expect(switchedSession.plan != firstSession.plan)
+    #expect(modelStore.speechLanguages == UserSpeechLanguages(
+        primaryLanguageCode: "en",
+        additionalLanguageCode: "de"
+    ))
 
     modelStore.activate(gigaAM)
     let second = engineStore.makeSession(

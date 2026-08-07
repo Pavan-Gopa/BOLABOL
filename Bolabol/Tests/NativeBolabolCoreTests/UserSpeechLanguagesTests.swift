@@ -49,6 +49,16 @@ func userSpeechLanguagesAdditionalMayEqualPrimary() {
     #expect(languages.usesSameAdditionalAsPrimary)
 }
 
+@Test
+func userSpeechLanguagesOrderedDistinctCodesPreserveSettingsOrder() {
+    let pair = UserSpeechLanguages(
+        primaryLanguageCode: " RU ",
+        additionalLanguageCode: "ru"
+    )
+
+    #expect(pair.orderedDistinctCodes == ["ru"])
+}
+
 // B2 — primary-change semantics used by the onboarding primary step (plan
 // §6.2): same-as-primary pairs stay mirrored, explicit additional choices stay.
 

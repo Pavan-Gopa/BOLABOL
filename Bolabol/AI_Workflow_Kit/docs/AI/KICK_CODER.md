@@ -87,8 +87,17 @@ Working directory:
   # optional if STATE says so:
   # ./script/qa/run_all.sh
 
+  # Mandatory final handoff build: close old app, clean Release, package and launch.
+  swift package clean
+  ./script/build_and_run.sh --verify
+  pid="$(pgrep -x Bolabol)"
+  ps -p "$pid" -o pid=,command=
+  codesign --verify --deep --strict "dist/Bolabol.app"
+
 ### Сдача
 FEEDBACK.md §1–4, RESULT: waiting_review.
+Record the clean Release build number/PID and leave the fresh app running so Human
+can test immediately.
 «Готово. Вернись к оркестратору» — НЕ «зови ревью».
 Orchestrator обновит Graphify по этому diff до Reviewer.
 

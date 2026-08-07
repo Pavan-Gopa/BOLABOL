@@ -82,6 +82,15 @@ public struct UserSpeechLanguages: Codable, Equatable, Sendable {
         additionalLanguageCode == primaryLanguageCode
     }
 
+    /// The configured pair in Settings order, with duplicate codes removed.
+    /// This is an ephemeral presentation helper; it never changes the stored pair.
+    public var orderedDistinctCodes: [String] {
+        var seen = Set<String>()
+        return [primaryLanguageCode, additionalLanguageCode].filter {
+            !$0.isEmpty && $0 != "auto" && seen.insert($0).inserted
+        }
+    }
+
     /// Same-as-primary policy (plan §3.4, §7.1): user explicitly wants no
     /// second language, so additional mirrors primary.
     public func settingAdditionalSameAsPrimary() -> UserSpeechLanguages {

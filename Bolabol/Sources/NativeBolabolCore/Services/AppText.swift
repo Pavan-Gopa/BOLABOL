@@ -647,6 +647,22 @@ public enum AppText {
         return translations[locale]?[key] ?? translations["en"]?[key] ?? key.rawValue
     }
 
+    /// Returns a speech-language name in the current UI locale while keeping
+    /// the canonical code as the fallback for unknown or custom values.
+    public static func localizedSpeechLanguageName(
+        for code: String,
+        language: UILanguagePreference,
+        systemLocale: Locale = .current
+    ) -> String {
+        let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalized.isEmpty else { return normalized }
+        let localeIdentifier = language.resolvedLocaleIdentifier(for: systemLocale)
+        let locale = Locale(identifier: localeIdentifier)
+        return locale.localizedString(forLanguageCode: normalized)?
+            .capitalized(with: locale)
+            ?? LanguagePickerOrder.displayName(for: normalized)
+    }
+
     private static let translations: [String: [AppTextKey: String]] = [
         "en": [
             .settingsGlossary: "Glossary",

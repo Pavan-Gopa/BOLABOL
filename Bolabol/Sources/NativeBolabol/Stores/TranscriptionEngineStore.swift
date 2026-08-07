@@ -50,7 +50,8 @@ final class TranscriptionEngineStore: ObservableObject {
     func makeSession(
         modelStore: TranscriptionModelStore,
         operation: TranscriptionSessionOperation,
-        legacyLanguageCode: String? = nil
+        legacyLanguageCode: String? = nil,
+        sourceLanguageOverride: String? = nil
     ) -> TranscriptionEngineSessionResolution {
         guard modelStore.settings.backend == .localWhisper else {
             return .unavailable(.noActiveModel)
@@ -70,6 +71,7 @@ final class TranscriptionEngineStore: ObservableObject {
                 modelStore: modelStore,
                 operation: operation,
                 legacyLanguageCode: legacyLanguageCode,
+                sourceLanguageOverride: sourceLanguageOverride,
                 hasCompleteModel: hasCompleteModel
             )
         }
@@ -82,7 +84,8 @@ final class TranscriptionEngineStore: ObservableObject {
             primaryLanguageCode: modelStore.speechLanguages.primaryLanguageCode,
             additionalLanguageCode: modelStore.speechLanguages.additionalLanguageCode,
             operation: operation,
-            legacyLanguageCode: legacyLanguageCode
+            legacyLanguageCode: legacyLanguageCode,
+            sourceLanguageOverride: sourceLanguageOverride
         )
 
         guard case .available = preflight else {
@@ -102,7 +105,8 @@ final class TranscriptionEngineStore: ObservableObject {
             primaryLanguageCode: modelStore.speechLanguages.primaryLanguageCode,
             additionalLanguageCode: modelStore.speechLanguages.additionalLanguageCode,
             operation: operation,
-            legacyLanguageCode: legacyLanguageCode
+            legacyLanguageCode: legacyLanguageCode,
+            sourceLanguageOverride: sourceLanguageOverride
         )
 
         switch resolution {
@@ -138,6 +142,7 @@ final class TranscriptionEngineStore: ObservableObject {
         modelStore: TranscriptionModelStore,
         operation: TranscriptionSessionOperation,
         legacyLanguageCode: String?,
+        sourceLanguageOverride: String?,
         hasCompleteModel: Bool
     ) -> TranscriptionEngineSessionResolution {
         let resolution = TranscriptionSessionResolver.resolve(
@@ -147,7 +152,8 @@ final class TranscriptionEngineStore: ObservableObject {
             primaryLanguageCode: modelStore.speechLanguages.primaryLanguageCode,
             additionalLanguageCode: modelStore.speechLanguages.additionalLanguageCode,
             operation: operation,
-            legacyLanguageCode: legacyLanguageCode
+            legacyLanguageCode: legacyLanguageCode,
+            sourceLanguageOverride: sourceLanguageOverride
         )
         switch resolution {
         case .available:

@@ -22,6 +22,14 @@
    Полный vuln-hunt / SECURITY_REPORT — НЕ твоя работа каждый turn.
    Если случайно видишь явный secret leak — кратко в BUG_REPORT / note для
    Orchestrator; глубокий audit сделает Security Engineer отдельно.
+8. Для final/exhaustive campaign строишь app-wide interactive inventory: все окна,
+   меню, sidebar actions, settings controls, buttons, clicks, right-clicks, scroll,
+   keyboard/hotkey, hover, drag, modal, cancel/confirm, error/retry, persistence,
+   accessibility и локализация. Каждая поверхность получает test/script/manual-evidence
+   mapping; нельзя ограничиться текущим feature diff.
+9. Используй несколько надежных parameterized runners с 2,000-3,000+ scenario/assertion
+   cases, а не тысячи хрупких отдельных shell-файлов. Добавляй AppKit/SwiftUI harness,
+   integration/unit tests и fail-closed QA guards там, где это дает реальное покрытие.
 
 ## Что писать можно
 - Tests/NativeBolabolCoreTests/**
@@ -38,6 +46,8 @@
 - Coder: feature + minimum tests
 - Tester: coverage owner for the step (edge cases, regression, surface QA)
 - «Все тесты уже есть» — только с gap-hunt mapping в REPORT
+- Final campaign: «всё покрыто» только с полным UI/action inventory и coverage map;
+  каждый NOT_EXECUTED item обязан иметь причину, риск и точный manual verification step.
 
 ## Проект
 cd "/Users/pavan/Documents/AI Projects/Bolabol"

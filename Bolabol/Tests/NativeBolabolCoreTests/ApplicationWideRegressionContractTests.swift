@@ -145,3 +145,32 @@ func translationUserFeedbackAndGlossaryActionsUseLocalizedCopy() throws {
         #expect(isLocalized, "user-visible Translation copy must resolve through AppText: \(literal)")
     }
 }
+
+@Test
+func verticalPulseAndCanaryLanguageControlsUseTypedPolicies() throws {
+    let content = try String(
+        contentsOfFile: "Sources/NativeBolabol/Views/ContentView.swift",
+        encoding: .utf8
+    )
+    let overlay = try String(
+        contentsOfFile: "Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift",
+        encoding: .utf8
+    )
+    let routing = try String(
+        contentsOfFile: "Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift",
+        encoding: .utf8
+    )
+    let layout = try String(
+        contentsOfFile: "Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift",
+        encoding: .utf8
+    )
+
+    #expect(routing.contains("sourceLanguageOverride"))
+    #expect(content.contains("replacePendingCanarySession"))
+    #expect(content.contains("onLanguageRightClick: handleOverlayLanguageRightClick"))
+    #expect(overlay.contains("event.type == .rightMouseUp"))
+    #expect(overlay.contains("languageControlHitRect"))
+    #expect(layout.contains("verticalPulsePanelWidth"))
+    #expect(layout.contains("anchoredPanelFrame"))
+    #expect(layout.contains("screenCapsuleFrame"))
+}

@@ -47,6 +47,16 @@ struct ContentView: View {
     @State private var pendingHotkeyForceTargetLanguage = false
     @State private var pendingHotkeyHumorSession: HumorSessionState?
     @AppStorage("hud.forceTargetLanguage") private var persistentHUDForceTargetLanguage = false
+    @State private var hudTargetLanguageOverride: String?
+    @State private var languagePickerPopover: NSPopover?
+    @State private var languagePickerPopoverID: UUID?
+
+    private func dismissLanguagePickerPopover() {
+        languagePickerPopover?.close()
+        languagePickerPopover = nil
+        languagePickerPopoverID = nil
+    }
+
     var body: some View {
         GeometryReader { proxy in
             NavigationSplitView {
@@ -181,6 +191,9 @@ struct ContentView: View {
             }
             .onChange(of: selectedVariant) { _, _ in
                 selectedNoteText = ""
+            }
+            .onReceive(transcriptionModelStore.objectWillChange) { _ in
+                dismissLanguagePickerPopover()
             }
         }
         .frame(minWidth: 820, minHeight: 580)
@@ -1079,6 +1092,7 @@ struct ContentView: View {
                     languageControlEnabled: languageControlEnabled,
                     onOriginChange: persistOverlayOrigin,
                     onLanguageTap: handleOverlayLanguageTap,
+                    onLanguageRightClick: handleOverlayLanguageRightClick,
                     onTargetTap: handleOverlayTargetTap,
                     onPromptSlotChange: handleOverlayPromptSlotChange,
                     onHumorLevelChange: handleOverlayHumorLevelChange,
@@ -1344,8 +1358,19 @@ struct ContentView: View {
     }
 
     private var isExplicitCoreMLBackend: Bool {
-        guard let backend = transcriptionModelStore.activeModel?.backend else { return false }
+        guard let backend = hudLanguageBackend else { return false }
         return backend == .canaryCoreML || backend == .gigaAMCoreML
+    }
+
+    private var hudLanguageBackend: TranscriptionModelDescriptor.Backend? {
+        if let pendingBackend = pendingHotkeySession?.plan.backend {
+            return pendingBackend
+        }
+        if transcriptionModelStore.settings.backend == .geminiCloud {
+            // Cloud mode can retain a stale local activeModel for settings UI.
+            return .whisperKitCoreML
+        }
+        return transcriptionModelStore.activeModel?.backend
     }
 
     /// Builds the one local session route used by hotkey, main-window and
@@ -1353,13 +1378,17 @@ struct ContentView: View {
     /// target preference and always resolves from the canonical pair.
     private func makeLocalSession(
         forceTargetLanguage: Bool,
-        hotkeySession: Bool
+        hotkeySession: Bool,
+        sourceLanguageOverride: String? = nil
     ) -> TranscriptionEngineSessionResolution {
         if isExplicitCoreMLBackend
             || transcriptionModelStore.activeModel?.backend == .fluidAudioCoreML {
             return transcriptionEngineStore.makeSession(
                 modelStore: transcriptionModelStore,
-                operation: .asr
+                operation: .asr,
+                sourceLanguageOverride: transcriptionModelStore.activeModel?.backend == .canaryCoreML
+                    ? sourceLanguageOverride
+                    : nil
             )
         }
 
@@ -1428,9 +1457,10 @@ struct ContentView: View {
     /// Target language code used when the HUD is in E (force target) mode.
     ///
     /// Priority:
-    /// 1. Hotkey "Transcription Language" setting when it is not Auto
-    /// 2. Glossary Auto Translation Language
-    /// 3. English
+    /// 1. The transient HUD target selection while the app is running
+    /// 2. Configured Additional Language when it differs from Primary
+    /// 3. Glossary Auto Translation Language
+    /// 4. The opposite of Primary, or English as the final fallback
     ///
     /// This matches the settings copy: choosing a specific transcription language
     /// enables auto-translation into that language regardless of what was spoken.
@@ -1441,6 +1471,11 @@ struct ContentView: View {
         let speech = generalSettingsStore.speechLanguages
         let primary = normalizeLanguageCode(speech.primaryLanguageCode)
         let additional = normalizeLanguageCode(speech.additionalLanguageCode)
+
+        if let override = hudTargetLanguageOverride,
+           speech.orderedDistinctCodes.contains(override) || LanguagePickerOrder.isKnownSpeechCode(override) {
+            return override
+        }
 
         if !speech.usesSameAdditionalAsPrimary, !additional.isEmpty, additional != "auto" {
             return additional
@@ -1535,13 +1570,13 @@ struct ContentView: View {
             return true
         }
         if isExplicitCoreMLBackend {
-            guard case .available = makeLocalSession(
+            guard case .available(let session) = makeLocalSession(
                 forceTargetLanguage: false,
                 hotkeySession: false
             ) else {
                 return false
             }
-            return false
+            return session.plan.languageControlEnabled
         }
         if activeModelSupportsNativeTranslation {
             return true
@@ -1558,7 +1593,44 @@ struct ContentView: View {
     /// Toggles the transcription language mode between auto-detection
     /// and the configured target language, persisting the selection for future sessions.
     private func handleOverlayLanguageTap() {
-        if isExplicitCoreMLBackend {
+        dismissLanguagePickerPopover()
+        let languages = generalSettingsStore.speechLanguages
+        if let session = pendingHotkeySession {
+            switch session.plan.backend {
+            case .canaryCoreML:
+                let current = session.plan.sourceLanguageCode ?? hudTargetLanguageOverride ?? languages.primaryLanguageCode
+                let choices = HUDLanguageMenuPolicy.canarySourceCodes(
+                    primary: languages.primaryLanguageCode,
+                    additional: languages.additionalLanguageCode,
+                    supportedCodes: session.plan.capabilities.explicitSupportedLanguageCodes
+                )
+                if let nextSource = HUDLanguageMenuPolicy.nextCode(current: current, choices: choices) {
+                    hudTargetLanguageOverride = nextSource
+                    _ = replacePendingCanarySession(withSourceLanguageCode: nextSource)
+                }
+                return
+            case .gigaAMCoreML:
+                return
+            case .whisperKitCoreML, .fluidAudioCoreML:
+                break
+            }
+        } else if isExplicitCoreMLBackend {
+            let activeModel = transcriptionModelStore.activeModel
+            if activeModel?.backend == .canaryCoreML {
+                let current = hudTargetLanguageOverride ?? languages.primaryLanguageCode
+                let choices = HUDLanguageMenuPolicy.canarySourceCodes(
+                    primary: languages.primaryLanguageCode,
+                    additional: languages.additionalLanguageCode,
+                    supportedCodes: activeModel?.capabilities.explicitSupportedLanguageCodes ?? []
+                )
+                if let nextSource = HUDLanguageMenuPolicy.nextCode(current: current, choices: choices) {
+                    hudTargetLanguageOverride = nextSource
+                    hotkeySessionOverlayManager.update(
+                        languageMode: .switchable,
+                        targetLanguageLabel: TranscriptionLanguageOption.hudLabel(for: nextSource)
+                    )
+                }
+            }
             return
         }
 
@@ -1587,6 +1659,175 @@ struct ContentView: View {
             languageMode: persistentHUDForceTargetLanguage ? .target : .auto,
             targetLanguageLabel: autoTranslationLanguageLabel
         )
+    }
+
+    private func replacePendingCanarySession(
+        withSourceLanguageCode sourceLanguageCode: String
+    ) -> TranscriptionEngineSession? {
+        dismissLanguagePickerPopover()
+        let normalizedSourceLanguageCode = sourceLanguageCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard audioRecorder.isRecording,
+              let pendingSession = pendingHotkeySession,
+              pendingSession.plan.backend == .canaryCoreML,
+              pendingSession.plan.capabilities.explicitSupportedLanguageCodes.contains(normalizedSourceLanguageCode)
+        else {
+            return nil
+        }
+
+        let resolution = TranscriptionSessionResolver.replacingCanarySource(
+            in: pendingSession.plan,
+            with: normalizedSourceLanguageCode
+        )
+        guard case .available(let replacementPlan) = resolution else { return nil }
+        let replacement = pendingSession.replacing(plan: replacementPlan)
+
+        pendingHotkeySession = replacement
+        pendingHotkeyForceTargetLanguage = false
+        hotkeySessionOverlayManager.update(
+            languageMode: replacement.plan.languageMode,
+            targetLanguageLabel: replacement.plan.hudLanguageLabel,
+            languageControlEnabled: replacement.plan.languageControlEnabled,
+            sessionPlan: replacement.plan
+        )
+        return replacement
+    }
+
+    private func handleOverlayLanguageRightClick(
+        anchorView: NSView,
+        location: NSPoint
+    ) {
+        dismissLanguagePickerPopover()
+
+        let sessionPlan = pendingHotkeySession?.plan
+        let backend = sessionPlan?.backend ?? hudLanguageBackend
+        guard let backend else { return }
+
+        let languages = generalSettingsStore.speechLanguages
+        let isAutomatic: Bool
+        let currentCode: String
+        let purpose: HUDLanguageMenuPolicy.PickerPurpose
+        switch backend {
+        case .canaryCoreML, .gigaAMCoreML:
+            isAutomatic = false
+            currentCode = sessionPlan?.sourceLanguageCode
+                ?? hudTargetLanguageOverride
+                ?? (backend == .gigaAMCoreML ? "ru" : languages.additionalLanguageCode)
+            purpose = .explicitASRSource
+        case .whisperKitCoreML, .fluidAudioCoreML:
+            if transcriptionModelStore.settings.backend == .geminiCloud {
+                isAutomatic = !persistentHUDForceTargetLanguage
+                currentCode = persistentHUDForceTargetLanguage ? (hudTargetLanguageOverride ?? languages.additionalLanguageCode) : "auto"
+            } else {
+                isAutomatic = sessionPlan?.isWhisperTargetMode == false && !persistentHUDForceTargetLanguage
+                currentCode = sessionPlan?.isWhisperTargetMode == true
+                    ? (sessionPlan?.requestedLanguageCode ?? languages.additionalLanguageCode)
+                    : (hudTargetLanguageOverride ?? languages.additionalLanguageCode)
+            }
+            purpose = .targetLanguageSelection
+        }
+
+        let supportedCodes: [String]
+        if transcriptionModelStore.settings.backend == .geminiCloud {
+            supportedCodes = languages.orderedDistinctCodes
+        } else if let sessionCodes = sessionPlan?.capabilities.explicitSupportedLanguageCodes, !sessionCodes.isEmpty {
+            supportedCodes = sessionCodes
+        } else if let activeCodes = transcriptionModelStore.activeModel?.capabilities.explicitSupportedLanguageCodes, !activeCodes.isEmpty {
+            supportedCodes = activeCodes
+        } else {
+            supportedCodes = LanguagePickerOrder.orderedSpeechCodes
+        }
+
+        let options = HUDLanguageMenuPolicy.options(
+            backend: backend,
+            languages: languages,
+            supportedSourceCodes: supportedCodes,
+            currentCode: currentCode,
+            isAutomatic: isAutomatic,
+            uiLanguage: generalSettingsStore.settings.uiLanguage,
+            systemLocale: .current,
+            purpose: purpose
+        )
+
+        let popoverID = UUID()
+        self.languagePickerPopoverID = popoverID
+
+        let pickerContentView = HUDLanguagePickerPopoverView(
+            options: options,
+            languages: languages,
+            onSelectLanguage: { [popoverID] selectedCode in
+                guard self.languagePickerPopoverID == popoverID else { return }
+                self.dismissLanguagePickerPopover()
+                self.handleOverlayLanguageSelection(selectedCode, popoverID: popoverID)
+            },
+            onClose: { [popoverID] in
+                guard self.languagePickerPopoverID == popoverID else { return }
+                self.dismissLanguagePickerPopover()
+            }
+        )
+
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.animates = true
+        popover.contentViewController = NSHostingController(rootView: pickerContentView)
+        self.languagePickerPopover = popover
+
+        let anchorRect = NSRect(origin: location, size: .zero)
+        popover.show(relativeTo: anchorRect, of: anchorView, preferredEdge: .maxY)
+    }
+
+    private func handleOverlayLanguageSelection(_ code: String, popoverID: UUID) {
+        guard self.languagePickerPopoverID == nil || self.languagePickerPopoverID == popoverID else { return }
+
+        let backend = pendingHotkeySession?.plan.backend ?? hudLanguageBackend
+        guard let backend else { return }
+
+        let normalizedCode = code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        switch backend {
+        case .canaryCoreML:
+            let automatic = normalizedCode == "auto"
+            if !automatic {
+                hudTargetLanguageOverride = normalizedCode
+                if normalizedCode != generalSettingsStore.speechLanguages.primaryLanguageCode {
+                    generalSettingsStore.speechLanguages = generalSettingsStore.speechLanguages.settingAdditional(normalizedCode)
+                }
+            }
+            if audioRecorder.isRecording {
+                _ = replacePendingCanarySession(withSourceLanguageCode: normalizedCode)
+            } else {
+                hotkeySessionOverlayManager.update(
+                    languageMode: .switchable,
+                    targetLanguageLabel: TranscriptionLanguageOption.hudLabel(for: normalizedCode)
+                )
+            }
+        case .gigaAMCoreML:
+            return
+        case .whisperKitCoreML, .fluidAudioCoreML:
+            let automatic = normalizedCode == "auto"
+            hudTargetLanguageOverride = automatic ? nil : normalizedCode
+            persistentHUDForceTargetLanguage = !automatic
+            pendingHotkeyForceTargetLanguage = !automatic
+
+            if !automatic && normalizedCode != generalSettingsStore.speechLanguages.primaryLanguageCode {
+                generalSettingsStore.speechLanguages = generalSettingsStore.speechLanguages.settingAdditional(normalizedCode)
+            }
+
+            if audioRecorder.isRecording {
+                let resolution = makeLocalSession(
+                    forceTargetLanguage: !automatic,
+                    hotkeySession: true
+                )
+                if case .available(let replacement) = resolution {
+                    pendingHotkeySession = replacement
+                }
+            }
+
+            hotkeySessionOverlayManager.update(
+                languageMode: automatic ? .auto : .target,
+                targetLanguageLabel: autoTranslationLanguageLabel
+            )
+        }
     }
 
     /// Cycles the processing target (raw -> variant 1 -> variant 2) and persists

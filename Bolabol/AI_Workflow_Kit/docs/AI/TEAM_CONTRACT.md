@@ -12,7 +12,7 @@
 
 | Role | Actor | Writes code? | Updates |
 |------|-------|--------------|---------|
-| **Orchestrator** | This session (hub) | no product code | STATE, DECISIONS, checkpoints, kick prompts, graphify |
+| **Orchestrator** | This session (hub) | **no product code, tests, or QA execution** | workflow/docs, STATE, checkpoints, kick prompts, graphify, status build/launch |
 | **Implementation Engineer** | Coder (fresh terminal) | **yes** product | `target_files` only; FEEDBACK §1–4 |
 | **Verification Engineer** | Reviewer (fresh terminal) | no | `FEEDBACK.md` review verdict |
 | **Test Engineer** | Tester (fresh terminal) | **feature test / QA scripts only** (no product) | feature tests, `script/qa`, `REPORT.md`, `BUG_REPORT.md` |
@@ -32,6 +32,7 @@ Human ↔ Orchestrator only (control plane)
   → Human: новое окно → Coder
   → Coder: code + FEEDBACK waiting_review → «вернись к оркестратору»
   → Human → Orchestrator «статус»
+  → Orchestrator: close old app + clean Release build + launch fresh bundle
   → Orchestrator: graphify rebuild по последнему Coder diff
   → Orchestrator выдаёт kick Reviewer
   → Human: новое окно → Reviewer
@@ -62,6 +63,16 @@ After Reviewer **APPROVED**, Tester does **not** only re-run what Coder already 
 
 If gap-hunt finds **product** defects → `BUG_REPORT.md` → Orchestrator kicks Coder.  
 If only coverage is thin → Tester **adds tests in the same turn**, re-runs, then REPORT green.
+
+### Human `статус` and fresh builds
+
+- Every Coder handoff must include a clean Release `./script/build_and_run.sh --verify`
+  and leave the fresh `dist/Bolabol.app` open for immediate Human testing.
+- When Human says `статус`, Orchestrator independently closes the old process, performs
+  the clean Release build/launch, and reports the new PID/build. Orchestrator does not
+  run tests; test evidence belongs to Coder/Reviewer/Tester roles.
+- A successful build or Human visual acceptance never replaces independent Reviewer,
+  exhaustive Tester, or scheduled Security gates.
 
 ### Security Engineer (separate agent — **rare**)
 
@@ -116,6 +127,7 @@ See `AI_Workflow_Kit/docs/AI/SECURITY.md` and `KICK_SECURITY.md`.
 17. Parakeet/Whisper auto (HUD **A**) remains default for non-Canary.
 18. Version string **1.0.3** (not «1.3»).
 19. English for code comments.
+20. Orchestrator never edits product/tests and never executes test/QA/security suites.
 
 ## Comments (mandatory quality bar)
 

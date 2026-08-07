@@ -148,6 +148,22 @@ func everySettingsKeyIsLocalizedInEveryLanguage() {
 }
 
 @Test
+func hudLanguageNamesUseTheSelectedUILocale() {
+    let english = AppText.localizedSpeechLanguageName(
+        for: "ru",
+        language: .english
+    )
+    let russian = AppText.localizedSpeechLanguageName(
+        for: "ru",
+        language: .russian
+    )
+
+    #expect(english == "Russian")
+    #expect(russian == "Русский")
+    #expect(AppText.localizedSpeechLanguageName(for: "", language: .english).isEmpty)
+}
+
+@Test
 func S10LocalModelsKeysResolveInEveryLocaleWithoutSilentFallback() {
     let english = UILanguagePreference.english
     let intentionallySharedKeyNames: Set<String> = [

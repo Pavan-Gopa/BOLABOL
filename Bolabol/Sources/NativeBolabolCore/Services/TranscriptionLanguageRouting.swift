@@ -69,6 +69,9 @@ public struct TranscriptionSessionSnapshot: Equatable, Sendable {
     public let additionalLanguageCode: String?
     public let operation: TranscriptionSessionOperation
     public let legacyLanguageCode: String?
+    /// Ephemeral source selection for explicit-source backends. This is never
+    /// persisted and is intentionally separate from the legacy Whisper field.
+    public let sourceLanguageOverride: String?
 
     public init(
         activeModel: TranscriptionModelDescriptor?,
@@ -79,7 +82,8 @@ public struct TranscriptionSessionSnapshot: Equatable, Sendable {
         primaryLanguageCode: String?,
         additionalLanguageCode: String?,
         operation: TranscriptionSessionOperation,
-        legacyLanguageCode: String? = nil
+        legacyLanguageCode: String? = nil,
+        sourceLanguageOverride: String? = nil
     ) {
         self.activeModel = activeModel
         self.modelFolderURL = modelFolderURL
@@ -90,6 +94,7 @@ public struct TranscriptionSessionSnapshot: Equatable, Sendable {
         self.additionalLanguageCode = additionalLanguageCode
         self.operation = operation
         self.legacyLanguageCode = legacyLanguageCode
+        self.sourceLanguageOverride = sourceLanguageOverride
     }
 }
 
@@ -330,7 +335,8 @@ public enum TranscriptionSessionResolver {
         primaryLanguageCode: String?,
         additionalLanguageCode: String?,
         operation: TranscriptionSessionOperation,
-        legacyLanguageCode: String? = nil
+        legacyLanguageCode: String? = nil,
+        sourceLanguageOverride: String? = nil
     ) -> TranscriptionSessionResolution {
         resolve(
             TranscriptionSessionSnapshot(
@@ -345,7 +351,65 @@ public enum TranscriptionSessionResolver {
                 primaryLanguageCode: primaryLanguageCode,
                 additionalLanguageCode: additionalLanguageCode,
                 operation: operation,
-                legacyLanguageCode: legacyLanguageCode
+                legacyLanguageCode: legacyLanguageCode,
+                sourceLanguageOverride: sourceLanguageOverride
+            )
+        )
+    }
+
+    /// Rebuilds only the route fields for an already-created Canary session.
+    /// The model, engine identity, model folder, and configured source pair all
+    /// remain frozen to the original plan; mutable stores are not consulted.
+    public static func replacingCanarySource(
+        in plan: TranscriptionSessionPlan,
+        with sourceLanguageCode: String
+    ) -> TranscriptionSessionResolution {
+        guard plan.backend == .canaryCoreML else {
+            return .unavailable(.unsupportedOperation(modelID: plan.modelID))
+        }
+        guard case .asr = plan.operation else {
+            return .unavailable(.translationUnsupported(modelID: plan.modelID))
+        }
+
+        let supportedCodes = verifiedCanarySources(for: plan.model)
+        let sourceCode = normalizedLanguageCode(sourceLanguageCode)
+        guard !sourceCode.isEmpty,
+              sourceCode != "auto",
+              supportedCodes.contains(sourceCode)
+        else {
+            return .unavailable(
+                .unsupportedSourceLanguage(
+                    modelID: plan.modelID,
+                    requestedCode: sourceCode,
+                    supportedCodes: supportedCodes
+                )
+            )
+        }
+
+        let sourceChoices = plan.sourceLanguageChoices.filter { supportedCodes.contains($0) }
+        guard !sourceChoices.isEmpty else {
+            return .unavailable(.invalidCapabilities(modelID: plan.modelID))
+        }
+
+        let route = TranscriptionLanguageRoute(
+            forcedLanguageCode: sourceCode,
+            translateToEnglish: false,
+            postASRTextTranslationTargetLanguageCode: nil
+        )
+        return .available(
+            makePlan(
+                model: plan.model,
+                folderURL: plan.modelFolderURL,
+                engineIdentity: plan.engineIdentity,
+                operation: plan.operation,
+                languageMode: sourceChoices.count > 1 ? .switchable : .fixed,
+                sourceChoices: sourceChoices,
+                sourceCode: sourceCode,
+                requestedLanguageCode: sourceCode,
+                hudLanguageLabel: TranscriptionLanguageOption.hudLabel(for: sourceCode),
+                languageControlEnabled: sourceChoices.count > 1,
+                route: route,
+                sourceLanguageWarning: plan.sourceLanguageWarning
             )
         )
     }
@@ -381,8 +445,32 @@ public enum TranscriptionSessionResolver {
             )
         }
 
+        let sourceChoices = normalizedPair(
+            primary: primaryLanguageCode,
+            additional: snapshot.additionalLanguageCode
+        ).filter { supportedCodes.contains($0) }
+        let sourceLanguageCode: String
+        if let rawOverride = snapshot.sourceLanguageOverride {
+            let override = normalizedLanguageCode(rawOverride)
+            guard !override.isEmpty,
+                  override != "auto",
+                  supportedCodes.contains(override)
+            else {
+                return .unavailable(
+                    .unsupportedSourceLanguage(
+                        modelID: model.id,
+                        requestedCode: override,
+                        supportedCodes: supportedCodes
+                    )
+                )
+            }
+            sourceLanguageCode = override
+        } else {
+            sourceLanguageCode = primaryLanguageCode
+        }
+
         let route = TranscriptionLanguageRoute(
-            forcedLanguageCode: primaryLanguageCode,
+            forcedLanguageCode: sourceLanguageCode,
             translateToEnglish: false,
             postASRTextTranslationTargetLanguageCode: nil
         )
@@ -392,12 +480,12 @@ public enum TranscriptionSessionResolver {
                 folderURL: folderURL,
                 engineIdentity: engineIdentity,
                 operation: snapshot.operation,
-                languageMode: .fixed,
-                sourceChoices: [primaryLanguageCode],
-                sourceCode: primaryLanguageCode,
-                requestedLanguageCode: primaryLanguageCode,
-                hudLanguageLabel: TranscriptionLanguageOption.hudLabel(for: primaryLanguageCode),
-                languageControlEnabled: false,
+                languageMode: sourceChoices.count > 1 ? .switchable : .fixed,
+                sourceChoices: sourceChoices,
+                sourceCode: sourceLanguageCode,
+                requestedLanguageCode: sourceLanguageCode,
+                hudLanguageLabel: TranscriptionLanguageOption.hudLabel(for: sourceLanguageCode),
+                languageControlEnabled: sourceChoices.count > 1,
                 route: route,
                 sourceLanguageWarning: nil
             )
@@ -416,6 +504,19 @@ public enum TranscriptionSessionResolver {
 
         guard verifiedGigaAMSources(for: model).contains("ru") else {
             return .unavailable(.invalidCapabilities(modelID: model.id))
+        }
+
+        if let rawOverride = snapshot.sourceLanguageOverride {
+            let override = normalizedLanguageCode(rawOverride)
+            guard override == "ru" else {
+                return .unavailable(
+                    .unsupportedSourceLanguage(
+                        modelID: model.id,
+                        requestedCode: override,
+                        supportedCodes: ["ru"]
+                    )
+                )
+            }
         }
 
         let route = TranscriptionLanguageRoute(
@@ -663,5 +764,162 @@ public enum TranscriptionLanguageRouter {
 
     private static func isEnglishTarget(_ targetCode: String) -> Bool {
         targetCode == "en" || targetCode.hasPrefix("en-") || targetCode == "english"
+    }
+}
+
+/// A language option presented by the transient HUD menu.
+public struct HUDLanguageMenuOption: Identifiable, Equatable, Sendable {
+    public let code: String
+    public let displayName: String
+    public let hudLabel: String
+    public let isCurrent: Bool
+    public let isSelectable: Bool
+
+    public var id: String { code }
+
+    public init(
+        code: String,
+        displayName: String,
+        hudLabel: String,
+        isCurrent: Bool,
+        isSelectable: Bool
+    ) {
+        self.code = code
+        self.displayName = displayName
+        self.hudLabel = hudLabel
+        self.isCurrent = isCurrent
+        self.isSelectable = isSelectable
+    }
+}
+
+/// Pure language-menu policy shared by the HUD's left control.
+public enum HUDLanguageMenuPolicy {
+    /// The purpose of the language picker.
+    public enum PickerPurpose: Equatable, Sendable {
+        /// Explicit ASR source picker for Canary/GigaAM models.
+        /// Shows verified source languages only, no Auto.
+        case explicitASRSource
+        /// Target language picker for Whisper/Cloud/Auto.
+        /// Shows Auto + complete 25-language target catalog.
+        case targetLanguageSelection
+    }
+
+    /// Preserves the Settings pair order while removing duplicate/empty values.
+    public static func configuredCodes(from languages: UserSpeechLanguages) -> [String] {
+        languages.orderedDistinctCodes
+    }
+
+    /// Builds explicit source choices from the configured pair and the active
+    /// model's verified source capabilities.
+    public static func canarySourceCodes(
+        primary: String?,
+        additional: String?,
+        supportedCodes: [String]
+    ) -> [String] {
+        let supported = Set(normalizedDistinctCodes(supportedCodes))
+        return normalizedDistinctCodes([primary, additional].compactMap { $0 })
+            .filter { supported.contains($0) }
+    }
+
+    /// Returns the complete 25-language target catalog (Canary 1B language set).
+    public static var completeTargetCatalog: [String] {
+        CanaryLanguageCatalog.oneBV2LanguageCodes
+    }
+
+    /// Returns Canary Flash's 4-language source catalog.
+    public static var flashSourceCatalog: [String] {
+        CanaryLanguageCatalog.flashLanguageCodes
+    }
+
+    /// Cycles only genuinely switchable explicit choices. A fixed source returns
+    /// nil so a left click cannot imply a language change that did not happen.
+    public static func nextCode(current: String, choices: [String]) -> String? {
+        guard choices.count > 1 else { return nil }
+        guard let currentIndex = choices.firstIndex(of: normalized(current)) else {
+            return choices[0]
+        }
+        return choices[(currentIndex + 1) % choices.count]
+    }
+
+    /// Creates menu options for the active backend and picker purpose.
+    public static func options(
+        backend: TranscriptionModelDescriptor.Backend?,
+        languages: UserSpeechLanguages,
+        supportedSourceCodes: [String] = [],
+        currentCode: String?,
+        isAutomatic: Bool,
+        uiLanguage: UILanguagePreference,
+        systemLocale: Locale = .current,
+        purpose: PickerPurpose = .explicitASRSource
+    ) -> [HUDLanguageMenuOption] {
+        let effectiveBackend = backend ?? .whisperKitCoreML
+        let codes: [String]
+        let includesAutomatic: Bool
+        switch (effectiveBackend, purpose) {
+        case (.canaryCoreML, .explicitASRSource):
+            codes = normalizedDistinctCodes(supportedSourceCodes)
+            includesAutomatic = false
+        case (.canaryCoreML, .targetLanguageSelection):
+            codes = completeTargetCatalog
+            includesAutomatic = true
+        case (.gigaAMCoreML, _):
+            codes = ["ru"]
+            includesAutomatic = false
+        case (.whisperKitCoreML, .explicitASRSource), (.fluidAudioCoreML, .explicitASRSource):
+            codes = normalizedDistinctCodes(supportedSourceCodes)
+            includesAutomatic = false
+        case (.whisperKitCoreML, .targetLanguageSelection), (.fluidAudioCoreML, .targetLanguageSelection):
+            codes = completeTargetCatalog
+            includesAutomatic = true
+        }
+
+        let selectable: Bool
+        switch (effectiveBackend, purpose) {
+        case (.canaryCoreML, .explicitASRSource):
+            selectable = codes.count > 1
+        case (.canaryCoreML, .targetLanguageSelection), (.whisperKitCoreML, .targetLanguageSelection), (.fluidAudioCoreML, .targetLanguageSelection):
+            selectable = true
+        case (.gigaAMCoreML, _):
+            selectable = false
+        case (.whisperKitCoreML, .explicitASRSource), (.fluidAudioCoreML, .explicitASRSource):
+            selectable = codes.count > 1
+        }
+
+        let automaticOption = includesAutomatic
+            ? [HUDLanguageMenuOption(
+                code: "auto",
+                displayName: AppText.localized(.autoDetect, language: uiLanguage, systemLocale: systemLocale),
+                hudLabel: "A",
+                isCurrent: isAutomatic,
+                isSelectable: true
+            )]
+            : []
+
+        return automaticOption + codes.map { code in
+            HUDLanguageMenuOption(
+                code: code,
+                displayName: HUDQuickSwitcherLayout.localizedSpeechLanguageName(
+                    for: code,
+                    language: uiLanguage,
+                    systemLocale: systemLocale
+                ),
+                hudLabel: TranscriptionLanguageOption.hudLabel(for: code),
+                isCurrent: !isAutomatic && normalized(code) == normalized(currentCode ?? ""),
+                isSelectable: selectable
+            )
+        }
+    }
+
+    private static func normalizedDistinctCodes(_ codes: [String]) -> [String] {
+        var seen = Set<String>()
+        return codes.compactMap { rawCode in
+            let code = normalized(rawCode)
+            guard !code.isEmpty, code != "auto", seen.insert(code).inserted else { return nil }
+            return code
+        }
+    }
+
+    private static func normalized(_ code: String) -> String {
+        code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }

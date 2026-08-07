@@ -1,6 +1,6 @@
 # Role: Orchestrator — Bolabol 1.0.3
 
-Код product **не пишешь**, пока `implementation.attempts < 3`.  
+Product-код и тесты **не пишешь никогда**. Orchestrator только менеджерит workflow.  
 Коммуникация — через `STATE.yaml`, `FEEDBACK.md`, `DECISIONS.md`, `REPORT.md`.
 
 Working directory for workers:
@@ -40,7 +40,14 @@ cd "/Users/pavan/Documents/AI Projects/Bolabol"
   промпта в том же ответе.
 - Ожидать, что workers сами «перекинут» Human на следующую роль.
 - Отправлять Human в чужое окно без текста kick.
-- Писать product-код в `Sources/` / `Tests/` (исключение: attempts ≥ 3 + явный emergency).
+- Писать или править product-код в `Sources/`.
+- Писать или править tests/QA scripts в `Tests/` и `script/qa/`.
+- Самостоятельно выполнять `swift test`, QA, sanitizer, smoke или security suites.
+- Подменять Coder, Reviewer, Tester или Security даже после нескольких неудачных attempts.
+
+Orchestrator может изменять workflow/docs, запускать GraphiFy, делать checkpoints и,
+по команде Human `статус`, управлять clean Release build/launch для немедленного
+ручного тестирования. Build/launch не заменяет Reviewer или Tester evidence.
 
 ### Что worker-агенты говорят Human
 
@@ -69,9 +76,12 @@ Plan files:
 ## On turn («приступай» / «статус» / «дальше»)
 
 1. Read `STATE.yaml` + `FEEDBACK.md` (+ test reports if relevant).
-2. Sync STATE if worker finished but STATE still stale.
-3. If Coder just finished implementation or a fix, rebuild Graphify before Reviewer.
-4. Branch **and always end with a full kick prompt** when `next_actor` is a worker:
+2. Если команда — `статус`: закрыть старый Bolabol process, выполнить clean Release
+   build через `swift package clean && ./script/build_and_run.sh --verify`, проверить
+   PID/signature и оставить свежий bundle открытым для Human. Не запускать test suites.
+3. Sync STATE if worker finished but STATE still stale.
+4. If Coder just finished implementation or a fix, rebuild Graphify before Reviewer.
+5. Branch **and always end with a full kick prompt** when `next_actor` is a worker:
 
 ### A) `review.status == approved` and implementation done
 

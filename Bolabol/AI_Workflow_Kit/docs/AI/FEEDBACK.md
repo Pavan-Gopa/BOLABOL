@@ -2,6 +2,141 @@
 
 > Workers fill sections on handoff. Orchestrator reads this every status check.
 
+## ADR021-ASR-ONLY-CLEANUP - Independent Review
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | `ADR021-ASR-ONLY-CLEANUP` |
+| Actor | reviewer (independent verification) |
+| Date | 2026-08-07 |
+| Baseline | `bolabol/pre-ADR021-ASR-ONLY-CLEANUP` |
+| Coder handoff | `ADR021-ASR-ONLY-CLEANUP - Coder Implementation` |
+| GraphiFy | Existing `graphify-out/graph.json` queried first; 6,204 nodes / 13,857 edges; no rebuild |
+| RESULT | `approved` |
+
+### Scope
+
+- Re-diffed the current Bolabol implementation against the exact baseline tag and checked the Architect ADR-022 packet and accepted ADR-022 contract.
+- Queried the existing GraphiFy graph before the source audit. The current graph resolves `.asr`, `.whisperTargetTranslation`, early Canary ASR-only validation, and the dedicated guard; `makeSpeechTranslationSession` has no matching node.
+- Independently checked product symbols, request/routing seams, engine boundaries, Translation/Floating Translation provider surfaces, test coverage, guard fail-closed behavior, mutations, sanitizers, builds, stress, and real model smokes.
+- The reviewer changed only this section. Product Sources, Tests, QA scripts, `STATE.yaml`, `BUG_REPORT.md`, `REPORT.md`, `DECISIONS.md`, GraphiFy outputs, user data, and git history were not changed.
+
+### Findings
+
+- None. No new BLOCK, HIGH, MEDIUM, or LOW finding was identified in the current Coder implementation.
+- The Parakeet target-output concern was traced through `ContentView`: the transcription session remains `.asr`, the generic `TranscriptionRequest` carries no target field, and the target is passed only to the post-ASR text polishing path. This matches ADR-022 and does not expose a Canary/GigaAM/Parakeet speech-translation seam.
+
+### Contract Verification
+
+- `TranscriptionSessionOperation` contains only `.asr` and the typed Whisper-only `.whisperTargetTranslation(languageCode:)` case.
+- `TranscriptionRequest.targetLanguageCode`, generic speech-translation operations, directional capability APIs, and `makeSpeechTranslationSession` are absent from product Sources.
+- Canary resolves explicit ASR only, uses the source token for both decoder positions, and rejects `translateToEnglish` before OS/model/audio/decoder work.
+- GigaAM remains fixed-RU ASR with translation rejection; Parakeet remains auto ASR; Whisper target behavior and text-only cloud/local translation remain available.
+- Translation modal and Floating Translation contain no Canary provider, callback, tag, or runtime dependency.
+- `rg` was unavailable in this environment; the portable grep fallback was exercised, and missing-search-tool mutations failed closed.
+
+### Command Results
+
+| Command | Result |
+|---------|--------|
+| 11 focused Swift test filters | PASS - 112 tests; no `No matching tests` result |
+| `swift test` | PASS - 624 tests in 16 suites |
+| `swift test --enable-code-coverage` | PASS - 624 tests in 16 suites |
+| `./script/qa/coverage_inventory.sh` | Initially blocked by stale profile after later builds; `./script/qa/coverage_inventory.sh --refresh` PASS - 23.17% regions, 21.69% functions, 17.18% lines |
+| `swift test --sanitize=thread` | PASS - 624 tests; no TSAN diagnostics |
+| `swift test --sanitize=address` | PASS - 624 tests; no ASAN diagnostics |
+| `swift build` | PASS |
+| `swift build -c release` | PASS |
+| `./script/qa/run_all.sh` | PASS - 32 passed / 0 failed |
+| `./script/qa/repeat_critical_suites.sh 20` | PASS - 140 runs / 140 passed / 0 failed |
+| Five touched guard normal runs | PASS |
+| Five touched guard `--self-test` runs | PASS - dedicated ADR guard 9/9 mutations; other guards 1/1 each |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS - 8 tests; Flash, Flash-long, Canary 1B, and GigaAM returned expected text |
+| `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests` | PASS - 8 tests; installed Flash, 1B, and GigaAM product sessions returned expected text |
+| `./script/build_and_run.sh --verify` | PASS - release app and polish worker built, signed, launched, and process-verified |
+| Bolabol-scoped `git diff --check` | PASS |
+
+### Residual Notes
+
+- Manual visual, accessibility, and interactive GUI testing was not executed because no safe GUI automation harness was available.
+- Builds retain non-blocking warnings for duplicate SwiftPM package identity, an unhandled FluidAudio markdown resource, redundant `await`/`try`, and deprecated `AVAsset.duration`.
+- Sanitizer output also contained environment-level CoreData XPC connection errors, but no ThreadSanitizer or AddressSanitizer diagnostics and all test assertions passed.
+- Real smokes used local/installed assets without cloud requests, model downloads, user-data deletion, or model changes.
+
+### Verdict
+
+**APPROVED**
+
+The deep ADR-022 contract, fail-closed QA gates, focused/full tests, sanitizer runs, release verification, stress runs, and real ASR smokes independently reproduced green. No changes are requested from the Coder.
+
+**RESULT: `approved`**
+
+## ADR021-ASR-ONLY-CLEANUP — Coder Implementation
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | `ADR021-ASR-ONLY-CLEANUP` |
+| Actor | coder (Implementation Engineer) |
+| Date | 2026-08-07 |
+| GraphiFy | Existing `graphify-out/graph.json` queried before implementation; no rebuild/checkpoint |
+| ADR | ADR-022 implemented as the accepted deep-contract clarification for ADR-021 |
+| RESULT | `waiting_review` |
+
+### Implementation
+
+- Replaced `TranscriptionSessionOperation` with `.asr` and the typed Whisper-only `.whisperTargetTranslation(languageCode:)` case. Deleted generic `.speechTranslation` without a compatibility alias.
+- Deleted `makeSpeechTranslationSession`, Canary speech-translation route/target state, `TranscriptionRequest.targetLanguageCode`, and the directional speech-translation capability APIs.
+- Kept `forcedLanguageCode` as the ASR source-language constraint and `translateToEnglish` for Whisper native X-to-English behavior only.
+- Kept Parakeet auto ASR, Canary explicit-source ASR, GigaAM fixed-RU ASR, Whisper behavior, and post-ASR cloud/local text translation. Parakeet target output remains a text-only post-ASR path.
+- Added early Canary ASR-only validation that rejects `translateToEnglish` before OS validation, model loading, audio conversion, or decoding; replaced the directional error with `.translationUnsupported`.
+- Resolved non-Whisper typed target operations as unavailable before engine construction/invocation. No NLLB runtime, model, package, network path, or new text-translation engine was added.
+
+### Tests And QA
+
+- Tests-first evidence captured: the old architecture failed the new application-wide contract with 17 violations, and old operation names failed compilation after the intentional contract rename.
+- Focused routing, store, workflow, engine, catalog, settings, application-wide, and translation contract suites pass.
+- `swift test` pass; coverage pass; ThreadSanitizer pass; AddressSanitizer pass.
+- `swift build` pass.
+- `swift build -c release` pass after the full production build completed in 226.54s.
+- `./script/qa/repeat_critical_suites.sh 20` pass: 20 iterations, 140 runs, 140 passed, 0 failed.
+- `./script/build_and_run.sh --verify` pass: release app and polish worker built, signed, launched, and process-verified.
+- `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` pass: Flash, Flash long-window, Canary 1B, and GigaAM returned expected non-empty text.
+- `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests` pass: installed Canary Flash, Canary 1B, and GigaAM product sessions returned expected text with cold/warm timings.
+- Added `check_adr021_canary_asr_only.sh`; its nine forbidden-contract mutation tests pass. Hardened S1b, S6, S9, and no-NLLB guards are fail-closed and their self-tests pass.
+- `./script/qa/run_all.sh` pass; active forbidden-marker scans are clean.
+
+### Changed Paths
+
+- `Sources/NativeBolabolCore/Services/EngineProtocols.swift`
+- `Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift`
+- `Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift`
+- `Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift`
+- `Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift`
+- `Sources/NativeBolabol/Views/ContentView.swift`
+- `Sources/NativeBolabol/Views/AudioPlaybackModalView.swift`
+- `Sources/NativeBolabol/Views/SidebarView.swift`
+- `Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift`
+- ADR-022 routing, runtime, workflow, catalog, settings, application-wide, and smoke tests under `Tests/NativeBolabolCoreTests/`
+- `script/qa/check_adr021_canary_asr_only.sh`
+- `script/qa/check_s1b_scope.sh`
+- `script/qa/check_s6_gigaam_spike.sh`
+- `script/qa/check_s9_engine_contract.sh`
+- `script/qa/check_no_nllb_translation.sh`
+
+### Scope And Runtime Notes
+
+- Real local and installed model assets were used without cloud requests, model downloads, or deletion of user data.
+- Manual visual/accessibility testing was not executed because no safe GUI automation harness was available.
+- Non-blocking warnings remain: duplicate SwiftPM package identity, an unhandled dependency markdown resource, redundant `await`/`try` in existing Canary code, and deprecated `AVAsset.duration` usage.
+- `STATE.yaml`, `BUG_REPORT.md`, `REPORT.md`, and `DECISIONS.md` were not edited by this coder attempt. Unrelated workspace changes were left untouched.
+- No GraphiFy rebuild, commit, tag, or push was performed.
+
+**RESULT: `waiting_review`**
+
 ## ADR021-ASR-ONLY-CLEANUP — Architect Packet
 
 ### Meta

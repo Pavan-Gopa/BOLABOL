@@ -72,6 +72,63 @@ func acceptedADR021KeepsCanaryOutOfTheTranslationRuntime() throws {
 }
 
 @Test
+func adr022RemovesTheDeepCanarySpeechTranslationContractFromProductSources() throws {
+    let fileManager = FileManager.default
+    let sourceRoot = "Sources"
+    let sourceURLs = try #require(
+        fileManager.enumerator(at: URL(fileURLWithPath: sourceRoot), includingPropertiesForKeys: nil)
+    ).compactMap { item -> URL? in
+        guard let url = item as? URL, url.pathExtension == "swift" else { return nil }
+        return url
+    }
+    #expect(!sourceURLs.isEmpty)
+
+    let sources = try sourceURLs.reduce(into: [String: String]()) { result, url in
+        result[url.path] = try String(contentsOf: url, encoding: .utf8)
+    }
+    let productSource = sources.values.joined(separator: "\n")
+    let forbiddenProductMarkers = [
+        ".speechTranslation",
+        "makeSpeechTranslationSession",
+        "speechTranslationTargetLanguageCode",
+        "SpeechTranslationDirection",
+        "supportsSpeechTranslation",
+        "supportedSpeechTranslationDirections",
+        "isCanaryTargetSwitchable",
+        "toggledCanaryTarget",
+        "resolveTargetLanguage",
+        ".ordinaryASR",
+        ".whisperTarget("
+    ]
+
+    for marker in forbiddenProductMarkers {
+        #expect(!productSource.contains(marker), "forbidden ADR-022 product marker remains: \(marker)")
+    }
+
+    let engineProtocols = try String(
+        contentsOfFile: "Sources/NativeBolabolCore/Services/EngineProtocols.swift",
+        encoding: .utf8
+    )
+    #expect(!engineProtocols.contains("targetLanguageCode"))
+
+    let routing = try String(
+        contentsOfFile: "Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift",
+        encoding: .utf8
+    )
+    #expect(!routing.contains("targetLanguageChoices"))
+    #expect(!routing.contains("targetLanguageCode"))
+    #expect(routing.contains("postASRTextTranslationTargetLanguageCode"))
+
+    let canary = try String(
+        contentsOfFile: "Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift",
+        encoding: .utf8
+    )
+    #expect(!canary.contains("targetLanguageCode"))
+    #expect(canary.contains("translationUnsupported"))
+    #expect(canary.contains("translateToEnglish"))
+}
+
+@Test
 func translationUserFeedbackAndGlossaryActionsUseLocalizedCopy() throws {
     let source = try String(
         contentsOfFile: "Sources/NativeBolabol/Views/TranslationModalView.swift",

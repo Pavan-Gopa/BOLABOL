@@ -202,7 +202,7 @@ struct S9RuntimeSmokeTests {
         let engineStore = TranscriptionEngineStore.live()
         let resolution = engineStore.makeSession(
             modelStore: modelStore,
-            operation: .ordinaryASR
+            operation: .asr
         )
 
         guard case .available(let session) = resolution else {
@@ -267,7 +267,7 @@ struct S9RuntimeSmokeTests {
         let engineStore = TranscriptionEngineStore.live()
         let resolution = engineStore.makeSession(
             modelStore: modelStore,
-            operation: .ordinaryASR
+            operation: .asr
         )
 
         guard case .available(let session) = resolution else {

@@ -80,7 +80,7 @@ func languageRouterAutoModeNeverForcesLanguage() {
   )
   #expect(route.forcedLanguageCode == nil)
   #expect(!route.translateToEnglish)
-  #expect(route.autoTranslateTargetLanguageCode == nil)
+  #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }
 
 @Test
@@ -100,7 +100,7 @@ func languageRouterMultilingualKeepsForcedSourceLanguage() {
   )
   #expect(route.forcedLanguageCode == "ru")
   #expect(!route.translateToEnglish)
-  #expect(route.autoTranslateTargetLanguageCode == nil)
+  #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }
 
 @Test
@@ -122,7 +122,7 @@ func languageRouterForceEnglishOnMultilingualUsesWhisperTranslate() {
   )
   #expect(route.forcedLanguageCode == nil)
   #expect(route.translateToEnglish)
-  #expect(route.autoTranslateTargetLanguageCode == nil)
+  #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }
 
 @Test
@@ -133,7 +133,7 @@ func languageRouterForceEnglishOnEnglishOnlyUsesLLM() {
     forceTargetLanguage: true
   )
   #expect(!route.translateToEnglish)
-  #expect(route.autoTranslateTargetLanguageCode == "en")
+  #expect(route.postASRTextTranslationTargetLanguageCode == "en")
 }
 
 @Test
@@ -145,7 +145,7 @@ func languageRouterForceNonEnglishAlwaysUsesLLMPass() {
       forceTargetLanguage: true
     )
     #expect(!multi.translateToEnglish, "force \(code) should not use Whisper translate")
-    #expect(multi.autoTranslateTargetLanguageCode == code, "force \(code) should LLM-translate")
+  #expect(multi.postASRTextTranslationTargetLanguageCode == code, "force \(code) should LLM-translate")
     #expect(multi.forcedLanguageCode == nil, "force \(code) should not force source language")
   }
 }
@@ -157,7 +157,7 @@ func languageRouterForceAutoDefaultsToEnglishTarget() {
     isMultilingualModel: true,
     forceTargetLanguage: true
   )
-  #expect(route.translateToEnglish || route.autoTranslateTargetLanguageCode == "en")
+  #expect(route.translateToEnglish || route.postASRTextTranslationTargetLanguageCode == "en")
 }
 
 @Test

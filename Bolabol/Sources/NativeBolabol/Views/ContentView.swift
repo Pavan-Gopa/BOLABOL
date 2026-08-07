@@ -657,14 +657,17 @@ struct ContentView: View {
             let languageCode = plan.requestedLanguageCode
             let route = plan.route
             let sessionForceTargetLanguage = plan.isWhisperTargetMode
+                || (plan.backend == .fluidAudioCoreML && forceTargetLanguage)
+            let postASRTextTranslationTargetCode = route.postASRTextTranslationTargetLanguageCode
+                ?? (plan.backend == .fluidAudioCoreML && forceTargetLanguage ? languageCode : nil)
 
             let noteID = await workflow.transcribeRecording(
                 recording,
                 plan: plan
             )
 
-            // Target language display name for any post-Whisper LLM translation.
-            let autoTranslationTargetLanguage = route.autoTranslateTargetLanguageCode.map {
+            // Target language display name for any post-ASR text translation.
+            let autoTranslationTargetLanguage = postASRTextTranslationTargetCode.map {
                 TranscriptionLanguageOption.displayName(for: $0)
             } ?? (sessionForceTargetLanguage ? TranscriptionLanguageOption.displayName(for: languageCode) : nil)
 
@@ -676,7 +679,7 @@ struct ContentView: View {
             //   provider / polishing engine) before inserting raw text.
             if let hotkeyTarget, hotkeyTarget == .raw {
                 if sessionForceTargetLanguage,
-                   let targetCode = route.autoTranslateTargetLanguageCode,
+                   let targetCode = postASRTextTranslationTargetCode,
                    let rawText = noteStore.note(withID: noteID)?.rawText,
                    !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     let targetLanguageName = autoTranslationTargetLanguage
@@ -707,7 +710,7 @@ struct ContentView: View {
                 targetLanguageCode: languageCode
             )
             let needsTranslation = sessionForceTargetLanguage
-                && (route.autoTranslateTargetLanguageCode != nil || rawTextLooksForeign)
+                && (postASRTextTranslationTargetCode != nil || rawTextLooksForeign)
 
             NativeBolabolLog.hotkey.info(
                 "Transcription routing forceTargetLanguage=\(sessionForceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) autoTranslationTarget=\(autoTranslationTargetLanguage ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) needsTranslation=\(needsTranslation) rawLooksForeign=\(rawTextLooksForeign)"
@@ -1034,7 +1037,13 @@ struct ContentView: View {
             if !languageControlEnabled && !isExplicitCoreMLBackend {
                 persistentHUDForceTargetLanguage = false
             }
-            let forceTargetLanguage = session?.plan.isWhisperTargetMode ?? requestedForceTargetLanguage
+            let forceTargetLanguage: Bool
+            if let session {
+                forceTargetLanguage = session.plan.isWhisperTargetMode
+                    || (session.plan.backend == .fluidAudioCoreML && requestedForceTargetLanguage)
+            } else {
+                forceTargetLanguage = requestedForceTargetLanguage
+            }
             pendingHotkeySession = session
             pendingHotkeyTarget = resolvedTarget
             pendingHotkeyOutputMode = settings.mode
@@ -1346,16 +1355,17 @@ struct ContentView: View {
         forceTargetLanguage: Bool,
         hotkeySession: Bool
     ) -> TranscriptionEngineSessionResolution {
-        if isExplicitCoreMLBackend {
+        if isExplicitCoreMLBackend
+            || transcriptionModelStore.activeModel?.backend == .fluidAudioCoreML {
             return transcriptionEngineStore.makeSession(
                 modelStore: transcriptionModelStore,
-                operation: .ordinaryASR
+                operation: .asr
             )
         }
 
         let operation: TranscriptionSessionOperation = forceTargetLanguage
-            ? .whisperTarget(languageCode: targetLanguageCode)
-            : .ordinaryASR
+            ? .whisperTargetTranslation(languageCode: targetLanguageCode)
+            : .asr
         let legacyLanguageCode = forceTargetLanguage
             ? targetLanguageCode
             : (hotkeySession ? "auto" : transcriptionModelStore.resolvedLanguageCode)
@@ -1525,13 +1535,13 @@ struct ContentView: View {
             return true
         }
         if isExplicitCoreMLBackend {
-            guard case .available(let session) = makeLocalSession(
+            guard case .available = makeLocalSession(
                 forceTargetLanguage: false,
                 hotkeySession: false
             ) else {
                 return false
             }
-            return session.plan.isCanaryTargetSwitchable
+            return false
         }
         if activeModelSupportsNativeTranslation {
             return true
@@ -1548,16 +1558,6 @@ struct ContentView: View {
     /// Toggles the transcription language mode between auto-detection
     /// and the configured target language, persisting the selection for future sessions.
     private func handleOverlayLanguageTap() {
-        if let session = pendingHotkeySession,
-           session.plan.backend == .canaryCoreML {
-            guard session.plan.isCanaryTargetSwitchable else { return }
-            let switched = session.plan.toggledCanaryTarget()
-            pendingHotkeySession = session.replacing(plan: switched)
-            pendingHotkeyForceTargetLanguage = false
-            hotkeySessionOverlayManager.update(sessionPlan: switched)
-            return
-        }
-
         if isExplicitCoreMLBackend {
             return
         }

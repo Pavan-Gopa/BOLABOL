@@ -74,6 +74,24 @@ final class TranscriptionEngineStore: ObservableObject {
             )
         }
 
+        let preflight = TranscriptionSessionResolver.resolve(
+            activeModel: downloadedModel.model,
+            modelFolderURL: downloadedModel.modelFolderURL,
+            currentOSVersion: modelStore.currentSessionOSVersion,
+            hasCompleteModel: true,
+            primaryLanguageCode: modelStore.speechLanguages.primaryLanguageCode,
+            additionalLanguageCode: modelStore.speechLanguages.additionalLanguageCode,
+            operation: operation,
+            legacyLanguageCode: legacyLanguageCode
+        )
+
+        guard case .available = preflight else {
+            if case .unavailable(let reason) = preflight {
+                return .unavailable(reason)
+            }
+            return .unavailable(.unsupportedOperation(modelID: downloadedModel.model.id))
+        }
+
         let engine = engine(for: downloadedModel)
         let resolution = TranscriptionSessionResolver.resolve(
             activeModel: downloadedModel.model,
@@ -85,72 +103,6 @@ final class TranscriptionEngineStore: ObservableObject {
             additionalLanguageCode: modelStore.speechLanguages.additionalLanguageCode,
             operation: operation,
             legacyLanguageCode: legacyLanguageCode
-        )
-
-        switch resolution {
-        case .available(let plan):
-            return .available(TranscriptionEngineSession(engine: engine, plan: plan))
-        case .unavailable(let reason):
-            return .unavailable(reason)
-        }
-    }
-
-    /// Creates a Canary speech-translation session from the modal's explicit
-    /// source/target pair without changing the app's active transcription model
-    /// or persisted speech-language settings.
-    func makeSpeechTranslationSession(
-        modelStore: TranscriptionModelStore,
-        model: TranscriptionModelDescriptor,
-        sourceLanguageCode: String,
-        targetLanguageCode: String
-    ) -> TranscriptionEngineSessionResolution {
-        guard model.backend == .canaryCoreML else {
-            return .unavailable(.translationUnsupported(modelID: model.id))
-        }
-
-        let source = sourceLanguageCode
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        let target = targetLanguageCode
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        let operation = TranscriptionSessionOperation.speechTranslation(
-            sourceLanguageCode: source,
-            targetLanguageCode: target
-        )
-        let hasCompleteModel = modelStore.hasLocalFiles(for: model)
-
-        guard modelStore.isModelAvailable(for: model),
-              hasCompleteModel,
-              let downloadedModel = modelStore.downloadedModel(for: model)
-        else {
-            let resolution = TranscriptionSessionResolver.resolve(
-                activeModel: model,
-                modelFolderURL: modelStore.installationState(for: model).localURL,
-                currentOSVersion: modelStore.currentSessionOSVersion,
-                hasCompleteModel: hasCompleteModel,
-                primaryLanguageCode: source,
-                additionalLanguageCode: target,
-                operation: operation
-            )
-            switch resolution {
-            case .available:
-                return .unavailable(.incompleteModel(modelID: model.id))
-            case .unavailable(let reason):
-                return .unavailable(reason)
-            }
-        }
-
-        let engine = engine(for: downloadedModel)
-        let resolution = TranscriptionSessionResolver.resolve(
-            activeModel: downloadedModel.model,
-            modelFolderURL: downloadedModel.modelFolderURL,
-            engineIdentity: engine.id,
-            currentOSVersion: modelStore.currentSessionOSVersion,
-            hasCompleteModel: true,
-            primaryLanguageCode: source,
-            additionalLanguageCode: target,
-            operation: operation
         )
 
         switch resolution {

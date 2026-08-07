@@ -18,6 +18,7 @@ RUNTIME_TEST="Tests/NativeBolabolCoreTests/S9RuntimeSmokeTests.swift"
 S8_TEST="Tests/NativeBolabolCoreTests/S8DownloadContractTests.swift"
 NO_CANARY="script/qa/check_no_canary_product.sh"
 NO_DOWNLOAD="script/qa/check_sec_no_download_code.sh"
+SEARCH_TOOL=""
 
 FAILED=0
 
@@ -28,15 +29,188 @@ require_file() {
     fi
 }
 
+resolve_search_tool() {
+    case "${BOLABOL_QA_SEARCH_TOOL:-}" in
+        missing)
+            echo "FAIL: search tool was forced missing"
+            return 1
+            ;;
+        rg)
+            if ! command -v rg >/dev/null 2>&1; then
+                echo "FAIL: required search tool rg is unavailable"
+                return 1
+            fi
+            SEARCH_TOOL="rg"
+            ;;
+        grep)
+            if ! command -v grep >/dev/null 2>&1; then
+                echo "FAIL: required search tool grep is unavailable"
+                return 1
+            fi
+            SEARCH_TOOL="grep"
+            ;;
+        *)
+            if command -v rg >/dev/null 2>&1; then
+                SEARCH_TOOL="rg"
+            elif command -v grep >/dev/null 2>&1; then
+                SEARCH_TOOL="grep"
+            else
+                echo "FAIL: neither rg nor grep is available"
+                return 1
+            fi
+            ;;
+    esac
+}
+
+if [ "${1:-}" != "--self-test" ]; then
+    if [ ! -d "$ROOT/Sources" ]; then
+        echo "FAIL: product Sources directory is missing: $ROOT/Sources"
+        exit 1
+    fi
+    if ! resolve_search_tool; then
+        exit 1
+    fi
+fi
+
+search_fixed() {
+    local needle="$1"
+    shift
+    if [ "$SEARCH_TOOL" = "rg" ]; then
+        rg --no-heading --line-number --color never -F -e "$needle" "$@"
+    else
+        grep -RInF -- "$needle" "$@"
+    fi
+}
+
+search_regex() {
+    local pattern="$1"
+    shift
+    if [ "$SEARCH_TOOL" = "rg" ]; then
+        rg --no-heading --line-number --color never -e "$pattern" "$@"
+    else
+        grep -RInE -- "$pattern" "$@"
+    fi
+}
+
 require_literal() {
     local file="$1"
     local needle="$2"
     local description="$3"
-    if ! grep -qF "$needle" "$file"; then
-        echo "FAIL: $description"
+    local output
+    if output="$(search_fixed "$needle" "$file" 2>&1)"; then
+        return 0
+    else
+        local status=$?
+        if [ "$status" -eq 1 ]; then
+            echo "FAIL: $description"
+        else
+            echo "FAIL: search error while checking $description: $output"
+        fi
         FAILED=1
+        return 1
     fi
 }
+
+validate_asr_only_boundary() {
+    local root="$1"
+    local sources="$root/Sources"
+    local canary="$sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift"
+    local edge_test="$root/Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift"
+    if [ ! -d "$sources" ]; then
+        echo "FAIL: product Sources directory is missing: $sources"
+        return 1
+    fi
+    if ! resolve_search_tool; then
+        return 1
+    fi
+    local failed=0
+    for file in "$canary" "$edge_test"; do
+        if [ ! -f "$file" ]; then
+            echo "FAIL: missing ASR-only validator/test file: $file"
+            failed=1
+        fi
+    done
+    if [ "$failed" -ne 0 ]; then
+        return 1
+    fi
+    local output
+    for pair in \
+        "$canary|validateASROnlyRequest" \
+        "$canary|guard !request.translateToEnglish" \
+        "$canary|case translationUnsupported" \
+        "$edge_test|canaryRejectsWhisperTranslationFlagBeforeEngineWork"; do
+        local file="${pair%%|*}"
+        local marker="${pair#*|}"
+        if output="$(search_fixed "$marker" "$file" 2>&1)"; then
+            :
+        else
+            local status=$?
+            if [ "$status" -eq 1 ]; then
+                echo "FAIL: missing real Canary ASR-only boundary marker: $marker"
+            else
+                echo "FAIL: search error while checking Canary ASR-only marker $marker: $output"
+            fi
+            failed=1
+        fi
+    done
+    [ "$failed" -eq 0 ]
+}
+
+self_test() {
+    local fixture
+    fixture="$(mktemp -d "${TMPDIR:-/tmp}/bolabol-s9-contract.XXXXXX")"
+    trap 'rm -rf "${fixture:-}"' EXIT
+    mkdir -p \
+        "$fixture/Sources/NativeBolabol/Engines" \
+        "$fixture/Tests/NativeBolabolCoreTests"
+    printf '%s\n' \
+        'func validateASROnlyRequest(_ request: TranscriptionRequest) throws {' \
+        '    guard !request.translateToEnglish else { throw Error.translationUnsupported }' \
+        '}' \
+        'enum Error { case translationUnsupported }' \
+        > "$fixture/Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift"
+    printf '%s\n' 'func canaryRejectsWhisperTranslationFlagBeforeEngineWork() {}' \
+        > "$fixture/Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift"
+
+    if ! validate_asr_only_boundary "$fixture"; then
+        echo "FAIL: clean fixture was rejected"
+        return 1
+    fi
+    echo "PASS: clean fixture"
+
+    rm -rf "$fixture/Sources"
+    if validate_asr_only_boundary "$fixture"; then
+        echo "FAIL: missing-Sources mutation was accepted"
+        return 1
+    fi
+    echo "PASS: missing-Sources mutation"
+
+    mkdir -p "$fixture/Sources/NativeBolabol/Engines"
+    printf '%s\n' \
+        'func validateASROnlyRequest(_ request: TranscriptionRequest) throws {}' \
+        > "$fixture/Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift"
+    if BOLABOL_QA_SEARCH_TOOL=missing validate_asr_only_boundary "$fixture"; then
+        echo "FAIL: missing-search-tool mutation was accepted"
+        return 1
+    fi
+    echo "PASS: missing-search-tool mutation"
+
+    printf '%s\n' \
+        'func validateASROnlyRequest(_ request: TranscriptionRequest) throws {}' \
+        'enum Error { case translationUnsupported }' \
+        > "$fixture/Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift"
+    if validate_asr_only_boundary "$fixture"; then
+        echo "FAIL: Canary translation-acceptance mutation was accepted"
+        return 1
+    fi
+    echo "PASS: negative mutation 1/1 Canary ASR-only validator"
+    echo "PASS: 1/1 S9 negative mutations executed"
+}
+
+if [ "${1:-}" = "--self-test" ]; then
+    self_test
+    exit $?
+fi
 
 for file in \
     "$CANARY" \
@@ -52,6 +226,8 @@ for file in \
     "$NO_DOWNLOAD"; do
     require_file "$file"
 done
+
+validate_asr_only_boundary "$ROOT" || FAILED=1
 
 if [ "$FAILED" -ne 0 ]; then
     exit 1
@@ -136,24 +312,52 @@ for marker in \
     'everyGOEngineRejectsAMissingModelDirectory' \
     'canary1BUsesMacOS15GateBeforeLoadingTheModel' \
     'canary1BOfflineDictationProducesTextWhenScratchIsEnabled'; do
-    if ! grep -qF "$marker" "$ENGINE_TEST" "$EDGE_TEST" "$RUNTIME_TEST"; then
-        echo "FAIL: missing S9 test mapping: $marker"
+    local_mapping=""
+    if local_mapping="$(search_fixed "$marker" "$ENGINE_TEST" "$EDGE_TEST" "$RUNTIME_TEST" 2>&1)"; then
+        :
+    else
+        mapping_status=$?
+        if [ "$mapping_status" -eq 1 ]; then
+            echo "FAIL: missing S9 test mapping: $marker"
+        else
+            echo "FAIL: search error while checking S9 test mapping $marker: $local_mapping"
+        fi
         FAILED=1
     fi
 done
 
 # The old CoreMLEngineTests private chunk implementation must not return as a
 # second contract; product static seams are the single chunking implementation.
-if grep -qE 'private[[:space:]]+(nonisolated[[:space:]]+)?func[[:space:]]+chunk' "$LEGACY_TEST"; then
+legacy_chunk_matches=""
+if legacy_chunk_matches="$(search_regex 'private[[:space:]]+(nonisolated[[:space:]]+)?func[[:space:]]+chunk' "$LEGACY_TEST" 2>&1)"; then
     echo "FAIL: legacy CoreMLEngineTests.swift still contains a private chunk helper"
+    printf '%s\n' "$legacy_chunk_matches"
     FAILED=1
+else
+    legacy_status=$?
+    if [ "$legacy_status" -gt 1 ]; then
+        echo "FAIL: search error while checking legacy chunk helper: $legacy_chunk_matches"
+        FAILED=1
+    fi
 fi
 
 # Preserve the lightweight boundary guards and keep the security allowlist
 # exactly at the two sanctioned pre-existing files.
 bash "$NO_CANARY" >/dev/null || FAILED=1
 bash "$NO_DOWNLOAD" >/dev/null || FAILED=1
-allowlist_count="$(grep -cE '^ALLOWED_[A-Z]+=' "$NO_DOWNLOAD" || true)"
+allowlist_matches=""
+if allowlist_matches="$(search_regex '^ALLOWED_[A-Z]+=' "$NO_DOWNLOAD" 2>&1)"; then
+    allowlist_count="$(printf '%s\n' "$allowlist_matches" | wc -l | tr -d '[:space:]')"
+else
+    allowlist_status=$?
+    if [ "$allowlist_status" -eq 1 ]; then
+        allowlist_count=0
+    else
+        echo "FAIL: search error while counting security download allowlist: $allowlist_matches"
+        allowlist_count=-1
+        FAILED=1
+    fi
+fi
 if [ "$allowlist_count" -ne 2 ]; then
     echo "FAIL: security download allowlist has $allowlist_count entries; expected exactly 2"
     FAILED=1

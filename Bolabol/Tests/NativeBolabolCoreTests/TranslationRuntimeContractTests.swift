@@ -21,7 +21,14 @@ func translationRuntimeHasNoCanarySpeechTranslationSurface() throws {
         contentsOfFile: "Sources/NativeBolabol/Views/TranslationModalView.swift",
         encoding: .utf8
     )
+    let floatingSource = try String(
+        contentsOfFile: "Sources/NativeBolabol/Services/FloatingTranslationWindowManager.swift",
+        encoding: .utf8
+    )
 
     #expect(!source.contains("Canary"))
     #expect(!source.contains("SpeechTranslation"))
+    #expect(!floatingSource.contains("Canary"))
+    #expect(!floatingSource.contains("SpeechTranslation"))
+    #expect(!floatingSource.contains("onCanaryTranslation"))
 }

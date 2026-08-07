@@ -55,15 +55,10 @@ struct CoreMLCapabilitiesTests {
     }
 
     @Test
-    func gigaAMDoesNotSupportTranslation() {
-        let model = TranscriptionModelDescriptor.gigaAMGO
-        #expect(model.capabilities.supportsSpeechTranslation == false)
-    }
-
-    @Test
-    func canaryFlashIsTranscriptionOnly() {
-        let model = TranscriptionModelDescriptor.flashGO
-        #expect(model.capabilities.supportsSpeechTranslation == false)
+    func goModelsExposeOnlyVerifiedASRSourceLanguages() {
+        #expect(TranscriptionModelDescriptor.flashGO.verifiedASRSourceChoices == ["en", "de", "fr", "es"])
+        #expect(TranscriptionModelDescriptor.canary1BGO.verifiedASRSourceChoices == CanaryLanguageCatalog.oneBV2LanguageCodes)
+        #expect(TranscriptionModelDescriptor.gigaAMGO.verifiedASRSourceChoices == ["ru"])
     }
 
     // MARK: - Chunk boundaries

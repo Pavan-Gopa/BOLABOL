@@ -230,7 +230,6 @@ private func makeRecommendationModel(id: String) -> TranscriptionModelDescriptor
         capabilities: ASRModelCapabilities(
             supportsAutoLanguageDetect: supportsAutoLanguageDetect,
             supportedLanguageCodes: supportedLanguageCodes,
-            supportsSpeechTranslation: false,
             maxChunkSeconds: 30,
             approxDownloadBytes: 1_000_000
         )

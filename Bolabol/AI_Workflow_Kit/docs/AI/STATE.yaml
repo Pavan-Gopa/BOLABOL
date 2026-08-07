@@ -1,41 +1,29 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: ADR021-ASR-ONLY-CLEANUP
+current_step: VERTICAL-PULSE-HUD
 step_description: >-
-  Narrow architectural cleanup after the HUD-HUMOR-PROMPTS exhaustive QA loop.
-  Seven of eight product bugs are closed. Remove the remaining active Canary
-  speech-translation operation/session/request contract and establish fail-closed
-  ADR-021 QA guards while preserving Canary Flash/1B ASR and all non-Canary text
-  translation paths.
+  Polish the third vertical HUD style, Vertical Pulse. Fit the complete D/1/2/3/4
+  prompt row without clipping, keep the main capsule at a pixel-stable screen
+  anchor while R/1/2 and accessory controls change, and add a right-click language
+  menu on the left language control using all configured settings languages. The
+  selected target must respect ADR-022: no Canary/GigaAM speech translation.
 target_files:
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  - Sources/NativeBolabol/Services/CanarySpeechTranslationRuntime.swift
-  - Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift
-  - Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift
+  - Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift
   - Sources/NativeBolabol/Views/ContentView.swift
-  - Sources/NativeBolabol/Views/SidebarView.swift
-  - Sources/NativeBolabol/Views/AudioPlaybackModalView.swift
-  - Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift
-  - Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
-  - Sources/NativeBolabolCore/Services/EngineProtocols.swift
-  - Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift
+  - Sources/NativeBolabolCore/Models/GeneralSettings.swift
+  - Sources/NativeBolabolCore/Models/UserSpeechLanguages.swift
+  - Sources/NativeBolabolCore/Services/AppText.swift
+  - Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift
   - Tests/NativeBolabolCoreTests/ApplicationWideRegressionContractTests.swift
+  - Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift
+  - Tests/NativeBolabolCoreTests/HUDProviderSwitcherFeatureTests.swift
+  - Tests/NativeBolabolCoreTests/NewFeatureRegressionTests.swift
+  - Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
+  - Tests/NativeBolabolCoreTests/UserSpeechLanguagesTests.swift
   - Tests/NativeBolabolCoreTests/TranscriptionLanguageRoutingTests.swift
-  - Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift
-  - Tests/NativeBolabolCoreTests/S11SessionRoutingTests.swift
-  - Tests/NativeBolabolCoreTests/RecordingTranscriptionWorkflowTests.swift
-  - Tests/NativeBolabolCoreTests/S9RuntimeSmokeTests.swift
-  - Tests/NativeBolabolCoreTests/TranslationRuntimeContractTests.swift
-  - Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift
-  - Tests/NativeBolabolCoreTests/CoreMLEngineTests.swift
-  - Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift
-  - Tests/NativeBolabolCoreTests/OnboardingModelRecommendationTests.swift
-  - script/qa/check_adr021_canary_asr_only.sh
-  - script/qa/check_s1b_scope.sh
-  - script/qa/check_s6_gigaam_spike.sh
-  - script/qa/check_s9_engine_contract.sh
-  - script/qa/check_no_nllb_translation.sh
+  - script/qa/check_vertical_pulse_hud_contract.sh
 completed_steps:
   - S0
   - S1
@@ -60,21 +48,20 @@ review:
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
   verdict: null
   note: >-
-    Architect packet complete; ADR-022 accepted as the implementation clarification
-    for ADR-021. Clean retry scope removes the generic speechTranslation operation,
-    Canary session factory/target route/request fields and directional capabilities,
-    while preserving Whisper-only native translation, post-ASR text translation,
-    Canary/GigaAM ASR, and real model smokes. Add fail-closed mutation-tested QA.
+    ADR-022 remains independently approved and must not regress. New Human-provided
+    Vertical Pulse screenshot shows the prompt row clipping D and 4 and the capsule
+    jumping when R/1/2 changes. Implement fixed-anchor accessory layout and the
+    right-click full-language target menu before a fresh independent review.
 qa:
-  status: bugs
+  status: blocked
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
   suite: HUD-HUMOR-PROMPTS
   bugs_open: 1
   note: >-
-    Reviewer independently closes seven bugs. One major architecture bug remains:
-    BUG-HHP-007 / BLOCK-QA-001. Current tests/build/runtime smokes are green but
-    do not prove ADR-021 because active deep speech-translation seams and false-green
-    guards remain. Tester rerun is blocked pending architected cleanup and review.
+    Final ADR-022 closure rerun is paused by Human-requested HUD scope. After Coder
+    and Reviewer, Tester must rerun all prior BUG-HHP/ADR-022 coverage plus a
+    generated 2,000-3,000-case HUD/UI interaction matrix. Prefer parameterized
+    scenarios and a few reliable runners over thousands of brittle script files.
 security:
   next_run: deferred_human_testing
   note: >-
@@ -108,15 +95,15 @@ plan_files:
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  Implement ADR-022 exactly. Replace session operations with `.asr` and the typed
-  Whisper-only target translation case; delete generic `.speechTranslation`,
-  `makeSpeechTranslationSession`, request/route/plan Canary target fields and
-  directional capability APIs. Canary/GigaAM/Parakeet accept ASR only and reject
-  the Whisper flag before engine work; Whisper semantics and post-ASR cloud/local
-  text translation remain unchanged. Keep real Canary/GigaAM ASR implementation
-  untouched beyond target-contract removal. Add a dedicated fail-closed ADR-021
-  QA guard plus mutation self-tests; harden existing guards without allowlisting
-  forbidden seams. Follow the ordered Architect packet and exact file boundaries.
+  Vertical Pulse only. Widen the top accessory/prompt region enough to render all
+  five D/1/2/3/4 buttons centered with no clipping. Keep the main HUD capsule at an
+  invariant screen anchor while raw/Variant 1/Variant 2, prompt row, language row,
+  and the Variant 2 humor slider appear or disappear; no bounce, jump, or panel
+  recenter. Left click retains the existing compact language action. Right click
+  on the left language glyph opens a complete localized menu from configured
+  Settings languages and selects a target for Whisper-native or post-ASR text
+  translation only. Auto-capable ASR remains auto; non-auto source uses Primary.
+  Canary/GigaAM remain ADR-022 ASR-only. Preserve all other HUD styles.
 notes: |
   S8 cycle closed: POST bolabol/S8-done @ 3659a72 (LOCAL ONLY — monorepo remote
   push DISABLED; Human must push when enabled). PRE bolabol/pre-S9 @ ca10a95.

@@ -10,25 +10,6 @@ public enum CanaryLanguageCatalog {
 
     public static let flashLanguageCodes = ["en", "de", "fr", "es"]
 
-    /// Canary AST supports non-English <-> English and English <-> non-English
-    /// directions. It does not support arbitrary non-English pairs.
-    public static func speechTranslationDirections(
-        for languageCodes: [String]
-    ) -> [SpeechTranslationDirection] {
-        languageCodes.flatMap { source in
-            languageCodes.compactMap { target in
-                guard source != target,
-                      source == "en" || target == "en"
-                else {
-                    return nil
-                }
-                return SpeechTranslationDirection(
-                    sourceLanguageCode: source,
-                    targetLanguageCode: target
-                )
-            }
-        }
-    }
 }
 
 public struct SpeechTranslationDirection: Codable, Equatable, Sendable {
@@ -170,6 +151,17 @@ public extension ASRModelCapabilities {
             }
             return code
         }
+    }
+
+    /// Whether this descriptor can transcribe an explicitly selected input
+    /// language. The legacy `auto` token is intentionally not treated as a
+    /// concrete language capability.
+    func supportsInputLanguage(_ languageCode: String) -> Bool {
+        let normalized = languageCode
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard !normalized.isEmpty else { return false }
+        return explicitSupportedLanguageCodes.contains(normalized)
     }
 
     func supportsSpeechTranslation(from source: String, to target: String) -> Bool {
@@ -440,7 +432,9 @@ public enum ModelInstallSource: Equatable, Sendable, Codable {
             let isMulti = languageSupport == .multilingual
             return ASRModelCapabilities(
                 supportsAutoLanguageDetect: isMulti,
-                supportedLanguageCodes: isMulti ? ["auto", "en", "de", "fr", "es", "ru"] : ["en"],
+                supportedLanguageCodes: isMulti
+                    ? ["auto"] + LanguagePickerOrder.orderedSpeechCodes
+                    : ["en"],
                 supportsSpeechTranslation: false,
                 maxChunkSeconds: 30.0,
                 approxDownloadBytes: estimateBytes(from: downloadSize),
@@ -450,7 +444,7 @@ public enum ModelInstallSource: Equatable, Sendable, Codable {
         case .fluidAudioCoreML:
             return ASRModelCapabilities(
                 supportsAutoLanguageDetect: true,
-                supportedLanguageCodes: ["auto", "en", "de", "fr", "es", "nl", "ru", "uk"],
+                supportedLanguageCodes: ["auto"] + CanaryLanguageCatalog.oneBV2LanguageCodes,
                 supportsSpeechTranslation: false,
                 maxChunkSeconds: 30.0,
                 approxDownloadBytes: estimateBytes(from: downloadSize),
@@ -461,10 +455,7 @@ public enum ModelInstallSource: Equatable, Sendable, Codable {
             return ASRModelCapabilities(
                 supportsAutoLanguageDetect: false,
                 supportedLanguageCodes: CanaryLanguageCatalog.flashLanguageCodes,
-                supportsSpeechTranslation: true,
-                supportedSpeechTranslationDirections: CanaryLanguageCatalog.speechTranslationDirections(
-                    for: CanaryLanguageCatalog.flashLanguageCodes
-                ),
+                supportsSpeechTranslation: false,
                 maxChunkSeconds: 15.0,
                 approxDownloadBytes: estimateBytes(from: downloadSize),
                 isRecommendedForPrimaryRU: false,
@@ -630,16 +621,13 @@ public extension TranscriptionModelCatalog {
                 languageSupport: .multilingual,
                 downloadSize: "~180 MB",
                 badge: "Compact · 4 languages",
-                description: "Compact fast Canary Flash model (~182M parameters) for English, German, French, and Spanish speech recognition and translation on Core ML.",
+                description: "Compact fast Canary Flash model (~182M parameters) for English, German, French, and Spanish speech recognition on Core ML.",
                 accuracy: 4,
                 speed: 5,
                 capabilities: ASRModelCapabilities(
                     supportsAutoLanguageDetect: false,
                     supportedLanguageCodes: ["en", "de", "fr", "es"],
-                    supportsSpeechTranslation: true,
-                    supportedSpeechTranslationDirections: CanaryLanguageCatalog.speechTranslationDirections(
-                        for: CanaryLanguageCatalog.flashLanguageCodes
-                    ),
+                    supportsSpeechTranslation: false,
                     maxChunkSeconds: 10.0,
                     minOSVersion: nil,
                     approxDownloadBytes: 180_000_000,
@@ -657,16 +645,13 @@ public extension TranscriptionModelCatalog {
                 languageSupport: .multilingual,
                 downloadSize: "~1.88 GB",
                 badge: "Multilingual · macOS 15+",
-                 description: "Canary 1B v2 Core ML int4 package for Apple Neural Engine on macOS 15+. Multilingual ASR across 25 languages with explicit source language and bidirectional English speech translation.",
+                 description: "Canary 1B v2 Core ML int4 package for Apple Neural Engine on macOS 15+. Multilingual speech recognition across 25 languages with explicit source language.",
                 accuracy: 4,
                 speed: 4,
                 capabilities: ASRModelCapabilities(
                     supportsAutoLanguageDetect: false,
                     supportedLanguageCodes: CanaryLanguageCatalog.oneBV2LanguageCodes,
-                    supportsSpeechTranslation: true,
-                    supportedSpeechTranslationDirections: CanaryLanguageCatalog.speechTranslationDirections(
-                        for: CanaryLanguageCatalog.oneBV2LanguageCodes
-                    ),
+                    supportsSpeechTranslation: false,
                     maxChunkSeconds: 15.0,
                     minOSVersion: ASRModelCapabilities.OSVersion(majorVersion: 15, minorVersion: 0, patchVersion: 0),
                     approxDownloadBytes: 1_884_267_035,

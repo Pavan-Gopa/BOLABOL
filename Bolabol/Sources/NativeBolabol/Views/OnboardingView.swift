@@ -68,7 +68,7 @@ struct OnboardingView: View {
 
   private var header: some View {
     HStack(spacing: 10) {
-      Text("BOLABOL!")
+      Text("BOLABOL")
         .font(.system(size: 17.5, weight: .bold, design: .rounded))
       Spacer()
       stepIndicator

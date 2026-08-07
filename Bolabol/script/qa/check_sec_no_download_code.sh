@@ -1,69 +1,124 @@
 #!/usr/bin/env bash
-# Security guard: detect automated CDN download code for models in Sources/.
-#
-# Rationale: Closes finding F3 (low) from SECURITY_REPORT.md.
-# Bolabol uses URLSession for LLM cloud polishing (legitimate), but model
-# download code should be reviewed before introduction. This script flags
-# patterns that combine network download APIs with model/package context.
-#
-# Scope: script/qa/** (allowed), does not modify Sources/**.
+# Security guard: detect unreviewed automated model/package download code in
+# Sources/. Sanctioned stores stay allowlisted, but new download surfaces fail.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-cd "$ROOT"
-
-if [ ! -d "Sources" ]; then
-    echo "SKIP: Sources/ not found"
-    exit 0
-fi
-
-FAILED=0
-
-# Pattern 1: URLSession/downloadTask/dataTask combined with model/mlmodelc/package context
-# in the same file. This catches automated model download helpers.
-PATTERN1_FILES=$(grep -rl -E "downloadTask|dataTask" Sources/ 2>/dev/null | grep -v "TranscriptionModelStore.swift" || true)
-if [ -n "$PATTERN1_FILES" ]; then
-    for f in $PATTERN1_FILES; do
-        # Check if the same file also references model package paths
-        if grep -q -E "mlmodelc|modelRoot|canary.*package|\.coreml|downloadFromCdn|fetchModel" "$f" 2>/dev/null; then
-            echo "FAIL: possible automated model download code in $f"
-            echo "  Found downloadTask/dataTask + model/package context in same file"
-            FAILED=1
-        fi
-    done
-fi
-
-# Pattern 2: Synchronous Data(contentsOf: URL) for model loading (antipattern)
-PATTERN2=$(grep -rn -E "Data\(contentsOf:.*URL" Sources/ 2>/dev/null | grep -E "model|mlmodelc|package" || true)
-if [ -n "$PATTERN2" ]; then
-    echo "FAIL: synchronous URL model loading detected:"
-    echo "$PATTERN2"
-    FAILED=1
-fi
-
-# Pattern 3: Explicit CDN/remote URLs for model files
-PATTERN3=$(grep -rn -E "https?://[^\"]*\.(mlmodelc|coreml|model|bin)" Sources/ 2>/dev/null | grep -v "// " | grep -v "/*" || true)
-if [ -n "$PATTERN3" ]; then
-    echo "FAIL: hardcoded model URLs detected:"
-    echo "$PATTERN3"
-    FAILED=1
-fi
-
-# Pattern 4: Model install helpers (installModel, downloadModel, fetchPackage)
-# Allowlist: CloudProviderModelCatalog.swift is the sanctioned cloud LLM catalog
-# surface (its presence is enforced by check_cloud_providers.sh). It lists
-# remote LLM models via GET /models JSON; it does not download ASR/CoreML
-# weights or packages. Defense in depth is preserved: any future
-# downloadTask/dataTask introduced there is still caught by Pattern 1
-# (the file already matches the fetchModel/model context probe).
 ALLOWED_CATALOG="Sources/NativeBolabol/Services/CloudProviderModelCatalog.swift"
 ALLOWED_STORE="Sources/NativeBolabol/Stores/TranscriptionModelStore.swift"
-PATTERN4=$(grep -rn -E "func (install|download|fetch)(Model|Package|CoreML|Weights)" Sources/ 2>/dev/null | grep -v "^$ALLOWED_CATALOG:" | grep -v "^$ALLOWED_STORE:" || true)
 
-if [ "$FAILED" -ne 0 ]; then
+validate_download_surface() {
+    local root="$1"
+    local sources="$root/Sources"
+    local failed=0
+
+    if [ ! -d "$sources" ]; then
+        echo "FAIL: Sources/ not found under $root"
+        return 1
+    fi
+    if ! command -v grep >/dev/null 2>&1; then
+        echo "FAIL: grep is required for the download-surface guard"
+        return 1
+    fi
+
+    while IFS= read -r file; do
+        [ -n "$file" ] || continue
+        local relative="${file#"$root/"}"
+        [ "$relative" = "$ALLOWED_STORE" ] && continue
+        if grep -qE 'mlmodelc|modelRoot|canary.*package|\.coreml|downloadFromCdn|fetchModel' "$file"; then
+            echo "FAIL: possible automated model download code in $relative"
+            failed=1
+        fi
+    done < <(grep -RIl --include='*.swift' -E 'downloadTask|dataTask' "$sources" || true)
+
+    local matches
+    matches="$(grep -RIn --include='*.swift' -E 'Data\(contentsOf:[[:space:]]*URL\(string:[[:space:]]*"https?://' "$sources" \
+        | grep -Ei 'model|mlmodelc|package' || true)"
+    if [ -n "$matches" ]; then
+        echo "FAIL: synchronous URL model loading detected:"
+        echo "$matches"
+        failed=1
+    fi
+
+    matches="$(grep -RIn --include='*.swift' -E 'https?://[^"[:space:]]+\.(mlmodelc|coreml|model|bin)([^[:alnum:]_]|$)' "$sources" \
+        | grep -Ev '^[^:]+:[0-9]+:[[:space:]]*//' || true)"
+    if [ -n "$matches" ]; then
+        echo "FAIL: hardcoded model URLs detected:"
+        echo "$matches"
+        failed=1
+    fi
+
+    matches="$(grep -RIn --include='*.swift' -E 'func[[:space:]]+(install|download|fetch)(Model|Package|CoreML|Weights)' "$sources" \
+        | grep -v "^$sources/${ALLOWED_CATALOG#Sources/}:" \
+        | grep -v "^$sources/${ALLOWED_STORE#Sources/}:" || true)"
+    if [ -n "$matches" ]; then
+        echo "FAIL: unauthorized model install/download helper detected:"
+        echo "$matches"
+        failed=1
+    fi
+
+    [ "$failed" -eq 0 ]
+}
+
+self_test() {
+    local fixture
+    fixture="$(mktemp -d "${TMPDIR:-/tmp}/bolabol-download-guard.XXXXXX")"
+    trap 'rm -rf "$fixture"' RETURN
+    mkdir -p \
+        "$fixture/Sources/NativeBolabol/Services" \
+        "$fixture/Sources/NativeBolabol/Stores"
+
+    cat > "$fixture/Sources/NativeBolabol/Services/CloudProviderModelCatalog.swift" <<'EOF'
+func fetchModels() { requestJSONCatalog() }
+EOF
+    cat > "$fixture/Sources/NativeBolabol/Stores/TranscriptionModelStore.swift" <<'EOF'
+func downloadModelPackage() { downloadTaskForReviewedPackage() }
+EOF
+    printf '%s\n' 'func ordinaryCloudRequest() { dataTaskForText() }' \
+        > "$fixture/Sources/NativeBolabol/Services/OrdinaryCloud.swift"
+
+    validate_download_surface "$fixture" >/dev/null || {
+        echo "FAIL: valid download-guard fixture was rejected"
+        return 1
+    }
+
+    cat > "$fixture/Sources/NativeBolabol/Services/Unreviewed.swift" <<'EOF'
+func request() { downloadTaskForNetwork() }
+let package = "weights.mlmodelc"
+EOF
+    if validate_download_surface "$fixture" >/dev/null; then
+        echo "FAIL: negative self-test accepted downloadTask plus model context"
+        return 1
+    fi
+    rm "$fixture/Sources/NativeBolabol/Services/Unreviewed.swift"
+
+    printf '%s\n' 'let weights = "https://example.invalid/model.bin"' \
+        > "$fixture/Sources/NativeBolabol/Services/HardcodedURL.swift"
+    if validate_download_surface "$fixture" >/dev/null; then
+        echo "FAIL: negative self-test accepted a hardcoded model URL"
+        return 1
+    fi
+    rm "$fixture/Sources/NativeBolabol/Services/HardcodedURL.swift"
+
+    printf '%s\n' 'func downloadModelWeights() {}' \
+        > "$fixture/Sources/NativeBolabol/Services/UnauthorizedHelper.swift"
+    if validate_download_surface "$fixture" >/dev/null; then
+        echo "FAIL: negative self-test accepted an unauthorized download helper"
+        return 1
+    fi
+
+    echo "OK: model download guard negative self-test"
+}
+
+if [ "${1:-}" = "--self-test" ]; then
+    self_test
+    exit $?
+fi
+
+if ! validate_download_surface "$ROOT"; then
     echo "FAIL: automated model download surface detected in Sources/"
-    echo "  (CDN download code requires security review before introduction)"
+    echo "  (model/package download code requires review before introduction)"
     exit 1
 fi
 
-echo "OK: no automated model download code in Sources/ (CDN surface clean)"
+echo "OK: no unreviewed automated model download code in Sources/"

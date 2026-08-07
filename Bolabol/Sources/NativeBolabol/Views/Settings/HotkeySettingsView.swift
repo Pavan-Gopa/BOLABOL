@@ -116,6 +116,26 @@ struct HotkeySettingsView: View {
                         .help(generalSettingsStore.text(.reset))
                     }
                     .padding(.vertical, 0)
+
+                    Toggle(isOn: humorSliderEnabledBinding) {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(generalSettingsStore.text(.humorSlider))
+                                .font(.body.weight(.medium))
+                            Text(generalSettingsStore.text(.humorSliderDesc))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 2)
+
+                    Picker(generalSettingsStore.text(.humorStyle), selection: humorPromptModeBinding) {
+                        ForEach(HumorPromptMode.allCases) { mode in
+                            Text(generalSettingsStore.text(mode.appTextKey))
+                                .tag(mode)
+                        }
+                    }
+                    .padding(.vertical, 0)
+
                 }
 
                 // Row for Settings Hotkey (Option+~) - always visible
@@ -380,6 +400,20 @@ struct HotkeySettingsView: View {
         Binding(
             get: { HotkeySettings.normalizeMacModifiers(hotkeySettingsStore.settings.settingsHotkey) },
             set: { hotkeySettingsStore.settings.settingsHotkey = HotkeySettings.normalizeMacModifiers($0) }
+        )
+    }
+
+    private var humorSliderEnabledBinding: Binding<Bool> {
+        Binding(
+            get: { hotkeySettingsStore.settings.humorSliderEnabled },
+            set: { hotkeySettingsStore.settings.humorSliderEnabled = $0 }
+        )
+    }
+
+    private var humorPromptModeBinding: Binding<HumorPromptMode> {
+        Binding(
+            get: { hotkeySettingsStore.settings.humorPromptMode },
+            set: { hotkeySettingsStore.settings.humorPromptMode = $0 }
         )
     }
 

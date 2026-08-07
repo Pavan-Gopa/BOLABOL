@@ -196,3 +196,92 @@ func helpCopyDocumentsHUDProviderScrollAndModelMenu() {
   #expect(providers.contains("Qwen"))
   #expect(providers.contains("OpenRouter"))
 }
+
+@Test
+func hudProviderSwitcherInitializerUsesTheNamedThreshold() {
+  let model = ProviderQuickSwitcherModel(
+    providers: [
+      .init(id: "one", displayName: "One"),
+      .init(id: "two", displayName: "Two")
+    ],
+    activeID: "one"
+  )
+  #expect(model.stepThreshold == ProviderQuickSwitcherModel.defaultStepThreshold)
+}
+
+@Test
+func hudProviderSwitcherPreciseScrollHonorsBelowAndExactThreshold() {
+  let providers = [
+    ProviderQuickSwitcherModel.Provider(id: "one", displayName: "One"),
+    ProviderQuickSwitcherModel.Provider(id: "two", displayName: "Two")
+  ]
+  var model = ProviderQuickSwitcherModel(
+    providers: providers,
+    activeID: "one",
+    stepCooldown: 0
+  )
+
+  #expect(model.applyScroll(
+    deltaY: ProviderQuickSwitcherModel.defaultStepThreshold - 0.01,
+    now: 1
+  ) == nil)
+  #expect(model.activeProvider?.id == "one")
+  model = ProviderQuickSwitcherModel(
+    providers: providers,
+    activeID: "one",
+    stepCooldown: 0
+  )
+  #expect(model.applyScroll(
+    deltaY: -ProviderQuickSwitcherModel.defaultStepThreshold,
+    now: 2
+  )?.id == "two")
+}
+
+@Test
+func hudProviderSwitcherAccumulationReversalAndBoundarySelectionAreDeterministic() {
+  let providers = [
+    ProviderQuickSwitcherModel.Provider(id: "one", displayName: "One"),
+    ProviderQuickSwitcherModel.Provider(id: "two", displayName: "Two"),
+    ProviderQuickSwitcherModel.Provider(id: "three", displayName: "Three")
+  ]
+  let threshold = ProviderQuickSwitcherModel.defaultStepThreshold
+  var model = ProviderQuickSwitcherModel(
+    providers: providers,
+    activeID: "one",
+    stepCooldown: 0
+  )
+
+  #expect(model.applyScroll(deltaY: -threshold / 2, now: 1) == nil)
+  #expect(model.applyScroll(deltaY: -threshold / 2, now: 2)?.id == "two")
+  #expect(model.applyScroll(deltaY: threshold / 2, now: 3) == nil)
+  #expect(model.applyScroll(deltaY: threshold / 2, now: 4)?.id == "one")
+  #expect(model.applyScroll(deltaY: threshold, now: 5)?.id == "three")
+  #expect(model.applyScroll(deltaY: -threshold, now: 6)?.id == "one")
+}
+
+@Test
+func hudProviderSwitcherNonPreciseDeltaUsesTheSameNamedThreshold() {
+  let threshold = ProviderQuickSwitcherModel.defaultStepThreshold
+  #expect(ProviderQuickSwitcherModel.nonPreciseHUDScrollDelta(1) == threshold)
+  #expect(ProviderQuickSwitcherModel.nonPreciseHUDScrollDelta(-2) == -2 * threshold)
+}
+
+@Test
+func hudProviderSwitcherIgnoresNonFiniteScrollWithoutPoisoningLaterInput() {
+  let providers = [
+    ProviderQuickSwitcherModel.Provider(id: "one", displayName: "One"),
+    ProviderQuickSwitcherModel.Provider(id: "two", displayName: "Two")
+  ]
+  let threshold = ProviderQuickSwitcherModel.defaultStepThreshold
+
+  for invalidDelta in [CGFloat.nan, CGFloat.infinity, -CGFloat.infinity] {
+    var model = ProviderQuickSwitcherModel(
+      providers: providers,
+      activeID: "one",
+      stepCooldown: 0
+    )
+    #expect(model.applyScroll(deltaY: invalidDelta, now: 1) == nil)
+    #expect(model.activeProvider?.id == "one")
+    #expect(model.applyScroll(deltaY: -threshold, now: 2)?.id == "two")
+  }
+}

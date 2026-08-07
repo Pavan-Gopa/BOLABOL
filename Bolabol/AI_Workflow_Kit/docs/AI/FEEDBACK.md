@@ -2,6 +2,1374 @@
 
 > Workers fill sections on handoff. Orchestrator reads this every status check.
 
+## ADR021-ASR-ONLY-CLEANUP — Architect Packet
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | `ADR021-ASR-ONLY-CLEANUP` |
+| Actor | architect (design-only) |
+| Date | 2026-08-07 |
+| GraphiFy | Existing `graphify-out/graph.json` queried first; 6,118 nodes / 13,769 edges; no rebuild |
+| Product/test/QA edits | None in this architect turn |
+| ADR | ADR-022 appended to `DECISIONS.md` |
+| RESULT | `design_complete` |
+
+### Root Cause
+
+BUG-HHP-007 survived because Attempt 2 removed the visible Canary translation
+runtime and UI callbacks but left a complete lower-level operation path:
+
+```text
+TranscriptionSessionOperation.speechTranslation
+  -> TranscriptionSessionResolver.resolveCanary
+  -> TranscriptionLanguageRoute.speechTranslationTargetLanguageCode
+  -> TranscriptionSessionPlan.request
+  -> TranscriptionRequest.targetLanguageCode
+  -> CanaryCoreMLEngine.resolveTargetLanguage
+  -> Canary source/target prompt tokens
+```
+
+`TranscriptionEngineStore.makeSpeechTranslationSession` can still construct that
+path independently of the removed UI. Current catalog capability values are
+`supportsSpeechTranslation == false`, so some current calls return unavailable,
+but the generic API, factory, request field, plan target state, and engine
+consumer still make the forbidden operation a first-class product contract.
+This is an architectural contradiction, not a UI-marker defect.
+
+BLOCK-QA-001 survived because current guards prove positive historical markers
+or broad allowlists rather than the active ADR-021 boundary. In particular,
+`check_s1b_scope.sh` allowlists every relevant routing/UI file,
+`check_s9_engine_contract.sh` has no negative deep-contract scan, and mandatory
+searches can turn tool failure into empty results through `|| true`. A green
+`run_all.sh` therefore does not prove that Canary speech translation is absent.
+
+### GraphiFy Evidence
+
+The required read-only commands were run against the existing graph:
+
+| Command/evidence | Result |
+|---|---|
+| ADR-021/operation/request/store query | Resolved `TranscriptionSessionOperation`, `.speechTranslation`, `TranscriptionEngineStore.makeSpeechTranslationSession`, `TranscriptionRequest`, `CanaryCoreMLEngine`, `ContentView`, and the current ADR regression test. |
+| Caller/consumer query | Connected `makeSpeechTranslationSession` to resolver, model store presence, engine construction, and session plan; connected `targetLanguageCode` to ContentView and Canary request consumption. |
+| Engine behavior query | Confirmed WhisperKit, Parakeet, Canary, GigaAM, ContentView, and the engine store are the active family boundary. |
+| `path TranscriptionSessionOperation TranscriptionEngineStore` | Two hops: operation is referenced by `.makeSession()`, which is a method of `TranscriptionEngineStore`. |
+| `path TranscriptionRequest CanaryCoreMLEngine` | Two hops: request is referenced by `.resolveLanguage()`, a method of `CanaryCoreMLEngine`. |
+| `explain makeSpeechTranslationSession` | Degree 13; method at `TranscriptionEngineStore.swift:101`, calls resolver/engine/model availability and returns an engine-bound session. |
+
+Source verification narrowed the graph evidence:
+
+- The only engine consumer of `TranscriptionRequest.targetLanguageCode` is
+  `CanaryCoreMLEngine.resolveTargetLanguage`. Whisper, Parakeet, GigaAM, and the
+  workflow do not read it.
+- `translateToEnglish` is different: WhisperKit consumes it as native
+  `task: .translate`; Parakeet and GigaAM reject it; Canary currently converts
+  it into a target and must instead hard-reject it.
+- No current product symbol named `TextTranslationEngine`,
+  `TextTranslationRequest`, `TextTranslationEngineStore`, or NLLB runtime
+  exists. Current text translation is real `TranslationPrompt` +
+  `PolishingEngine`: `CloudTextPolishingEngine` for cloud providers and
+  `MLXSwiftPolishingEngine` for local models.
+- `TranslationModalView` provider rows are built from
+  `PolishingEngineStore.descriptors` and downloaded/custom MLX models. Floating
+  Translation forwards only text translation and ordinary recording-ASR
+  callbacks. Neither currently exposes Canary.
+- `ASR_COREML_STEPS.md` has a complete S9 card but no standalone S11 heading;
+  it only records S11 deferrals. The implemented S11 contract is documented in
+  ADR-020 and the S11 handoff in this file.
+
+### Chosen Architecture
+
+#### Session Operation
+
+Replace the current cases in one compile-breaking edit:
+
+```swift
+public enum TranscriptionSessionOperation: Equatable, Sendable {
+    case asr
+    case whisperTargetTranslation(languageCode: String)
+}
+```
+
+Disposition:
+
+- Delete `.speechTranslation`; do not deprecate, alias, or retain it for older
+  callers. All known values are ephemeral and there is no persisted enum value.
+- Rename `.ordinaryASR` to `.asr` so the accepted operation is explicit and
+  backend-neutral.
+- Rename current `.whisperTarget` to `.whisperTargetTranslation`. It is a
+  Whisper target-output intent, not a Canary-capable generic operation.
+- `resolveCanary`, `resolveGigaAM`, and the Parakeet backend accept only `.asr`.
+  Receiving
+  `.whisperTargetTranslation` returns typed `.translationUnsupported` before
+  engine construction/invocation.
+- `resolveLegacyWhisperFamily` preserves current behavior: multilingual Whisper
+  + English target sets `translateToEnglish`; non-English target and
+  English-only Whisper emit only a post-ASR text-translation target. ContentView
+  preserves Parakeet target-output behavior as `.asr` plus a separate text-only
+  target; that target never enters the speech session operation or request.
+
+#### Transcription Request
+
+Exact decision:
+
+- Delete `TranscriptionRequest.targetLanguageCode` and its initializer
+  parameter. It is ephemeral, has no persisted migration, and no accepted
+  Whisper/Parakeet/GigaAM consumer.
+- Keep `forcedLanguageCode`. It means spoken/source ASR language constraint and
+  is mandatory non-auto for Canary/GigaAM valid sessions.
+- Keep `translateToEnglish`. It means only Whisper's native X→English task. It
+  is not a generic target and must not be used by Canary, Parakeet, or GigaAM.
+- Do not add a replacement generic target field. Non-English target text remains
+  a field in the text-only route/UI flow and never enters `TranscriptionRequest`.
+- A shared request accepted by the common `TranscriptionEngine` protocol cannot
+  make a manually constructed Canary request with `translateToEnglish == true`
+  unrepresentable without splitting the engine protocol/request type. That is a
+  disproportionate redesign. Product construction is made safe by the typed
+  session operation/resolver; engine hard rejection remains defense in depth.
+- Direct compile breaks from deleting the field are expected in
+  `EngineProtocols.swift`, `TranscriptionLanguageRouting.swift`,
+  `CanaryCoreMLEngine.swift`, and `S9EngineEdgeCaseTests.swift`. No other current
+  request constructor supplies the target field.
+
+#### Session Plan and Capabilities
+
+- Delete `TranscriptionLanguageRoute.speechTranslationTargetLanguageCode`.
+- Rename `autoTranslateTargetLanguageCode` to
+  `postASRTextTranslationTargetLanguageCode` (or an equally explicit text-only
+  name). It remains data for the existing text provider path and is never copied
+  into a speech request.
+- Delete `TranscriptionSessionPlan.targetLanguageChoices`, the Canary
+  `targetLanguageCode` field, `isCanaryTargetSwitchable`, and
+  `toggledCanaryTarget()`. Keep source-language choices/code and the display/
+  requested language needed by accepted ASR/Whisper UI.
+- Delete Canary target construction from `resolveCanary`. For valid ASR, source
+  and decoder target token are the same explicit language.
+- Delete `SpeechTranslationDirection`, `supportsSpeechTranslation`,
+  `supportedSpeechTranslationDirections`, `supportsSpeechTranslation(from:to:)`,
+  `speechTranslationTargets(from:)`, and descriptor forwarding helpers. Current
+  catalog entries already set the flag false; no active accepted consumer
+  remains. Historical AST evidence stays historical.
+- Keep `TranscriptionLanguageMode.switchable` only as a generic explicit-source
+  presentation capability if another accepted ASR path uses it. It must have no
+  Canary target semantics. Do not delete/reshape HUD mode state merely to remove
+  a dead target toggle.
+
+#### Engine Boundary
+
+- Delete `CanaryCoreMLEngine.resolveTargetLanguage`.
+- Add one ASR-only request validator that rejects `translateToEnglish == true`
+  before OS validation, model loading, audio conversion, or decoding. Keep it
+  internal so S9 tests execute the real engine seam.
+- Replace `CanaryTranscriptionError.unsupportedSpeechTranslation(source:target:)`
+  with non-directional `.translationUnsupported`; remove active engine comments
+  that advertise AST as a product operation while retaining historical spike
+  evidence in docs.
+- Flash and Path B decoding use the explicit resolved source as both source and
+  target token. Do not change mel, chunking, model loading, state, token IDs,
+  compute units, or decoder loops.
+- Keep GigaAM's fixed-RU and translation rejection. Do not add target-field
+  handling to GigaAM.
+- WhisperKit remains the only engine that consumes `translateToEnglish`.
+  Parakeet remains auto ASR and keeps rejection of that flag.
+
+#### Text Translation
+
+- Do not create a placeholder `TextTranslationEngine` merely to satisfy old
+  prose. The concrete current text subsystem is already separate from speech:
+  `TranslationPrompt` -> `PolishingEngine` -> cloud or local MLX engine.
+- Keep `TranslationModalView`, `FloatingTranslationWindowManager`,
+  `ContentView.translateText`, `ContentView.autoTranslateRawText`, and
+  `ContentView.resolveTranslationEngine` behavior intact.
+- A recording in Translation first runs ordinary ASR, then submits resulting
+  text to the selected cloud/local text provider. It never asks Canary for a
+  speech target.
+- No NLLB runtime/package, model catalog row, asset, download, Python process,
+  network request, or new runtime is authorized.
+
+### Symbol Inventory
+
+`Y/N` engine columns mean the symbol is required by the accepted behavior, not
+merely that the current file mentions it.
+
+| Symbol | File | Current callers | Current engine consumers | State | Wh | Pk | Ca ASR | Gi | Text | ADR-021 violation | Exact disposition |
+|---|---|---|---|---|---:|---:|---:|---:|---:|---|---|
+| `TranscriptionSessionOperation` | `TranscriptionLanguageRouting.swift` | Snapshot/plan/resolver, `makeSession`, ContentView, Sidebar, Audio modal, Hotkey settings, tests/smokes | Resolver selects family behavior | Ephemeral | Y | Y | Y | Y | N | No, but current case set is unsafe | Keep type; replace cases with `.asr` and `.whisperTargetTranslation` only |
+| `.speechTranslation` | same | `makeSpeechTranslationSession`; two S11 tests; resolver switches | Canary resolver can build direction | Ephemeral | N | N | N | N | N | Yes | Delete with no alias |
+| `.ordinaryASR` | same | All ordinary product/session callers | All engines indirectly | Ephemeral | Y | Y | Y | Y | N | No | Rename to `.asr`; update every caller |
+| `.whisperTarget` (current) | same | `ContentView.makeLocalSession`; S11 tests | Whisper request flag or post-ASR text route; current resolver also admits Parakeet | Ephemeral | Y | current target intent | N | N | Y after ASR | Name/scope ambiguous | Rename/narrow to `.whisperTargetTranslation`; Parakeet moves to `.asr`; hard-unavailable on all non-Whisper backends |
+| `whisperTargetTranslation` (requested symbol) | Not currently present | None | None | N/A | Y | N | N | N | Y after Whisper ASR | No | Add only as replacement Whisper-typed case; not a generic speech operation |
+| `speechTranslationTargetLanguageCode` | `TranscriptionLanguageRouting.swift` | Canary resolver/toggle, plan request construction | Copied into Canary request | Ephemeral | N | N | N | N | N | Yes | Delete |
+| `TranscriptionLanguageRoute.autoTranslateTargetLanguageCode` | same | ContentView raw/polish text fallback; routing tests | No speech engine | Ephemeral | Y | Y | N | N | Y | Name obscures boundary | Rename to explicit post-ASR text target; never copy to request |
+| `TranscriptionRequest.targetLanguageCode` | `EngineProtocols.swift` | Resolver/plan constructors; S9 test | Canary only (`resolveTargetLanguage`) | Ephemeral | N | N | N | N | N | Yes | Delete; no replacement/migration |
+| `TranscriptionRequest.forcedLanguageCode` | `EngineProtocols.swift` | Workflow and session plan | Whisper source hint; Canary explicit source; Giga fixed RU; ignored for Parakeet manager call | Ephemeral | Y | not restrictive | Y | Y | N | No | Keep as source-language field |
+| `TranscriptionRequest.translateToEnglish` | `EngineProtocols.swift` | Legacy router/session plan/workflow/tests | Whisper consumes; Parakeet/Giga reject; Canary currently consumes | Ephemeral | Y | reject | reject | reject | N | Canary consumer violates | Keep with Whisper-only documentation; hard-reject Canary/Giga/Parakeet |
+| `TranscriptionRequest` | `EngineProtocols.swift` | Workflow, plan, runtime tests | All `TranscriptionEngine`s | Ephemeral | Y | Y | Y | Y | N | Current target field violates | Narrow to audio URL + source + Whisper flag |
+| `SpeechTranslationDirection` | `TranscriptionModelDescriptor.swift` | Only capability methods | Canary resolver/engine consult through capabilities | Source-built Codable value | N | N | N | N | N | Yes as active product capability | Delete type and coding keys |
+| `supportsSpeechTranslation` / directions | same | Catalog initialization/tests; Canary resolver/engine | Canary only | Source-built; not user state | N | N | N | N | N | Yes as active product capability | Delete fields/helpers/initializers; update catalog tests |
+| `TranscriptionSessionSnapshot` | `TranscriptionLanguageRouting.swift` | Resolver convenience API/tests/store | None directly | Ephemeral | Y | Y | Y | Y | N | Carries unsafe operation today | Keep; operation uses closed case set; no directional target |
+| `TranscriptionSessionPlan` | same | Engine session, workflow, ContentView/HUD, tests | Produces request for all engines | Ephemeral | Y | Y | Y | Y | text intent only | Canary target fields violate | Keep immutable plan; remove Canary target choices/toggle/request target |
+| `TranscriptionLanguageRouter` | same | Legacy Whisper family resolver and routing tests | Produces Whisper flag/post-ASR text intent | Ephemeral pure function | Y | target intent | N | N | Y | No if isolated | Keep; rename text-only target field and preserve tests |
+| `TranscriptionSessionResolver` | same | Store/tests/workflow plan construction | Routes all families | Ephemeral pure function | Y | Y | Y | Y | N | Current Canary branch violates | Narrow Canary/Giga to `.asr`; legacy typed op only elsewhere |
+| `makeSpeechTranslationSession` | `TranscriptionEngineStore.swift` | No current product UI caller after Attempt 2; graph shows complete callable seam | Can bind Canary engine/plan | Ephemeral factory | N | N | N | N | N | Yes | Delete whole method, comment, and tests; no wrapper |
+| `makeSession` | same | ContentView, Sidebar, Audio modal, Hotkey settings, S9 smoke, S11 tests | Binds selected engine + plan | Ephemeral factory | Y | Y | Y | Y | N | Generic op currently admits forbidden case | Keep; accept closed operation enum and return typed unavailable before engine |
+| `CanaryCoreMLEngine.resolveTargetLanguage` | `CanaryCoreMLEngine.swift` | Flash and Path B transcribe internals; tests via request behavior | Canary | Ephemeral internal | N | N | N | N | N | Yes | Delete; source token is target token for ASR |
+| `CanaryTranscriptionError.unsupportedSpeechTranslation` | `CanaryCoreMLEngine.swift` | Target resolver | Canary | Ephemeral error | N | N | N | N | N | Yes, directional product error | Replace with non-directional `.translationUnsupported` used by ASR-only validation |
+| Canary request validation | `CanaryCoreMLEngine.swift` | `transcribe`, internal edge tests | Canary | Ephemeral | N | N | Y | N | N | Currently allows accepted capability directions | Keep explicit source validation; add early hard rejection of Whisper flag |
+| `ContentView.targetLanguageCode` | `ContentView.swift` | HUD legacy target, Gemini target, polish/text fallback, Whisper operation | Whisper route only; text providers after ASR | Derived ephemeral UI value | Y | post-ASR only | N | N | Y | Not itself a Canary seam | Keep or rename to clarify selected text/output target; prohibit use in Canary request/session |
+| Canary target HUD/toggle code | `ContentView.swift` | `isHUDLanguageControlEnabled`, `handleOverlayLanguageTap` | Replaces pending Canary plan | Ephemeral | N | N | N | N | N | Yes | Delete `isCanaryTargetSwitchable`/`toggledCanaryTarget` branches; explicit Core ML HUD remains source/fixed only |
+| `RecordingTranscriptionWorkflow` | `RecordingTranscriptionWorkflow.swift` | ContentView/Sidebar/Audio modal/tests | Calls common engine with frozen plan request | Ephemeral service | Y | Y | Y | Y | N | Plan path safe only after request narrowing | Keep plan/no-engine-on-unavailable contract; no directional field |
+| `TranslationModalView` | `TranslationModalView.swift` | ContentView sheet and floating window | No speech engine; callbacks to ordinary ASR and text provider | UI state; provider binding may persist outside view | N | N | recording ASR only | recording ASR only | Y | Currently compliant | Read-only; tests prove no Canary provider/tag/callback |
+| `FloatingTranslationWindowManager` | same-named service | ContentView floating toggle | No engine; forwards modal closures | Ephemeral window manager | N | N | recording ASR only | recording ASR only | Y | Currently compliant | Read-only; tests prove no Canary callback/dependency |
+| `TextTranslationEngine` | No current file/symbol | None | None | Absent | N | N | N | N | N | Fake addition would violate scope | Do not add; ADR-022 treats separation as subsystem boundary, not placeholder type |
+| `TranslationPrompt` | `TranslationPrompt.swift` | `ContentView.translateText` / auto translate; tests | Consumed by text polishing engines | Ephemeral text | N | N | N | N | Y | No | Keep unchanged |
+| Cloud text path | `ContentView`, `PolishingEngineStore`, `CloudTextPolishingEngine` | Translation modal/floating/HUD text fallback | Cloud text polishing engine | Settings + ephemeral request | N | N | N | N | Y | No | Preserve; no paid/network acceptance invocation in this cleanup |
+| Local text path | `TranslationModalView`, `ContentView`, `PolishingEngineStore`, `MLXSwiftPolishingEngine` | Downloaded/custom MLX provider rows | Local MLX text polishing engine | Model install/settings + ephemeral request | N | N | N | N | Y | No | Preserve; no new model/download/runtime |
+
+### Exact Coder Scope
+
+The following is the complete minimal ordered scope. “Read-only” means inspect
+and include in verification, but do not edit unless compilation proves this
+packet missed a direct dependency; any expansion must be reported before use.
+
+| Order | File | Action | Exact responsibility | Prohibited collateral change |
+|---:|---|---|---|---|
+| 1 | `Tests/NativeBolabolCoreTests/ApplicationWideRegressionContractTests.swift` | edit | Make ADR-021 source contract fail first for all deep symbols/files/UI callbacks and scan product Sources, not only one view | Do not touch closed humor/onboarding tests |
+| 2 | `Tests/NativeBolabolCoreTests/TranscriptionLanguageRoutingTests.swift` | edit | Lock Whisper native X→English and post-ASR text target semantics after route-field rename | Do not change accepted legacy outputs |
+| 3 | `Tests/NativeBolabolCoreTests/S11SessionRoutingTests.swift` | edit | Replace old case names; remove tests that construct generic speech translation; assert Canary/Giga reject typed Whisper target op and ASR plans have no directional request | Do not weaken explicit-source/OS/package/session immutability matrix |
+| 4 | `Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift` | edit | Remove target-field construction; execute real Canary ASR-only validator for Flash/1B and translation flag rejection before load | Do not change model language sets/chunk tests |
+| 5 | `Tests/NativeBolabolCoreTests/RecordingTranscriptionWorkflowTests.swift` | edit | Preserve exact plan request and zero engine calls for typed unavailable; update `.asr` case | Do not alter NoteStore semantics |
+| 6 | `Tests/NativeBolabolCoreTests/TranslationRuntimeContractTests.swift` | edit | Prove modal and Floating Translation have no Canary provider/tag/callback and real cloud/local text provider composition remains | Do not add fake text engine/NLLB smoke |
+| 7 | `Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift` | edit | Remove directional speech-translation type, capability fields, Codable keys, helpers, and catalog initializer arguments | No model IDs, language lists, package paths, sizes, OS gates, recommendation flags, or assets |
+| 8 | `Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift` | edit | Install closed operation enum; remove Canary target route/plan/toggle; rename post-ASR text field; narrow resolver | No change to accepted Canary source selection, Giga RU, Whisper/Parakeet auto, availability, or persistence |
+| 9 | `Sources/NativeBolabolCore/Services/EngineProtocols.swift` | edit | Delete request target field/initializer argument; document source vs Whisper-only flag | Do not split protocols or add a runtime |
+| 10 | `Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift` | edit | Delete `makeSpeechTranslationSession`; keep one `makeSession` factory and typed unavailable behavior | No engine-cache/model-store/fallback changes |
+| 11 | `Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift` | edit | Delete target resolution/directional error and AST product comments; hard-reject translation flag before load; use source token as target for ASR | No frontend, chunking, compute units, state, vocab, decoder, model loading, or smoke criteria changes |
+| 12 | `Sources/NativeBolabol/Views/ContentView.swift` | edit | Remove Canary target toggles/callback semantics; use new cases/route field; preserve Whisper and text-provider targets | No HUD humor, NoteStore, onboarding, Gemini, provider, polish, localization, or unrelated UI changes |
+| 13 | `Sources/NativeBolabol/Views/SidebarView.swift` | edit | Mechanical `.ordinaryASR` -> `.asr` compile migration only | No retranscription/polish behavior change |
+| 14 | `Sources/NativeBolabol/Views/AudioPlaybackModalView.swift` | edit | Mechanical `.ordinaryASR` -> `.asr` compile migration only | No playback/retranscription/polish behavior change |
+| 15 | `Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift` | edit | Mechanical `.asr` migration for explicit Core ML session presentation | No Settings redesign/localization/capability changes |
+| 16 | `Sources/NativeBolabol/Services/CanarySpeechTranslationRuntime.swift` | delete/keep deleted | Verify file remains absent; delete if a concurrent mutation restored it | Do not replace it with another wrapper |
+| 17 | `Sources/NativeBolabol/Views/TranslationModalView.swift` | read-only | Verify provider rows/callbacks remain text-only and no Canary | No UI redesign or provider behavior change |
+| 18 | `Sources/NativeBolabol/Services/FloatingTranslationWindowManager.swift` | read-only | Verify only text translation + ordinary recording callbacks remain | No window behavior change |
+| 19 | `Sources/NativeBolabolCore/Services/RecordingTranscriptionWorkflow.swift` | read-only | Verify frozen plan/no-call-unavailable behavior survives request narrowing | No API compatibility helper unless compiler requires target removal |
+| 20 | `Sources/NativeBolabol/Services/WhisperKitTranscriptionEngine.swift` | read-only | Verify it remains sole consumer of `translateToEnglish` | No decoding option changes |
+| 21 | `Sources/NativeBolabol/Services/ParakeetTranscriptionEngine.swift` | read-only | Verify auto ASR and translation rejection remain | No FluidAudio/audio-preparation changes |
+| 22 | `Sources/NativeBolabol/Engines/GigaAMCoreMLEngine.swift` | read-only | Verify fixed-RU and translation rejection remain | No RNNT/frontend changes |
+| 23 | `Sources/NativeBolabolCore/Models/TranscriptionLanguageMode.swift` | read-only | Ensure no remaining switchable state has Canary target meaning | No persisted enum migration/redesign |
+| 24 | `Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift` | read-only | Verify fixed explicit labels render after target-toggle removal | No layout/animation/accessibility changes |
+| 25 | `Tests/NativeBolabolCoreTests/S9RuntimeSmokeTests.swift` | edit | Mechanical `.asr` migration only; preserve all real Flash/1B/GigaAM paths/results | No new translation smoke, asset, network, or weaker opt-in gate |
+| 26 | `Tests/NativeBolabolCoreTests/TranscriptionModelSettingsTests.swift` | edit | Remove stale Canary target toggle call; update `.asr`; retain no-persistence proof | No settings migration behavior change |
+| 27 | `Tests/NativeBolabolCoreTests/CoreMLEngineTests.swift` | edit | Remove stale `supportsSpeechTranslation == false` assertions; keep source/OS/chunk truth | Do not reduce ASR coverage |
+| 28 | `Tests/NativeBolabolCoreTests/TranscriptionModelCatalogTests.swift` | edit | Remove deleted capability assertions; preserve GO IDs/backends/languages/origins | No catalog snapshot/order changes |
+| 29 | `Tests/NativeBolabolCoreTests/OnboardingModelRecommendationTests.swift` | edit | Remove deleted capability initializer argument only | No ranking/onboarding behavior change |
+| 30 | `Tests/NativeBolabolCoreTests/DomainModelsExhaustiveTests.swift` | read-only | Verify `translateToEnglish` value behavior remains | No domain expansion |
+| 31 | `script/qa/check_adr021_canary_asr_only.sh` | add + executable | Own fail-closed application-wide ADR-021 absence checks and nine-mutation self-test | No runtime/product generation; no network |
+| 32 | `script/qa/check_s1b_scope.sh` | edit | Keep S1b ownership; add Sources/tool failure and isolated negative self-test | Do not add ADR-021 marker allowlist policy |
+| 33 | `script/qa/check_s6_gigaam_spike.sh` | edit | Fail closed for Sources/tool; self-test Giga invariant mutation | Do not change spike evidence or absorb Canary policy |
+| 34 | `script/qa/check_s9_engine_contract.sh` | edit | Require ASR-only engine test/validator and fail-closed self-test; remove stale mapping names only when replaced by exact new tests | Do not weaken frontend/chunk/storage/security checks |
+| 35 | `script/qa/check_no_nllb_translation.sh` | edit | Require Sources/tool; retain fake/NLLB runtime negative scan and self-test | Do not ban real cloud/local PolishingEngine text paths |
+| 36 | `script/qa/run_all.sh` | read-only | Existing `check_*.sh` glob must discover the new executable guard | Do not special-case/skip guards |
+
+### Ordered Implementation
+
+1. Add/strengthen failing contract tests first. Confirm the focused suites fail
+   on `.speechTranslation`, factory, request target, Canary resolver target, and
+   weak UI-only coverage.
+2. Replace `TranscriptionSessionOperation` with `.asr` and
+   `.whisperTargetTranslation`; remove the generic speech case.
+3. Delete `makeSpeechTranslationSession` with no alias.
+4. Delete directional capabilities/plan/route fields and
+   `TranscriptionRequest.targetLanguageCode`; rename the text-only route target.
+5. Fix all compile-time call sites listed above, including mechanical `.asr`
+   migrations and removal of Canary target HUD toggles.
+6. Re-run Whisper/Parakeet focused tests immediately; preserve auto, target
+   English native behavior, and post-ASR text translation.
+7. Re-run Canary Flash/1B/GigaAM session tests; preserve explicit source and
+   fixed-RU behavior with no target request field.
+8. Delete Canary target resolution and add early translation-flag rejection as
+   engine defense in depth.
+9. Add the dedicated fail-closed ADR-021 guard; harden the four existing guards
+   without moving policy into S1b.
+10. Run every guard `--self-test`; each named negative mutation must report
+    nonzero and restore its fixture automatically.
+11. Run all focused tests in the acceptance list.
+12. Run full `swift test`, `run_all.sh`, and 20x critical repetition.
+13. Run ThreadSanitizer and AddressSanitizer.
+14. Run unchanged scratch and installed real smokes; do not fetch/download.
+15. Run release verification and record exact results for Reviewer.
+
+### Test Matrix
+
+| Contract | Existing file | Exact recommended addition/preservation |
+|---|---|---|
+| Canary Flash explicit ASR accepted | `S11SessionRoutingTests.swift`, `S9EngineEdgeCaseTests.swift` | `.asr` plan forces supported EN/DE/FR/ES source, request has no target, flag false |
+| Canary 1B explicit ASR accepted | same + `S9RuntimeSmokeTests.swift` | Preserve currently accepted source capability scope, macOS 15/package gates, flag false; no directional target |
+| GigaAM RU ASR accepted | `S11SessionRoutingTests.swift`, `S9EngineEdgeCaseTests.swift` | `.asr` always forces `ru`, fixed HUD, no target/flag |
+| Whisper auto preserved | `S11SessionRoutingTests.swift`, `TranscriptionLanguageRoutingTests.swift` | `.asr`, nil source when auto, no translation flag |
+| Parakeet auto/target-output preserved | same + `TranslationRuntimeContractTests.swift` | Speech session is always `.asr`, with no restrictive hint or translation flag; target-output mode carries text target separately to existing provider |
+| Whisper target translation preserved | same + `RecordingTranscriptionWorkflowTests.swift` | `.whisperTargetTranslation("en")` on multilingual Whisper sets only `translateToEnglish`; non-English target remains post-ASR text intent |
+| Canary speech translation unrepresentable/unavailable | `ApplicationWideRegressionContractTests.swift`, `S11SessionRoutingTests.swift` | Source contract proves generic case/factory/target field absent; passing typed Whisper op to Canary returns `.translationUnsupported` |
+| GigaAM translation unavailable | `S11SessionRoutingTests.swift`, `EngineConstructionTests.swift` | Typed Whisper op unavailable; direct request flag rejected |
+| Parakeet speech translation unavailable | `S11SessionRoutingTests.swift` | Typed Whisper op is unavailable; ordinary Parakeet `.asr` still feeds post-ASR text translation when requested by UI |
+| No engine call on unavailable | `RecordingTranscriptionWorkflowTests.swift` | Preserve existing spy assertion and add Canary/Giga typed unavailable cases if needed |
+| Canary target absent | `S9EngineEdgeCaseTests.swift`, application-wide contract | Request API has no target; engine has no resolver/consumer; flag rejects before load |
+| Translation UI has no Canary row | `TranslationRuntimeContractTests.swift` | Inspect provider construction and assert no Canary tag/prefix/row while cloud + local MLX paths remain |
+| Floating has no Canary callback | same | Inspect manager signature/construction for no Canary callback/runtime/store dependency |
+| Real smokes unchanged | `S9RuntimeSmokeTests.swift` | Only operation rename; Flash short/long, 1B, GigaAM, installed and product-session smoke expectations unchanged |
+| Application-wide ADR-021 | `ApplicationWideRegressionContractTests.swift` | Scan all `Sources/**/*.swift` for forbidden exact symbols/file and inspect specific request/resolver/UI sections, not comments alone |
+| QA mutation behavior | guard `--self-test`s | Fixture mutations must return nonzero; missing Sources/tool must return nonzero; clean fixture passes |
+| Capability API removed | `CoreMLEngineTests.swift`, `TranscriptionModelCatalogTests.swift` | Assert positive ASR capabilities/languages rather than a retained false translation field |
+| No persistence migration | `TranscriptionModelSettingsTests.swift` | Existing settings round-trip/session immutability remains; no new persisted field |
+
+Tests must execute real resolver/engine/workflow seams. String/source tests are
+required for symbol/file absence but are not substitutes for behavioral tests.
+Positive proof must not be satisfied by a comment containing a marker.
+
+### QA Fail-Closed Design
+
+#### Common Guard Contract
+
+Each touched guard must implement these rules:
+
+1. Resolve project root and immediately require `Sources/` to be a directory.
+2. Resolve its search command before scanning. Prefer `rg` when available; use a
+   tested `grep` fallback; if neither exists, print `FAIL` and return nonzero.
+3. For absence checks, distinguish exit 1 (no match) from exit >1 (execution or
+   I/O failure). Never wrap a mandatory scan in `2>/dev/null || true`.
+4. Require every product/test file used for positive assertions before reading.
+5. Scan product Sources directly. Test names alone cannot prove product absence.
+6. Keep positive executable tests for behavior; comments do not satisfy required
+   declarations/guards.
+7. Support `--self-test` using a temporary fixture, restore/remove it with a
+   trap, and return nonzero if any forbidden mutation is accepted.
+8. The self-test must include clean-fixture pass, missing-Sources failure,
+   forced-missing-search-tool failure, and at least one guard-specific mutation.
+9. Main mode and self-test mode must call the same validation functions.
+
+#### Script Ownership
+
+| Script | Owner contract | Required change |
+|---|---|---|
+| `check_s1b_scope.sh` | Pure ranking helper and allowed ranking call sites | Add fail-closed directory/tool/search status handling and a mutation self-test. Do not own ADR-021 symbols. |
+| `check_s6_gigaam_spike.sh` | Historical GigaAM spike + fixed-RU/no-translation product boundary | Add fail-closed handling and self-test that removing a required Giga invariant or adding a Giga translation acceptance fails. |
+| `check_s9_engine_contract.sh` | GO engines, explicit language, chunk/frontend/storage, engine defense | Require the named Canary ASR-only rejection test/validator, ensure Giga rejection remains, fail closed, add negative mutation self-test. It may invoke the dedicated ADR guard but must not replace it. |
+| `check_no_nllb_translation.sh` | Retired NLLB/fake native text-runtime/package absence | Require `Sources/`, fail if search is unavailable, preserve clean/forbidden self-test. Do not flag real cloud/local `PolishingEngine` text translation. |
+| `check_adr021_canary_asr_only.sh` | Complete application-wide ADR-021 source boundary | New dedicated guard; scan request/session/store/engine/UI and run all nine mandatory mutations. |
+
+#### Mandatory Mutation Matrix
+
+| Mutation reintroduced in fixture/product-shaped path | Primary catching script | Secondary evidence | Expected result |
+|---|---|---|---|
+| `CanarySpeechTranslationRuntime.swift` | `check_adr021_canary_asr_only.sh` | `ApplicationWideRegressionContractTests` | Nonzero |
+| `onCanaryTranslation` callback | dedicated ADR guard | Translation runtime + application-wide tests | Nonzero |
+| `localCanaryPrefix` tag | dedicated ADR guard | Translation runtime + application-wide tests | Nonzero |
+| `.speechTranslation` case/use | dedicated ADR guard | Application-wide source contract; S9 guard may invoke dedicated guard | Nonzero |
+| `makeSpeechTranslationSession` | dedicated ADR guard | Application-wide source contract | Nonzero |
+| `speechTranslationTargetLanguageCode` | dedicated ADR guard | Application-wide source contract | Nonzero |
+| Canary directional `targetLanguageCode` in request/resolver/store/routing | dedicated ADR guard | Request API + S9 engine tests | Nonzero |
+| Canary request construction with `translateToEnglish: true` or removed rejection | dedicated ADR guard + `check_s9_engine_contract.sh` | Real Canary validator test | Nonzero |
+| Canary provider row/tag in Translation UI | dedicated ADR guard | `TranslationRuntimeContractTests` | Nonzero |
+| Fake `TextTranslationEngine`/NLLB runtime/package | `check_no_nllb_translation.sh` | Translation runtime contract | Nonzero |
+| GigaAM translation acceptance | `check_s6_gigaam_spike.sh` + `check_s9_engine_contract.sh` | S11/S9 edge tests | Nonzero |
+| Ranking helper runtime/out-of-scope caller | `check_s1b_scope.sh` | Existing ranking tests | Nonzero |
+
+The dedicated guard must not rely on one renameable UI token. It must combine:
+forbidden file basenames; forbidden operation/factory/route/capability symbols;
+absence of a request target member in `EngineProtocols.swift`; absence of Canary
+target consumption in `CanaryCoreMLEngine.swift`; required ASR-only rejection
+test/validator; and absence of Canary rows/callbacks in both Translation product
+files. A mutation must defeat all relevant layers to pass.
+
+### Acceptance Commands
+
+Run from the project root without network calls or model downloads:
+
+```bash
+cd "/Users/pavan/Documents/AI Projects/Bolabol"
+
+swift test --filter ApplicationWideRegressionContractTests
+swift test --filter TranscriptionLanguageRoutingTests
+swift test --filter S11SessionRoutingTests
+swift test --filter S9EngineEdgeCaseTests
+swift test --filter RecordingTranscriptionWorkflowTests
+swift test --filter TranslationRuntimeContractTests
+swift test --filter TranscriptionModelSettingsTests
+swift test --filter TranscriptionModelCatalogTests
+swift test --filter CoreMLCapabilitiesTests
+swift test --filter S9RuntimeSmokeTests
+
+bash script/qa/check_adr021_canary_asr_only.sh --self-test
+bash script/qa/check_s1b_scope.sh --self-test
+bash script/qa/check_s6_gigaam_spike.sh --self-test
+bash script/qa/check_s9_engine_contract.sh --self-test
+bash script/qa/check_no_nllb_translation.sh --self-test
+
+bash script/qa/check_adr021_canary_asr_only.sh
+bash script/qa/check_s1b_scope.sh
+bash script/qa/check_s6_gigaam_spike.sh
+bash script/qa/check_s9_engine_contract.sh
+bash script/qa/check_no_nllb_translation.sh
+
+swift test
+swift test --sanitize=thread
+swift test --sanitize=address
+./script/qa/run_all.sh
+./script/qa/repeat_critical_suites.sh 20
+./script/build_and_run.sh --verify
+
+BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests
+BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests
+
+git diff --check -- \
+  Sources/NativeBolabol \
+  Sources/NativeBolabolCore \
+  Tests/NativeBolabolCoreTests \
+  script/qa \
+  AI_Workflow_Kit/docs/AI/FEEDBACK.md \
+  AI_Workflow_Kit/docs/DECISIONS.md
+```
+
+Every `--self-test` must print a distinct PASS line for clean fixture,
+missing-Sources, missing-search-tool, and each guard-specific mutation. The
+dedicated ADR guard must print one result for each of the nine mandatory
+mutations above. A self-test that merely runs the clean repository is not
+sufficient mutation evidence.
+
+### ADR-022 Summary
+
+ADR-022 completes ADR-021 below the UI layer. It removes the generic Canary
+speech operation, factory, request target, directional capability API, plan
+target/toggle, and engine target resolution; preserves a typed Whisper target
+operation and Whisper-only flag; preserves Parakeet auto, Canary explicit ASR,
+and GigaAM fixed RU; recognizes the real existing cloud/local text-provider
+path without inventing a fake engine; and makes fail-closed mutation QA part of
+Definition of Done.
+
+### Risks
+
+| Risk | Mitigation |
+|---|---|
+| Removing Codable capability keys appears like persisted migration work | Source search found no user persistence of descriptors/capabilities; update constructor/coding tests and state this explicitly. Do not add a migration shim. |
+| Operation rename touches many call sites and can obscure behavior regression | Compile-breaking change is intentional; ordered caller list and focused tests cover every current product caller. |
+| Whisper target mode and text fallback are accidentally removed with Canary target fields | Keep/rename the post-ASR text target, retain `translateToEnglish`, and run routing + workflow + Translation tests before Core ML tests. |
+| Engine rejection runs after expensive model load | Require Canary ASR-only validation before OS/model/audio/decode and test the internal seam. |
+| Static guard passes after symbol rename | Combine semantic file/API/consumer/provider checks with executable behavior tests and nine independent mutations. |
+| S1b/S6 historical scope expands again | Keep ADR-021 ownership in a dedicated guard; only harden old scripts. |
+| Dirty shared worktree causes collateral edits | Coder edits only listed files, reads current content before patching, never reverts unrelated work, and reports any required scope expansion. |
+| Real smoke assets are absent | Treat opt-in skip/absence honestly; do not download or alter assets. Existing local/installed smokes must remain unchanged when available. |
+
+### Unresolved Decisions
+
+None. The accepted Whisper native X→English behavior is evidenced by ADR-020,
+`TranscriptionLanguageRouter`, `WhisperKitTranscriptionEngine`, and current S11
+tests. `targetLanguageCode` has no non-Canary engine consumer and may be deleted.
+The current text translation implementation is known and must be preserved; no
+new runtime/model/provider decision is required for this cleanup.
+
+**RESULT: `design_complete`**
+
+## HUD-HUMOR-PROMPTS — QA Bug Fix Attempt 2 Re-review
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | HUD-HUMOR-PROMPTS |
+| Actor | reviewer (independent verification) |
+| Date | 2026-08-07 |
+| GraphiFy | Existing `graphify-out/graph.json` queried; no rebuild performed |
+| RESULT | `changes_requested` |
+
+### Scope
+
+- Re-reviewed BUG-HHP-001 through BUG-HHP-008, the claimed changed paths, ADR-021, NoteStore retention/ownership behavior, and the QA guards.
+- Existing GraphiFy evidence confirmed the translation, transcription routing, NoteStore, HUD, onboarding, and localization paths. No GraphiFy rebuild, commit, tag, or push was performed.
+- Reviewer did not change product code, tests, QA scripts, state, bug reports, reports, or decisions. This section is the only reviewer edit.
+
+### Findings
+
+- **BLOCK-HHP-007 (major)** — The removed `CanarySpeechTranslationRuntime.swift` and removed TranslationModal/FloatingTranslationWindowManager callback surface do not remove the active speech-translation contract. `Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift:22-32,228-263,463-653` still defines and resolves `TranscriptionSessionOperation.speechTranslation`, `speechTranslationTargetLanguageCode`, and directional target fields. `Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift:98-149` still exposes `makeSpeechTranslationSession` and constructs that operation for Canary. `Sources/NativeBolabolCore/Services/EngineProtocols.swift:66-85` still exposes `TranscriptionRequest.targetLanguageCode` as a Canary speech-translation target. This contradicts accepted ADR-021, which requires Canary ASR-only and text translation through a separate `TextTranslationEngine`.
+- **BLOCK-QA-001 (major)** — The source guards do not prove the ADR-021 boundary. `check_s1b_scope.sh` explicitly allowlists `TranscriptionLanguageRouting.swift`, `TranscriptionEngineStore.swift`, `EngineProtocols.swift`, `TranslationModalView.swift`, and `FloatingTranslationWindowManager.swift`; `check_s9_engine_contract.sh` checks positive engine markers but no absence of `speechTranslation`/Canary directional translation seams. Mutation audit confirmed that adding `onCanaryTranslation` did not make the HUD/S1b/S9 checks fail, and re-adding the deleted Canary runtime left S9 green. Missing-tool execution also produced false green results for S1b and no-NLLB guards. The guards need explicit ADR-021 negative assertions and fail-closed tool checks.
+
+### Closure Table
+
+| Bug | Re-review status | Evidence |
+|-----|-----------------|----------|
+| BUG-HHP-001 | CLOSED | Humor runtime controls replace the generated block and remain idempotent. |
+| BUG-HHP-002 | CLOSED | Settings changes update the pending listening snapshot before freeze. |
+| BUG-HHP-003 | CLOSED | Non-finite HUD deltas are ignored without poisoning selection state. |
+| BUG-HHP-004 | CLOSED | Retention counts only audio notes and preserves text-only notes plus retained audio. |
+| BUG-HHP-005 | CLOSED | Imported source paths remain protected through delete, clear, purge, and persistence reload paths. |
+| BUG-HHP-006 | CLOSED | ContentView consumes `.nativeBolabolHotkeyTriggered` and toggles recording. |
+| BUG-HHP-007 | OPEN / BLOCKING | Active Canary speech-translation operation, session factory, and request target contract remain. |
+| BUG-HHP-008 | CLOSED | Translation feedback and glossary labels use AppText across the 15-locale matrix. |
+
+### Command Results
+
+| Command | Result |
+|---------|--------|
+| `swift test` | PASS — 622 tests in 16 suites |
+| `swift test --enable-code-coverage` | PASS — 23.12% regions, 21.76% functions, 17.24% lines |
+| `swift test --sanitize=thread` | PASS — no TSAN diagnostics |
+| `swift test --sanitize=address` | PASS — no ASAN diagnostics |
+| `swift build` | PASS |
+| `swift build -c release` | PASS |
+| `./script/qa/run_all.sh` | PASS — 31 passed / 0 failed |
+| `./script/qa/repeat_critical_suites.sh 20` | PASS — 140 runs / 140 passed / 0 failed |
+| `./script/qa/coverage_inventory.sh` | BLOCKED after rebuild by stale profile; standard `--refresh` rerun PASS with LLVM profile |
+| `./script/build_and_run.sh --verify` | PASS — release app and polish worker built, signed, and verified |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS — 8 tests; Flash, Flash-long, Canary 1B, and GigaAM returned expected non-empty text |
+| `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests` | PASS — 8 tests; installed Flash, 1B, and GigaAM product sessions returned expected non-empty text |
+| `git diff --check -- Bolabol` | PASS |
+
+### Runtime Notes
+
+- Real local and installed model smoke tests used no cloud requests, model downloads, or deletion of user data.
+- Manual visual/accessibility testing was not executed because no safe GUI automation harness was available.
+- Build warnings were non-blocking: duplicate SwiftPM package identity, an unhandled dependency markdown resource, deprecated `AVAsset.duration`, and redundant `await`/`try` in existing engine code.
+- Green tests and smokes do not close BLOCK-HHP-007 because the defect is an architecture/source-contract contradiction rather than a runtime crash.
+
+**RESULT: `changes_requested`**
+
+## HUD-HUMOR-PROMPTS — QA Bug Fix Attempt 2
+
+### Scope Note Before Implementation
+
+- Actor: coder.
+- Additional product path required: `Sources/NativeBolabol/Services/FloatingTranslationWindowManager.swift` passes the obsolete Canary speech-translation callback and source/target bindings into `TranslationModalView`. Removing that active ADR-021-forbidden surface requires removing the matching forwarding seam; leaving it would preserve the product dependency and fail compilation. No other unlisted product path is planned.
+
+## HUD-HUMOR-PROMPTS — Coder Fix Attempt 2
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | HUD-HUMOR-PROMPTS |
+| Actor | coder (Implementation Engineer) |
+| Date | 2026-08-07 |
+| GraphiFy | Existing graph queried; 6,121 nodes / 13,819 edges; no rebuild run |
+| RESULT | `waiting_review` |
+
+### GraphiFy Gate
+
+- Queried the existing `graphify-out/graph.json` for the eight BUG-HHP contracts and their production seams.
+- `explain`/`path` checks confirmed the humor session, ContentView snapshot, NoteStore, translation runtime, localization, and provider-switcher paths.
+- No GraphiFy rebuild/checkpoint was run; Orchestrator owns the rebuild after this handoff.
+
+### Findings and Fixes
+
+- **BUG-HHP-001** — Made generated humor runtime controls replace their own generated block before insertion, preserving user prompt content and keeping repeated application idempotent.
+- **BUG-HHP-002** — Added the Settings humor-level observer path that updates the pending listening session before the request snapshot is frozen.
+- **BUG-HHP-003** — Ignored non-finite provider scroll deltas before they can poison the accumulator or change selection.
+- **BUG-HHP-004** — Applied audio retention only to audio-backed notes, preserving text-only notes and the retained audio note.
+- **BUG-HHP-005** — Treated imported audio as externally owned; note deletion no longer removes the imported source file.
+- **BUG-HHP-006** — Added the production ContentView consumer for `.nativeBolabolHotkeyTriggered`, restoring the onboarding Try Record path.
+- **BUG-HHP-007** — Removed the Canary speech-translation runtime and product forwarding surface; retained Canary ASR engines and updated S9/ADR-021 contracts to enforce ASR-only behavior.
+- **BUG-HHP-008** — Routed clipboard feedback and glossary action labels through `AppText` with concrete values in all 15 locales.
+
+### Changed Paths
+
+- `Sources/NativeBolabolCore/Models/HumorStyleControl.swift`
+- `Sources/NativeBolabolCore/Services/ProviderQuickSwitcherModel.swift`
+- `Sources/NativeBolabolCore/Stores/NoteStore.swift`
+- `Sources/NativeBolabol/Views/ContentView.swift`
+- `Sources/NativeBolabol/Views/TranslationModalView.swift`
+- `Sources/NativeBolabol/Services/FloatingTranslationWindowManager.swift`
+- `Sources/NativeBolabolCore/Services/AppText.swift`
+- `Sources/NativeBolabolCore/Services/EngineProtocols.swift`
+- `Sources/NativeBolabol/Services/CanarySpeechTranslationRuntime.swift` (removed)
+- `Tests/NativeBolabolCoreTests/ApplicationWideRegressionContractTests.swift`
+- `Tests/NativeBolabolCoreTests/HumorStyleControlTests.swift`
+- `Tests/NativeBolabolCoreTests/NoteStoreTests.swift`
+- `Tests/NativeBolabolCoreTests/S9EngineEdgeCaseTests.swift`
+- `Tests/NativeBolabolCoreTests/TranslationRuntimeContractTests.swift`
+- `Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift`
+- `script/qa/check_hud_humor_prompt_contract.sh`
+- `script/qa/check_s1b_scope.sh`
+- `script/qa/check_s9_engine_contract.sh`
+- `script/qa/check_no_nllb_translation.sh`
+- `script/qa/coverage_inventory.sh`
+- `script/qa/repeat_critical_suites.sh`
+
+### Command Results
+
+| Command | Result |
+|---------|--------|
+| Focused HHP regression suites | PASS; Humor 15, PromptTemplate 29, HotkeySettings 11, HUD provider 15, HUD layout 13, Settings localization and application contracts green |
+| `swift test` | PASS — 622 tests in 16 suites |
+| `swift test --enable-code-coverage` | PASS — 622 tests; 23.12% regions, 21.76% functions, 17.24% lines |
+| `swift test --sanitize=thread` | PASS — 622 tests; no TSAN diagnostics |
+| `swift test --sanitize=address` | PASS — 622 tests; no ASAN diagnostics |
+| `swift build` | PASS |
+| `swift build -c release` | PASS — rerun completed in 220.34s |
+| `./script/build_and_run.sh --verify` | PASS — release app and polish worker built, signed, and process verification completed |
+| `./script/qa/run_all.sh` | PASS — 31 passed / 0 failed |
+| `./script/qa/repeat_critical_suites.sh 20` | PASS — 140 runs / 140 passed / 0 failed |
+| `./script/qa/coverage_inventory.sh` | PASS — LLVM coverage profile reported |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 swift test --filter S9RuntimeSmokeTests` | PASS — 8 tests; real Flash, Flash-long, Canary 1B, and GigaAM output non-empty expected-language text |
+| `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release --filter S9RuntimeSmokeTests` | PASS — 8 tests; installed Flash/1B/GigaAM cold/warm and product-session paths returned non-empty text |
+| `git diff --check -- .` | PASS — Bolabol-scoped diff clean |
+
+### Runtime and Scope Notes
+
+- Real local scratch and installed model assets were exercised without cloud requests, model downloads, or deletion of user data.
+- The installed smoke timings were recorded for Canary Flash, Canary 1B, and GigaAM; no backend substitution occurred.
+- Manual visual/accessibility testing was not executed because no safe GUI automation harness was available.
+- Repository-wide `git diff --check` still sees unrelated workspace changes outside Bolabol; the required Bolabol-scoped check is clean.
+- No GraphiFy rebuild, commit, tag, or push was performed.
+- `STATE.yaml`, `BUG_REPORT.md`, and `REPORT.md` were not edited by this coder attempt; pre-existing worktree changes remain untouched.
+
+**RESULT: `waiting_review`**
+
+## HUD-HUMOR-PROMPTS — Exhaustive Tester QA
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Actor | tester (independent Test Engineer / Exhaustive QA Engineer) |
+| Date | 2026-08-07 |
+| Scope | HUD humor/prompt feature plus application-wide regression, coverage, sanitizer, flake, runtime, QA-script and safe release smoke |
+| RESULT | **`bugs`** |
+
+### GraphiFy gate
+
+- Ran all five required queries against the existing 6,043-node / 13,704-edge graph before broad inspection.
+- Targeted `explain` confirmed `HumorSessionState` and `HUDInteractionPolicy`; `path` linked humor state to workflow and overlay manager to prompt store through ContentView.
+- No rebuild/checkpoint was run.
+
+### Gap-hunt summary
+
+- Built application coverage inventory across startup, onboarding, permissions, audio, hotkeys, HUD, routing, models, polishing, prompts, providers, notes, glossaries, translation, insertion, settings, localization, persistence, alerts, accessibility and concurrency.
+- Added 11 test functions. Green additions cover empty/long/Unicode/multiline prompts, translation coexistence, and 100 freeze/fresh cycles. Red regressions expose eight product bugs.
+- Added production source-contract, coverage inventory and repeat-runner scripts.
+- Fixed two proven always-green QA scripts (`check_sec_no_download_code.sh`, `check_no_nllb_translation.sh`) and added negative self-tests.
+- Did not change product `Sources/**`, `Package.swift`, `STATE.yaml`, decisions, user data, model assets, credentials or git history.
+
+### New tests
+
+- `runtimeControlsRemainIdempotentWhenAppliedRepeatedly`
+- `runtimeControlsHandleEmptyLongUnicodeAndMarkerLikePromptBodies`
+- `humorSessionRunsOneHundredFreezeAndFreshSessionCyclesWithoutStateLeakage`
+- `humorRuntimeControlCoexistsWithTranslationWithoutLeakingIntoRawOrVariantOne`
+- `hudProviderSwitcherIgnoresNonFiniteScrollWithoutPoisoningLaterInput`
+- `audioRetentionLimitCountsOnlyAudioNotesAndPreservesTextNotes`
+- `deletingImportedAudioNoteNeverDeletesTheUsersSourceFile`
+- `contentViewSettingsHumorLevelChangeUpdatesThePendingListeningSnapshot`
+- `onboardingTryRecordNotificationHasAProductionConsumer`
+- `acceptedADR021KeepsCanaryOutOfTheTranslationRuntime`
+- `translationUserFeedbackAndGlossaryActionsUseLocalizedCopy`
+
+### New/changed scripts
+
+- New `check_hud_humor_prompt_contract.sh`; negative self-test PASS, repository FAIL on BUG-HHP-002; included by `run_all` glob.
+- New `coverage_inventory.sh`; reports LLVM source coverage, supports `--refresh`.
+- New `repeat_critical_suites.sh`; 20 deterministic iterations, no sleeps/hidden retries.
+- Changed `check_sec_no_download_code.sh`; fixed dead Pattern 4 and always-empty Pattern 3, path-safe scan, three negative mutations PASS.
+- Changed `check_no_nllb_translation.sh`; removed missing-`rg` false green, one negative mutation PASS.
+- S1b/S6/S9 red scripts were not relaxed because current failures are tied to BUG-HHP-007.
+
+### Command table
+
+| Command | Result |
+|---------|--------|
+| `swift test --filter HumorStyleControlTests` | FAIL: 13 tests, 1 red / 2 issues, BUG-HHP-001 |
+| `swift test --filter PromptTemplateTests` | PASS: 29 |
+| `swift test --filter HotkeySettingsTests` | PASS: 11 |
+| `swift test --filter SettingsLocalizationTests` | PASS: 23 |
+| `swift test --filter HUDProviderSwitcherFeatureTests` | FAIL: 15 tests, 1 red / 7 issues, BUG-HHP-003 |
+| `swift test --filter HUDLayoutAndComposerTests` | PASS: 13 |
+| `swift test --filter ApplicationWideRegressionContractTests` | FAIL: 4 tests / 9 issues, BUG-HHP-002/006/007/008 |
+| Final `swift test` | FAIL: **618 tests / 21 issues** |
+| `swift test --enable-code-coverage` | FAIL on known bugs; report exported: 22.73% regions, 21.52% functions, 16.96% lines |
+| `swift test --sanitize=thread` | FAIL on same 18 then-known issues; no TSAN diagnostic |
+| `swift test --sanitize=address` | FAIL on same 18 then-known issues; no ASAN diagnostic |
+| `repeat_critical_suites.sh 20` | 140 runs: 100 pass / 40 expected deterministic fails; no new flake |
+| `swift build` | PASS |
+| `swift build -c release` | PASS |
+| `./script/build_and_run.sh --verify` | PASS; signed app + worker |
+| Final `./script/qa/run_all.sh` | FAIL: 26 pass / 5 fail |
+| `BOLABOL_S9_RUNTIME_SMOKE=1 ...S9RuntimeSmokeTests` | PASS: 8; Flash/1B/GigaAM non-empty expected languages |
+| `BOLABOL_INSTALLED_MODEL_SMOKE=1 swift test -c release ...` | PASS: installed cold/warm Flash/1B/GigaAM; no substitution |
+| Scoped `git diff --check` | PASS |
+| Repository-wide `git diff --check` | BLOCKED: unrelated VaniScript EOF blank line |
+
+### Runtime/manual summary
+
+- Real scratch and installed local assets were exercised without download/delete; all three engines returned non-empty expected-language output.
+- Signed release binary launched under isolated `HOME`/`CFFIXED_USER_HOME`/`TMPDIR`, stayed alive for 5 seconds, and produced no crash report.
+- Visual Settings/HUD/button/VoiceOver/permission/focus matrix is `NOT_EXECUTED`: no safe GUI automation harness was available and real user data/preferences were protected.
+- Temporary root was removed and verified absent.
+
+### Bugs
+
+- BUG-HHP-001 major: repeated humor application duplicates runtime controls.
+- BUG-HHP-002 major: Settings humor change during listening is not copied into pending snapshot.
+- BUG-HHP-003 moderate: NaN/infinity corrupt provider scroll behavior.
+- BUG-HHP-004 critical: audio retention deletes text-only notes and retained audio.
+- BUG-HHP-005 critical: deleting imported-audio note can delete user source file.
+- BUG-HHP-006 major: onboarding Try Record notification has no consumer.
+- BUG-HHP-007 major: Canary speech translation contradicts accepted ADR-021 ASR-only boundary.
+- BUG-HHP-008 minor: Translation feedback/glossary action is hard-coded English.
+
+Full evidence and matrices are in `REPORT.md`; exact repros are in `BUG_REPORT.md` with `bugs_open: 8`.
+
+**RESULT: `bugs`**
+
+## HUD Humor and Prompt Switch — Fix Attempt 1 Re-review
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | HUD-HUMOR-PROMPTS |
+| Actor | reviewer (independent Verification Engineer) |
+| Timestamp | 2026-08-07T00:40:00+05:30 |
+| Graphify | 6,043 nodes / 13,704 edges (Orchestrator rebuild after Fix Attempt 1; used as-is) |
+| Coder handoff | `HUD Humor and Prompt Switch — Coder Fix Attempt 1` (`waiting_review`) |
+| Prior review | `HUD Humor and Prompt Switch — Independent Review` (`changes_requested`) |
+| RESULT | `approved` |
+
+### Exact scope reviewed
+
+Product / test paths claimed by Coder Fix Attempt 1 were re-diffed and re-read:
+
+- `Sources/NativeBolabolCore/Models/HumorStyleControl.swift` (untracked; SPM-included)
+- `Sources/NativeBolabolCore/Models/HotkeySettings.swift` (`HUDInteractionPolicy`, a11y metadata, humor settings)
+- `Sources/NativeBolabolCore/Services/PolishingWorkflow.swift` (`make` factory + Variant 2 inject)
+- `Sources/NativeBolabolCore/Services/PromptTemplate.swift` (static HUMOR CONTROL prose)
+- `Sources/NativeBolabolCore/Services/ProviderQuickSwitcherModel.swift` (named threshold + nonPrecise mapping)
+- `Sources/NativeBolabolCore/Services/AppText.swift` (15-locale humor/prompt keys)
+- `Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift` (hit-testing, hover, layout generation, a11y)
+- `Sources/NativeBolabol/Views/ContentView.swift` (session state, freeze, `PolishingWorkflow.make`)
+- `Sources/NativeBolabol/Views/SidebarView.swift` / `AudioPlaybackModalView.swift` (same factory)
+- `Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift` / `ProviderQuickSwitcher.swift`
+- Focused tests: `HumorStyleControlTests`, `PromptTemplateTests`, `HotkeySettingsTests`, `SettingsLocalizationTests`, `HUDProviderSwitcherFeatureTests`, `HUDLayoutAndComposerTests`
+
+Unrelated dirty-tree Canary/translation/onboarding/ASR routing changes were **not** treated as this fix and were not reverted.
+
+### GraphiFy evidence
+
+| Query | Result |
+|-------|--------|
+| query Fix Attempt 1 / HumorSession* / HUDInteractionPolicy / make | Resolves `HumorSessionState`, `HumorSessionSnapshot`, `HUDInteractionPolicy`, `PolishingWorkflow.make`, production-factory tests, freeze/update helpers on ContentView |
+| `explain HumorSessionState` | Degree 13; ContentView pending session; freeze/update/updateSelection; tests call freeze path |
+| `explain HumorSessionSnapshot` | Degree 19; referenced by `transcribeRecording`, `polish`, Gemini cloud path, freeze helpers |
+| `explain HUDInteractionPolicy` | `allowsHitTesting` / `isAccessibilityHidden` |
+| `path HumorSessionState → PolishingWorkflow` | Present via shared model graph (HumorLevel); product wiring confirmed in source as ContentView freeze → polish → `PolishingWorkflow.make` |
+| `path ProviderQuickSwitcher → ContentView` | 1 hop (ContentView calls) |
+
+No missing symbols vs Coder handoff. Graph does not contradict the claimed fix structure.
+
+### Finding-by-finding closure table
+
+| ID | Status | Evidence |
+|----|--------|----------|
+| **BLOCK-HHP-001** | **CLOSED** | `PolishingWorkflow.make(...)` is the shared seam. `ContentView.polish`, `SidebarView`, and `AudioPlaybackModalView` all call it. Variant 2 injects one `RUNTIME CONTROL:` / `HUMOR_LEVEL:`; Variant 1 gets zero. Disabled slider → `humorLevel: nil` → no runtime block. Factory tests exercise the production constructor. |
+| **BLOCK-HHP-002** | **CLOSED** | Listening creates `pendingHotkeyHumorSession` via `makeHotkeyHumorSessionState`. HUD/settings updates mutate pending only. Stop freezes via `freezeHotkeyHumorSession` (copies variant + prompt + humor) and clears pending. Snapshot is passed by value into local + Gemini polish. Finish/cancel/failure/non-owner/stop-nil paths clear pending. Next session allocates a new state. Live preference vs frozen request documented and unit-tested. |
+| **HIGH-HHP-001** | **CLOSED** | Tests use real markers `RUNTIME CONTROL:` and `HUMOR_LEVEL:` with exact counts. No `RUNTIME STYLE CONTROLS` remains. |
+| **HIGH-HHP-002** | **CLOSED** | `productionPolishingFactorySharesTheHumorContractAcrossHUDEntryPoints` calls `PolishingWorkflow.make` (the same factory product surfaces use). Source call sites confirmed for ContentView/Sidebar/Audio. |
+| **HIGH-HHP-003** | **CLOSED** | `HumorLevel.nearest` guards `isFinite` → `.none`. Tests cover nan/±inf. Midpoints use `.toNearestOrAwayFromZero` with documented 10→20 … 90→100 table. |
+| **MED-HHP-001** | **CLOSED** | Prompt bar + humor slider apply `HUDInteractionPolicy.allowsHitTesting` and matching `accessibilityHidden`. Pure policy unit-tested. |
+| **MED-HHP-002** | **CLOSED** | `hide()` and `show()` set `isHovered = false`. `invalidatePendingLayoutCallbacks` / `layoutGeneration` guard animated layout completion against stale HUD instances. |
+| **MED-HHP-003** | **CLOSED** | Explicit live-preference product rule: HUD ticks persist immediately; cancel does not roll back preference; frozen snapshot is independent (`hotkeyHumorUsesLivePreferenceWithoutChangingAnEnqueuedSnapshot`). |
+| **MED-HHP-004** | **CLOSED** | New AppText keys for slider/style/level/modes/prompt slots; Settings and HUD bind through `generalSettingsStore.text` / mode `appTextKey`. Keys present in all 15 concrete locale maps; localization suite includes them. |
+| **MED-HHP-005** | **CLOSED** | Prompt buttons: label/value/hint + button/selected traits via `HUDAccessibilityMetadataPolicy`. Slider: localized label, percent value, adjustable action. Metadata unit-tested. |
+| **MED-HHP-006** | **CLOSED** | Init default is `ProviderQuickSwitcherModel.defaultStepThreshold` (24). `nonPreciseHUDScrollDelta` multiplies by the same constant; HUD and capture views use it. Threshold tests cover below/exact/accumulate/reversal/boundary/non-precise. |
+| **MED-HHP-007** | **CLOSED (workflow residual)** | QA still 27/3 with the same three legacy scripts; failures cite `CanarySpeechTranslationRuntime` and missing S9 matrix test names only. No HUD/humor path in QA log. Not introduced by this fix. |
+| **LOW-HHP-001** | **CLOSED** | Ties-to-away-from-zero midpoint table tested. |
+| **LOW-HHP-002** | **CLOSED** | Disabled path asserts absence of both `RUNTIME CONTROL:` and `HUMOR_LEVEL:`. |
+
+### New findings
+
+**None** that reopen BLOCK/HIGH or require CHANGES_REQUESTED.
+
+Residual notes (non-blocking):
+
+- Factory test labels entry points as strings while always calling the same `make` API; closure of wiring still rests on (a) that factory test and (b) static verification of the three call sites. Acceptable for this step; Tester may add source-contract greps if desired.
+- Overlay accessibility strings default to empty until `show(...)` supplies them; ContentView always supplies localized values on hotkey show.
+- Manual note polish without a snapshot correctly uses **live** settings (not a hotkey freeze) — consistent with non-session entry points.
+
+### State-machine verification
+
+| Transition | Verified |
+|------------|----------|
+| idle → listening | Pending `HumorSessionState` created; HUD show resets hover |
+| listening updates | Slider/mode/target/slot update pending (or settings live for preference) |
+| listening → processing | `freezeHotkeyHumorSession` snapshots + clears pending; overlay processing mode |
+| request | Local + cloud polish receive snapshot by value; template provider prefers frozen prompt for selected variant |
+| post-freeze settings change | Cannot mutate enqueued snapshot (value semantics + cleared pending) |
+| finish / cancel / failure / stop-nil / non-owner | `pendingHotkeyHumorSession = nil` |
+| retry | New listening allocates new state; no reuse of prior optional |
+| hide/show race | layoutGeneration invalidated on hide and each layout; completion no-ops if generation advanced |
+
+### Production-seam verification
+
+| Check | Result |
+|-------|--------|
+| ContentView uses `PolishingWorkflow.make` | Yes |
+| Sidebar uses same | Yes |
+| AudioPlaybackModal uses same | Yes |
+| `make` not dead | Used by all three + factory tests |
+| Variant 2 only | `polishWithLanguageGuard` gates on `.variantTwo` + non-nil humorLevel |
+| Disabled → no block | `make` sets `humorLevel: nil` when slider disabled |
+| Single runtime block | `markerCount == 1` in tests; `applying` inserts once |
+| Raw ASR / translation engine paths | Unchanged by humor inject (humor only on polish Variant 2) |
+| Tests call production seam | `PolishingWorkflow.make`, real `HumorSessionState`/`HumorLevel`, real policies |
+
+### Localization / accessibility verification
+
+| Check | Result |
+|-------|--------|
+| New keys exist | humorSlider/Desc/Style/Level, three modes, five prompt slot names, selected/unselected/switch |
+| 15 locales concrete values | Present in AppText maps; `everySettingsKeyIsLocalizedInEveryLanguage` + translation-beyond-English lists include new keys (23 localization tests green) |
+| Settings UI | Uses `generalSettingsStore.text` / `mode.appTextKey` — no hard-coded English for new controls |
+| HUD UI | Accessibility labels from localized show parameters; visual glyphs remain short `D/1/2…` with full a11y names |
+| Prompt VO metadata | label / value / hint / selected trait |
+| Slider VO | label / `N%` value / adjustable action |
+| A11y tests | Policy + metadata unit tests green |
+
+### Command results (independent reproduction)
+
+| Command | Exit | Executed tests | Notes |
+|---------|------|----------------|-------|
+| `swift test --filter HumorStyleControlTests` | 0 | **9** | Matches Coder claim |
+| `swift test --filter PromptTemplateTests` | 0 | **29** | Matches |
+| `swift test --filter HotkeySettingsTests` | 0 | **11** | Matches |
+| `swift test --filter SettingsLocalizationTests` | 0 | **23** | Matches |
+| `swift test --filter HUDProviderSwitcherFeatureTests` | 0 | **14** | Matches |
+| `swift test --filter HUDLayoutAndComposerTests` | 0 | **13** | Matches |
+| `swift test` | 0 | **607** in 15 suites | Matches |
+| `./script/qa/run_all.sh` | **1** | 27 pass / **3 fail** | See legacy QA |
+| `./script/build_and_run.sh --verify` | 0 | — | Release app + polish worker built/signed |
+| `git diff --check` (feature paths) | 0 | — | Clean |
+
+### Legacy QA (unrelated / pre-existing)
+
+| Script | Classification | Why |
+|--------|----------------|-----|
+| `check_s1b_scope.sh` | PRE_EXISTING_UNRELATED | Flags `CanarySpeechTranslationRuntime.swift` only |
+| `check_s6_gigaam_spike.sh` | PRE_EXISTING_UNRELATED | Same Canary runtime / stale ASR scope boundary |
+| `check_s9_engine_contract.sh` | PRE_EXISTING_UNRELATED | Missing old S9 language-matrix test **names**; not HUD humor |
+
+No new red gate was created by the HUD humor/prompt fix. Feature-scoped tests, full suite, and release verify are green.
+
+### Residual risks
+
+1. Three legacy QA scripts remain red until Orchestrator/Tester triage allowlists or S9 name mapping — outside this feature.
+2. End-to-end HUD interaction (real mouse hover, multi-monitor, Reduced Motion) still belongs to Tester matrix after approval.
+3. Co-presence of translation override + humor runtime block remains a product nuance for live QA, not a reopened defect.
+
+### Verdict
+
+**APPROVED**
+
+All BLOCK/HIGH findings from the independent review are closed with production seams, state-machine freeze semantics, honest tests, localization/accessibility, and threshold single-source-of-truth fixes. MED/LOW are closed or product-documented. Focused + full tests and release verify reproduced green. Legacy QA triad remains unrelated and pre-existing.
+
+**RESULT: `approved`**
+
+## HUD Humor and Prompt Switch — Coder Fix Attempt 1
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | HUD-HUMOR-PROMPTS |
+| Actor | coder (Implementation Engineer) |
+| Graphify | Existing graph queried; no rebuild run |
+| RESULT | `waiting_review` |
+
+### GraphiFy Gate
+
+- `graphify query "BLOCK-HHP ContentView humor session snapshot HumorLevel nearest HUD hit testing hover localization accessibility ProviderQuickSwitcher threshold" --graph graphify-out/graph.json --budget 4000` — completed; traced the humor/session/HUD/threshold nodes.
+- `graphify path "HumorRuntimeStyleControls" "PolishingWorkflow" --graph graphify-out/graph.json` — 2-hop path through `HumorLevel`.
+- `graphify path "ProviderQuickSwitcher" "ContentView" --graph graphify-out/graph.json` — 1-hop call path.
+- No GraphiFy rebuild was run; Orchestrator owns the rebuild after this handoff.
+
+### Findings and Fixes
+
+- **BLOCK-HHP-001** — Root cause: `ContentView` constructed `PolishingWorkflow` without humor arguments while Sidebar and Audio used separate wiring. Fix: added `PolishingWorkflow.make(...)` as the shared production seam accepting slider enabled, level, mode, template provider, and message provider; ContentView, Sidebar, and Audio now all use it. The workflow still injects humor only for Variant 2, leaving Variant 1, raw ASR, and translation paths unchanged.
+- **BLOCK-HHP-002** — Root cause: `pendingHotkeyHumorLevel` was write-only and prompt/settings values were read live during polishing. Fix: added session-local `HumorSessionState`; listening updates pending slider/mode/selection, processing freezes enabled + level + mode + selected variant + copied prompt, and the frozen value is passed through local/cloud polish. Finish, cancel, failure, and retry cleanup use fresh session state.
+- **HIGH-HHP-001** — Root cause: tests asserted the nonexistent `RUNTIME STYLE CONTROLS` marker. Fix: tests now assert `RUNTIME CONTROL:` and `HUMOR_LEVEL:` with exact counts, including Variant 1 isolation, Variant 2 enabled/disabled behavior, mode content, and static-template prose separation.
+- **HIGH-HHP-002** — Root cause: isolated `PolishingWorkflow` coverage did not cover construction used by product surfaces. Fix: added production-factory coverage exercising ContentView/Sidebar/Audio-equivalent contracts, Variant 1/2 behavior, disabled behavior, all humor modes, and no duplicate runtime block.
+- **HIGH-HHP-003** — Root cause: `HumorLevel.nearest` converted NaN/infinity to `Int`. Fix: added an `isFinite` guard with deterministic `.none` fallback.
+- **MED-HHP-001** — Root cause: hover-only prompt and humor controls were transparent but still hit-testable. Fix: added pure `HUDInteractionPolicy` and applied `.allowsHitTesting` only while visible; accessibility visibility follows the same policy.
+- **MED-HHP-002** — Root cause: hide did not clear hover and delayed layout completion could affect a later HUD lifecycle. Fix: `hide()` and `show()` reset hover; layout callbacks use a generation guard invalidated on hide.
+- **MED-HHP-003** — Chosen contract: live preference semantics. HUD slider ticks remain persisted immediately and cancel does not roll back the saved preference; the request snapshot is separate and immutable. Code comments and tests document this exact behavior.
+- **MED-HHP-004** — Root cause: new HUD/Settings strings were hard-coded English. Fix: added AppText keys and concrete values for all 15 supported locales, including slider, style, caption, level, modes, prompt names, and prompt state/action copy.
+- **MED-HHP-005** — Root cause: prompt buttons exposed only short glyphs and `.help()`, and the slider label was English-only. Fix: added testable accessibility metadata policy; prompt buttons expose full name, selected/unselected value, switch hint, and button/selected traits; the slider exposes localized label, current percentage, and adjustable action.
+- **MED-HHP-006** — Root cause: initializer default `8` diverged from named threshold `24`. Fix: initializer now uses `ProviderQuickSwitcherModel.defaultStepThreshold`; non-precise HUD mapping uses the same named constant and tests cover below/exact/accumulated/reversal/boundary cases.
+- **MED-HHP-007** — `run_all.sh` still has the three unrelated legacy failures listed below. Reproduction confirms they are outside HUD humor/prompt scope; no QA script or unrelated product path was changed.
+- **LOW-HHP-001** — Root cause: default Swift rounding used banker’s ties-to-even behavior. Fix: documented and implemented ties-to-away-from-zero rounding, with the 10/30/50/70/90 midpoint table.
+- **LOW-HHP-002** — Root cause: disabled coverage checked only selected mode strings. Fix: disabled assertions now require absence of both `RUNTIME CONTROL:` and `HUMOR_LEVEL:`.
+
+### Session and Persistence Contract
+
+- A new `HumorSessionState` is created when listening starts and is cleared on every terminal hotkey path.
+- Slider, mode, target, slot, and current prompt updates affect only the pending listening state until `freezeHotkeyHumorSession` copies the final request snapshot.
+- The frozen snapshot is passed by value to polishing and contains the selected prompt body, so later Settings/prompt edits cannot change an enqueued request.
+- Retry means a new listening session and a new snapshot; no stale snapshot is reused.
+- The global humor preference is intentionally live: cancel does not restore the prior saved level. The focused `HotkeySettingsTests` regression test asserts saved preference and frozen request independence.
+
+### Changed Paths
+
+- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+- `Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift`
+- `Sources/NativeBolabol/Views/ContentView.swift`
+- `Sources/NativeBolabol/Views/ProviderQuickSwitcher.swift`
+- `Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift`
+- `Sources/NativeBolabol/Views/SidebarView.swift`
+- `Sources/NativeBolabol/Views/AudioPlaybackModalView.swift`
+- `Sources/NativeBolabolCore/Models/HotkeySettings.swift`
+- `Sources/NativeBolabolCore/Models/HumorStyleControl.swift`
+- `Sources/NativeBolabolCore/Services/AppText.swift`
+- `Sources/NativeBolabolCore/Services/PolishingWorkflow.swift`
+- `Sources/NativeBolabolCore/Services/ProviderQuickSwitcherModel.swift`
+- `Tests/NativeBolabolCoreTests/HumorStyleControlTests.swift`
+- `Tests/NativeBolabolCoreTests/PromptTemplateTests.swift`
+- `Tests/NativeBolabolCoreTests/HotkeySettingsTests.swift`
+- `Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift`
+- `Tests/NativeBolabolCoreTests/HUDProviderSwitcherFeatureTests.swift`
+- `Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift`
+
+No new helper/test file was needed.
+
+### New and Updated Tests
+
+- `HumorStyleControlTests`: non-finite values, boundaries, exact marks, midpoint table, production factory matrix, mode content, marker counts, and frozen session state.
+- `PromptTemplateTests`: static Variant 2 prose does not count as a runtime block.
+- `HotkeySettingsTests`: live preference versus frozen queued snapshot contract.
+- `SettingsLocalizationTests`: all new HUD/Settings/accessibility keys resolve with concrete values in all 15 locales and differ from English where translation is expected.
+- `HUDProviderSwitcherFeatureTests`: named threshold default, precise below/exact threshold, accumulation, reversal, boundary selection, and non-precise mapping.
+- `HUDLayoutAndComposerTests`: pure hit-testing/accessibility visibility policy and prompt/slider metadata.
+
+### Command Results
+
+| Command | Result |
+|---------|--------|
+| `swift test --filter HumorStyleControlTests` | PASS — 9 tests |
+| `swift test --filter PromptTemplateTests` | PASS — 29 tests |
+| `swift test --filter HotkeySettingsTests` | PASS — 11 tests |
+| `swift test --filter SettingsLocalizationTests` | PASS — 23 tests |
+| `swift test --filter HUDProviderSwitcherFeatureTests` | PASS — 14 tests |
+| `swift test --filter HUDLayoutAndComposerTests` | PASS — 13 tests |
+| `swift test` | PASS — 607 tests in 15 suites |
+| `./script/qa/run_all.sh` | Exit 1 — 27 pass, 3 fail; all three are `PRE_EXISTING_UNRELATED` below |
+| `./script/build_and_run.sh --verify` | PASS — production app and polish worker built and verification completed |
+| `git diff --check` on required feature paths | PASS |
+
+### Remaining Unrelated QA Failures
+
+- `check_s1b_scope.sh` — `PRE_EXISTING_UNRELATED`; flags Canary speech-translation runtime outside the old S1b allowlist.
+- `check_s6_gigaam_spike.sh` — `PRE_EXISTING_UNRELATED`; reuses the stale ASR scope boundary and flags the existing Canary runtime.
+- `check_s9_engine_contract.sh` — `PRE_EXISTING_UNRELATED`; expects old S9 test mapping names absent from the current accepted routing tests.
+
+### Scope Confirmation
+
+- Only the allowed HUD humor/prompt, HUD lifecycle, quick-switcher, localization, workflow, and test paths were edited.
+- `STATE.yaml` was not changed by this attempt.
+- Canary, translation, onboarding, ASR routing, old ADR scope, and unrelated QA scripts were not changed.
+- No GraphiFy rebuild, git commit, tag, or push was performed.
+
+**RESULT: `waiting_review`**
+
+## HUD Humor and Prompt Switch — Independent Review
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | HUD-HUMOR-PROMPTS |
+| Actor | reviewer (independent Verification Engineer) |
+| Timestamp | 2026-08-06T23:52:15+05:30 |
+| Graphify | 5,947 nodes / 13,469 edges (Orchestrator rebuild; used as-is, no rebuild) |
+| Coder handoff | absent for this step — scope reconstructed from STATE.yaml, Graphify, and working-tree diffs |
+| RESULT | `changes_requested` |
+
+### Exact scope (reconstructed)
+
+**In-scope product/test files (feature HUD humor + HUD prompt slots + quick switcher hit fix + workflow wire):**
+
+| Path | Status |
+|------|--------|
+| `Sources/NativeBolabolCore/Models/HumorStyleControl.swift` | **untracked new** (SPM path-included) |
+| `Sources/NativeBolabolCore/Models/HotkeySettings.swift` | modified (humor fields + legacy decode) |
+| `Sources/NativeBolabolCore/Services/PolishingWorkflow.swift` | modified (optional humor inject on Variant 2) |
+| `Sources/NativeBolabolCore/Services/PromptTemplate.swift` | modified (Variant 2 static HUMOR CONTROL section) |
+| `Sources/NativeBolabolCore/Services/ProviderQuickSwitcherModel.swift` | modified (init `stepThreshold` default `8`) |
+| `Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift` | modified (prompt bar + humor slider + layout) |
+| `Sources/NativeBolabol/Views/ContentView.swift` | **mixed** (feature HUD hooks + polish gap + unrelated language routing churn) |
+| `Sources/NativeBolabol/Views/ProviderQuickSwitcher.swift` | modified (view-local row hit testing) |
+| `Sources/NativeBolabol/Views/Settings/HotkeySettingsView.swift` | modified (humor toggle/mode picker) |
+| `Sources/NativeBolabol/Views/SidebarView.swift` | modified (wires humor into `PolishingWorkflow`) |
+| `Sources/NativeBolabol/Views/AudioPlaybackModalView.swift` | modified (wires humor into `PolishingWorkflow`) |
+| `Tests/NativeBolabolCoreTests/HumorStyleControlTests.swift` | **untracked new** |
+| `Tests/NativeBolabolCoreTests/PromptTemplateTests.swift` | modified (humor static body assert) |
+| `Tests/NativeBolabolCoreTests/HotkeySettingsTests.swift` | modified (defaults/migration/round-trip) |
+| `Tests/NativeBolabolCoreTests/HUDProviderSwitcherFeatureTests.swift` | **unchanged** (pre-existing; still relevant) |
+| `Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift` | **unchanged** (pre-existing; still relevant) |
+| `Sources/NativeBolabolCore/Models/PromptTemplateSettings.swift` | **not modified** (existing `PromptSlot` API reused) |
+
+**Explicitly out of scope (dirty tree; not reviewed as this feature; not reverted):**
+
+- Canary / translation runtime, onboarding, S9/S11 routing, cloud-provider, SmartScribe deletions, VaniScript sibling, graphify cache noise, QA allowlist scripts, other ADR tracks.
+
+**Workflow / scope finding:** The monorepo working tree is heavily polluted. Feature review is possible for the paths above, but `ContentView.swift` mixes HUD-humor work with unrelated `targetLanguageCode` / session routing edits. Reviewer did not roll anything back.
+
+### GraphiFy evidence
+
+| Query | Result |
+|-------|--------|
+| `query "HUD humor slider … PolishingWorkflow"` | Resolves `HumorRuntimeStyleControls`, `HumorLevel`, `PolishingWorkflow`, `ProviderQuickSwitcher`, `ContentView`, `humorSlider`, HUD layout tests, humor unit tests |
+| `explain HumorStyleControl.swift` | Degree 5: contains `HumorLevel`, `HumorPromptMode`, `HumorRuntimeStyleControls`, extends `PromptTemplate.applying` |
+| `explain ProviderQuickSwitcher` | Degree 32; `ContentView` calls; show/hide/scroll/click/right-click lifecycle methods |
+| `path HumorRuntimeStyleControls → PolishingWorkflow` | 2 hops via shared `HumorLevel` reference |
+| `path ProviderQuickSwitcher → ContentView` | 1 hop (`ContentView` calls) |
+
+Known Orchestrator links confirmed: `HumorRuntimeStyleControls → HumorLevel ← PolishingWorkflow`; `ContentView → ProviderQuickSwitcher`.
+
+### Reviewed files
+
+Full diffs (or full untracked content) reviewed for every in-scope path listed above. Production seams for humor injection traced:
+
+1. HUD slider → `handleOverlayHumorLevelChange` → `HotkeySettings.humorLevel` (+ dead `pendingHotkeyHumorLevel`)
+2. `PolishingWorkflow.polishWithLanguageGuard` → Variant 2 only + optional `humorLevel`
+3. Call sites: `SidebarView` ✅, `AudioPlaybackModalView` ✅, **`ContentView.polish` ❌**
+
+### Findings (severity order)
+
+#### BLOCK-HHP-001 — Primary polish path never applies HUD humor
+
+| Field | Detail |
+|-------|--------|
+| Severity | **BLOCKER** |
+| File / line | `Sources/NativeBolabol/Views/ContentView.swift` L821–L836 (`polish`), L814–L818 (`polishNote`); compare `SidebarView.swift` L231–L241, `AudioPlaybackModalView.swift` L387–L397 |
+| Observed | `ContentView.polish` constructs `PolishingWorkflow` with only `noteStore` / `engine` / `templateProvider` / `messageProvider`. It never passes `humorLevel` or `humorPromptMode`. Default remains `humorLevel: nil`, so **no RUNTIME CONTROL block is injected** on the hotkey dictation path or the note-detail “Polish” path. |
+| Expected | When humor slider is enabled, Variant 2 requests from the primary recording/polish path must carry the same runtime humor controls the HUD shows (and that Sidebar/Audio retranscribe already pass). |
+| Repro | Enable Humor slider in Settings; set HUD target to Variant 2; set non-zero humor; record via global hotkey (or polish a note from the main window). Capture the polishing request template body — no `HUMOR_LEVEL` / `RUNTIME CONTROL` (except the static optional prose in the default Variant 2 body). Retranscribe from Sidebar with the same settings — runtime block **is** present. |
+| Contract | UI selection must match runtime request; humor control must reach real `PolishingWorkflow`; Variant 2 optional humor is a product feature of this step. |
+| Minimal fix direction | Wire `ContentView.polish` like Sidebar/Audio: pass `humorLevel: humorSliderEnabled ? settings.humorLevel : nil` (or the frozen session value) and `humorPromptMode`. Prefer a single shared helper so the three call sites cannot diverge again. |
+| Mandatory regression test | Production-seam test that the **same construction path used by ContentView** (or a extracted pure helper it must call) includes/excludes runtime humor for Variant 2 when enabled/disabled; assert Variant 1 never receives it. Do not only unit-test `PolishingWorkflow` in isolation. |
+
+#### BLOCK-HHP-002 — Session freeze field is write-only; polish never freezes session humor
+
+| Field | Detail |
+|-------|--------|
+| Severity | **BLOCKER** (state machine / retry contract) |
+| File / line | `ContentView.swift` L51 (`pendingHotkeyHumorLevel`), L1670–L1674 (`handleOverlayHumorLevelChange` writes it); **zero reads** anywhere in the tree |
+| Observed | Comment claims capture “so an in-flight request cannot change underneath it,” but the value is never consumed by `polish` or session start. Every slider tick also mutates persisted `hotkeySettingsStore.settings.humorLevel` immediately. |
+| Expected | Either (a) freeze humor at recording start / polish enqueue and use that frozen value for the request, or (b) document live settings as the sole source of truth and remove the dead pending field. Cancel / failed transcription must not leave inconsistent session state. |
+| Repro | Start recording on Variant 2; drag humor mid-session; cancel vs complete; observe settings already mutated and polish still ignores both pending and (on ContentView) settings. |
+| Contract | Frozen request values; cancel/retry honesty; UI ↔ runtime parity. |
+| Minimal fix direction | On hotkey session start, snapshot humor (enabled + level + mode). Pass snapshot into `polish`. Clear snapshot on finish/cancel. Stop pretending `pendingHotkeyHumorLevel` freezes anything until it is read. |
+| Mandatory regression test | Session snapshot used by polish; mid-session settings mutation does not alter an already-enqueued request when freeze is the product rule. |
+
+#### HIGH-HHP-001 — Variant 1 isolation assertions are false-green
+
+| Field | Detail |
+|-------|--------|
+| Severity | **HIGH** |
+| File / line | `Tests/NativeBolabolCoreTests/HumorStyleControlTests.swift` L68, L102 |
+| Observed | Tests assert absence of `"RUNTIME STYLE CONTROLS"`, but production injects `"RUNTIME CONTROL:"` (`HumorStyleControl.swift` L185). Leakage of the real marker into Variant 1 would still pass these expects. |
+| Expected | Assert the real production marker (`RUNTIME CONTROL` / `HUMOR_LEVEL:`) is present only on Variant 2 and absent on Variant 1. |
+| Repro | Read test vs `HumorRuntimeStyleControls.promptBlock`. |
+| Contract | Tests must execute the production seam with honest assertions; green tests do not replace logic review. |
+| Minimal fix direction | Replace wrong string; add positive/negative checks for both variants. |
+| Mandatory regression test | Fix existing test (this is the regression test). |
+
+#### HIGH-HHP-002 — No production-seam coverage for ContentView / note polish wiring
+
+| Field | Detail |
+|-------|--------|
+| Severity | **HIGH** |
+| File / line | Missing; current coverage only `PolishingWorkflow` unit path in `HumorStyleControlTests` + Sidebar/Audio product call sites untested |
+| Observed | Unit tests prove `PolishingWorkflow` *can* inject humor when constructed correctly. They do **not** prove the app’s primary construction site does so. That is exactly where BLOCK-HHP-001 lives. |
+| Expected | At least one test (helper extraction or compile-time wiring contract) that fails if ContentView-equivalent polish omits humor parameters. |
+| Contract | Critical production-seam test required for this step. |
+| Minimal fix direction | Extract `makePolishingWorkflow(...)` used by ContentView/Sidebar/Audio; unit-test that factory. |
+| Mandatory regression test | Factory wiring matrix: slider off → nil; on → level+mode; Variant 1 body clean; Variant 2 body has single RUNTIME CONTROL. |
+
+#### HIGH-HHP-003 — `HumorLevel.nearest` traps on NaN / infinity
+
+| Field | Detail |
+|-------|--------|
+| Severity | **HIGH** |
+| File / line | `HumorStyleControl.swift` L118–L122 (`Int(snapped)` after `rounded()`) |
+| Observed | Independent Swift probe: `HumorLevel.nearest`-equivalent conversion of `Double.nan` fatally traps (`Double value cannot be converted to Int because it is either infinite or NaN`). Infinity same class of failure. |
+| Expected | Non-finite slider / programmatic values clamp or reject safely without process death. |
+| Repro | Call `HumorLevel.nearest(.nan)` or `.infinity` (slider UI with `step: 20` is unlikely; any future binding/API misuse is fatal). |
+| Contract | No crash paths from control normalization. |
+| Minimal fix direction | Guard `rawValue.isFinite` before snap; fallback to `.none` or clamp. |
+| Mandatory regression test | `nearest(nan)`, `nearest(+inf)`, `nearest(-inf)` return safe levels (no trap). |
+
+#### MED-HHP-001 — Prompt bar / humor controls remain hit-testable at opacity 0
+
+| Field | Detail |
+|-------|--------|
+| Severity | **MEDIUM** |
+| File / line | `HotkeySessionOverlayManager.swift` L792–L800 (prompt bar), L889–L927 (humor slider); hover L703–L720 |
+| Observed | Controls use `.opacity(isHovered ? 0.95 : 0.0)` without `.allowsHitTesting(isHovered)`. Expanded panel height still hosts invisible SwiftUI buttons/slider. |
+| Expected | Invisible controls should not steal clicks/scroll from the surrounding area unless product intends always-on hit targets; VoiceOver/focus order should be intentional. |
+| Repro | With prompt bar shown (note/x2 listening), without hovering, click the reserved bar region above the pill. |
+| Contract | HUD input honesty; no invisible intercept. |
+| Minimal fix direction | `.allowsHitTesting(state.isHovered)` (or keep hit testing only when opacity threshold met). |
+| Mandatory regression test | Layout/hit policy unit test if hit regions are pure-layout; otherwise Tester manual matrix item. |
+
+#### MED-HHP-002 — `isHovered` not cleared on HUD hide
+
+| Field | Detail |
+|-------|--------|
+| Severity | **MEDIUM** |
+| File / line | `HotkeySessionOverlayManager.swift` L193–L197 `hide()`; `isHovered` L265 |
+| Observed | `hide()` sets `isVisible = false` and `orderOut`s the panel but does not reset `isHovered`. If `mouseExited` is skipped (common when panel is ordered out under the cursor), the next `show` can open with prompt/humor already “visible” until a later exit. |
+| Expected | Dismiss clears hover; re-show starts from non-hovered chrome unless cursor is truly inside. |
+| Contract | HUD lifecycle cleanup; no stale UI state across sessions. |
+| Minimal fix direction | `state.isHovered = false` in `hide()`. |
+| Mandatory regression test | If OverlayState becomes testable, assert hide clears hover; else Tester matrix. |
+
+#### MED-HHP-003 — Immediate persistence of every humor tick (cancel cannot discard)
+
+| Field | Detail |
+|-------|--------|
+| Severity | **MEDIUM** |
+| File / line | `ContentView.swift` L1672–L1674; `HotkeySettings` encode path |
+| Observed | Each slider change writes `hotkeySettingsStore.settings.humorLevel` immediately. Cancelled recording does not restore prior value. |
+| Expected | Matrix item 15: cancel must not keep accidental intermediate values **if** product requires commit-on-finish. If product wants live preference, document it and drop freeze rhetoric. |
+| Contract | Persistence boundary must match product intent. |
+| Minimal fix direction | Decide product rule; either commit on successful polish only, or document live preference explicitly and test it. |
+| Mandatory regression test | Cancel-after-drag leaves previous stored humor **or** intentionally updates it (assert chosen rule). |
+
+#### MED-HHP-004 — Unlocalized humor UI strings
+
+| Field | Detail |
+|-------|--------|
+| Severity | **MEDIUM** |
+| File / line | `HotkeySettingsView.swift` L122–L131 (“Humor slider”, “Humor style”, caption); overlay L934 `"Humor level"` |
+| Observed | Hard-coded English outside `AppText` / `generalSettingsStore.text`. |
+| Expected | App has a 15-language UI surface; new user-visible strings should follow existing localization pipeline. |
+| Contract | Accessibility/i18n consistency. |
+| Minimal fix direction | Add `AppTextKey`s and wire through existing localization. |
+| Mandatory regression test | Settings localization suite keys for new strings. |
+
+#### MED-HHP-005 — Prompt slot buttons lack accessibility labels/values
+
+| Field | Detail |
+|-------|--------|
+| Severity | **MEDIUM** |
+| File / line | `HotkeySessionOverlayManager.swift` L803–L824 |
+| Observed | Prompt buttons expose short titles (`D`/`1`/`2`/…) with `.help(slotName)` only; no `accessibilityLabel` / selected state / adjustable actions. |
+| Expected | VoiceOver names the slot, selection state, and action (switch Variant 1/2 prompt). |
+| Contract | Accessibility not a blocker only if critical path works; incomplete labels are MEDIUM but must not be ignored before release. |
+| Minimal fix direction | Label = slot name; value = selected/unselected; traits = button. |
+| Mandatory regression test | Prefer UI snapshot/a11y audit in Tester matrix. |
+
+#### MED-HHP-006 — Quick switcher default threshold diverges from documented constant
+
+| Field | Detail |
+|-------|--------|
+| Severity | **MEDIUM** |
+| File / line | `ProviderQuickSwitcherModel.swift` L25 `defaultStepThreshold = 24` vs L38 default parameter `= 8` |
+| Observed | Init no longer uses `defaultStepThreshold`; trackpad step sensitivity becomes 3× easier (threshold 8). HUD non-precise deltas still multiply by `defaultStepThreshold` (24). |
+| Expected | Single source of truth; intentional sensitivity change should update the named constant and tests. |
+| Contract | Existing provider quick switch must not regress silently. |
+| Minimal fix direction | `stepThreshold: CGFloat = Self.defaultStepThreshold` **or** set `defaultStepThreshold = 8` and update HUDProvider scroll tests. |
+| Mandatory regression test | Init default equals documented constant; scroll step counts under known deltas. |
+
+#### MED-HHP-007 — Dirty-tree / QA gate pollution outside feature
+
+| Field | Detail |
+|-------|--------|
+| Severity | **MEDIUM** (workflow) |
+| File / line | `./script/qa/run_all.sh` → `check_s1b_scope.sh`, `check_s6_gigaam_spike.sh`, `check_s9_engine_contract.sh` |
+| Observed | QA **27/30 fail 3** (exit 1). Failures reference Canary speech-translation runtime scope, GigaAM spike, and missing S9 language-matrix test names — **not** HUD humor files. Full `swift test` is green (598). |
+| Expected | Feature step should not ship with red gates unless Orchestrator accepts known unrelated red allowlists. |
+| Contract | Reviewer must not treat green unit tests as full gate; also must not mis-blame this feature for unrelated reds. |
+| Minimal fix direction | Orchestrator/Tester triage allowlists separately; Coder of this step should not “fix” unrelated QA by editing product. |
+| Mandatory regression test | N/A for humor; track as workflow debt. |
+
+#### LOW-HHP-001 — Midpoint banker's rounding asymmetry in `nearest`
+
+| Field | Detail |
+|-------|--------|
+| Severity | **LOW** |
+| File / line | `HumorStyleControl.swift` L118–L122 |
+| Observed | Swift `.rounded()` ties-to-even: e.g. 10→0, 30→40, 50→40, 70→80, 90→80. UI slider uses `step: 20` so marks avoid midpoints; continuous persisted values (e.g. migrated 63) do not go through `nearest`. |
+| Expected | Documented deterministic nearest marks; midpoints should be explicit product rule. |
+| Minimal fix direction | Use `rounded(.toNearestOrAwayFromZero)` or integer arithmetic if midpoints matter. |
+| Mandatory regression test | Midpoint table 10/30/50/70/90. |
+
+#### LOW-HHP-002 — Weak “disabled” test only checks absence of specific mode strings
+
+| Field | Detail |
+|-------|--------|
+| Severity | **LOW** |
+| File / line | `HumorStyleControlTests.swift` L109–L128 |
+| Observed | Disabled path checks `!contains("HUMOR_LEVEL: 80")` and a specific base mode — not `!contains("RUNTIME CONTROL")` / `HUMOR_LEVEL:`. |
+| Expected | Assert no runtime control block at all when `humorLevel` is nil. |
+| Minimal fix direction | Strengthen assertions. |
+
+### State-machine assessment
+
+| Transition / concern | Assessment |
+|----------------------|------------|
+| idle → recording (HUD show listening) | Prompt bar for `.note`/`.x2`; humor only `.x2` + enabled. Layout refresh on target/humor/controls changes — OK directionally. |
+| recording → processing | Humor/prompt chrome gated on `mode == .listening` — OK. |
+| polish enqueue | **Broken on ContentView** (BLOCK-HHP-001). Sidebar/Audio OK. |
+| cancel / finish | Overlay hide + quick switcher hide — OK; hover not cleared (MED-HHP-002). |
+| prompt slot change mid-recording | Immediately mutates `PromptTemplateStore` active slot — survives cancel (product may intend global preference). |
+| provider scroll mid-recording | Existing switcher lifecycle retained; view-coordinate click fix is sound. |
+| retry after failed polish | Uses whatever settings exist at next polish call; no frozen humor (BLOCK-HHP-002). |
+| concurrent sessions | No new multi-HUD ownership; single manager retained. |
+| hide while switcher visible | `finishHotkeySessionIfNeeded` hides both — OK. |
+
+### Humor slider matrix assessment (1–30)
+
+| # | Result | Notes |
+|---|--------|-------|
+| 1 Control only Variant 2 | **Partial** | Workflow code restricts to Variant 2; primary ContentView path never sends control. |
+| 2 Variant 1 never gets humor | **Partial** | Engine path OK when used; tests false-green (HIGH-HHP-001). |
+| 3 Disabled does not change prompt | **Partial** | Sidebar/Audio nil when disabled; ContentView always nil (accidentally “safe”, feature dead). |
+| 4 Default matches intent | **Covered** | Default `.none` / slider off; settings defaults tested. |
+| 5–8 Min/max/marks/step UI | **Covered** | 0…100 step 20; marks 0/20/…/100. |
+| 9 `nearest` boundaries | **Partial** | Tested some values; midpoints banker's (LOW-HHP-001); NaN fatal (HIGH-HHP-003). |
+| 10–11 Out of range clamp | **Covered** | `HumorLevel` clamps 0…100. |
+| 12 NaN/inf | **Fail** | Traps (HIGH-HHP-003). |
+| 13 Reopen HUD shows state | **Covered** | Loaded from settings on show/update. |
+| 14 New session stale runtime | **Partial** | Inherits settings (intended?) but pending freeze unused. |
+| 15 Cancel keeps intermediate | **Fail / product gap** | Immediate persist (MED-HHP-003). |
+| 16–17 Fail paths keep humor state | **Covered** (settings) | Humor is settings-owned; failures do not clear it. |
+| 18 Retry frozen value | **Fail** | No freeze (BLOCK-HHP-002). |
+| 19–20 Variant switch clear/dup | **Partial** | UI hides control off x2; no instruction cleanup needed when not injected. |
+| 21 Single instruction | **Covered** | One `applying` insert per request when wired. |
+| 22 User text isolated | **Covered** | `renderForChat` keeps userContent = transcription. |
+| 23 Translation/raw no humor | **Partial** | Humor only Variant 2 polish; translation override prepends to already-configured template (humor can still be present under translation — product may want explicit matrix decision). |
+| 24 UI ↔ request match | **Fail** | BLOCK-HHP-001 on primary path. |
+| 25–26 A11y/keyboard adjust | **Partial** | Slider adjustable action present; English-only label; prompt slots weak a11y. |
+| 27–28 Fast drag no LLM spam | **Covered** | Handler only updates settings/state; polish not triggered per tick. |
+| 29 Persistence contract | **Partial** | Persists every tick without explicit confirm. |
+| 30 Legacy settings decode | **Covered** | `decodeIfPresent` + `variantTwoHumorLevel` migration tested. |
+
+### HUD prompt-switch matrix assessment (1–40)
+
+| Area | Result |
+|------|--------|
+| Visibility only listening + note/x2 | **Covered** in `showsPromptBar` |
+| Current slot highlight | **Covered** selected fill |
+| Left click selects slot | **Covered** button → store |
+| Scroll / provider switch isolation | **Covered** scroll still routes to provider switcher; prompt uses buttons |
+| Empty/single prompt list | N/A fixed 5 slots |
+| Persist selection | Immediate store write (same class as humor persist) |
+| Hover opacity / invisible hits | **Fail** MED-HHP-001 |
+| Escape / click-outside | Provider panel auto-hide timer OK; prompt bar is in HUD not separate panel |
+| Event monitors | Quick switcher uses view tracking + Timer; no new global monitors in this feature |
+| Multi-monitor position | Switcher clamps to screen of anchor — OK |
+| Provider vs prompt orthogonality | **Covered** separate handlers |
+| Stale hide timer | `cancelHideTimer` on reschedule — OK |
+| Coordinate bug on right-click | **Fixed** (view-local conversion) — positive |
+| Accessibility | MED-HHP-005 |
+| Lifecycle after failed session | Hide on finish — OK with hover caveat |
+| Existing provider switch regression | Model threshold drift MED-HHP-006; feature tests still green |
+
+### Tests coverage gaps
+
+| Requirement | Coverage |
+|-------------|----------|
+| Real `HumorLevel` / marks / clamp | **Covered** |
+| Real `HumorRuntimeStyleControls` block | **Covered** |
+| Real `PromptTemplate.applying` | **Covered** |
+| Real `PolishingWorkflow` inject Variant 2 only | **Partial** (unit OK; wrong negative string; no ContentView seam) |
+| Disabled → omit control | **Partial** (weak asserts) |
+| `HotkeySettings` humor defaults/migration | **Covered** |
+| Variant 2 static HUMOR CONTROL prose | **Covered** |
+| `ProviderQuickSwitcherModel` scroll/select | **Covered** (pre-existing) |
+| Layout row index / composer | **Covered** (pre-existing) |
+| ContentView polish wires humor | **Not covered** (critical) |
+| Session freeze / cancel | **Not covered** |
+| NaN/inf nearest | **Not covered** |
+| HUD prompt bar state machine | **Not covered** |
+| A11y / localization | **Not covered** |
+| DomainModelsExhaustive humor types | **Not covered** |
+| Duplicate product logic in tests | **Low risk** — tests call real types; assertion strings wrong |
+
+### Command results
+
+| Command | Exit | Executed tests | Notes |
+|---------|------|----------------|-------|
+| `swift test --filter HumorStyleControlTests` | 0 | **7** | All pass (incl. false-green asserts) |
+| `swift test --filter PromptTemplateTests` | 0 | **29** | Includes new humor prose test |
+| `swift test --filter HUDProviderSwitcherFeatureTests` | 0 | **10** | Unchanged suite; still runs |
+| `swift test --filter HUDLayoutAndComposerTests` | 0 | **11** | Unchanged suite; still runs |
+| `swift test --filter HotkeySettingsTests` | 0 | **10** | Humor migration covered |
+| `swift test` | 0 | **598** in 15 suites | Green |
+| `./script/qa/run_all.sh` | **1** | 27 pass / **3 fail** | Unrelated: s1b scope, s6 gigaam spike, s9 engine contract mapping |
+| `./script/build_and_run.sh --verify` | 0 | — | Release app + polish worker built; app signed/verified |
+| `git diff --check` (feature paths) | 0 | — | Clean |
+
+Untracked `HumorStyleControl.swift` is under `Sources/NativeBolabolCore` (path-based SPM target) and **is** part of the real build (full suite + release build both green).
+
+### Residual risks
+
+1. Primary dictation UX ships a visible humor slider that **does not affect** hotkey polish until BLOCK-HHP-001 is fixed.
+2. Sidebar/Audio retranscribe **do** inject humor → inconsistent user experience across entry points.
+3. Dirty tree + red legacy QA checks can mask future feature regressions if gates are ignored wholesale.
+4. Hover/opacity hit-testing can produce “ghost” HUD interactions.
+5. Translation override + humor co-presence not explicitly product-specified.
+
+### Verdict
+
+**CHANGES_REQUESTED**
+
+Blocking reasons present:
+
+- UI humor selection diverges from primary runtime polish request (BLOCK-HHP-001).
+- Session freeze/retry contract incomplete (BLOCK-HHP-002).
+- Critical production-seam test missing; existing isolation asserts unreliable (HIGH-HHP-001/002).
+- Crash path on non-finite nearest (HIGH-HHP-003).
+- QA gate red (even if mostly unrelated) remains on the record for Orchestrator triage (MED-HHP-007).
+
+APPROVED is not allowed under these conditions.
+
+**RESULT: `changes_requested`**
+
+## Current Translation Runtime Reset: Canary ASR-only and CDN-delivered Core ML text translation
+
+### Meta
+
+| Field | Value |
+|-------|-------|
+| Step | Remove Canary speech translation; add separate native text-to-text runtime and package delivery |
+| Actor | coder |
+| Timestamp | 2026-08-06T00:55:00+05:30 |
+| RESULT | waiting_review |
+
+### Findings and Fixes
+
+- Canary is now ASR-only at both product routing and engine boundaries. The translation modal and floating window no longer expose Canary as a translation provider, and `CanaryCoreMLEngine` rejects speech-target requests and `translateToEnglish` requests.
+- Text translation now has its own `TextTranslationRequest` / `TextTranslationEngine` contract, `TextTranslationEngineStore`, and native Core ML NLLB encoder-decoder engine. It does not depend on `TranscriptionEngineStore`, Canary state, Python, `transformers`, MLX, or a worker process.
+- `TranslationModelStore` downloads a versioned package from the configured Bolabol CDN, validates `MANIFEST.json`, rejects unsafe paths, verifies byte sizes and SHA-256 for every file, stages atomically, and only then exposes the model to the provider picker.
+- The current NLLB Core ML artifact is a technical evaluation probe (`facebook/nllb-200-distilled-600M` conversion). It is deliberately marked not public-product-ready because the upstream package uses CC-BY-NC-4.0. A commercially distributable replacement still needs its own offline conversion/package gate.
+- Settings now has a separate Translation tab. Conversion remains an offline maintainer step; the shipped app performs only CDN download, integrity verification, native SentencePiece tokenization, and Core ML inference.
+
+### Verification
+
+| Command | Result |
+|---------|--------|
+| `swift test --filter TranslationRuntimeContractTests` | PASS - 7 contract tests |
+| `swift test --filter S9CanaryLanguageEdgeCaseTests` | PASS - 2 tests; Canary ASR-only validation |
+| `BOLABOL_NLLB_TRANSLATION_SMOKE=1 swift test --filter TranslationRuntimeContractTests` | PASS - native Core ML smoke returned `Привет, как дела?` for English → Russian; 6 output tokens at about 13 tok/s |
+| `swift test` | PASS - 597 tests in 15 suites |
+| `./script/qa/run_all.sh` | PASS - 29/29 checks |
+
+### Remaining Blockers
+
+- The current NLLB license is evaluation-only for a public product. MADLAD-400 or another commercially suitable multilingual encoder-decoder must be converted offline and published as a new signed/versioned package before enabling a public model row.
+- CDN hosting is represented by the manifest/package contract and configurable base URL; the production cloud URL and release manifest still need to be supplied by the maintainer.
+- The current probe uses a full decoder pass for each greedy token, so its measured speed is a technical baseline, not the final “instant” production target. A final package should be benchmarked and, if needed, converted with a cache-aware decoder or replaced by a faster Core ML translation model.
+
+**RESULT: `waiting_review`**
+
 ## Canary Translation Window: Local Provider and Explicit Source/Target
 
 ### Meta

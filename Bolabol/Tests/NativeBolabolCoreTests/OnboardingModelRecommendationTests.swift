@@ -7,94 +7,45 @@ private enum RecommendationTestModelID {
     static let canary1B = "canary-1b-v2-coreml"
     static let largeV3 = "whisperkit-large-v3-full"
     static let turbo = "whisperkit-large-v3-turbo"
+    static let medium = "whisperkit-medium-multilingual"
     static let parakeet = "parakeet-tdt-06b-v3"
 }
 
 @Test
-func onboardingModelRecommendationMatchesLanguageMatrix() {
-    let cases: [(primary: String, additional: String, expected: [String])] = [
-        ("ru", "en", [
-            RecommendationTestModelID.gigaAM,
-            RecommendationTestModelID.canaryFlash,
-            RecommendationTestModelID.largeV3
-        ]),
-        ("ru", "ru", [
-            RecommendationTestModelID.gigaAM,
-            RecommendationTestModelID.largeV3,
-            RecommendationTestModelID.turbo
-        ]),
-        ("en", "es", [
-            RecommendationTestModelID.canaryFlash,
-            RecommendationTestModelID.largeV3,
-            RecommendationTestModelID.turbo
-        ]),
-        ("en", "en", [
-            RecommendationTestModelID.canaryFlash,
-            RecommendationTestModelID.largeV3,
-            RecommendationTestModelID.turbo
-        ]),
-        ("hi", "en", [
-            RecommendationTestModelID.largeV3,
-            RecommendationTestModelID.turbo,
-            RecommendationTestModelID.canary1B
-        ]),
-        ("de", "fr", [
-            RecommendationTestModelID.canaryFlash,
-            RecommendationTestModelID.largeV3,
-            RecommendationTestModelID.turbo
-        ])
-    ]
-
-    for testCase in cases {
-        let result = OnboardingModelRecommendation.topThree(
-            primary: testCase.primary,
-            additional: testCase.additional,
-            available: allRecommendationModels()
-        )
-
-        #expect(result.map(\.id) == testCase.expected)
-    }
-}
-
-@Test
-func onboardingModelRecommendationUsesCanaryFlashForEveryCompactLanguagePair() {
-    let compactLanguages = ["en", "de", "fr", "es"]
-    let expected = [
-        RecommendationTestModelID.canaryFlash,
-        RecommendationTestModelID.largeV3,
-        RecommendationTestModelID.turbo
-    ]
-
-    for primary in compactLanguages {
-        for additional in compactLanguages {
-            let result = OnboardingModelRecommendation.topThree(
-                primary: primary,
-                additional: additional,
-                available: allRecommendationModels()
-            )
-
-            #expect(result.map(\.id) == expected, "Unexpected compact ranking for \(primary)+\(additional)")
-        }
-    }
-}
-
-@Test
-func onboardingModelRecommendationUsesR3OrderForOtherLanguagePairs() {
+func russianPrimaryUsesRussianAndBilingualRecommendations() {
     let result = OnboardingModelRecommendation.topThree(
-        primary: "zh",
+        primary: "ru",
         additional: "en",
         available: allRecommendationModels()
     )
 
     #expect(result.map(\.id) == [
-        RecommendationTestModelID.largeV3,
-        RecommendationTestModelID.turbo,
+        RecommendationTestModelID.gigaAM,
+        RecommendationTestModelID.parakeet,
         RecommendationTestModelID.canary1B
     ])
+    #expect(!result.contains { $0.id == RecommendationTestModelID.canaryFlash })
 }
 
 @Test
-func onboardingModelRecommendationAppliesRussianRuleWhenAdditionalIsRussian() {
+func russianPrimaryDoesNotLetUnsupportedAdditionalLanguageHideBilingualModels() {
+    let result = OnboardingModelRecommendation.topThree(
+        primary: "ru",
+        additional: "ko",
+        available: allRecommendationModels()
+    )
+
+    #expect(result.map(\.id) == [
+        RecommendationTestModelID.gigaAM,
+        RecommendationTestModelID.largeV3,
+        RecommendationTestModelID.turbo
+    ])
+    #expect(!result.contains { $0.id == RecommendationTestModelID.canary1B })
+    #expect(!result.contains { $0.id == RecommendationTestModelID.parakeet })
+}
+
+@Test
+func primaryLanguageIsMandatoryEvenWhenAdditionalLanguageMatchesSpecialtyModel() {
     let result = OnboardingModelRecommendation.topThree(
         primary: "en",
         additional: "ru",
@@ -102,147 +53,128 @@ func onboardingModelRecommendationAppliesRussianRuleWhenAdditionalIsRussian() {
     )
 
     #expect(result.map(\.id) == [
-        RecommendationTestModelID.gigaAM,
-        RecommendationTestModelID.largeV3,
-        RecommendationTestModelID.turbo
+        RecommendationTestModelID.parakeet,
+        RecommendationTestModelID.canary1B,
+        RecommendationTestModelID.largeV3
     ])
+    #expect(!result.contains { $0.id == RecommendationTestModelID.gigaAM })
 }
 
 @Test
-func onboardingModelRecommendationNormalizesSpeechLanguageCodes() {
+func compactLanguagePairPrefersCompactFlashThenBilingualFastModels() {
     let result = OnboardingModelRecommendation.topThree(
-        primary: " RU ",
-        additional: " EN ",
+        primary: "en",
+        additional: "de",
         available: allRecommendationModels()
     )
 
     #expect(result.map(\.id) == [
-        RecommendationTestModelID.gigaAM,
         RecommendationTestModelID.canaryFlash,
-        RecommendationTestModelID.largeV3
-    ])
-}
-
-@Test
-func onboardingModelRecommendationNormalizesRussianAdditionalLanguageCode() {
-    let result = OnboardingModelRecommendation.topThree(
-        primary: " EN ",
-        additional: " Ru ",
-        available: allRecommendationModels()
-    )
-
-    #expect(result.map(\.id) == [
-        RecommendationTestModelID.gigaAM,
-        RecommendationTestModelID.largeV3,
-        RecommendationTestModelID.turbo
-    ])
-}
-
-@Test
-func onboardingModelRecommendationCollapsesMissingGigaAM() {
-    let available = allRecommendationModels().filter { $0.id != RecommendationTestModelID.gigaAM }
-
-    let result = OnboardingModelRecommendation.topThree(
-        primary: "ru",
-        additional: "en",
-        available: available
-    )
-
-    #expect(result.map(\.id) == [
-        RecommendationTestModelID.canaryFlash,
-        RecommendationTestModelID.largeV3
-    ])
-}
-
-@Test
-func onboardingModelRecommendationUsesParakeetWhenCanary1BIsUnavailable() {
-    let available = allRecommendationModels().filter { $0.id != RecommendationTestModelID.canary1B }
-
-    let result = OnboardingModelRecommendation.topThree(
-        primary: "hi",
-        additional: "en",
-        available: available
-    )
-
-    #expect(result.map(\.id) == [
-        RecommendationTestModelID.largeV3,
-        RecommendationTestModelID.turbo,
-        RecommendationTestModelID.parakeet
-    ])
-}
-
-@Test
-func onboardingModelRecommendationUsesFlashAsFinalR3Fallback() {
-    let available = allRecommendationModels().filter {
-        $0.id != RecommendationTestModelID.canary1B && $0.id != RecommendationTestModelID.parakeet
-    }
-
-    let result = OnboardingModelRecommendation.topThree(
-        primary: "hi",
-        additional: "en",
-        available: available
-    )
-
-    #expect(result.map(\.id) == [
-        RecommendationTestModelID.largeV3,
-        RecommendationTestModelID.turbo,
-        RecommendationTestModelID.canaryFlash
-    ])
-}
-
-@Test
-func onboardingModelRecommendationReturnsEmptyForEmptyCatalog() {
-    #expect(OnboardingModelRecommendation.topThree(primary: "ru", additional: "en", available: []).isEmpty)
-}
-
-@Test
-func onboardingModelRecommendationDoesNotReturnDuplicateModels() {
-    let models = allRecommendationModels()
-    let available = models + [models[0]]
-
-    let result = OnboardingModelRecommendation.topThree(
-        primary: "ru",
-        additional: "en",
-        available: available
-    )
-
-    #expect(result.map(\.id) == [
-        RecommendationTestModelID.gigaAM,
-        RecommendationTestModelID.canaryFlash,
-        RecommendationTestModelID.largeV3
-    ])
-    #expect(result.map(\.id).count == Set(result.map(\.id)).count)
-}
-
-@Test
-func onboardingModelRecommendationCapsResultAtThreeModels() {
-    let result = OnboardingModelRecommendation.topThree(
-        primary: "hi",
-        additional: "en",
-        available: allRecommendationModels()
-    )
-
-    #expect(result.count == 3)
-    #expect(result.map(\.id) == [
-        RecommendationTestModelID.largeV3,
-        RecommendationTestModelID.turbo,
+        RecommendationTestModelID.parakeet,
         RecommendationTestModelID.canary1B
     ])
 }
 
 @Test
-func onboardingModelRecommendationAcceptsOnlySpeechLanguageInputs() {
-    // The explicit function type has no UI-language input, keeping ranking pure.
-    let ranking: (String, String, [TranscriptionModelDescriptor]) -> [TranscriptionModelDescriptor] =
-        OnboardingModelRecommendation.topThree
-
-    let result = ranking("en", "es", allRecommendationModels())
+func koreanPrimaryOffersOnlyModelsWithKoreanCapability() {
+    let result = OnboardingModelRecommendation.topThree(
+        primary: "ko",
+        additional: "en",
+        available: allRecommendationModels()
+    )
 
     #expect(result.map(\.id) == [
-        RecommendationTestModelID.canaryFlash,
+        RecommendationTestModelID.largeV3,
+        RecommendationTestModelID.turbo,
+        RecommendationTestModelID.medium
+    ])
+    #expect(!result.contains { $0.id == RecommendationTestModelID.gigaAM })
+    #expect(!result.contains { $0.id == RecommendationTestModelID.canaryFlash })
+    #expect(!result.contains { $0.id == RecommendationTestModelID.canary1B })
+}
+
+@Test
+func shippedCatalogRecommendationsFollowRealModelCapabilities() {
+    let available = TranscriptionModelCatalog.nativeWhisperKit.models
+
+    let russian = OnboardingModelRecommendation.topThree(
+        primary: "ru",
+        additional: "en",
+        available: available
+    )
+    let korean = OnboardingModelRecommendation.topThree(
+        primary: "ko",
+        additional: "en",
+        available: available
+    )
+
+    #expect(russian.map(\.id) == [
+        RecommendationTestModelID.gigaAM,
+        RecommendationTestModelID.parakeet,
+        RecommendationTestModelID.canary1B
+    ])
+    #expect(korean.map(\.id) == [
+        RecommendationTestModelID.largeV3,
+        RecommendationTestModelID.turbo,
+        RecommendationTestModelID.medium
+    ])
+}
+
+@Test
+func recommendationNormalizesNamesAndRegionalCodes() {
+    let result = OnboardingModelRecommendation.topThree(
+        primary: " Russian ",
+        additional: "en-US",
+        available: allRecommendationModels()
+    )
+
+    #expect(result.map(\.id) == [
+        RecommendationTestModelID.gigaAM,
+        RecommendationTestModelID.parakeet,
+        RecommendationTestModelID.canary1B
+    ])
+}
+
+@Test
+func unavailableModelsAreSkippedWithoutFillingPlaceholderSlots() {
+    let available = allRecommendationModels().filter {
+        $0.id != RecommendationTestModelID.gigaAM
+            && $0.id != RecommendationTestModelID.canary1B
+    }
+
+    let result = OnboardingModelRecommendation.topThree(
+        primary: "ru",
+        additional: "en",
+        available: available
+    )
+
+    #expect(result.map(\.id) == [
+        RecommendationTestModelID.parakeet,
         RecommendationTestModelID.largeV3,
         RecommendationTestModelID.turbo
     ])
+}
+
+@Test
+func duplicateModelsAreReturnedOnceAndResultIsCappedAtThree() {
+    let models = allRecommendationModels()
+    let result = OnboardingModelRecommendation.topThree(
+        primary: "ru",
+        additional: "en",
+        available: models + [models[0]]
+    )
+
+    #expect(result.count == 3)
+    #expect(result.map(\.id).count == Set(result.map(\.id)).count)
+}
+
+@Test
+func emptyCatalogReturnsNoRecommendations() {
+    #expect(OnboardingModelRecommendation.topThree(
+        primary: "ru",
+        additional: "en",
+        available: []
+    ).isEmpty)
 }
 
 private func allRecommendationModels() -> [TranscriptionModelDescriptor] {
@@ -252,20 +184,55 @@ private func allRecommendationModels() -> [TranscriptionModelDescriptor] {
         makeRecommendationModel(id: RecommendationTestModelID.canary1B),
         makeRecommendationModel(id: RecommendationTestModelID.largeV3),
         makeRecommendationModel(id: RecommendationTestModelID.turbo),
+        makeRecommendationModel(id: RecommendationTestModelID.medium),
         makeRecommendationModel(id: RecommendationTestModelID.parakeet)
     ]
 }
 
 private func makeRecommendationModel(id: String) -> TranscriptionModelDescriptor {
-    TranscriptionModelDescriptor(
+    let backend: TranscriptionModelDescriptor.Backend
+    let supportedLanguageCodes: [String]
+    let supportsAutoLanguageDetect: Bool
+
+    switch id {
+    case RecommendationTestModelID.gigaAM:
+        backend = .gigaAMCoreML
+        supportedLanguageCodes = ["ru"]
+        supportsAutoLanguageDetect = false
+    case RecommendationTestModelID.canaryFlash:
+        backend = .canaryCoreML
+        supportedLanguageCodes = CanaryLanguageCatalog.flashLanguageCodes
+        supportsAutoLanguageDetect = false
+    case RecommendationTestModelID.canary1B:
+        backend = .canaryCoreML
+        supportedLanguageCodes = CanaryLanguageCatalog.oneBV2LanguageCodes
+        supportsAutoLanguageDetect = false
+    case RecommendationTestModelID.parakeet:
+        backend = .fluidAudioCoreML
+        supportedLanguageCodes = CanaryLanguageCatalog.oneBV2LanguageCodes
+        supportsAutoLanguageDetect = true
+    default:
+        backend = .whisperKitCoreML
+        supportedLanguageCodes = LanguagePickerOrder.orderedSpeechCodes
+        supportsAutoLanguageDetect = true
+    }
+
+    return TranscriptionModelDescriptor(
         id: id,
         displayName: id,
         modelName: id,
-        backend: .fluidAudioCoreML,
+        backend: backend,
         languageSupport: .multilingual,
         downloadSize: "1 MB",
         description: "Test model",
         accuracy: 3,
-        speed: 3
+        speed: 3,
+        capabilities: ASRModelCapabilities(
+            supportsAutoLanguageDetect: supportsAutoLanguageDetect,
+            supportedLanguageCodes: supportedLanguageCodes,
+            supportsSpeechTranslation: false,
+            maxChunkSeconds: 30,
+            approxDownloadBytes: 1_000_000
+        )
     )
 }

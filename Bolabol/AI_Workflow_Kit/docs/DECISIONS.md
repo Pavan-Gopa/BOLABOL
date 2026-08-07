@@ -5,6 +5,15 @@
 
 ---
 
+## ADR-021 — Separate native text translation runtime and CDN package delivery
+
+**Status:** Accepted — 2026-08-06
+**Decision:** Canary remains an audio transcription model only. Text translation is a separate `TextTranslationEngine` runtime with explicit source/target text requests. Model conversion happens offline; the macOS app receives only a versioned Core ML package from the Bolabol CDN, verifies `MANIFEST.json` plus per-file size/SHA-256, and loads the completed package natively. Python, `transformers`, and conversion tooling are not runtime dependencies.
+**Current probe:** NLLB-200 distilled 600M Core ML encoder-decoder is wired as an evaluation-only technical probe. It is not marked public-product-ready because the upstream `CC-BY-NC-4.0` license does not clear public/commercial distribution. A commercially suitable multilingual model must pass the same conversion, package, integrity, and native smoke gates before release.
+**Supersedes for product behavior:** the Canary speech-translation window/source-target path described by ADR-011 and the historical Canary AST product claims in earlier feedback. Historical ADRs remain retained for audit; current code and this ADR are authoritative for the active runtime boundary.
+
+---
+
 ## ADR-001 — Native-only ML runtime
 
 **Status:** Accepted  
@@ -1002,3 +1011,156 @@ handled:
 Only after independent review and Tester evidence may the orchestrator decide
 the S10/S11 completion status. The previous S10 approval does not prove runtime
 success, and this ADR itself makes no such claim.
+
+---
+
+## ADR-022 — Complete ADR-021 Canary ASR-only deep contract cleanup
+
+**Status:** Accepted — 2026-08-07
+
+### Context
+
+ADR-021 superseded the Canary speech-translation product path, but deleting
+`CanarySpeechTranslationRuntime.swift` and its Translation/Floating Window
+callbacks did not remove the lower-level contract. The current tree still has a
+generic `.speechTranslation` session operation, Canary directional capability
+and plan fields, `makeSpeechTranslationSession`,
+`TranscriptionRequest.targetLanguageCode`, and engine target-token routing. A
+UI-only absence test therefore cannot prove the accepted architecture.
+
+ADR-022 clarifies and completes ADR-021. It supersedes ADR-020 only where
+ADR-020 permitted a future typed Canary speech-translation operation. It does
+not rewrite the historical ADRs or invalidate their spike evidence.
+
+### Decision
+
+The production speech boundary has exactly two session operations:
+
+```swift
+enum TranscriptionSessionOperation {
+    case asr
+    case whisperTargetTranslation(languageCode: String)
+}
+```
+
+- `.asr` is the only operation accepted by Canary Flash, Canary 1B, GigaAM,
+  and Parakeet. Canary receives an explicit verified source; GigaAM receives
+  fixed `ru`; Parakeet retains internal auto detection.
+- `.whisperTargetTranslation` is the existing Whisper target-output intent. A
+  multilingual Whisper target of English sets the existing
+  `translateToEnglish` request flag and uses Whisper's native X→English task.
+  A non-English target or English-only Whisper remains ordinary Whisper ASR
+  followed by the existing text-only provider path. Canary, GigaAM, and
+  Parakeet resolve this operation to typed unavailable before an engine call;
+  Parakeet target-output UI creates `.asr` and separately carries the post-ASR
+  text target to the existing text provider.
+- The generic `.speechTranslation` case is deleted, not deprecated or aliased.
+  `makeSpeechTranslationSession` is deleted. There is no compatibility wrapper.
+- `TranscriptionRequest.targetLanguageCode` is deleted. Its only product engine
+  consumer is `CanaryCoreMLEngine`; Whisper, Parakeet, and GigaAM do not need it.
+  `forcedLanguageCode` remains an ASR source constraint. `translateToEnglish`
+  remains the accepted Whisper-native X→English flag.
+- A shared `TranscriptionRequest` cannot make every backend-invalid state
+  unrepresentable without splitting the `TranscriptionEngine` protocol by
+  backend. That broad redesign is not justified here. Instead, typed session
+  resolution prevents product construction of Canary/GigaAM translation, and
+  both engines retain hard rejection as defense in depth.
+- `SpeechTranslationDirection`, `supportsSpeechTranslation`,
+  `supportedSpeechTranslationDirections`, and their query helpers are removed
+  from `ASRModelCapabilities`. They have no accepted product consumer after
+  ADR-021. Historical AST evidence remains in historical ADRs/spike reports,
+  not in the active product capability API.
+- `TranscriptionLanguageRoute.speechTranslationTargetLanguageCode`, Canary
+  target choices/codes, `isCanaryTargetSwitchable`, and
+  `toggledCanaryTarget()` are removed. The legacy
+  `autoTranslateTargetLanguageCode` field is renamed to an explicitly text-only
+  name such as `postASRTextTranslationTargetLanguageCode`; it is never copied
+  into a transcription request and has no Canary/GigaAM consumer.
+- `CanaryCoreMLEngine.resolveTargetLanguage` is deleted. Canary ASR emits the
+  same language token for source and target. A request with
+  `translateToEnglish == true` is rejected before model loading/audio decode.
+  Replace the directional `unsupportedSpeechTranslation(source:target:)` engine
+  error with non-directional `translationUnsupported`; update active engine
+  comments so historical AST claims are not presented as product operations.
+- GigaAM remains fixed-Russian ASR and keeps its translation rejection.
+  Whisper and Parakeet behavior remains unchanged. No silent fallback is
+  allowed for any unavailable operation.
+
+### Text Translation Boundary
+
+The current tree does not contain a real `TextTranslationEngine` type. Text
+translation is currently implemented through `TranslationPrompt` plus the
+existing text-only `PolishingEngine` implementations:
+`CloudTextPolishingEngine` for configured cloud providers and
+`MLXSwiftPolishingEngine` for downloaded local models. `TranslationModalView`
+and Floating Translation call that text path after optional ordinary ASR.
+
+ADR-021's separation requirement means that text translation must not depend on
+Canary speech sessions or `TranscriptionEngineStore`; it does not require this
+cleanup to add an empty placeholder named `TextTranslationEngine`. No fake
+runtime, NLLB package, Python process, model asset, catalog row, download path,
+or network call is introduced by ADR-022.
+
+### Engine Matrix
+
+| Engine/path | Accepted speech operation | Request language contract | Translation contract |
+|---|---|---|---|
+| Whisper multilingual | `.asr` or `.whisperTargetTranslation` | Auto or existing explicit recognition preference | Native X→English only through `translateToEnglish`; other targets go to text translation |
+| Whisper English-only | `.asr` or target-output intent | Existing recognition behavior | No native translation; text provider handles target |
+| Parakeet | `.asr` | No restrictive language hint; internal auto detection | Text provider only after ASR |
+| Canary Flash | `.asr` only | Explicit EN/DE/FR/ES source from accepted session routing | Speech translation forbidden; source token is also target token |
+| Canary 1B | `.asr` only | Explicit source within the currently accepted capability scope; macOS/package gates unchanged | Speech translation forbidden despite historical spike AST evidence |
+| GigaAM | `.asr` only | Fixed explicit `ru` | Translation forbidden |
+| Translation modal / floating window | Not a speech operation | Optional recording first uses ordinary ASR | Existing cloud/local text providers only; no Canary provider/callback |
+
+### Migration Policy
+
+- Session plans, snapshots, routes, and requests are ephemeral. Rename/delete
+  their cases and fields in one compile-breaking change; no compatibility shim
+  or persisted-data migration is needed.
+- Model descriptors/capabilities are source-built catalog values. User settings
+  persist model IDs and installation state, not the removed directional
+  capability values. Old JSON containing extra removed capability keys is
+  ignored by normal decoding; no migration job is required.
+- Update every compile-time caller in product and tests. Do not preserve old
+  names as aliases, deprecated overloads, or test-only helpers.
+- Do not change model IDs, model assets, package layouts, manifests, download
+  origins, frontend/decode constants, or previously closed humor, NoteStore,
+  onboarding, and localization fixes.
+
+### Fail-Closed QA
+
+Add a dedicated `script/qa/check_adr021_canary_asr_only.sh`; do not turn the
+historical S1b scope guard into an ADR-021 policy grab bag. The new guard owns
+application-wide forbidden-symbol/file/provider assertions and a negative
+mutation self-test. `check_s9_engine_contract.sh` owns positive engine ASR and
+defense-in-depth assertions. `check_s6_gigaam_spike.sh` remains the GigaAM spike
+owner. `check_no_nllb_translation.sh` remains the retired/fake text-runtime
+owner. `check_s1b_scope.sh` remains the ranking/scope owner.
+
+Every touched guard must fail when `Sources/` is absent, fail when its required
+search tool is unavailable (or use a tested portable fallback), distinguish
+grep “no match” from grep execution failure, inspect product files, and expose a
+`--self-test` that proves a forbidden mutation returns nonzero. Mandatory checks
+must not be hidden by `2>/dev/null || true`. The dedicated ADR-021 guard is
+discovered by `run_all.sh` through the existing `check_*.sh` loop.
+
+### Definition of Done
+
+1. No product source defines or calls `.speechTranslation`,
+   `makeSpeechTranslationSession`, `speechTranslationTargetLanguageCode`,
+   `SpeechTranslationDirection`, or a transcription-request target field.
+2. Canary Flash and Canary 1B resolve only explicit-source `.asr` sessions;
+   GigaAM resolves only fixed-RU `.asr`; accepted Whisper/Parakeet behavior is
+   covered and unchanged.
+3. Canary cannot receive a directional target. Its engine rejects the retained
+   Whisper translation flag before loading/decoding; GigaAM translation remains
+   unavailable; unavailable sessions make zero engine calls.
+4. Translation UI and Floating Translation contain no Canary provider,
+   callback, tag, or runtime dependency. Existing cloud/local text providers
+   continue through their real text-only engines.
+5. The ADR-021 guard fails for every required mutation, missing `Sources/`, and
+   missing search tooling; all guard self-tests and `run_all.sh` pass.
+6. Focused routing/request/UI tests, the full suite, TSAN, ASAN, repeated
+   critical suites, release verification, and unchanged real Flash/1B/GigaAM
+   smokes pass without network calls or model changes.

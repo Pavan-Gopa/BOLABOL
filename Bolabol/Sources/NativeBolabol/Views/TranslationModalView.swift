@@ -16,7 +16,6 @@ struct TranslationModalView: View {
 
     // MARK: – MLX tag helpers (shared with ContentView)
     static let localMLXPrefix = "local-mlx:"
-    static let localCanaryPrefix = "local-canary:"
 
     static func localMLXTag(for modelID: String) -> String {
         "\(localMLXPrefix)\(modelID)"
@@ -27,31 +26,18 @@ struct TranslationModalView: View {
         return String(tag.dropFirst(localMLXPrefix.count))
     }
 
-    static func localCanaryTag(for modelID: String) -> String {
-        "\(localCanaryPrefix)\(modelID)"
-    }
-
-    static func localCanaryModelID(from tag: String) -> String? {
-        guard tag.hasPrefix(localCanaryPrefix) else { return nil }
-        return String(tag.dropFirst(localCanaryPrefix.count))
-    }
-
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
-    @EnvironmentObject private var transcriptionModelStore: TranscriptionModelStore
     @EnvironmentObject private var glossaryStore: GlossaryStore
     @ObservedObject var audioRecorder: AudioRecorder
 
     @Binding var providerID: String
     @Binding var targetLanguage: String
-    @Binding var canarySourceLanguageCode: String
-    @Binding var canaryTargetLanguageCode: String
     @Binding var originalText: String
     @Binding var translatedText: String
     let onTranslate: (String, String, String) async throws -> PolishingResult
     let onRecordingCompleted: (AudioRecording) async throws -> String
-    let onCanaryTranslation: (AudioRecording, String, String, String) async throws -> SpeechTranslationResult
 
     @State private var selectedOriginalText = ""
     @State private var selectedTranslatedText = ""
@@ -85,51 +71,7 @@ struct TranslationModalView: View {
                 )
             }
 
-        let canaryProviders: [Provider] = transcriptionModelStore.models.compactMap { model in
-            guard model.id == "canary-1b-v2-coreml",
-                  model.backend == .canaryCoreML,
-                  transcriptionModelStore.isModelAvailable(for: model),
-                  transcriptionModelStore.hasLocalFiles(for: model)
-            else {
-                return nil
-            }
-
-            return Provider(
-                id: Self.localCanaryTag(for: model.id),
-                displayName: model.displayName
-            )
-        }
-
-        return cloudProviders + mlxProviders + canaryProviders
-    }
-
-    private var selectedCanaryModel: TranscriptionModelDescriptor? {
-        guard let modelID = Self.localCanaryModelID(from: providerID) else { return nil }
-        return transcriptionModelStore.models.first { $0.id == modelID }
-    }
-
-    private var isCanaryProvider: Bool {
-        selectedCanaryModel != nil
-    }
-
-    private var canarySourceOptions: [LanguageOption] {
-        guard let model = selectedCanaryModel else { return [] }
-        let supported = Set(model.verifiedASRSourceChoices)
-        return LanguagePickerOrder.speechLanguages.compactMap { language in
-            guard supported.contains(language.code) else { return nil }
-            return LanguageOption(id: language.code, displayName: language.displayName)
-        }
-    }
-
-    private var canaryTargetOptions: [LanguageOption] {
-        guard let model = selectedCanaryModel else { return [] }
-        let targetCodes = model.supportedSpeechTranslationTargets(from: canarySourceLanguageCode)
-        return targetCodes.compactMap { code in
-            guard let language = LanguagePickerOrder.speechLanguages.first(where: { $0.code == code }) else {
-                return nil
-            }
-            return LanguageOption(id: language.code, displayName: language.displayName)
-        }
+        return cloudProviders + mlxProviders
     }
 
     var body: some View {
@@ -191,20 +133,12 @@ struct TranslationModalView: View {
             if targetLanguage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 targetLanguage = Self.defaultLanguages.first?.id ?? "English"
             }
-            normalizeCanaryLanguageSelection()
         }
         .onChange(of: providers) { _, newProviders in
             // Keep selection valid if the list changes while modal is open
             if !newProviders.contains(where: { $0.id == providerID }) {
                 providerID = newProviders.first?.id ?? ""
             }
-            normalizeCanaryLanguageSelection()
-        }
-        .onChange(of: providerID) { _, _ in
-            normalizeCanaryLanguageSelection()
-        }
-        .onChange(of: canarySourceLanguageCode) { _, _ in
-            normalizeCanaryLanguageSelection()
         }
         .sheet(item: $glossaryDraft) { draft in
             GlossaryDraftModal(
@@ -259,16 +193,12 @@ struct TranslationModalView: View {
 
             Spacer(minLength: 0)
 
-            if isCanaryProvider {
-                canaryLanguageControls
-            } else {
-                languagePickerControl(
-                    title: generalSettingsStore.text(.targetLanguage),
-                    selection: $targetLanguage,
-                    options: Self.defaultLanguages,
-                    width: 124
-                )
-            }
+            languagePickerControl(
+                title: generalSettingsStore.text(.targetLanguage),
+                selection: $targetLanguage,
+                options: Self.defaultLanguages,
+                width: 124
+            )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 2)
@@ -312,24 +242,6 @@ struct TranslationModalView: View {
                 .labelsHidden()
                 .frame(width: 152, alignment: .leading)
             }
-        }
-        .layoutPriority(1)
-    }
-
-    private var canaryLanguageControls: some View {
-        HStack(spacing: 8) {
-            languagePickerControl(
-                title: generalSettingsStore.text(.translationSourceLanguage),
-                selection: $canarySourceLanguageCode,
-                options: canarySourceOptions,
-                width: 124
-            )
-            languagePickerControl(
-                title: generalSettingsStore.text(.translationTargetLanguage),
-                selection: $canaryTargetLanguageCode,
-                options: canaryTargetOptions,
-                width: 124
-            )
         }
         .layoutPriority(1)
     }
@@ -468,7 +380,7 @@ struct TranslationModalView: View {
                 selectedText: selectedText,
                 placeholder: placeholder,
                 isEditable: isEditable,
-                selectionActionTitle: "Add to Glossary",
+                selectionActionTitle: generalSettingsStore.text(.addToGlossaryAction),
                 onSelectionAction: { selectedText in
                     beginGlossaryDraft(
                         selectedText: selectedText,
@@ -499,10 +411,6 @@ struct TranslationModalView: View {
             errorMessage = nil
             return
         }
-        guard !isCanaryProvider else {
-            errorMessage = generalSettingsStore.text(.localModelsCanary1BSubtitle)
-            return
-        }
         isTranslating = true
         errorMessage = nil
         translatedText = ""
@@ -527,22 +435,11 @@ struct TranslationModalView: View {
                 isTranscribingRecording = true
                 translatedText = generalSettingsStore.text(.transcribing)
                 do {
-                    if isCanaryProvider {
-                        let output = try await onCanaryTranslation(
-                            recording,
-                            providerID,
-                            canarySourceLanguageCode,
-                            canaryTargetLanguageCode
-                        )
-                        originalText = output.sourceText
-                        translatedText = output.translatedText
+                    originalText = try await onRecordingCompleted(recording)
+                    if providerID.isEmpty {
+                        translatedText = generalSettingsStore.text(.noTranslationProvider)
                     } else {
-                        originalText = try await onRecordingCompleted(recording)
-                        if providerID.isEmpty {
-                            translatedText = generalSettingsStore.text(.noTranslationProvider)
-                        } else {
-                            await translate()
-                        }
+                        await translate()
                     }
                 } catch {
                     errorMessage = error.localizedDescription
@@ -601,23 +498,23 @@ struct TranslationModalView: View {
     }
 
     private func pasteFromClipboardAndTranslate() {
-        guard let clipboardText = NSPasteboard.general.string(forType: .string)?
-            .trimmingCharacters(in: .whitespacesAndNewlines),
-              !clipboardText.isEmpty else { return }
-        originalText = clipboardText
-        showToast("Pasted from clipboard")
-        if !isCanaryProvider, !providerID.isEmpty {
-            Task { await translate() }
-        }
+         guard let clipboardText = NSPasteboard.general.string(forType: .string)?
+             .trimmingCharacters(in: .whitespacesAndNewlines),
+               !clipboardText.isEmpty else { return }
+         originalText = clipboardText
+         showToast(generalSettingsStore.text(.pastedFromClipboard))
+         if !providerID.isEmpty {
+             Task { await translate() }
+         }
     }
 
     private func copyTranslatedTextWithFeedback() {
         let text = translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
-        showToast("Copied to clipboard!")
-    }
+         NSPasteboard.general.clearContents()
+         NSPasteboard.general.setString(text, forType: .string)
+         showToast(generalSettingsStore.text(.copiedToClipboard))
+     }
 
     private func showToast(_ message: String) {
         toastMessage = message
@@ -665,51 +562,6 @@ struct TranslationModalView: View {
                 target: .translation,
                 language: targetLanguage
             ).text
-        }
-    }
-
-    private func normalizeCanaryLanguageSelection() {
-        guard isCanaryProvider, let model = selectedCanaryModel else { return }
-
-        let sourceOptions = canarySourceOptions
-        guard !sourceOptions.isEmpty else { return }
-
-        let normalizedSource = LanguagePickerOrder.speechCode(
-            forNameOrCode: canarySourceLanguageCode
-        )
-        if let normalizedSource,
-           sourceOptions.contains(where: { $0.id == normalizedSource }) {
-            if canarySourceLanguageCode != normalizedSource {
-                canarySourceLanguageCode = normalizedSource
-            }
-        } else {
-            let configuredPrimary = transcriptionModelStore.speechLanguages.primaryLanguageCode
-            canarySourceLanguageCode = sourceOptions.contains(where: { $0.id == configuredPrimary })
-                ? configuredPrimary
-                : sourceOptions.first?.id ?? "en"
-        }
-
-        let targetOptions = model.supportedSpeechTranslationTargets(from: canarySourceLanguageCode)
-        guard !targetOptions.isEmpty else {
-            canaryTargetLanguageCode = ""
-            return
-        }
-
-        let normalizedTarget = LanguagePickerOrder.speechCode(
-            forNameOrCode: canaryTargetLanguageCode
-        )
-        if let normalizedTarget, targetOptions.contains(normalizedTarget) {
-            if canaryTargetLanguageCode != normalizedTarget {
-                canaryTargetLanguageCode = normalizedTarget
-            }
-            return
-        }
-
-        let savedTarget = LanguagePickerOrder.speechCode(forNameOrCode: targetLanguage)
-        if let savedTarget, targetOptions.contains(savedTarget) {
-            canaryTargetLanguageCode = savedTarget
-        } else {
-            canaryTargetLanguageCode = targetOptions.first ?? ""
         }
     }
 

@@ -72,27 +72,6 @@ struct S9RuntimeSmokeTests {
     }
 
     @Test
-    func canary1BSpeechTranslationUsesExplicitEnglishToRussianTargetWhenScratchIsEnabled() async throws {
-        guard let paths = scratchPaths(
-            model: "canary-1b-fix/package/bolabol-canary-1b-v2-coreml-r1",
-            audio: "canary-flash-spike/audio/en_short.wav"
-        ) else { return }
-        let model = try #require(
-            TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-1b-v2-coreml")
-        )
-        let engine = CanaryCoreMLEngine(model: model, modelFolderURL: paths.model)
-        let result = try await engine.transcribe(
-            TranscriptionRequest(
-                audioFileURL: paths.audio,
-                forcedLanguageCode: "en",
-                targetLanguageCode: "ru"
-            )
-        )
-        print("SMOKE Canary 1B en->ru: \(result.text)")
-        #expect(!result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-    }
-
-    @Test
     func gigaAMOfflineDictationProducesTextWhenScratchIsEnabled() async throws {
         let audioPath = ProcessInfo.processInfo.environment["BOLABOL_GIGAAM_AUDIO_PATH"]
             ?? "gigaam-spike/audio/ru_short.wav"

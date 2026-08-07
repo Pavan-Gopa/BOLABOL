@@ -42,7 +42,7 @@ struct NativeBolabolApp: App {
     }
 
     var body: some Scene {
-        Window("BOLABOL!", id: "main") {
+        Window("BOLABOL", id: "main") {
             ContentView()
                 .environmentObject(polishingEngineStore)
                 .environmentObject(promptTemplateStore)
@@ -231,11 +231,11 @@ extension AppDelegate {
     }
 
     func isPrimaryBolabolWindow(_ window: NSWindow) -> Bool {
-        !window.isKind(of: NSPanel.self) && window.title == "BOLABOL!"
+        !window.isKind(of: NSPanel.self) && window.title == "BOLABOL"
     }
 
     func configureMainWindowTitle(_ window: NSWindow) {
-        window.title = "BOLABOL!"
+        window.title = "BOLABOL"
         window.titleVisibility = .visible
 
         DispatchQueue.main.async {

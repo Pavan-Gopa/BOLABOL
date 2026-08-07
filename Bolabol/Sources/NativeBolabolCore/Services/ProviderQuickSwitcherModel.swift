@@ -24,6 +24,12 @@ public struct ProviderQuickSwitcherModel: Equatable, Sendable {
   /// Default scroll distance (in normalized units) that produces one step.
   public static let defaultStepThreshold: CGFloat = 24
 
+  /// Converts a non-precise HUD wheel notch to the same normalized distance
+  /// used by the model's default threshold.
+  public static func nonPreciseHUDScrollDelta(_ deltaY: CGFloat) -> CGFloat {
+    deltaY * defaultStepThreshold
+  }
+
   public private(set) var providers: [Provider]
   public private(set) var activeIndex: Int
   public var stepThreshold: CGFloat
@@ -62,6 +68,7 @@ public struct ProviderQuickSwitcherModel: Equatable, Sendable {
   /// end (next provider). Returns the newly selected provider when a step
   /// occurred, or `nil` while the gesture is still accumulating or cooling down.
   public mutating func applyScroll(deltaY: CGFloat, now: TimeInterval) -> Provider? {
+    guard deltaY.isFinite else { return nil }
     guard canCycle else { return nil }
     guard now - lastStepTime >= stepCooldown else { return nil }
 

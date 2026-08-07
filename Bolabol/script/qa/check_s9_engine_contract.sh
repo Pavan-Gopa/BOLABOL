@@ -130,8 +130,8 @@ for marker in \
     'canaryFlashChunkingProductCode' \
     'canary1BChunkingProductCode' \
     'gigaAMChunkingProductCode' \
-    'canary1BLanguageMatrixCoversExplicit25LanguageSourcesAndASTDirections' \
-    'canaryFlashLanguageMatrixAcceptsAllASTSourceLanguages' \
+    'canary1BLanguageMatrixCoversExplicit25LanguageASRSources' \
+    'canaryFlashLanguageMatrixAcceptsAllASRSourceLanguages' \
     'gigaAMLanguageValidationViaProductCode' \
     'everyGOEngineRejectsAMissingModelDirectory' \
     'canary1BUsesMacOS15GateBeforeLoadingTheModel' \

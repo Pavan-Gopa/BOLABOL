@@ -18,6 +18,7 @@ public final class NoteStore: ObservableObject {
     private let notesFileURL: URL
     private let isPersistenceEnabled: Bool
     private var isSavingEnabled = false
+    private var protectedImportedAudioPaths: Set<String> = []
 
     public init(
         notes: [BolabolNote]? = nil,
@@ -33,6 +34,15 @@ public final class NoteStore: ObservableObject {
         if let notes = notes {
             self.notes = notes
             self.selection = notes.first?.id
+            self.protectedImportedAudioPaths = Set(
+                notes.compactMap { note in
+                    guard note.audioRecording?.source == .importedFile,
+                          let fileURL = note.audioRecording?.fileURL else {
+                        return nil
+                    }
+                    return fileURL.standardizedFileURL.resolvingSymlinksInPath().standardizedFileURL.path
+                }
+            )
         } else {
             self.notes = []
             self.selection = nil
@@ -40,9 +50,19 @@ public final class NoteStore: ObservableObject {
                 if let container = Self.loadNotes(from: self.notesFileURL, fileManager: fileManager) {
                     self.notes = container.notes
                     self.selection = container.selection
+                    self.protectedImportedAudioPaths = Set(container.protectedImportedAudioPaths)
                 }
             }
         }
+        self.protectedImportedAudioPaths.formUnion(
+            self.notes.compactMap { note in
+                guard note.audioRecording?.source == .importedFile,
+                      let fileURL = note.audioRecording?.fileURL else {
+                    return nil
+                }
+                return fileURL.standardizedFileURL.resolvingSymlinksInPath().standardizedFileURL.path
+            }
+        )
         self.isSavingEnabled = true
     }
 
@@ -88,6 +108,10 @@ public final class NoteStore: ObservableObject {
     public func deleteNote(_ id: BolabolNote.ID) {
         guard let index = notes.firstIndex(where: { $0.id == id }) else { return }
         let note = notes[index]
+        if let recording = note.audioRecording,
+           recording.source == .importedFile {
+            protectedImportedAudioPaths.insert(canonicalFilePath(recording.fileURL))
+        }
         notes.remove(at: index)
 
         if selection == id {
@@ -98,25 +122,48 @@ public final class NoteStore: ObservableObject {
     }
 
     public func clearAll() {
-        for note in notes {
-            removeManagedAudioFile(note.audioRecording)
+        let importedPaths = Set(
+            notes.compactMap { note -> String? in
+                guard note.audioRecording?.source == .importedFile,
+                      let fileURL = note.audioRecording?.fileURL else {
+                    return nil
+                }
+                return canonicalFilePath(fileURL)
+            }
+        )
+        protectedImportedAudioPaths.formUnion(importedPaths)
+        let ownedRecordings = notes.compactMap { note -> AudioRecording? in
+            guard let recording = note.audioRecording,
+                  recording.source == .microphone else {
+                return nil
+            }
+            return recording
         }
+
         notes.removeAll()
         selection = nil
-        // Always empty the mic Recordings folder so orphans left by failed
-        // sessions / lost note links cannot accumulate (was ~GBs of .caf junk).
-        // Permanent delete via FileManager — not the Finder Trash.
-        purgeAllFiles(in: recordingsDirectoryURL)
+
+        // Imported paths remain protected even when they share the managed
+        // directory with microphone recordings or duplicate note references.
+        for recording in ownedRecordings
+            where !importedPaths.contains(canonicalFilePath(recording.fileURL)) {
+            removeManagedAudioFile(recording)
+        }
+        _ = purgeUnreferencedFiles(
+            in: recordingsDirectoryURL,
+            referencedPaths: protectedImportedAudioPaths
+        )
     }
 
     /// Deletes microphone recordings under Application Support that are no longer
     /// referenced by any note. Safe to call on launch after loading notes.
     @discardableResult
     public func purgeOrphanedRecordings() -> Int {
-        let referenced = Set(
+        var referenced = protectedImportedAudioPaths
+        referenced.formUnion(
             notes.compactMap { note -> String? in
                 guard let url = note.audioRecording?.fileURL else { return nil }
-                return url.standardizedFileURL.resolvingSymlinksInPath().path
+                return canonicalFilePath(url)
             }
         )
         return purgeUnreferencedFiles(in: recordingsDirectoryURL, referencedPaths: referenced)
@@ -142,15 +189,16 @@ public final class NoteStore: ObservableObject {
     }
 
     public func enforceAudioArchiveLimit(maxRecordings: Int) {
-        guard maxRecordings > 0 else { return }
-        
-        if notes.count > maxRecordings {
-            let overflowCount = notes.count - maxRecordings
-            // Oldest notes are at the end of the notes array
-            let oldestNotes = notes.suffix(overflowCount)
-            for oldNote in oldestNotes {
-                deleteNote(oldNote.id)
-            }
+        let limit = max(0, maxRecordings)
+        let audioNoteIDs = notes.compactMap { note in
+            note.audioRecording == nil ? nil : note.id
+        }
+        guard audioNoteIDs.count > limit else { return }
+
+        // `notes` is the persisted newest-first ordering. Keeping its order
+        // makes equal timestamps deterministic and avoids deleting text notes.
+        for noteID in audioNoteIDs.dropFirst(limit) {
+            deleteNote(noteID)
         }
     }
 
@@ -330,7 +378,11 @@ public final class NoteStore: ObservableObject {
 
     private func saveNotes() {
         guard isSavingEnabled, isPersistenceEnabled else { return }
-        let container = NoteStorePersistenceContainer(notes: notes, selection: selection)
+        let container = NoteStorePersistenceContainer(
+            notes: notes,
+            selection: selection,
+            protectedImportedAudioPaths: Array(protectedImportedAudioPaths).sorted()
+        )
         do {
             let directory = notesFileURL.deletingLastPathComponent()
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -357,32 +409,34 @@ public final class NoteStore: ObservableObject {
     }
 
     private func removeManagedAudioFile(_ recording: AudioRecording?) {
-        guard let recording else { return }
-        let url = recording.fileURL.standardizedFileURL.resolvingSymlinksInPath()
+        guard let recording, recording.source == .microphone else { return }
+        let url = canonicalFileURL(recording.fileURL)
         guard isManagedAudioPath(url) else { return }
+        let path = url.path
+        let stillReferenced = notes.contains { note in
+            guard let otherURL = note.audioRecording?.fileURL else { return false }
+            return canonicalFilePath(otherURL) == path
+        }
+        guard !stillReferenced,
+              !protectedImportedAudioPaths.contains(path) else { return }
         try? fileManager.removeItem(at: url)
     }
 
     private func isManagedAudioPath(_ url: URL) -> Bool {
         let path = url.path
-        let supportRoot = applicationSupportRootURL.standardizedFileURL.resolvingSymlinksInPath().path
-        // Only delete files we own under this store's Application Support root.
-        return path.hasPrefix(supportRoot + "/") || path == supportRoot
+        let recordingsRoot = canonicalFilePath(recordingsDirectoryURL)
+        // Source metadata proves app ownership; the resolved path must still
+        // stay below the dedicated recordings directory. A support-root path
+        // alone is not enough, and symlinks resolving outside this root fail.
+        return path.hasPrefix(recordingsRoot + "/")
     }
 
-    private func purgeAllFiles(in directory: URL) {
-        guard fileManager.fileExists(atPath: directory.path),
-              let contents = try? fileManager.contentsOfDirectory(
-                at: directory,
-                includingPropertiesForKeys: nil,
-                options: [.skipsHiddenFiles]
-              )
-        else {
-            return
-        }
-        for item in contents {
-            try? fileManager.removeItem(at: item)
-        }
+    private func canonicalFilePath(_ url: URL) -> String {
+        canonicalFileURL(url).path
+    }
+
+    private func canonicalFileURL(_ url: URL) -> URL {
+        url.standardizedFileURL.resolvingSymlinksInPath().standardizedFileURL
     }
 
     @discardableResult
@@ -402,7 +456,7 @@ public final class NoteStore: ObservableObject {
 
         var removed = 0
         for item in contents {
-            let path = item.standardizedFileURL.resolvingSymlinksInPath().path
+            let path = canonicalFilePath(item)
             guard !referencedPaths.contains(path) else { continue }
             do {
                 try fileManager.removeItem(at: item)
@@ -442,6 +496,33 @@ public final class NoteStore: ObservableObject {
 private struct NoteStorePersistenceContainer: Codable {
     let notes: [BolabolNote]
     let selection: UUID?
+    let protectedImportedAudioPaths: [String]
+
+    init(
+        notes: [BolabolNote],
+        selection: UUID?,
+        protectedImportedAudioPaths: [String] = []
+    ) {
+        self.notes = notes
+        self.selection = selection
+        self.protectedImportedAudioPaths = protectedImportedAudioPaths
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case notes
+        case selection
+        case protectedImportedAudioPaths
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        notes = try container.decode([BolabolNote].self, forKey: .notes)
+        selection = try container.decodeIfPresent(UUID.self, forKey: .selection)
+        protectedImportedAudioPaths = try container.decodeIfPresent(
+            [String].self,
+            forKey: .protectedImportedAudioPaths
+        ) ?? []
+    }
 }
 
 private extension Array {

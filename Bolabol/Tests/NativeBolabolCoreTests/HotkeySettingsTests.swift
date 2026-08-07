@@ -12,6 +12,9 @@ func hotkeySettingsMatchElectronDefaults() {
     #expect(settings.holdToRecord == false)
     #expect(settings.hotkey == "Option+S")
     #expect(settings.secondaryHotkey == "Option+1")
+    #expect(settings.humorSliderEnabled == false)
+    #expect(settings.humorLevel.rawValue == 0)
+    #expect(settings.humorPromptMode == .playful)
 }
 
 @Test
@@ -30,18 +33,76 @@ func hotkeySettingsDecodesLegacyPayloadWithoutSecondaryHotkey() throws {
     #expect(settings.target == .raw)
     #expect(settings.mode == .clipboard)
     #expect(settings.holdToRecord == false)
+    #expect(settings.humorSliderEnabled == false)
+    #expect(settings.humorLevel.rawValue == 0)
+    #expect(settings.humorPromptMode == .playful)
     // Legacy Alt / Cmd tokens are normalized to Mac Option / Command wording.
     #expect(settings.hotkey == "Command+Option+X")
     #expect(settings.secondaryHotkey == "Option+1")
 }
 
 @Test
+func hotkeySettingsMigratesTheInitialVariantTwoHumorLevelKey() throws {
+    let json = """
+    {
+        "enabled": true,
+        "target": "x2",
+        "mode": "typing",
+        "hotkey": "Option+S",
+        "humorSliderEnabled": true,
+        "variantTwoHumorLevel": 63
+    }
+    """.data(using: .utf8)!
+
+    let settings = try JSONDecoder().decode(HotkeySettings.self, from: json)
+    #expect(settings.humorSliderEnabled)
+    #expect(settings.humorLevel.rawValue == 63)
+    #expect(settings.variantTwoHumorLevel.rawValue == 63)
+}
+
+@Test
 func hotkeySettingsEncodesAndDecodesHoldToRecord() throws {
     var settings = HotkeySettings()
     settings.holdToRecord = true
+    settings.humorSliderEnabled = true
+    settings.humorLevel = HumorLevel(clamping: 63)
+    settings.humorPromptMode = .warmRespectful
     let data = try JSONEncoder().encode(settings)
     let decoded = try JSONDecoder().decode(HotkeySettings.self, from: data)
     #expect(decoded.holdToRecord == true)
+    #expect(decoded.humorSliderEnabled == true)
+    #expect(decoded.humorLevel.rawValue == 63)
+    #expect(decoded.humorPromptMode == .warmRespectful)
+}
+
+@Test
+func hotkeyHumorUsesLivePreferenceWithoutChangingAnEnqueuedSnapshot() {
+    var settings = HotkeySettings(
+        humorSliderEnabled: true,
+        humorLevel: .playful,
+        humorPromptMode: .casualHumor
+    )
+    let prompt = PromptTemplate(
+        id: "session-prompt",
+        title: "Session Prompt",
+        body: "Rewrite ${transcription}"
+    )
+    let session = HumorSessionState(
+        sliderEnabled: settings.humorSliderEnabled,
+        level: settings.humorLevel,
+        promptMode: settings.humorPromptMode,
+        selectedVariant: .variantTwo,
+        selectedPromptSlot: .default,
+        selectedPrompt: prompt
+    )
+    let enqueued = session.freeze()
+
+    // Live preference semantics: a later/cancelled HUD drag remains saved, but
+    // the already enqueued request retains its frozen value.
+    settings.humorLevel = .standUp
+    #expect(settings.humorLevel == .standUp)
+    #expect(enqueued.level == .playful)
+    #expect(enqueued.promptMode == .casualHumor)
 }
 
 @Test
@@ -73,6 +134,19 @@ func hotkeyTargetsCycleThroughHUDLabels() {
     #expect(HotkeyTarget.raw.next() == .note)
     #expect(HotkeyTarget.note.next() == .x2)
     #expect(HotkeyTarget.x2.next() == .raw)
+}
+@Test
+func hotkeyTargetVariantTransitionPreservesHUDLabels() {
+    let initialTarget = HotkeyTarget.note
+    #expect(initialTarget.hudLabel == "1")
+
+    let nextTarget = initialTarget.next()
+    #expect(nextTarget == .x2)
+    #expect(nextTarget.hudLabel == "2")
+
+    let cycleTarget = nextTarget.next()
+    #expect(cycleTarget == .raw)
+    #expect(cycleTarget.hudLabel == "R")
 }
 
 @Test

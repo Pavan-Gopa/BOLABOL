@@ -61,9 +61,9 @@ struct CoreMLCapabilitiesTests {
     }
 
     @Test
-    func canaryFlashSupportsSpeechTranslation() {
+    func canaryFlashIsTranscriptionOnly() {
         let model = TranscriptionModelDescriptor.flashGO
-        #expect(model.capabilities.supportsSpeechTranslation == true)
+        #expect(model.capabilities.supportsSpeechTranslation == false)
     }
 
     // MARK: - Chunk boundaries

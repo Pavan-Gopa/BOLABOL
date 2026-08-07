@@ -73,27 +73,33 @@ final class ProviderQuickSwitcherCaptureView: NSView {
             super.mouseUp(with: event)
             return
         }
-        if let index = QuickSwitcherLayout.rowIndex(forY: event.locationInWindow.y, providers: providers) {
+        if let index = rowIndex(for: event) {
             onLeftClickRow?(index)
         }
     }
 
     override func rightMouseUp(with event: NSEvent) {
-        if let index = QuickSwitcherLayout.rowIndex(forY: event.locationInWindow.y, providers: providers) {
-            onRightClickRow?(index, event.locationInWindow)
+        if let index = rowIndex(for: event) {
+            let locationInView = convert(event.locationInWindow, from: nil)
+            onRightClickRow?(index, locationInView)
         }
     }
 
     override func scrollWheel(with event: NSEvent) {
         let delta = event.hasPreciseScrollingDeltas
             ? event.scrollingDeltaY
-            : event.scrollingDeltaY * ProviderQuickSwitcherModel.defaultStepThreshold
+            : ProviderQuickSwitcherModel.nonPreciseHUDScrollDelta(event.scrollingDeltaY)
         if abs(delta) > 0.001 {
             onScroll?(delta)
         }
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    private func rowIndex(for event: NSEvent) -> Int? {
+        let locationInView = convert(event.locationInWindow, from: nil)
+        return QuickSwitcherLayout.rowIndex(forY: locationInView.y, providers: providers)
+    }
 }
 
 /// Observable state driving the rendered provider list.

@@ -17,7 +17,7 @@ public struct TranscriptionModelSettings: Codable, Equatable, Sendable {
     public var activeModelID: String?
     public var languagePreference: TranscriptionLanguagePreference
     public var installationStates: [String: TranscriptionModelInstallationState]
-    /// Local Whisper vs Cloud Gemini. Never falls back to Apple Speech.
+    /// Local speech models vs Cloud Gemini. Never falls back to Apple Speech.
     public var backend: TranscriptionBackend
 
     public init(

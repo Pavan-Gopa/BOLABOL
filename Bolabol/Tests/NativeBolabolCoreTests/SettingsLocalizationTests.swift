@@ -48,12 +48,17 @@ private let settingsKeys: [AppTextKey] = [
     .translationWindowDesc, .quickTranslationLabel, .quickTranslationDesc,
     .translationSourceLanguage, .translationTargetLanguage,
     .openSettingsLabel, .openSettingsDesc, .transcriptionEngine, .engine,
-    .localModelsHint, .googleAPI, .geminiModel, .googleAPIBody,
-    .scanForLocalModels, .scanForLocalModelsBody, .scanning, .scan,
-    .skippedUnsupportedModels, .localPolishingSupportHint, .markdown,
-    .remove, .keyConfigured, .noAPIKey, .copied, .defaultModelName,
-    .removeCustomModelHelp, .noNewModelsFound, .foundModelsCount, .cloudDictationUsesGemini,
-    // HUD skins
+     .localModelsHint, .googleAPI, .geminiModel, .googleAPIBody,
+     .scanForLocalModels, .scanForLocalModelsBody, .scanning, .scan,
+     .skippedUnsupportedModels, .localPolishingSupportHint, .markdown,
+     .remove, .keyConfigured, .noAPIKey, .copied, .defaultModelName,
+     .removeCustomModelHelp, .noNewModelsFound, .foundModelsCount, .cloudDictationUsesGemini,
+     .humorSlider, .humorSliderDesc, .humorStyle, .humorLevel,
+     .humorModePlayful, .humorModeCasual, .humorModeWarm,
+     .promptSlotDefault, .promptSlotCustomOne, .promptSlotCustomTwo,
+     .promptSlotCustomThree, .promptSlotCustomFour, .promptSlotSelected,
+     .promptSlotUnselected, .promptSlotSwitch,
+     // HUD skins
     .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical,
     // S2 — Settings local models recommendations (plan §9.4)
     .settingsLocalModelsRecommendedTitle,
@@ -99,6 +104,28 @@ private let s10LocalModelsKeys: [AppTextKey] = [
     .transcriptionSessionTranslationUnavailable,
     .transcriptionSessionEngineMismatch,
 ]
+
+@Suite("AppTextFullCoverageTests")
+struct AppTextFullCoverageTests {
+    @Test
+    func translationFeedbackAndGlossaryKeysHaveConcreteValuesInEveryLocale() {
+        let keys: [AppTextKey] = [
+            .pastedFromClipboard,
+            .copiedToClipboard,
+            .addToGlossaryAction
+        ]
+        for language in concreteLanguages {
+            for key in keys {
+                let value = AppText.localized(key, language: language)
+                #expect(!value.isEmpty)
+                #expect(value != key.rawValue)
+                if language != .english {
+                    #expect(value != AppText.localized(key, language: .english))
+                }
+            }
+        }
+    }
+}
 
 @Test
 func everySettingsKeyIsLocalizedInEveryLanguage() {
@@ -163,7 +190,7 @@ func S10LocalModelsCopyIsHonestAboutCapabilitiesAndLanguagePair() {
 
     #expect(flash.contains("English") && flash.contains("German") && flash.contains("French") && flash.contains("Spanish"))
     #expect(gigaAM.contains("Russian only") && gigaAM.contains("Core ML/ANE"))
-    #expect(oneB.contains("25 languages") && oneB.contains("bidirectional English speech translation"))
+    #expect(oneB.contains("25 languages") && oneB.contains("Multilingual ASR"))
     #expect(flashBadge == "Compact · 4 languages")
     #expect(gigaBadge == "Russian only")
     #expect(oneBBadge == "macOS 15+")
@@ -197,8 +224,13 @@ func settingsKeysAreActuallyTranslatedBeyondEnglish() {
         .cloudProvider, .accountBalance, .removeAPIKey, .usageStatistics,
         .translationWindowLabel, .quickTranslationLabel, .openSettingsLabel,
         .transcriptionEngine, .scanForLocalModels, .scanning, .noNewModelsFound,
-        .copied, .defaultModelName, .removeCustomModelHelp, .cloudDictationUsesGemini,
-        .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical,
+         .copied, .defaultModelName, .removeCustomModelHelp, .cloudDictationUsesGemini,
+         .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical,
+         .humorSlider, .humorSliderDesc, .humorStyle, .humorLevel,
+         .humorModePlayful, .humorModeCasual, .humorModeWarm,
+         .promptSlotDefault, .promptSlotCustomOne, .promptSlotCustomTwo,
+         .promptSlotCustomThree, .promptSlotCustomFour, .promptSlotSelected,
+         .promptSlotUnselected, .promptSlotSwitch,
         // B3 — Settings speech-language pair (plan §7.1)
         .languagePairSectionTitle, .primaryLanguage, .primaryLanguageHint,
         .additionalLanguage, .additionalLanguageHint, .additionalSameAsPrimary,
@@ -626,13 +658,13 @@ func s2RecommendationRecalculatesWhenSpeechPairChanges() {
 
     #expect(compactPair.map(\.id) == [
         "canary-180m-flash-coreml",
-        "whisperkit-large-v3-full",
-        "whisperkit-large-v3-turbo"
+        "parakeet-tdt-06b-v3",
+        "canary-1b-v2-coreml"
     ])
     #expect(broadPair.map(\.id) == [
         "whisperkit-large-v3-full",
         "whisperkit-large-v3-turbo",
-        "canary-1b-v2-coreml"
+        "whisperkit-medium-multilingual"
     ])
     #expect(compactPair.map(\.id) != broadPair.map(\.id))
 }

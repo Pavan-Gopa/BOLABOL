@@ -2,7 +2,7 @@ import Foundation
 
 /// How Bolabol turns microphone audio into text.
 ///
-/// - `localWhisper`: on-device WhisperKit Core ML (requires a downloaded model).
+/// - `localWhisper`: on-device speech models (requires a downloaded model).
 /// - `geminiCloud`: audio → lightly cleaned Raw text with Google Gemini Flash /
 ///   Flash-Lite, followed by an optional text-only Variant 1/2 pass.
 ///   No Apple Speech path — on-device system STT is intentionally unsupported
@@ -16,7 +16,7 @@ public enum TranscriptionBackend: String, CaseIterable, Codable, Equatable, Iden
     public var displayName: String {
         switch self {
         case .localWhisper:
-            "Local Whisper"
+            "Local"
         case .geminiCloud:
             "Cloud · Google"
         }
@@ -25,7 +25,7 @@ public enum TranscriptionBackend: String, CaseIterable, Codable, Equatable, Iden
     public var shortDescription: String {
         switch self {
         case .localWhisper:
-            "On-device WhisperKit. Best quality when your Mac has enough memory for a model."
+            "On-device speech models. Best quality when your Mac has enough memory for a model."
         case .geminiCloud:
             "Fast Gemini Raw transcription first, then an optional text-only Variant 1/2 pass. Google API only."
         }

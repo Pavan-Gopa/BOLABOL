@@ -137,3 +137,40 @@ func hudLayoutWidthAndPaddingConstants() {
   #expect(HUDQuickSwitcherLayout.verticalPadding == 6)
   #expect(HUDQuickSwitcherLayout.dividerHeight == 7)
 }
+
+@Test
+func hudHoverOnlyControlsMatchHitTestingAndVoiceOverVisibility() {
+  #expect(!HUDInteractionPolicy.allowsHitTesting(isVisible: false))
+  #expect(HUDInteractionPolicy.allowsHitTesting(isVisible: true))
+  #expect(HUDInteractionPolicy.isAccessibilityHidden(isVisible: false))
+  #expect(!HUDInteractionPolicy.isAccessibilityHidden(isVisible: true))
+}
+
+@Test
+func hudAccessibilityMetadataContainsPromptStateAndSliderValue() {
+  let selected = HUDAccessibilityMetadataPolicy.promptSlot(
+    name: "Custom prompt 2",
+    isSelected: true,
+    selectedState: "Selected",
+    unselectedState: "Not selected",
+    switchHint: "Switch prompt"
+  )
+  #expect(selected.label == "Custom prompt 2")
+  #expect(selected.value == "Selected")
+  #expect(selected.hint == "Switch prompt")
+  #expect(selected.isSelected)
+
+  let unselected = HUDAccessibilityMetadataPolicy.promptSlot(
+    name: "Custom prompt 3",
+    isSelected: false,
+    selectedState: "Selected",
+    unselectedState: "Not selected",
+    switchHint: "Switch prompt"
+  )
+  #expect(unselected.value == "Not selected")
+  #expect(!unselected.isSelected)
+
+  let slider = HUDAccessibilityMetadataPolicy.humorSlider(label: "Humor level", level: .comedic)
+  #expect(slider.label == "Humor level")
+  #expect(slider.value == "80%")
+}

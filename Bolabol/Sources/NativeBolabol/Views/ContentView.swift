@@ -32,9 +32,6 @@ struct ContentView: View {
     @State private var translationTranslatedText = ""
     @AppStorage("translation.targetLanguage") private var translationTargetLanguage = "English"
     @AppStorage("translation.providerID") private var translationProviderID = ""
-    @AppStorage("translation.canarySourceLanguage") private var translationCanarySourceLanguage = ""
-    @AppStorage("translation.canaryTargetLanguage") private var translationCanaryTargetLanguage = ""
-    @State private var canarySpeechTranslationRuntimeStore = CanarySpeechTranslationRuntimeStore()
     @State private var pendingHotkeyTarget: HotkeyTarget?
     @State private var pendingHotkeyOutputMode: HotkeyOutputMode?
     @State private var pendingHotkeySourcePID: pid_t?
@@ -48,8 +45,8 @@ struct ContentView: View {
     @State private var providerQuickSwitcher = ProviderQuickSwitcher()
     @State private var pendingHotkeySession: TranscriptionEngineSession?
     @State private var pendingHotkeyForceTargetLanguage = false
+    @State private var pendingHotkeyHumorSession: HumorSessionState?
     @AppStorage("hud.forceTargetLanguage") private var persistentHUDForceTargetLanguage = false
-
     var body: some View {
         GeometryReader { proxy in
             NavigationSplitView {
@@ -91,17 +88,13 @@ struct ContentView: View {
                     audioRecorder: translationAudioRecorder,
                     providerID: $translationProviderID,
                     targetLanguage: $translationTargetLanguage,
-                    canarySourceLanguageCode: $translationCanarySourceLanguage,
-                    canaryTargetLanguageCode: $translationCanaryTargetLanguage,
                     originalText: $translationOriginalText,
                     translatedText: $translationTranslatedText,
                     onTranslate: translateText,
-                    onRecordingCompleted: transcribeForTranslation,
-                    onCanaryTranslation: transcribeAndTranslateWithCanary
+                    onRecordingCompleted: transcribeForTranslation
                 )
                 .environmentObject(generalSettingsStore)
                 .environmentObject(polishingEngineStore)
-                .environmentObject(transcriptionModelStore)
                 .environmentObject(glossaryStore)
             }
             .sheet(isPresented: $isShowingOnboarding) {
@@ -117,6 +110,9 @@ struct ContentView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
                 isShowingOnboarding = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .nativeBolabolHotkeyTriggered)) { _ in
+                handleHotkeyTriggered()
             }
             .onAppear {
                 syncLocalizedServices()
@@ -151,6 +147,34 @@ struct ContentView: View {
             }
             .onChange(of: generalSettingsStore.settings.overlay) { _, overlaySettings in
                 hotkeySessionOverlayManager.update(settings: overlaySettings)
+            }
+            .onChange(of: hotkeySettingsStore.settings.humorSliderEnabled) { _, isEnabled in
+                if audioRecorder.isRecording {
+                    updatePendingHotkeyHumorSession(sliderEnabled: isEnabled)
+                }
+                hotkeySessionOverlayManager.update(
+                    humorLevel: hotkeySettingsStore.settings.humorLevel,
+                    humorSliderEnabled: isEnabled
+                )
+            }
+            .onChange(of: hotkeySettingsStore.settings.humorLevel) { _, level in
+                if audioRecorder.isRecording {
+                    updatePendingHotkeyHumorSession(level: level)
+                }
+                hotkeySessionOverlayManager.update(
+                    humorLevel: level
+                )
+            }
+            .onChange(of: hotkeySettingsStore.settings.humorPromptMode) { _, mode in
+                if audioRecorder.isRecording {
+                    updatePendingHotkeyHumorSession(promptMode: mode)
+                }
+            }
+            .onReceive(promptTemplateStore.objectWillChange) { _ in
+                hotkeySessionOverlayManager.update(
+                    activePromptSlot: currentHUDActivePromptSlot,
+                    promptSlotNames: currentHUDPromptSlotNames
+                )
             }
             .onChange(of: noteStore.selection) { _, _ in
                 selectedNoteText = ""
@@ -286,9 +310,6 @@ struct ContentView: View {
         isShowingTranslation = true
 
         guard !source.isEmpty else { return }
-        guard TranslationModalView.localCanaryModelID(from: translationProviderID) == nil else {
-            return
-        }
         guard !translationProviderID.isEmpty else {
             translationTranslatedText = generalSettingsStore.text(.noTranslationProvider)
             return
@@ -331,23 +352,16 @@ struct ContentView: View {
                 audioRecorder: translationAudioRecorder,
                 providerID: $translationProviderID,
                 targetLanguage: $translationTargetLanguage,
-                canarySourceLanguageCode: $translationCanarySourceLanguage,
-                canaryTargetLanguageCode: $translationCanaryTargetLanguage,
                 originalText: $translationOriginalText,
                 translatedText: $translationTranslatedText,
                 generalSettingsStore: generalSettingsStore,
                 polishingEngineStore: polishingEngineStore,
-                transcriptionModelStore: transcriptionModelStore,
                 glossaryStore: glossaryStore,
                 onTranslate: translateText,
-                onRecordingCompleted: transcribeForTranslation,
-                onCanaryTranslation: transcribeAndTranslateWithCanary
+                onRecordingCompleted: transcribeForTranslation
             )
 
             guard !source.isEmpty else { return }
-            guard TranslationModalView.localCanaryModelID(from: translationProviderID) == nil else {
-                return
-            }
             guard !translationProviderID.isEmpty else {
                 translationTranslatedText = generalSettingsStore.text(.noTranslationProvider)
                 return
@@ -488,10 +502,6 @@ struct ContentView: View {
         targetLanguage: String,
         providerID: String
     ) async throws -> PolishingResult {
-        if let modelID = TranslationModalView.localCanaryModelID(from: providerID) {
-            throw localizedSessionError(.translationUnsupported(modelID: modelID))
-        }
-
         let prompt = try TranslationPrompt.render(text: text, targetLanguage: targetLanguage)
 
         // Resolve engine: per-model MLX tag vs. cloud provider ID
@@ -582,63 +592,13 @@ struct ContentView: View {
         }
     }
 
-    private func transcribeAndTranslateWithCanary(
-        _ recording: AudioRecording,
-        providerID: String,
-        sourceLanguageCode: String,
-        targetLanguageCode: String
-    ) async throws -> SpeechTranslationResult {
-        guard let modelID = TranslationModalView.localCanaryModelID(from: providerID),
-              let model = transcriptionModelStore.models.first(where: { $0.id == modelID })
-        else {
-            throw localizedSessionError(.translationUnsupported(modelID: "Canary"))
-        }
-
-        guard model.backend == .canaryCoreML,
-              transcriptionModelStore.isModelAvailable(for: model),
-              let downloadedModel = transcriptionModelStore.downloadedModel(for: model)
-        else {
-            throw localizedSessionError(.translationUnsupported(modelID: model.id))
-        }
-
-        let runtime = canarySpeechTranslationRuntimeStore.runtime(for: downloadedModel)
-        let result = try await runtime.translate(
-            SpeechTranslationRequest(
-                audioFileURL: recording.fileURL,
-                sourceLanguageCode: sourceLanguageCode,
-                targetLanguageCode: targetLanguageCode
-            )
-        )
-
-        usageStatisticsStore.record(
-            modelID: result.sourceDiagnostics.backendName,
-            modelName: result.sourceDiagnostics.backendName,
-            diagnostics: result.sourceDiagnostics
-        )
-        usageStatisticsStore.record(
-            modelID: result.translationDiagnostics.backendName,
-            modelName: result.translationDiagnostics.backendName,
-            diagnostics: result.translationDiagnostics
-        )
-
-        return SpeechTranslationResult(
-            sourceText: glossaryStore.apply(to: result.sourceText, target: .source).text,
-            translatedText: glossaryStore.apply(
-                to: result.translatedText,
-                target: .translation,
-                language: targetLanguageCode
-            ).text,
-            sourceDiagnostics: result.sourceDiagnostics,
-            translationDiagnostics: result.translationDiagnostics
-        )
-    }
-
     private func transcribeRecording(
         _ recording: AudioRecording,
         hotkeyTarget: HotkeyTarget?,
         outputMode: HotkeyOutputMode?,
         forceTargetLanguage: Bool = false,
-        session: TranscriptionEngineSession? = nil
+        session: TranscriptionEngineSession? = nil,
+        humorSnapshot: HumorSessionSnapshot? = nil
     ) {
         Task { @MainActor in
             // Cloud · Google Gemini: fast audio-to-Raw first, followed by an
@@ -648,13 +608,14 @@ struct ContentView: View {
                     recording,
                     hotkeyTarget: hotkeyTarget,
                     outputMode: outputMode,
-                    forceTargetLanguage: forceTargetLanguage
+                    forceTargetLanguage: forceTargetLanguage,
+                    humorSnapshot: humorSnapshot
                 )
                 return
             }
 
             let resolution: TranscriptionEngineSessionResolution
-            if let session {
+            if let session, session.plan.isWhisperTargetMode == forceTargetLanguage {
                 resolution = .available(session)
             } else {
                 resolution = makeLocalSession(
@@ -787,7 +748,12 @@ struct ContentView: View {
             let requestedVariants = hotkeyTarget?.requestedPolishingVariants ?? [.variantOne, .variantTwo]
             selectedVariant = hotkeyTarget?.processingVariant ?? requestedVariants.first ?? .variantOne
             let polishingTargetLang = sessionForceTargetLanguage ? targetLanguageCode : nil
-            await polish(noteID, variants: requestedVariants, targetLanguage: polishingTargetLang)
+            await polish(
+                noteID,
+                variants: requestedVariants,
+                targetLanguage: polishingTargetLang,
+                humorSnapshot: humorSnapshot
+            )
             selectedVariant = hotkeyTarget?.processingVariant ?? selectedVariant
             applyHotkeyOutputIfNeeded(for: noteID, target: hotkeyTarget, mode: outputMode)
             finishHotkeySessionIfNeeded(target: hotkeyTarget)
@@ -804,17 +770,25 @@ struct ContentView: View {
     private func polish(
         _ noteID: BolabolNote.ID,
         variants: [ProcessingVariant] = [.variantOne, .variantTwo],
-        targetLanguage: String? = nil
+        targetLanguage: String? = nil,
+        humorSnapshot: HumorSessionSnapshot? = nil
     ) async {
-        let workflow = PolishingWorkflow(
+        let settings = hotkeySettingsStore.settings
+        let workflow = PolishingWorkflow.make(
             noteStore: noteStore,
             engine: polishingEngineStore.activeEngine,
             templateProvider: { variant in
-                promptTemplateStore.template(for: variant)
+                if let humorSnapshot, humorSnapshot.selectedVariant == variant {
+                    return humorSnapshot.selectedPrompt
+                }
+                return promptTemplateStore.template(for: variant)
             },
             messageProvider: { key in
                 generalSettingsStore.text(key)
-            }
+            },
+            humorSliderEnabled: humorSnapshot?.sliderEnabled ?? settings.humorSliderEnabled,
+            humorLevel: humorSnapshot?.level ?? settings.humorLevel,
+            humorPromptMode: humorSnapshot?.promptMode ?? settings.humorPromptMode
         )
         let results = await workflow.polishNote(noteID, variants: variants, targetLanguage: targetLanguage)
         for result in results.values {
@@ -835,13 +809,6 @@ struct ContentView: View {
         rawText: String,
         targetLanguage: String
     ) async {
-        if TranslationModalView.localCanaryModelID(from: translationProviderID) != nil {
-            NativeBolabolLog.polishing.info(
-                "Skipped text auto-translation because Canary requires an audio speech-translation session."
-            )
-            return
-        }
-
         // Resolve the translation engine the same way the in-app Translation
         // modal does: prefer the user-selected translation provider (which may be
         // a local MLX model tagged "local-mlx:<modelID>"), and only fall back to
@@ -905,10 +872,6 @@ struct ContentView: View {
     private func resolveTranslationEngine(providerID: String) -> (any PolishingEngine)? {
         let trimmed = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
-
-        if TranslationModalView.localCanaryModelID(from: trimmed) != nil {
-            return nil
-        }
 
         if let modelID = TranslationModalView.localMLXModelID(from: trimmed) {
             guard let model = polishingEngineStore.allModels.first(where: { $0.id == modelID }) else {
@@ -1056,6 +1019,7 @@ struct ContentView: View {
                         )
                     }
                     HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
+                    pendingHotkeyHumorSession = nil
                     return
                 }
                 session = resolvedSession
@@ -1075,6 +1039,10 @@ struct ContentView: View {
             pendingHotkeyTarget = resolvedTarget
             pendingHotkeyOutputMode = settings.mode
             pendingHotkeyForceTargetLanguage = forceTargetLanguage
+            pendingHotkeyHumorSession = makeHotkeyHumorSessionState(
+                for: resolvedTarget,
+                settings: settings
+            )
             if resolvedTarget != .raw {
                 polishingEngineStore.ensurePolishingEnabledForWidgetTarget()
             }
@@ -1090,11 +1058,21 @@ struct ContentView: View {
                     languageMode: forceTargetLanguage ? .target : .auto,
                     hotkeyTarget: resolvedTarget,
                     targetLanguageLabel: autoTranslationLanguageLabel,
+                    activePromptSlot: currentHUDActivePromptSlot,
+                    promptSlotNames: currentHUDPromptSlotNames,
+                    humorLevel: hotkeySettingsStore.settings.humorLevel,
+                    humorSliderEnabled: hotkeySettingsStore.settings.humorSliderEnabled,
+                    humorAccessibilityLabel: generalSettingsStore.text(.humorLevel),
+                    promptSlotSelectedLabel: generalSettingsStore.text(.promptSlotSelected),
+                    promptSlotUnselectedLabel: generalSettingsStore.text(.promptSlotUnselected),
+                    promptSlotSwitchHint: generalSettingsStore.text(.promptSlotSwitch),
                     showsControls: true,
                     languageControlEnabled: languageControlEnabled,
                     onOriginChange: persistOverlayOrigin,
                     onLanguageTap: handleOverlayLanguageTap,
                     onTargetTap: handleOverlayTargetTap,
+                    onPromptSlotChange: handleOverlayPromptSlotChange,
+                    onHumorLevelChange: handleOverlayHumorLevelChange,
                     onScroll: handleOverlayProviderScroll,
                     sessionPlan: session?.plan
                 )
@@ -1110,6 +1088,7 @@ struct ContentView: View {
                 pendingHotkeyOutputMode = nil
                 pendingHotkeySession = nil
                 pendingHotkeyForceTargetLanguage = false
+                pendingHotkeyHumorSession = nil
                 hotkeySessionOverlayManager.hide()
                 HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
             }
@@ -1130,6 +1109,7 @@ struct ContentView: View {
                 NativeBolabolLog.hotkey.info(
                     "Ignored stop hotkey for non-owner content view owner=\(self.hotkeyOwnerID.uuidString, privacy: .public) phaseOwned=\(HotkeySessionCoordinator.shared.isOwned(by: self.hotkeyOwnerID))"
                 )
+                pendingHotkeyHumorSession = nil
                 return
             }
 
@@ -1139,8 +1119,11 @@ struct ContentView: View {
                 )
                 HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
                 hotkeySessionOverlayManager.hide()
+                pendingHotkeyHumorSession = nil
                 return
             }
+            let target = pendingHotkeyTarget ?? settings.target
+            let humorSnapshot = freezeHotkeyHumorSession(for: target)
             hotkeySessionOverlayManager.show(
                 mode: .processing,
                 settings: generalSettingsStore.settings.overlay,
@@ -1148,10 +1131,9 @@ struct ContentView: View {
                 onOriginChange: persistOverlayOrigin,
                 sessionPlan: pendingHotkeySession?.plan
             )
-            let target = pendingHotkeyTarget ?? settings.target
             let mode = pendingHotkeyOutputMode ?? settings.mode
             let session = pendingHotkeySession
-            let forceTargetValue = session?.plan.isWhisperTargetMode ?? effectiveHUDForceTargetLanguage
+            let forceTargetValue = effectiveHUDForceTargetLanguage
             pendingHotkeyTarget = nil
             pendingHotkeyOutputMode = nil
             pendingHotkeySession = nil
@@ -1164,7 +1146,8 @@ struct ContentView: View {
                 hotkeyTarget: target,
                 outputMode: mode,
                 forceTargetLanguage: forceTargetValue,
-                session: session
+                session: session,
+                humorSnapshot: humorSnapshot
             )
         }
     }
@@ -1203,6 +1186,7 @@ struct ContentView: View {
         hotkeySessionOverlayManager.playCue(.finish, settings: generalSettingsStore.settings.overlay)
         hotkeySessionOverlayManager.hide()
         providerQuickSwitcher.hide()
+        pendingHotkeyHumorSession = nil
         HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
     }
 
@@ -1440,18 +1424,24 @@ struct ContentView: View {
     ///
     /// This matches the settings copy: choosing a specific transcription language
     /// enables auto-translation into that language regardless of what was spoken.
+    /// Target language code for auto-translation / HUD secondary language targeting.
+    /// Prefers the configured Additional Language from settings ("Your Languages" -> Additional Language).
+    /// If additional language matches primary (or is empty), falls back to the opposite default language.
     private var targetLanguageCode: String {
-        let fromTranscription = transcriptionModelStore.resolvedLanguageCode
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        if !fromTranscription.isEmpty, fromTranscription != "auto" {
-            return normalizeLanguageCode(fromTranscription)
+        let speech = generalSettingsStore.speechLanguages
+        let primary = normalizeLanguageCode(speech.primaryLanguageCode)
+        let additional = normalizeLanguageCode(speech.additionalLanguageCode)
+
+        if !speech.usesSameAdditionalAsPrimary, !additional.isEmpty, additional != "auto" {
+            return additional
         }
 
-        let autoLang = glossaryStore.settings.autoTranslationLanguage
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        return normalizeLanguageCode(autoLang.isEmpty ? "en" : autoLang)
+        let glossaryAuto = normalizeLanguageCode(glossaryStore.settings.autoTranslationLanguage)
+        if !glossaryAuto.isEmpty && glossaryAuto != primary && glossaryAuto != "auto" {
+            return glossaryAuto
+        }
+
+        return primary == "en" ? "ru" : "en"
     }
 
     private func normalizeLanguageCode(_ value: String) -> String {
@@ -1584,6 +1574,15 @@ struct ContentView: View {
 
         persistentHUDForceTargetLanguage.toggle()
         pendingHotkeyForceTargetLanguage = persistentHUDForceTargetLanguage
+        if audioRecorder.isRecording {
+            let resolution = makeLocalSession(
+                forceTargetLanguage: persistentHUDForceTargetLanguage,
+                hotkeySession: true
+            )
+            if case .available(let newSession) = resolution {
+                pendingHotkeySession = newSession
+            }
+        }
         hotkeySessionOverlayManager.update(
             languageMode: persistentHUDForceTargetLanguage ? .target : .auto,
             targetLanguageLabel: autoTranslationLanguageLabel
@@ -1609,13 +1608,117 @@ struct ContentView: View {
             persistentHUDForceTargetLanguage = false
             pendingHotkeyForceTargetLanguage = false
         }
+        let targetVariant: ProcessingVariant = (next == .x2) ? .variantTwo : .variantOne
+        let activeSlot = promptTemplateStore.activeSlot(for: targetVariant)
+        let slotNames = hudPromptSlotNames(for: targetVariant)
+        updatePendingHotkeyPromptSnapshot(for: next)
+
         hotkeySessionOverlayManager.update(
             languageMode: persistentHUDForceTargetLanguage ? .target : .auto,
             hotkeyTarget: next,
             targetLanguageLabel: autoTranslationLanguageLabel,
+            activePromptSlot: activeSlot,
+            promptSlotNames: slotNames,
+            humorLevel: hotkeySettingsStore.settings.humorLevel,
+            humorSliderEnabled: hotkeySettingsStore.settings.humorSliderEnabled,
             languageControlEnabled: languageControlEnabled,
             sessionPlan: isExplicitCoreMLBackend ? pendingHotkeySession?.plan : nil
         )
+    }
+    /// The HUD is a live preference control. Its value is persisted immediately,
+    /// while the listening session keeps its own pending copy for the eventual
+    /// frozen request snapshot; cancel does not roll back the preference.
+    private func handleOverlayHumorLevelChange(_ level: HumorLevel) {
+        guard hotkeySettingsStore.settings.humorLevel != level else { return }
+        hotkeySettingsStore.settings.humorLevel = level
+    }
+
+    private func makeHotkeyHumorSessionState(
+        for target: HotkeyTarget,
+        settings: HotkeySettings
+    ) -> HumorSessionState {
+        let variant = target.processingVariant
+        return HumorSessionState(
+            sliderEnabled: settings.humorSliderEnabled,
+            level: settings.humorLevel,
+            promptMode: settings.humorPromptMode,
+            selectedVariant: variant,
+            selectedPromptSlot: promptTemplateStore.activeSlot(for: variant),
+            selectedPrompt: promptTemplateStore.template(for: variant)
+        )
+    }
+
+    private func updatePendingHotkeyHumorSession(
+        sliderEnabled: Bool? = nil,
+        level: HumorLevel? = nil,
+        promptMode: HumorPromptMode? = nil
+    ) {
+        guard var session = pendingHotkeyHumorSession else { return }
+        session.update(sliderEnabled: sliderEnabled, level: level, promptMode: promptMode)
+        pendingHotkeyHumorSession = session
+    }
+
+    private func updatePendingHotkeyPromptSnapshot(for target: HotkeyTarget) {
+        guard var session = pendingHotkeyHumorSession else { return }
+        let variant = target.processingVariant
+        session.updateSelection(
+            variant: variant,
+            promptSlot: promptTemplateStore.activeSlot(for: variant),
+            prompt: promptTemplateStore.template(for: variant)
+        )
+        pendingHotkeyHumorSession = session
+    }
+
+    private func freezeHotkeyHumorSession(for target: HotkeyTarget) -> HumorSessionSnapshot? {
+        guard var session = pendingHotkeyHumorSession else { return nil }
+        let variant = target.processingVariant
+        session.updateSelection(
+            variant: variant,
+            promptSlot: promptTemplateStore.activeSlot(for: variant),
+            prompt: promptTemplateStore.template(for: variant)
+        )
+        let snapshot = session.freeze()
+        pendingHotkeyHumorSession = nil
+        return snapshot
+    }
+
+    private var currentHUDPromptVariant: ProcessingVariant {
+        currentHUDTarget == .x2 ? .variantTwo : .variantOne
+    }
+
+    private var currentHUDActivePromptSlot: PromptSlot {
+        promptTemplateStore.activeSlot(for: currentHUDPromptVariant)
+    }
+
+    private var currentHUDPromptSlotNames: [PromptSlot: String] {
+        hudPromptSlotNames(for: currentHUDPromptVariant)
+    }
+
+    private func hudPromptSlotNames(for variant: ProcessingVariant) -> [PromptSlot: String] {
+        Dictionary(
+            uniqueKeysWithValues: PromptSlot.allCases.map { slot in
+                let storedName = promptTemplateStore.slotName(in: slot, for: variant)
+                let localizedDefault: String
+                switch slot {
+                case .default:
+                    localizedDefault = generalSettingsStore.text(.promptSlotDefault)
+                case .customOne:
+                    localizedDefault = generalSettingsStore.text(.promptSlotCustomOne)
+                case .customTwo:
+                    localizedDefault = generalSettingsStore.text(.promptSlotCustomTwo)
+                case .customThree:
+                    localizedDefault = generalSettingsStore.text(.promptSlotCustomThree)
+                case .customFour:
+                    localizedDefault = generalSettingsStore.text(.promptSlotCustomFour)
+                }
+                return (slot, storedName == slot.title ? localizedDefault : storedName)
+            }
+        )
+    }
+
+    private func handleOverlayPromptSlotChange(_ slot: PromptSlot) {
+        promptTemplateStore.setActiveSlot(slot, for: currentHUDPromptVariant)
+        updatePendingHotkeyPromptSnapshot(for: currentHUDTarget)
     }
 
     /// Two-stage cloud dictation:
@@ -1625,7 +1728,8 @@ struct ContentView: View {
         _ recording: AudioRecording,
         hotkeyTarget: HotkeyTarget?,
         outputMode: HotkeyOutputMode?,
-        forceTargetLanguage: Bool
+        forceTargetLanguage: Bool,
+        humorSnapshot: HumorSessionSnapshot? = nil
     ) async {
         let google = polishingEngineStore.apiSettings.configuration(for: .google)
         let resolvedTarget = hotkeyTarget ?? hotkeySettingsStore.settings.target
@@ -1691,7 +1795,8 @@ struct ContentView: View {
             await polish(
                 noteID,
                 variants: [variant],
-                targetLanguage: polishingTargetLanguage
+                targetLanguage: polishingTargetLanguage,
+                humorSnapshot: humorSnapshot
             )
 
             selectedVariant = variant

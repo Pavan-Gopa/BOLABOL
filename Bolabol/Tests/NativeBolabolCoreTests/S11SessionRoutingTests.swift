@@ -14,7 +14,7 @@ private func s11Resolve(
     modelID: String,
     primary: String?,
     additional: String?,
-    operation: TranscriptionSessionOperation = .ordinaryASR,
+    operation: TranscriptionSessionOperation = .asr,
     os: ASRModelCapabilities.OSVersion = s11OS15,
     complete: Bool = true
 ) throws -> TranscriptionSessionResolution {
@@ -42,12 +42,11 @@ func s11CanaryFlashPairMatrixUsesOnlyConfiguredSupportedSources() throws {
     #expect(bothPlan.languageMode == .fixed)
     #expect(bothPlan.sourceLanguageCode == "en")
     #expect(bothPlan.hudLanguageLabel == "E")
-    #expect(bothPlan.targetLanguageChoices == ["en"])
     #expect(bothPlan.request.forcedLanguageCode == "en")
     #expect(!bothPlan.request.translateToEnglish)
+    #expect(bothPlan.route.postASRTextTranslationTargetLanguageCode == nil)
 
     #expect(bothPlan.sourceLanguageChoices == ["en"])
-    #expect(!bothPlan.isCanaryTargetSwitchable)
 
     let german = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "de", additional: "fr")
     guard case .available(let germanPlan) = german else {
@@ -57,12 +56,7 @@ func s11CanaryFlashPairMatrixUsesOnlyConfiguredSupportedSources() throws {
     #expect(germanPlan.sourceLanguageChoices == ["de"])
     #expect(germanPlan.sourceLanguageCode == "de")
     #expect(germanPlan.hudLanguageLabel == "G")
-    #expect(germanPlan.targetLanguageChoices == ["de"])
-    #expect(!germanPlan.isCanaryTargetSwitchable)
-    let translated = germanPlan.toggledCanaryTarget()
-    #expect(translated == germanPlan)
-
-    #expect(bothPlan.toggledCanaryTarget() == bothPlan)
+    #expect(germanPlan.route.postASRTextTranslationTargetLanguageCode == nil)
 
     let primaryOnly = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "en", additional: "ru")
     guard case .available(let primaryPlan) = primaryOnly else {
@@ -127,11 +121,9 @@ func s11CanaryOneBUsesExplicitMultilingualSourceASR() throws {
     #expect(plan.sourceLanguageChoices == ["en"])
     #expect(plan.sourceLanguageCode == "en")
     #expect(plan.hudLanguageLabel == "E")
-    #expect(plan.targetLanguageChoices == ["en"])
     #expect(plan.request.forcedLanguageCode == "en")
     #expect(!plan.request.translateToEnglish)
-    #expect(!plan.isCanaryTargetSwitchable)
-    #expect(plan.toggledCanaryTarget() == plan)
+    #expect(plan.route.postASRTextTranslationTargetLanguageCode == nil)
 
     let russian = try s11Resolve(modelID: "canary-1b-v2-coreml", primary: "ru", additional: "en")
     guard case .available(let russianPlan) = russian else {
@@ -140,9 +132,7 @@ func s11CanaryOneBUsesExplicitMultilingualSourceASR() throws {
     }
     #expect(russianPlan.sourceLanguageCode == "ru")
     #expect(russianPlan.hudLanguageLabel == "R")
-    #expect(russianPlan.targetLanguageChoices == ["ru"])
-    #expect(!russianPlan.isCanaryTargetSwitchable)
-    #expect(russianPlan.toggledCanaryTarget() == russianPlan)
+    #expect(russianPlan.route.postASRTextTranslationTargetLanguageCode == nil)
 
     let frenchOnly = try s11Resolve(modelID: "canary-1b-v2-coreml", primary: "fr", additional: "de")
     guard case .available(let frenchPlan) = frenchOnly else {
@@ -150,7 +140,7 @@ func s11CanaryOneBUsesExplicitMultilingualSourceASR() throws {
         return
     }
     #expect(frenchPlan.sourceLanguageCode == "fr")
-    #expect(frenchPlan.targetLanguageChoices == ["fr"])
+    #expect(frenchPlan.route.postASRTextTranslationTargetLanguageCode == nil)
 
     let oldOS = try s11Resolve(
         modelID: "canary-1b-v2-coreml",
@@ -197,7 +187,7 @@ func s11GigaAMIsFixedRussianAndRejectsTranslation() throws {
         modelID: "gigaam-v3-rnnt-coreml",
         primary: "ru",
         additional: "en",
-        operation: .whisperTarget(languageCode: "en")
+        operation: .whisperTargetTranslation(languageCode: "en")
     )
     guard case .unavailable(.translationUnsupported("gigaam-v3-rnnt-coreml")) = translation else {
         Issue.record("GigaAM translation must be unavailable")
@@ -208,7 +198,7 @@ func s11GigaAMIsFixedRussianAndRejectsTranslation() throws {
         modelID: "gigaam-v3-rnnt-coreml",
         primary: "ru",
         additional: "en",
-        operation: .speechTranslation(sourceLanguageCode: "ru", targetLanguageCode: "en")
+        operation: .whisperTargetTranslation(languageCode: "en")
     )
     #expect(typedTranslation == .unavailable(.translationUnsupported(modelID: "gigaam-v3-rnnt-coreml")))
 }
@@ -255,7 +245,7 @@ func s11WhisperAndParakeetKeepLegacyAutoBehavior() throws {
         modelID: "whisperkit-large-v3-full",
         primary: "en",
         additional: "ru",
-        operation: .whisperTarget(languageCode: "en")
+        operation: .whisperTargetTranslation(languageCode: "en")
     )
     guard case .available(let targetPlan) = whisperTarget else {
         Issue.record("Whisper target plan should be available")
@@ -306,7 +296,7 @@ func s11MissingActiveModelIsTypedUnavailable() {
         currentOSVersion: s11OS15,
         primaryLanguageCode: "en",
         additionalLanguageCode: "de",
-        operation: .ordinaryASR
+        operation: .asr
     )
     #expect(result == .unavailable(.noActiveModel))
     #expect(result.hudLanguageMode == .unavailable)
@@ -345,7 +335,7 @@ func s11EngineBindingFreezesDescriptorBackendAndEngineIdentity() throws {
     let engineStore = TranscriptionEngineStore.live()
     let first = engineStore.makeSession(
         modelStore: modelStore,
-        operation: .ordinaryASR
+        operation: .asr
     )
     guard case .available(let firstSession) = first else {
         Issue.record("Flash should produce an engine-bound session")
@@ -355,7 +345,7 @@ func s11EngineBindingFreezesDescriptorBackendAndEngineIdentity() throws {
     modelStore.activate(gigaAM)
     let second = engineStore.makeSession(
         modelStore: modelStore,
-        operation: .ordinaryASR
+        operation: .asr
     )
     guard case .available(let secondSession) = second else {
         Issue.record("GigaAM should produce the next engine-bound session")
@@ -375,15 +365,23 @@ func s11EngineBindingFreezesDescriptorBackendAndEngineIdentity() throws {
 }
 
 @Test
-func s11CanarySpeechTranslationOperationIsUnavailable() throws {
+func s11TypedWhisperTargetTranslationIsUnavailableForCanaryAndParakeet() throws {
     let result = try s11Resolve(
         modelID: "canary-1b-v2-coreml",
         primary: "en",
         additional: "ru",
-        operation: .speechTranslation(sourceLanguageCode: "en", targetLanguageCode: "ru")
+        operation: .whisperTargetTranslation(languageCode: "ru")
     )
 
     #expect(result == .unavailable(.translationUnsupported(modelID: "canary-1b-v2-coreml")))
+
+    let parakeet = try s11Resolve(
+        modelID: "parakeet-tdt-06b-v3",
+        primary: "en",
+        additional: "ru",
+        operation: .whisperTargetTranslation(languageCode: "en")
+    )
+    #expect(parakeet == .unavailable(.translationUnsupported(modelID: "parakeet-tdt-06b-v3")))
 }
 
 private func s11CreateCompleteFolder(

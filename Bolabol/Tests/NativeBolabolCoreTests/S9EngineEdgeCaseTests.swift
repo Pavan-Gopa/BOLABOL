@@ -111,13 +111,38 @@ struct S9CanaryLanguageEdgeCaseTests {
         for sourceLanguage in CanaryLanguageCatalog.oneBV2LanguageCodes {
             let resolved = try await engine.resolveLanguage(
                 TranscriptionRequest(
-                    forcedLanguageCode: sourceLanguage,
-                    targetLanguageCode: sourceLanguage
+                    forcedLanguageCode: sourceLanguage
                 )
             )
             #expect(resolved == sourceLanguage)
         }
 
+    }
+
+    @Test
+    func canaryRejectsWhisperTranslationFlagBeforeEngineWork() async throws {
+        let model = try #require(
+            TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-180m-flash-coreml")
+        )
+        let engine = CanaryCoreMLEngine(
+            model: model,
+            modelFolderURL: URL(fileURLWithPath: "/tmp/bolabol-s9-translation-rejection")
+        )
+
+        do {
+            try await engine.validateASROnlyRequest(
+                TranscriptionRequest(translateToEnglish: true)
+            )
+            Issue.record("Canary must reject Whisper translation before engine work")
+        } catch let error as CanaryTranscriptionError {
+            #expect(error == .translationUnsupported)
+        } catch {
+            Issue.record("Unexpected Canary validation error: \(error)")
+        }
+
+        try await engine.validateASROnlyRequest(
+            TranscriptionRequest(forcedLanguageCode: "en")
+        )
     }
 
     @Test

@@ -66,23 +66,17 @@ public protocol ModelPreparingPolishingEngine: PolishingEngine {
 public struct TranscriptionRequest: Equatable, Sendable {
     public var audioFileURL: URL?
     public var forcedLanguageCode: String?
-    /// When `true`, the engine should use Whisper's `translate` task to
-    /// produce English output regardless of the spoken language.
+    /// Whisper-only native X-to-English task. Other engines reject this flag.
     public var translateToEnglish: Bool
-    /// Explicit speech-translation target for engines with directional AST
-    /// capabilities, such as Canary. `nil` means ordinary ASR.
-    public var targetLanguageCode: String?
 
     public init(
         audioFileURL: URL? = nil,
         forcedLanguageCode: String? = nil,
-        translateToEnglish: Bool = false,
-        targetLanguageCode: String? = nil
+        translateToEnglish: Bool = false
     ) {
         self.audioFileURL = audioFileURL
         self.forcedLanguageCode = forcedLanguageCode
         self.translateToEnglish = translateToEnglish
-        self.targetLanguageCode = targetLanguageCode
     }
 }
 

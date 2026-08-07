@@ -214,13 +214,12 @@ func S11SessionRoutingDoesNotPersistPairOrLegacyLanguagePreference() throws {
         hasCompleteModel: true,
         primaryLanguageCode: pair.primaryLanguageCode,
         additionalLanguageCode: pair.additionalLanguageCode,
-        operation: .ordinaryASR
+        operation: .asr
     )
-    guard case .available(let plan) = resolution else {
+    guard case .available = resolution else {
         Issue.record("Expected an explicit Flash plan")
         return
     }
-    _ = plan.toggledCanaryTarget()
 
     #expect(settings == originalSettings)
     #expect(pair == originalPair)

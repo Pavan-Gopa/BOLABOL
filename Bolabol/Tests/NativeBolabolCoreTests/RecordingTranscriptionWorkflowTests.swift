@@ -127,7 +127,7 @@ func recordingTranscriptionWorkflowPassesTheExactS11PlanRequest() async throws {
         hasCompleteModel: true,
         primaryLanguageCode: "de",
         additionalLanguageCode: "en",
-        operation: .ordinaryASR
+        operation: .asr
     )
     guard case .available(let plan) = resolution else {
         Issue.record("Expected a valid Flash session plan")
@@ -174,6 +174,42 @@ func recordingTranscriptionWorkflowDoesNotCallEngineForUnavailableSession() asyn
 
 @MainActor
 @Test
+func recordingTranscriptionWorkflowDoesNotCallEngineForTypedNonWhisperTranslation() async throws {
+    let store = NoteStore()
+    let recording = AudioRecording(
+        fileURL: URL(fileURLWithPath: "/tmp/native-bolabol-typed-unavailable.wav"),
+        createdAt: Date(timeIntervalSince1970: 1_775_066_500),
+        duration: 4,
+        sampleRate: 48_000,
+        channelCount: 1,
+        suggestedTitle: "Typed unavailable note"
+    )
+    let model = try #require(
+        TranscriptionModelCatalog.nativeWhisperKit.model(withID: "canary-180m-flash-coreml")
+    )
+    let resolution = TranscriptionSessionResolver.resolve(
+        activeModel: model,
+        currentOSVersion: ASRModelCapabilities.OSVersion(majorVersion: 15),
+        hasCompleteModel: true,
+        primaryLanguageCode: "en",
+        additionalLanguageCode: "de",
+        operation: .whisperTargetTranslation(languageCode: "en")
+    )
+    let engine = CapturingTranscriptionEngine(id: "must-not-call-typed")
+    let workflow = RecordingTranscriptionWorkflow(noteStore: store, engine: engine)
+
+    let noteID = await workflow.transcribeRecording(
+        recording,
+        resolution: resolution,
+        now: recording.createdAt
+    )
+
+    #expect(engine.calls == 0)
+    #expect(store.note(withID: noteID)?.transcriptionStatus.phase == .failed)
+}
+
+@MainActor
+@Test
 func recordingTranscriptionWorkflowRejectsEngineIdentityMismatchBeforeCall() async throws {
     let store = NoteStore()
     let recording = AudioRecording(
@@ -195,7 +231,7 @@ func recordingTranscriptionWorkflowRejectsEngineIdentityMismatchBeforeCall() asy
         hasCompleteModel: true,
         primaryLanguageCode: "en",
         additionalLanguageCode: "ru",
-        operation: .ordinaryASR
+        operation: .asr
     )
     guard case .available(let plan) = resolution else {
         Issue.record("Expected a valid GigaAM session plan")

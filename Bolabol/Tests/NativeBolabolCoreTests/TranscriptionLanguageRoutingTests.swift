@@ -10,7 +10,7 @@ func transcriptionLanguageRouterForcesEnglishLikeElectronOnMultilingualModels() 
 
     #expect(route.forcedLanguageCode == "en")
     #expect(!route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == nil)
+    #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }
 
 @Test
@@ -22,7 +22,7 @@ func transcriptionLanguageRouterKeepsAutoDetectAsPlainTranscription() {
 
     #expect(route.forcedLanguageCode == nil)
     #expect(!route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == nil)
+    #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }
 
 @Test
@@ -34,7 +34,7 @@ func transcriptionLanguageRouterForcesNonEnglishTargetsLikeElectron() {
 
     #expect(route.forcedLanguageCode == "fr")
     #expect(!route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == nil)
+    #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }
 
 @Test
@@ -46,7 +46,7 @@ func transcriptionLanguageRouterForcesLanguageOnNonMultilingualModels() {
 
     #expect(route.forcedLanguageCode == "en")
     #expect(!route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == nil)
+    #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }
 
 @Test
@@ -61,7 +61,7 @@ func transcriptionLanguageRouterTargetModeUsesLLMForNonEnglishTargets() {
 
     #expect(route.forcedLanguageCode == nil)
     #expect(!route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == "fr")
+    #expect(route.postASRTextTranslationTargetLanguageCode == "fr")
 }
 
 @Test
@@ -74,7 +74,7 @@ func transcriptionLanguageRouterTargetModeEnablesTranslateToEnglishForEnglishTar
 
     #expect(route.forcedLanguageCode == nil)
     #expect(route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == nil)
+    #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }
 
 @Test
@@ -88,7 +88,7 @@ func transcriptionLanguageRouterTargetModeFallsBackToLLMOnNonMultilingualModels(
 
     #expect(route.forcedLanguageCode == nil)
     #expect(!route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == "fr")
+    #expect(route.postASRTextTranslationTargetLanguageCode == "fr")
 }
 
 @Test
@@ -101,7 +101,7 @@ func transcriptionLanguageRouterTargetModeFallsBackToLLMForEnglishOnNonMultiling
 
     #expect(route.forcedLanguageCode == nil)
     #expect(!route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == "en")
+    #expect(route.postASRTextTranslationTargetLanguageCode == "en")
 }
 
 @Test
@@ -115,7 +115,7 @@ func transcriptionLanguageRouterTargetModeKeepsAutoDetectWhenAutoSelected() {
 
     #expect(route.forcedLanguageCode == nil)
     #expect(route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == nil)
+    #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }
 
 @Test
@@ -128,5 +128,5 @@ func transcriptionLanguageRouterTargetModeNormalizesEnglishAliases() {
 
     #expect(route.forcedLanguageCode == nil)
     #expect(route.translateToEnglish)
-    #expect(route.autoTranslateTargetLanguageCode == nil)
+    #expect(route.postASRTextTranslationTargetLanguageCode == nil)
 }

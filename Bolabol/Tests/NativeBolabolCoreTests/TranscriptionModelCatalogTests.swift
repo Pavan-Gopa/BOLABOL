@@ -151,7 +151,6 @@ func nativeTranscriptionCatalogContainsAdr018GoModelsWithHonestCapabilities() th
     let flash = try #require(catalog.model(withID: "canary-180m-flash-coreml"))
     #expect(flash.backend == .canaryCoreML)
     #expect(!flash.capabilities.supportsAutoLanguageDetect)
-    #expect(!flash.capabilities.supportsSpeechTranslation)
     #expect(flash.capabilities.isRecommendedForEnDeFrEs)
     #expect(flash.capabilities.supportedLanguageCodes == ["en", "de", "fr", "es"])
 
@@ -159,13 +158,11 @@ func nativeTranscriptionCatalogContainsAdr018GoModelsWithHonestCapabilities() th
     #expect(canary1B.backend == .canaryCoreML)
     #expect(canary1B.modelRepositoryID == "bolabol-canary-1b-v2-coreml-r1")
     #expect(!canary1B.capabilities.supportsAutoLanguageDetect)
-    #expect(!canary1B.capabilities.supportsSpeechTranslation)
     #expect(canary1B.capabilities.minOSVersion?.majorVersion == 15)
 
     let gigaAM = try #require(catalog.model(withID: "gigaam-v3-rnnt-coreml"))
     #expect(gigaAM.backend == .gigaAMCoreML)
     #expect(!gigaAM.capabilities.supportsAutoLanguageDetect)
-    #expect(!gigaAM.capabilities.supportsSpeechTranslation)
     #expect(gigaAM.capabilities.isRecommendedForPrimaryRU)
     #expect(gigaAM.capabilities.supportedLanguageCodes == ["ru"])
 

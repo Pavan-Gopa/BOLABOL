@@ -478,7 +478,7 @@ struct HotkeySettingsView: View {
         }
         return transcriptionEngineStore.makeSession(
             modelStore: transcriptionModelStore,
-            operation: .ordinaryASR
+            operation: .asr
         )
     }
 

@@ -196,7 +196,7 @@ struct SidebarView: View {
         Task { @MainActor in
             let resolution = transcriptionEngineStore.makeSession(
                 modelStore: transcriptionModelStore,
-                operation: .ordinaryASR,
+                operation: .asr,
                 legacyLanguageCode: transcriptionModelStore.resolvedLanguageCode
             )
             switch resolution {

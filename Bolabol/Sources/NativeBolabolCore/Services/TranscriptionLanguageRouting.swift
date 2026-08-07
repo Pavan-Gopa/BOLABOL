@@ -3,32 +3,27 @@ import Foundation
 public struct TranscriptionLanguageRoute: Equatable, Sendable {
     public var forcedLanguageCode: String?
     public var translateToEnglish: Bool
-    public var autoTranslateTargetLanguageCode: String?
-    public var speechTranslationTargetLanguageCode: String?
+    public var postASRTextTranslationTargetLanguageCode: String?
 
     public init(
         forcedLanguageCode: String?,
         translateToEnglish: Bool,
-        autoTranslateTargetLanguageCode: String?,
-        speechTranslationTargetLanguageCode: String? = nil
+        postASRTextTranslationTargetLanguageCode: String?
     ) {
         self.forcedLanguageCode = forcedLanguageCode
         self.translateToEnglish = translateToEnglish
-        self.autoTranslateTargetLanguageCode = autoTranslateTargetLanguageCode
-        self.speechTranslationTargetLanguageCode = speechTranslationTargetLanguageCode
+        self.postASRTextTranslationTargetLanguageCode = postASRTextTranslationTargetLanguageCode
     }
 }
 
 /// The operation requested when a local transcription session is created.
 ///
-/// `ordinaryASR` preserves the normal recording path. `speechTranslation` is
-/// retained for older callers, but Canary descriptors reject it because Canary
-/// is ASR-only; text translation uses a separate runtime. The Whisper-target
-/// case preserves the existing Whisper translation/LLM path.
+/// `.asr` is the only speech operation accepted by non-Whisper backends.
+/// Target-output intent is typed as Whisper-only and never carries a generic
+/// speech target into a transcription request.
 public enum TranscriptionSessionOperation: Equatable, Sendable {
-    case ordinaryASR
-    case whisperTarget(languageCode: String)
-    case speechTranslation(sourceLanguageCode: String, targetLanguageCode: String)
+    case asr
+    case whisperTargetTranslation(languageCode: String)
 }
 
 /// Availability facts captured together with the model snapshot. These are
@@ -179,8 +174,6 @@ public struct TranscriptionSessionPlan: Equatable, Sendable {
     public let languageMode: TranscriptionLanguageMode
     public let sourceLanguageChoices: [String]
     public let sourceLanguageCode: String?
-    public let targetLanguageChoices: [String]
-    public let targetLanguageCode: String
     public let requestedLanguageCode: String
     public let hudLanguageLabel: String
     public let languageControlEnabled: Bool
@@ -189,78 +182,18 @@ public struct TranscriptionSessionPlan: Equatable, Sendable {
     public let supportsNativeWhisperTranslation: Bool
     public let sourceLanguageWarning: TranscriptionSessionLanguageWarning?
 
-    public var isCanaryTargetSwitchable: Bool {
-        backend == .canaryCoreML
-            && languageMode == .switchable
-            && languageControlEnabled
-            && targetLanguageChoices.count > 1
-    }
-
     public var isWhisperTargetMode: Bool {
-        if case .whisperTarget = operation {
+        if case .whisperTargetTranslation = operation {
             return true
         }
         return false
-    }
-
-    public var autoTranslateTargetLanguageCode: String? {
-        route.autoTranslateTargetLanguageCode
-    }
-
-    /// Toggles a Canary session between source-language ASR and English output.
-    /// The source is captured from the settings pair and never changes during
-    /// the session.
-    public func toggledCanaryTarget() -> TranscriptionSessionPlan {
-        guard isCanaryTargetSwitchable,
-              let sourceLanguageCode
-        else {
-            return self
-        }
-
-        let nextTargetLanguageCode: String
-        if targetLanguageCode == sourceLanguageCode {
-            nextTargetLanguageCode = targetLanguageChoices.first { $0 != sourceLanguageCode }
-                ?? sourceLanguageCode
-        } else {
-            nextTargetLanguageCode = sourceLanguageCode
-        }
-        let translates = nextTargetLanguageCode != sourceLanguageCode
-        let nextRoute = TranscriptionLanguageRoute(
-            forcedLanguageCode: sourceLanguageCode,
-            translateToEnglish: translates && nextTargetLanguageCode == "en",
-            autoTranslateTargetLanguageCode: nil,
-            speechTranslationTargetLanguageCode: translates ? nextTargetLanguageCode : nil
-        )
-        return TranscriptionSessionPlan(
-            model: model,
-            modelFolderURL: modelFolderURL,
-            engineIdentity: engineIdentity,
-            operation: operation,
-            languageMode: .switchable,
-            sourceLanguageChoices: sourceLanguageChoices,
-            sourceLanguageCode: sourceLanguageCode,
-            targetLanguageChoices: targetLanguageChoices,
-            targetLanguageCode: nextTargetLanguageCode,
-            requestedLanguageCode: nextTargetLanguageCode,
-            hudLanguageLabel: TranscriptionLanguageOption.hudLabel(for: nextTargetLanguageCode),
-            languageControlEnabled: languageControlEnabled,
-            route: nextRoute,
-            supportsNativeWhisperTranslation: supportsNativeWhisperTranslation,
-            request: TranscriptionRequest(
-                forcedLanguageCode: sourceLanguageCode,
-                translateToEnglish: nextRoute.translateToEnglish,
-                targetLanguageCode: nextRoute.speechTranslationTargetLanguageCode
-            ),
-            sourceLanguageWarning: sourceLanguageWarning
-        )
     }
 
     public func request(audioFileURL: URL?) -> TranscriptionRequest {
         TranscriptionRequest(
             audioFileURL: audioFileURL,
             forcedLanguageCode: request.forcedLanguageCode,
-            translateToEnglish: request.translateToEnglish,
-            targetLanguageCode: request.targetLanguageCode
+            translateToEnglish: request.translateToEnglish
         )
     }
 
@@ -272,8 +205,6 @@ public struct TranscriptionSessionPlan: Equatable, Sendable {
         languageMode: TranscriptionLanguageMode,
         sourceLanguageChoices: [String],
         sourceLanguageCode: String?,
-        targetLanguageChoices: [String],
-        targetLanguageCode: String,
         requestedLanguageCode: String,
         hudLanguageLabel: String,
         languageControlEnabled: Bool,
@@ -292,8 +223,6 @@ public struct TranscriptionSessionPlan: Equatable, Sendable {
         self.languageMode = languageMode
         self.sourceLanguageChoices = sourceLanguageChoices
         self.sourceLanguageCode = sourceLanguageCode
-        self.targetLanguageChoices = targetLanguageChoices
-        self.targetLanguageCode = targetLanguageCode
         self.requestedLanguageCode = requestedLanguageCode
         self.hudLanguageLabel = hudLanguageLabel
         self.languageControlEnabled = languageControlEnabled
@@ -330,6 +259,11 @@ public enum TranscriptionSessionResolver {
         var model = activeModel
         if let capabilities = snapshot.capabilities {
             model.capabilities = capabilities
+        }
+
+        if model.backend != .whisperKitCoreML,
+           case .whisperTargetTranslation = snapshot.operation {
+            return .unavailable(.translationUnsupported(modelID: model.id))
         }
 
         if let requiredOS = model.capabilities.minOSVersion,
@@ -422,6 +356,10 @@ public enum TranscriptionSessionResolver {
         engineIdentity: String,
         snapshot: TranscriptionSessionSnapshot
     ) -> TranscriptionSessionResolution {
+        guard case .asr = snapshot.operation else {
+            return .unavailable(.translationUnsupported(modelID: model.id))
+        }
+
         let supportedCodes = verifiedCanarySources(for: model)
         guard !supportedCodes.isEmpty else {
             return .unavailable(.invalidCapabilities(modelID: model.id))
@@ -443,71 +381,23 @@ public enum TranscriptionSessionResolver {
             )
         }
 
-        let translationTargets = model.supportedSpeechTranslationTargets(from: primaryLanguageCode)
-        let additionalLanguageCode = normalizedOptionalLanguageCode(snapshot.additionalLanguageCode)
-        let additionalTarget: String?
-        if let additionalLanguageCode,
-           additionalLanguageCode != primaryLanguageCode,
-           translationTargets.contains(additionalLanguageCode) {
-            additionalTarget = additionalLanguageCode
-        } else {
-            additionalTarget = nil
-        }
-
-        let targetLanguageChoices: [String]
-        let requestedTargetLanguageCode: String
-        switch snapshot.operation {
-        case .ordinaryASR:
-            targetLanguageChoices = [primaryLanguageCode] + (additionalTarget.map { [$0] } ?? [])
-            requestedTargetLanguageCode = primaryLanguageCode
-        case .speechTranslation(let requestedSource, let requestedTarget):
-            let source = normalizedLanguageCode(requestedSource)
-            let target = normalizedLanguageCode(requestedTarget)
-            guard source == primaryLanguageCode else {
-                return .unavailable(
-                    .unsupportedSourceLanguage(
-                        modelID: model.id,
-                        requestedCode: source,
-                        supportedCodes: supportedCodes
-                    )
-                )
-            }
-            guard source == target || model.capabilities.supportsSpeechTranslation(
-                from: source,
-                to: target
-            ) else {
-                return .unavailable(.translationUnsupported(modelID: model.id))
-            }
-            targetLanguageChoices = source == target ? [source] : [source, target]
-            requestedTargetLanguageCode = target
-        case .whisperTarget:
-            return .unavailable(.unsupportedOperation(modelID: model.id))
-        }
-
-        let translates = requestedTargetLanguageCode != primaryLanguageCode
         let route = TranscriptionLanguageRoute(
             forcedLanguageCode: primaryLanguageCode,
-            translateToEnglish: translates && requestedTargetLanguageCode == "en",
-            autoTranslateTargetLanguageCode: nil,
-            speechTranslationTargetLanguageCode: translates ? requestedTargetLanguageCode : nil
+            translateToEnglish: false,
+            postASRTextTranslationTargetLanguageCode: nil
         )
-        let canSwitchTarget = snapshot.operation == .ordinaryASR
-            && targetLanguageChoices.count > 1
-        let mode: TranscriptionLanguageMode = canSwitchTarget ? .switchable : .fixed
         return .available(
             makePlan(
                 model: model,
                 folderURL: folderURL,
                 engineIdentity: engineIdentity,
                 operation: snapshot.operation,
-                languageMode: mode,
+                languageMode: .fixed,
                 sourceChoices: [primaryLanguageCode],
                 sourceCode: primaryLanguageCode,
-                targetLanguageChoices: targetLanguageChoices,
-                targetLanguageCode: requestedTargetLanguageCode,
-                requestedLanguageCode: requestedTargetLanguageCode,
-                hudLanguageLabel: TranscriptionLanguageOption.hudLabel(for: requestedTargetLanguageCode),
-                languageControlEnabled: canSwitchTarget,
+                requestedLanguageCode: primaryLanguageCode,
+                hudLanguageLabel: TranscriptionLanguageOption.hudLabel(for: primaryLanguageCode),
+                languageControlEnabled: false,
                 route: route,
                 sourceLanguageWarning: nil
             )
@@ -520,7 +410,7 @@ public enum TranscriptionSessionResolver {
         engineIdentity: String,
         snapshot: TranscriptionSessionSnapshot
     ) -> TranscriptionSessionResolution {
-        guard case .ordinaryASR = snapshot.operation else {
+        guard case .asr = snapshot.operation else {
             return .unavailable(.translationUnsupported(modelID: model.id))
         }
 
@@ -531,7 +421,7 @@ public enum TranscriptionSessionResolver {
         let route = TranscriptionLanguageRoute(
             forcedLanguageCode: "ru",
             translateToEnglish: false,
-            autoTranslateTargetLanguageCode: nil
+            postASRTextTranslationTargetLanguageCode: nil
         )
         return .available(
             makePlan(
@@ -542,8 +432,6 @@ public enum TranscriptionSessionResolver {
                 languageMode: .fixed,
                 sourceChoices: ["ru"],
                 sourceCode: "ru",
-                targetLanguageChoices: ["ru"],
-                targetLanguageCode: "ru",
                 requestedLanguageCode: "ru",
                 hudLanguageLabel: TranscriptionLanguageOption.hudLabel(for: "ru"),
                 languageControlEnabled: false,
@@ -566,15 +454,20 @@ public enum TranscriptionSessionResolver {
         let requestedLanguageCode: String
         let hudLabel: String
 
+        if model.backend == .fluidAudioCoreML,
+           case .whisperTargetTranslation = snapshot.operation {
+            return .unavailable(.translationUnsupported(modelID: model.id))
+        }
+
         switch snapshot.operation {
-        case .ordinaryASR:
+        case .asr:
             // Parakeet must not inherit a restrictive Whisper preference. It
             // auto-detects internally even when the legacy setting is explicit.
             route = model.backend == .fluidAudioCoreML
                 ? TranscriptionLanguageRoute(
                     forcedLanguageCode: nil,
                     translateToEnglish: false,
-                    autoTranslateTargetLanguageCode: nil
+                    postASRTextTranslationTargetLanguageCode: nil
                 )
                 : TranscriptionLanguageRouter.route(
                     resolvedLanguageCode: languageCode,
@@ -583,17 +476,15 @@ public enum TranscriptionSessionResolver {
             languageMode = .auto
             requestedLanguageCode = languageCode
             hudLabel = TranscriptionLanguageOption.hudLabel(for: languageCode)
-        case .whisperTarget(let targetLanguageCode):
+        case .whisperTargetTranslation(let targetCode):
             route = TranscriptionLanguageRouter.route(
-                resolvedLanguageCode: normalizedLanguageCode(targetLanguageCode),
+                resolvedLanguageCode: normalizedLanguageCode(targetCode),
                 isMultilingualModel: isMultilingual,
                 forceTargetLanguage: true
             )
             languageMode = .target
-            requestedLanguageCode = normalizedLanguageCode(targetLanguageCode)
+            requestedLanguageCode = normalizedLanguageCode(targetCode)
             hudLabel = TranscriptionLanguageOption.hudLabel(for: requestedLanguageCode)
-        case .speechTranslation:
-            return .unavailable(.translationUnsupported(modelID: model.id))
         }
 
         return .available(
@@ -605,8 +496,6 @@ public enum TranscriptionSessionResolver {
                 languageMode: languageMode,
                 sourceChoices: [],
                 sourceCode: route.forcedLanguageCode,
-                targetLanguageChoices: [requestedLanguageCode],
-                targetLanguageCode: requestedLanguageCode,
                 requestedLanguageCode: requestedLanguageCode,
                 hudLanguageLabel: hudLabel,
                 languageControlEnabled: true,
@@ -623,8 +512,6 @@ public enum TranscriptionSessionResolver {
         languageMode: TranscriptionLanguageMode,
         sourceChoices: [String],
         sourceCode: String?,
-        targetLanguageChoices: [String],
-        targetLanguageCode: String,
         requestedLanguageCode: String,
         hudLanguageLabel: String,
         languageControlEnabled: Bool,
@@ -639,8 +526,6 @@ public enum TranscriptionSessionResolver {
             languageMode: languageMode,
             sourceLanguageChoices: sourceChoices,
             sourceLanguageCode: sourceCode,
-            targetLanguageChoices: targetLanguageChoices,
-            targetLanguageCode: targetLanguageCode,
             requestedLanguageCode: requestedLanguageCode,
             hudLanguageLabel: hudLanguageLabel,
             languageControlEnabled: languageControlEnabled,
@@ -649,8 +534,7 @@ public enum TranscriptionSessionResolver {
                 && model.languageSupport == .multilingual,
             request: TranscriptionRequest(
                 forcedLanguageCode: route.forcedLanguageCode,
-                translateToEnglish: route.translateToEnglish,
-                targetLanguageCode: route.speechTranslationTargetLanguageCode
+                translateToEnglish: route.translateToEnglish
             ),
             sourceLanguageWarning: sourceLanguageWarning
         )
@@ -726,21 +610,21 @@ public enum TranscriptionLanguageRouter {
                     return TranscriptionLanguageRoute(
                         forcedLanguageCode: nil,
                         translateToEnglish: true,
-                        autoTranslateTargetLanguageCode: nil
+                        postASRTextTranslationTargetLanguageCode: nil
                     )
                 }
                 // English-only Whisper models cannot translate; fall back to LLM.
                 return TranscriptionLanguageRoute(
                     forcedLanguageCode: nil,
                     translateToEnglish: false,
-                    autoTranslateTargetLanguageCode: targetCode
+                    postASRTextTranslationTargetLanguageCode: targetCode
                 )
             }
 
             return TranscriptionLanguageRoute(
                 forcedLanguageCode: nil,
                 translateToEnglish: false,
-                autoTranslateTargetLanguageCode: targetCode
+                postASRTextTranslationTargetLanguageCode: targetCode
             )
         }
 
@@ -748,7 +632,7 @@ public enum TranscriptionLanguageRouter {
             return TranscriptionLanguageRoute(
                 forcedLanguageCode: nil,
                 translateToEnglish: false,
-                autoTranslateTargetLanguageCode: nil
+                postASRTextTranslationTargetLanguageCode: nil
             )
         }
 
@@ -756,14 +640,14 @@ public enum TranscriptionLanguageRouter {
             return TranscriptionLanguageRoute(
                 forcedLanguageCode: languageCode,
                 translateToEnglish: false,
-                autoTranslateTargetLanguageCode: nil
+                postASRTextTranslationTargetLanguageCode: nil
             )
         }
 
         return TranscriptionLanguageRoute(
             forcedLanguageCode: languageCode,
             translateToEnglish: false,
-            autoTranslateTargetLanguageCode: nil
+            postASRTextTranslationTargetLanguageCode: nil
         )
     }
 

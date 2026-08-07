@@ -10,13 +10,13 @@ import NativeBolabolCore
 ///
 /// Supports two model variants under the `.canaryCoreML` backend:
 /// - **Flash** (`canary-180m-flash-coreml`): int8, macOS 14+, 10 s window,
-///   NeMo mel frontend, EN/DE/FR/ES ASR + AST.
+///   NeMo mel frontend, EN/DE/FR/ES ASR.
 /// - **1B Path B** (`canary-1b-v2-coreml`): int4 ANE, macOS 15+ (MLState),
-///   15 s window, native NeMo-style mel frontend, EN ASR + EN→FR AST.
+///   15 s window, native NeMo-style mel frontend, explicit-source ASR.
 ///
 /// Spike constraints (authoritative):
 /// - `.cpuAndNeuralEngine` only — `.all` crashes MPSGraph on Flash.
-/// - Explicit source and target language tokens; no auto-detect.
+/// - Explicit source language; ASR uses the source token for decoder target.
 /// - Audio longer than `capabilities.maxChunkSeconds` is segmented; no
 ///   cross-window context.
 /// - 1B Path B requires macOS 15+ (stateful `MLState` decoder).
@@ -57,6 +57,8 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
     // MARK: - TranscriptionEngine
 
     func transcribe(_ request: TranscriptionRequest) async throws -> TranscriptionResult {
+        try validateASROnlyRequest(request)
+
         guard let audioFileURL = request.audioFileURL else {
             throw CanaryTranscriptionError.missingAudioFile
         }
@@ -131,6 +133,15 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
                     current: currentVersion
                 )
             }
+        }
+    }
+
+    // Internal seam keeps the ASR-only defense before OS, model, audio, and
+    // decoder work. Session routing prevents this state in product callers;
+    // the engine still rejects manually constructed requests.
+    internal func validateASROnlyRequest(_ request: TranscriptionRequest) throws {
+        guard !request.translateToEnglish else {
+            throw CanaryTranscriptionError.translationUnsupported
         }
     }
 
@@ -383,35 +394,6 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
         return normalized
     }
 
-    // Internal seam for directional speech-translation contract tests.
-    internal func resolveTargetLanguage(
-        _ request: TranscriptionRequest,
-        sourceLanguage: String
-    ) throws -> String {
-        let requested = (request.targetLanguageCode
-            ?? (request.translateToEnglish ? "en" : sourceLanguage))
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-
-        guard requested != sourceLanguage else {
-            return sourceLanguage
-        }
-
-        guard model.capabilities.supportsSpeechTranslation,
-              model.capabilities.supportsSpeechTranslation(
-                  from: sourceLanguage,
-                  to: requested
-              )
-        else {
-            throw CanaryTranscriptionError.unsupportedSpeechTranslation(
-                source: sourceLanguage,
-                target: requested
-            )
-        }
-
-        return requested
-    }
-
     // MARK: - Flash Transcription
 
     private func transcribeFlash(_ samples: [Float], request: TranscriptionRequest) async throws -> String {
@@ -420,7 +402,6 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
         }
 
         let language = try resolveLanguage(request)
-        let targetLanguage = try resolveTargetLanguage(request, sourceLanguage: language)
 
         guard state.languageTokenIds[language] != nil else {
             throw CanaryTranscriptionError.unsupportedLanguage(language)
@@ -439,14 +420,13 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
             throw CanaryTranscriptionError.encoderFailed
         }
 
-        // Prompt: [7, 4, 16, src, tgt, 5, 9, 11, 13]
+        // Prompt: [7, 4, 16, source, source, 5, 9, 11, 13]
         var prompt = state.promptTemplate
-        guard let srcID = state.languageTokenIds[language],
-              let tgtID = state.languageTokenIds[targetLanguage] else {
+        guard let languageID = state.languageTokenIds[language] else {
             throw CanaryTranscriptionError.unsupportedLanguage(language)
         }
-        prompt[3] = srcID
-        prompt[4] = tgtID
+        prompt[3] = languageID
+        prompt[4] = languageID
 
         // Prefill
         var output = try state.runPrefill(
@@ -497,7 +477,6 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
         }
 
         let language = try resolveLanguage(request)
-        let targetLanguage = try resolveTargetLanguage(request, sourceLanguage: language)
 
         guard state.languageTokenIds[language] != nil else {
             throw CanaryTranscriptionError.unsupportedLanguage(language)
@@ -522,14 +501,13 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
         }
 
         // Language IDs for Path B
-        guard let sourceLanguageTokenID = state.languageTokenIds[language],
-              let targetLanguageTokenID = state.languageTokenIds[targetLanguage]
+        guard let languageTokenID = state.languageTokenIds[language]
         else {
-            throw CanaryTranscriptionError.unsupportedLanguage(targetLanguage)
+            throw CanaryTranscriptionError.unsupportedLanguage(language)
         }
         let seed = [16053, 7, 4, 16,
-                    sourceLanguageTokenID,
-                    targetLanguageTokenID,
+                    languageTokenID,
+                    languageTokenID,
                     5, 9, 11, 13]
 
         // Fresh MLState per segment (macOS 15+)
@@ -1408,7 +1386,7 @@ internal enum CanaryTranscriptionError: LocalizedError, Equatable {
     case invalidModelConfig
     case unsupportedOS(required: ASRModelCapabilities.OSVersion, current: ASRModelCapabilities.OSVersion)
     case unsupportedLanguage(String)
-    case unsupportedSpeechTranslation(source: String, target: String)
+    case translationUnsupported
     case noSupportedLanguages
     case encoderFailed
     case frontendFailed(String)
@@ -1435,8 +1413,8 @@ internal enum CanaryTranscriptionError: LocalizedError, Equatable {
             "Canary 1B requires macOS \(required.majorVersion).\(required.minorVersion) or later (current: \(current.majorVersion).\(current.minorVersion))."
         case .unsupportedLanguage(let code):
             "Language '\(code)' is not supported by this Canary model."
-        case .unsupportedSpeechTranslation(let source, let target):
-            "Canary cannot translate speech from '\(source)' to '\(target)' with this model."
+        case .translationUnsupported:
+            "Canary supports ASR only; speech translation is unavailable."
         case .noSupportedLanguages:
             "This Canary model has no supported languages configured."
         case .encoderFailed:

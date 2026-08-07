@@ -87,9 +87,9 @@ excluded:
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-ADR021-ASR-ONLY-CLEANUP
+  last_pre_tag: bolabol/pre-VERTICAL-PULSE-HUD
   last_post_tag: bolabol/S9-done
-  last_commit: f47489a
+  last_commit: 4d84ff2
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
@@ -143,6 +143,9 @@ notes: |
    requires an immutable explicit-source session plan across every entry point,
    preserves Whisper/Parakeet auto, and treats Canary 1B -1003 as a separate
    truthful infrastructure/download failure with no guessed endpoint or fallback.
-   Combined S10/S11 QA stays blocked through implementation, independent review,
-   CDN disposition, and Tester fresh-build manual matrix. Graphify rebuilt after
-   Architect handoff: 5,573 nodes / 12,462 edges.
+    Combined S10/S11 QA stays blocked through implementation, independent review,
+    CDN disposition, and Tester fresh-build manual matrix. Graphify rebuilt after
+    Architect handoff: 5,573 nodes / 12,462 edges. ADR-022 ASR-only cleanup was
+    independently approved and captured at checkpoint commit 4d84ff2 before the
+    Human-requested Vertical Pulse HUD cycle. PRE bolabol/pre-VERTICAL-PULSE-HUD
+    is local only because remote push remains disabled.

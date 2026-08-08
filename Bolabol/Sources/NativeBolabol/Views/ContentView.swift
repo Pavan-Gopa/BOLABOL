@@ -50,11 +50,13 @@ struct ContentView: View {
     @State private var hudTargetLanguageOverride: String?
     @State private var languagePickerPopover: NSPopover?
     @State private var languagePickerPopoverID: UUID?
+    @State private var activePopoverDelegate: PopoverDelegate?
 
     private func dismissLanguagePickerPopover() {
         languagePickerPopover?.close()
         languagePickerPopover = nil
         languagePickerPopoverID = nil
+        activePopoverDelegate = nil
     }
 
     var body: some View {
@@ -193,6 +195,9 @@ struct ContentView: View {
                 selectedNoteText = ""
             }
             .onReceive(transcriptionModelStore.objectWillChange) { _ in
+                dismissLanguagePickerPopover()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
                 dismissLanguagePickerPopover()
             }
         }
@@ -1119,13 +1124,13 @@ struct ContentView: View {
     }
 
     private func stopHotkeyRecording() {
+        dismissLanguagePickerPopover()
         guard !isTogglingHotkeyRecording else { return }
         let settings = hotkeySettingsStore.settings
 
         isTogglingHotkeyRecording = true
         Task { @MainActor in
             defer { isTogglingHotkeyRecording = false }
-
             let canProcess = HotkeySessionCoordinator.shared.beginProcessing(ownerID: hotkeyOwnerID)
                 || HotkeySessionCoordinator.shared.reclaimOrphanedRecordingForStop(ownerID: hotkeyOwnerID)
             guard canProcess else {
@@ -1354,6 +1359,15 @@ struct ContentView: View {
         }
         @objc func invoke() {
             handler()
+        }
+    }
+    private final class PopoverDelegate: NSObject, NSPopoverDelegate {
+        private let onDidClose: () -> Void
+        init(onDidClose: @escaping () -> Void) {
+            self.onDidClose = onDidClose
+        }
+        func popoverDidClose(_ notification: Notification) {
+            onDidClose()
         }
     }
 
@@ -1771,8 +1785,18 @@ struct ContentView: View {
         popover.behavior = .transient
         popover.animates = true
         popover.contentViewController = NSHostingController(rootView: pickerContentView)
+        let delegate = PopoverDelegate { [popoverID] in
+            Task { @MainActor in
+                if self.languagePickerPopoverID == popoverID {
+                    self.languagePickerPopover = nil
+                    self.languagePickerPopoverID = nil
+                    self.activePopoverDelegate = nil
+                }
+            }
+        }
+        popover.delegate = delegate
+        self.activePopoverDelegate = delegate
         self.languagePickerPopover = popover
-
         let anchorRect = NSRect(origin: location, size: .zero)
         popover.show(relativeTo: anchorRect, of: anchorView, preferredEdge: .maxY)
     }
@@ -1789,9 +1813,6 @@ struct ContentView: View {
             let automatic = normalizedCode == "auto"
             if !automatic {
                 hudTargetLanguageOverride = normalizedCode
-                if normalizedCode != generalSettingsStore.speechLanguages.primaryLanguageCode {
-                    generalSettingsStore.speechLanguages = generalSettingsStore.speechLanguages.settingAdditional(normalizedCode)
-                }
             }
             if audioRecorder.isRecording {
                 _ = replacePendingCanarySession(withSourceLanguageCode: normalizedCode)
@@ -1808,10 +1829,6 @@ struct ContentView: View {
             hudTargetLanguageOverride = automatic ? nil : normalizedCode
             persistentHUDForceTargetLanguage = !automatic
             pendingHotkeyForceTargetLanguage = !automatic
-
-            if !automatic && normalizedCode != generalSettingsStore.speechLanguages.primaryLanguageCode {
-                generalSettingsStore.speechLanguages = generalSettingsStore.speechLanguages.settingAdditional(normalizedCode)
-            }
 
             if audioRecorder.isRecording {
                 let resolution = makeLocalSession(

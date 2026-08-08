@@ -473,3 +473,51 @@ func verticalPulseMainCapsuleDoesNotUseAnimatedPanelFrameOrMoveTransitions() thr
   #expect(overlay.contains("laidOutCapsuleScreenFrame = nil"))
   #expect(overlay.contains("visibleFrame: visibleFrame"))
 }
+@Test
+func verticalControlHitFrameMatchesVisibleCapsuleAndSupportsMultipleScales() {
+  let scales: [Double] = [0.8, 1.0, 1.25, 1.5]
+  for scale in scales {
+    let panelSize = HUDQuickSwitcherLayout.overlayPanelSize(
+      for: scale,
+      style: .vertical,
+      isProcessing: false
+    )
+    let visualScale = HUDQuickSwitcherLayout.overlayVisualScale(for: scale)
+    let shadowInset = HUDQuickSwitcherLayout.overlayShadowPad * visualScale
+    let visibleHeight = max(1, panelSize.height - 2 * shadowInset)
+    let visibleWidth = max(1, panelSize.width - 2 * shadowInset)
+
+    let langFrame = HUDQuickSwitcherLayout.verticalControlHitFrame(
+      slot: .language,
+      panelSize: panelSize,
+      scale: scale,
+      style: .vertical,
+      isProcessing: false
+    )
+    let targetFrame = HUDQuickSwitcherLayout.verticalControlHitFrame(
+      slot: .target,
+      panelSize: panelSize,
+      scale: scale,
+      style: .vertical,
+      isProcessing: false
+    )
+
+    let diameter = HUDQuickSwitcherLayout.controlDiameter(for: scale, style: .vertical)
+    let margin = HUDQuickSwitcherLayout.controlHitMargin(for: scale)
+    let pad = HUDQuickSwitcherLayout.capsuleContentPad(for: scale)
+
+    let expectedLangCenterY = shadowInset + visibleHeight - pad - diameter / 2
+    let actualLangCenterY = langFrame.y + langFrame.height / 2
+    #expect(abs(actualLangCenterY - expectedLangCenterY) < 0.001)
+
+    let expectedTargetCenterY = shadowInset + pad + diameter / 2
+    let actualTargetCenterY = targetFrame.y + targetFrame.height / 2
+    #expect(abs(actualTargetCenterY - expectedTargetCenterY) < 0.001)
+
+    let expectedCenterX = shadowInset + visibleWidth / 2
+    #expect(abs((langFrame.x + langFrame.width / 2) - expectedCenterX) < 0.001)
+    #expect(abs((targetFrame.x + targetFrame.width / 2) - expectedCenterX) < 0.001)
+
+    #expect(langFrame.y > targetFrame.y + targetFrame.height)
+  }
+}

@@ -503,7 +503,6 @@ func verticalControlHitFrameMatchesVisibleCapsuleAndSupportsMultipleScales() {
     )
 
     let diameter = HUDQuickSwitcherLayout.controlDiameter(for: scale, style: .vertical)
-    let margin = HUDQuickSwitcherLayout.controlHitMargin(for: scale)
     let pad = HUDQuickSwitcherLayout.capsuleContentPad(for: scale)
 
     let expectedLangCenterY = shadowInset + visibleHeight - pad - diameter / 2
@@ -519,5 +518,43 @@ func verticalControlHitFrameMatchesVisibleCapsuleAndSupportsMultipleScales() {
     #expect(abs((targetFrame.x + targetFrame.width / 2) - expectedCenterX) < 0.001)
 
     #expect(langFrame.y > targetFrame.y + targetFrame.height)
+  }
+}
+
+@Test
+func verticalHitRegionExcludesInertBoundingCornersAtEveryScale() {
+  let layout = HUDQuickSwitcherLayout.self
+  let scales: [Double] = [0.8, 1.0, 1.25, 1.5]
+  for scale in scales {
+    let style = OverlayHUDStyle.vertical
+    let panelSize = layout.overlayPanelSize(for: scale, style: style, isProcessing: false)
+    for slot in [HUDVerticalControlSlot.language, .target] {
+      let region = layout.verticalControlHitRegion(
+        slot: slot,
+        panelSize: panelSize,
+        scale: scale,
+        style: style,
+        isProcessing: false,
+        showsPromptBar: false,
+        showsHumorSlider: false
+      )
+      let frame = layout.verticalControlHitFrame(
+        slot: slot,
+        panelSize: panelSize,
+        scale: scale,
+        style: style,
+        isProcessing: false,
+        showsPromptBar: false,
+        showsHumorSlider: false
+      )
+
+      #expect(region.boundingFrame == frame)
+      #expect(region.contains(pointX: region.centerX, pointY: region.centerY + region.radius - 0.5))
+      for cornerX in [region.centerX - region.radius, region.centerX + region.radius] {
+        for cornerY in [region.centerY - region.radius, region.centerY + region.radius] {
+          #expect(!region.contains(pointX: cornerX, pointY: cornerY))
+        }
+      }
+    }
   }
 }

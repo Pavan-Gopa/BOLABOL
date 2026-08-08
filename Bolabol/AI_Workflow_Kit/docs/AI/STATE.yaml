@@ -3,33 +3,23 @@
 
 current_step: VERTICAL-PULSE-HUD
 step_description: >-
-  Polish the third vertical HUD style, Vertical Pulse. Fit the complete D/1/2/3/4
-  prompt row without clipping, keep the main capsule at a pixel-stable screen
-  anchor while R/1/2 and accessory controls change, and add a right-click language
-  menu on the left language control using all configured settings languages. Restore
-  explicit Canary source switching between supported Primary and Additional languages;
-  Canary 1B with ru/en must switch R/E instead of being fixed to R. Translation-target
-  selection must still respect ADR-022: no Canary/GigaAM speech translation.
+  Vertical Pulse HUD cycle plus security hardening. Coder Fix Attempt 8 (SEC-001..004)
+  independently approved. Final Tester retest of security fix + full feature gate
+  required before POST. SEC-005 info remains deferred and does not block POST.
 target_files:
+  - Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
+  - Sources/NativeBolabol/Stores/PolishingEngineStore.swift
+  - Sources/NativeBolabolCore/Services/SharedModelsRoot.swift
+  - Sources/NativeBolabolCore/Services/PolishingRequestPolicy.swift
+  - Sources/NativeBolabolCore/Services/ModelDownloadPathPolicy.swift
+  - Tests/NativeBolabolCoreTests/SecuritySurfaceRegressionTests.swift
+  - Tests/NativeBolabolCoreTests/FinalMaxCoverageMatrixTests.swift
+  - script/qa/check_sec_download_path_safety.sh
+  - script/qa/check_sec_*.sh
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  - Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift
-  - Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift
-  - Sources/NativeBolabol/Views/ContentView.swift
-  - Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift
-  - Sources/NativeBolabolCore/Models/GeneralSettings.swift
-  - Sources/NativeBolabolCore/Models/UserSpeechLanguages.swift
-  - Sources/NativeBolabolCore/Services/AppText.swift
-  - Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift
-  - Tests/NativeBolabolCoreTests/ApplicationWideRegressionContractTests.swift
-  - Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift
-  - Tests/NativeBolabolCoreTests/HUDLanguagePickerPopoverTests.swift
-  - Tests/NativeBolabolCoreTests/HUDProviderSwitcherFeatureTests.swift
-  - Tests/NativeBolabolCoreTests/NewFeatureRegressionTests.swift
-  - Tests/NativeBolabolCoreTests/S11SessionRoutingTests.swift
-  - Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift
-  - Tests/NativeBolabolCoreTests/UserSpeechLanguagesTests.swift
-  - Tests/NativeBolabolCoreTests/TranscriptionLanguageRoutingTests.swift
-  - script/qa/check_vertical_pulse_hud_contract.sh
+  - AI_Workflow_Kit/docs/AI/REPORT.md
+  - AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md
+  - AI_Workflow_Kit/docs/AI/BUG_REPORT.md
 completed_steps:
   - S0
   - S1
@@ -47,39 +37,39 @@ completed_steps:
   - S9
 skipped_steps: []
 implementation:
-  status: changes_requested
-  attempts: 6
+  status: done
+  attempts: 9
+  note: >-
+    Attempt 8 SEC fix approved. No further coder work unless Tester finds bugs.
 review:
-  status: changes_requested
+  status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: changes_requested_after_coder_fix_attempt_4
+  verdict: approved_coder_fix_attempt_8_sec
   note: >-
-    Independent Reviewer rejected Coder Fix Attempt 4. C-002 shared policy,
-    H-002 product no-settings-mutation, H-009 ADR-022 target-purpose fail-closed,
-    and HR-VPH-002 compact picker/catalog behavior are accepted or preserved.
-    Remaining blockers: C-003 AppKit rectangular left-click guard and SwiftUI
-    circular Button content shape still disagree, H-003 common finish/hide and
-    outside-close invalidation remain incomplete, and M-004 tests/QA guard still
-    miss production AppKit/SwiftUI/NSPopover surfaces.
+    Independent Reviewer APPROVED Attempt 8. SEC-001..004 closed; no findings.
+    SEC-005 deferred (info). 745 tests / 39/39 QA independently green.
 qa:
-  status: blocked
+  status: pending_retest
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: FINAL-APPLICATION-EXHAUSTIVE
-  bugs_open: 2
+  suite: SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE
+  bugs_open: 0
   note: >-
-    Blocked until independent Reviewer approval. Then final Tester must inventory
-    and cover the whole application: every window, menu, button, left/right click,
-    keyboard/hotkey, hover, scroll, drag, modal, settings control, persistence,
-    localization, accessibility, error/retry and user-visible workflow. Rerun all
-    BUG-HHP/ADR-022/HUD coverage and add reliable parameterized runners totaling
-    at least 2,000-3,000 scenario/assertion cases, not thousands of brittle scripts.
+    Retest after approved SEC fix. Confirm SEC-001..004 still closed under full
+    gate; rerun SecuritySurface + path-safety guards + full swift test + run_all.
+    Spot-check VPH/MAX regressions still green. Add tests only if new gaps found.
+    Green → REPORT qa_green → Orchestrator POST. Bugs → BUG_REPORT → Coder.
 security:
-  next_run: after_final_exhaustive_qa
-  note: >-
-    Run a dedicated full Security campaign after Reviewer approval and final
-    exhaustive Tester QA are green. Security remains a separate fresh agent and
-    must audit the full application attack surface without editing product code.
-next_actor: coder
+  status: sec_001_to_004_approved_pending_tester_confirm
+  last_report: AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md
+  open:
+    - SEC-005  # info deferred — does not block POST
+  closed_pending_retest:
+    - SEC-001
+    - SEC-002
+    - SEC-003
+    - SEC-004
+  next_run: optional_after_post_if_human_wants_second_security_eyes
+next_actor: tester
 track: PRODUCT
 prior_track: SPIKE_COMPLETE
 go_list:
@@ -106,102 +96,10 @@ plan_files:
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  Fix Attempt 3 is a narrow Human-directed restoration. Keep the current popover
-  component, search, scrolling and internal safety fixes, but restore its compact
-  approved width: approximately 30% narrower than the current 280 pt maximum, with
-  no large empty area. For explicit Canary, show all verified model source languages.
-  For Auto/Whisper/Cloud target selection, show Auto plus the complete existing
-  25-European-language target catalog, never only Primary/Additional. Keep selected,
-  search and scroll behavior. Rework A/E hit geometry so 100% of the visible circle
-  plus a forgiving 8-10 pt margin is clickable at every scale, without overlapping
-  target/spectrum. Do not redesign anything else. Add regression tests for exact
-  catalog count/order, compact width contract and full-circle hit coverage.
+  No coder work. Waiting Tester retest after Attempt 8 approval.
 notes: |
-  VERTICAL-PULSE-HUD Fix Attempt 4 independent review returned CHANGES_REQUESTED.
-  Reviewer closed or accepted C-002 shared policy, H-002 current product callback
-  no-settings-mutation, H-009 ADR-022 fail-closed target-purpose policy, and
-  HR-VPH-002 compact picker/catalog preservation. Next Coder fix must be very
-  narrow: align AppKit and SwiftUI hit shapes so no accepted guard point becomes
-  non-actionable/non-draggable; invalidate popover state through the shared
-  finish/hide path and make outside-close identity cleanup synchronous or otherwise
-  stale-callback safe; add production-surface tests/guard mutations for those
-  exact failures. Per Human `статус`, Orchestrator closed the old Bolabol process
-  and ran only `swift package clean && ./script/build_and_run.sh --verify`; no
-  test or QA suite was executed by Orchestrator. Fresh signed `dist/Bolabol.app`
-  is running as PID 66707. Signature verification returned success with no output.
-
-  VERTICAL-PULSE-HUD Coder Fix Attempt 4 handoff is present in FEEDBACK.md with
-  RESULT: waiting_review. Per Human `статус`, Orchestrator closed the old
-  Bolabol process and ran only the clean Release status build/launch command;
-  no test or QA suite was executed by Orchestrator. `swift package clean &&
-  ./script/build_and_run.sh --verify` succeeded after a longer timeout, and
-  fresh signed `dist/Bolabol.app` is running as PID 57270. Signature verification
-  returned success with no output. Orchestrator must rebuild GraphiFy before
-  issuing the independent Reviewer kick. GraphiFy was rebuilt after the Coder
-  diff: 6,433 nodes / 14,428 edges.
-
-  Orchestrator status build after Fix Attempt 3 review: old Bolabol process was
-  closed, `swift package clean && ./script/build_and_run.sh --verify` succeeded,
-  and fresh signed Release `dist/Bolabol.app` is running as PID 36211. Orchestrator
-  did not run tests/QA. Signature verification returned success with no output.
-
-  VERTICAL-PULSE-HUD Fix Attempt 3 independent review returned CHANGES_REQUESTED.
-  Coder Fix Attempt 4 must be narrow: fix real left-click hit geometry/margin by
-  aligning AppKit policy with actual SwiftUI button geometry or expanding the
-  real Button content shape; prevent any arbitrary picker selection from mutating
-  persisted Primary/Additional settings; close/invalidate popovers on stop, hide,
-  processing, outside close, display changes and stale callbacks; reject Canary
-  targetLanguageSelection policy requests as ADR-022 invalid; and add tests/guard
-  mutations that exercise these production surfaces. Preserve the Human-approved
-  compact picker and Auto+25 / Canary source catalogs, which Reviewer accepted.
-
-  VERTICAL-PULSE-HUD Fix Attempt 3 handoff is ready for independent review.
-  Orchestrator synced STATE to waiting_review and rebuilt GraphiFy before Reviewer:
-  6,401 nodes / 14,374 edges. Human reports the fresh app now works as desired,
-  but Human acceptance does not replace independent review, final exhaustive QA,
-  or the scheduled Security campaign after QA green.
-
-  S8 cycle closed: POST bolabol/S8-done @ 3659a72 (LOCAL ONLY — monorepo remote
-  push DISABLED; Human must push when enabled). PRE bolabol/pre-S9 @ ca10a95.
-  S9 loop: Coder handoff → Reviewer CHANGES_REQUESTED (BLOCK-S9-001..004) →
-  Coder Fix Attempt 1 (all 4 blocking closed, 552 tests, 28/28 QA) → Graphify
-  rebuilt (4942 nodes) → Reviewer re-review approved. Tester then completed
-  feature QA: 554 tests and 29/29 QA were green, but real Canary 1B Path B
-  smoke was red with BUG-003. Coder fixed only BUG-003: product pos is now
-  rank 1, targeted/full tests, 29/29 QA, all three real runtime smokes, and a
-   fresh build are reported green. Graphify was rebuilt (4,988 nodes) and the
-   independent Reviewer approved BUG-003. Independent Tester QA then passed:
-   555 tests, 29/29 QA checks, the real Path B smoke, and all three runtime
-   smokes; BUG-003 is closed and S9 is complete at POST bolabol/S9-done @
-   2cfbc72 (LOCAL ONLY — remote push DISABLED). Graphify was rebuilt after POST.
-   Architect handoff appended ADR-019 (S10 capability/UI/banner contract) with
-   no product changes. S10 begins from PRE bolabol/pre-S10. Coder implementation
-   handoff reports focused suites, full swift test (563), real S9 smoke, and
-   build green; run_all is 27/29 because legacy S1b/S6 scope allowlists flag
-   accepted S10 paths. Graphify rebuilt (5072 nodes) before independent review.
-   Reviewer returned changes_requested: BLOCK-S10-001 must restore real S8
-   install controls/progress under Canary hard-language block while preventing
-   auto-activation; focused coverage is missing. Coder Fix Attempt 1 reports
-   565 tests, real S9 smoke, and build green; Reviewer re-review approved the
-   fix. Legacy S1b/S6 allowlist failures are a proven static QA gap now queued
-   for minimal Tester remediation. User-confirmed current dist/Bolabol.app v1.0.3 runtime
-   reproduction on 2026-08-05 confirmed Canary Flash/GigaAM route with
-   forcedLanguageCode=none and resolvedLanguageCode=auto (Whisper only), then
-   empty text. Flash/GigaAM package layouts in AI_LOCAL_MODELS are complete;
-   Canary 1B is not downloaded because its CDN hostname resolution failed and
-   its local folder is empty. Tester is paused; Architect must resolve exact
-   S11 runtime-routing/download mitigation before Coder is dispatched. Security
-   remains deferred until Human manual testing and a green S9 feature gate.
-   Architect completed a design-only investigation and appended proposed ADR-020,
-   confirming the runtime root cause: active engine selection is correct, but
-   legacy Whisper-oriented routing converts auto to nil before Canary/GigaAM
-   requests; Sidebar and audio-modal re-transcription duplicate the defect. ADR-020
-   requires an immutable explicit-source session plan across every entry point,
-   preserves Whisper/Parakeet auto, and treats Canary 1B -1003 as a separate
-   truthful infrastructure/download failure with no guessed endpoint or fallback.
-    Combined S10/S11 QA stays blocked through implementation, independent review,
-    CDN disposition, and Tester fresh-build manual matrix. Graphify rebuilt after
-    Architect handoff: 5,573 nodes / 12,462 edges. ADR-022 ASR-only cleanup was
-    independently approved and captured at checkpoint commit 4d84ff2 before the
-    Human-requested Vertical Pulse HUD cycle. PRE bolabol/pre-VERTICAL-PULSE-HUD
-    is local only because remote push remains disabled.
+  Human `статус` after Reviewer APPROVED Attempt 8:
+  - Orchestrator status build only: clean Release verify.
+  - Fresh signed Release PID 53655 (Sun Aug 9 01:09:19 2026); codesign OK.
+  - next_actor=tester for SEC-FIX retest + full gate.
+  - POST after qa_green; monorepo remote push remains DISABLED.

@@ -40,13 +40,16 @@ fi
 
 resolve_step() {
   local step="${1:-}"
+  # Standard plan steps plus ad-hoc product campaigns already used as tags
+  # (e.g. VERTICAL-PULSE-HUD, ADR021-ASR-ONLY-CLEANUP).
   if [[ "$step" =~ ^B([0-9]|1[0-2])$ ]] \
     || [[ "$step" =~ ^S([0-9]|1[0-5])$ ]] \
     || [[ "$step" =~ ^S1(b|c)$ ]] \
-    || [[ "$step" =~ ^S4b$ ]]; then
+    || [[ "$step" =~ ^S4b$ ]] \
+    || [[ "$step" =~ ^[A-Z][A-Z0-9-]{2,48}$ ]]; then
     return 0
   fi
-  die "step must be B0..B12, S0..S15, S1b, S1c, or S4b; got: ${step:-empty}"
+  die "step must be B0..B12, S0..S15, S1b, S1c, S4b, or AD-HOC-NAME; got: ${step:-empty}"
 }
 
 pre_tag_for()  { echo "${PRODUCT_PREFIX}/pre-${1}"; }

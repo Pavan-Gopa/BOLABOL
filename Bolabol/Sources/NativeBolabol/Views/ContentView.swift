@@ -5,6 +5,90 @@ import NativeBolabolCore
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// Production `NSPopoverDelegate` backing the HUD language picker. The outside-
+/// close callback runs synchronously so no stale popover reference or identity
+/// survives after the system closes the popover.
+@MainActor
+final class PopoverDelegate: NSObject, NSPopoverDelegate {
+    private let onDidClose: () -> Void
+    init(onDidClose: @escaping () -> Void) {
+        self.onDidClose = onDidClose
+    }
+    func popoverDidClose(_ notification: Notification) {
+        onDidClose()
+    }
+}
+
+/// Testable production seam for the HUD language-picker popover lifecycle.
+/// Creates the real transient `NSPopover` hosting the compact
+/// `HUDLanguagePickerPopoverView` with a real `PopoverDelegate`; outside-close,
+/// selection and finish/hide invalidation all flow through this controller
+/// instead of duplicated view-local tokens.
+@MainActor
+final class LanguagePickerPopoverController {
+    private(set) var popover: NSPopover?
+    private(set) var popoverID: UUID?
+    private(set) var popoverDelegate: PopoverDelegate?
+
+    func present(
+        options: [HUDLanguageMenuOption],
+        languages: UserSpeechLanguages,
+        anchorView: NSView,
+        location: NSPoint,
+        onSelectLanguage: @escaping (UUID, String) -> Void,
+        onClose: @escaping (UUID) -> Void
+    ) {
+        dismiss()
+        let popoverID = UUID()
+        self.popoverID = popoverID
+
+        let pickerContentView = HUDLanguagePickerPopoverView(
+            options: options,
+            languages: languages,
+            onSelectLanguage: { [weak self] selectedCode in
+                guard let self, self.popoverID == popoverID else { return }
+                self.dismiss()
+                onSelectLanguage(popoverID, selectedCode)
+            },
+            onClose: { [weak self] in
+                guard let self, self.popoverID == popoverID else { return }
+                self.dismiss()
+                onClose(popoverID)
+            }
+        )
+
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.animates = true
+        popover.contentViewController = NSHostingController(rootView: pickerContentView)
+        let delegate = PopoverDelegate { [weak self] in
+            guard let self, self.popoverID == popoverID else { return }
+            self.popover = nil
+            self.popoverID = nil
+            self.popoverDelegate = nil
+        }
+        popover.delegate = delegate
+        self.popoverDelegate = delegate
+        self.popover = popover
+        let anchorRect = NSRect(origin: location, size: .zero)
+        popover.show(relativeTo: anchorRect, of: anchorView, preferredEdge: .maxY)
+    }
+
+    func dismiss() {
+        popover?.close()
+        popover = nil
+        popoverID = nil
+        popoverDelegate = nil
+    }
+
+    /// Invalidates the picker as part of the common hotkey-session finish path.
+    /// Keeping this operation on the production controller lets the finish path
+    /// and the lifecycle tests exercise the same real popover state transition.
+    func invalidateForFinishedHotkeySession() {
+        dismiss()
+    }
+}
+
 @MainActor
 struct ContentView: View {
     private enum Layout {
@@ -48,15 +132,11 @@ struct ContentView: View {
     @State private var pendingHotkeyHumorSession: HumorSessionState?
     @AppStorage("hud.forceTargetLanguage") private var persistentHUDForceTargetLanguage = false
     @State private var hudTargetLanguageOverride: String?
-    @State private var languagePickerPopover: NSPopover?
-    @State private var languagePickerPopoverID: UUID?
-    @State private var activePopoverDelegate: PopoverDelegate?
+    @State private var lastObservedAdditionalLanguageCode: String?
+    @State private var languagePickerController = LanguagePickerPopoverController()
 
     private func dismissLanguagePickerPopover() {
-        languagePickerPopover?.close()
-        languagePickerPopover = nil
-        languagePickerPopoverID = nil
-        activePopoverDelegate = nil
+        languagePickerController.dismiss()
     }
 
     var body: some View {
@@ -1211,6 +1291,7 @@ struct ContentView: View {
     }
 
     private func finishHotkeySessionIfNeeded(target: HotkeyTarget?) {
+        languagePickerController.invalidateForFinishedHotkeySession()
         hotkeySessionOverlayManager.playCue(.finish, settings: generalSettingsStore.settings.overlay)
         hotkeySessionOverlayManager.hide()
         providerQuickSwitcher.hide()
@@ -1359,15 +1440,6 @@ struct ContentView: View {
         }
         @objc func invoke() {
             handler()
-        }
-    }
-    private final class PopoverDelegate: NSObject, NSPopoverDelegate {
-        private let onDidClose: () -> Void
-        init(onDidClose: @escaping () -> Void) {
-            self.onDidClose = onDidClose
-        }
-        func popoverDidClose(_ notification: Notification) {
-            onDidClose()
         }
     }
 
@@ -1719,6 +1791,12 @@ struct ContentView: View {
         guard let backend else { return }
 
         let languages = generalSettingsStore.speechLanguages
+        if lastObservedAdditionalLanguageCode != languages.additionalLanguageCode {
+            // Settings is authoritative for the default Additional language. A
+            // previous transient HUD target must not keep the picker marker stale.
+            hudTargetLanguageOverride = nil
+            lastObservedAdditionalLanguageCode = languages.additionalLanguageCode
+        }
         let isAutomatic: Bool
         let currentCode: String
         let purpose: HUDLanguageMenuPolicy.PickerPurpose
@@ -1764,45 +1842,21 @@ struct ContentView: View {
             purpose: purpose
         )
 
-        let popoverID = UUID()
-        self.languagePickerPopoverID = popoverID
-
-        let pickerContentView = HUDLanguagePickerPopoverView(
+        languagePickerController.present(
             options: options,
             languages: languages,
-            onSelectLanguage: { [popoverID] selectedCode in
-                guard self.languagePickerPopoverID == popoverID else { return }
-                self.dismissLanguagePickerPopover()
+            anchorView: anchorView,
+            location: location,
+            onSelectLanguage: { popoverID, selectedCode in
                 self.handleOverlayLanguageSelection(selectedCode, popoverID: popoverID)
             },
-            onClose: { [popoverID] in
-                guard self.languagePickerPopoverID == popoverID else { return }
-                self.dismissLanguagePickerPopover()
+            onClose: { _ in
             }
         )
-
-        let popover = NSPopover()
-        popover.behavior = .transient
-        popover.animates = true
-        popover.contentViewController = NSHostingController(rootView: pickerContentView)
-        let delegate = PopoverDelegate { [popoverID] in
-            Task { @MainActor in
-                if self.languagePickerPopoverID == popoverID {
-                    self.languagePickerPopover = nil
-                    self.languagePickerPopoverID = nil
-                    self.activePopoverDelegate = nil
-                }
-            }
-        }
-        popover.delegate = delegate
-        self.activePopoverDelegate = delegate
-        self.languagePickerPopover = popover
-        let anchorRect = NSRect(origin: location, size: .zero)
-        popover.show(relativeTo: anchorRect, of: anchorView, preferredEdge: .maxY)
     }
 
     private func handleOverlayLanguageSelection(_ code: String, popoverID: UUID) {
-        guard self.languagePickerPopoverID == nil || self.languagePickerPopoverID == popoverID else { return }
+        guard languagePickerController.popoverID == nil || languagePickerController.popoverID == popoverID else { return }
 
         let backend = pendingHotkeySession?.plan.backend ?? hudLanguageBackend
         guard let backend else { return }
@@ -1830,6 +1884,10 @@ struct ContentView: View {
             persistentHUDForceTargetLanguage = !automatic
             pendingHotkeyForceTargetLanguage = !automatic
 
+            if !automatic {
+                applyHUDAdditionalLanguageSelection(normalizedCode)
+            }
+
             if audioRecorder.isRecording {
                 let resolution = makeLocalSession(
                     forceTargetLanguage: !automatic,
@@ -1845,6 +1903,18 @@ struct ContentView: View {
                 targetLanguageLabel: autoTranslationLanguageLabel
             )
         }
+    }
+
+    /// Target-language picker selections also choose the persisted Additional
+    /// speech language. The HUD override remains ephemeral for the current
+    /// target/session; explicit Canary source selections never use this path.
+    private func applyHUDAdditionalLanguageSelection(_ code: String) {
+        guard code != "auto", LanguagePickerOrder.isKnownSpeechCode(code) else { return }
+
+        let current = generalSettingsStore.speechLanguages
+        let updated = current.settingAdditional(code)
+        guard updated != current else { return }
+        generalSettingsStore.speechLanguages = updated
     }
 
     /// Cycles the processing target (raw -> variant 1 -> variant 2) and persists

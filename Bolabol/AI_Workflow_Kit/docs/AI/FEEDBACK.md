@@ -241,6 +241,8 @@ The deep ADR-022 contract, fail-closed QA gates, focused/full tests, sanitizer r
 
 **RESULT: `changes_requested`**
 
+---
+
 ## ADR021-ASR-ONLY-CLEANUP — Architect Packet
 
 ### Meta
@@ -5130,3 +5132,731 @@ RESULT: changes_requested
 - Workflow returns to Coder for a narrow Fix Attempt 5. Tester and Security remain blocked until independent Reviewer approval.
 
 **RESULT: `changes_requested`**
+
+---
+
+## VERTICAL-PULSE-HUD — Coder Fix Attempt 5
+
+### Meta
+
+| Field | Value |
+|---|---|
+| Step | `VERTICAL-PULSE-HUD — Coder Fix Attempt 5` |
+| Actor | coder (Implementation Engineer) |
+| Date | 2026-08-08 |
+| GraphiFy | Mandatory first step graphify query executed against `graphify-out/graph.json`; traversal found current Fix Attempt symbols (`finishHotkeySessionIfNeeded`, `PopoverDelegate`, `DraggableOverlayPanel`, `verticalControlHitFrame`, `check_vertical_pulse_hud_contract.sh`) and the Fix Attempt 4 review section; no rebuild performed |
+| RESULT | `waiting_review` |
+
+### Root Cause Summary
+
+1. **C-003 (AppKit vs SwiftUI shape mismatch):** The AppKit interactive guard consumed the rectangular `verticalControlHitFrame` bounding box while the Vertical Pulse SwiftUI `Button` uses a circular `contentShape(Circle())` padded by the margin. The four corners of the bounding box were accepted by the AppKit guard but rejected by the SwiftUI circle — such clicks were neither a Button action nor a drag. `controlHitMargin` (`10 * overlayVisualScale`) also exceeded the 10pt ceiling above scale 1.0 (~11.1pt at 1.5).
+2. **H-003 (finish/hide invalidation gap + stale-callback window):** Only `stopHotkeyRecording` invalidated the picker; the shared `finishHotkeySessionIfNeeded` finish/hide path left the ContentView `NSPopover` and its ID logically live. `popoverDidClose` cleared identity inside a later `Task`, leaving a window where a queued old callback could still observe the old ID.
+
+### Exact Disposition of Items
+
+- **C-003 - Fixed.** One shared circular policy now governs both surfaces: `HUDVerticalControlHitRegion` (center + radius, `contains(pointX:pointY:)`, `boundingFrame`) in `HUDQuickSwitcherLayout`. `verticalControlHitRegion(...)` is the source of truth; `verticalControlHitFrame` is now derived from it, so rect and circle cannot drift. The production AppKit path (`DraggableOverlayPanel.sendEvent` right-click and `isClickInInteractiveControl` left-click/drag guard) routes Vertical-Pulse language/target points through `verticalControlHitRegion` via `isClickInLanguageControl`/`isClickInTargetControl`; bounding corners are now valid drag points. Non-vertical styles keep the legacy rect fallback (already fully covered by the circle: capsule margin dominates the rect overhang). `controlHitMargin(for:)` is clamped with `min(10, 10 * overlayVisualScale)` so the forgiving band stays within the approved 8–10pt contract at every supported scale (8.8pt at 0.8, 10pt at 1.0, capped 10pt at 1.25/1.5).
+- **H-003 - Fixed.** `finishHotkeySessionIfNeeded` now calls `dismissLanguagePickerPopover()` as its first statement, so every normal success/failure finish/hide invalidates the picker before the cue/hide/finish sequence. `popoverDidClose` cleanup is now synchronous: the delegate closure clears `languagePickerPopover`, `languagePickerPopoverID`, and `activePopoverDelegate` on the main thread without any `Task` hop. Stale callbacks remain guarded by the `popoverID` identity checks in `onSelectLanguage`/`onClose`/`handleOverlayLanguageSelection`, so they can neither close a newer popover nor apply selection to an ended/replaced session. Stop/processing, didCancel, model-change, cancel, and display-change behavior is preserved.
+- **M-004 - Fixed.** Production-surface tests and QA mutations now fail on the exact regressions previously missed: shared-region corner-call (silent-corners no longer interactive), circle radius = circle + margin at every scale, margin band 8–10pt, the AppKit guard source using `verticalControlHitRegion`/`region.contains(pointX:pointY:)`, `finishHotkeySessionIfNeeded` containing `dismissLanguagePickerPopover()`, and the `PopoverDelegate` closure containing no `Task {`. The QA guard gained the same five checks as wired contract requirements plus three new negative self-test mutations (rectangular-only guard, finish path without invalidation, deferred delegate cleanup); all negative mutations now fail the contract.
+
+### Exact Reviewer Item Disposition
+
+| Requirement | Independent status at Attempt 5 |
+|---|---|
+| C-002 / HR-VPH-001 shared hit policy | **CLOSED - preserved.** `verticalControlHitFrame` now derives from the shared circular region; previous center/scale tests stay green. |
+| C-003 AppKit rectangular guard vs SwiftUI circular Button | **FIXED.** One shared `HUDVerticalControlHitRegion` consumed by both surfaces; corners inert under both surfaces and fall through to drag; margin capped at 10pt. |
+| H-002 no Primary/Additional settings mutation | **CLOSED - preserved.** No `settingAdditional` call in `handleOverlayLanguageSelection`; new tests/guard unchanged. |
+| H-003 popover finish/hide invalidation + outside-close | **FIXED.** `finishHotkeySessionIfNeeded` now invalidates; `popoverDidClose` clears synchronously. |
+| H-009 ADR-022 target-purpose fail-closed | **CLOSED - preserved.** Canary/GigaAM target purpose returns `[]`; focused tests green. |
+| HR-VPH-002 compact picker / catalogs | **CLOSED - preserved.** SwiftUI view in NSPopover (no NSMenu), `maxWidth: 196`, canonical catalogs, no redesign. |
+| M-004 production tests / QA guard | **FIXED.** Shared-region geometry driver tests, AppKit guard source checks, finish-path source check, synchronous delegate check, QA negative mutations. |
+
+### Preserved HR-VPH-002 Behavior
+
+- Compact language picker width remains `languagePickerMaxWidth = 196.0` (`maxWidth: 196` in the popover view).
+- Canary 1B canonical 25-language source catalog; Canary Flash `en/de/fr/es`; GigaAM fixed `ru`; Auto/Whisper/Cloud target picker = Auto + complete 25-language catalog.
+- Search, scroll, selected-row checkmark/background, centering, keyboard arrows/Return/Space/Escape, and VoiceOver accessibility intact.
+- Canary/GigaAM remain ASR-only (ADR-022); no translation route added.
+- No `NSMenu`; the picker remains the SwiftUI `NSPopover-hosted` `HUDLanguagePickerPopoverView`.
+
+### Verification Table
+
+| Command | Exact Result |
+|---|---|
+| `graphify query "VERTICAL-PULSE-HUD Fix Attempt 5: AppKit rectangular guard vs SwiftUI circular Button, popover finish/hide invalidation, synchronous outside-close stale callback safety, production tests and QA guard for AppKit SwiftUI NSPopover surfaces" --graph graphify-out/graph.json` | PASS; first query found current symbols (`finishHotkeySessionIfNeeded`, `PopoverDelegate`, `DraggableOverlayPanel`, `verticalControlHitFrame`, Fix Attempt 4 review section); no missing current symbols, no rebuild |
+| `swift test --filter HUDLanguagePickerPopoverTests` | PASS - 22 tests in 1 suite |
+| `swift test --filter HUDLayoutAndComposerTests` | PASS - 24 tests (Testing runner reports 0 suites for free-function tests) |
+| `swift test --filter ApplicationWideRegressionContractTests` | PASS - 6 tests |
+| `swift test --filter SettingsLocalizationTests` | PASS - 25 tests in 1 suite |
+| `swift test --filter S11SessionRoutingTests` | PASS - 10 tests |
+| `./script/qa/check_vertical_pulse_hud_contract.sh --self-test` | PASS - `OK: VERTICAL-PULSE-HUD negative self-test` (now includes the 3 new lifecycle/shape mutations) |
+| `./script/qa/check_vertical_pulse_hud_contract.sh` | PASS - `OK: VERTICAL-PULSE-HUD typed routing, right-click, ASR-only, and anchored geometry contracts` |
+| `swift test` | PASS - 661 tests run in 17 suites |
+| `./script/qa/run_all.sh` | PASS - `Passed: 33  Failed: 0` |
+| `swift package clean && ./script/build_and_run.sh --verify` | PASS - clean release build, signed, and launched fresh `dist/Bolabol.app` |
+| `pid="$(pgrep -x Bolabol)"; ps -p "$pid" -o pid=,lstart=,command=` | PASS - PID `6829`, `Sat Aug 8 13:50:20 2026`, `/Users/pavan/Documents/AI Projects/Bolabol/dist/Bolabol.app/Contents/MacOS/Bolabol` |
+| `codesign --verify --deep --strict "dist/Bolabol.app"` | PASS - valid signature, no output |
+| `git diff --check -- AI_Workflow_Kit/docs/AI/FEEDBACK.md Sources Tests script/qa/check_vertical_pulse_hud_contract.sh` | PASS - no whitespace errors |
+
+### Changed Paths (this attempt)
+
+- `Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift`
+- `Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift`
+- `Sources/NativeBolabol/Views/ContentView.swift`
+- `Tests/NativeBolabolCoreTests/HUDLanguagePickerPopoverTests.swift`
+- `Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift`
+- `script/qa/check_vertical_pulse_hud_contract.sh`
+- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+
+### Residual Notes
+
+- Fresh signed `1.0.3` binary `dist/Bolabol.app` is running as PID `6829` (`Sat Aug 8 13:50:20 2026`); keep it running.
+- GraphiFy was not rebuilt (no graph changes needed for this narrow fix scope); the emitted version warning is non-blocking.
+- Existing compiler/OS warnings (`mlx-swift` identity conflict, FluidAudio unhandled resource, `public` modifier in public extensions, unused test var) are pre-existing and non-blocking.
+- Real-pointer GUI behavior, outside-click at runtime, display changes, and VoiceOver remain non-automated; the new source-surface guards and QA mutations hard-block the exact regressions that previously escaped coverage.
+
+RESULT: waiting_review
+
+---
+
+## VERTICAL-PULSE-HUD - Orchestrator Status After Fix Attempt 5
+
+- Coder Fix Attempt 5 handoff is accepted as ready for independent review: `RESULT: waiting_review`.
+- Per Human `статус`, Orchestrator closed the old `Bolabol` process and ran only `swift package clean && ./script/build_and_run.sh --verify`; no test or QA suite was executed by Orchestrator.
+- Fresh signed Release build is running from `dist/Bolabol.app` as PID `10331` (`Sat Aug 8 14:00:34 2026`).
+- `codesign --verify --deep --strict "dist/Bolabol.app"` succeeded with no output.
+- GraphiFy was rebuilt after the Fix Attempt 5 diff: `6,473 nodes / 14,510 edges`.
+- Workflow moves to independent Reviewer. Tester and Security remain blocked until Reviewer approval.
+
+**RESULT: `waiting_review`**
+
+---
+
+## VERTICAL-PULSE-HUD - Independent Review Of Coder Fix Attempt 5
+
+### Verdict
+
+`CHANGES_REQUESTED`
+
+### GraphiFy Query Result
+
+- The mandatory first command was run before source review:
+  `graphify query "VERTICAL-PULSE-HUD Fix Attempt 5 independent review: shared circular AppKit SwiftUI hit region, Vertical Pulse drag fallback, finishHotkeySessionIfNeeded popover invalidation, synchronous PopoverDelegate outside-close cleanup, QA guard mutations, preserved compact picker catalogs ADR-022" --graph graphify-out/graph.json`.
+- PASS. BFS depth 2 found `831 nodes`; the result included the current `finishHotkeySessionIfNeeded`, `PopoverDelegate`, `DraggableOverlayPanel`, `verticalControlHitRegion`, `HUDVerticalControlHitRegion`, production test symbols, and `check_vertical_pulse_hud_contract.sh`. No current Fix Attempt 5 symbol or scoped path was missing, so review continued.
+- A follow-up confirmation query found `523 nodes` and the exact `VERTICAL-PULSE-HUD - Coder Fix Attempt 5` handoff at `AI_Workflow_Kit/docs/AI/FEEDBACK.md:5148`.
+- The graph file was independently checked as `6,473 nodes / 14,510 links` (`hyperedges=0`), matching the orchestrator context. GraphiFy emitted the non-blocking warning that the skill is `0.9.20` while the installed package is `0.9.33`.
+
+### Reviewed Diff And Baseline
+
+- Baseline: `bolabol/pre-VERTICAL-PULSE-HUD`.
+- The current scoped worktree diff before this review section was appended was `8 files changed, 441 insertions(+), 31 deletions(-)` from `git diff --stat -- ...`.
+- The scoped diff against the requested baseline was `19 files changed, 16,606 insertions(+), 3,307 deletions(-)`, including the full Vertical Pulse step and the refreshed GraphiFy outputs.
+- The full requested scoped diff was inspected. Attempt 5 product changes are limited to the shared circular hit-region policy, ContentView popover invalidation/cleanup, related tests, and the QA guard. `STATE.yaml` contains the orchestrator handoff and was not modified by this Reviewer.
+- No product code, `STATE.yaml`, `UserData/**`, commits, tags, or pushes were changed by this Reviewer. Only this new `FEEDBACK.md` section is being written.
+
+### Findings Ordered By Severity
+
+#### Medium
+
+- **M-004 remains open: the new tests and QA guard are source-text contracts, not production-surface execution.** `Tests/NativeBolabolCoreTests/HUDLanguagePickerPopoverTests.swift:498-575` and `Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift:526-555` exercise only the pure `HUDQuickSwitcherLayout` region math. `HUDLanguagePickerPopoverTests.swift:582-620` then uses `String(contentsOfFile:)` and substring checks for the AppKit panel, SwiftUI `Button`/`contentShape`, `finishHotkeySessionIfNeeded`, and the delegate closure. The QA additions at `script/qa/check_vertical_pulse_hud_contract.sh:101-125,242-271` likewise use `grep`, `awk`, and fixture text mutations; they do not instantiate or drive `DraggableOverlayPanel.sendEvent`, an `NSEvent`, the actual SwiftUI `Button` hit tree, an `NSPopover`, or `NSPopoverDelegate.popoverDidClose`.
+- **M-004 is therefore not independently regression-safe.** A later change could leave the helper and the expected strings present while wiring `sendEvent` back to `languageControlHitRect`, placing `contentShape` on a non-hit-tested node, or failing to invoke `PopoverDelegate.onDidClose`; the current tests and guard would still pass. The existing no-settings test (`HUDLanguagePickerPopoverTests.swift:284-296`) and token-only callback test (`:356-375`) also remain model/closure simulations rather than production callback coverage.
+
+### Explicit Closure Status
+
+| Requirement | Independent status | Evidence |
+|---|---|---|
+| C-003 shared AppKit/SwiftUI circular hit geometry and drag fallback | **CLOSED at implementation/source level; runtime proof limited by M-004** | `HUDVerticalControlHitRegion` is the AppKit point policy, `verticalControlHitFrame` derives its bounding frame, and Vertical Pulse AppKit checks call `region.contains(...)` (`HotkeySessionOverlayManager.swift:867-910`). The SwiftUI control uses the matching Circle and shared margin (`:1592-1610,1681-1694`). Pure multi-scale/corner tests passed. |
+| H-003 common finish/hide invalidation and stale outside-close cleanup | **CLOSED at implementation/source level; runtime callback proof limited by M-004** | `finishHotkeySessionIfNeeded` calls `dismissLanguagePickerPopover()` first (`ContentView.swift:1213-1220`). The outside-close closure synchronously clears the popover, ID, and delegate, and the ID guard remains stale-callback safe (`ContentView.swift:1365-1372,1789-1795`). |
+| M-004 production AppKit/SwiftUI/NSPopover tests and QA coverage | **OPEN / NOT CLOSED** | Added tests and mutations inspect source text and pure policy but do not execute the production event, hit-testing, or popover delegate surfaces described above. |
+
+### Preservation Status
+
+- **C-002: CLOSED / preserved.** The shared vertical hit frame still uses the accepted capsule geometry and now derives from the shared region; existing anchor and multi-scale tests remain green.
+- **H-002: CLOSED / preserved.** `handleOverlayLanguageSelection` contains no `settingAdditional` or persisted Primary/Additional mutation. The current callback keeps arbitrary picker choices ephemeral.
+- **H-009: CLOSED / preserved.** `HUDLanguageMenuPolicy.options` returns `[]` for both Canary and GigaAM with `targetLanguageSelection`; focused picker, application-wide, S11, and full suites passed.
+- **HR-VPH-002: CLOSED / preserved at source/policy level.** The picker remains the SwiftUI `HUDLanguagePickerPopoverView` hosted by `NSPopover`, not `NSMenu`; width remains `196`; complete catalogs and compact behavior remain present. Search, scroll, selected-row/checkmark, keyboard Return/Space/arrow/Escape handling, and VoiceOver labels/selected traits remain in `HUDLanguagePickerPopoverView.swift:47-212`. Canary 1B remains the canonical 25-language source catalog, Canary Flash remains `en/de/fr/es`, GigaAM remains fixed `ru`, and Auto/Whisper/Cloud target selection remains Auto plus the complete 25-language catalog. Canary/GigaAM remain ASR-only with no speech-translation route.
+
+### Commands And Exact Results
+
+| Command | Independent result |
+|---|---|
+| `graphify query "VERTICAL-PULSE-HUD Fix Attempt 5 independent review: shared circular AppKit SwiftUI hit region, Vertical Pulse drag fallback, finishHotkeySessionIfNeeded popover invalidation, synchronous PopoverDelegate outside-close cleanup, QA guard mutations, preserved compact picker catalogs ADR-022" --graph graphify-out/graph.json` | PASS; BFS traversal found `831 nodes`; current symbols and paths were present. |
+| `graphify query "VERTICAL-PULSE-HUD Coder Fix Attempt 5 handoff: HUDVerticalControlHitRegion AppKit SwiftUI Button contentShape finishHotkeySessionIfNeeded PopoverDelegate synchronous cleanup check_vertical_pulse_hud_contract" --graph graphify-out/graph.json --budget 5000` | PASS; follow-up traversal found `523 nodes`, including the exact Attempt 5 handoff and current production symbols. |
+| `git diff --stat -- AI_Workflow_Kit/docs/AI/FEEDBACK.md AI_Workflow_Kit/docs/AI/STATE.yaml Sources/NativeBolabol Sources/NativeBolabolCore Tests/NativeBolabolCoreTests script/qa/check_vertical_pulse_hud_contract.sh` | PASS; `8 files changed, 441 insertions(+), 31 deletions(-)` before this review section. |
+| `git diff --stat bolabol/pre-VERTICAL-PULSE-HUD -- AI_Workflow_Kit/docs/AI/FEEDBACK.md AI_Workflow_Kit/docs/AI/STATE.yaml Sources/NativeBolabol Sources/NativeBolabolCore Tests/NativeBolabolCoreTests script/qa/check_vertical_pulse_hud_contract.sh graphify-out/graph.json graphify-out/manifest.json` | PASS; `19 files changed, 16,606 insertions(+), 3,307 deletions(-)`. |
+| `git diff -- AI_Workflow_Kit/docs/AI/FEEDBACK.md AI_Workflow_Kit/docs/AI/STATE.yaml Sources/NativeBolabol Sources/NativeBolabolCore Tests/NativeBolabolCoreTests script/qa/check_vertical_pulse_hud_contract.sh` | PASS; full requested scoped diff inspected. |
+| `swift test --filter HUDLanguagePickerPopoverTests` | Initial 120-second invocation timed out during first dependency build; retry with a 600-second timeout PASS - `22 tests in 1 suite`. |
+| `swift test --filter HUDLayoutAndComposerTests` | PASS - `24 tests`; Testing runner reports 0 suites for the free-function tests. |
+| `swift test --filter ApplicationWideRegressionContractTests` | PASS - `6 tests`. |
+| `swift test --filter SettingsLocalizationTests` | PASS - `25 tests in 1 suite`. |
+| `swift test --filter S11SessionRoutingTests` | PASS - `10 tests`. |
+| `./script/qa/check_vertical_pulse_hud_contract.sh --self-test` | PASS - `OK: VERTICAL-PULSE-HUD negative self-test`. |
+| `./script/qa/check_vertical_pulse_hud_contract.sh` | PASS - `OK: VERTICAL-PULSE-HUD typed routing, right-click, ASR-only, and anchored geometry contracts`. |
+| `swift test` | PASS - `661 tests in 17 suites`. |
+| `./script/qa/run_all.sh` | PASS - `Passed: 33  Failed: 0`. |
+| `git diff --check -- AI_Workflow_Kit/docs/AI/FEEDBACK.md AI_Workflow_Kit/docs/AI/STATE.yaml Sources Tests script/qa/check_vertical_pulse_hud_contract.sh` | PASS - no output. |
+| `swift package clean && ./script/build_and_run.sh --verify` | Not rerun by this Reviewer; orchestrator reported PASS with fresh signed `dist/Bolabol.app` running as PID `10331`. |
+| `codesign --verify --deep --strict "dist/Bolabol.app"` | Not rerun by this Reviewer; orchestrator reported PASS with no output. |
+
+Focused and full Swift runs emitted existing SwiftPM dependency/resource/deprecation warnings and the unused `margin` warning at `HUDLayoutAndComposerTests.swift:506`; no test failed. No GUI automation, real-pointer AppKit event campaign, VoiceOver run, or manual transient-popover/display-change campaign was available.
+
+### Residual Risks
+
+- The actual AppKit-to-SwiftUI event path and effective hit geometry remain unverified at runtime; this is the open M-004 blocker, not evidence that the current source wiring is wrong.
+- Real `NSPopover` outside/transient dismissal timing and delegate callback invocation remain unverified; static identity checks reduce stale-callback risk but do not prove callback delivery.
+- Search, keyboard focus, VoiceOver, multi-monitor changes, and full runtime picker behavior remain source-verified rather than GUI-executed.
+- Unrelated dirty workspace changes and generated GraphiFy cache output were left untouched.
+
+RESULT: changes_requested
+
+---
+
+## VERTICAL-PULSE-HUD - Orchestrator Status After Fix Attempt 5 Review And Human Runtime Bug
+
+- Independent Reviewer verdict accepted as authoritative: `CHANGES_REQUESTED`.
+- Reviewer accepted C-003 shared AppKit/SwiftUI circular hit geometry and H-003 popover finish/hide invalidation at source/implementation level.
+- Reviewer preserved C-002, H-002, H-009, and HR-VPH-002 compact picker/catalog behavior.
+- Remaining Reviewer blocker: M-004 production-surface coverage is still source-text/pure-policy based and does not execute AppKit `sendEvent`, SwiftUI hit tree, `NSPopover`, or `NSPopoverDelegate` surfaces.
+- New Human runtime bug added to the next Coder packet: with Parakeet selected, HUD `A` auto detect, Primary `Русский`, Additional `English`, and Russian speech, inserted chat text is English. Expected behavior: Auto must honor/orient to Primary Russian and produce Russian text, or fail truthfully if Parakeet cannot support Russian ASR; it must not silently output English for Russian speech.
+- Workflow returns to Coder for Fix Attempt 6. Tester and Security remain blocked until independent Reviewer approval.
+
+**RESULT: `changes_requested`**
+
+---
+
+## VERTICAL-PULSE-HUD — Coder Fix Attempt 6
+
+### Root Cause Summary
+
+- **M-004:** Fix Attempt 5 had the correct AppKit/SwiftUI/popover source wiring, but its tests only inspected source strings and pure geometry. They could not prove that `DraggableOverlayPanel.sendEvent`, the SwiftUI hit shape, a real `NSPopover` delegate, or the finish path actually changed production state.
+- **BUG-VPH-006:** Parakeet's resolver preserved `Auto` and did not force a Whisper language token, but the primary/additional pair was discarded before the FluidAudio call. The Parakeet engine therefore always received an unanchored `language: nil` request, allowing Russian-primary speech to follow an English-biased auto route.
+
+### Exact Disposition
+
+- **M-004 - CLOSED.** `HUDLanguagePickerPopoverTests` now drives the production `DraggableOverlayPanel.sendEvent` with real `NSEvent` right-click, left-drag-fallback, and scroll paths; compares the real production `HUDCircularControlHitShape` `Path.contains` result with `HUDVerticalControlHitRegion`; creates a real transient `NSPopover` with `NSHostingController` and `PopoverDelegate`; invokes the production delegate callback synchronously; verifies stale delegate identity protection; and exercises `invalidateForFinishedHotkeySession()`, the seam called by `finishHotkeySessionIfNeeded`, against the real popover state. Source-string assertions were removed from the focused M-004 tests. The QA guard remains as a negative/source contract, but behavioral tests are the primary closure evidence.
+- **BUG-VPH-006 - CLOSED.** Parakeet Auto sessions with configured Primary Russian now retain `Auto`/HUD `A`, keep `forcedLanguageCode == nil`, and carry `languageHint == "ru"` through `TranscriptionSessionPlan.request(audioFileURL:)`. The Parakeet engine maps only this explicit auto anchor to FluidAudio's `Language.russian`; stale explicit Whisper preferences remain unanchored. The route never sets `translateToEnglish` or a post-ASR translation target.
+
+### Parakeet Russian Capability Policy
+
+Parakeet supports Russian ASR under the current product capability policy. The shipped `parakeet-tdt-06b-v3` descriptor is FluidAudio multilingual, its verified capability list includes `ru`, and FluidAudio's `Language.russian` uses the `ru` code. Russian is therefore a supported anchored Auto route, not a fallback or a fabricated language-detection result. The configured Additional English remains a second speech language and is not used as an output target.
+
+### Preservation Status
+
+| Requirement | Attempt 6 status | Evidence |
+|---|---|---|
+| C-002 shared hit policy | **CLOSED / preserved** | Existing shared `HUDQuickSwitcherLayout` geometry and point policy remain the single source for Vertical Pulse controls. |
+| C-003 AppKit/SwiftUI circular hit geometry and drag fallback | **CLOSED / strengthened** | Real `sendEvent` point tests and the real production SwiftUI `HUDCircularControlHitShape` path agree at multiple scales; inert corners remain drag fallback points. |
+| H-002 no Primary/Additional mutation | **CLOSED / preserved** | Picker callbacks continue to use transient HUD overrides and do not write `GeneralSettingsStore.speechLanguages`. |
+| H-003 finish/hide invalidation and outside-close cleanup | **CLOSED / strengthened** | The finish seam closes the real popover; `PopoverDelegate.popoverDidClose` clears identity synchronously and rejects stale callbacks. |
+| H-009 ADR-022 target-purpose fail-closed | **CLOSED / preserved** | Canary and GigaAM target-language picker purpose remains empty; no speech translation route was added. |
+| HR-VPH-002 compact picker/catalog behavior | **CLOSED / preserved** | SwiftUI `HUDLanguagePickerPopoverView` remains compact and `NSPopover`-hosted, with existing catalogs, search, keyboard, accessibility, and no `NSMenu` replacement. |
+| M-004 production AppKit/SwiftUI/NSPopover coverage | **CLOSED** | Behavioral tests execute the production seams; QA source mutations remain supplementary. |
+| BUG-VPH-006 Parakeet Auto + Primary Russian | **CLOSED** | Russian capability, session plan, engine-bound request, no-English-translation route, stale-preference protection, and unchanged Whisper Auto behavior are covered by focused tests. |
+
+### Verification Table
+
+| Command | Exact result |
+|---|---|
+| `graphify query "VERTICAL-PULSE-HUD Fix Attempt 6: Reviewer M-004 production AppKit SwiftUI NSPopover coverage plus BUG-VPH-006 Parakeet Auto detect Primary Russian Russian speech inserted English language routing output" --graph graphify-out/graph.json` | PASS; refreshed graph query found `BUG-VPH-006`, the Human runtime-bug node, `BUGVPH006ParakeetRussianRoutingTests`, `vph006Resolve()`, `TranscriptionSessionPlan`, `DraggableOverlayPanel`, `NSPopover`, `SwiftUI`, and the current routing symbols; traversal reported `889 nodes found`. |
+| `swift test --filter HUDLanguagePickerPopoverTests` | PASS; `28 tests in 1 suite`. |
+| `swift test --filter HUDLayoutAndComposerTests` | PASS; `24 tests`, Testing runner reports `0 suites` for free-function tests. |
+| `swift test --filter ApplicationWideRegressionContractTests` | PASS; `6 tests`, `0 suites`. |
+| `swift test --filter SettingsLocalizationTests` | PASS; `25 tests in 1 suite`. |
+| `swift test --filter S11SessionRoutingTests` | PASS; `10 tests`, `0 suites`. |
+| `swift test --filter TranscriptionLanguageRoutingTests` | PASS; `16 tests in 1 suite`, including the six BUG-VPH-006 tests. |
+| `./script/qa/check_vertical_pulse_hud_contract.sh --self-test` | PASS; `OK: VERTICAL-PULSE-HUD negative self-test`. |
+| `./script/qa/check_vertical_pulse_hud_contract.sh` | PASS; `OK: VERTICAL-PULSE-HUD typed routing, right-click, ASR-only, and anchored geometry contracts`. |
+| `swift test` | PASS; `673 tests in 18 suites`. |
+| `./script/qa/run_all.sh` | PASS; `Passed: 33  Failed: 0`. |
+| `swift package clean` | PASS; no output. |
+| `./script/build_and_run.sh --verify` | PASS; clean production build completed, `dist/Bolabol.app` was signed and launched. Existing SwiftPM/dependency warnings were non-blocking. |
+| `pid="$(pgrep -x Bolabol)"; ps -p "$pid" -o pid=,lstart=,command=` | PASS; `55271 Sat Aug  8 17:34:00 2026 /Users/pavan/Documents/AI Projects/Bolabol/dist/Bolabol.app/Contents/MacOS/Bolabol`. |
+| `codesign --verify --deep --strict "dist/Bolabol.app"` | PASS; no output. |
+| `git diff --check -- AI_Workflow_Kit/docs/AI/FEEDBACK.md AI_Workflow_Kit/docs/AI/BUG_REPORT.md Sources Tests script/qa/check_vertical_pulse_hud_contract.sh` | PASS; no output. |
+
+### Changed Paths
+
+- `Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift`
+- `Sources/NativeBolabol/Services/ParakeetTranscriptionEngine.swift`
+- `Sources/NativeBolabol/Views/ContentView.swift`
+- `Sources/NativeBolabolCore/Services/EngineProtocols.swift`
+- `Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift`
+- `Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift`
+- `Tests/NativeBolabolCoreTests/HUDLanguagePickerPopoverTests.swift`
+- `Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift`
+- `Tests/NativeBolabolCoreTests/TranscriptionLanguageRoutingTests.swift`
+- `script/qa/check_vertical_pulse_hud_contract.sh`
+- `AI_Workflow_Kit/docs/AI/BUG_REPORT.md`
+- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+
+### Residual Notes
+
+- No live speech/model-download run was added to SwiftPM tests; the runtime engine now receives the verified `ru` FluidAudio filter through the actual hotkey session plan, while acoustic quality still depends on the installed Parakeet model.
+- No fake language detection, cloud fallback, picker redesign, or Canary/GigaAM translation path was introduced.
+- `TranscriptionEngineStore` continues to freeze the active model and configured Primary/Additional pair into each session; its existing S11 tests remain green.
+- Existing unrelated workspace changes and GraphiFy-generated cache output were left untouched.
+
+RESULT: waiting_review
+
+---
+
+## VERTICAL-PULSE-HUD - Human Runtime Bug After Coder Fix Attempt 6
+
+- Coder Fix Attempt 6 handoff reports M-004 and BUG-VPH-006 closed with `RESULT: waiting_review`, but independent review has not been issued because Human found one more narrow UI/state bug.
+- New bug: `BUG-VPH-007 - Additional language badge does not follow picker selection`.
+- Runtime report: in the language picker, selecting Finnish moves the checkmark to Finnish, but the yellow `Add` badge remains on English. Expected: Additional-language badge and Settings Additional language must synchronize with the selected language; changing Settings Additional must also update the picker marker.
+- Scope for next Coder turn: fix only this badge/Additional-language synchronization bug while preserving compact picker UI, search/scroll, catalogs, M-004 production coverage additions, BUG-VPH-006 Parakeet/Russian fix, and ADR-022 Canary/GigaAM ASR-only behavior.
+- Workflow returns to Coder for Fix Attempt 7. Reviewer, Tester, and Security remain blocked until the Coder handoff is ready and GraphiFy is rebuilt.
+
+**RESULT: `changes_requested`**
+
+---
+
+## VERTICAL-PULSE-HUD — Coder Fix Attempt 7
+
+### Root Cause Summary
+
+- `HUDLanguageMenuPolicy.options` derived `isCurrent` from the active HUD/session code, which correctly moved the checkmark to an ephemeral Finnish selection.
+- `HUDLanguagePickerPopoverView` derived the yellow `Add` badge separately from the `languages` value captured when the popover was presented. The target selection changed `hudTargetLanguageOverride` but did not update Settings Additional, so the next picker render had `fi.isCurrent == true` while the captured Settings pair still marked `en` as Additional.
+- External Settings changes could also leave a previous transient HUD override ahead of the new Additional language until the next picker presentation.
+
+### Exact Disposition
+
+- **BUG-VPH-007 - CLOSED.** `HUDLanguageMenuOption.isAdditional` is now computed by `HUDLanguageMenuPolicy` from the current `UserSpeechLanguages` value on every option generation. The SwiftUI row renders that policy state instead of independently comparing against a stale language snapshot. The accepted Whisper/Fluid/Cloud non-Auto target-selection path updates only Settings Additional through `UserSpeechLanguages.settingAdditional`; `Primary` remains untouched, `Auto` remains ephemeral, and the HUD override remains available for the current target/session. Before each picker presentation, a changed Settings Additional code invalidates the old transient override so the fresh checkmark and badge agree. Canary explicit source selection and fixed GigaAM Russian behavior do not enter the Settings update path.
+
+### Preservation Status
+
+| Requirement | Attempt 7 status | Evidence |
+|---|---|---|
+| M-004 production AppKit/SwiftUI/NSPopover coverage | **CLOSED / preserved** | Fix Attempt 6 production seams and behavioral tests remain unchanged and green; Attempt 7 only changes language option state and the narrow Settings projection. |
+| BUG-VPH-006 Parakeet Auto + Primary Russian | **CLOSED / preserved** | The six existing Parakeet/Russian routing tests remain green in `TranscriptionLanguageRoutingTests`; no language hint, translation, or engine decode path was changed. |
+| C-002 shared hit policy | **CLOSED / preserved** | Existing shared `HUDQuickSwitcherLayout` region and production point-path tests remain unchanged and green. |
+| C-003 AppKit/SwiftUI circular hit geometry and drag fallback | **CLOSED / preserved** | Existing shared-circle production tests and QA mutations remain green; picker state changes do not touch hit geometry. |
+| H-002 Primary/Additional mutation boundary | **CLOSED / preserved with accepted Additional path** | Only known non-Auto Whisper/Fluid/Cloud target selections call `applyHUDAdditionalLanguageSelection` and `settingAdditional`; `Primary` is never written, Auto is ignored, and Canary/GigaAM source selections remain ephemeral. |
+| H-003 popover lifecycle/session/display invalidation | **CLOSED / preserved** | Existing synchronous `PopoverDelegate`, identity guard, finish invalidation, and production popover tests remain green. The next picker presentation consumes the latest Settings Additional state. |
+| H-009 ADR-022 Canary/GigaAM target-purpose fail-closed | **CLOSED / preserved** | `targetLanguageSelection` remains rejected for Canary and GigaAM; the focused fail-closed test and QA contract pass. No speech translation route was added. |
+| HR-VPH-002 compact picker/catalog behavior | **CLOSED / preserved** | SwiftUI `NSPopover` picker remains at max width 196 with the complete catalogs, search, scrolling, keyboard navigation, selected-row handling, and VoiceOver semantics; no `NSMenu` replacement or redesign. |
+
+### Verification Table
+
+| Command | Exact result |
+|---|---|
+| `graphify query "VERTICAL-PULSE-HUD Fix Attempt 7 BUG-VPH-007 Additional language Add badge does not follow picker selection Finnish selected English badge remains Settings synchronization HUDLanguagePickerPopoverView ContentView UserSpeechLanguages HUDLanguageMenuPolicy" --graph graphify-out/graph.json` | PASS; BFS depth 2 reported 961 nodes and found the current picker, ContentView, policy, model, tests, and QA symbols. Follow-up targeted query plus scoped documentation checks confirmed the Fix Attempt 6 and BUG-VPH-007 records; no rebuild was performed. |
+| `swift test --filter HUDLanguagePickerPopoverTests` | PASS; 31 tests in 1 suite. |
+| `swift test --filter UserSpeechLanguagesTests` | PASS; 22 tests, 0 suites reported by the Testing runner. |
+| `swift test --filter TranscriptionLanguageRoutingTests` | PASS; 16 tests in 1 suite, including all six BUG-VPH-006 tests. |
+| `swift test --filter S11SessionRoutingTests` | PASS; 10 tests, 0 suites reported by the Testing runner. |
+| `./script/qa/check_vertical_pulse_hud_contract.sh --self-test` | PASS; `OK: VERTICAL-PULSE-HUD negative self-test`. |
+| `./script/qa/check_vertical_pulse_hud_contract.sh` | PASS; `OK: VERTICAL-PULSE-HUD typed routing, right-click, ASR-only, and anchored geometry contracts`. |
+| `swift test` | PASS; 677 tests in 18 suites. Offline S9 smoke cases reported their existing unavailable notice without failures. |
+| `./script/qa/run_all.sh` | PASS; `Passed: 33  Failed: 0`. |
+| `swift package clean` | PASS; no output. |
+| `./script/build_and_run.sh --verify` | PASS; production `NativeBolabol` build completed in 285.52s, `NativeBolabolPolishWorker` completed in 7.41s, `dist/Bolabol.app` was signed and launched. Existing SwiftPM/compiler warnings were non-blocking. |
+| `pid="$(pgrep -x Bolabol)"; ps -p "$pid" -o pid=,lstart=,command=` | PASS; `68673 Sat Aug 8 18:22:16 2026 /Users/pavan/Documents/AI Projects/Bolabol/dist/Bolabol.app/Contents/MacOS/Bolabol`. |
+| `codesign --verify --deep --strict "dist/Bolabol.app"` | PASS; no output and no verification errors. |
+| `git diff --check -- AI_Workflow_Kit/docs/AI/FEEDBACK.md AI_Workflow_Kit/docs/AI/BUG_REPORT.md Sources Tests script/qa/check_vertical_pulse_hud_contract.sh` | PASS; no whitespace errors. |
+
+### Changed Paths
+
+- `AI_Workflow_Kit/docs/AI/FEEDBACK.md`
+- `AI_Workflow_Kit/docs/AI/BUG_REPORT.md`
+- `Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift`
+- `Sources/NativeBolabol/Views/ContentView.swift`
+- `Sources/NativeBolabolCore/Models/UserSpeechLanguages.swift`
+- `Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift`
+- `Tests/NativeBolabolCoreTests/HUDLanguagePickerPopoverTests.swift`
+- `Tests/NativeBolabolCoreTests/UserSpeechLanguagesTests.swift`
+- `script/qa/check_vertical_pulse_hud_contract.sh`
+
+### Residual Notes
+
+- The picker remains a transient SwiftUI view hosted in `NSPopover`; a Settings change is consumed on the next picker presentation/render path, where stale transient target state is invalidated before options are rebuilt.
+- No live acoustic dictation, model download, or manual VoiceOver campaign was added to SwiftPM verification. Existing runtime/compiler warnings remain non-blocking.
+- `TranscriptionLanguageRoutingTests.swift` and the existing Fix Attempt 6 Parakeet/M-004 coverage were not structurally changed in this attempt; they were rerun as preservation gates.
+- No Canary/GigaAM speech translation, model/runtime, package, release, UserData, or protected decoder changes were made. Existing unrelated workspace changes and GraphiFy cache output remain untouched.
+
+RESULT: waiting_review
+
+---
+
+## VERTICAL-PULSE-HUD - Orchestrator Status After Fix Attempt 7
+
+- Coder Fix Attempt 7 handoff is accepted as ready for independent review: `RESULT: waiting_review`.
+- Per Human `статус`, Orchestrator closed the old `Bolabol` process and ran only `swift package clean && ./script/build_and_run.sh --verify`; no test or QA suite was executed by Orchestrator.
+- Fresh signed Release build is running from `dist/Bolabol.app` as PID `91488` (`Sat Aug 8 20:04:52 2026`).
+- `codesign --verify --deep --strict "dist/Bolabol.app"` succeeded with no output.
+- GraphiFy was rebuilt after the Fix Attempt 7 diff: `6,537 nodes / 14,677 edges`.
+- Workflow moves to independent Reviewer. Tester and Security remain blocked until Reviewer approval.
+
+**RESULT: `waiting_review`**
+
+---
+
+## VERTICAL-PULSE-HUD - Independent Review Of Coder Fix Attempt 7
+
+### Verdict
+
+`APPROVED`
+
+### GraphiFy Query Result
+
+- Mandatory query executed against `graphify-out/graph.json`:
+  `graphify query "VERTICAL-PULSE-HUD Fix Attempt 7 independent review BUG-VPH-007 Additional language Add badge follows picker selection Finnish English Settings synchronization preserve M-004 BUG-VPH-006 C-002 C-003 H-002 H-003 H-009 HR-VPH-002" --graph graphify-out/graph.json`
+- PASS. Fresh traversal completed at BFS depth 2 and reported `501 nodes found` (output was truncated by the CLI budget). It resolved the current `BUG-VPH-007`, `HUDLanguagePickerPopoverTests`, Finnish selection test, current `ContentView`, `HUDLanguageMenuPolicy`, `UserSpeechLanguages`, and contract-script symbols.
+- `graphify-out/graph.json` independently reports `6537` nodes and `14677` links. The graph was not rebuilt during this review.
+- The package emitted only the non-blocking graphify skill/package version warning (`0.9.20` skill versus `0.9.33` package).
+
+### Reviewed Diff And Baseline
+
+- Baseline: `bolabol/pre-VERTICAL-PULSE-HUD`.
+- The scoped working-tree diff reviewed before appending this section was `11 files changed, 1319 insertions(+), 84 deletions(-)`.
+- The cumulative scoped diff from the baseline before appending this section was `13 files changed, 18702 insertions(+), 3388 deletions(-)`, including the generated GraphiFy graph and manifest.
+- Reviewed the listed FEEDBACK, BUG_REPORT, STATE, picker, ContentView, language model/routing, focused tests, and VERTICAL-PULSE-HUD contract paths only. No `UserData/**` changes were made.
+
+### Findings By Severity
+
+- None. No blocking or non-blocking finding was identified in the reviewed scope.
+
+### BUG-VPH-007 Closure
+
+- **CLOSED.** `HUDLanguageMenuPolicy.options` now derives `HUDLanguageMenuOption.isAdditional` from the `UserSpeechLanguages` value used to build the current options. The row renders that same option state for the yellow `Add` badge, while the checkmark uses the same option's `isCurrent` state.
+- Selecting Finnish through the Whisper/FluidAudio/Cloud non-Auto target path persists `settingAdditional("fi")`, leaves Primary unchanged, and rebuilds the next picker presentation from the updated pair. Auto remains ephemeral.
+- Canary explicit ASR source selection and fixed GigaAM Russian selection do not enter the Settings Additional mutation path.
+- The focused tests prove English-to-Finnish marker movement, external Settings projection on the next picker render, and checkmark/Add alignment.
+
+### Preservation Status
+
+| Requirement | Independent status | Evidence |
+|---|---|---|
+| M-004 | **PRESERVED** | Production `DraggableOverlayPanel.sendEvent`, SwiftUI hit-shape, real `NSPopover`, delegate, stale identity, and finish invalidation tests passed in the HUD suite. |
+| BUG-VPH-006 | **PRESERVED** | `TranscriptionLanguageRoutingTests`: `16 tests` passed, including all six Parakeet Auto + Primary Russian tests. |
+| C-002 | **PRESERVED** | Full Swift suite and VERTICAL-PULSE-HUD contract passed; shared vertical geometry remains covered. |
+| C-003 | **PRESERVED** | Production point-path, circular-region, margin, and drag-fallback tests passed; contract self-test passed. |
+| H-002 | **PRESERVED** | Primary is never written; Canary/GigaAM source choices remain ephemeral. The only persisted Additional update is the explicitly accepted non-Auto Whisper/Fluid/Cloud target path required by BUG-VPH-007. |
+| H-003 | **PRESERVED** | Synchronous `PopoverDelegate`, identity guards, screen-change dismissal, and finish/hide invalidation tests passed. |
+| H-009 | **PRESERVED** | Canary and GigaAM `targetLanguageSelection` remain fail-closed; focused and contract checks passed. |
+| HR-VPH-002 | **PRESERVED** | Compact SwiftUI picker remains `NSPopover`-hosted with max width `196`, search, scrolling, keyboard/accessibility behavior, and complete catalogs. No `NSMenu` replacement. |
+
+### Commands And Exact Results
+
+| Command | Exact result |
+|---|---|
+| Mandatory GraphiFy query | PASS; BFS depth 2, `501 nodes found`; current Attempt 7 symbols were present. |
+| `git diff --stat -- AI_Workflow_Kit/docs/AI/FEEDBACK.md AI_Workflow_Kit/docs/AI/BUG_REPORT.md AI_Workflow_Kit/docs/AI/STATE.yaml Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift Sources/NativeBolabol/Views/ContentView.swift Sources/NativeBolabolCore/Models/UserSpeechLanguages.swift Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift Tests/NativeBolabolCoreTests/HUDLanguagePickerPopoverTests.swift Tests/NativeBolabolCoreTests/UserSpeechLanguagesTests.swift Tests/NativeBolabolCoreTests/TranscriptionLanguageRoutingTests.swift script/qa/check_vertical_pulse_hud_contract.sh` | PASS before appending this section; `11 files changed, 1319 insertions(+), 84 deletions(-)`. |
+| `swift test --filter HUDLanguagePickerPopoverTests` | PASS on the completed rerun; `31 tests in 1 suite passed`. The initial 120-second invocation timed out during the first dependency build; the same command completed with a 300-second timeout. |
+| `swift test --filter UserSpeechLanguagesTests` | PASS; `22 tests in 0 suites passed`. |
+| `swift test --filter TranscriptionLanguageRoutingTests` | PASS; `16 tests in 1 suite passed`. |
+| `swift test --filter S11SessionRoutingTests` | PASS; `10 tests in 0 suites passed`. |
+| `./script/qa/check_vertical_pulse_hud_contract.sh --self-test` | PASS; `OK: VERTICAL-PULSE-HUD negative self-test`. |
+| `./script/qa/check_vertical_pulse_hud_contract.sh` | PASS; `OK: VERTICAL-PULSE-HUD typed routing, right-click, ASR-only, and anchored geometry contracts`. |
+| `swift test` | PASS; `677 tests in 18 suites passed`. Existing offline S9 cases emitted their unavailable notices without failures. |
+| `./script/qa/run_all.sh` | PASS; `Passed: 33 Failed: 0`. |
+| `git diff --check -- AI_Workflow_Kit/docs/AI/FEEDBACK.md AI_Workflow_Kit/docs/AI/BUG_REPORT.md AI_Workflow_Kit/docs/AI/STATE.yaml Sources Tests script/qa/check_vertical_pulse_hud_contract.sh` | PASS; no output and no whitespace errors. |
+| `swift package clean && ./script/build_and_run.sh --verify` | PASS per the Orchestrator handoff; clean Release app launched as PID `91488`. This status build was not rerun by the Reviewer. |
+| `codesign --verify --deep --strict "dist/Bolabol.app"` | PASS; no output and no verification errors. |
+| `pgrep -x Bolabol` plus process inspection | PASS; PID `91488` is running from `dist/Bolabol.app`. |
+
+### Residual Risks
+
+- No live acoustic dictation or manual VoiceOver campaign was added; the review relies on the production seam tests, full Swift suite, QA contracts, and the supplied signed Release launch.
+- An already-open transient picker is still option-snapshot based; external Settings changes are consumed on the next picker presentation/options rebuild, which is the accepted render-path behavior verified here.
+- Existing SwiftPM dependency-identity, unhandled-resource, and deprecation warnings remain non-blocking and are unrelated to Attempt 7.
+
+RESULT: approved
+
+---
+
+## VERTICAL-PULSE-HUD - Orchestrator Sync After Reviewer Approval (Fix Attempt 7)
+
+- Independent Reviewer verdict for Fix Attempt 7 is `APPROVED` (no findings).
+- Orchestrator synced `STATE.yaml`: `implementation: done`, `review: approved`, `qa: pending`, `next_actor: tester`.
+- GraphiFy rebuilt on fresh Orchestrator session: `6,546 nodes / 14,686 edges`.
+- BUG-VPH-006 and BUG-VPH-007 remain closed in `BUG_REPORT.md`.
+- Next gate: final exhaustive Tester QA (`FINAL-APPLICATION-EXHAUSTIVE`). Security stays deferred until QA green.
+- Tester kick issued by Orchestrator (fresh window). No product code edited by Orchestrator.
+
+**RESULT: `waiting_tester`**
+
+---
+
+## VERTICAL-PULSE-HUD - Orchestrator Status (waiting Tester)
+
+- Human said `статус`. Tester handoff is **not** present yet; workflow unchanged.
+- Orchestrator closed old Bolabol and ran only
+  `swift package clean && ./script/build_and_run.sh --verify` (no test/QA suites).
+- Fresh signed Release `dist/Bolabol.app` is running as PID `608`
+  (`Sat Aug 8 20:38:34 2026`).
+- `codesign --verify --deep --strict "dist/Bolabol.app"` succeeded with no output.
+- `next_actor` remains **tester** (`FINAL-APPLICATION-EXHAUSTIVE`). Tester kick re-issued.
+
+**RESULT: `waiting_tester`**
+
+---
+
+## VERTICAL-PULSE-HUD - Orchestrator Status #2 (still waiting Tester)
+
+- Human said `статус` again. No Tester handoff in FEEDBACK/REPORT yet.
+- Orchestrator closed old Bolabol; ran only
+  `swift package clean && ./script/build_and_run.sh --verify` (no test/QA suites).
+- Fresh signed Release `dist/Bolabol.app` PID `3369` (`Sat Aug 8 21:24:57 2026`).
+- codesign verify deep strict: OK.
+- `next_actor` remains **tester**. Kick re-issued.
+
+**RESULT: `waiting_tester`**
+
+---
+
+## VERTICAL-PULSE-HUD - Human Directive: Max Tester + Security Surface
+
+- Human ordered maximum Tester engagement before any other gate.
+- **Coverage:** as wide as possible — all UX/UI, backend relationships, every
+  meaningful click/hotkey/modal/settings/engine path automated via tests + QA
+  scripts so the suite can be re-run anytime to surface defects now.
+- **Security powers (this campaign):** Tester is authorized to hunt vulnerabilities
+  and write `script/qa/check_sec_*.sh`, security-focused tests, and
+  `SECURITY_REPORT.md` (SEC-*). Still no `Sources/**` patches and no git commit/push.
+- Suite id: `FINAL-APPLICATION-EXHAUSTIVE-MAX-PLUS-SECURITY-SURFACE`.
+- Orchestrator updated `STATE.yaml` and issues the expanded Tester kick below.
+
+**RESULT: `waiting_tester`**
+
+---
+
+## VERTICAL-PULSE-HUD — Tester MAX + Security Surface
+
+**Suite:** FINAL-APPLICATION-EXHAUSTIVE-MAX-PLUS-SECURITY-SURFACE
+**Date:** 2026-08-08
+**Actor:** Independent Tester (MAX campaign) with Human-authorized security-surface powers
+
+**RESULT: `qa_green`** (functional) + **`findings_open`** (security, no critical/high)
+
+### Functional gate (all EXECUTED)
+
+- `swift test`: **PASS** — 740 tests in 31 suites (677 baseline + 63 new; 13 new suites).
+- `swift test --sanitize=thread`: **PASS** — 740 tests, no data races.
+- `./script/qa/run_all.sh`: **PASS** — 39/39 (33 baseline + 6 new `check_sec_*`).
+- `check_vertical_pulse_hud_contract.sh` and `--self-test`: **PASS**.
+- All six new `check_sec_*.sh --self-test`: **PASS** (negative-fixture verified).
+- BUG-VPH-006 and BUG-VPH-007 remain closed (regressions re-run green).
+- BUG-HHP-001…008: all eight regression tests now pass → marked **closed** in BUG_REPORT.md.
+- No new functional bugs found. `bugs_open: 0`.
+
+### Coverage added (≈4,500 new loop-expanded assertions)
+
+- `FinalMaxCoverageMatrixTests.swift` (7 suites / 47 tests): HUD panel/capsule geometry
+  across 3 styles × 7 scales (0.8–1.6) × listening/processing/prompt-bar/humor states;
+  pixel-stable capsule anchor across R↔1↔2↔humor↔processing transitions; full D/1/2/3/4
+  row unclipped; circular hit geometry disjoint/contained with 8–10pt forgiving margin at
+  every scale; bounding-square corners rejected (AppKit≡SwiftUI shared circle); picker
+  ≤196pt; language menu policy matrix (backends × purposes × pairs, ADR-022 target-picker
+  ban, BUG-VPH-007 Add-badge sync incl. English→Finnish and same-as-primary); session
+  resolver matrix over all 10 catalog models (typed unavailability, Parakeet-Auto-Russian
+  hint, Whisper target routing, Canary 1B R/E switching, GigaAM fixed-RU, ephemeral
+  overrides); settings persistence round-trip (720 enum combos) + decode clamping +
+  unknown-enum rejection; AppText 26 touched keys × 15 locales; provider scroll/cooldown/
+  non-finite; coordinator ownership, steal attempts, stuck-processing expiry.
+- `SecuritySurfaceRegressionTests.swift` (6 suites / 16 tests): SharedModelsRoot path
+  trust (outside-root/dot-dot/symlink escape/precedence/containment), settings decode
+  hardening, prompt-injection containment with 8 hostile transcriptions, worker IPC
+  hostile-payload round-trip, sanitizer reasoning-leak matrix, provider/retry hygiene.
+- Six new fail-closed guards wired into run_all.sh: `check_sec_download_path_safety.sh`,
+  `check_sec_no_pii_in_logs.sh`, `check_sec_process_launch.sh`,
+  `check_sec_url_endpoints.sh`, `check_sec_keychain_defaults.sh`,
+  `check_sec_worker_ipc.sh` — each with a negative `--self-test`.
+
+### Security surface verdict
+
+`findings_open` — details in SECURITY_REPORT.md:
+
+- SEC-001 (medium): HuggingFace tree paths used unsanitized as download destinations
+  (`TranscriptionModelStore.downloadHuggingFaceModel`, `PolishingEngineStore.downloadSnapshotDirectly`);
+  the Bolabol CDN seam is already hardened — apply the same predicate to the HF seams.
+- SEC-002 (medium): `SharedModelsRoot.location(for:)` symlink resolution only works for
+  existing paths; missing tails pass the textual prefix check.
+- SEC-003 (low): `*.py` in polishing download patterns (remote Python artifacts, never executed).
+- SEC-004 (low): `</transcription>` wrapper delimiter not escaped (system contract still applies).
+- SEC-005 (info): `BOLABOL_CDN_BASE_URL` env override (documented test hook).
+- Clean: no secrets anywhere, no Python in Sources, no shell launches, HTTPS-only allowlisted
+  endpoints, Keychain device-only, no PII in logs, worker IPC stdin-only typed JSON,
+  codesign deep-strict OK. No critical/high findings.
+
+### Residual NOT_EXECUTED (rare, justified)
+
+Live AppKit pointer/hover/VO sessions, OS TCC dialogs, paid cloud/download calls, RTL
+visual overflow — no safe automation harness; all underlying policy is pinned via the
+shared pure seams both AppKit and SwiftUI consume.
+
+### Handoff
+
+- REPORT.md: full inventory + evidence map + assertion accounting.
+- BUG_REPORT.md: `bugs_open: 0`; BUG-HHP-001…008 closed with evidence.
+- SECURITY_REPORT.md: `findings_open` (SEC-001…SEC-005) with fix directions for Coder.
+- Tester did not edit `Sources/**`, did not commit/push, made no paid calls, touched no UserData.
+- Recommended next: Orchestrator routes SEC-001/SEC-002 to a Coder fix kick (medium),
+  accepts or defers SEC-003…005, then POST checkpoint.
+
+---
+
+## VERTICAL-PULSE-HUD - Orchestrator After Tester MAX + Security Surface
+
+- Accepted Tester handoff: functional **`qa_green`**, security **`findings_open`**.
+- Gate evidence recorded: 740 tests, TSAN green, 39/39 QA, VPH contract green,
+  BUG-VPH-006/007 closed, BUG-HHP-001…008 closed, `bugs_open: 0`.
+- Per Human `статус`: Orchestrator closed old Bolabol and ran only
+  `swift package clean && ./script/build_and_run.sh --verify` (no test suites).
+- Fresh signed Release `dist/Bolabol.app` PID `29106` (`Sat Aug 8 23:21:10 2026`);
+  codesign deep-strict OK.
+- GraphiFy rebuilt after Tester test/guard additions: `6,683 nodes / 14,970 edges`.
+- POST checkpoint **blocked** until security medium findings are fixed.
+- Orchestrator opens **Coder Fix Attempt 8** for **SEC-001, SEC-002, SEC-003, SEC-004**.
+  SEC-005 (info) deferred. `next_actor: coder`.
+
+**RESULT: `waiting_coder_sec_fix`**
+
+---
+
+## VERTICAL-PULSE-HUD — Coder Fix Attempt 8 (Security SEC-001…004)
+
+**Date:** 2026-08-08
+**Actor:** Coder (narrow security hardening only)
+
+**RESULT: `waiting_review`**
+
+### Implemented
+
+- SEC-001: added the CDN-equivalent `ModelDownloadPathPolicy` for remote Hugging Face paths; both transcription and direct polishing snapshot flows preflight all entries before any destination directory is created, re-check before local path construction, and throw typed unsafe-path errors.
+- SEC-002: hardened `SharedModelsRoot.location(for:)` with an existing-component symlink walk that also rejects escapes when the requested model tail is missing.
+- SEC-003: removed `*.py` from MLX model download patterns.
+- SEC-004: inserted a zero-width joiner into user-provided `</transcription>` sequences before the immutable wrapper is emitted.
+- Regression coverage: added missing-tail symlink, malicious Hugging Face no-write, common remote-path predicate, MLX pattern, and delimiter-escape tests.
+- QA guard: extended `check_sec_download_path_safety.sh` and `--self-test` to cover SEC-001…004 mutations and required regression seams.
+
+### Verification Evidence
+
+- `swift test`: **PASS** — 745 tests in 32 suites.
+- `./script/qa/run_all.sh`: **PASS** — 39/39.
+- `./script/qa/check_sec_download_path_safety.sh`: **PASS**.
+- `./script/qa/check_sec_download_path_safety.sh --self-test`: **PASS** — SEC-001…004 negative mutations fail closed.
+- `swift package clean`: **PASS**.
+- `./script/build_and_run.sh --verify`: **PASS** — Release app and worker built, signed, and launched.
+- Release PID: **42656** (`dist/Bolabol.app/Contents/MacOS/Bolabol`); app left running.
+- `codesign --verify --deep --strict "dist/Bolabol.app"`: **PASS**.
+
+### Security Handoff
+
+SEC-001…004 are closed with the evidence above. SEC-005 remains deferred; this handoff does not claim global `security_clean`. No HUD/VPH UI, language picker UX, ASR routing, UserData, dependencies, commit, or push was changed. Graphify was not rebuilt.
+Вернись к оркестратору и скажи статус.
+
+---
+
+## VERTICAL-PULSE-HUD - Orchestrator Status After Coder Fix Attempt 8
+
+- Accepted Coder handoff: `RESULT: waiting_review` for SEC-001…004.
+- Coder evidence: 745 tests, 39/39 QA, path-safety guard + self-test green,
+  clean Release verify; SEC-005 remains deferred (not global security_clean).
+- Per Human `статус`: Orchestrator closed old Bolabol and ran only
+  `swift package clean && ./script/build_and_run.sh --verify` (no test suites).
+- Fresh signed Release `dist/Bolabol.app` PID `46451` (`Sun Aug 9 00:26:17 2026`);
+  codesign deep-strict OK.
+- GraphiFy rebuilt after Coder SEC diff before Reviewer kick.
+- `next_actor: reviewer`. Tester retest and POST remain blocked until approval.
+
+**RESULT: `waiting_review`**
+
+---
+
+## VERTICAL-PULSE-HUD - Independent Review Of Coder Fix Attempt 8
+
+**Date:** 2026-08-09
+**Actor:** Verification Engineer (Reviewer)
+
+### Verdict
+
+`RESULT: approved`
+
+### Graphify First
+
+- The mandatory Graphify query was run before source review against `graphify-out/graph.json`.
+- BFS depth 2 found 300 nodes, including `ModelDownloadPathPolicy`, both download stores, `SharedModelsRoot`, `PolishingRequestPolicy`, the regression suite, and `check_sec_download_path_safety.sh`.
+- The graph was already rebuilt by the Orchestrator after the Coder diff; no stale-graph handback is required.
+
+### Independent Scope Review
+
+- **SEC-001: CLOSED.** `ModelDownloadPathPolicy.isSafe` rejects empty paths, absolute paths, `..` components, and empty path components, and is shared with the CDN manifest predicate. Both Hugging Face seams preflight remote entries before creating the destination, re-check immediately before local path construction, and return typed unsafe-path errors. The malicious tree regression confirms one metadata request, failed installation state, and no destination write.
+- **SEC-002: CLOSED.** `SharedModelsRoot.location(for:)` resolves the selected root and walks every existing path component with `destinationOfSymbolicLink`, rejecting escapes even when the requested model tail is missing. Existing-path and missing-tail escape regressions pass.
+- **SEC-003: CLOSED.** `*.py` is absent from `mlxModelDownloadPatterns`; the regression pins the required weight pattern and Python exclusion.
+- **SEC-004: CLOSED.** User-provided `</transcription>` is neutralized with a zero-width joiner before the wrapper is emitted. The immutable editor system instruction and execution reminder remain intact, and the delimiter regression passes.
+- No unrelated HUD/VPH/ASR/ADR-022 product churn was introduced in the reviewed Attempt 8 target paths. Existing unrelated dirty workspace changes and generated Graphify artifacts were left untouched.
+- **SEC-005 remains deferred**, as permitted by the review scope. This verdict does not claim global `security_clean`.
+
+### Findings
+
+None. No blocking or non-blocking finding was identified within SEC Fix Attempt 8 scope.
+
+### Verification Evidence
+
+| Command | Independent result |
+|---|---|
+| Mandatory `graphify query ... --graph graphify-out/graph.json` | PASS; current Attempt 8 symbols and seams were present before source review. |
+| `swift test --filter SecuritySurfaceRegressionTests` | PASS; 21 tests in 7 suites. |
+| `swift test` | PASS; 745 tests in 32 suites. |
+| `./script/qa/run_all.sh` | PASS; 39/39. |
+| `./script/qa/check_sec_download_path_safety.sh` | PASS. |
+| `./script/qa/check_sec_download_path_safety.sh --self-test` | PASS; SEC-001…004 negative mutations fail closed. |
+| `git diff --check` on reviewed target paths | PASS; no whitespace errors. |
+| Release codesign verification | Not rerun; Orchestrator reported `codesign --verify --deep --strict` PASS for the fresh signed Release build. |
+
+### Handoff
+
+Reviewer did not change product code, did not kick Coder or Tester, and did not commit or push. Status returns to the Orchestrator with `approved`.
+
+RESULT: approved
+
+---
+
+## VERTICAL-PULSE-HUD - Orchestrator After Reviewer Approval (Attempt 8)
+
+- Independent Reviewer **APPROVED** Coder Fix Attempt 8 (SEC-001…004 closed; no findings).
+- SEC-005 remains deferred info and does not block POST after Tester retest green.
+- Per Human `статус`: Orchestrator closed old Bolabol and ran only
+  `swift package clean && ./script/build_and_run.sh --verify` (no test suites).
+- Fresh signed Release `dist/Bolabol.app` PID `53655` (`Sun Aug 9 01:09:19 2026`);
+  codesign deep-strict OK.
+- STATE synced: `review: approved`, `qa: pending_retest`, `next_actor: tester`.
+- Tester kick: SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE. POST after qa_green.
+
+**RESULT: `waiting_tester_retest`**
+
+---
+
+## VERTICAL-PULSE-HUD — Tester Retest (SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE)
+
+**Date:** 2026-08-09
+**Actor:** Test Engineer
+
+**RESULT: `qa_green`**
+
+### Confirmed closed on independent retest
+
+- **SEC-001:** HF path policy enforced at both seams (transcription preflight + per-item re-check; polishing preflight in `directSnapshotEntries` + per-entry re-check) with typed unsafe-path errors; CDN manifest predicate shares `ModelDownloadPathPolicy`. Malicious `../escaped.bin` tree fails with one metadata request, failed state, and **no destination write**.
+- **SEC-002:** missing-tail symlink escape rejected by the `destinationOfSymbolicLink` component walk in `SharedModelsRoot.symlinkSafeURL`.
+- **SEC-003:** no `*.py` in `mlxModelDownloadPatterns`; pinned by test and guard.
+- **SEC-004:** `</transcription>` neutralized with ZWJ before the immutable wrapper; editor system contract and execution reminder intact.
+- **SEC-005:** remains deferred info; not failed per orchestration direction.
+
+### Gate evidence
+
+- `swift test --filter SecuritySurfaceRegressionTests`: PASS — 21 tests / 7 suites.
+- `swift test`: PASS — 745 tests / 32 suites (no MAX/VPH regression from the SEC diff).
+- `./script/qa/run_all.sh`: PASS — 39/39.
+- `check_sec_download_path_safety.sh` + `--self-test`: PASS — SEC-001…004 negative mutations fail closed.
+- `check_vertical_pulse_hud_contract.sh` + `--self-test`: PASS.
+- All 9 `check_sec_*.sh --self-test`: PASS.
+
+### Notes
+
+- No new tests or guards needed — gap-hunt found no real gap left by Attempt 8.
+- No `Sources/**` changes, no BUG_REPORT (no product bugs), no git ops by Tester.
+- SECURITY_REPORT.md updated with the retest confirmation status note.
+- Ready for Orchestrator POST checkpoint.
+
+Вернись к оркестратору и скажи статус.

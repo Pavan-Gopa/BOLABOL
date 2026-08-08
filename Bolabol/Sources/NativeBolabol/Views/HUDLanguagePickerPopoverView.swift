@@ -148,7 +148,7 @@ struct HUDLanguagePickerPopoverView: View {
     @ViewBuilder
     private func languageRow(_ option: HUDLanguageMenuOption, isHighlighted: Bool) -> some View {
         let isPrimary = option.code.lowercased() == languages.primaryLanguageCode.lowercased()
-        let isAdditional = option.code.lowercased() == languages.additionalLanguageCode.lowercased() && !languages.usesSameAdditionalAsPrimary
+        let isAdditional = option.isAdditional
 
         Button {
             cancelHoverExitTimer()

@@ -68,15 +68,21 @@ public struct TranscriptionRequest: Equatable, Sendable {
     public var forcedLanguageCode: String?
     /// Whisper-only native X-to-English task. Other engines reject this flag.
     public var translateToEnglish: Bool
+    /// Optional auto-detect orientation hint used by script-aware engines
+    /// (Parakeet/FluidAudio). It never replaces Whisper's `forcedLanguageCode`
+    /// and is nil for fully unanchored sessions.
+    public var languageHint: String?
 
     public init(
         audioFileURL: URL? = nil,
         forcedLanguageCode: String? = nil,
-        translateToEnglish: Bool = false
+        translateToEnglish: Bool = false,
+        languageHint: String? = nil
     ) {
         self.audioFileURL = audioFileURL
         self.forcedLanguageCode = forcedLanguageCode
         self.translateToEnglish = translateToEnglish
+        self.languageHint = languageHint
     }
 }
 

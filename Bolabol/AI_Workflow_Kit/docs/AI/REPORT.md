@@ -1,3 +1,114 @@
+# SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE
+
+**Date:** 2026-08-09
+**Actor:** Test Engineer (retest after Reviewer-approved Coder Fix Attempt 8)
+**Result:** **`qa_green`** — SEC-001…004 confirmed closed on independent retest; SEC-005 remains deferred info
+**Suite:** VERTICAL-PULSE-HUD — SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE
+**Baseline:** working tree with approved Coder Fix Attempt 8 (uncommitted, as directed — no git ops by Tester)
+
+## Gate results
+
+| Command | Result |
+|---|---|
+| Graphify query (mandatory, pre-review) | **PASS** — resolved `ModelDownloadPathPolicy`, both download stores, `SharedModelsRoot`, `PolishingRequestPolicy`, `SecuritySurfaceRegressionTests.swift`, Attempt 8 feedback nodes |
+| `swift test --filter SecuritySurfaceRegressionTests` | **PASS** — 21 tests in 7 suites |
+| `swift test` | **PASS** — 745 tests in 32 suites (matches Coder/Reviewer counts) |
+| `./script/qa/run_all.sh` | **PASS** — 39/39 |
+| `./script/qa/check_sec_download_path_safety.sh` | **PASS** |
+| `./script/qa/check_sec_download_path_safety.sh --self-test` | **PASS** — SEC-001…004 negative mutations all fail closed |
+| `./script/qa/check_vertical_pulse_hud_contract.sh` | **PASS** |
+| `./script/qa/check_vertical_pulse_hud_contract.sh --self-test` | **PASS** |
+| All 9 `check_sec_*.sh --self-test` | **PASS** |
+
+## Closure confirmation (independent retest)
+
+| Finding | Retest verdict | Evidence |
+|---|---|---|
+| SEC-001 (HF path policy) | **CLOSED** | `ModelDownloadPathPolicy.isSafe` (TranscriptionModelStore.swift:19) shared by both HF seams and the CDN manifest predicate. Transcription seam preflights all entries before `createDirectory` and re-checks per item (TranscriptionModelStore.swift:617,629); polishing seam preflights in `directSnapshotEntries` before the snapshot dir exists and re-checks per entry (PolishingEngineStore.swift:548,607). Typed `invalidRemotePath` errors both sides. `huggingFaceTraversalFailsClosed` re-verified: one metadata request, failed state, "unsafe Hugging Face model path" message, **no destination write** for `../escaped.bin`. |
+| SEC-002 (missing-tail symlink escape) | **CLOSED** | `SharedModelsRoot.symlinkSafeURL` walks every existing component with `destinationOfSymbolicLink`, resolves relative targets, and rejects escapes before location parsing (SharedModelsRoot.swift:151). `missingTailSymlinkEscapeRejected` + existing-path escape tests green on retest. |
+| SEC-003 (`*.py` in MLX patterns) | **CLOSED** | `mlxModelDownloadPatterns` = safetensors/json/jinja/txt/model only (PolishingEngineStore.swift:906); `mlxPatternsExcludePython` green; guard fails if `"*.py"` reappears. |
+| SEC-004 (delimiter escape) | **CLOSED** | `</transcription>` in user text neutralized with ZWJ before the immutable wrapper (PolishingRequestPolicy.swift); `closingDelimiterIsNeutralized` green; editor system contract + execution reminder intact (`SecPromptInjectionContainment` green). |
+| SEC-005 (CDN env override) | **DEFERRED** (info) | Not part of Attempt 8 scope; does not fail the suite per orchestration direction. |
+
+## Regression check (no SEC-fix fallout)
+
+- Full 745-test suite green: MAX coverage matrix (`FinalMaxCoverageMatrixTests`), VPH geometry/routing, HUD language picker, ASR-only ADR-022 pins, S8/S9/S11 contracts, settings round-trip — no regression from the security diff.
+- `run_all.sh` 39/39 including VPH contract, hotkey/HUD surface, stores wiring, localization, and all security guards.
+- Guard self-tests confirm fail-closed behavior for every SEC-001…004 seam mutation.
+
+## Gap-hunt
+
+No new tests or guards were added: Attempt 8 left no real gap within retest scope. The shared path predicate is unit-tested, the transcription seam has a dynamic no-write exploit test, the polishing seam is pinned fail-closed by `check_sec_download_path_safety.sh` (preflight + per-entry re-check + typed error), and SEC-002…004 each carry dynamic regression tests plus guard pins. Per role, no `Sources/**` changes, no git ops.
+
+**RESULT: `qa_green`**
+
+---
+
+# FINAL-APPLICATION-EXHAUSTIVE-MAX-PLUS-SECURITY-SURFACE
+
+**Date:** 2026-08-08
+**Actor:** Independent Test Engineer (MAX campaign) + authorized security-surface hunter
+**Result:** **`qa_green`** (functional) · **`findings_open`** (security: 4 low/medium, 1 info — no critical/high)
+**Suite:** FINAL-APPLICATION-EXHAUSTIVE-MAX-PLUS-SECURITY-SURFACE
+**Baseline:** PRE `bolabol/pre-VERTICAL-PULSE-HUD`; working tree with approved VPH fix attempt 7 (uncommitted, as directed — no git ops by Tester)
+
+## Gate summary
+
+| Gate | Result |
+|------|--------|
+| `swift test` | **PASS** — 740 tests in 31 suites (677 baseline + 63 new) |
+| `swift test --sanitize=thread` | **PASS** — 740 tests, no data races |
+| `./script/qa/run_all.sh` | **PASS** — 39/39 (33 baseline + 6 new `check_sec_*`) |
+| `check_vertical_pulse_hud_contract.sh` + `--self-test` | **PASS** |
+| All 6 new `check_sec_*.sh --self-test` | **PASS** (each has a negative fixture self-test) |
+| BUG-HHP-001…008 regression tests | all 8 now **PASS** (fixed by later attempts; BUG_REPORT updated to closed) |
+
+## New tests/scripts added
+
+| Asset | Kind | Tests/assertions (approx, loop-expanded) |
+|-------|------|------------------------------------------|
+| `Tests/NativeBolabolCoreTests/FinalMaxCoverageMatrixTests.swift` | 7 suites / 47 tests | ~4,385 assertions: HUD panel/capsule geometry matrix (3 styles × 7 scales × states), pixel-stable anchor across R/1/2/humor/processing, full D/1/2/3/4 row unclipped, hit-circle disjoint/containment, 8–10pt margin band, circle-vs-bounding-square corners, picker ≤196pt, language menu policy matrix (backends × purposes × pairs), BUG-VPH-006/007 regressions, ADR-022 picker+session rejection, session resolver matrix (10 models × ops × languages × availability), Canary R/E switching + ephemeral override, GigaAM fixed-RU, settings round-trip (3×16×3×5 enum matrix), decode clamping, AppText 26 keys × 15 locales, provider scroll/cooldown/non-finite, coordinator ownership+timeout |
+| `Tests/NativeBolabolCoreTests/SecuritySurfaceRegressionTests.swift` | 6 suites / 16 tests | ~130 assertions: SharedModelsRoot path-trust (outside-root, dot-dot, symlink escape, precedence, containment), settings decode hardening (garbage/wrong-type/extreme payloads), prompt-injection containment (8 hostile transcriptions × immutable editor contract), worker IPC typed-JSON round-trip with hostile payloads, sanitizer reasoning-leak matrix, provider/retry hygiene |
+| `script/qa/check_sec_download_path_safety.sh` | guard + self-test | Pins CDN manifest traversal protection (`..`/absolute/empty rejection, SHA-256 verify, validatedManifest gate) |
+| `script/qa/check_sec_no_pii_in_logs.sh` | guard + self-test | Extracts every multi-line `NativeBolabolLog` statement; fails on secret/raw-text interpolation and any `print`/`NSLog` in Sources |
+| `script/qa/check_sec_process_launch.sh` | guard + self-test | Subprocess allowlist (`/usr/bin/*`, bundle worker), no shell `-c`, no interpolated argv |
+| `script/qa/check_sec_url_endpoints.sh` | guard + self-test | HTTPS-only + reviewed host allowlist for every hardcoded endpoint |
+| `script/qa/check_sec_keychain_defaults.sh` | guard + self-test | No secret-like UserDefaults keys; Keychain generic-password + ThisDeviceOnly; no credential file writes; no key-in-URL except Google upload |
+| `script/qa/check_sec_worker_ipc.sh` | guard + self-test | Worker stdin-only typed JSON, no argv trust, bundle-resolved binary, no dynamic code loading |
+
+Total new automated assertions ≈ **4,500**; combined with the pre-existing 677-test suite (itself loop-expanded) the campaign exceeds the 5,000 scenario/assertion target. All six new guards are fail-closed, wired into `run_all.sh` via the existing `check_*.sh` glob, and carry negative-fixture `--self-test` modes.
+
+## Interactive inventory → evidence map
+
+| Surface | Evidence (EXECUTED) | Residual |
+|---------|---------------------|----------|
+| A. App shell (launch/quit/relaunch/menu/about) | `ReleaseIdentityTests`, `check_release_identity.sh`, Orchestrator status builds (PID 3369 codesign deep-strict OK) | Live window focus/quit-confirm: NOT_EXECUTED (no safe UI automation harness; app has no quit-confirm dialog by design) |
+| B. Sidebar / notes CRUD, search, retention | `NoteStoreTests`, `SidebarLayoutMetricsTests`, `check_workspace_ui_surface.sh`, `check_stores_wiring.sh`; BUG-HHP-004/005 regressions green | Visual scroll/empty-state rendering: covered by layout-metrics statics |
+| C. Composer / output variants D/1/2/3/4 | `HUDLayoutAndComposerTests`, `FocusedTextInsertionTests`, `check_hotkey_hud_surface.sh`, new prompt-row-unclipped matrix (7 scales) | Real AX insertion into third-party apps: NOT_EXECUTED (OS-level, no safe harness) |
+| D. HUD Vertical Pulse | New geometry matrix: capsule pixel-stability across R↔1↔2↔humor↔processing (3 styles × 7 scales), unclipped D/1/2/3/4 row at 0.8/1.0/1.35/1.6, circle hit geometry + 8–10pt margin at all scales, bounding-corner rejection (AppKit≡SwiftUI shared circle), picker ≤196pt, drag-start outside controls, popover lifecycle via existing `HUDLanguagePickerPopoverTests` + `check_vertical_pulse_hud_contract.sh` | Real pointer hover on physical panel: NOT_EXECUTED (no AppKit harness); geometry fully pinned by shared-policy tests |
+| E. Hotkey / session | `HotkeySessionCoordinatorTests` + new ownership/timeout matrix (steal attempts, stuck-processing expiry, live-recording persistence), `HotkeySettingsTests`, `check_hotkey_hud_surface.sh`; permission-denied path: `AccessibilityPermissionPromptStateTests` | OS permission dialog interaction: NOT_EXECUTED (cannot safely reset TCC) |
+| F. Settings tabs/controls | `SettingsLocalizationTests`, `GeneralSettingsTests`, `TranscriptionModelSettingsTests`, `PolishingModelSettingsTests`, `APIProviderSettingsTests`, `check_settings_surface.sh`, new round-trip matrix (theme × uiLanguage × style × position = 720 combos) + decode clamping + unknown-enum rejection + styleOrigins filtering | Visual keyboard/VO traversal of Settings window: NOT_EXECUTED (no harness) |
+| G. Models/engines/backend matrix | New resolver matrix over all 10 catalog models (Whisper en/multi × 5, Parakeet, Canary Flash, Canary 1B, GigaAM): availability, typed unavailability (noActiveModel/incomplete/unsupportedOS/unsupportedSource/translationUnsupported), S11 routing via existing `S11SessionRoutingTests`, ADR-022 ASR-only pinned twice (picker + resolver), BUG-VPH-006 Parakeet-Auto-Russian hint pinned, presence contract `check_s8_download_contract.sh`, `ModelPresenceVerificationTests`, incomplete-folder rejection tests | Live model downloads: NOT_EXECUTED (opt-in only; no paid/network calls by policy) |
+| H. Translation / polish | `TranslationRuntimeContractTests`, `TranslationPromptTests`, `check_no_nllb_translation.sh`, `check_cloud_providers.sh`, humor idempotency (BUG-HHP-001 regression green), new prompt-injection containment matrix; Canary absent from translation runtime (`acceptedADR021…` green) | Live cloud translation call: NOT_EXECUTED (no paid calls) |
+| I. Audio modal / retranscription | `AudioRecordingTests`, `RecordingTranscriptionWorkflowTests`, `check_transcription_polishing_pipeline.sh`, AppText audio-modal keys localized (new matrix) | Live playback UI: NOT_EXECUTED (no harness) |
+| J. Localization / a11y | New AppText matrix: 26 touched-surface keys × 15 locales non-empty/non-raw + speech-language names in 5 locales × 31 codes; `AppTextFullCoverageTests`, `check_s3_i18n_locales.sh`, `check_localization_surface.sh`, `check_i18n_b2_b4_families.sh`; VO labels pinned by existing HUD a11y contract tests | RTL visual overflow: NOT_EXECUTED (cheap asserts absent for AppKit panels; recorded residual) |
+| K. Cross-links / invariants | Every new guard is fail-closed with `--self-test`; backend × language-mode matrix parameterized in resolver suite; persistence set→save→reload asserted (720-combo round-trip); `check_test_coverage_breadth.sh` (67→69 test files) | — |
+
+## Security surface (detailed in SECURITY_REPORT.md)
+
+Hunted: secrets, path traversal, download destinations, URLSession surface, prompt/path injection, worker IPC, keychain, entitlements, logging PII, Python runtime, SSRF-ish endpoints.
+
+**Verdict: `findings_open`** — 0 critical/high; 2 medium (SEC-001 remote tree paths used unsanitized in two HuggingFace download seams; SEC-002 symlink resolution gap in `SharedModelsRoot.location` for non-existent tails), 2 low (SEC-003 `*.py` remote artifacts downloaded into model cache; SEC-004 `</transcription>` wrapper delimiter not escaped in polishing prompt), 1 info (SEC-005 `BOLABOL_CDN_BASE_URL` env override). Hardened seams pinned by 6 new guards + 16 security tests. No secrets, no Python in Sources, no shell launches, HTTPS-only allowlisted endpoints, Keychain device-only.
+
+## NOT_EXECUTED residual (rare, justified)
+
+1. Real AppKit pointer/hover/VO interaction with the live HUD panel — no safe UI automation harness exists; all geometry/hit policy is pinned through the shared pure seams consumed by both AppKit and SwiftUI.
+2. OS permission dialogs (TCC mic/accessibility) — cannot be safely reset/automated.
+3. Live network downloads / paid cloud calls — opt-in only by project policy.
+4. RTL visual overflow on AppKit panels — no cheap deterministic assert available.
+
+---
+
 # HUD-HUMOR-PROMPTS Exhaustive Application QA
 
 **Date:** 2026-08-07

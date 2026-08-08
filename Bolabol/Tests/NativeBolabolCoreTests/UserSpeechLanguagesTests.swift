@@ -135,6 +135,19 @@ func userSpeechLanguagesSettingAdditionalNormalizesInput() {
 }
 
 @Test
+func userSpeechLanguagesFinnishAdditionalSelectionMovesTheConfiguredLanguage() {
+    let changed = UserSpeechLanguages(
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en"
+    ).settingAdditional("fi")
+
+    #expect(changed.primaryLanguageCode == "ru")
+    #expect(changed.additionalLanguageCode == "fi")
+    #expect(changed.isAdditionalLanguage("fi"))
+    #expect(!changed.isAdditionalLanguage("en"))
+}
+
+@Test
 func userSpeechLanguagesSettingAdditionalToPrimaryRestoresSameAsPrimary() {
     let languages = UserSpeechLanguages(
         primaryLanguageCode: "hi",

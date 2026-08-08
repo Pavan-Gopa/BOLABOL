@@ -16,6 +16,16 @@ private struct BolabolPackageManifestFile: Codable {
     let sizeBytes: Int64
 }
 
+enum ModelDownloadPathPolicy {
+    static func isSafe(_ path: String) -> Bool {
+        let components = path.split(separator: "/", omittingEmptySubsequences: false)
+        return !path.isEmpty
+            && !path.hasPrefix("/")
+            && !components.contains("..")
+            && !components.contains("")
+    }
+}
+
 @MainActor
 final class TranscriptionModelStore: ObservableObject {
     /// Legacy transcription settings blob key. Internal so GeneralSettingsStore
@@ -276,10 +286,6 @@ final class TranscriptionModelStore: ObservableObject {
 
             case .canaryCoreML, .gigaAMCoreML:
                 let destination = destinationURL(for: model)
-                try fileManager.createDirectory(
-                    at: destination,
-                    withIntermediateDirectories: true
-                )
                 let progressHandler: @Sendable (Double) -> Void = { [weak self] fraction in
                     Task { @MainActor [weak self] in
                         self?.settings.markDownloading(
@@ -608,10 +614,21 @@ final class TranscriptionModelStore: ObservableObject {
 
         let items = try JSONDecoder().decode([HFItem].self, from: data)
         let fileItems = items.filter { $0.type == "file" }
+        guard fileItems.allSatisfy({ ModelDownloadPathPolicy.isSafe($0.path) }) else {
+            let unsafePath = fileItems.first(where: {
+                !ModelDownloadPathPolicy.isSafe($0.path)
+            })?.path ?? ""
+            throw TranscriptionModelDownloadError.invalidRemotePath(unsafePath)
+        }
+        try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
+
         let totalBytes = fileItems.compactMap(\.size).reduce(0, +)
         var downloadedBytes: Int64 = 0
 
         for item in fileItems {
+            guard ModelDownloadPathPolicy.isSafe(item.path) else {
+                throw TranscriptionModelDownloadError.invalidRemotePath(item.path)
+            }
             let localFileURL = destination.appendingPathComponent(item.path)
             try fileManager.createDirectory(at: localFileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
 
@@ -742,12 +759,8 @@ final class TranscriptionModelStore: ObservableObject {
 
     private func isSafeManifestFile(_ file: BolabolPackageManifestFile) -> Bool {
         let path = file.path
-        let components = path.split(separator: "/", omittingEmptySubsequences: false)
         let hash = file.sha256.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !path.isEmpty
-            && !path.hasPrefix("/")
-            && !components.contains("..")
-            && !components.contains("")
+        return ModelDownloadPathPolicy.isSafe(path)
             && file.sizeBytes >= 0
             && hash.count == 64
             && hash.allSatisfy { $0.isHexDigit }
@@ -878,5 +891,16 @@ final class TranscriptionModelStore: ObservableObject {
 
         let digest = hasher.finalize()
         return digest.map { String(format: "%02hhx", $0) }.joined()
+    }
+}
+
+private enum TranscriptionModelDownloadError: LocalizedError {
+    case invalidRemotePath(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidRemotePath(let path):
+            "Refusing unsafe Hugging Face model path: \(path)"
+        }
     }
 }

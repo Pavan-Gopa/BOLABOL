@@ -55,10 +55,14 @@ actor ParakeetTranscriptionEngine: TranscriptionEngine {
         // Parakeet v3 detects the spoken language itself. A stale Whisper language
         // preference acts only as a script filter in FluidAudio; for example, an
         // Italian hint can suppress every Cyrillic token in Russian speech.
+        // Only the route's explicit `languageHint` (anchored auto-detect for the
+        // configured primary language) is mapped to a FluidAudio script filter;
+        // anything else stays fully unanchored auto-detect.
+        let languageFilter: Language? = request.languageHint.flatMap(Language.init(rawValue:))
         let result = try await manager.transcribe(
             normalizedAudioURL,
             decoderState: &decoderState,
-            language: nil
+            language: languageFilter
         )
         let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {

@@ -1,25 +1,11 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: VERTICAL-PULSE-HUD
+current_step: IDLE
 step_description: >-
-  Vertical Pulse HUD cycle plus security hardening. Coder Fix Attempt 8 (SEC-001..004)
-  independently approved. Final Tester retest of security fix + full feature gate
-  required before POST. SEC-005 info remains deferred and does not block POST.
-target_files:
-  - Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
-  - Sources/NativeBolabol/Stores/PolishingEngineStore.swift
-  - Sources/NativeBolabolCore/Services/SharedModelsRoot.swift
-  - Sources/NativeBolabolCore/Services/PolishingRequestPolicy.swift
-  - Sources/NativeBolabolCore/Services/ModelDownloadPathPolicy.swift
-  - Tests/NativeBolabolCoreTests/SecuritySurfaceRegressionTests.swift
-  - Tests/NativeBolabolCoreTests/FinalMaxCoverageMatrixTests.swift
-  - script/qa/check_sec_download_path_safety.sh
-  - script/qa/check_sec_*.sh
-  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  - AI_Workflow_Kit/docs/AI/REPORT.md
-  - AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md
-  - AI_Workflow_Kit/docs/AI/BUG_REPORT.md
+  VERTICAL-PULSE-HUD cycle is complete. Awaiting Human direction for the next
+  product step (plan S10+ remainder, polish, SEC-005, or release prep).
+target_files: []
 completed_steps:
   - S0
   - S1
@@ -35,41 +21,35 @@ completed_steps:
   - S7
   - S8
   - S9
+  - VERTICAL-PULSE-HUD
 skipped_steps: []
 implementation:
   status: done
   attempts: 9
-  note: >-
-    Attempt 8 SEC fix approved. No further coder work unless Tester finds bugs.
 review:
   status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved_coder_fix_attempt_8_sec
-  note: >-
-    Independent Reviewer APPROVED Attempt 8. SEC-001..004 closed; no findings.
-    SEC-005 deferred (info). 745 tests / 39/39 QA independently green.
+  verdict: approved_attempt_7_vph_and_attempt_8_sec
 qa:
-  status: pending_retest
+  status: green
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
   suite: SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE
   bugs_open: 0
   note: >-
-    Retest after approved SEC fix. Confirm SEC-001..004 still closed under full
-    gate; rerun SecuritySurface + path-safety guards + full swift test + run_all.
-    Spot-check VPH/MAX regressions still green. Add tests only if new gaps found.
-    Green → REPORT qa_green → Orchestrator POST. Bugs → BUG_REPORT → Coder.
+    Final retest qa_green: 745 tests, 39/39 QA, SEC-001..004 confirmed closed,
+    VPH contract green. MAX campaign earlier also qa_green.
 security:
-  status: sec_001_to_004_approved_pending_tester_confirm
+  status: medium_low_closed_sec005_deferred
   last_report: AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md
   open:
-    - SEC-005  # info deferred — does not block POST
-  closed_pending_retest:
+    - SEC-005  # info deferred — does not block
+  closed:
     - SEC-001
     - SEC-002
     - SEC-003
     - SEC-004
-  next_run: optional_after_post_if_human_wants_second_security_eyes
-next_actor: tester
+  next_run: optional_human_request_or_pre_release
+next_actor: human
 track: PRODUCT
 prior_track: SPIKE_COMPLETE
 go_list:
@@ -89,17 +69,19 @@ working_roots:
   - Bolabol
 checkpoint:
   last_pre_tag: bolabol/pre-VERTICAL-PULSE-HUD
-  last_post_tag: bolabol/S9-done
-  last_commit: 4d84ff2
+  last_post_tag: bolabol/VERTICAL-PULSE-HUD-done
+  last_commit: 95fdca7
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 coder_brief: |
-  No coder work. Waiting Tester retest after Attempt 8 approval.
+  No active coder brief. Step closed. Await Human next directive.
 notes: |
-  Human `статус` after Reviewer APPROVED Attempt 8:
-  - Orchestrator status build only: clean Release verify.
-  - Fresh signed Release PID 53655 (Sun Aug 9 01:09:19 2026); codesign OK.
-  - next_actor=tester for SEC-FIX retest + full gate.
-  - POST after qa_green; monorepo remote push remains DISABLED.
+  POST bolabol/VERTICAL-PULSE-HUD-done @ 95fdca7 (LOCAL ONLY — remote push DISABLED).
+  Human `статус` after Tester retest qa_green:
+  - Orchestrator status build: Release PID 62726 (Sun Aug 9 01:36:21 2026); codesign OK.
+  - GraphiFy rebuilt after POST.
+  - checkpoint.sh extended to accept AD-HOC step ids (VERTICAL-PULSE-HUD).
+  - SEC-005 info remains deferred backlog.
+  - next_actor=human. Say next step or «приступай» with direction.

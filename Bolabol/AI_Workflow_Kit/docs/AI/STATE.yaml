@@ -48,21 +48,19 @@ completed_steps:
 skipped_steps: []
 implementation:
   status: changes_requested
-  attempts: 5
+  attempts: 6
 review:
   status: changes_requested
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: changes_requested_after_coder_fix_attempt_3
+  verdict: changes_requested_after_coder_fix_attempt_4
   note: >-
-    Independent Reviewer rejected Coder Fix Attempt 3. HR-VPH-002 catalog/UI
-    restoration is accepted, but HR-VPH-001 remains open because the shared hit
-    frame does not match the real Vertical Pulse visible control geometry and
-    the 8-10 pt margin is not part of the SwiftUI Button left-click hit area.
-    Additional blockers: arbitrary picker selection still mutates persisted
-    Primary/Additional settings, popover lifecycle/session/display invalidation
-    remains incomplete, Canary target-purpose menu policy is not fail-closed
-    against ADR-022-invalid target selection, and tests/guard still miss those
-    production surfaces.
+    Independent Reviewer rejected Coder Fix Attempt 4. C-002 shared policy,
+    H-002 product no-settings-mutation, H-009 ADR-022 target-purpose fail-closed,
+    and HR-VPH-002 compact picker/catalog behavior are accepted or preserved.
+    Remaining blockers: C-003 AppKit rectangular left-click guard and SwiftUI
+    circular Button content shape still disagree, H-003 common finish/hide and
+    outside-close invalidation remain incomplete, and M-004 tests/QA guard still
+    miss production AppKit/SwiftUI/NSPopover surfaces.
 qa:
   status: blocked
   last_report: AI_Workflow_Kit/docs/AI/REPORT.md
@@ -119,6 +117,29 @@ coder_brief: |
   target/spectrum. Do not redesign anything else. Add regression tests for exact
   catalog count/order, compact width contract and full-circle hit coverage.
 notes: |
+  VERTICAL-PULSE-HUD Fix Attempt 4 independent review returned CHANGES_REQUESTED.
+  Reviewer closed or accepted C-002 shared policy, H-002 current product callback
+  no-settings-mutation, H-009 ADR-022 fail-closed target-purpose policy, and
+  HR-VPH-002 compact picker/catalog preservation. Next Coder fix must be very
+  narrow: align AppKit and SwiftUI hit shapes so no accepted guard point becomes
+  non-actionable/non-draggable; invalidate popover state through the shared
+  finish/hide path and make outside-close identity cleanup synchronous or otherwise
+  stale-callback safe; add production-surface tests/guard mutations for those
+  exact failures. Per Human `статус`, Orchestrator closed the old Bolabol process
+  and ran only `swift package clean && ./script/build_and_run.sh --verify`; no
+  test or QA suite was executed by Orchestrator. Fresh signed `dist/Bolabol.app`
+  is running as PID 66707. Signature verification returned success with no output.
+
+  VERTICAL-PULSE-HUD Coder Fix Attempt 4 handoff is present in FEEDBACK.md with
+  RESULT: waiting_review. Per Human `статус`, Orchestrator closed the old
+  Bolabol process and ran only the clean Release status build/launch command;
+  no test or QA suite was executed by Orchestrator. `swift package clean &&
+  ./script/build_and_run.sh --verify` succeeded after a longer timeout, and
+  fresh signed `dist/Bolabol.app` is running as PID 57270. Signature verification
+  returned success with no output. Orchestrator must rebuild GraphiFy before
+  issuing the independent Reviewer kick. GraphiFy was rebuilt after the Coder
+  diff: 6,433 nodes / 14,428 edges.
+
   Orchestrator status build after Fix Attempt 3 review: old Bolabol process was
   closed, `swift package clean && ./script/build_and_run.sh --verify` succeeded,
   and fresh signed Release `dist/Bolabol.app` is running as PID 36211. Orchestrator

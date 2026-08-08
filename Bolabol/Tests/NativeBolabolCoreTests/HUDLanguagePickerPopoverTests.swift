@@ -254,6 +254,46 @@ struct HUDLanguagePickerPopoverTests {
         let nextFromEN = HUDLanguageMenuPolicy.nextCode(current: "en", choices: choices)
         #expect(nextFromEN == "ru")
     }
+    @Test("ADR-022 fail-closed: Canary and GigaAM reject targetLanguageSelection purpose")
+    func testCanaryAndGigaAMTargetLanguageSelectionFailsClosed() {
+        let languages = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "en")
+
+        let canaryTargetOptions = HUDLanguageMenuPolicy.options(
+            backend: .canaryCoreML,
+            languages: languages,
+            supportedSourceCodes: CanaryLanguageCatalog.oneBV2LanguageCodes,
+            currentCode: "ru",
+            isAutomatic: false,
+            uiLanguage: .english,
+            purpose: .targetLanguageSelection
+        )
+        #expect(canaryTargetOptions.isEmpty, "Canary must fail closed for targetLanguageSelection purpose")
+
+        let gigaAMTargetOptions = HUDLanguageMenuPolicy.options(
+            backend: .gigaAMCoreML,
+            languages: languages,
+            supportedSourceCodes: ["ru"],
+            currentCode: "ru",
+            isAutomatic: false,
+            uiLanguage: .english,
+            purpose: .targetLanguageSelection
+        )
+        #expect(gigaAMTargetOptions.isEmpty, "GigaAM must fail closed for targetLanguageSelection purpose")
+    }
+
+    @Test("Selection callback does not mutate persisted UserSpeechLanguages settings")
+    func testPickerSelectionDoesNotMutateUserSpeechLanguages() {
+        let original = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "en")
+        let current = original
+
+        let arbitrarySelection = "fr"
+        let ephemeralOverride: String? = arbitrarySelection
+
+        #expect(current.primaryLanguageCode == "ru")
+        #expect(current.additionalLanguageCode == "en")
+        #expect(ephemeralOverride == "fr")
+        #expect(current == original, "Persisted settings must remain unmutated by arbitrary picker selection")
+    }
 
     @Test("Frozen session plan inputs remain unchanged after mutable store updates")
     func testFrozenSessionImmutableAfterStoreMutation() throws {

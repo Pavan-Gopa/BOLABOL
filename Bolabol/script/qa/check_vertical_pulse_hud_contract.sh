@@ -91,7 +91,10 @@ validate_contract() {
     'showsHumorControl' \
     'updateTrackedCapsuleAfterExternalMove' \
     'laidOutCapsuleScreenFrame = nil' \
-    'visibleFrame: visibleFrame'; do
+    'visibleFrame: visibleFrame' \
+    'controlHitMargin' \
+    'controlHitShape' \
+    'contentShape'; do
     require_text "$overlay" "$contract" || failed=1
   done
 
@@ -135,7 +138,18 @@ validate_contract() {
     echo "FAIL: Canary language callback has no immutable pending-session replacement"
     failed=1
   fi
-
+  if (grep -A 35 'func handleOverlayLanguageSelection' "$content" 2>/dev/null || true) | grep -qF 'generalSettingsStore.speechLanguages ='; then
+    echo "FAIL: handleOverlayLanguageSelection mutates persisted speechLanguages settings"
+    failed=1
+  fi
+  if ! grep -qF 'didChangeScreenParametersNotification' "$content"; then
+    echo "FAIL: ContentView missing display change parameter observer for popover dismissal"
+    failed=1
+  fi
+  if ! (grep -A 3 'case (.canaryCoreML, .targetLanguageSelection)' "$routing" 2>/dev/null || true) | grep -qF 'return []'; then
+    echo "FAIL: HUDLanguageMenuPolicy allows targetLanguageSelection for Canary Core ML"
+    failed=1
+  fi
   [ "$failed" -eq 0 ]
 }
 
@@ -149,68 +163,12 @@ self_test() {
     "$fixture/Sources/NativeBolabol/Views" \
     "$fixture/Sources/NativeBolabol/Services"
 
-  cat > "$fixture/Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift" <<'EOF'
-public let sourceLanguageOverride: String?
-sourceChoices.count > 1 ? .switchable : .fixed
-languageControlEnabled: sourceChoices.count > 1
-supportedCodes.contains(override)
-replacingCanarySource
-codes = normalizedDistinctCodes(supportedSourceCodes)
-translateToEnglish: false
-postASRTextTranslationTargetLanguageCode: nil
-completeTargetCatalog
-CanaryLanguageCatalog.oneBV2LanguageCodes
-flashSourceCatalog
-case targetLanguageSelection
-case explicitASRSource
-case (.canaryCoreML, .targetLanguageSelection)
-purpose: PickerPurpose = .explicitASRSource
-codes = completeTargetCatalog
-includesAutomatic = true
-EOF
-  cat > "$fixture/Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift" <<'EOF'
-verticalPulsePanelWidth
-promptSlotCount = 5
-HUDOverlayFrame
-mainCapsuleFrame
-anchoredPanelFrame
-screenCapsuleFrame
-AppText.localizedSpeechLanguageName
-controlHitMargin
-verticalControlHitFrame
-HUDVerticalControlSlot
-func controlDiameter(for scale
-languagePickerMaxWidth = 196.0
-EOF
-  cat > "$fixture/Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift" <<'EOF'
-sourceLanguageOverride: String? = nil
-sourceLanguageOverride: sourceLanguageOverride
-EOF
-  cat > "$fixture/Sources/NativeBolabol/Views/ContentView.swift" <<'EOF'
-HUDLanguageMenuPolicy.nextCode
-replacePendingCanarySession
-TranscriptionSessionResolver.replacingCanarySource
-onLanguageRightClick: handleOverlayLanguageRightClick
-HUDLanguageMenuPolicy.options
-purpose = .explicitASRSource
-purpose = .targetLanguageSelection
-case .canaryCoreML:
-EOF
-  cat > "$fixture/Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift" <<'EOF'
-maxWidth: 196
-EOF
-  cat > "$fixture/Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift" <<'EOF'
-event.type == .rightMouseUp
-onLanguageRightClick
-languageControlHitRect
-HUDQuickSwitcherLayout.anchoredPanelFrame
-HUDQuickSwitcherLayout.screenCapsuleFrame
-HUDQuickSwitcherLayout.verticalControlHitFrame
-showsHumorControl
-updateTrackedCapsuleAfterExternalMove
-laidOutCapsuleScreenFrame = nil
-visibleFrame: visibleFrame
-EOF
+  cp "$ROOT/Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift" "$fixture/Sources/NativeBolabolCore/Services/"
+  cp "$ROOT/Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift" "$fixture/Sources/NativeBolabolCore/Services/"
+  cp "$ROOT/Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift" "$fixture/Sources/NativeBolabol/Stores/"
+  cp "$ROOT/Sources/NativeBolabol/Views/ContentView.swift" "$fixture/Sources/NativeBolabol/Views/"
+  cp "$ROOT/Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift" "$fixture/Sources/NativeBolabol/Views/"
+  cp "$ROOT/Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift" "$fixture/Sources/NativeBolabol/Services/"
 
   validate_contract "$fixture" >/dev/null || {
     echo "FAIL: valid VERTICAL-PULSE-HUD fixture was rejected"
@@ -225,6 +183,8 @@ EOF
     echo "FAIL: negative self-test accepted a missing typed store override"
     return 1
   fi
+  cp "$ROOT/Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift" "$fixture/Sources/NativeBolabol/Stores/"
+
   grep -vF 'HUDLanguageMenuPolicy.nextCode' \
     "$fixture/Sources/NativeBolabol/Views/ContentView.swift" \
     > "$fixture/content.invalid"
@@ -233,14 +193,15 @@ EOF
     echo "FAIL: negative self-test accepted missing HUDLanguageMenuPolicy.nextCode"
     return 1
   fi
-  grep -vF 'includesAutomatic = true' \
-    "$fixture/Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift" \
-    > "$fixture/routing.invalid"
-  mv "$fixture/routing.invalid" "$fixture/Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift"
+  cp "$ROOT/Sources/NativeBolabol/Views/ContentView.swift" "$fixture/Sources/NativeBolabol/Views/"
+
+  sed -i '' 's/func handleOverlayLanguageSelection.*/func handleOverlayLanguageSelection(_ code: String, popoverID: UUID) {\n        generalSettingsStore.speechLanguages = languages/' "$fixture/Sources/NativeBolabol/Views/ContentView.swift"
   if validate_contract "$fixture" >/dev/null; then
-    echo "FAIL: negative self-test accepted missing catalog includesAutomatic"
+    echo "FAIL: negative self-test accepted speechLanguages settings mutation in selection handler"
     return 1
   fi
+  cp "$ROOT/Sources/NativeBolabol/Views/ContentView.swift" "$fixture/Sources/NativeBolabol/Views/"
+
   grep -vF 'maxWidth: 196' \
     "$fixture/Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift" \
     > "$fixture/picker.invalid" || true

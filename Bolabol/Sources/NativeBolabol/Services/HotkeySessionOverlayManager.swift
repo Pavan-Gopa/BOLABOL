@@ -332,6 +332,9 @@ private enum OverlayHUDLayout {
     static func humorControlSpacing(for scale: Double) -> CGFloat {
         4 * visualScale(for: scale)
     }
+    static func controlHitMargin(for scale: Double) -> CGFloat {
+        CGFloat(HUDQuickSwitcherLayout.controlHitMargin(for: scale))
+    }
 
     static func humorSliderWidth(for scale: Double, style: OverlayHUDStyle) -> CGFloat {
         switch style {
@@ -1562,13 +1565,17 @@ private struct HotkeySessionOverlayView: View {
         isEnabled: Bool = true,
         action: (() -> Void)? = nil
     ) -> some View {
+        let margin = OverlayHUDLayout.controlHitMargin(for: state.scale)
         if state.showsControls {
             Button {
                 action?()
             } label: {
                 controlButton(label: label, isActive: isActive)
+                    .padding(margin)
+                    .contentShape(controlHitShape)
             }
             .buttonStyle(.plain)
+            .padding(-margin)
             .opacity(isEnabled ? 1 : 0.34)
             .disabled(!isEnabled)
             .transition(.opacity.combined(with: .scale(scale: 0.85)))
@@ -1638,6 +1645,21 @@ private struct HotkeySessionOverlayView: View {
             )
         case .vertical:
             AnyShape(Circle())
+        }
+    }
+
+    private var controlHitShape: AnyShape {
+        let margin = OverlayHUDLayout.controlHitMargin(for: state.scale)
+        switch state.style {
+        case .capsule, .vertical:
+            return AnyShape(Circle())
+        case .tech:
+            return AnyShape(
+                RoundedRectangle(
+                    cornerRadius: 6 * visualScale + margin,
+                    style: .continuous
+                )
+            )
         }
     }
 }

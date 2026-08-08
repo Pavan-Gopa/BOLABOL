@@ -859,10 +859,9 @@ public enum HUDLanguageMenuPolicy {
         case (.canaryCoreML, .explicitASRSource):
             codes = normalizedDistinctCodes(supportedSourceCodes)
             includesAutomatic = false
-        case (.canaryCoreML, .targetLanguageSelection):
-            codes = completeTargetCatalog
-            includesAutomatic = true
-        case (.gigaAMCoreML, _):
+        case (.canaryCoreML, .targetLanguageSelection), (.gigaAMCoreML, .targetLanguageSelection):
+            return []
+        case (.gigaAMCoreML, .explicitASRSource):
             codes = ["ru"]
             includesAutomatic = false
         case (.whisperKitCoreML, .explicitASRSource), (.fluidAudioCoreML, .explicitASRSource):
@@ -877,10 +876,12 @@ public enum HUDLanguageMenuPolicy {
         switch (effectiveBackend, purpose) {
         case (.canaryCoreML, .explicitASRSource):
             selectable = codes.count > 1
-        case (.canaryCoreML, .targetLanguageSelection), (.whisperKitCoreML, .targetLanguageSelection), (.fluidAudioCoreML, .targetLanguageSelection):
-            selectable = true
-        case (.gigaAMCoreML, _):
+        case (.canaryCoreML, .targetLanguageSelection), (.gigaAMCoreML, .targetLanguageSelection):
+            return []
+        case (.gigaAMCoreML, .explicitASRSource):
             selectable = false
+        case (.whisperKitCoreML, .targetLanguageSelection), (.fluidAudioCoreML, .targetLanguageSelection):
+            selectable = true
         case (.whisperKitCoreML, .explicitASRSource), (.fluidAudioCoreML, .explicitASRSource):
             selectable = codes.count > 1
         }

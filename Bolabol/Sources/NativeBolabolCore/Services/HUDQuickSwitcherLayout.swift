@@ -270,7 +270,7 @@ public extension HUDQuickSwitcherLayout {
 
   /// Capsule content inset used to anchor controls inside the pill, scaled.
   public static func capsuleContentPad(for scale: Double) -> Double {
-    3 * overlayVisualScale(for: scale)
+    4 * overlayVisualScale(for: scale)
   }
 
   /// Pointer forgiving margin around the visible control frame, scaled.
@@ -315,17 +315,20 @@ public extension HUDQuickSwitcherLayout {
       showsPromptBar: false,
       showsHumorSlider: false
     )
+    let visibleCapsuleWidth = max(1, pill.width - 2 * shadowInset)
+    let visibleCapsuleHeight = max(1, pill.height - 2 * shadowInset)
     let pillOriginX = (panelSize.width - pill.width) / 2
     let pillBottom = shadowInset + humorOffset
     let diameter = controlDiameter(for: scale, style: style)
     let margin = controlHitMargin(for: scale)
-    let centerX = pillOriginX + (pill.width - diameter) / 2 + diameter / 2
+    let pad = capsuleContentPad(for: scale)
+    let centerX = pillOriginX + shadowInset + visibleCapsuleWidth / 2
     let centerY: Double
     switch slot {
     case .language:
-      centerY = pillBottom + pill.height - capsuleContentPad(for: scale) - diameter / 2
+      centerY = pillBottom + visibleCapsuleHeight - pad - diameter / 2
     case .target:
-      centerY = pillBottom + capsuleContentPad(for: scale) + diameter / 2
+      centerY = pillBottom + pad + diameter / 2
     }
     return HUDOverlayFrame(
       x: centerX - diameter / 2 - margin,

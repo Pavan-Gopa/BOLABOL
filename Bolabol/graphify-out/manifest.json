@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1786120154.439864,
-    "ast_hash": "47bcff4fd47725329bc3d3e7033e74bb",
+    "mtime": 1786129886.467675,
+    "ast_hash": "10d2634a81347bdfbeb03cc294477eb8",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1786124940.043894,
-    "ast_hash": "2f086d421713dfbd96a6f9edf705b021",
+    "mtime": 1786130739.5634546,
+    "ast_hash": "3a6c7bd6aed682df9d69a7182bac2c03",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -535,8 +535,8 @@
     "semantic_hash": "0ccda49981cd23aefe12c99c7c25fb79"
   },
   "Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift": {
-    "mtime": 1786118969.684992,
-    "ast_hash": "c9b1c3e8b936557bce20a321d8da621f",
+    "mtime": 1786128882.646697,
+    "ast_hash": "f164ee2c949093c6383b4ceb04b099ab",
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Services/LocalModelScanner.swift": {
@@ -655,8 +655,8 @@
     "semantic_hash": "5dc85f94fe5de7e1fde12c417509a1a3"
   },
   "Sources/NativeBolabol/Views/ContentView.swift": {
-    "mtime": 1786122982.477427,
-    "ast_hash": "7396f0f66df7441cfc866c928d36880d",
+    "mtime": 1786129208.2876549,
+    "ast_hash": "a5aa457d00bd52796824fd6858f2a808",
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Views/GlossaryCategoryPicker.swift": {
@@ -930,8 +930,8 @@
     "semantic_hash": "9ec26128501a230ad9ed2c0d329efa43"
   },
   "Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift": {
-    "mtime": 1786118865.369797,
-    "ast_hash": "56e29d51395b9949bcf5731652f70c63",
+    "mtime": 1786128857.9313097,
+    "ast_hash": "868becc3fa57789300d050745900ed3d",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/HUDSpectrumResponse.swift": {
@@ -1020,8 +1020,8 @@
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift": {
-    "mtime": 1786119238.2605772,
-    "ast_hash": "674e5df3229da21d99e1452c7846b221",
+    "mtime": 1786128906.0290766,
+    "ast_hash": "551c74ed5819689f95b517a6e4a0ef66",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/TranslationPrompt.swift": {
@@ -1130,8 +1130,8 @@
     "semantic_hash": "ef5746cec20db1beae59022a04abb1a7"
   },
   "Tests/NativeBolabolCoreTests/HUDLayoutAndComposerTests.swift": {
-    "mtime": 1786119309.3981543,
-    "ast_hash": "f916760db8597e90b3f76c98d84750d8",
+    "mtime": 1786128940.0201516,
+    "ast_hash": "2fbb60b599894fc508c1e441f5ef5a3a",
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/HUDProviderSwitcherFeatureTests.swift": {
@@ -1675,8 +1675,8 @@
     "semantic_hash": ""
   },
   "script/qa/check_vertical_pulse_hud_contract.sh": {
-    "mtime": 1786119506.9124901,
-    "ast_hash": "b3d071188fd63b0e83393a8d12469942",
+    "mtime": 1786129037.3421266,
+    "ast_hash": "ca7f82c013c07fc52fd75f03a47ea1b3",
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift": {
@@ -1685,8 +1685,8 @@
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/HUDLanguagePickerPopoverTests.swift": {
-    "mtime": 1786119146.5320532,
-    "ast_hash": "e89277cb6c8321637551794e2d914c43",
+    "mtime": 1786128945.0608637,
+    "ast_hash": "aac4523eba46d4e2211ed0fb50f01ef9",
     "semantic_hash": ""
   }
 }

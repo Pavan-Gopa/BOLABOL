@@ -70,7 +70,8 @@ working_roots:
 checkpoint:
   last_pre_tag: bolabol/pre-VERTICAL-PULSE-HUD
   last_post_tag: bolabol/VERTICAL-PULSE-HUD-done
-  last_commit: 95fdca7
+  last_commit: b43da84
+  post_tag_commit: 95fdca7
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md

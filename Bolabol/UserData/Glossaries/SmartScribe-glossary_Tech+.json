@@ -345,11 +345,13 @@
       "translations" : {
         "English" : "Graphify"
       },
-      "updatedAt" : "2026-07-31T12:37:38.180Z",
+      "updatedAt" : "2026-08-05T11:24:18.832Z",
       "variants" : [
         "Grafi Fi",
         "Grafi",
-        "гафифай"
+        "гафифай",
+        "GrafiFy",
+        "GrafiFi"
       ]
     },
     {
@@ -447,25 +449,12 @@
       "translations" : {
         "English" : "Прабху"
       },
-      "updatedAt" : "2026-08-01T15:33:11.908Z",
+      "updatedAt" : "2026-08-03T14:01:59.656Z",
       "variants" : [
-        "Дабу"
-      ]
-    },
-    {
-      "category" : "Product Terms",
-      "createdAt" : "2026-08-02T02:35:29.785Z",
-      "id" : "3E98CB0F-D193-4495-AA1F-408E3054C42B",
-      "remember" : true,
-      "source" : "BOLABOL",
-      "translation" : "",
-      "translations" : {
-        "English" : "BOLABOL"
-      },
-      "updatedAt" : "2026-08-02T02:59:00.500Z",
-      "variants" : [
-        "Блабом",
-        "Блабум"
+        "Дабу",
+        "пробу",
+        "про Бу",
+        "Прабу"
       ]
     },
     {
@@ -481,6 +470,100 @@
       "updatedAt" : "2026-08-02T02:40:39.953Z",
       "variants" : [
         "Эстру"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-08-04T10:47:58.033Z",
+      "id" : "D315D768-A9BA-4EC4-856D-283276ED7C22",
+      "remember" : true,
+      "source" : "BOLABOL",
+      "translation" : "",
+      "translations" : {
+        "English" : "BOLABOL"
+      },
+      "updatedAt" : "2026-08-04T10:49:20.167Z",
+      "variants" : [
+        "Булабол",
+        "болабол",
+        "балабол"
+      ]
+    },
+    {
+      "category" : "Projects",
+      "createdAt" : "2026-08-04T10:53:49.876Z",
+      "id" : "AFC593AE-0EAD-4599-A467-9FE5A1F13437",
+      "remember" : true,
+      "source" : "Torrentino",
+      "translation" : "",
+      "translations" : {
+        "English" : "Torrentino"
+      },
+      "updatedAt" : "2026-08-04T10:53:49.876Z",
+      "variants" : [
+        "Торантино"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-08-05T05:35:32.599Z",
+      "id" : "758E0F06-DB24-498C-A2A2-54E76D649C3D",
+      "remember" : true,
+      "source" : "Canary",
+      "translation" : "",
+      "translations" : {
+        "English" : "Canary"
+      },
+      "updatedAt" : "2026-08-05T12:53:54.472Z",
+      "variants" : [
+        "кенери",
+        "Кеннери",
+        "Kennery",
+        "Kenner"
+      ]
+    },
+    {
+      "createdAt" : "2026-08-05T05:36:23.433Z",
+      "id" : "9E192289-F662-412D-88EA-B27C16AF9186",
+      "remember" : true,
+      "source" : "GigaAM",
+      "translation" : "",
+      "translations" : {
+        "English" : "GigaAM"
+      },
+      "updatedAt" : "2026-08-05T05:36:23.433Z",
+      "variants" : [
+        "гигам"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-08-05T10:40:14.512Z",
+      "id" : "5F965E2B-1D4E-444E-BEE7-CC41C27E71DD",
+      "remember" : true,
+      "source" : "Canary 1B",
+      "translation" : "",
+      "translations" : {
+        "English" : "Canary 1B"
+      },
+      "updatedAt" : "2026-08-05T10:40:14.512Z",
+      "variants" : [
+        "Кенри 1Б"
+      ]
+    },
+    {
+      "category" : "Product Terms",
+      "createdAt" : "2026-08-05T10:40:50.896Z",
+      "id" : "ABAC1998-4E7B-4461-9B49-96DB66B17210",
+      "remember" : true,
+      "source" : "Canary Flash",
+      "translation" : "",
+      "translations" : {
+        "English" : "Canary Flash"
+      },
+      "updatedAt" : "2026-08-05T10:40:50.896Z",
+      "variants" : [
+        "канере флеш"
       ]
     }
   ],

@@ -86,6 +86,38 @@ public struct HUDOverlayFrame: Equatable, Sendable {
   }
 }
 
+/// Exact interactive shape for a vertical-pulse control: the visible circle
+/// expanded by the forgiving pointer margin. Both the AppKit interactive guard
+/// and the SwiftUI Button hit shape must be governed by this single circle so
+/// that no point accepted by one surface is inert in the other.
+public struct HUDVerticalControlHitRegion: Equatable, Sendable {
+  public let centerX: Double
+  public let centerY: Double
+  public let radius: Double
+
+  public init(centerX: Double, centerY: Double, radius: Double) {
+    self.centerX = centerX.isFinite ? centerX : 0
+    self.centerY = centerY.isFinite ? centerY : 0
+    self.radius = radius.isFinite ? max(0, radius) : 0
+  }
+
+  public func contains(pointX: Double, pointY: Double) -> Bool {
+    let dx = pointX - centerX
+    let dy = pointY - centerY
+    return dx * dx + dy * dy <= radius * radius
+  }
+
+  /// Bounding square; same geometry as `verticalControlHitFrame`.
+  public var boundingFrame: HUDOverlayFrame {
+    HUDOverlayFrame(
+      x: centerX - radius,
+      y: centerY - radius,
+      width: 2 * radius,
+      height: 2 * radius
+    )
+  }
+}
+
 public extension HUDQuickSwitcherLayout {
   static let promptSlotCount = 5
   static let promptSlotButtonWidth = 17.0
@@ -274,8 +306,10 @@ public extension HUDQuickSwitcherLayout {
   }
 
   /// Pointer forgiving margin around the visible control frame, scaled.
+  /// The forgiving band stays within the approved 8–10pt range at every
+  /// supported HUD visual scale so the hit area never overgrows.
   public static func controlHitMargin(for scale: Double) -> Double {
-    10 * overlayVisualScale(for: scale)
+    min(10, 10 * overlayVisualScale(for: scale))
   }
 
   /// Diameter of a round control button, including capsule style scaling.
@@ -291,10 +325,10 @@ public extension HUDQuickSwitcherLayout {
     }
   }
 
-  /// Hit frame (panel-local, bottom-left origin) for a control slot in the
-  /// vertical pulse layout. Both the AppKit hit-testing and the tests consume
-  /// this single policy so they can never drift apart.
-  public static func verticalControlHitFrame(
+  /// Exact circular interactive shape for a vertical-pulse control slot.
+  /// Panels and SwiftUI consume this one shared circle, so their hit areas can
+  /// never disagree (the bounding square alone would accept inert corners).
+  public static func verticalControlHitRegion(
     slot: HUDVerticalControlSlot,
     panelSize: HUDOverlaySize,
     scale: Double,
@@ -302,7 +336,7 @@ public extension HUDQuickSwitcherLayout {
     isProcessing: Bool,
     showsPromptBar: Bool = false,
     showsHumorSlider: Bool = false
-  ) -> HUDOverlayFrame {
+  ) -> HUDVerticalControlHitRegion {
     let visualScale = overlayVisualScale(for: scale)
     let shadowInset = overlayShadowPad * visualScale
     let humorOffset = showsHumorSlider
@@ -330,12 +364,36 @@ public extension HUDQuickSwitcherLayout {
     case .target:
       centerY = pillBottom + pad + diameter / 2
     }
-    return HUDOverlayFrame(
-      x: centerX - diameter / 2 - margin,
-      y: centerY - diameter / 2 - margin,
-      width: diameter + 2 * margin,
-      height: diameter + 2 * margin
+    return HUDVerticalControlHitRegion(
+      centerX: centerX,
+      centerY: centerY,
+      radius: diameter / 2 + margin
     )
+  }
+
+  /// Hit frame (panel-local, bottom-left origin) for a control slot in the
+  /// vertical pulse layout. Both the AppKit hit-testing and the tests consume
+  /// this single policy so they can never drift apart. The frame is derived
+  /// from the shared circular hit region; it is the bounding square only, and
+  /// point containment outside the circle must use `verticalControlHitRegion`.
+  public static func verticalControlHitFrame(
+    slot: HUDVerticalControlSlot,
+    panelSize: HUDOverlaySize,
+    scale: Double,
+    style: OverlayHUDStyle,
+    isProcessing: Bool,
+    showsPromptBar: Bool = false,
+    showsHumorSlider: Bool = false
+  ) -> HUDOverlayFrame {
+    verticalControlHitRegion(
+      slot: slot,
+      panelSize: panelSize,
+      scale: scale,
+      style: style,
+      isProcessing: isProcessing,
+      showsPromptBar: showsPromptBar,
+      showsHumorSlider: showsHumorSlider
+    ).boundingFrame
   }
 
   /// Maximum allowed width of the language picker popover. Kept compact so it

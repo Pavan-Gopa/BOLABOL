@@ -82,6 +82,12 @@ public struct UserSpeechLanguages: Codable, Equatable, Sendable {
         additionalLanguageCode == primaryLanguageCode
     }
 
+    /// Returns whether `code` is the distinct configured Additional language.
+    /// Same-as-primary pairs intentionally have no Additional badge.
+    public func isAdditionalLanguage(_ code: String) -> Bool {
+        !usesSameAdditionalAsPrimary && additionalLanguageCode == Self.normalized(code)
+    }
+
     /// The configured pair in Settings order, with duplicate codes removed.
     /// This is an ephemeral presentation helper; it never changes the stored pair.
     public var orderedDistinctCodes: [String] {

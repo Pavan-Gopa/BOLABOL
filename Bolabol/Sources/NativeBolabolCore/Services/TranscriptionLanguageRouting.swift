@@ -4,15 +4,22 @@ public struct TranscriptionLanguageRoute: Equatable, Sendable {
     public var forcedLanguageCode: String?
     public var translateToEnglish: Bool
     public var postASRTextTranslationTargetLanguageCode: String?
+    /// Primary-language auto-detect anchor for script-aware engines
+    /// (Parakeet/FluidAudio). Auto sessions orient to the configured primary
+    /// language instead of silently defaulting to an English-biased request.
+    /// This hint is never a Whisper forced token and never a translation target.
+    public var languageHint: String?
 
     public init(
         forcedLanguageCode: String?,
         translateToEnglish: Bool,
-        postASRTextTranslationTargetLanguageCode: String?
+        postASRTextTranslationTargetLanguageCode: String?,
+        languageHint: String? = nil
     ) {
         self.forcedLanguageCode = forcedLanguageCode
         self.translateToEnglish = translateToEnglish
         self.postASRTextTranslationTargetLanguageCode = postASRTextTranslationTargetLanguageCode
+        self.languageHint = languageHint
     }
 }
 
@@ -198,7 +205,8 @@ public struct TranscriptionSessionPlan: Equatable, Sendable {
         TranscriptionRequest(
             audioFileURL: audioFileURL,
             forcedLanguageCode: request.forcedLanguageCode,
-            translateToEnglish: request.translateToEnglish
+            translateToEnglish: request.translateToEnglish,
+            languageHint: request.languageHint
         )
     }
 
@@ -562,13 +570,27 @@ public enum TranscriptionSessionResolver {
 
         switch snapshot.operation {
         case .asr:
-            // Parakeet must not inherit a restrictive Whisper preference. It
-            // auto-detects internally even when the legacy setting is explicit.
+            // Parakeet auto-detect must not inherit a restrictive Whisper
+            // preference as a *forced* token. However, an auto session with a
+            // configured primary language carries that language as a deliberate
+            // script/anchor hint (e.g. Russian) so the engine cannot silently
+            // fall back to an English-oriented request. Explicit legacy
+            // preferences stay unanchored (the stale-preference protection from
+            // the accepted Vertical Pulse fix remains untouched).
+            let autoAnchorHint: String?
+            if model.backend == .fluidAudioCoreML,
+               model.languageSupport == .multilingual,
+               languageCode == "auto" {
+                autoAnchorHint = normalizedOptionalLanguageCode(snapshot.primaryLanguageCode)
+            } else {
+                autoAnchorHint = nil
+            }
             route = model.backend == .fluidAudioCoreML
                 ? TranscriptionLanguageRoute(
                     forcedLanguageCode: nil,
                     translateToEnglish: false,
-                    postASRTextTranslationTargetLanguageCode: nil
+                    postASRTextTranslationTargetLanguageCode: nil,
+                    languageHint: autoAnchorHint
                 )
                 : TranscriptionLanguageRouter.route(
                     resolvedLanguageCode: languageCode,
@@ -635,7 +657,8 @@ public enum TranscriptionSessionResolver {
                 && model.languageSupport == .multilingual,
             request: TranscriptionRequest(
                 forcedLanguageCode: route.forcedLanguageCode,
-                translateToEnglish: route.translateToEnglish
+                translateToEnglish: route.translateToEnglish,
+                languageHint: route.languageHint
             ),
             sourceLanguageWarning: sourceLanguageWarning
         )
@@ -774,6 +797,8 @@ public struct HUDLanguageMenuOption: Identifiable, Equatable, Sendable {
     public let hudLabel: String
     public let isCurrent: Bool
     public let isSelectable: Bool
+    /// Whether this option is the distinct Additional language from Settings.
+    public let isAdditional: Bool
 
     public var id: String { code }
 
@@ -782,13 +807,15 @@ public struct HUDLanguageMenuOption: Identifiable, Equatable, Sendable {
         displayName: String,
         hudLabel: String,
         isCurrent: Bool,
-        isSelectable: Bool
+        isSelectable: Bool,
+        isAdditional: Bool = false
     ) {
         self.code = code
         self.displayName = displayName
         self.hudLabel = hudLabel
         self.isCurrent = isCurrent
         self.isSelectable = isSelectable
+        self.isAdditional = isAdditional
     }
 }
 
@@ -892,7 +919,8 @@ public enum HUDLanguageMenuPolicy {
                 displayName: AppText.localized(.autoDetect, language: uiLanguage, systemLocale: systemLocale),
                 hudLabel: "A",
                 isCurrent: isAutomatic,
-                isSelectable: true
+                isSelectable: true,
+                isAdditional: false
             )]
             : []
 
@@ -906,7 +934,8 @@ public enum HUDLanguageMenuPolicy {
                 ),
                 hudLabel: TranscriptionLanguageOption.hudLabel(for: code),
                 isCurrent: !isAutomatic && normalized(code) == normalized(currentCode ?? ""),
-                isSelectable: selectable
+                isSelectable: selectable,
+                isAdditional: languages.isAdditionalLanguage(code)
             )
         }
     }

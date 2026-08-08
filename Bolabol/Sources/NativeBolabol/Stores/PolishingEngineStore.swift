@@ -545,6 +545,9 @@ final class PolishingEngineStore: ObservableObject {
 
         var completedBytes: Int64 = 0
         for entry in entries {
+            guard ModelDownloadPathPolicy.isSafe(entry.path) else {
+                throw PolishingModelDownloadError.invalidRemotePath(entry.path)
+            }
             let destination = snapshotURL.appendingPathComponent(entry.path)
             let expectedBytes = entry.size
             if isCompleteDownloadedFile(at: destination, expectedBytes: expectedBytes) {
@@ -601,6 +604,13 @@ final class PolishingEngineStore: ObservableObject {
         }
 
         let entries = try JSONDecoder().decode([DirectHuggingFaceTreeEntry].self, from: data)
+        guard entries.allSatisfy({ ModelDownloadPathPolicy.isSafe($0.path) }) else {
+            let unsafePath = entries.first(where: {
+                !ModelDownloadPathPolicy.isSafe($0.path)
+            })?.path ?? ""
+            throw PolishingModelDownloadError.invalidRemotePath(unsafePath)
+        }
+
         return entries
             .filter { $0.type == "file" }
             .filter { entry in
@@ -893,13 +903,12 @@ final class PolishingEngineStore: ObservableObject {
         })
     }
 
-    private static let mlxModelDownloadPatterns = [
+    static let mlxModelDownloadPatterns = [
         "*.safetensors",
         "*.json",
         "*.jinja",
         "*.txt",
-        "*.model",
-        "*.py"
+        "*.model"
     ]
 
     private static let requiredCachedMetadataFiles = [
@@ -1104,6 +1113,7 @@ private struct CurlDownloadTask {
 private enum PolishingModelDownloadError: LocalizedError {
     case invalidRepositoryID(String)
     case invalidDownloadResponse(String)
+    case invalidRemotePath(String)
     case curlFailed(String)
     case incompleteFile(String, expected: Int64, actual: Int64)
     case incompleteSnapshot(String)
@@ -1114,6 +1124,8 @@ private enum PolishingModelDownloadError: LocalizedError {
             "Invalid Hugging Face repository ID: \(repositoryID)"
         case .invalidDownloadResponse(let path):
             "Invalid Hugging Face download response for \(path)"
+        case .invalidRemotePath(let path):
+            "Refusing unsafe Hugging Face model path: \(path)"
         case .curlFailed(let message):
             "Hugging Face download failed: \(message)"
         case .incompleteFile(let filename, let expected, let actual):

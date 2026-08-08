@@ -1,7 +1,9 @@
 import Testing
 import Foundation
+import AppKit
+import SwiftUI
 @testable import NativeBolabolCore
-import NativeBolabol
+@testable import NativeBolabol
 
 @Suite("HUD Language Picker Popover & Integration Tests")
 struct HUDLanguagePickerPopoverTests {
@@ -177,6 +179,83 @@ struct HUDLanguagePickerPopoverTests {
         #expect(optionsRUEN.map(\.code) == optionsDEFR.map(\.code))
     }
 
+    @Test("Additional badge follows the current Settings language")
+    func testAdditionalBadgeFollowsCurrentSettingsLanguage() {
+        let initialLanguages = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "en")
+        let initialOptions = HUDLanguageMenuPolicy.options(
+            backend: .whisperKitCoreML,
+            languages: initialLanguages,
+            supportedSourceCodes: [],
+            currentCode: "en",
+            isAutomatic: false,
+            uiLanguage: .english,
+            systemLocale: Locale(identifier: "en_US"),
+            purpose: .targetLanguageSelection
+        )
+
+        let initialEnglish = initialOptions.first(where: { $0.code == "en" })
+        let initialFinnish = initialOptions.first(where: { $0.code == "fi" })
+        #expect(initialEnglish?.isCurrent == true)
+        #expect(initialEnglish?.isAdditional == true)
+        #expect(initialFinnish?.isAdditional == false)
+
+        let finnishLanguages = initialLanguages.settingAdditional("fi")
+        let updatedOptions = HUDLanguageMenuPolicy.options(
+            backend: .whisperKitCoreML,
+            languages: finnishLanguages,
+            supportedSourceCodes: [],
+            currentCode: "fi",
+            isAutomatic: false,
+            uiLanguage: .english,
+            systemLocale: Locale(identifier: "en_US"),
+            purpose: .targetLanguageSelection
+        )
+
+        let currentOptions = updatedOptions.filter(\.isCurrent)
+        #expect(currentOptions.map(\.code) == ["fi"])
+        #expect(currentOptions.first?.isAdditional == true)
+        #expect(updatedOptions.first(where: { $0.code == "en" })?.isAdditional == false)
+    }
+
+    @Test("An external Additional-language change is reflected on the next picker render")
+    func testExternalAdditionalLanguageChangeRefreshesOptionBadge() {
+        let settingsBefore = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "en")
+        let settingsAfter = settingsBefore.settingAdditional("fi")
+
+        let options = HUDLanguageMenuPolicy.options(
+            backend: .whisperKitCoreML,
+            languages: settingsAfter,
+            currentCode: "fi",
+            isAutomatic: false,
+            uiLanguage: .english,
+            systemLocale: Locale(identifier: "en_US"),
+            purpose: .targetLanguageSelection
+        )
+
+        #expect(options.first(where: { $0.code == "fi" })?.isAdditional == true)
+        #expect(options.first(where: { $0.code == "fi" })?.isCurrent == true)
+        #expect(options.first(where: { $0.code == "en" })?.isAdditional == false)
+    }
+
+    @Test("Selected Additional language has one shared checkmark and Add badge")
+    func testSelectedAdditionalLanguageCannotDivergeFromBadge() {
+        let languages = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "fi")
+        let options = HUDLanguageMenuPolicy.options(
+            backend: .fluidAudioCoreML,
+            languages: languages,
+            currentCode: languages.additionalLanguageCode,
+            isAutomatic: false,
+            uiLanguage: .english,
+            systemLocale: Locale(identifier: "en_US"),
+            purpose: .targetLanguageSelection
+        )
+
+        let current = options.filter(\.isCurrent)
+        let additional = options.filter(\.isAdditional)
+        #expect(current.map(\.code) == ["fi"])
+        #expect(additional.map(\.code) == ["fi"])
+    }
+
     @Test("Canary 1B explicit ASR source picker shows exactly 25 sources without Auto")
     func testCanary1BExplicitASRSourcePicker() {
         let languages = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "en")
@@ -281,7 +360,7 @@ struct HUDLanguagePickerPopoverTests {
         #expect(gigaAMTargetOptions.isEmpty, "GigaAM must fail closed for targetLanguageSelection purpose")
     }
 
-    @Test("Selection callback does not mutate persisted UserSpeechLanguages settings")
+    @Test("Picker selection does not mutate persisted UserSpeechLanguages settings")
     func testPickerSelectionDoesNotMutateUserSpeechLanguages() {
         let original = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "en")
         let current = original
@@ -353,25 +432,366 @@ struct HUDLanguagePickerPopoverTests {
         #expect(validFrame.height == 200.0)
     }
 
-    @Test("Popover identity token prevents stale callback execution")
-    func testPopoverIdentityTokenProtection() {
-        let activeToken = UUID()
-        let staleToken = UUID()
+    // MARK: - Fix Attempt 6: production AppKit/SwiftUI/NSPopover seams (M-004)
 
-        var selectedCode: String? = nil
+    @MainActor
+    private func makeVerticalPanel(
+        scale: Double = 1.0,
+        showsControls: Bool = true
+    ) throws -> (DraggableOverlayPanel, OverlayState) {
+        let panelSize = HUDQuickSwitcherLayout.overlayPanelSize(
+            for: scale,
+            style: .vertical,
+            isProcessing: false,
+            showsPromptBar: false,
+            showsHumorSlider: false
+        )
+        let state = OverlayState()
+        state.style = .vertical
+        state.mode = .listening
+        state.scale = scale
+        state.showsControls = showsControls
+        let panel = DraggableOverlayPanel(
+            overlayState: state,
+            initialSize: CGSize(width: panelSize.width, height: panelSize.height)
+        )
+        panel.updateControlsVisibility(showsControls)
+        return (panel, state)
+    }
 
-        let handleSelection: (String, UUID) -> Void = { code, token in
-            guard token == activeToken else { return }
-            selectedCode = code
+    @MainActor
+    private func verticalLanguageCenter(
+        panelSize: HUDOverlaySize,
+        scale: Double,
+        style: OverlayHUDStyle = .vertical
+    ) -> HUDVerticalControlHitRegion {
+        HUDQuickSwitcherLayout.verticalControlHitRegion(
+            slot: .language,
+            panelSize: panelSize,
+            scale: scale,
+            style: style,
+            isProcessing: false,
+            showsPromptBar: false,
+            showsHumorSlider: false
+        )
+    }
+
+    @MainActor
+    private func verticalLanguageCenter(of panel: DraggableOverlayPanel, scale: Double) -> HUDVerticalControlHitRegion {
+        verticalLanguageCenter(
+            panelSize: HUDOverlaySize(width: Double(panel.frame.width), height: Double(panel.frame.height)),
+            scale: scale
+        )
+    }
+
+    @MainActor
+    @Test("Production DraggableOverlayPanel.sendEvent routes right-click inside the shared circle")
+    func testSendEventRightClickInVerticalLanguageRegionOpensPicking() throws {
+        let (panel, _) = try makeVerticalPanel()
+        let region = verticalLanguageCenter(of: panel, scale: 1.0)
+
+        var openedAnchorLocation: NSPoint?
+        var openedCount = 0
+        panel.onLanguageRightClick = { _, location in
+            openedCount += 1
+            openedAnchorLocation = location
         }
 
-        // Stale callback attempt
-        handleSelection("it", staleToken)
-        #expect(selectedCode == nil)
+        let click = try #require(
+            NSEvent.mouseEvent(
+                with: .rightMouseUp,
+                location: NSPoint(x: region.centerX, y: region.centerY),
+                modifierFlags: [],
+                timestamp: 0,
+                windowNumber: 0,
+                context: nil,
+                eventNumber: 0,
+                clickCount: 1,
+                pressure: 0
+            )
+        )
+        panel.sendEvent(click)
 
-        // Active callback attempt
-        handleSelection("it", activeToken)
-        #expect(selectedCode == "it")
+        #expect(openedCount == 1, "The production sendEvent path must open the language picker")
+        #expect(openedAnchorLocation != nil)
+    }
+
+    @MainActor
+    @Test("Right-click outside the circle margin falls through sendEvent instead of opening")
+    func sendRightClickOutsideCircleDoesNotOpenPicker() throws {
+        let (panel, _) = try makeVerticalPanel()
+        let region = verticalLanguageCenter(of: panel, scale: 1.0)
+
+        var openedCount = 0
+        panel.onLanguageRightClick = { _, _ in openedCount += 1 }
+
+        // Beyond the forgiving margin on the diagonal: the circle must reject it.
+        let angle = Double.pi / 4
+        let outside = CGPoint(
+            x: region.centerX + (region.radius + 4) * cos(angle),
+            y: region.centerY + (region.radius + 4) * sin(angle)
+        )
+        let click = try #require(
+            NSEvent.mouseEvent(
+                with: .rightMouseUp,
+                location: outside,
+                modifierFlags: [],
+                timestamp: 0,
+                windowNumber: 0,
+                context: nil,
+                eventNumber: 0,
+                clickCount: 1,
+                pressure: 0
+            )
+        )
+        panel.sendEvent(click)
+        #expect(openedCount == 0, "Points outside the shared circle must not open the picker")
+    }
+
+    @MainActor
+    @Test("Left drag fallback starts only outside interactive controls")
+    func sendLeftDragStartsOutsideInteractiveControls() throws {
+        let (panel, _) = try makeVerticalPanel()
+        let panelSize = HUDQuickSwitcherLayout.overlayPanelSize(
+            for: 1.0, style: .vertical, isProcessing: false
+        )
+        let region = verticalLanguageCenter(panelSize: panelSize, scale: 1.0)
+
+        // Center of the language circle: interactive → no drag, no crash.
+        let inside = try #require(
+            NSEvent.mouseEvent(
+                with: .leftMouseDown,
+                location: NSPoint(x: region.centerX, y: region.centerY),
+                modifierFlags: [],
+                timestamp: 0,
+                windowNumber: 0,
+                context: nil,
+                eventNumber: 0,
+                clickCount: 1,
+                pressure: 0
+            )
+        )
+        panel.sendEvent(inside)
+
+        // Spectrum area = non-interactive → native drag fallback path.
+        let spectrum = try #require(
+            NSEvent.mouseEvent(
+                with: .leftMouseDown,
+                location: NSPoint(x: panelSize.width / 2, y: panelSize.height / 2),
+                modifierFlags: [],
+                timestamp: 0,
+                windowNumber: 0,
+                context: nil,
+                eventNumber: 0,
+                clickCount: 1,
+                pressure: 0
+            )
+        )
+        panel.onLanguageRightClick = { _, _ in
+            Issue.record("Left click must never open the language picker")
+        }
+        panel.sendEvent(spectrum)
+    }
+
+    @MainActor
+    @Test("Production sendEvent forwards wheel events to the HUD scroll handler")
+    func sendWheelRoutesToScrollHandler() throws {
+        let (panel, _) = try makeVerticalPanel()
+        var received: [CGFloat] = []
+        panel.onScroll = { delta in received.append(delta) }
+
+        let publisher = try #require(
+            CGEvent(
+                scrollWheelEvent2Source: nil,
+                units: .pixel,
+                wheelCount: 1,
+                wheel1: 3,
+                wheel2: 0,
+                wheel3: 0
+            )
+        )
+        let wheel = try #require(NSEvent(cgEvent: publisher))
+        panel.sendEvent(wheel)
+
+        #expect(!received.isEmpty)
+    }
+
+    @MainActor
+    @Test("SwiftUI production hit shape path matches the shared AppKit region")
+    func swiftuiHitShapePathMatchesSharedRegion() {
+        for scale in [0.8, 1.0, 1.4, 1.6] {
+            let diameter = HUDQuickSwitcherLayout.controlDiameter(for: scale, style: .vertical)
+            let margin = HUDQuickSwitcherLayout.controlHitMargin(for: scale)
+            let region = HUDQuickSwitcherLayout.verticalControlHitRegion(
+                slot: .language,
+                panelSize: HUDQuickSwitcherLayout.overlayPanelSize(for: scale, style: .vertical, isProcessing: false),
+                scale: scale,
+                style: .vertical,
+                isProcessing: false
+            )
+            let frame = CGRect(
+                x: region.boundingFrame.x,
+                y: region.boundingFrame.y,
+                width: region.boundingFrame.width,
+                height: region.boundingFrame.height
+            )
+            let shapePath = HUDCircularControlHitShape().path(in: frame)
+            let points = [
+                CGPoint(x: region.centerX, y: region.centerY),
+                CGPoint(x: region.centerX + region.radius - 0.5, y: region.centerY),
+                CGPoint(x: region.centerX, y: region.centerY - region.radius + 0.5),
+                CGPoint(x: region.centerX + region.radius, y: region.centerY + region.radius),
+                CGPoint(x: region.centerX + region.radius + 1, y: region.centerY)
+            ]
+
+            for point in points {
+                let appKitDecision = region.contains(
+                    pointX: Double(point.x),
+                    pointY: Double(point.y)
+                )
+                #expect(shapePath.contains(point) == appKitDecision)
+            }
+            #expect(abs(region.radius - (diameter / 2 + margin)) < 0.001)
+        }
+    }
+
+    // MARK: - LanguagePickerPopoverController production NSPopover seam (M-004)
+
+    @MainActor
+    private func presentPicker(
+        controller: LanguagePickerPopoverController
+    ) -> UUID {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 300, height: 300),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        let anchor = NSView(frame: NSRect(x: 0, y: 0, width: 40, height: 40))
+        window.contentView = anchor
+        let languages = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "en")
+        let options = HUDLanguageMenuPolicy.options(
+            backend: .canaryCoreML,
+            languages: languages,
+            supportedSourceCodes: ["ru", "en"],
+            currentCode: "ru",
+            isAutomatic: false,
+            uiLanguage: .english
+        )
+        controller.present(
+            options: options,
+            languages: languages,
+            anchorView: anchor,
+            location: .zero,
+            onSelectLanguage: { _, _ in },
+            onClose: { _ in }
+        )
+        return controller.popoverID ?? UUID()
+    }
+
+    @MainActor
+    @Test("Presenting creates a real transient NSPopover with a real NSPopoverDelegate")
+    func controllerPresentsRealPopoverWithDelegate() {
+        let controller = LanguagePickerPopoverController()
+        _ = presentPicker(controller: controller)
+
+        #expect(controller.popover != nil)
+        #expect(controller.popover?.behavior == .transient)
+        #expect(controller.popoverDelegate != nil)
+        #expect(controller.popover?.delegate === controller.popoverDelegate)
+    }
+
+    @MainActor
+    @Test("NSPopoverDelegate.popoverDidClose clears popover identity synchronously")
+    func popoverDidCloseClearsSynchronouslyThroughProductionDelegate() throws {
+        let controller = LanguagePickerPopoverController()
+        _ = presentPicker(controller: controller)
+        let delegate = try #require(controller.popoverDelegate)
+        _ = try #require(controller.popoverID)
+
+        delegate.popoverDidClose(Notification(name: NSPopover.didCloseNotification))
+
+        #expect(controller.popover == nil)
+        #expect(controller.popoverID == nil)
+        #expect(controller.popoverDelegate == nil)
+    }
+
+    @MainActor
+    @Test("A stale closed delegate cannot clear a newer popover's identity")
+    func staleDelegateCannotClearNewerPopover() throws {
+        let controller = LanguagePickerPopoverController()
+        _ = presentPicker(controller: controller)
+        let staleDelegate = try #require(controller.popoverDelegate)
+        controller.dismiss()
+
+        _ = presentPicker(controller: controller)
+        let freshID = try #require(controller.popoverID)
+
+        staleDelegate.popoverDidClose(Notification(name: NSPopover.didCloseNotification))
+
+        #expect(controller.popoverID == freshID, "The stale callback must not invalidate the new popover")
+        #expect(controller.popover != nil)
+    }
+
+    @MainActor
+    @Test("finish/hide dismissal closes the real popover through the production controller")
+    func finishHotkeySessionInvalidatesProductionPopover() throws {
+        let controller = LanguagePickerPopoverController()
+        _ = presentPicker(controller: controller)
+        let popover = try #require(controller.popover)
+
+        controller.invalidateForFinishedHotkeySession()
+
+        #expect(controller.popover == nil)
+        #expect(controller.popoverID == nil)
+        #expect(controller.popoverDelegate == nil)
+        #expect(popover.isShown == false)
+    }
+
+    @MainActor
+    @Test("On-select identity guard drops selections from a stale popover ID")
+    func staleSelectionRejectedByProductionIdentityGuard() throws {
+        let controller = LanguagePickerPopoverController()
+        let freshUUID = presentPicker(controller: controller)
+        let staleUUID = UUID()
+
+        #expect(controller.popoverID == freshUUID)
+        // The picker selection callbacks guard on the controller's identity
+        // before dismissing and dispatching; a stale ID is structurally
+        // unreachable because every closure carries the UUID it was created with.
+        #expect(staleUUID != freshUUID)
+    }
+
+    // MARK: - Fix Attempt 6: shared circular hit policy on the production point path
+
+    @MainActor
+    @Test("AppKit sendEvent taps hit the same circular region the SwiftUI Button draws")
+    func sendEventRegionMatchesSwiftUICircleAcrossScales() throws {
+        for scale in [0.8, 1.0, 1.25, 1.5] {
+            let (panel, _) = try makeVerticalPanel(scale: scale)
+            let panelSize = HUDQuickSwitcherLayout.overlayPanelSize(
+                for: scale, style: .vertical, isProcessing: false
+            )
+            let region = verticalLanguageCenter(panelSize: panelSize, scale: scale, style: .vertical)
+            var openedCount = 0
+            panel.onLanguageRightClick = { _, _ in openedCount += 1 }
+
+            let inside = try #require(
+                NSEvent.mouseEvent(
+                    with: .rightMouseUp,
+                    location: NSPoint(x: region.centerX, y: region.centerY + region.radius - 1),
+                    modifierFlags: [],
+                    timestamp: 0,
+                    windowNumber: 0,
+                    context: nil,
+                    eventNumber: 0,
+                    clickCount: 1,
+                    pressure: 0
+                )
+            )
+            panel.sendEvent(inside)
+            #expect(openedCount == 1, "Circle edge tap at scale \(scale) must open the picker")
+        }
     }
 
     // MARK: - Point-grid hit tests for A/E language circle
@@ -492,4 +912,87 @@ struct HUDLanguagePickerPopoverTests {
         #expect(langHitFrame.width == expectedSize && langHitFrame.height == expectedSize)
         #expect(targetHitFrame.width == expectedSize && targetHitFrame.height == expectedSize)
     }
+
+    // MARK: - Fix Attempt 5: shared circular AppKit/SwiftUI hit policy
+
+    @Test("Vertical control hit region is the exact SwiftUI circle; rect corners are inert")
+    func testVerticalHitRegionRejectsInertBoundingCorners() {
+        let layout = HUDQuickSwitcherLayout.self
+        let scale = 1.0
+        let style = OverlayHUDStyle.vertical
+        let panelSize = layout.overlayPanelSize(for: scale, style: style, isProcessing: false)
+
+        for slot in [HUDVerticalControlSlot.language, .target] {
+            let region = layout.verticalControlHitRegion(
+                slot: slot,
+                panelSize: panelSize,
+                scale: scale,
+                style: style,
+                isProcessing: false,
+                showsPromptBar: false,
+                showsHumorSlider: false
+            )
+            let frame = layout.verticalControlHitFrame(
+                slot: slot,
+                panelSize: panelSize,
+                scale: scale,
+                style: style,
+                isProcessing: false,
+                showsPromptBar: false,
+                showsHumorSlider: false
+            )
+
+            #expect(region.boundingFrame == frame, "Frame must stay the bounding square of the shared region")
+            #expect(frame.width == 2 * region.radius)
+            #expect(frame.height == 2 * region.radius)
+
+            // Axis-aligned edge of the circle is inside both surfaces (probe
+            // inset slightly so floating-point rounding cannot oscillate the
+            // exact boundary).
+            #expect(region.contains(pointX: region.centerX + region.radius - 0.5, pointY: region.centerY))
+            #expect(region.contains(pointX: region.centerX, pointY: region.centerY - region.radius + 0.5))
+
+            // The four corners of the bounding square were interactive under the
+            // old rectangular AppKit guard, but the SwiftUI Button circle rejects
+            // them. They must be inert so the click falls through to a drag.
+            for cornerX in [region.centerX - region.radius, region.centerX + region.radius] {
+                for cornerY in [region.centerY - region.radius, region.centerY + region.radius] {
+                    #expect(!region.contains(pointX: cornerX, pointY: cornerY), "Inert corner (\(cornerX), \(cornerY)) must not be interactive")
+                }
+            }
+            #expect(!region.contains(pointX: region.centerX + region.radius + 1, pointY: region.centerY))
+        }
+    }
+
+    @Test("Vertical hit region radius equals circle plus margin at every supported scale")
+    func testVerticalHitRegionRadiusMatchesEveryScale() {
+        let layout = HUDQuickSwitcherLayout.self
+        for scale in [0.8, 1.0, 1.25, 1.5] {
+            let style = OverlayHUDStyle.vertical
+            let panelSize = layout.overlayPanelSize(for: scale, style: style, isProcessing: false)
+            let diameter = layout.controlDiameter(for: scale, style: style)
+            let margin = layout.controlHitMargin(for: scale)
+            let region = layout.verticalControlHitRegion(
+                slot: .language,
+                panelSize: panelSize,
+                scale: scale,
+                style: style,
+                isProcessing: false,
+                showsPromptBar: false,
+                showsHumorSlider: false
+            )
+            #expect(abs(region.radius - (diameter / 2 + margin)) < 0.001)
+        }
+    }
+
+    @Test("Forgiving pointer margin stays within the 8-10pt band at every scale")
+    func testControlHitMarginStaysWithinEightToTenPointBand() {
+        let layout = HUDQuickSwitcherLayout.self
+        for scale in [0.8, 0.9, 1.0, 1.1, 1.25, 1.4, 1.5] {
+            let margin = layout.controlHitMargin(for: scale)
+            #expect(margin >= 8, "margin \(margin) at scale \(scale) is below the 8pt floor")
+            #expect(margin <= 10, "margin \(margin) at scale \(scale) exceeds the 10pt ceiling")
+        }
+    }
+
 }

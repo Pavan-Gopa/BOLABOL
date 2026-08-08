@@ -5,6 +5,57 @@
 > Orchestrator opens fix/retry for Coder from either file.
 > Tester never patches product `Sources/**`.
 
+## FINAL-APPLICATION-EXHAUSTIVE-MAX-PLUS-SECURITY-SURFACE — Meta
+
+| Field | Value |
+|-------|-------|
+| Step | VERTICAL-PULSE-HUD (MAX Tester + Security Surface campaign) |
+| Date | 2026-08-08 |
+| Result | `qa_green` |
+| bugs_open | **0** |
+| Functional gate | `swift test` 740/740 PASS; `swift test --sanitize=thread` 740/740 PASS; `./script/qa/run_all.sh` 39/39 PASS |
+| New functional bugs found | none |
+| Bug-status changes this campaign | BUG-HHP-001…BUG-HHP-008 verified **fixed** (all 8 regression tests now pass) and marked closed below |
+| Security | Handled in `SECURITY_REPORT.md` (SEC-001…SEC-005, no critical/high) |
+
+## VERTICAL-PULSE-HUD Human Runtime Bug - Parakeet Auto/Russian Outputs English
+
+### BUG-VPH-006 - Parakeet auto detect ignores Primary Russian and inserts English
+
+| Field | Value |
+|-------|-------|
+| Severity | major |
+| Date | 2026-08-08 |
+| Reporter | Human manual runtime report, recorded by Orchestrator |
+| Subsystem | Hotkey dictation language routing / Parakeet auto-detect / output insertion |
+| Runtime state | Transcription model: Parakeet; Settings Primary language: Russian (`Русский`); Additional language: English; Recognition Language: Auto detect; Resolved language: `auto`; HUD shows `A`; Output target shows Variant 2 |
+| Exact repro | Select Parakeet, keep Recognition Language on Auto detect, set Primary language to Russian, speak Russian into the HUD hotkey flow, then observe inserted chat text. |
+| Expected | Auto mode must orient to the configured Primary Russian for Russian speech and insert Russian transcription. If the selected backend cannot support Russian ASR, the product must fail truthfully/visibly or route according to an explicit supported policy; it must not silently output English text for Russian speech. |
+| Actual | The text inserted into the active chat is English, despite Russian speech and Primary language Russian. |
+| Screenshot evidence | Human screenshot shows Hotkey settings with Primary `Русский`, Additional `English`, Recognition Language `Auto detect`, Resolved `auto`, HUD `A`, and English text inserted in the chat composer. |
+| Suspect areas | `Sources/NativeBolabol/Views/ContentView.swift`; `Sources/NativeBolabol/Stores/TranscriptionEngineStore.swift`; `Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift`; Parakeet capability/model selection paths. |
+| Regression requirement | Add a focused test/guard proving Parakeet Auto + Primary Russian cannot silently produce/route as English for Russian-primary sessions. The fix must preserve Whisper/Parakeet auto behavior where valid and must not regress Canary/GigaAM ADR-022 ASR-only policy. |
+| Status | closed |
+| Closure | Parakeet Auto + Primary Russian now carries a Russian FluidAudio script hint through the frozen session/request plan; focused behavioral routing tests and the full Swift suite pass. No English translation route or cloud fallback is used. |
+
+### BUG-VPH-007 - Additional language badge does not follow picker selection
+
+| Field | Value |
+|-------|-------|
+| Severity | minor |
+| Date | 2026-08-08 |
+| Reporter | Human manual runtime report, recorded by Orchestrator |
+| Subsystem | HUD language picker / Settings Additional language synchronization |
+| Runtime state | Language picker popover opened from the HUD language capsule; Settings Additional language initially English; user selects Finnish in the popover. |
+| Exact repro | Open the HUD language picker from the left language capsule, select Finnish, then observe the selected checkmark and yellow `Add` badge. |
+| Expected | The selected language and the Additional-language marker are synchronized. If Finnish is selected as Additional, the checkmark and yellow `Add` badge both move to Finnish, and Settings Additional language updates to Finnish. Changing Additional language in Settings should update the picker marker as well. |
+| Actual | The checkmark moves to Finnish, but the yellow `Add` badge remains on English. The visible picker state is inconsistent with the selected Additional language. |
+| Screenshot evidence | Human screenshot shows Finnish selected with a checkmark while the yellow `Add` badge remains on English. |
+| Suspect areas | `Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift`; `Sources/NativeBolabol/Views/ContentView.swift`; `Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift`; `UserSpeechLanguages`/Additional-language state projection into picker options. |
+| Regression requirement | Add focused tests proving picker option badges are recomputed from the current Additional language after selection and from Settings changes. Preserve compact picker UI, search/scroll, full catalogs, BUG-VPH-006 Parakeet/Russian fix, and ADR-022 Canary/GigaAM ASR-only behavior. |
+| Status | closed |
+| Closure | The HUD policy now derives the `Add` badge from the current Additional-language state carried by each option. Whisper/Fluid/Cloud non-Auto picker selections update only the persisted Additional language through the accepted update path; Canary/GigaAM source selection remains ephemeral. Focused HUD and UserSpeechLanguages tests prove English -> Finnish badge movement, Settings projection refresh, and checkmark/badge alignment. |
+
 ## HUD-HUMOR-PROMPTS Exhaustive Application QA
 
 ### Meta
@@ -152,6 +203,25 @@
 - Open moderate: BUG-HHP-003.
 - Open minor: BUG-HHP-008.
 - Final result is `bugs`; `qa_green` is not permitted.
+
+### Closure — verified 2026-08-08 (FINAL-APPLICATION-EXHAUSTIVE-MAX campaign)
+
+All eight BUG-HHP defects were fixed by subsequent Coder attempts. Independent
+Tester re-run on 2026-08-08 confirms every regression test now **passes** on
+the current tree (no product edits by Tester):
+
+| Bug | Regression test | Status |
+|-----|-----------------|--------|
+| BUG-HHP-001 | `runtimeControlsRemainIdempotentWhenAppliedRepeatedly` | PASS → **closed** |
+| BUG-HHP-002 | `contentViewSettingsHumorLevelChangeUpdatesThePendingListeningSnapshot` | PASS → **closed** |
+| BUG-HHP-003 | `hudProviderSwitcherIgnoresNonFiniteScrollWithoutPoisoningLaterInput` | PASS → **closed** |
+| BUG-HHP-004 | `audioRetentionLimitCountsOnlyAudioNotesAndPreservesTextNotes` | PASS → **closed** |
+| BUG-HHP-005 | `deletingImportedAudioNoteNeverDeletesTheUsersSourceFile` | PASS → **closed** |
+| BUG-HHP-006 | `onboardingTryRecordNotificationHasAProductionConsumer` | PASS → **closed** |
+| BUG-HHP-007 | `acceptedADR021KeepsCanaryOutOfTheTranslationRuntime` | PASS → **closed** |
+| BUG-HHP-008 | `translationUserFeedbackAndGlossaryActionsUseLocalizedCopy` | PASS → **closed** |
+
+Evidence: `swift test --filter "runtimeControlsRemainIdempotent|contentViewSettingsHumorLevelChange|hudProviderSwitcherIgnoresNonFinite|audioRetentionLimitCounts|deletingImportedAudioNote|onboardingTryRecordNotification|acceptedADR021|translationUserFeedbackAndGlossaryActions"` → 8/8 PASS; full suite 740/740 PASS.
 
 ## Meta
 

@@ -116,13 +116,24 @@ public enum SharedModelsRoot {
             defaultRoot: defaultRoot,
             legacyRoot: legacyRoot,
             fileManager: fileManager
-        ).standardizedFileURL.resolvingSymlinksInPath()
+        ).standardizedFileURL.resolvingSymlinksInPath().standardizedFileURL
 
-        let standardizedURL = modelURL.standardizedFileURL.resolvingSymlinksInPath()
         let rootPath = root.path.hasSuffix("/") ? root.path : root.path + "/"
+        let standardizedURL = modelURL.standardizedFileURL
         guard standardizedURL.path.hasPrefix(rootPath) else { return nil }
 
-        let relativePath = String(standardizedURL.path.dropFirst(rootPath.count))
+        // Resolve every existing component, including symlinks whose target has
+        // a missing tail. This keeps the containment contract valid for paths
+        // that are not installed yet, not only for existing model files.
+        guard let safeURL = symlinkSafeURL(
+            for: standardizedURL,
+            under: root,
+            fileManager: fileManager
+        ), safeURL.path.hasPrefix(rootPath) else {
+            return nil
+        }
+
+        let relativePath = String(safeURL.path.dropFirst(rootPath.count))
         guard let slashIndex = relativePath.firstIndex(of: "/") else { return nil }
         let runtimeName = String(relativePath[..<slashIndex])
         let nameStart = relativePath.index(after: slashIndex)
@@ -135,6 +146,37 @@ public enum SharedModelsRoot {
         }
 
         return SharedModelLocation(runtime: runtime, name: name)
+    }
+
+    private static func symlinkSafeURL(
+        for standardizedURL: URL,
+        under root: URL,
+        fileManager: FileManager
+    ) -> URL? {
+        let rootPath = root.path.hasSuffix("/") ? root.path : root.path + "/"
+        guard standardizedURL.path.hasPrefix(rootPath) else { return nil }
+
+        let relativePath = String(standardizedURL.path.dropFirst(rootPath.count))
+        var resolvedURL = root
+
+        for component in relativePath.split(separator: "/", omittingEmptySubsequences: true) {
+            let nextURL = resolvedURL.appendingPathComponent(String(component))
+            if let destination = try? fileManager.destinationOfSymbolicLink(atPath: nextURL.path) {
+                let targetURL = destination.hasPrefix("/")
+                    ? URL(fileURLWithPath: destination)
+                    : nextURL.deletingLastPathComponent().appendingPathComponent(destination)
+                resolvedURL = targetURL.standardizedFileURL
+                    .resolvingSymlinksInPath()
+                    .standardizedFileURL
+                guard resolvedURL.path == root.path || resolvedURL.path.hasPrefix(rootPath) else {
+                    return nil
+                }
+            } else {
+                resolvedURL = nextURL
+            }
+        }
+
+        return resolvedURL.standardizedFileURL
     }
 
     private static func readConfigRoot(

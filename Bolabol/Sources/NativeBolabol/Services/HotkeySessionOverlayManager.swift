@@ -265,7 +265,7 @@ final class HotkeySessionOverlayManager {
 }
 
 @MainActor
-private final class OverlayState: ObservableObject {
+final class OverlayState: ObservableObject {
     @Published var mode: HotkeySessionOverlayManager.Mode = .listening
     @Published var spectrumBands: [Float] = Array(repeating: 0.04, count: 40)
     @Published var scale: Double = 1
@@ -436,7 +436,7 @@ private enum OverlayHUDLayout {
     }
 }
 
-private final class DraggableOverlayPanel: NSPanel {
+final class DraggableOverlayPanel: NSPanel {
     var originDidChange: ((OverlayHUDOrigin) -> Void)?
     var onLanguageRightClick: ((_ anchorView: NSView, _ locationInAnchor: NSPoint) -> Void)?
     var onScroll: ((_ deltaY: CGFloat) -> Void)? {
@@ -515,7 +515,7 @@ private final class DraggableOverlayPanel: NSPanel {
         if event.type == .rightMouseUp,
            overlayState.mode == .listening,
            overlayState.showsControls,
-           languageControlHitRect().contains(contentPoint(for: event)) {
+           isClickInLanguageControl(contentPoint(for: event)) {
             guard let anchorView = contentView else { return }
             let location = anchorView.convert(event.locationInWindow, from: nil)
             onLanguageRightClick?(anchorView, location)
@@ -864,11 +864,41 @@ private final class DraggableOverlayPanel: NSPanel {
         )
     }
 
+    private func verticalControlHitRegion(_ slot: HUDVerticalControlSlot) -> HUDVerticalControlHitRegion? {
+        guard overlayState.style == .vertical else { return nil }
+        let panelSize = frame.size
+        return HUDQuickSwitcherLayout.verticalControlHitRegion(
+            slot: slot,
+            panelSize: HUDOverlaySize(width: panelSize.width, height: panelSize.height),
+            scale: overlayState.scale,
+            style: overlayState.style,
+            isProcessing: overlayState.mode == .processing,
+            showsPromptBar: false,
+            showsHumorSlider: overlayState.showsHumorControl
+        )
+    }
+
+    private func isClickInLanguageControl(_ point: NSPoint) -> Bool {
+        guard overlayState.showsControls, overlayState.languageControlEnabled else { return false }
+        if let region = verticalControlHitRegion(.language) {
+            return region.contains(pointX: Double(point.x), pointY: Double(point.y))
+        }
+        return languageControlHitRect().contains(point)
+    }
+
+    private func isClickInTargetControl(_ point: NSPoint) -> Bool {
+        guard overlayState.showsControls else { return false }
+        if let region = verticalControlHitRegion(.target) {
+            return region.contains(pointX: Double(point.x), pointY: Double(point.y))
+        }
+        return targetControlHitRect().contains(point)
+    }
+
     private func isClickInInteractiveControl(_ point: NSPoint) -> Bool {
-        if overlayState.showsControls && overlayState.languageControlEnabled && languageControlHitRect().contains(point) {
+        if isClickInLanguageControl(point) {
             return true
         }
-        if overlayState.showsControls && targetControlHitRect().contains(point) {
+        if isClickInTargetControl(point) {
             return true
         }
         if overlayState.showsPromptBar && overlayState.isHovered && promptBarHitRect().contains(point) {
@@ -882,6 +912,15 @@ private final class DraggableOverlayPanel: NSPanel {
 
     private func screenVisibleFrame() -> CGRect {
         screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? .zero
+    }
+}
+
+/// Concrete SwiftUI hit shape shared by the circular HUD controls. Keeping a
+/// named shape here gives AppKit tests a production path to compare against
+/// `HUDVerticalControlHitRegion`, instead of duplicating the circle in tests.
+struct HUDCircularControlHitShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path(ellipseIn: rect)
     }
 }
 
@@ -1652,7 +1691,7 @@ private struct HotkeySessionOverlayView: View {
         let margin = OverlayHUDLayout.controlHitMargin(for: state.scale)
         switch state.style {
         case .capsule, .vertical:
-            return AnyShape(Circle())
+            return AnyShape(HUDCircularControlHitShape())
         case .tech:
             return AnyShape(
                 RoundedRectangle(

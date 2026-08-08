@@ -39,6 +39,8 @@ validate_contract() {
 
   for contract in \
     'public let sourceLanguageOverride: String?' \
+    'public let isAdditional: Bool' \
+    'isAdditionalLanguage' \
     'sourceChoices.count > 1 ? .switchable : .fixed' \
     'languageControlEnabled: sourceChoices.count > 1' \
     'supportedCodes.contains(override)' \
@@ -74,6 +76,7 @@ validate_contract() {
     'HUDLanguageMenuPolicy.nextCode' \
     'replacePendingCanarySession' \
     'TranscriptionSessionResolver.replacingCanarySource' \
+    'applyHUDAdditionalLanguageSelection' \
     'onLanguageRightClick: handleOverlayLanguageRightClick' \
     'HUDLanguageMenuPolicy.options' \
     'purpose = .explicitASRSource' \
@@ -92,11 +95,38 @@ validate_contract() {
     'updateTrackedCapsuleAfterExternalMove' \
     'laidOutCapsuleScreenFrame = nil' \
     'visibleFrame: visibleFrame' \
+    'HUDCircularControlHitShape' \
     'controlHitMargin' \
     'controlHitShape' \
     'contentShape'; do
     require_text "$overlay" "$contract" || failed=1
   done
+
+  # Fix Attempt 5: the AppKit interactive guard must share the circular hit
+  # region with the SwiftUI Button instead of a rectangular corner-accepting formula.
+  for contract in \
+    'HUDQuickSwitcherLayout.verticalControlHitRegion' \
+    'HUDVerticalControlHitRegion' \
+    'isClickInLanguageControl' \
+    'isClickInTargetControl' \
+    'region.contains(pointX: Double(point.x), pointY: Double(point.y))'; do
+    require_text "$overlay" "$contract" || failed=1
+  done
+
+  if ! (grep -A 8 'func finishHotkeySessionIfNeeded' "$content" 2>/dev/null || true) | grep -qF 'languagePickerController.invalidateForFinishedHotkeySession()'; then
+    echo "FAIL: finishHotkeySessionIfNeeded does not invalidate the language picker popover"
+    failed=1
+  fi
+  delegate_task="$(awk '
+      /PopoverDelegate \{ \[weak self\] in/ { in_delegate = 1 }
+      in_delegate && /popover\.delegate = delegate/ { in_delegate = 0 }
+      in_delegate && /Task \{/ { hit = 1 }
+      END { print hit + 0 }
+    ' "$content")"
+  if [ "$delegate_task" = "1" ]; then
+    echo "FAIL: popoverDidClose cleanup is deferred inside a Task (stale-callback window)"
+    failed=1
+  fi
 
   for contract in \
     'verticalPulsePanelWidth' \
@@ -116,6 +146,7 @@ validate_contract() {
 
   # The picker popover must stay compact (was 280pt before the rejection).
   require_text "$picker" 'maxWidth: 196' || failed=1
+  require_text "$picker" 'option.isAdditional' || failed=1
   if grep -qF 'maxWidth: 280' "$picker"; then
     echo "FAIL: picker popover still uses the oversized 280pt max width"
     failed=1
@@ -209,6 +240,38 @@ self_test() {
   printf 'maxWidth: 280\n' >> "$fixture/Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift"
   if validate_contract "$fixture" >/dev/null; then
     echo "FAIL: negative self-test accepted oversized 280pt picker width"
+    return 1
+  fi
+  cp "$ROOT/Sources/NativeBolabol/Views/HUDLanguagePickerPopoverView.swift" "$fixture/Sources/NativeBolabol/Views/"
+
+  grep -vF 'HUDQuickSwitcherLayout.verticalControlHitRegion' \
+    "$fixture/Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift" \
+    > "$fixture/overlay.invalid"
+  mv "$fixture/overlay.invalid" "$fixture/Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift"
+  if validate_contract "$fixture" >/dev/null; then
+    echo "FAIL: negative self-test accepted a rectangular-only AppKit hit guard"
+    return 1
+  fi
+  cp "$ROOT/Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift" "$fixture/Sources/NativeBolabol/Services/"
+
+  awk 'BEGIN { in_finish = 0 }
+    /private func finishHotkeySessionIfNeeded/ { in_finish = 1 }
+    in_finish && /^        languagePickerController\.invalidateForFinishedHotkeySession\(\)$/ { next }
+    { print }
+    in_finish && /^    }$/ { in_finish = 0 }' \
+    "$fixture/Sources/NativeBolabol/Views/ContentView.swift" \
+    > "$fixture/content.finish.invalid"
+  mv "$fixture/content.finish.invalid" "$fixture/Sources/NativeBolabol/Views/ContentView.swift"
+  if validate_contract "$fixture" >/dev/null; then
+    echo "FAIL: negative self-test accepted finish path that leaves the popover logically live"
+    return 1
+  fi
+  cp "$ROOT/Sources/NativeBolabol/Views/ContentView.swift" "$fixture/Sources/NativeBolabol/Views/"
+
+  sed -i '' 's/let delegate = PopoverDelegate { \[weak self\] in/let delegate = PopoverDelegate { [weak self] in\n            Task { @MainActor in/' \
+    "$fixture/Sources/NativeBolabol/Views/ContentView.swift"
+  if validate_contract "$fixture" >/dev/null; then
+    echo "FAIL: negative self-test accepted deferred popoverDidClose cleanup"
     return 1
   fi
 

@@ -1,16 +1,11 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: CODE-HYGIENE-RELEASE
+current_step: IDLE
 step_description: >-
-  Batch 1 hygiene approved by Reviewer. Tester retest full gate (no product
-  Sources edits). No Orchestrator rebuild. After qa_green → POST.
-target_files:
-  - Tests/NativeBolabolCoreTests/**
-  - script/qa/**
-  - AI_Workflow_Kit/docs/AI/REPORT.md
-  - AI_Workflow_Kit/docs/AI/BUG_REPORT.md
-  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  CODE-HYGIENE-RELEASE Batch 1 complete. Awaiting Human direction for optional
+  HYG-016 copy batch, screenshots HYG-001, SEC-005, or next product work.
+target_files: []
 completed_steps:
   - S0
   - S1
@@ -27,34 +22,36 @@ completed_steps:
   - S8
   - S9
   - VERTICAL-PULSE-HUD
+  - CODE-HYGIENE-RELEASE
 skipped_steps: []
 implementation:
   status: done
-  attempts: 1
 review:
   status: approved
-  verdict: approved_batch_1_hygiene
-  note: >-
-    Independent Reviewer APPROVED Batch 1. 744 tests, 39/39 QA, no findings.
-    HYG-016 not mixed. No behavior change.
 qa:
-  status: pending_retest
+  status: green
   suite: CODE-HYGIENE-BATCH-1-RETEST
   bugs_open: 0
 security:
   status: medium_low_closed_sec005_deferred
   open:
     - SEC-005
-next_actor: tester
+  closed:
+    - SEC-001
+    - SEC-002
+    - SEC-003
+    - SEC-004
+next_actor: human
 track: PRODUCT
 checkpoint:
   last_pre_tag: bolabol/pre-CODE-HYGIENE-RELEASE
-  last_post_tag: bolabol/VERTICAL-PULSE-HUD-done
-  last_commit: 9826e64
+  last_post_tag: bolabol/CODE-HYGIENE-RELEASE-done
+  last_commit: 5243228
+  note: LOCAL ONLY — remote push DISABLED
 plan_files:
   - AI_Workflow_Kit/docs/AI/ARCHITECT_HANDOFF.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 notes: |
-  Human `статус` after Reviewer APPROVED Batch 1. No rebuild (policy).
-  next_actor=tester retest only. POST after qa_green.
-  App 1.0.4 already verified; Tester should not require Orchestrator rebuild.
+  POST bolabol/CODE-HYGIENE-RELEASE-done @ 5243228 (LOCAL ONLY).
+  No rebuild on this status (Tester docs-only). Graphify rebuilt after POST.
+  Optional next: HYG-016 AppText copy, HYG-001 screenshots, enable GitHub remote.

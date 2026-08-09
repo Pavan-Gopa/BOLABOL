@@ -6000,3 +6000,18 @@ RESULT: approved
 - PRE: `bolabol/pre-CODE-HYGIENE-RELEASE` @ `1a8bf3d`. Kick re-issued.
 
 **RESULT: `waiting_coder`**
+
+---
+
+## CODE-HYGIENE-RELEASE - Orchestrator Git Checkpoint (pre-Coder)
+
+- Human asked to commit + push to GitHub before Coder starts.
+- **Committed Bolabol-only** workflow packet (Architect handoff, ADR-023, STATE,
+  FEEDBACK, graphify): `08adb91` on `orchestrator/cloud-provider-stabilization`.
+- Did **not** stage unrelated monorepo noise (SmartScribe deletions, VaniScript, etc.).
+- **Push FAILED:** remote pushurl is `DISABLED` → `NativeSmartScribe.git`.
+  No `Pavan-Gopa/Bolabol` GitHub repo found via `gh`.
+- Local tags OK: `bolabol/pre-CODE-HYGIENE-RELEASE`, `bolabol/VERTICAL-PULSE-HUD-done`.
+- Coder still next; local PRE rollback intact.
+
+**RESULT: `waiting_coder` (push blocked — needs Human remote)**

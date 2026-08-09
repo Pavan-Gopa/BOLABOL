@@ -109,7 +109,13 @@ working_roots:
 checkpoint:
   last_pre_tag: bolabol/pre-CODE-HYGIENE-RELEASE
   last_post_tag: bolabol/VERTICAL-PULSE-HUD-done
-  last_commit: 1a8bf3d
+  last_commit: 08adb91
+  last_pre_commit: 1a8bf3d
+  note_git: >-
+    Human requested commit+push before Coder. Committed Bolabol-only Architect
+    packet @ 08adb91. Monorepo remote pushurl is DISABLED
+    (legacy-mixed-workspace-origin -> NativeSmartScribe.git). No Pavan-Gopa/Bolabol
+    GitHub repo found. Push blocked until Human enables a Bolabol remote.
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md

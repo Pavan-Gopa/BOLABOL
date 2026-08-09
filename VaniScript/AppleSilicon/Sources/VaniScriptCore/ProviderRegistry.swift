@@ -72,18 +72,21 @@ public enum ProviderRegistry {
         // flipping `supportsTranscription` in CloudProviderCatalog is enough.
         for descriptor in CloudProviderCatalog.providers
         where CloudChatRouter.chatProviderIDs.contains(descriptor.id)
-            && descriptor.capabilities.supportsTranscription
             && CloudChatRouter.apiKey(for: descriptor.id, settings: settings) != nil {
-            providers.append(
-                ProviderOption(
-                    id: descriptor.id,
-                    label: descriptor.label,
-                    group: .cloud,
-                    kind: .transcription,
-                    requiresKey: descriptor.id
+            let model = CloudChatRouter.route(providerID: descriptor.id, settings: settings, purpose: .transcription)?.model
+            if CloudProviderCatalog.supportsTranscription(providerID: descriptor.id, modelID: model) {
+                providers.append(
+                    ProviderOption(
+                        id: descriptor.id,
+                        label: descriptor.label,
+                        group: .cloud,
+                        kind: .transcription,
+                        requiresKey: descriptor.id
+                    )
                 )
-            )
+            }
         }
+
         return providers + downloadedLocalProviders(models: settings.localAsrModels, kind: .transcription)
     }
 
@@ -91,9 +94,7 @@ public enum ProviderRegistry {
         settings: AppSettings,
         targetLang: String
     ) -> TranslationProviderAvailability {
-        guard targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "same" else {
-            return TranslationProviderAvailability(enabled: false, providers: [])
-        }
+        let isSame = targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "same"
 
         var providers: [ProviderOption] = []
         if !settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -147,7 +148,7 @@ public enum ProviderRegistry {
             )
         )
         providers += downloadedLocalProviders(models: settings.localTranslationModels, kind: .translation)
-        return TranslationProviderAvailability(enabled: true, providers: providers)
+        return TranslationProviderAvailability(enabled: !isSame, providers: providers)
     }
 
     private static func downloadedLocalProviders(
@@ -176,6 +177,59 @@ public enum ProviderRegistry {
             }
             .sorted { $0.label < $1.label }
     }
+
+    /// Calculate total spent for a provider based on accumulated token usage and pricing.
+    public static func providerSpent(providerID: String, settings: AppSettings) -> Double {
+        let prefix = "\(providerID):"
+        var total: Double = 0
+        for (key, stats) in settings.usage {
+            if key == providerID || key.hasPrefix(prefix) {
+                let input = stats.inputTokens
+                let output = stats.outputTokens
+                let audio = stats.audioMinutes
+
+                let modelID: String = {
+                    if let m = stats.lastModel, !m.isEmpty { return m }
+                    let parts = key.split(separator: ":", maxSplits: 1)
+                    return parts.count == 2 ? String(parts[1]) : ""
+                }()
+
+                let pricing = CloudProviderCatalog.modelPricingDetails(providerID: providerID, modelID: modelID)
+                let promptPrice: Double = {
+                    let s = pricing.inputCost.replacingOccurrences(of: "$", with: "").replacingOccurrences(of: " / 1M", with: "")
+                    return (Double(s) ?? 0.15) / 1_000_000.0
+                }()
+                let completionPrice: Double = {
+                    let s = pricing.outputCost.replacingOccurrences(of: "$", with: "").replacingOccurrences(of: " / 1M", with: "")
+                    return (Double(s) ?? 0.60) / 1_000_000.0
+                }()
+
+                total += (Double(input) * promptPrice) + (Double(output) * completionPrice) + (audio * 0.005)
+            }
+        }
+        return total
+    }
+
+    /// Evaluates whether spending for a cloud provider has reached or exceeded its budget limit.
+    public static func isBudgetExceeded(providerID: String, settings: AppSettings) -> Bool {
+        let budget: Double = {
+            switch providerID {
+            case CloudProviderCatalog.geminiID, "gemini-cloud": return settings.geminiBudgetUsd
+            case CloudProviderCatalog.openaiID, "gpt-cloud": return settings.openaiBudgetUsd
+            case CloudProviderCatalog.qwenID: return settings.qwenBudgetUsd
+            case CloudProviderCatalog.openrouterID: return settings.openrouterBudgetUsd
+            default:
+                if let custom = settings.customCloudProviders.first(where: { $0.id == providerID }) {
+                    return custom.budgetLimitUsd
+                }
+                return 0
+            }
+        }()
+
+        guard budget > 0 else { return false }
+        let spent = providerSpent(providerID: providerID, settings: settings)
+        return spent >= budget
+    }
 }
 
 // MARK: - CloudChatRouter (A5)
@@ -199,14 +253,12 @@ public struct CloudChatRoute: Equatable, Sendable {
     public var headers: [String: String]
 }
 
-/// A5: builds `CloudChatRoute`s for the providers that speak the OpenAI-compatible
-/// chat protocol. Endpoints follow the A1/A5 discovery (see DECISIONS.md ADR A5):
-///   - Qwen: DashScope *compatible-mode* (`/compatible-mode/v1/chat/completions`).
-///   - OpenRouter: `/api/v1/chat/completions`.
-///   - Ollama Cloud: OpenAI-compatible `/v1/chat/completions` on the user's base URL
-///     (default `https://ollama.com`). Chosen over native `/api/chat` so the engines
-///     reuse one request/response/usage parser for all three providers.
 public enum CloudChatRouter {
+    /// Default Qwen (DashScope PAYG) OpenAI-compatible chat completions endpoint.
+    /// Used when `AppSettings.resolvedQwenBaseUrl` resolves to the standard host.
+    public static let qwenDefaultChatCompletionsURL =
+        "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions"
+
     /// Provider ids handled by this router (subset of CloudProviderCatalog).
     public static let chatProviderIDs: [String] = [
         CloudProviderCatalog.qwenID,
@@ -232,9 +284,18 @@ public enum CloudChatRouter {
         return trimmed.isEmpty ? nil : trimmed
     }
 
+    public enum ModelPurpose: Sendable {
+        case transcription
+        case translation
+    }
+
     /// Resolve a provider id into a ready-to-use chat route, or nil when the id is
     /// not handled here or no key is saved (mirrors ActiveCloud*Provider.resolve).
-    public static func route(providerID: String, settings: AppSettings) -> CloudChatRoute? {
+    public static func route(
+        providerID: String,
+        settings: AppSettings,
+        purpose: ModelPurpose = .translation
+    ) -> CloudChatRoute? {
         let id = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard chatProviderIDs.contains(id),
               let key = apiKey(for: id, settings: settings),
@@ -242,20 +303,35 @@ public enum CloudChatRouter {
             return nil
         }
 
+        // Budget enforcement: block routing if the user's budget limit is reached
+        guard !ProviderRegistry.isBudgetExceeded(providerID: id, settings: settings) else {
+            return nil
+        }
+
         let endpointString: String
-        let configuredModel: String
+        var configuredModel: String
         switch id {
         case CloudProviderCatalog.qwenID:
-            // DashScope international endpoint, OpenAI compatible-mode (A1 verified:
-            // 401 without Bearer ⇒ endpoint live). Same base as CloudModelCatalog.
-            endpointString = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions"
+            // Prefer resolved endpoint profile (Token Plan vs PAYG); fall back to default DashScope URL.
+            let base = settings.resolvedQwenBaseUrl(apiKey: settings.qwenApiKey)
+            if base == "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+                || base == "https://dashscope-intl.aliyuncs.com/compatible-mode" {
+                endpointString = Self.qwenDefaultChatCompletionsURL
+            } else {
+                endpointString = base + (base.hasSuffix("/v1") ? "/chat/completions" : "/v1/chat/completions")
+            }
+            // Settings model field: qwenCloudModel (blank → catalog default below).
             configuredModel = settings.qwenCloudModel
         case CloudProviderCatalog.openrouterID:
             endpointString = "https://openrouter.ai/api/v1/chat/completions"
-            configuredModel = settings.openrouterModel
+            // Role-specific models with fallback to openrouterModel (see AppSettings helpers).
+            configuredModel = purpose == .transcription
+                ? settings.transcriptionModel(for: id)
+                : settings.translationModel(for: id)
+            if configuredModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                configuredModel = settings.openrouterModel
+            }
         case CloudProviderCatalog.ollamaCloudID:
-            // User-configurable base URL (self-host escape hatch); trailing slashes
-            // stripped so "https://ollama.com/" doesn't produce "//v1/...".
             var base = settings.ollamaCloudBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
             while base.hasSuffix("/") { base.removeLast() }
             if base.isEmpty { base = "https://ollama.com" }
@@ -267,10 +343,14 @@ public enum CloudChatRouter {
 
         guard let endpoint = URL(string: endpointString) else { return nil }
 
-        // Model precedence matches A4 (§9.2): user-selected settings model first,
-        // catalog default as migration-safe fallback (empty settings ⇒ old behavior).
         let trimmedModel = configuredModel.trimmingCharacters(in: .whitespacesAndNewlines)
         let model = trimmedModel.isEmpty ? descriptor.defaultTextModel : trimmedModel
+
+        if purpose == .transcription {
+            guard CloudProviderCatalog.supportsTranscription(providerID: id, modelID: model) else {
+                return nil
+            }
+        }
 
         return CloudChatRoute(
             providerID: id,
@@ -278,7 +358,6 @@ public enum CloudChatRouter {
             model: model,
             apiKey: key,
             endpoint: endpoint,
-            // All three providers authenticate with a plain Bearer token.
             headers: ["Authorization": "Bearer \(key)"]
         )
     }

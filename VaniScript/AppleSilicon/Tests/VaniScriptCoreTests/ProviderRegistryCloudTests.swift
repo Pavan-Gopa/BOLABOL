@@ -54,20 +54,25 @@ struct ProviderRegistryCloudTests {
         #expect(!ids.contains(CloudProviderCatalog.openrouterID))
     }
 
-    @Test("honest transcription gating: no audio capability → no transcription option")
-    func noTranscriptionOptionsWithoutCapability() {
+    @Test("honest transcription gating: text-only model → no transcription option, audio model → transcription option enabled")
+    func transcriptionOptionsDynamicGating() {
         var settings = AppSettings.defaults
         settings.qwenApiKey = "k"
         settings.openrouterApiKey = "k"
         settings.ollamaCloudApiKey = "k"
 
-        // Catalog says supportsTranscription == false for all three (A1/A5 honest
-        // capabilities) → the registry must not offer them for transcription even
-        // with keys present.
-        let ids = ProviderRegistry.availableTranscriptionProviders(settings: settings).map(\.id)
-        #expect(!ids.contains(CloudProviderCatalog.qwenID))
-        #expect(!ids.contains(CloudProviderCatalog.openrouterID))
-        #expect(!ids.contains(CloudProviderCatalog.ollamaCloudID))
+        // Default models (qwen-plus, openai/gpt-4o-mini, gpt-oss:120b) are text-only -> no transcription option.
+        let idsTextOnly = ProviderRegistry.availableTranscriptionProviders(settings: settings).map(\.id)
+        #expect(!idsTextOnly.contains(CloudProviderCatalog.qwenID))
+        #expect(!idsTextOnly.contains(CloudProviderCatalog.openrouterID))
+        #expect(!idsTextOnly.contains(CloudProviderCatalog.ollamaCloudID))
+
+        // Qwen is text-only -> no transcription option.
+        // When OpenRouter model is set to an audio model (e.g. whisper), transcription option is enabled.
+        settings.openrouterModel = "openai/whisper-1"
+        let idsWithAudio = ProviderRegistry.availableTranscriptionProviders(settings: settings).map(\.id)
+        #expect(!idsWithAudio.contains(CloudProviderCatalog.qwenID))
+        #expect(idsWithAudio.contains(CloudProviderCatalog.openrouterID))
     }
 
     @Test("legacy gemini/gpt behavior is untouched")

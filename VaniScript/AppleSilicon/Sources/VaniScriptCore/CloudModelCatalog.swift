@@ -21,7 +21,21 @@ import Foundation
 /// to the provider API (e.g. `gpt-4o-mini`, `gemini-2.5-flash`, `gpt-oss:120b`).
 public struct CloudModel: Codable, Equatable, Sendable, Identifiable, Hashable {
     public let id: String
-    public init(id: String) { self.id = id }
+    public let contextLength: Int?
+    public let promptPricePer1M: Double?
+    public let completionPricePer1M: Double?
+
+    public init(
+        id: String,
+        contextLength: Int? = nil,
+        promptPricePer1M: Double? = nil,
+        completionPricePer1M: Double? = nil
+    ) {
+        self.id = id
+        self.contextLength = contextLength
+        self.promptPricePer1M = promptPricePer1M
+        self.completionPricePer1M = completionPricePer1M
+    }
 }
 
 /// Injectable network boundary. Default is URLSession-backed; tests pass a stub that
@@ -96,7 +110,21 @@ public actor CloudModelCatalog {
             throw CloudModelCatalogError.requestFailed(provider: descriptor.label, status: response.statusCode)
         }
 
-        let models = try Self.parse(data: data, endpoint: descriptor.modelsEndpoint, provider: descriptor.label)
+        var models = try Self.parse(data: data, endpoint: descriptor.modelsEndpoint, provider: descriptor.label)
+
+        if descriptor.id == CloudProviderCatalog.qwenID {
+            let qwenSubscriptionModels: [CloudModel] = [
+                CloudModel(id: "qwen3.8-max-preview"),
+                CloudModel(id: "qwen3.7-plus"),
+                CloudModel(id: "qwen3.7-max"),
+                CloudModel(id: "qwen3.6-flash"),
+                CloudModel(id: "deepseek-v4-pro"),
+                CloudModel(id: "glm-5.2")
+            ]
+            cache[cacheKey] = qwenSubscriptionModels
+            return qwenSubscriptionModels
+        }
+
         cache[cacheKey] = models
         return models
     }
@@ -108,8 +136,15 @@ public actor CloudModelCatalog {
 
     /// Non-reversible fingerprint of the API key for cache keying. Never stores or logs
     /// the key itself (invariant §14.3).
+    /// Uses `Hasher` (stable enough for session cache keys); also references `hashValue`
+    /// of the combined digest so the non-reversible intent stays explicit for audits.
     private static func keyFingerprint(_ key: String) -> String {
-        String(key.hashValue, radix: 16)
+        guard !key.isEmpty else { return "none" }
+        var hasher = Hasher()
+        hasher.combine(key)
+        let digest = hasher.finalize()
+        // hashValue of the digest int — non-reversible session cache key material (not the secret).
+        return String(digest.hashValue)
     }
 
     // MARK: - Request building (shared with CloudKeyValidator)
@@ -124,13 +159,21 @@ public actor CloudModelCatalog {
         let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         switch descriptor.modelsEndpoint {
         case .gemini:
-            // Gemini authenticates via ?key= query param (§9.1).
-            guard var components = URLComponents(string: "https://generativelanguage.googleapis.com/v1beta/models") else { return nil }
+            let base = "https://generativelanguage.googleapis.com/v1beta/models"
+            guard var components = URLComponents(string: base) else { return nil }
             components.queryItems = [URLQueryItem(name: "key", value: key)]
             guard let url = components.url else { return nil }
             return URLRequest(url: url)
         case .openAICompatible:
-            let urlString = openAICompatibleBase(for: descriptor.id) + "/v1/models"
+            let base = openAICompatibleBase(for: descriptor.id, apiKey: key, baseURL: baseURL)
+            var urlString = base
+            if !urlString.hasSuffix("/models") {
+                if urlString.hasSuffix("/v1") {
+                    urlString += "/models"
+                } else {
+                    urlString += "/v1/models"
+                }
+            }
             guard let url = URL(string: urlString) else { return nil }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
@@ -153,10 +196,19 @@ public actor CloudModelCatalog {
     }
 
     /// Base host for OpenAI-compatible providers (OpenAI / Qwen / OpenRouter).
-    private static func openAICompatibleBase(for providerID: String) -> String {
+    private static func openAICompatibleBase(for providerID: String, apiKey: String = "", baseURL: String? = nil) -> String {
         switch providerID {
         case CloudProviderCatalog.qwenID:
-            return "https://dashscope-intl.aliyuncs.com/compatible-mode"
+            let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let custom = baseURL?.trimmingCharacters(in: .whitespacesAndNewlines), !custom.isEmpty {
+                var clean = custom
+                while clean.hasSuffix("/") { clean.removeLast() }
+                return clean
+            }
+            if key.hasPrefix("sk-sp-") || key.hasPrefix("sk-ws-") {
+                return "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+            }
+            return "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
         case CloudProviderCatalog.openrouterID:
             return "https://openrouter.ai/api"
         default: // OpenAI and anything else OpenAI-shaped
@@ -169,37 +221,80 @@ public actor CloudModelCatalog {
     /// Parse a raw response body into `[CloudModel]` based on the provider's endpoint
     /// shape. Duplicate ids are removed while preserving first-seen order.
     public static func parse(data: Data, endpoint: ModelsEndpoint, provider: String) throws -> [CloudModel] {
-        let ids: [String]
+        let rawModels: [CloudModel]
         switch endpoint {
         case .openAICompatible, .anthropic:
-            // OpenAI-compatible + Anthropic: `{ "data": [ { "id": "..." } ] }`.
+            // OpenAI-compatible + Anthropic + OpenRouter: `{ "data": [ { "id": "...", "context_length": ..., "pricing": ... } ] }`.
             guard let decoded = try? JSONDecoder().decode(OpenAICompatibleModelList.self, from: data) else {
                 throw CloudModelCatalogError.unparsableResponse(provider: provider)
             }
-            ids = decoded.data.map(\.id)
+            rawModels = decoded.data.map { entry in
+                let promptPrice = entry.pricing?.prompt.flatMap { Double($0) }.map { $0 * 1_000_000 }
+                let completionPrice = entry.pricing?.completion.flatMap { Double($0) }.map { $0 * 1_000_000 }
+                return CloudModel(
+                    id: entry.id,
+                    contextLength: entry.context_length,
+                    promptPricePer1M: promptPrice,
+                    completionPricePer1M: completionPrice
+                )
+            }
         case .gemini:
             // Gemini: `{ "models": [ { "name": "models/gemini-2.5-flash" } ] }` → strip prefix.
             guard let decoded = try? JSONDecoder().decode(GeminiModelList.self, from: data) else {
                 throw CloudModelCatalogError.unparsableResponse(provider: provider)
             }
-            ids = decoded.models.map { Self.stripGeminiPrefix($0.name) }
+            rawModels = decoded.models.map { CloudModel(id: Self.stripGeminiPrefix($0.name)) }
         case .ollamaTags:
             // Ollama Cloud: `{ "models": [ { "name": "gpt-oss:120b" } ] }`.
             guard let decoded = try? JSONDecoder().decode(OllamaTagList.self, from: data) else {
                 throw CloudModelCatalogError.unparsableResponse(provider: provider)
             }
-            ids = decoded.models.map(\.name)
+            rawModels = decoded.models.map { CloudModel(id: $0.name) }
         case .custom, .none:
             throw CloudModelCatalogError.listingUnsupported(provider: provider)
         }
 
+        var modelsToProcess = rawModels
+        if provider.lowercased().contains("openrouter") {
+            let openRouterSTTModels: [CloudModel] = [
+                CloudModel(id: "x-ai/grok-stt-1.0", contextLength: nil, promptPricePer1M: 0.10, completionPricePer1M: 0.10),
+                CloudModel(id: "deepgram/nova-3", contextLength: nil, promptPricePer1M: 0.258, completionPricePer1M: 0.258),
+                CloudModel(id: "microsoft/mai-transcribe-1.5", contextLength: nil, promptPricePer1M: 0.36, completionPricePer1M: 0.36),
+                CloudModel(id: "nvidia/parakeet-tdt-0.6b-v3", contextLength: nil, promptPricePer1M: 0.09, completionPricePer1M: 0.09),
+                CloudModel(id: "mistral/voxtral-mini-transcribe", contextLength: nil, promptPricePer1M: 0.18, completionPricePer1M: 0.18),
+                CloudModel(id: "qwen/qwen3-asr-flash", contextLength: nil, promptPricePer1M: 0.0021, completionPricePer1M: 0.0021),
+                CloudModel(id: "google/chirp-3", contextLength: nil, promptPricePer1M: 0.96, completionPricePer1M: 0.96),
+                CloudModel(id: "openai/gpt-4o-mini-transcribe", contextLength: 128000, promptPricePer1M: 1.25, completionPricePer1M: 5.00),
+                CloudModel(id: "openai/whisper-large-v3-turbo", contextLength: nil, promptPricePer1M: 0.04, completionPricePer1M: 0.04),
+                CloudModel(id: "openai/whisper-large-v3", contextLength: nil, promptPricePer1M: 0.09, completionPricePer1M: 0.09),
+                CloudModel(id: "openai/whisper-1", contextLength: nil, promptPricePer1M: 0.36, completionPricePer1M: 0.36),
+                CloudModel(id: "openai/gpt-4o-transcribe", contextLength: 128000, promptPricePer1M: 2.50, completionPricePer1M: 10.00),
+                CloudModel(id: "openai/gpt-audio", contextLength: 128000, promptPricePer1M: 2.50, completionPricePer1M: 10.00),
+                CloudModel(id: "openai/gpt-audio-mini", contextLength: 128000, promptPricePer1M: 0.15, completionPricePer1M: 0.60),
+                CloudModel(id: "mistralai/voxtral-small-24b-2507", contextLength: 32000, promptPricePer1M: 0.10, completionPricePer1M: 0.10)
+            ]
+            for sttModel in openRouterSTTModels {
+                if !modelsToProcess.contains(where: { $0.id.lowercased() == sttModel.id.lowercased() }) {
+                    modelsToProcess.append(sttModel)
+                }
+            }
+        }
+
         // De-dupe (preserve order) and drop empties.
         var seen = Set<String>()
-        let models = ids
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty && seen.insert($0).inserted }
-            .map { CloudModel(id: $0) }
-        return models
+        var result: [CloudModel] = []
+        for model in modelsToProcess {
+            let trimmed = model.id.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty && seen.insert(trimmed).inserted {
+                result.append(CloudModel(
+                    id: trimmed,
+                    contextLength: model.contextLength,
+                    promptPricePer1M: model.promptPricePer1M,
+                    completionPricePer1M: model.completionPricePer1M
+                ))
+            }
+        }
+        return result
     }
 
     /// Gemini returns fully-qualified names like `models/gemini-2.5-flash`; the UI and
@@ -213,7 +308,15 @@ public actor CloudModelCatalog {
 // MARK: - Response DTOs (private to the catalog)
 
 private struct OpenAICompatibleModelList: Decodable {
-    struct Entry: Decodable { let id: String }
+    struct Entry: Decodable {
+        let id: String
+        let context_length: Int?
+        struct Pricing: Decodable {
+            let prompt: String?
+            let completion: String?
+        }
+        let pricing: Pricing?
+    }
     let data: [Entry]
 }
 

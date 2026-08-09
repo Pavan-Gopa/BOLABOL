@@ -9,7 +9,7 @@ cd "$AS_DIR"
 STATE_FILE="AI_Workflow_Kit/docs/AI/STATE.yaml"
 current_step=""
 if [[ -f "$STATE_FILE" ]]; then
-  current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_]+).*/\1/p' "$STATE_FILE" | head -1)"
+  current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_-]+).*/\1/p' "$STATE_FILE" | head -1)"
 fi
 case "$current_step" in
   A3|"")

@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 text = Path("AI_Workflow_Kit/docs/AI/FEEDBACK.md").read_text(encoding="utf-8")
 state = Path("AI_Workflow_Kit/docs/AI/STATE.yaml").read_text(encoding="utf-8") if Path("AI_Workflow_Kit/docs/AI/STATE.yaml").exists() else ""
-m = re.search(r'^current_step:\s*([A-Za-z0-9_]+)', state, re.M)
+m = re.search(r'^current_step:\s*([A-Za-z0-9_-]+)', state, re.M)
 step = m.group(1) if m else "A4"
 
 if "A4" not in text:

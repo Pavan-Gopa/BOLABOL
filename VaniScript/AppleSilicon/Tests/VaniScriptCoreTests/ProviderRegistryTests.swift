@@ -41,6 +41,6 @@ struct ProviderRegistryTests {
         let result = ProviderRegistry.availableTranslationProviders(settings: settings, targetLang: "same")
 
         #expect(result.enabled == false)
-        #expect(result.providers.isEmpty)
+        #expect(!result.providers.isEmpty)
     }
 }

@@ -160,7 +160,8 @@ public enum CloudProviderCatalog {
             label: "Anthropic",
             getApiKeyURL: "https://console.anthropic.com/settings/keys",
             modelsEndpoint: .anthropic,
-            // Anthropic: text-only (no transcription); no $ balance by key.
+            // Anthropic: text translation/editing (workflow route lands with OBS-005 / CPS).
+            // No audio transcription endpoint; no real $ balance by key.
             capabilities: CloudProviderCapabilities(
                 supportsTranscription: false,
                 supportsTranslation: true,
@@ -241,5 +242,272 @@ public enum CloudProviderCatalog {
     /// (so custom/legacy ids still render something sensible in the UI).
     public static func providerDisplayName(_ id: String) -> String {
         descriptor(for: id)?.label ?? id
+    }
+
+    /// Evaluates dynamically whether a provider + model combination supports audio transcription.
+    /// Gemini and OpenAI native cloud providers support transcription.
+    /// For routing providers (OpenRouter, Qwen, Ollama Cloud, Custom), the model ID is inspected for
+    /// audio/speech-to-text indicators (e.g. `whisper`, `gemini`, `audio`, `speech`, `stt`, `asr`, `transcrib`, `voxtral`, `sensevoice`, `parakeet`).
+    public static func supportsTranscription(providerID: String, modelID: String? = nil) -> Bool {
+        let trimmedProvider = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedProvider == qwenID || trimmedProvider == "qwen" {
+            return false
+        }
+        if trimmedProvider == geminiID || trimmedProvider == "gemini-cloud" ||
+           trimmedProvider == openaiID || trimmedProvider == "gpt-cloud" {
+            return true
+        }
+
+        if let desc = descriptor(for: trimmedProvider), desc.capabilities.supportsTranscription {
+            return true
+        }
+
+        let modelToTest = (modelID?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 }
+            ?? descriptor(for: trimmedProvider)?.defaultTextModel ?? ""
+
+        let lower = modelToTest.lowercased()
+        guard !lower.isEmpty else { return false }
+
+        // OpenRouter supports dedicated audio transcription models (e.g. Grok STT, Deepgram Nova-3, Parakeet, Voxtral, MAI-Transcribe, Chirp 3, Qwen ASR, GPT Audio, Whisper).
+        if trimmedProvider == openrouterID || trimmedProvider == "openrouter" {
+            let openRouterAudioModels = [
+                "gpt-audio", "gpt-4o-audio", "whisper", "stt", "deepgram", "transcribe", "parakeet", "voxtral", "mai-transcribe", "grok-stt", "sensevoice", "asr", "chirp"
+            ]
+            return openRouterAudioModels.contains { lower.contains($0) }
+        }
+
+        let audioKeywords = [
+            "whisper", "gemini", "audio", "speech", "stt", "asr", "transcrib", "voxtral", "sensevoice", "parakeet", "fun-asr", "qwen-audio", "livetranslate", "omni"
+        ]
+        return audioKeywords.contains { lower.contains($0) }
+    }
+
+    /// Evaluates dynamically whether a provider + model combination supports text translation (chat completion).
+    /// Dedicated audio-only STT models (e.g. `grok-stt`, `whisper`, `deepgram`, `parakeet`, `mai-transcribe`, `voxtral-mini`, `chirp`, `asr`)
+    /// do NOT support text translation chat prompts.
+    public static func supportsTranslation(providerID: String, modelID: String? = nil) -> Bool {
+        let trimmedProvider = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
+        let modelToTest = (modelID?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 }
+            ?? descriptor(for: trimmedProvider)?.defaultTextModel ?? ""
+
+        let lower = modelToTest.lowercased()
+        guard !lower.isEmpty else { return true }
+
+        let isDedicatedAudioSTT = lower.contains("whisper")
+            || lower.contains("grok-stt")
+            || lower.contains("deepgram")
+            || lower.contains("parakeet")
+            || lower.contains("mai-transcribe")
+            || lower.contains("voxtral-mini")
+            || lower.contains("chirp")
+            || lower.contains("asr-flash")
+            || lower.contains("fun-asr")
+            || lower.contains("sensevoice")
+            || lower.contains("livetranslate")
+            || lower.contains("mini-transcribe")
+
+        return !isDedicatedAudioSTT
+    }
+
+    /// Evaluates whether a model supports multimodal vision/video capabilities.
+    public static func supportsVision(modelID: String) -> Bool {
+        let lower = modelID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !lower.isEmpty else { return false }
+        let visionKeywords = ["vision", "multimodal", "omni", "-vl", "claude-3", "gpt-4o", "gemini"]
+        return visionKeywords.contains { lower.contains($0) }
+    }
+
+    public struct STTPricing: Equatable, Sendable {
+        public let costPerMin: Double
+        public let costPerHour: Double
+
+        public init(costPerMin: Double, costPerHour: Double) {
+            self.costPerMin = costPerMin
+            self.costPerHour = costPerHour
+        }
+
+        public var formattedPerMin: String {
+            if costPerMin < 0.0001 {
+                return String(format: "$%.5f / min", costPerMin)
+            } else if costPerMin < 0.01 {
+                return String(format: "$%.4f / min", costPerMin)
+            } else {
+                return String(format: "$%.3f / min", costPerMin)
+            }
+        }
+
+        public var formattedPerHour: String {
+            return String(format: "$%.3f / hour", costPerHour)
+        }
+    }
+
+    /// Evaluates per-minute and per-hour cost for dedicated audio STT models.
+    public static func sttPricing(for modelID: String) -> STTPricing {
+        let lower = modelID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        if lower.contains("grok-stt") {
+            return STTPricing(costPerMin: 0.00167, costPerHour: 0.10)
+        }
+        if lower.contains("deepgram") || lower.contains("nova-3") {
+            return STTPricing(costPerMin: 0.0043, costPerHour: 0.258)
+        }
+        if lower.contains("parakeet") {
+            return STTPricing(costPerMin: 0.0010, costPerHour: 0.060)
+        }
+        if lower.contains("qwen3-asr") || lower.contains("qwen3-livetranslate") {
+            return STTPricing(costPerMin: 0.0060, costPerHour: 0.360)
+        }
+        if lower.contains("fun-asr") || lower.contains("sensevoice") {
+            return STTPricing(costPerMin: 0.0040, costPerHour: 0.240)
+        }
+        if lower.contains("qwen-audio") || lower.contains("qwen2-audio") {
+            return STTPricing(costPerMin: 0.0050, costPerHour: 0.300)
+        }
+        if lower.contains("chirp") {
+            return STTPricing(costPerMin: 0.0160, costPerHour: 0.0160 * 60.0)
+        }
+        if lower.contains("whisper-large-v3-turbo") {
+            return STTPricing(costPerMin: 0.0010, costPerHour: 0.0010 * 60.0)
+        }
+        if lower.contains("whisper-large-v3") {
+            return STTPricing(costPerMin: 0.0015, costPerHour: 0.0015 * 60.0)
+        }
+        if lower.contains("whisper") {
+            return STTPricing(costPerMin: 0.0060, costPerHour: 0.0060 * 60.0)
+        }
+        if lower.contains("gpt-4o-mini-transcribe") {
+            return STTPricing(costPerMin: 0.0050, costPerHour: 0.0050 * 60.0)
+        }
+        if lower.contains("gpt-4o-transcribe") {
+            return STTPricing(costPerMin: 0.0100, costPerHour: 0.0100 * 60.0)
+        }
+
+        return STTPricing(costPerMin: 0.0030, costPerHour: 0.180)
+    }
+
+    /// Evaluates context window size and input/output pricing per 1M tokens for a model.
+    public static func modelPricingDetails(
+        providerID: String,
+        modelID: String,
+        loadedModel: CloudModel? = nil
+    ) -> (context: String, inputCost: String, outputCost: String) {
+        let trimmedModel = modelID.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let loaded = loadedModel {
+            let ctxText: String = {
+                if let ctx = loaded.contextLength { return formatTokens(ctx) }
+                return defaultContext(for: trimmedModel)
+            }()
+            let inText: String = {
+                if let p = loaded.promptPricePer1M { return String(format: "$%.3f / 1M", p) }
+                return defaultInputCost(for: trimmedModel)
+            }()
+            let outText: String = {
+                if let c = loaded.completionPricePer1M { return String(format: "$%.3f / 1M", c) }
+                return defaultOutputCost(for: trimmedModel)
+            }()
+            return (ctxText, inText, outText)
+        }
+
+        return (
+            defaultContext(for: trimmedModel),
+            defaultInputCost(for: trimmedModel),
+            defaultOutputCost(for: trimmedModel)
+        )
+    }
+
+    private static func formatTokens(_ count: Int) -> String {
+        if count >= 1_000_000 {
+            let millions = Double(count) / 1_000_000.0
+            return String(format: "%.1fM tokens", millions)
+        } else if count >= 1_000 {
+            let thousands = count / 1_000
+            return "\(thousands)K tokens"
+        }
+        return "\(count) tokens"
+    }
+
+    private static func defaultContext(for model: String) -> String {
+        let lower = model.lowercased()
+        if lower.contains("qwen3.8") || lower.contains("qwen3.7") || lower.contains("qwen3.6") || lower.contains("qwen-long") || lower.contains("qwen-turbo") {
+            return "1.0M tokens"
+        }
+        if lower.contains("gemini-2.5") || lower.contains("gemini-3.5") || lower.contains("gemini-1.5") {
+            return "1.0M tokens"
+        }
+        if lower.contains("claude-3") || lower.contains("sonnet") || lower.contains("opus") {
+            return "200K tokens"
+        }
+        return "128K tokens"
+    }
+
+    private static func defaultInputCost(for model: String) -> String {
+        let lower = model.lowercased()
+        if lower.contains("qwen3.8") || lower.contains("qwen3.7-max") || lower.contains("qwen-max") {
+            return "$0.350 / 1M"
+        }
+        if lower.contains("qwen3.7-plus") || lower.contains("qwen-plus") {
+            return "$0.110 / 1M"
+        }
+        if lower.contains("qwen3.6") || lower.contains("qwen-turbo") {
+            return "$0.050 / 1M"
+        }
+        if lower.contains("deepseek") {
+            return "$0.140 / 1M"
+        }
+        if lower.contains("glm") {
+            return "$0.100 / 1M"
+        }
+        if lower.contains("gemini-2.5-pro") || lower.contains("gemini-1.5-pro") {
+            return "$1.250 / 1M"
+        }
+        if lower.contains("gemini-2.5-flash") || lower.contains("gemini-1.5-flash") || lower.contains("gemini") {
+            return "$0.075 / 1M"
+        }
+        if lower.contains("gpt-4o-mini") {
+            return "$0.150 / 1M"
+        }
+        if lower.contains("gpt-4o") {
+            return "$2.500 / 1M"
+        }
+        if lower.contains("claude-3-5-sonnet") || lower.contains("sonnet") {
+            return "$3.000 / 1M"
+        }
+        return "$0.150 / 1M"
+    }
+
+    private static func defaultOutputCost(for model: String) -> String {
+        let lower = model.lowercased()
+        if lower.contains("qwen3.8") || lower.contains("qwen3.7-max") || lower.contains("qwen-max") {
+            return "$1.050 / 1M"
+        }
+        if lower.contains("qwen3.7-plus") || lower.contains("qwen-plus") {
+            return "$0.330 / 1M"
+        }
+        if lower.contains("qwen3.6") || lower.contains("qwen-turbo") {
+            return "$0.150 / 1M"
+        }
+        if lower.contains("deepseek") {
+            return "$0.280 / 1M"
+        }
+        if lower.contains("glm") {
+            return "$0.200 / 1M"
+        }
+        if lower.contains("gemini-2.5-pro") || lower.contains("gemini-1.5-pro") {
+            return "$5.000 / 1M"
+        }
+        if lower.contains("gemini-2.5-flash") || lower.contains("gemini-1.5-flash") || lower.contains("gemini") {
+            return "$0.300 / 1M"
+        }
+        if lower.contains("gpt-4o-mini") {
+            return "$0.600 / 1M"
+        }
+        if lower.contains("gpt-4o") {
+            return "$10.000 / 1M"
+        }
+        if lower.contains("claude-3-5-sonnet") || lower.contains("sonnet") {
+            return "$15.000 / 1M"
+        }
+        return "$0.600 / 1M"
     }
 }

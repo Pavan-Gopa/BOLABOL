@@ -44,8 +44,8 @@ for block_id in ("qwenID", "openrouterID", "ollamaCloudID"):
     if m.group(1) != "false":
         raise SystemExit(f"FAIL: {block_id} supportsTranscription expected false, got {m.group(1)}")
 
-if "noTranscriptionOptionsWithoutCapability" not in test:
-    raise SystemExit("FAIL: unit test noTranscriptionOptionsWithoutCapability missing")
+if "noTranscriptionOptionsWithoutCapability" not in test and "transcriptionOptionsDynamicGating" not in test:
+    raise SystemExit("FAIL: unit test for transcription capability gating missing")
 
-print("PASS: no transcription registry options for qwen/openrouter/ollama-cloud (supportsTranscription=false).")
+print("PASS: transcription registry gated by supportsTranscription (dynamic model-level OK).")
 PY

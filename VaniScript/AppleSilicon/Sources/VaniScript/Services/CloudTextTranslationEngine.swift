@@ -14,6 +14,9 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
 
     static func resolve(settings: AppSettings, providerID: String) -> ActiveCloudTranslationProvider? {
         let trimmedProvider = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !ProviderRegistry.isBudgetExceeded(providerID: trimmedProvider, settings: settings) else {
+            return nil
+        }
         switch trimmedProvider {
         case "gemini-cloud":
             let key = settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -63,6 +66,12 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
 }
 
 actor CloudTextTranslationEngine {
+    private static let networkSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 600 // 10 minutes request timeout for long LLM translations
+        config.timeoutIntervalForResource = 1800 // 30 minutes resource timeout
+        return URLSession(configuration: config)
+    }()
     // A2 (§8.1): usage accumulator. Each low-level `generate*` call adds the token
     // counters it parsed out of the API response here; a high-level operation may
     // fan out into several HTTP calls (e.g. batched cue translation), so we SUM.
@@ -255,7 +264,7 @@ actor CloudTextTranslationEngine {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await Self.networkSession.data(for: request)
         try validate(response: response, data: data, provider: provider.label)
         // A2: best-effort usage capture — parse the token counters from the raw
         // response and fold them into the accumulator. Never throws.
@@ -320,7 +329,7 @@ actor CloudTextTranslationEngine {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await Self.networkSession.data(for: request)
         try validate(response: response, data: data, provider: provider.label)
         // A2: best-effort usage capture (OpenAI-compatible `usage` block). Never throws.
         accumulate(UsageRecorder.parseOpenAIUsage(from: data))

@@ -11,7 +11,7 @@ FILE="Sources/VaniScript/Views/SettingsView.swift"
 STATE_FILE="AI_Workflow_Kit/docs/AI/STATE.yaml"
 current_step=""
 if [[ -f "$STATE_FILE" ]]; then
-  current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_]+).*/\1/p' "$STATE_FILE" | head -1)"
+  current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_-]+).*/\1/p' "$STATE_FILE" | head -1)"
 fi
 
 python3 - "$current_step" <<'PY'
@@ -20,7 +20,7 @@ from pathlib import Path
 
 step = (sys.argv[1] or "A3").strip()
 a6_or_later = bool(re.match(r"^A([6-9]|\d{2,})$", step)) or step in (
-    "A6", "A7", "A8", "APIUSAGE_DONE", "API_USAGE_DONE",
+    "A6", "A7", "A8", "APIUSAGE_DONE", "API_USAGE_DONE", "CPS", "CPS-01", "CPS-02", "CPS-03", "CPS-04", "CPS-05", "CPS-06", "CPS-07", "CPS-08", "CPS-09", "CPS-10", "CLOUD_PROVIDER_STABILIZATION", "CPS", "CPS-01", "CPS-02", "CPS-03", "CPS-04", "CPS-05", "CPS-06", "CPS-07", "CPS-08", "CPS-09", "CPS-10", "CLOUD_PROVIDER_STABILIZATION",
 )
 
 text = Path("Sources/VaniScript/Views/SettingsView.swift").read_text(encoding="utf-8")

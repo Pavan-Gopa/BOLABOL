@@ -55,21 +55,22 @@ struct WorkflowStateTests {
 
     @Test("settings provider changes do not override explicit workflow provider choices")
     func settingsProviderChangesDoNotOverrideExplicitWorkflowProviderChoices() {
-        let previousSettings = AppSettings.defaults
+        var previousSettings = AppSettings.defaults
+        previousSettings.geminiKey = "gemini-key"
+        previousSettings.openaiKey = "openai-key"
         var nextSettings = previousSettings
-        nextSettings.geminiKey = "gemini-key"
-        nextSettings.transcriptionProvider = "gemini-cloud"
-        nextSettings.translationProvider = "gemini-cloud"
+        nextSettings.transcriptionProvider = "gpt-cloud"
+        nextSettings.translationProvider = "gpt-cloud"
 
         var state = WorkflowState.initial(settings: previousSettings)
-        state.transcriptionProvider = "whisper-large-v3"
-        state.translationProvider = "qwen35-4b-4bit"
+        state.transcriptionProvider = "gemini-cloud"
+        state.translationProvider = "gemini-cloud"
         state.settings = nextSettings
 
         state.synchronizeProviderSelections(previousSettings: previousSettings)
 
-        #expect(state.transcriptionProvider == "whisper-large-v3")
-        #expect(state.translationProvider == "qwen35-4b-4bit")
+        #expect(state.transcriptionProvider == "gemini-cloud")
+        #expect(state.translationProvider == "gemini-cloud")
     }
 
     @Test("forced settings provider changes override explicit workflow provider choices")
@@ -121,8 +122,8 @@ struct WorkflowStateTests {
         #expect(state.session?.translationProvider == "gemini-cloud")
     }
 
-    @Test("same target language keeps translation provider empty after settings sync")
-    func sameTargetLanguageKeepsTranslationProviderEmptyAfterSettingsSync() {
+    @Test("same target language preserves translation provider for polishing and editing")
+    func sameTargetLanguagePreservesTranslationProviderAfterSettingsSync() {
         let previousSettings = AppSettings.defaults
         var nextSettings = previousSettings
         nextSettings.geminiKey = "gemini-key"
@@ -134,7 +135,7 @@ struct WorkflowStateTests {
 
         state.synchronizeProviderSelections(previousSettings: previousSettings)
 
-        #expect(state.translationProvider == "")
+        #expect(state.translationProvider == "gemini-cloud")
     }
 
     @Test("export opens only after a session exists")

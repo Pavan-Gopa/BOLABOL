@@ -54,7 +54,23 @@ public struct CloudKeyValidator: Sendable {
 
         do {
             let (_, response) = try await fetcher(request)
-            return Self.status(forHTTPStatus: response.statusCode)
+            let status = Self.status(forHTTPStatus: response.statusCode)
+
+            if case .invalid = status, descriptor.id == CloudProviderCatalog.qwenID {
+                let tokenPlanBase = "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/models"
+                if request.url?.absoluteString != tokenPlanBase, let fallbackURL = URL(string: tokenPlanBase) {
+                    var fallbackReq = URLRequest(url: fallbackURL)
+                    fallbackReq.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+                    if let (_, fbResp) = try? await fetcher(fallbackReq) {
+                        let fbStatus = Self.status(forHTTPStatus: fbResp.statusCode)
+                        if fbStatus == .valid {
+                            return .valid
+                        }
+                    }
+                }
+            }
+
+            return status
         } catch is CancellationError {
             // Superseded by a newer keystroke — keep "checking" so the UI's newer task wins.
             return .checking

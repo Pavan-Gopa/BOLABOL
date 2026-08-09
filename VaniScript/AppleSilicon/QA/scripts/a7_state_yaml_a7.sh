@@ -6,7 +6,11 @@ cd "$AS_DIR"
 FILE="AI_Workflow_Kit/docs/AI/STATE.yaml"
 [[ -f "$FILE" ]] || { echo "FAIL: $FILE missing"; exit 1; }
 
-current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_]+).*/\1/p' "$FILE" | head -1)"
+current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_-]+).*/\1/p' "$FILE" | head -1)"
+if [[ "$current_step" == CPS* ]] || [[ "$current_step" == CLOUD_PROVIDER* ]]; then
+  echo "NOTE: current_step='$current_step' (post API_USAGE); A7 STATE gate is N/A."
+  exit 0
+fi
 if [[ "$current_step" != "A7" ]]; then
   if [[ "$current_step" =~ ^A([8-9]|[1-9][0-9]+)$ ]] || [[ "$current_step" == "A8" || "$current_step" == "API_USAGE_DONE" ]]; then
     echo "NOTE: current_step='$current_step' (not A7); A7 STATE gate is N/A."

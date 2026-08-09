@@ -412,3 +412,162 @@
   WhisperKit/MLX, Codex/Grok, usage aggregation и balance вне трека.
 - **Documents:** `CLOUD_PROVIDER_STABILIZATION_ARCHITECTURE.md`,
   `CLOUD_PROVIDER_STABILIZATION_STEPS.md`.
+
+### CPS-01 evidence update (2026-07-26) — OBS-002 root cause VERIFIED
+
+- **Baseline:** fresh native build; `swift build` green; `swift test`
+  **331 tests / 47 suites PASS**. No product file changed (doc-only step).
+- **OBS-002 → `VERIFIED`.** Root cause:
+  `AppSettings.synchronizeLocalModelsWithDisk()`
+  (`Sources/VaniScriptCore/AppSettings.swift:641–649`) — pre-A5 cloud
+  translation whitelist `["gemini-cloud", "gpt-cloud"] + custom ids` omits the
+  A5 catalog ids `qwen`/`openrouter`/`ollama-cloud`. `WorkflowStore.updateSettings`
+  calls this sanitizer immediately after the `Use for Translation` click
+  mutation, silently reverting `translationProvider` to `mlx-native` before
+  change detection, workflow sync, persistence and runtime routing. Defect is
+  **generic** for all three A5 providers, not OpenRouter-specific. Confirmed by
+  a **reproducible** executable probe against the real built `VaniScriptCore`
+  module (dummy key only), stored in the git-ignored evidence dir
+  `VaniScript/UserData/WorkflowEvidence/CPS-01/` with command, stdout, SHA-256
+  and build commit: `openrouter → mlx-native`, `qwen → mlx-native`,
+  `ollama-cloud → mlx-native`, `gemini-cloud → gemini-cloud`.
+- Downstream layers (`ProviderRegistry`, `refreshProviderSelections`,
+  `CloudChatRouter.route`, `ActiveCloudTranslationProvider.resolve`) verified
+  correct for the A5 ids; the selection never reaches them.
+- **Contracts frozen (official sources, accessed 2026-07-26):** Qwen PAYG
+  `dashscope-intl.aliyuncs.com/compatible-mode/v1` (key must match region +
+  billing plan); Token Plan Singapore-only
+  `token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1` with
+  dedicated per-seat key, exact-string model allowlist and interactive-tools-only
+  use policy; OpenRouter dedicated `POST /api/v1/audio/transcriptions` with
+  model-level STT discovery via `models?output_modalities=transcription`.
+  Full table + URLs: `CLOUD_PROVIDER_STABILIZATION_ACCEPTANCE.md` §5.
+- **Gate (initial, superseded by retry below):** see retry update.
+
+### CPS-01 retry evidence update (2026-07-27, post CHANGES_REQUESTED)
+
+- **Live black-box pass (Human-assisted, fresh build of commit `11a64f8`):**
+  Human entered a valid OpenRouter key in UI only; model
+  `google/gemini-2.5-flash`; target `Russian`. Live observation: OpenRouter
+  `Use for Translation` / `Use for Transcribing` **do not latch** (OBS-002
+  reproduced live). Measured persisted ids (read-only, ids only):
+  `settings.translationProvider` went `gemini-cloud → mlx-native` across the
+  click — the clicked `openrouter` never reached disk; state persists across
+  Settings reopen/app restart. Redacted before/after screenshots + SHA-256 +
+  measured-id snapshots stored in git-ignored
+  `VaniScript/UserData/WorkflowEvidence/CPS-01/` (paths/hashes in acceptance §4).
+- **Second retake (same date, after reviewer visual rejection):** screenshot
+  pair replaced, but the `before` frame (02:40:42) actually shows the **Qwen**
+  card (`qwen-plus`, Invalid), not OpenRouter — so the pair is **INVALID** as a
+  same-viewport OpenRouter before/after (corrected retake protocol in acceptance
+  §4). Hashes in acceptance §4. **Minimal translation executed:** errored / did not start; effective provider `mlx-native`
+  (sanitizer-forced); OpenRouter route proven unused — persisted `usage` map
+  empty before/after (no `openrouter:*` usage key), measured
+  `session.translationProvider = mlx-native`, session chunk translations
+  untouched. **Qwen repeat** recorded as CPS-01 requirement-3 **safe
+  mock-backed profile** via the reproducible built-module probe (explicitly
+  NOT a live UI pass; live Qwen blocked by OBS-001).
+- **Gate wording (separated):**
+  - Source-level OBS-002 root cause: **VERIFIED** (symbol/branch + probe).
+  - Live black-box evidence: **PARTIAL** — OpenRouter logic COMPLETE (click
+    no-op + measured settings/session ids + runtime route proof); **screenshot
+    evidence INVALID** (the retaken `before` frame shows Qwen, not OpenRouter —
+    acceptance §4); Qwen live repeat remains mock-backed (OBS-001).
+  - CPS-01 Done: **BLOCKED on valid screenshot retake** (acceptance §4/§9);
+    final closure and CPS-02/CPS-06 unblock are the Orchestrator's decision
+    (unblock **recommended** once a valid same-card pair is captured).
+- Missing regression seam recorded for CPS-06 (no test drives `updateSettings`
+  with A5 provider ids). No secret in any artifact; evidence files are not
+  tracked by git.
+- **Human evidence decision (2026-07-27):** the OpenRouter role click produces
+  no visual change (“ничего не меняется”); that absence is the observed defect.
+  The Qwen screenshot is classified separately as OBS-001 context and is not
+  misrepresented as an OpenRouter `before` frame. For CPS-01, the rendered
+  OpenRouter state frame plus Human confirmation, measured provider ids,
+  reproducible built-module probe and runtime-route proof replace the redundant
+  requirement for two visually identical OpenRouter captures. CPS-01 returns
+  to independent re-review.
+
+
+## D-2026-08-09-LOCAL-ASR-BACKENDS — Port three Core ML ASR backends from Bolabol
+
+- **Контекст:** VaniScript Apple Silicon локально транскрибирует только через
+  WhisperKit/Core ML. В Bolabol уже работают Parakeet TDT 0.6B v3, Canary Flash
+  180M и Canary 1B v2 с catalog capabilities, complete-folder presence,
+  backend routing и native Core ML engines. Human ограничил новый трек ровно
+  этими тремя моделями.
+- **Решение:** Создать track `LOCAL_ASR_COREML` и портировать:
+  `parakeet-tdt-06b-v3` через FluidAudio Core ML/ANE v3 int8;
+  `canary-180m-flash-coreml` и `canary-1b-v2-coreml` через native
+  `CanaryCoreMLEngine`. Catalog, readiness и pipeline становятся
+  descriptor-driven; существующий WhisperKit остаётся regression invariant.
+  VaniScript outer chunk pipeline, source glossary и translation/review
+  сохраняются; Canary режет outer chunks на собственные 10/15-second windows.
+- **Альтернативы:** Оставить WhisperKit единственным local backend — отвергнуто,
+  так как не выполняет задачу. Встроить Bolabol stores/session types 1:1 —
+  отвергнуто: они не соответствуют VaniScript `AppSettings`/`WorkflowStore` и
+  chunk pipeline. Добавить GigaAM/другие модели — отвергнуто явным scope Human.
+  Python/NeMo, ONNX и MLX ASR — отвергнуты: runtime должен быть native Core ML.
+- **Риски / ограничения:** FluidAudio закрепляется exact `0.15.5`; Canary
+  запускается с `.cpuAndNeuralEngine`, не `.all`; Canary 1B требует macOS 15+.
+  Pipeline должен держать не более одного resident local ASR engine и освобождать
+  Canary 1B перед local MLX translation, чтобы не создавать лишний memory peak.
+- **Точность:** backend/model IDs, Bolabol engine contracts и текущие VaniScript
+  integration points `[high]`; точная форма общего VaniScript engine protocol и
+  measured residency thresholds `[med]`.
+
+## D-2026-08-09-LOCAL-ASR-INSTALL — HF/FluidAudio plus generic remote package
+
+- **Контекст:** Parakeet и Canary Flash имеют рабочие Hugging Face/SDK sources.
+  Рабочий Canary 1B package Human разместит в Google Drive; готового подходящего
+  HF artifact нет. Bolabol использует `.bolabolCDN`, но чужой CDN и package ID
+  нельзя переносить в VaniScript.
+- **Решение:** Install source — first-class catalog contract:
+  (1) FluidAudio v3/int8 для Parakeet;
+  (2) pinned Hugging Face revision
+  `aufklarer/Canary-180M-Flash-CoreML` для Flash;
+  (3) neutral `remotePackage` для Canary 1B. Remote package URL резолвится из
+  direct URL override либо configurable Human-owned base URL. Installer
+  скачивает в staging, проверяет independently trusted archive SHA-256,
+  allowlisted per-file manifest/sizes/hashes, блокирует path/symlink escape и
+  атомарно заменяет canonical `SharedModelsRoot` destination только после полной
+  верификации. Bolabol CDN naming/URL не используется.
+- **Альтернативы:** Hardcode `cdn.bolabol.app` — отвергнуто как чужая
+  инфраструктура. Floating HF `main` — отвергнут из-за mutable layout.
+  Доверять downloaded manifest из того же mutable URL без independent digest —
+  отвергнуто как отсутствие trust anchor. Распаковывать напрямую в final model
+  directory — отвергнуто из-за partial/unsafe Ready state.
+- **Риски / ограничения:** Google Drive direct links могут истечь, вернуть
+  permission/confirmation HTML или изменить redirect behavior; такой ответ
+  должен fail closed с actionable error. Для staging нужны archive +
+  uncompressed disk bytes. Exact Drive URL, package layout, sizes и hashes пока
+  не предоставлены Human и являются blocking input для concrete Canary 1B
+  release.
+- **Точность:** install-source separation, HF/FluidAudio routes, integrity и
+  atomic-install strategy `[high]`; archive extraction implementation и
+  configurable URL resolver `[med]`; concrete Canary 1B URL/layout/digests
+  `[low]` до Human handoff.
+
+## D-2026-08-09-LOCAL-ASR-LANGUAGE — Explicit Canary source; Parakeet auto
+
+- **Контекст:** VaniScript хранит source language отдельно от target translation
+  language, но текущий local readiness/processing ориентирован на WhisperKit и
+  допускает `auto`. Рабочие Canary exports требуют explicit source token; silent
+  fallback создаст правдоподобный, но неверно маршрутизированный результат.
+- **Решение:** Capability policy живёт в Core catalog и одинаково применяется в
+  Settings, workflow/MCP preflight и engines. Parakeet принимает `auto` и
+  supported explicit hint. Canary Flash принимает только `en/de/fr/es`;
+  Canary 1B — catalog 25 language codes, включая `ru/uk`. Обе Canary-модели
+  ASR-only: `auto`, missing или unsupported source блокируют Start до model load,
+  target translation language не превращается в Canary AST target. Canary 1B
+  дополнительно блокируется ниже macOS 15.
+- **Альтернативы:** Молча заменять `auto` на English/primary/default — отвергнуто
+  как скрытая смена семантики. Оставить проверку только внутри engine —
+  отвергнуто: UI/MCP будут обещать unavailable route. Использовать target
+  language как decoder target — отвергнуто, потому что AST вне scope.
+- **Риски / ограничения:** Existing free-form language values требуют
+  нормализации в ISO-639-1; неизвестное значение должно блокироваться, а не
+  угадываться. Installed Canary остаётся на диске при incompatible source, но
+  provider readiness false до явного поддерживаемого выбора.
+- **Точность:** Canary/Parakeet capabilities и no-auto behavior `[high]`;
+  конкретный UI projection/normalization spelling `[med]`.

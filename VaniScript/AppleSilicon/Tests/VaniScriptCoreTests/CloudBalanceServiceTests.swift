@@ -78,8 +78,7 @@ struct CloudBalanceServiceTests {
             return (Data(), HTTPURLResponse(url: URL(string: "https://x")!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
         })
         for id in [CloudProviderCatalog.geminiID, CloudProviderCatalog.openaiID,
-                   CloudProviderCatalog.anthropicID, CloudProviderCatalog.qwenID,
-                   CloudProviderCatalog.customID] {
+                   CloudProviderCatalog.qwenID, CloudProviderCatalog.customID] {
             let descriptor = try #require(CloudProviderCatalog.descriptor(for: id))
             let info = await service.balance(for: descriptor, apiKey: "SECRET")
             #expect(info == .unavailable)

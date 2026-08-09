@@ -43,8 +43,11 @@ resolve_step() {
   elif [[ "$step" =~ ^A[1-8]$|^API_USAGE_DONE$ ]]; then
     TRACK_PREFIX="apiusage"
     TRACK_LABEL="API_USAGE"
+  elif [[ "$step" =~ ^ASR-ARCH$|^LASR-0[1-9]$|^LOCAL_ASR_DONE$ ]]; then
+    TRACK_PREFIX="local-asr-coreml"
+    TRACK_LABEL="LOCAL_ASR_COREML"
   else
-    die "step must be G0..G6, GROK_DONE, U0..U3, UI_DONE, Q0..Q7, QWEN_DONE, A1..A8, or API_USAGE_DONE; got: ${step:-empty}"
+    die "step must be G0..G6, GROK_DONE, U0..U3, UI_DONE, Q0..Q7, QWEN_DONE, A1..A8, API_USAGE_DONE, ASR-ARCH, LASR-01..LASR-09, or LOCAL_ASR_DONE; got: ${step:-empty}"
   fi
 }
 
@@ -151,6 +154,8 @@ cmd_list() {
   git tag -l 'qwen/*' --sort=creatordate
   echo "=== apiusage/* tags ==="
   git tag -l 'apiusage/*' --sort=creatordate
+  echo "=== local-asr-coreml/* tags ==="
+  git tag -l 'local-asr-coreml/*' --sort=creatordate
   echo "=== recent commits ==="
   git log --oneline --decorate -15
 }
@@ -176,8 +181,8 @@ cmd_rollback() {
 usage() {
   cat <<'EOF'
 Usage:
-  ./AI_Workflow_Kit/script/checkpoint.sh pre <G0..G6|U0..U3|Q0..Q7|A1..A8>
-  ./AI_Workflow_Kit/script/checkpoint.sh post <G0..G6|U0..U3|Q0..Q7|A1..A8> [description]
+  ./AI_Workflow_Kit/script/checkpoint.sh pre <G0..G6|U0..U3|Q0..Q7|A1..A8|ASR-ARCH|LASR-01..09>
+  ./AI_Workflow_Kit/script/checkpoint.sh post <G0..G6|U0..U3|Q0..Q7|A1..A8|ASR-ARCH|LASR-01..09> [description]
   ./AI_Workflow_Kit/script/checkpoint.sh list
   ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post <step>
 

@@ -1456,6 +1456,8 @@ private struct SecureInputRow: View {
 private struct ProviderCardView: View {
     @EnvironmentObject private var store: WorkflowStore
     let descriptor: CloudProviderDescriptor
+    @State private var validationStatus: CloudKeyValidationStatus = .idle
+    @State private var fetchedBalance: Double? = nil
 
     var body: some View {
         switch descriptor.id {
@@ -1475,6 +1477,10 @@ private struct ProviderCardView: View {
         }
     }
 
+    private var isValidKey: Bool {
+        validationStatus == .valid
+    }
+
     // MARK: - Gemini (behavior 1:1 with the previous "Google Gemini" section)
     private var geminiCard: some View {
         let isTranscription = store.settings.transcriptionProvider == "gemini-cloud"
@@ -1486,52 +1492,28 @@ private struct ProviderCardView: View {
             }
         )) {
             VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
-                Text("Gemini API key for cloud transcription, translation, and editing.")
+                Text("Google Gemini API key for cloud transcription, translation, and editing.")
                     .font(.system(size: 11))
                     .foregroundStyle(VaniScriptTheme.text2)
                     .padding(.bottom, 2)
 
                 ApiKeyInputRow(title: "Gemini Key", text: binding(\.geminiKey), urlString: descriptor.getApiKeyURL)
-                // A4 (§9): key-validity badge + auto-loaded model dropdown (editable
-                // combo + Retry on failure). Replaces the old read-only "Text Model" row.
                 CloudKeyModelRow(
                     descriptor: descriptor,
                     apiKey: store.settings.geminiKey,
                     selectedModel: binding(\.geminiTextModel),
-                    fallbackModel: "gemini-2.5-flash"
+                    fallbackModel: "gemini-2.5-flash",
+                    validationStatus: $validationStatus,
+                    customLeadingView: AnyView(
+                        stackedProviderToggles(
+                            providerID: "gemini-cloud",
+                            isTranscription: isTranscription,
+                            isTranslation: isTranslation,
+                            isValidKey: isValidKey
+                        )
+                    )
                 )
                 SliderRow(title: "Gemini Budget", value: binding(\.geminiBudgetUsd), range: 0...200, format: "$%.0f")
-
-                HStack(spacing: 8) {
-                    let hasKey = !store.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-
-                    Button {
-                        store.updateSettings { settings in
-                            settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : "gemini-cloud"
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: isTranscription ? "checkmark.circle.fill" : "circle")
-                            Text(isTranscription ? "Used for Transcribing" : "Use for Transcribing")
-                        }
-                    }
-                    .buttonStyle(SettingsSmallButtonStyle(primary: isTranscription))
-                    .disabled(!hasKey)
-
-                    Button {
-                        store.updateSettings { settings in
-                            settings.translationProvider = isTranslation ? "mlx-native" : "gemini-cloud"
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: isTranslation ? "checkmark.circle.fill" : "circle")
-                            Text(isTranslation ? "Used for Translation" : "Use for Translation")
-                        }
-                    }
-                    .buttonStyle(SettingsSmallButtonStyle(primary: isTranslation))
-                    .disabled(!hasKey)
-                }
-                .padding(.top, 4)
             }
         }
     }
@@ -1553,81 +1535,50 @@ private struct ProviderCardView: View {
                     .padding(.bottom, 2)
 
                 ApiKeyInputRow(title: "OpenAI Key", text: binding(\.openaiKey), urlString: descriptor.getApiKeyURL)
-                // A4 (§9): validity badge + model dropdown for the OpenAI *text* model.
-                // (Transcription still uses whisper-1 — audio-model picker is A5.)
                 CloudKeyModelRow(
                     descriptor: descriptor,
                     apiKey: store.settings.openaiKey,
                     selectedModel: binding(\.openaiTextModel),
-                    fallbackModel: "gpt-4o-mini"
+                    fallbackModel: "gpt-4o-mini",
+                    validationStatus: $validationStatus,
+                    customLeadingView: AnyView(
+                        stackedProviderToggles(
+                            providerID: "gpt-cloud",
+                            isTranscription: isTranscription,
+                            isTranslation: isTranslation,
+                            isValidKey: isValidKey
+                        )
+                    )
                 )
                 SliderRow(title: "OpenAI Budget", value: binding(\.openaiBudgetUsd), range: 0...200, format: "$%.0f")
-
-                HStack(spacing: 8) {
-                    let hasKey = !store.settings.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-
-                    Button {
-                        store.updateSettings { settings in
-                            settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : "gpt-cloud"
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: isTranscription ? "checkmark.circle.fill" : "circle")
-                            Text(isTranscription ? "Used for Transcribing" : "Use for Transcribing")
-                        }
-                    }
-                    .buttonStyle(SettingsSmallButtonStyle(primary: isTranscription))
-                    .disabled(!hasKey)
-
-                    Button {
-                        store.updateSettings { settings in
-                            settings.translationProvider = isTranslation ? "mlx-native" : "gpt-cloud"
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: isTranslation ? "checkmark.circle.fill" : "circle")
-                            Text(isTranslation ? "Used for Translation" : "Use for Translation")
-                        }
-                    }
-                    .buttonStyle(SettingsSmallButtonStyle(primary: isTranslation))
-                    .disabled(!hasKey)
-                }
-                .padding(.top, 4)
             }
         }
     }
 
-    // MARK: - Anthropic (behavior 1:1 with the previous "Anthropic" section)
+    // MARK: - Anthropic (key + ReadOnly model; workflow route is CPS / OBS-005)
     private var anthropicCard: some View {
         SettingsSection(title: descriptor.label) {
             VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
-                Text("Anthropic API key for cloud text polishing and editing.")
+                Text("Anthropic API key for cloud translation and editing. Workflow routing is being stabilized (OBS-005).")
                     .font(.system(size: 11))
                     .foregroundStyle(VaniScriptTheme.text2)
                     .padding(.bottom, 2)
 
                 ApiKeyInputRow(title: "Anthropic Key", text: binding(\.anthropicKey), urlString: descriptor.getApiKeyURL)
-                ReadOnlyRow(title: "Text Model", value: "claude-3-5-sonnet")
+                ReadOnlyRow(title: "Text Model", value: descriptor.defaultTextModel)
             }
         }
     }
 
     // MARK: - Qwen / OpenRouter / Ollama Cloud (A5: full integration card)
-    //
-    // One generic card driven by CloudProviderCatalog + CloudChatRouter ids:
-    //   key row → validity badge + auto-loaded model dropdown (CloudKeyModelRow, A4)
-    //   → budget slider (where a budget field exists) → Use-for toggles.
-    // Honesty (§14): the "Use for Transcribing" toggle is disabled with an
-    // explanation whenever `capabilities.supportsTranscription == false` — we never
-    // offer a pipeline the provider cannot actually serve. Translation is available
-    // for all three (OpenAI-compatible chat, routed by CloudChatRouter).
     private var cloudProviderCard: some View {
-        // Engine/registry provider id == catalog id (A5 decision: no "-cloud" suffix
-        // remap needed for usage keys §8).
         let engineID = descriptor.id
         let isTranscription = store.settings.transcriptionProvider == engineID
         let isTranslation = store.settings.translationProvider == engineID
-        let supportsTranscription = descriptor.capabilities.supportsTranscription
+        let isExceeded = ProviderRegistry.isBudgetExceeded(providerID: engineID, settings: store.settings)
+        let spent = ProviderRegistry.providerSpent(providerID: engineID, settings: store.settings)
+        let isEnabled = isValidKey && !isExceeded
+
         return SettingsSection(title: descriptor.label, headerAccessory: AnyView(
             HStack(spacing: 4) {
                 if isTranscription { statusBadge("Transcribing") }
@@ -1641,48 +1592,298 @@ private struct ProviderCardView: View {
                     .padding(.bottom, 2)
 
                 if let keyPath = apiKeyPath {
-                    ApiKeyInputRow(title: "\(descriptor.label) Key", text: binding(keyPath), urlString: descriptor.getApiKeyURL)
+                    ApiKeyInputRow(text: binding(keyPath), urlString: descriptor.getApiKeyURL)
                 }
                 if descriptor.id == CloudProviderCatalog.ollamaCloudID {
-                    // Self-host escape hatch; CloudChatRouter appends /v1/chat/completions.
                     TextInputRow(title: "Base URL", text: binding(\.ollamaCloudBaseUrl))
                 }
-                if let modelPath = textModelPath {
-                    CloudKeyModelRow(
-                        descriptor: descriptor,
-                        apiKey: store.settings[keyPath: apiKeyPath ?? \.geminiKey],
-                        selectedModel: binding(modelPath),
-                        fallbackModel: descriptor.defaultTextModel
-                    )
-                }
-                if let budgetPath = budgetPath {
-                    SliderRow(title: "\(descriptor.label) Budget", value: binding(budgetPath), range: 0...200, format: "$%.0f")
-                }
 
-                // A7 (§11): real balance row — only for providers whose API exposes one
-                // (OpenRouter USD, Ollama plan). `.estimated`/`.none` providers render
-                // nothing here (their card keeps local Estimated spent only; no fake $).
                 if descriptor.balanceKind == .openrouterCredits || descriptor.balanceKind == .ollamaPlan {
                     CloudBalanceRow(
                         descriptor: descriptor,
-                        apiKey: apiKeyPath.map { store.settings[keyPath: $0] } ?? ""
+                        apiKey: apiKeyPath.map { store.settings[keyPath: $0] } ?? "",
+                        onBalanceFetched: { remaining in
+                            self.fetchedBalance = remaining
+                            if let remaining, remaining > 0, let budgetPath = budgetPath {
+                                let curr = store.settings[keyPath: budgetPath]
+                                if curr == 0 || curr > remaining {
+                                    store.updateSettings { settings in
+                                        settings[keyPath: budgetPath] = remaining
+                                    }
+                                }
+                            }
+                        }
                     )
                 }
 
-                cloudProviderToggles(
-                    engineID: engineID,
-                    isTranscription: isTranscription,
-                    isTranslation: isTranslation,
-                    supportsTranscription: supportsTranscription
-                )
+                if isExceeded, let budgetPath = budgetPath {
+                    let limit = store.settings[keyPath: budgetPath]
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(VaniScriptTheme.red)
+                        Text("Budget limit reached (\(String(format: "$%.2f", spent)) spent of \(String(format: "$%.2f", limit)) budget). \(descriptor.label) processing is locked.")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.red)
+                    }
+                    .padding(8)
+                    .background(VaniScriptTheme.red.opacity(0.1))
+                    .cornerRadius(6)
+                }
 
-                if !supportsTranscription {
-                    Text("Transcribing is unavailable: \(descriptor.label) does not offer a verified audio transcription API yet. Translation works with any \(descriptor.label) chat model.")
-                        .font(.system(size: 10))
-                        .foregroundStyle(VaniScriptTheme.text2)
+                if descriptor.id == CloudProviderCatalog.openrouterID {
+                    if let budgetPath = budgetPath {
+                        let maxVal = fetchedBalance ?? 50.0
+                        let rangeLimit = max(maxVal, 1.0)
+                        let formatStr = fetchedBalance != nil ? "$%.2f" : "$%.0f"
+                        let maxLabelStr = fetchedBalance != nil ? String(format: "$%.2f balance", maxVal) : nil
+
+                        SliderRow(
+                            title: "\(descriptor.label) Budget",
+                            value: binding(budgetPath),
+                            range: 0...rangeLimit,
+                            format: formatStr,
+                            maxLabel: maxLabelStr
+                        )
+                    }
+
+                    // Block 1: Transcription Model & Activation Section
+                    let transcriptionModel = store.settings.transcriptionModel(for: engineID)
+                    let sttSupported = CloudProviderCatalog.supportsTranscription(providerID: engineID, modelID: transcriptionModel)
+                    let activeTranscription = isTranscription && sttSupported
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            HStack(spacing: 6) {
+                                Image(systemName: "waveform")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(activeTranscription ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+                                Text("Audio Transcription Section")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(activeTranscription ? VaniScriptTheme.text0 : VaniScriptTheme.text2)
+                            }
+                            Spacer()
+                            if activeTranscription {
+                                statusBadge("Active Transcribing")
+                            }
+                        }
+
+                        CloudKeyModelRow(
+                            descriptor: descriptor,
+                            apiKey: store.settings[keyPath: apiKeyPath ?? \.openrouterApiKey],
+                            selectedModel: binding(\.openrouterTranscriptionModel),
+                            fallbackModel: "x-ai/grok-stt-1.0",
+                            validationStatus: $validationStatus,
+                            initialCategory: .transcribing,
+                            customLeadingView: AnyView(
+                                Button {
+                                    store.updateSettings { settings in
+                                        settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : engineID
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: activeTranscription ? "checkmark.circle.fill" : "circle")
+                                        Text(activeTranscription ? "Used for Transcribing" : "Use for Transcribing")
+                                            .font(.system(size: 11, weight: .medium))
+                                            .lineLimit(1)
+                                        Spacer(minLength: 0)
+                                    }
+                                    .frame(width: 142, alignment: .leading)
+                                }
+                                .buttonStyle(SettingsSmallButtonStyle(primary: activeTranscription))
+                                .disabled(!isEnabled || !sttSupported)
+                                .help(!sttSupported ? "Model does not support audio transcription." : "")
+                            )
+                        )
+
+                        if !sttSupported {
+                            Text("Model '\(transcriptionModel)' does not support audio transcription.")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(VaniScriptTheme.red)
+                        }
+                    }
+                    .padding(10)
+                    .background(activeTranscription ? VaniScriptTheme.accent.opacity(0.08) : Color.white.opacity(0.02))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(activeTranscription ? VaniScriptTheme.accent : Color.white.opacity(0.1), lineWidth: activeTranscription ? 1.5 : 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                    // Block 2: Translation Model & Activation Section
+                    let translationModel = store.settings.translationModel(for: engineID)
+                    let textSupported = CloudProviderCatalog.supportsTranslation(providerID: engineID, modelID: translationModel)
+                    let activeTranslation = isTranslation && textSupported
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            HStack(spacing: 6) {
+                                Image(systemName: "character.bubble")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(activeTranslation ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+                                Text("Text Translation Section")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(activeTranslation ? VaniScriptTheme.text0 : VaniScriptTheme.text2)
+                            }
+                            Spacer()
+                            if activeTranslation {
+                                statusBadge("Active Translation")
+                            }
+                        }
+
+                        CloudKeyModelRow(
+                            descriptor: descriptor,
+                            apiKey: store.settings[keyPath: apiKeyPath ?? \.openrouterApiKey],
+                            selectedModel: binding(\.openrouterTranslationModel),
+                            fallbackModel: "google/gemini-2.5-flash",
+                            validationStatus: $validationStatus,
+                            initialCategory: .translation,
+                            customLeadingView: AnyView(
+                                Button {
+                                    store.updateSettings { settings in
+                                        settings.translationProvider = isTranslation ? "mlx-native" : engineID
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: activeTranslation ? "checkmark.circle.fill" : "circle")
+                                        Text(activeTranslation ? "Used for Translation" : "Use for Translation")
+                                            .font(.system(size: 11, weight: .medium))
+                                            .lineLimit(1)
+                                        Spacer(minLength: 0)
+                                    }
+                                    .frame(width: 142, alignment: .leading)
+                                }
+                                .buttonStyle(SettingsSmallButtonStyle(primary: activeTranslation))
+                                .disabled(!isEnabled || !textSupported)
+                                .help(!textSupported ? "Model does not support text translation." : "")
+                            )
+                        )
+
+                        if !textSupported {
+                            Text("Model '\(translationModel)' is audio-only and does not support text translation.")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(VaniScriptTheme.red)
+                        }
+                    }
+                    .padding(10)
+                    .background(activeTranslation ? VaniScriptTheme.accent.opacity(0.08) : Color.white.opacity(0.02))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(activeTranslation ? VaniScriptTheme.accent : Color.white.opacity(0.1), lineWidth: activeTranslation ? 1.5 : 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    let selectedModel = textModelPath.map { store.settings[keyPath: $0] } ?? descriptor.defaultTextModel
+                    let supportsTranscription = CloudProviderCatalog.supportsTranscription(providerID: engineID, modelID: selectedModel)
+
+                    if let modelPath = textModelPath {
+                        CloudKeyModelRow(
+                            descriptor: descriptor,
+                            apiKey: store.settings[keyPath: apiKeyPath ?? \.geminiKey],
+                            selectedModel: binding(modelPath),
+                            fallbackModel: descriptor.defaultTextModel,
+                            validationStatus: $validationStatus,
+                            customLeadingView: AnyView(
+                                cloudProviderToggles(
+                                    engineID: engineID,
+                                    isTranscription: isTranscription,
+                                    isTranslation: isTranslation,
+                                    hasKey: isValidKey,
+                                    supportsTranscription: supportsTranscription
+                                )
+                            )
+                        )
+                    }
+
+                    if !supportsTranscription {
+                        Text("Transcribing is unavailable for this provider/model (no verified audio transcription endpoint).")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(VaniScriptTheme.text2)
+                    }
+
+                    if let budgetPath = budgetPath {
+                        let maxVal = fetchedBalance ?? 50.0
+                        let rangeLimit = max(maxVal, 1.0)
+                        let formatStr = fetchedBalance != nil ? "$%.2f" : "$%.0f"
+                        let maxLabelStr = fetchedBalance != nil ? String(format: "$%.2f balance", maxVal) : nil
+
+                        SliderRow(
+                            title: "\(descriptor.label) Budget",
+                            value: binding(budgetPath),
+                            range: 0...rangeLimit,
+                            format: formatStr,
+                            maxLabel: maxLabelStr
+                        )
+                    }
                 }
             }
         }
+    }
+
+    /// A5 honesty toggles for Qwen / Ollama (and shared Gemini/OpenAI stacked layout).
+    /// Transcribing is disabled when `!supportsTranscription`; Translation only needs a key.
+    private func cloudProviderToggles(
+        engineID: String,
+        isTranscription: Bool,
+        isTranslation: Bool,
+        hasKey: Bool,
+        supportsTranscription: Bool
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button {
+                store.updateSettings { settings in
+                    settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : engineID
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: isTranscription ? "checkmark.circle.fill" : "circle")
+                    Text(isTranscription ? "Used for Transcribing" : "Use for Transcribing")
+                        .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                .frame(width: 142, alignment: .leading)
+            }
+            .buttonStyle(SettingsSmallButtonStyle(primary: isTranscription))
+            .disabled(!hasKey || !supportsTranscription)
+            .help(supportsTranscription
+                  ? "Use this provider for audio transcription."
+                  : "No verified audio transcription endpoint for this provider/model.")
+
+            Button {
+                store.updateSettings { settings in
+                    settings.translationProvider = isTranslation ? "mlx-native" : engineID
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: isTranslation ? "checkmark.circle.fill" : "circle")
+                    Text(isTranslation ? "Used for Translation" : "Use for Translation")
+                        .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                .frame(width: 142, alignment: .leading)
+            }
+            .buttonStyle(SettingsSmallButtonStyle(primary: isTranslation))
+            .disabled(!hasKey)
+        }
+        .frame(width: 170, alignment: .leading)
+    }
+
+    /// Compact stacked toggles for Gemini/OpenAI (always supports transcription).
+    private func stackedProviderToggles(
+        providerID: String,
+        isTranscription: Bool,
+        isTranslation: Bool,
+        isValidKey: Bool,
+        supportsTranscription: Bool = true
+    ) -> some View {
+        cloudProviderToggles(
+            engineID: providerID,
+            isTranscription: isTranscription,
+            isTranslation: isTranslation,
+            hasKey: isValidKey,
+            supportsTranscription: supportsTranscription
+        )
     }
 
     // A5: settings keyPath for the provider's text model (written by CloudKeyModelRow).
@@ -1702,52 +1903,6 @@ private struct ProviderCardView: View {
         case CloudProviderCatalog.openrouterID: return \.openrouterBudgetUsd
         default: return nil
         }
-    }
-
-    // A5: "Use for Transcribing / Translation" buttons for the generic card.
-    // Transcribing is shown but disabled (with a tooltip) when the provider has no
-    // verified audio API — visible-but-disabled is the honest UX (§14): the user
-    // learns the limitation instead of wondering where the toggle went.
-    private func cloudProviderToggles(
-        engineID: String,
-        isTranscription: Bool,
-        isTranslation: Bool,
-        supportsTranscription: Bool
-    ) -> some View {
-        HStack(spacing: 8) {
-            let hasKey = !(apiKeyPath.map { store.settings[keyPath: $0] } ?? "")
-                .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-
-            Button {
-                store.updateSettings { settings in
-                    settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : engineID
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: isTranscription ? "checkmark.circle.fill" : "circle")
-                    Text(isTranscription ? "Used for Transcribing" : "Use for Transcribing")
-                }
-            }
-            .buttonStyle(SettingsSmallButtonStyle(primary: isTranscription))
-            .disabled(!hasKey || !supportsTranscription)
-            .help(supportsTranscription
-                ? ""
-                : "\(descriptor.label) has no verified audio transcription API in VaniScript yet.")
-
-            Button {
-                store.updateSettings { settings in
-                    settings.translationProvider = isTranslation ? "mlx-native" : engineID
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: isTranslation ? "checkmark.circle.fill" : "circle")
-                    Text(isTranslation ? "Used for Translation" : "Use for Translation")
-                }
-            }
-            .buttonStyle(SettingsSmallButtonStyle(primary: isTranslation))
-            .disabled(!hasKey)
-        }
-        .padding(.top, 4)
     }
 
     // MARK: - Fallback card for ids without a dedicated card (defensive only)
@@ -1799,16 +1954,22 @@ private struct ProviderCardView: View {
 }
 
 private struct ApiKeyInputRow: View {
-    let title: String
+    var title: String = "API Key"
     @Binding var text: String
     let urlString: String
+    var showTitle: Bool = true
     @State private var isRevealed = false
 
     var body: some View {
         HStack(spacing: 8) {
-            Text(title)
-                .foregroundStyle(VaniScriptTheme.text2)
-                .frame(width: 140, alignment: .leading)
+            if showTitle && !title.isEmpty {
+                Text(title)
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .frame(width: 170, alignment: .leading)
+            } else {
+                Spacer()
+                    .frame(width: 170)
+            }
             HStack(spacing: 6) {
                 Group {
                     if isRevealed {
@@ -1833,12 +1994,12 @@ private struct ApiKeyInputRow: View {
                 .help(isRevealed ? "Hide API key" : "Show API key")
                 .accessibilityLabel(isRevealed ? "Hide API key" : "Show API key")
             }
-            .padding(.leading, 10)
-            .padding(.trailing, 6)
+            .padding(.horizontal, 10)
             .frame(height: 34)
             .background(VaniScriptTheme.input)
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 8))
+
             Button {
                 if let url = URL(string: urlString) {
                     NSWorkspace.shared.open(url)
@@ -1888,24 +2049,28 @@ private struct ReadOnlyRow: View {
 struct CloudBalanceRow: View {
     let descriptor: CloudProviderDescriptor
     let apiKey: String
+    var showTitleLabel: Bool = true
+    var onBalanceFetched: ((Double?) -> Void)? = nil
 
     @State private var info: BalanceInfo = .unavailable
     @State private var isLoading = false
-    // One session-scoped service instance (in-memory TTL cache; nothing persisted).
     @State private var service = CloudBalanceService()
 
     private var trimmedKey: String { apiKey.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     var body: some View {
         HStack(alignment: .center, spacing: 8) {
-            Text("Balance")
-                .foregroundStyle(VaniScriptTheme.text2)
-                .frame(width: 140, alignment: .leading)
+            if showTitleLabel {
+                Text("Balance")
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .frame(width: 140, alignment: .leading)
+            }
 
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 Text(displayText)
-                    .foregroundStyle(VaniScriptTheme.text1)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(!showTitleLabel ? balanceColor : VaniScriptTheme.text1)
+                    .font(.system(size: !showTitleLabel ? 16 : 12, weight: .bold, design: .monospaced))
+                    .lineLimit(1)
 
                 if isLoading {
                     ProgressView().controlSize(.small)
@@ -1930,14 +2095,29 @@ struct CloudBalanceRow: View {
         }
     }
 
+    private var balanceColor: Color {
+        switch info {
+        case let .usd(remaining, _):
+            if remaining <= 0 {
+                return VaniScriptTheme.red
+            } else if remaining <= 5.0 {
+                return VaniScriptTheme.accent
+            } else {
+                return VaniScriptTheme.green
+            }
+        default:
+            return VaniScriptTheme.text0
+        }
+    }
+
     /// Human-readable balance line by `BalanceInfo` case (§11 wording).
     private var displayText: String {
         switch info {
-        case let .usd(remaining, total):
-            if let total {
-                return "\(Self.usd(remaining)) remaining / \(Self.usd(total)) limit"
+        case let .usd(remaining, _):
+            if !showTitleLabel {
+                return Self.usd(remaining)
             }
-            return "\(Self.usd(remaining)) remaining"
+            return "\(Self.usd(remaining)) remaining (Account Balance)"
         case let .planLimits(label, detail):
             return detail.isEmpty ? label : "\(label) — \(detail)"
         case .unavailable:
@@ -1952,6 +2132,11 @@ struct CloudBalanceRow: View {
         let result = await service.balance(for: descriptor, apiKey: trimmedKey, force: force)
         guard !Task.isCancelled else { return }
         info = result
+        if case let .usd(remaining, _) = result {
+            onBalanceFetched?(remaining)
+        } else {
+            onBalanceFetched?(nil)
+        }
     }
 
     /// Format a USD amount with two decimals (never fabricates precision).
@@ -1962,23 +2147,16 @@ struct CloudBalanceRow: View {
 
 
 // A4 (§9): validity badge + model dropdown for a cloud provider.
-//
-// Responsibilities:
-//   - Debounced key validation on key change (via CloudKeyValidator) → Checking/Valid/
-//     Invalid badge.
-//   - On a valid key, auto-load the provider's model list (CloudModelCatalog). Success →
-//     Picker; failure/empty → editable combo (free-text model id) + Retry button (§9.2).
-//   - Writes the chosen model id into settings via `selectedModel` binding.
-//
-// Concurrency: all async work runs in `.task(id: apiKey)`, which SwiftUI cancels and
-// restarts whenever the key changes — that cancellation *is* our debounce/dedupe, so
-// no manual timer bookkeeping is needed. Services are session-scoped @State (the
-// catalog caches in memory only; nothing persisted, no keys logged).
 private struct CloudKeyModelRow: View {
+    @EnvironmentObject private var store: WorkflowStore
     let descriptor: CloudProviderDescriptor
     let apiKey: String
+    var title: String = "Text Model"
     @Binding var selectedModel: String
     let fallbackModel: String
+    @Binding var validationStatus: CloudKeyValidationStatus
+    var initialCategory: SmartModelPickerSheet.ModelFilterCategory = .all
+    var customLeadingView: AnyView? = nil
 
     @State private var status: CloudKeyValidationStatus = .idle
     @State private var models: [CloudModel] = []
@@ -1986,6 +2164,7 @@ private struct CloudKeyModelRow: View {
     @State private var loadFailed = false
     // User forced free-text entry even though a list is available (advanced users).
     @State private var manualEntry = false
+    @State private var showPickerSheet = false
 
     // Session-scoped services (constructed once; @State preserves the first instance).
     @State private var validator = CloudKeyValidator()
@@ -1995,20 +2174,106 @@ private struct CloudKeyModelRow: View {
     private var showsCombo: Bool { manualEntry || loadFailed || models.isEmpty }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 8) {
-            Text("Text Model")
-                .foregroundStyle(VaniScriptTheme.text2)
-                .frame(width: 140, alignment: .leading)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .center, spacing: 8) {
+                if let leading = customLeadingView {
+                    leading
+                        .frame(width: 170, alignment: .leading)
+                } else {
+                    Text(title)
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .frame(width: 170, alignment: .leading)
+                }
 
-            VStack(alignment: .leading, spacing: 6) {
-                validationBadge
-                modelControl
+                HStack(alignment: .center, spacing: 8) {
+                    modelControl
+                    validationBadge
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if status == .valid {
+                modelPricingInfoRow
+            }
         }
         .font(.system(size: 13))
         .task(id: apiKey) {
             await runValidationAndLoad()
+        }
+    }
+
+    @ViewBuilder
+    private var modelPricingInfoRow: some View {
+        let currentModelID = selectedModel.isEmpty ? fallbackModel : selectedModel
+        let isSTT = initialCategory == .transcribing
+            || title.lowercased().contains("audio")
+            || title.lowercased().contains("transcrib")
+            || (CloudProviderCatalog.supportsTranscription(providerID: descriptor.id, modelID: currentModelID) && !CloudProviderCatalog.supportsTranslation(providerID: descriptor.id, modelID: currentModelID))
+
+        if isSTT {
+            let sttPrice = CloudProviderCatalog.sttPricing(for: currentModelID)
+            HStack(spacing: 12) {
+                HStack(spacing: 4) {
+                    Image(systemName: "timer")
+                        .font(.system(size: 10))
+                        .foregroundStyle(VaniScriptTheme.accent)
+                    Text("Audio Rate:")
+                        .foregroundStyle(VaniScriptTheme.text2)
+                    Text("\(sttPrice.formattedPerMin) (\(sttPrice.formattedPerHour))")
+                        .foregroundStyle(VaniScriptTheme.text0)
+                        .fontWeight(.semibold)
+                }
+            }
+            .font(.system(size: 11, design: .monospaced))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .padding(.leading, 178)
+        } else {
+            let loaded = models.first(where: { $0.id == currentModelID })
+            let info = CloudProviderCatalog.modelPricingDetails(
+                providerID: descriptor.id,
+                modelID: currentModelID,
+                loadedModel: loaded
+            )
+
+            HStack(spacing: 12) {
+                HStack(spacing: 4) {
+                    Image(systemName: "brain")
+                        .font(.system(size: 10))
+                        .foregroundStyle(VaniScriptTheme.accent)
+                    Text("Context:")
+                        .foregroundStyle(VaniScriptTheme.text2)
+                    Text(info.context)
+                        .foregroundStyle(VaniScriptTheme.text0)
+                        .fontWeight(.semibold)
+                }
+
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.down.circle")
+                        .font(.system(size: 10))
+                        .foregroundStyle(VaniScriptTheme.green)
+                    Text("Input:")
+                        .foregroundStyle(VaniScriptTheme.text2)
+                    Text(info.inputCost)
+                        .foregroundStyle(VaniScriptTheme.text0)
+                        .fontWeight(.semibold)
+                }
+
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.up.circle")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.blue)
+                    Text("Output:")
+                        .foregroundStyle(VaniScriptTheme.text2)
+                    Text(info.outputCost)
+                        .foregroundStyle(VaniScriptTheme.text0)
+                        .fontWeight(.semibold)
+                }
+            }
+            .font(.system(size: 11, design: .monospaced))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .padding(.leading, 178)
         }
     }
 
@@ -2035,7 +2300,7 @@ private struct CloudKeyModelRow: View {
             .foregroundStyle(color)
     }
 
-    // MARK: - Model control (Picker or editable combo + Retry)
+    // MARK: - Model control (Smart Picker Sheet or editable combo + Retry)
 
     @ViewBuilder
     private var modelControl: some View {
@@ -2068,29 +2333,84 @@ private struct CloudKeyModelRow: View {
                 .buttonStyle(SettingsSmallButtonStyle(primary: false))
                 .disabled(trimmedKey.isEmpty || isLoadingModels)
             }
+        } else if descriptor.id == CloudProviderCatalog.qwenID {
+            Picker("", selection: $selectedModel) {
+                ForEach(models, id: \.id) { model in
+                    Text(model.id)
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .tag(model.id)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .frame(height: 34)
+            .frame(maxWidth: .infinity, alignment: .leading)
         } else {
             HStack(spacing: 6) {
-                Picker("", selection: $selectedModel) {
-                    // Keep the current selection visible even if it isn't in the fetched
-                    // list (e.g. a previously saved custom id).
-                    if !selectedModel.isEmpty && !models.contains(where: { $0.id == selectedModel }) {
-                        Text(selectedModel).tag(selectedModel)
-                    }
-                    ForEach(models) { model in
-                        Text(model.id).tag(model.id)
-                    }
-                }
-                .labelsHidden()
-                .frame(maxWidth: .infinity, alignment: .leading)
+                let currentModelID = selectedModel.isEmpty ? fallbackModel : selectedModel
+                let isAudio = CloudProviderCatalog.supportsTranscription(providerID: descriptor.id, modelID: currentModelID)
+                let isVision = CloudProviderCatalog.supportsVision(modelID: currentModelID)
 
-                // Escape hatch to type a model id manually.
                 Button {
-                    manualEntry = true
+                    showPickerSheet = true
                 } label: {
-                    Image(systemName: "square.and.pencil")
+                    HStack(spacing: 8) {
+                        Text(currentModelID)
+                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(VaniScriptTheme.text0)
+                            .lineLimit(1)
+
+                        Spacer(minLength: 4)
+
+                        HStack(spacing: 4) {
+                            if isAudio {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "waveform")
+                                        .font(.system(size: 8, weight: .bold))
+                                    Text("Audio STT")
+                                }
+                                .font(.system(size: 9, weight: .bold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(VaniScriptTheme.green.opacity(0.22))
+                                .foregroundStyle(VaniScriptTheme.green)
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                            }
+                            if isVision {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "camera")
+                                        .font(.system(size: 8, weight: .bold))
+                                    Text("Vision")
+                                }
+                                .font(.system(size: 9, weight: .bold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(Color.blue.opacity(0.22))
+                                .foregroundStyle(Color(red: 0.35, green: 0.72, blue: 1.0))
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                            }
+                        }
+
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 10))
+                            .foregroundStyle(VaniScriptTheme.text2)
+                    }
+                    .padding(.horizontal, 10)
+                    .frame(height: 34)
+                    .background(VaniScriptTheme.input)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
-                .buttonStyle(SettingsSmallButtonStyle(primary: false))
-                .help("Enter a model id manually")
+                .buttonStyle(.plain)
+                .popover(isPresented: $showPickerSheet, arrowEdge: .bottom) {
+                    SmartModelPickerSheet(
+                        descriptor: descriptor,
+                        models: models,
+                        selectedModel: $selectedModel,
+                        isPresented: $showPickerSheet,
+                        initialCategory: initialCategory
+                    )
+                }
             }
         }
     }
@@ -2100,11 +2420,14 @@ private struct CloudKeyModelRow: View {
     private func runValidationAndLoad() async {
         guard !trimmedKey.isEmpty else {
             status = .idle
+            validationStatus = .idle
             models = []
             loadFailed = false
+            autoResetIfInvalid(status: .idle)
             return
         }
         status = .checking
+        validationStatus = .checking
         // Debounce: wait for typing to pause. If the key changes, SwiftUI cancels this
         // task (throwing CancellationError) and starts a fresh one — newest wins.
         do {
@@ -2112,14 +2435,34 @@ private struct CloudKeyModelRow: View {
         } catch {
             return
         }
-        let result = await validator.validate(descriptor: descriptor, apiKey: trimmedKey)
+        let baseURL = descriptor.id == CloudProviderCatalog.qwenID ? store.settings.resolvedQwenBaseUrl(apiKey: trimmedKey) : nil
+        let result = await validator.validate(descriptor: descriptor, apiKey: trimmedKey, baseURL: baseURL)
         guard !Task.isCancelled else { return }
         status = result
+        validationStatus = result
         if case .valid = result {
             await loadModels(force: false)
         } else {
             models = []
             loadFailed = false
+            autoResetIfInvalid(status: result)
+        }
+    }
+
+    private func autoResetIfInvalid(status: CloudKeyValidationStatus) {
+        guard status != .valid else { return }
+        let engineID: String = {
+            switch descriptor.id {
+            case CloudProviderCatalog.geminiID: return "gemini-cloud"
+            case CloudProviderCatalog.openaiID: return "gpt-cloud"
+            default: return descriptor.id
+            }
+        }()
+        if store.settings.transcriptionProvider == engineID {
+            store.updateSettings { $0.transcriptionProvider = "coreml-whisperkit" }
+        }
+        if store.settings.translationProvider == engineID {
+            store.updateSettings { $0.translationProvider = "mlx-native" }
         }
     }
 
@@ -2128,7 +2471,8 @@ private struct CloudKeyModelRow: View {
         isLoadingModels = true
         defer { isLoadingModels = false }
         do {
-            let fetched = try await catalog.listModels(descriptor: descriptor, apiKey: trimmedKey, useCache: !force)
+            let baseURL = descriptor.id == CloudProviderCatalog.qwenID ? store.settings.resolvedQwenBaseUrl(apiKey: trimmedKey) : nil
+            let fetched = try await catalog.listModels(descriptor: descriptor, apiKey: trimmedKey, baseURL: baseURL, useCache: !force)
             guard !Task.isCancelled else { return }
             models = fetched
             loadFailed = fetched.isEmpty
@@ -2141,6 +2485,282 @@ private struct CloudKeyModelRow: View {
             models = []
             loadFailed = true
         }
+    }
+}
+
+// MARK: - Smart Model Picker Sheet (A5: Search bar + capability filter chips)
+
+private struct SmartModelPickerSheet: View {
+    let descriptor: CloudProviderDescriptor
+    let models: [CloudModel]
+    @Binding var selectedModel: String
+    @Binding var isPresented: Bool
+    var initialCategory: ModelFilterCategory = .all
+
+    @State private var searchText = ""
+    @State private var selectedFilter: ModelFilterCategory
+
+    init(
+        descriptor: CloudProviderDescriptor,
+        models: [CloudModel],
+        selectedModel: Binding<String>,
+        isPresented: Binding<Bool>,
+        initialCategory: ModelFilterCategory = .all
+    ) {
+        self.descriptor = descriptor
+        self.models = models
+        self._selectedModel = selectedModel
+        self._isPresented = isPresented
+        self.initialCategory = initialCategory
+        self._selectedFilter = State(initialValue: initialCategory)
+    }
+
+    enum ModelFilterCategory: String, CaseIterable, Identifiable {
+        case all = "All"
+        case transcribing = "For Transcribing"
+        case translation = "For Translation"
+
+        var id: String { rawValue }
+        var icon: String {
+            switch self {
+            case .all: return "square.grid.2x2"
+            case .transcribing: return "waveform"
+            case .translation: return "character.bubble"
+            }
+        }
+    }
+
+    private var filteredModels: [CloudModel] {
+        models.filter { model in
+            let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let matchesSearch = query.isEmpty || model.id.localizedCaseInsensitiveContains(query)
+            let matchesCategory: Bool = {
+                switch selectedFilter {
+                case .all:
+                    return true
+                case .transcribing:
+                    return CloudProviderCatalog.supportsTranscription(providerID: descriptor.id, modelID: model.id)
+                case .translation:
+                    // Text LLMs suitable for translation (excludes dedicated audio-only STT models like Whisper/Grok STT/Nova-3)
+                    let lower = model.id.lowercased()
+                    let isDedicatedAudioSTT = lower.contains("whisper")
+                        || lower.contains("grok-stt")
+                        || lower.contains("deepgram")
+                        || lower.contains("parakeet")
+                        || lower.contains("mai-transcribe")
+                        || lower.contains("voxtral-mini")
+                        || lower.contains("chirp")
+                        || lower.contains("asr-flash")
+                        || lower.contains("mini-transcribe")
+                    return !isDedicatedAudioSTT
+                }
+            }()
+            return matchesSearch && matchesCategory
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Select Model for \(descriptor.label)")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(VaniScriptTheme.text0)
+                    Text("\(filteredModels.count) of \(models.count) models matching filter")
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                }
+                Spacer()
+                Button {
+                    isPresented = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
+
+            Divider().background(Color.white.opacity(0.12))
+
+            // Search Bar & Filter Chips
+            VStack(spacing: 10) {
+                // Search Input
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .font(.system(size: 13))
+                    TextField("Search models (e.g. omni, gemini, qwen, flash)...", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12))
+                        .foregroundStyle(VaniScriptTheme.text0)
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(VaniScriptTheme.text2)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .frame(height: 32)
+                .background(VaniScriptTheme.input)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.12), lineWidth: 1))
+
+                // Filter Chips
+                HStack(spacing: 6) {
+                    ForEach(ModelFilterCategory.allCases) { category in
+                        let count: Int = {
+                            switch category {
+                            case .all:
+                                return models.count
+                            case .transcribing:
+                                return models.filter { CloudProviderCatalog.supportsTranscription(providerID: descriptor.id, modelID: $0.id) }.count
+                            case .translation:
+                                return models.filter { model in
+                                    let lower = model.id.lowercased()
+                                    let isDedicatedAudioSTT = lower.contains("whisper")
+                                        || lower.contains("grok-stt")
+                                        || lower.contains("deepgram")
+                                        || lower.contains("parakeet")
+                                        || lower.contains("mai-transcribe")
+                                        || lower.contains("voxtral-mini")
+                                        || lower.contains("chirp")
+                                        || lower.contains("asr-flash")
+                                        || lower.contains("mini-transcribe")
+                                    return !isDedicatedAudioSTT
+                                }.count
+                            }
+                        }()
+                        Button {
+                            selectedFilter = category
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: category.icon)
+                                Text("\(category.rawValue) (\(count))")
+                                    .lineLimit(1)
+                            }
+                            .font(.system(size: 11, weight: selectedFilter == category ? .bold : .medium))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .frame(maxWidth: .infinity)
+                            .background(selectedFilter == category ? VaniScriptTheme.accent.opacity(0.25) : VaniScriptTheme.input)
+                            .foregroundStyle(selectedFilter == category ? Color.white : VaniScriptTheme.text2)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(selectedFilter == category ? VaniScriptTheme.accent : Color.white.opacity(0.12), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(12)
+
+            Divider().background(Color.white.opacity(0.12))
+
+            // Models List
+            if filteredModels.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "slash.circle")
+                        .font(.system(size: 26))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                    Text("No matching models found")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(VaniScriptTheme.text1)
+                    Text("Try clearing your search query or filter.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 2) {
+                        ForEach(filteredModels, id: \.id) { model in
+                            let isSelected = selectedModel == model.id
+                            let isAudio = CloudProviderCatalog.supportsTranscription(providerID: descriptor.id, modelID: model.id)
+                            let isVision = CloudProviderCatalog.supportsVision(modelID: model.id)
+
+                            Button {
+                                selectedModel = model.id
+                                isPresented = false
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                        .foregroundStyle(isSelected ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+                                        .font(.system(size: 14))
+
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(model.id)
+                                            .font(.system(size: 12, weight: isSelected ? .bold : .medium, design: .monospaced))
+                                            .foregroundStyle(isSelected ? Color.white : VaniScriptTheme.text0)
+
+                                        HStack(spacing: 4) {
+                                            if isAudio {
+                                                HStack(spacing: 3) {
+                                                    Image(systemName: "waveform")
+                                                        .font(.system(size: 8, weight: .bold))
+                                                    Text("Audio STT")
+                                                }
+                                                .font(.system(size: 9, weight: .bold))
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 2)
+                                                .background(VaniScriptTheme.green.opacity(0.22))
+                                                .foregroundStyle(VaniScriptTheme.green)
+                                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                            } else {
+                                                HStack(spacing: 3) {
+                                                    Image(systemName: "text.bubble")
+                                                        .font(.system(size: 8, weight: .semibold))
+                                                    Text("Text LLM")
+                                                }
+                                                .font(.system(size: 9))
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 2)
+                                                .background(Color.white.opacity(0.08))
+                                                .foregroundStyle(VaniScriptTheme.text2)
+                                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                            }
+
+                                            if isVision {
+                                                HStack(spacing: 3) {
+                                                    Image(systemName: "camera")
+                                                        .font(.system(size: 8, weight: .bold))
+                                                    Text("Vision")
+                                                }
+                                                .font(.system(size: 9, weight: .bold))
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 2)
+                                                .background(Color.blue.opacity(0.22))
+                                                .foregroundStyle(Color(red: 0.35, green: 0.72, blue: 1.0))
+                                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                            }
+                                        }
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(isSelected ? VaniScriptTheme.accent.opacity(0.18) : Color.clear)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+        .frame(width: 580, height: 500)
+        .background(VaniScriptTheme.card)
     }
 }
 
@@ -2345,6 +2965,7 @@ private struct SliderRow: View {
     @Binding var value: Double
     let range: ClosedRange<Double>
     let format: String
+    var maxLabel: String? = nil
 
     var body: some View {
         HStack {
@@ -2353,10 +2974,17 @@ private struct SliderRow: View {
                 .frame(width: 140, alignment: .leading)
             Slider(value: $value, in: range)
                 .tint(VaniScriptTheme.accent)
-            Text(String(format: format, value))
-                .foregroundStyle(VaniScriptTheme.accent)
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
-                .frame(width: 54, alignment: .trailing)
+            HStack(spacing: 2) {
+                Text(String(format: format, value))
+                    .foregroundStyle(VaniScriptTheme.accent)
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                if let maxLabel {
+                    Text("/ \(maxLabel)")
+                        .foregroundStyle(VaniScriptTheme.text2)
+                        .font(.system(size: 10, design: .monospaced))
+                }
+            }
+            .frame(minWidth: 54, alignment: .trailing)
         }
         .font(.system(size: 13))
     }
@@ -2453,17 +3081,17 @@ private func modelDownloadUrl(id: String) -> String {
     case "nemotron3-nano-4b-4bit":
         return "https://huggingface.co/mlx-community/NVIDIA-Nemotron-3-Nano-4B-4bit"
     case "whisper-small-en":
-        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/small.en"
+        return "https://huggingface.co/argmaxinc/whisperkit-coreml/tree/main/openai_whisper-small.en"
     case "whisper-small-multilingual":
-        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/small"
+        return "https://huggingface.co/argmaxinc/whisperkit-coreml/tree/main/openai_whisper-small"
     case "whisper-medium-en":
-        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/medium.en"
+        return "https://huggingface.co/argmaxinc/whisperkit-coreml/tree/main/openai_whisper-medium.en"
     case "whisper-medium-multilingual":
-        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/medium"
+        return "https://huggingface.co/argmaxinc/whisperkit-coreml/tree/main/openai_whisper-medium"
     case "whisper-large-v3-turbo":
-        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/large-v3-turbo"
+        return "https://huggingface.co/argmaxinc/whisperkit-coreml/tree/main/openai_whisper-large-v3_turbo"
     case "whisper-large-v3":
-        return "https://huggingface.co/awni/whisperkit-coreml/tree/main/huggingface/models/apple/ml-whisper/large-v3"
+        return "https://huggingface.co/argmaxinc/whisperkit-coreml/tree/main/openai_whisper-large-v3"
     default:
         return "https://huggingface.co"
     }

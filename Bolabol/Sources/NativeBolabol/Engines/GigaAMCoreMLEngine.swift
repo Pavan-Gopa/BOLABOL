@@ -159,7 +159,7 @@ actor GigaAMCoreMLEngine: TranscriptionEngine {
 
     // MARK: - Language Resolution
 
-    // Internal seam for language validation contract testing (BLOCK-S9-003)
+    // Keep language validation isolated so explicit-source requirements remain testable.
     internal func resolveLanguage(_ request: TranscriptionRequest) throws -> String {
         let supported = model.capabilities.supportedLanguageCodes
         guard !supported.isEmpty else {
@@ -171,6 +171,8 @@ actor GigaAMCoreMLEngine: TranscriptionEngine {
         guard supported.contains(language) else {
             throw GigaAMTranscriptionError.unsupportedLanguage(language)
         }
+        // ADR-022 keeps GigaAM transcription-only; translation is a separate
+        // post-transcription text operation.
         guard !request.translateToEnglish else {
             throw GigaAMTranscriptionError.translationUnsupported
         }
@@ -179,7 +181,7 @@ actor GigaAMCoreMLEngine: TranscriptionEngine {
 
     // MARK: - Chunking
 
-    // Internal seam for unit testing engine audio chunking contracts (BLOCK-S9-004)
+    // Keep chunking as a pure seam so audio-window boundaries remain testable.
     nonisolated internal static func chunk(samples: [Float], maxSamples: Int) -> [[Float]] {
         guard samples.count > maxSamples else { return [samples] }
         var chunks: [[Float]] = []
@@ -564,9 +566,8 @@ private func makeIntArray(shape: [Int], values: [Int]) throws -> MLMultiArray {
     return array
 }
 
-// Dtype-aware float reading (GigaAM encoder outputs Float16; spike harness
-// uses the same floatValue helper pattern — see GigaAMCoreMLSpike.swift:181).
-// Internal seam for Float16 dtype-aware regression testing (BLOCK-S9-001).
+// Encoder outputs may use Float16, Float32, or Double; keep scalar conversion
+// in one seam so decoding does not assume a single storage type.
 internal func floatValue(from array: MLMultiArray, at offset: Int) -> Float {
     switch array.dataType {
     case .float16:
@@ -580,7 +581,7 @@ internal func floatValue(from array: MLMultiArray, at offset: Int) -> Float {
     }
 }
 
-// Internal seam for Float16 dtype-aware regression testing (BLOCK-S9-001).
+// Keep stride conversion in a small seam so tensor layout remains testable.
 internal func elementOffset(_ array: MLMultiArray, indices: [Int]) -> Int {
     zip(indices, array.strides).reduce(0) { $0 + $1.0 * $1.1.intValue }
 }
@@ -620,7 +621,7 @@ private func predictorState(_ state: MLMultiArray, hiddenSize: Int) throws -> ML
 
 // MARK: - Errors
 
-// Internal seam for unit testing engine error contracts (BLOCK-S9-004)
+// Keep engine errors stable for the transcription failure contract.
 internal enum GigaAMTranscriptionError: LocalizedError, Equatable {
     case missingAudioFile
     case emptyAudio

@@ -5,14 +5,14 @@
     "semantic_hash": ""
   },
   "script/build_and_run.sh": {
-    "mtime": 1785995271.401392,
-    "ast_hash": "91341bd99565b02314a0e815fe4e26d3",
+    "mtime": 1786271770.596374,
+    "ast_hash": "68dd202e638c05cae8517d4cede33916",
     "semantic_hash": ""
   },
   "script/build_release_dmg.sh": {
-    "mtime": 1785995271.4021084,
-    "ast_hash": "cbe7d63d842fcac44f4fe4130c145c29",
-    "semantic_hash": "cbe7d63d842fcac44f4fe4130c145c29"
+    "mtime": 1786271770.5965161,
+    "ast_hash": "ca7c1a066f89a6290d23231b62535922",
+    "semantic_hash": ""
   },
   "AI_Workflow_Kit/script/checkpoint.sh": {
     "mtime": 1786219614.0004616,
@@ -48,11 +48,6 @@
     "mtime": 1785743539.1196382,
     "ast_hash": "8dd14a007ac9871e1b67d96216bdd97e",
     "semantic_hash": "8dd14a007ac9871e1b67d96216bdd97e"
-  },
-  "restructure.sh": {
-    "mtime": 1785743537.3044207,
-    "ast_hash": "583033fb752f11709b7c04c98800bdde",
-    "semantic_hash": "583033fb752f11709b7c04c98800bdde"
   },
   "scratch/test_didset.swift": {
     "mtime": 1785532602.0985081,
@@ -120,9 +115,9 @@
     "semantic_hash": "a016520a81d88ebe31e0896a35d22c61"
   },
   "script/qa/check_settings_surface.sh": {
-    "mtime": 1785743538.0098271,
-    "ast_hash": "2f2e651cb2056089caf994155ab767b9",
-    "semantic_hash": "2f2e651cb2056089caf994155ab767b9"
+    "mtime": 1786271469.690711,
+    "ast_hash": "9d64d4996592c6e50cb3083f32f93bb2",
+    "semantic_hash": ""
   },
   "script/qa/check_stores_wiring.sh": {
     "mtime": 1785743537.987975,
@@ -140,9 +135,9 @@
     "semantic_hash": "6411467d5e6bad774e6df0c5c5b4a74a"
   },
   "script/qa/check_workspace_ui_surface.sh": {
-    "mtime": 1785743537.977999,
-    "ast_hash": "dd03fb2e6a7f3d03af4000ca13a3d81b",
-    "semantic_hash": "dd03fb2e6a7f3d03af4000ca13a3d81b"
+    "mtime": 1786271484.2659845,
+    "ast_hash": "0f1cc194bbbae57aff3c789c6c57b6a9",
+    "semantic_hash": ""
   },
   "script/qa/run_all.sh": {
     "mtime": 1785755820.7793005,
@@ -155,8 +150,8 @@
     "semantic_hash": "b7537aa48ca840a48caafbfbf42dcb1d"
   },
   "AI_Workflow_Kit/docs/AI/ARCHITECT_HANDOFF.md": {
-    "mtime": 1785743537.425937,
-    "ast_hash": "52dafe794535c42c10d5fe3b17a28f5d",
+    "mtime": 1786264240.66558,
+    "ast_hash": "fd8ccb3a124339a7ccfa6b0e12c6a52f",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/BUG_REPORT.md": {
@@ -170,8 +165,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1786219644.384016,
-    "ast_hash": "d03b7494528545fe4ff9512a0e0042c9",
+    "mtime": 1786272760.5343928,
+    "ast_hash": "b474b65c8c298b781bb1c938afe36e0c",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -210,8 +205,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1786219654.9772146,
-    "ast_hash": "624d9b6313956cf96f6861580af00553",
+    "mtime": 1786270285.2358084,
+    "ast_hash": "18f78957cf4f4ed12dcb90d38a029420",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -220,8 +215,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/DECISIONS.md": {
-    "mtime": 1786077193.3323493,
-    "ast_hash": "002962f8700aef3f06e355a86cd98ff3",
+    "mtime": 1786264060.8372142,
+    "ast_hash": "b92e9a0eb1f67b1eb44ae29487b67e7a",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/PROJECT_CONTEXT.md": {
@@ -235,8 +230,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1785995271.4026656,
-    "ast_hash": "04589b01465f2bfe44c452e36e042c52",
+    "mtime": 1786272021.6996322,
+    "ast_hash": "281f12af06bda4a326a1196144c66fb6",
     "semantic_hash": ""
   },
   "RENAME_REPORT.md": {
@@ -245,8 +240,8 @@
     "semantic_hash": ""
   },
   "RESTRUCTURE_README.md": {
-    "mtime": 1785743539.143348,
-    "ast_hash": "5a037ab63c9a6d0e77ad018f9ca2663f",
+    "mtime": 1786271522.4328442,
+    "ast_hash": "c020721acd7e060c583272c694c3ebbc",
     "semantic_hash": ""
   },
   "UserData/RecoveredPrompts/custom-slot-prompts-20260707.md": {
@@ -280,13 +275,13 @@
     "semantic_hash": ""
   },
   "docs/RELEASE.md": {
-    "mtime": 1785743537.9146988,
-    "ast_hash": "5bca9cb4ac817b36ef108a7a132a5ea5",
+    "mtime": 1786272021.7002232,
+    "ast_hash": "fd3351674910f658a1f463fef5eba22b",
     "semantic_hash": ""
   },
   "docs/RELEASE_NOTES.md": {
-    "mtime": 1785743537.9251537,
-    "ast_hash": "3a9f2cd52f96599e5aa2d29c7effd4b7",
+    "mtime": 1786271923.2849362,
+    "ast_hash": "6a9a148c968371d29236fff6dbbdc797",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260801_085027_\u043a\u0430\u043a\u043e\u0439_\u043e\u043a\u0440\u0443\u0433\u043b\u044b\u0439_\u0441\u0438\u0441\u0442\u0435\u043c\u043d\u044b\u0439_\u0448\u0440\u0438\u0444\u0442_\u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c_\u0432_\u0437\u0430\u0433\u043e.md": {
@@ -484,11 +479,6 @@
     "ast_hash": "db0984656fcf2b4a6dcd2f2b01581f47",
     "semantic_hash": "db0984656fcf2b4a6dcd2f2b01581f47"
   },
-  "Sources/NativeBolabol/Services/AppleSpeechTranscriptionEngine.swift": {
-    "mtime": 1785743538.9055822,
-    "ast_hash": "cad3d30f12ed0e1475d2505c6602a04b",
-    "semantic_hash": "cad3d30f12ed0e1475d2505c6602a04b"
-  },
   "Sources/NativeBolabol/Services/AudioCuePlayer.swift": {
     "mtime": 1785743538.9738457,
     "ast_hash": "b5dbc92dfcb005bc135e002719266c9f",
@@ -520,9 +510,9 @@
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Services/GeminiCloudDictationEngine.swift": {
-    "mtime": 1785743539.0501986,
-    "ast_hash": "aa378b91b7bee8f9180cd1e52fdb1405",
-    "semantic_hash": "aa378b91b7bee8f9180cd1e52fdb1405"
+    "mtime": 1786271533.608961,
+    "ast_hash": "1b526b1a2cf5264ad06931957ec25fcd",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabol/Services/GlobalHotkeyManager.swift": {
     "mtime": 1785966519.2800086,
@@ -575,9 +565,9 @@
     "semantic_hash": "28e5d485448b72ae79fb13452859f331"
   },
   "Sources/NativeBolabol/Stores/GeneralSettingsStore.swift": {
-    "mtime": 1785743538.627937,
-    "ast_hash": "4dee3681fb451abc2437290969cc93c6",
-    "semantic_hash": "4dee3681fb451abc2437290969cc93c6"
+    "mtime": 1786271692.195355,
+    "ast_hash": "08d1210ff9162c7bcc57b9370750310c",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabol/Stores/HotkeySettingsStore.swift": {
     "mtime": 1785743538.6035407,
@@ -600,8 +590,8 @@
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Stores/TranscriptionModelStore.swift": {
-    "mtime": 1786213025.7436104,
-    "ast_hash": "c78d596b021751307ed2385f7bc9469c",
+    "mtime": 1786271197.0503407,
+    "ast_hash": "438e7d9b4e54a8bc0df31ba2194fcd68",
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Stores/UsageStatisticsStore.swift": {
@@ -615,8 +605,8 @@
     "semantic_hash": "389583426874db4b68d2fa6257832eb4"
   },
   "Sources/NativeBolabol/Views/AudioPlaybackModalView.swift": {
-    "mtime": 1786078474.375239,
-    "ast_hash": "2a25a7cea495350e7bc20bd9fa11e998",
+    "mtime": 1786271681.6107168,
+    "ast_hash": "cd360c14a3ab36d992b531422d3f7537",
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Views/Components/AudioInputDeviceStatusPill.swift": {
@@ -628,11 +618,6 @@
     "mtime": 1785743538.788001,
     "ast_hash": "3f950418ab97a0d94cf0b48ae00c4b67",
     "semantic_hash": "3f950418ab97a0d94cf0b48ae00c4b67"
-  },
-  "Sources/NativeBolabol/Views/Components/BolabolFullLogoView.swift": {
-    "mtime": 1785743538.7807698,
-    "ast_hash": "6111f8b08ba18ac0252df0297b95f0db",
-    "semantic_hash": "6111f8b08ba18ac0252df0297b95f0db"
   },
   "Sources/NativeBolabol/Views/Components/BolabolLogoView.swift": {
     "mtime": 1785743538.7602563,
@@ -655,8 +640,8 @@
     "semantic_hash": "5dc85f94fe5de7e1fde12c417509a1a3"
   },
   "Sources/NativeBolabol/Views/ContentView.swift": {
-    "mtime": 1786192995.6811488,
-    "ast_hash": "9e6bb3bb8bd194ad6fd8fe765dadfba0",
+    "mtime": 1786271160.1740937,
+    "ast_hash": "4930264ab33ad12ad0291ee75a6f998e",
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Views/GlossaryCategoryPicker.swift": {
@@ -690,9 +675,9 @@
     "semantic_hash": "a5036b7520a6cd269532b4f3ace8261a"
   },
   "Sources/NativeBolabol/Views/Settings/APIProvidersSettingsView.swift": {
-    "mtime": 1785743538.6707823,
-    "ast_hash": "78f9df98fd60010f4946eb39f08744a9",
-    "semantic_hash": "78f9df98fd60010f4946eb39f08744a9"
+    "mtime": 1786271533.608691,
+    "ast_hash": "6cf542b59bb6317c8164f4f67429d5ac",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabol/Views/Settings/GeneralSettingsView.swift": {
     "mtime": 1785743538.7044992,
@@ -734,11 +719,6 @@
     "ast_hash": "e5af02de71bf3144691d23354c3613ea",
     "semantic_hash": ""
   },
-  "Sources/NativeBolabol/Views/Settings/StatisticsSettingsView.swift": {
-    "mtime": 1785743538.711867,
-    "ast_hash": "b9ba3a6964705b08bd8e1a1c46a6edb9",
-    "semantic_hash": "b9ba3a6964705b08bd8e1a1c46a6edb9"
-  },
   "Sources/NativeBolabol/Views/SidebarView.swift": {
     "mtime": 1786078474.3749552,
     "ast_hash": "57c83f0125fd70c8eda678504a108d31",
@@ -755,9 +735,9 @@
     "semantic_hash": "08912f5344be6f19940da20fe7eddeca"
   },
   "Sources/NativeBolabolCore/Models/AccessibilityPermissionPromptState.swift": {
-    "mtime": 1785743538.277201,
-    "ast_hash": "013c87fc25498c6e97e146f0cec61dff",
-    "semantic_hash": "013c87fc25498c6e97e146f0cec61dff"
+    "mtime": 1786271681.6109176,
+    "ast_hash": "1cb53d3cf3139893c38ba055d5129199",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/AudioRecording.swift": {
     "mtime": 1785743538.2908268,
@@ -775,9 +755,9 @@
     "semantic_hash": "a7993ca3d488fd12277e51786f40f042"
   },
   "Sources/NativeBolabolCore/Models/GlossaryEntry.swift": {
-    "mtime": 1785743538.1843102,
-    "ast_hash": "b95cd0bb986175451551725f44faa7cb",
-    "semantic_hash": "b95cd0bb986175451551725f44faa7cb"
+    "mtime": 1786271681.6110427,
+    "ast_hash": "31033b3cd7deb670418dfea9ccd11831",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/GlossarySettings.swift": {
     "mtime": 1785743538.121407,
@@ -795,9 +775,9 @@
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/LocalModelDescriptor.swift": {
-    "mtime": 1785743538.2445486,
-    "ast_hash": "ed0e0ea7fe5075f254a9ad7904b59560",
-    "semantic_hash": "ed0e0ea7fe5075f254a9ad7904b59560"
+    "mtime": 1786271681.611178,
+    "ast_hash": "a8c6d3099701e8a2061114388d7c38a6",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/ModelPreparationSnapshot.swift": {
     "mtime": 1785743538.1288872,
@@ -825,14 +805,14 @@
     "semantic_hash": "f2d469dde359f0a222349c884d7bbc9e"
   },
   "Sources/NativeBolabolCore/Models/PolishingStatus.swift": {
-    "mtime": 1785743538.283782,
-    "ast_hash": "6503fc75524625931005196f1a6df0b4",
-    "semantic_hash": "6503fc75524625931005196f1a6df0b4"
+    "mtime": 1786271681.6112955,
+    "ast_hash": "1c65b50a43988d98f3c6020f8bb03546",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/ProcessingVariant.swift": {
-    "mtime": 1785743538.160376,
-    "ast_hash": "d6bce98bb0dc6c37952f213aebd8a8de",
-    "semantic_hash": "d6bce98bb0dc6c37952f213aebd8a8de"
+    "mtime": 1786271681.6113873,
+    "ast_hash": "cee143306a150846cb21752dfac7caf9",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/PromptTemplateSettings.swift": {
     "mtime": 1785743538.145914,
@@ -845,13 +825,13 @@
     "semantic_hash": "e634a1b66a08b71485393466bcf8aa4d"
   },
   "Sources/NativeBolabolCore/Models/TranscriptionBackend.swift": {
-    "mtime": 1785964426.5630958,
-    "ast_hash": "1c85d29aadea934f7da2ee4aad1c5806",
+    "mtime": 1786271681.611485,
+    "ast_hash": "f5a054174761201162c4db8e6e18054b",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/TranscriptionLanguageMode.swift": {
-    "mtime": 1785914826.7218068,
-    "ast_hash": "40e4a20aa2c3dc0d94053fff8cab65ec",
+    "mtime": 1786271681.6115918,
+    "ast_hash": "b42bec08bd87ac4b04c889567517a336",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/TranscriptionLanguagePreference.swift": {
@@ -875,14 +855,14 @@
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/TranscriptionStatus.swift": {
-    "mtime": 1785743538.2065842,
-    "ast_hash": "d2d767ed6a42933922064796d8ce4247",
-    "semantic_hash": "d2d767ed6a42933922064796d8ce4247"
+    "mtime": 1786271681.611683,
+    "ast_hash": "c01025d20afb950034c0c7a33c1b25c4",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/UsageStatisticsSettings.swift": {
-    "mtime": 1785743538.1050668,
-    "ast_hash": "5ff896ea58a1996e80855e25f8e8019c",
-    "semantic_hash": "5ff896ea58a1996e80855e25f8e8019c"
+    "mtime": 1786271681.6117947,
+    "ast_hash": "73910e9c7292be52dddc3648ed88cb71",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Models/UserSpeechLanguages.swift": {
     "mtime": 1786192766.5570707,
@@ -890,8 +870,8 @@
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/AppText.swift": {
-    "mtime": 1786093742.4322543,
-    "ast_hash": "b5b60569038427670c3d89e0ed0c9020",
+    "mtime": 1786271455.8529172,
+    "ast_hash": "0a96a5154297f3bf91cc651436967eab",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/CloudRawTranscriptionPrompt.swift": {
@@ -925,13 +905,13 @@
     "semantic_hash": "86a56f8edc27a7a3e2b8fb1e07879340"
   },
   "Sources/NativeBolabolCore/Services/HUDProviderListComposer.swift": {
-    "mtime": 1785743538.4564571,
-    "ast_hash": "9ec26128501a230ad9ed2c0d329efa43",
-    "semantic_hash": "9ec26128501a230ad9ed2c0d329efa43"
+    "mtime": 1786271681.6118987,
+    "ast_hash": "9735023f13d110f226f3335f983cd296",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift": {
-    "mtime": 1786176381.7729657,
-    "ast_hash": "276a8e388471aa076ce09b03dc9f3017",
+    "mtime": 1786271681.6103473,
+    "ast_hash": "7284f6dfc4cd10e42e9e90f79891a389",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/HUDSpectrumResponse.swift": {
@@ -950,9 +930,9 @@
     "semantic_hash": "0dadcd2592c26c01bb4d5b6e4578afbc"
   },
   "Sources/NativeBolabolCore/Services/LocalMLXModelCompatibility.swift": {
-    "mtime": 1785743538.4024322,
-    "ast_hash": "1670d2c88467a9dc6a92fa060275d7fe",
-    "semantic_hash": "1670d2c88467a9dc6a92fa060275d7fe"
+    "mtime": 1786271681.6120079,
+    "ast_hash": "1766848ede2558503fbcb428da1391ae",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/LocalModelPresence.swift": {
     "mtime": 1785743538.3581314,
@@ -975,19 +955,19 @@
     "semantic_hash": "9c1c4ed7a8a1b4b9d46a647778763f87"
   },
   "Sources/NativeBolabolCore/Services/PolishingEngineRegistry.swift": {
-    "mtime": 1785743538.4415617,
-    "ast_hash": "2a4096f011751d3156894c4612c9b709",
-    "semantic_hash": "2a4096f011751d3156894c4612c9b709"
+    "mtime": 1786271681.6121016,
+    "ast_hash": "d7b62cd6c44573888390406ca4cab3ba",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/PolishingModelOptionsProvider.swift": {
-    "mtime": 1785743538.5408952,
-    "ast_hash": "a73ff7711d86aad06ebe3b76aab96680",
-    "semantic_hash": "a73ff7711d86aad06ebe3b76aab96680"
+    "mtime": 1786271681.6122022,
+    "ast_hash": "c93a69606511d47989b9e5c343c075a3",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/PolishingModelPromptControl.swift": {
-    "mtime": 1785743538.3267844,
-    "ast_hash": "b448a70333ba9ddc38dfa04e0568d534",
-    "semantic_hash": "b448a70333ba9ddc38dfa04e0568d534"
+    "mtime": 1786271681.6123147,
+    "ast_hash": "d2e5b18105de22196d8b6581d5fd5a3f",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/PolishingRequestPolicy.swift": {
     "mtime": 1786212095.756217,
@@ -1015,13 +995,13 @@
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/SharedModelsRoot.swift": {
-    "mtime": 1786212086.329803,
-    "ast_hash": "622416d77460d9f0ec164daa7e01bf49",
+    "mtime": 1786271595.3853157,
+    "ast_hash": "95a35c940d9a09831ffcfedc7d3aeecd",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift": {
-    "mtime": 1786192766.5577075,
-    "ast_hash": "c6ac9611413968b1ec6eb8f331fdf1f6",
+    "mtime": 1786271595.3847182,
+    "ast_hash": "f4c5ae3aed39c1d72f19fb5b95df813f",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Services/TranslationPrompt.swift": {
@@ -1035,14 +1015,14 @@
     "semantic_hash": "c0986bd22ebee4dfc209580d4996d639"
   },
   "Sources/NativeBolabolCore/Stores/NoteStore.swift": {
-    "mtime": 1786069453.428419,
-    "ast_hash": "6d5bf70341d4670993c5087cc9928859",
+    "mtime": 1786271692.1955087,
+    "ast_hash": "ad33549bec3cc4ce20a49d578682ebd3",
     "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Support/NativeBolabolLog.swift": {
-    "mtime": 1785743538.3048477,
-    "ast_hash": "5de94ff20b332ba1e62f4539c72b2481",
-    "semantic_hash": "5de94ff20b332ba1e62f4539c72b2481"
+    "mtime": 1786271701.7240865,
+    "ast_hash": "40338d0fa2b8d6acf21a728d5a270b09",
+    "semantic_hash": ""
   },
   "Sources/NativeBolabolCore/Support/SidebarLayoutMetrics.swift": {
     "mtime": 1785743538.3197842,
@@ -1100,8 +1080,8 @@
     "semantic_hash": "1b903acf22ca2296961625ae1faa7bc7"
   },
   "Tests/NativeBolabolCoreTests/DomainModelsExhaustiveTests.swift": {
-    "mtime": 1785964429.8415334,
-    "ast_hash": "7868b389d5035ce9f158ab971b610dbc",
+    "mtime": 1786271701.7245011,
+    "ast_hash": "eb91b5c629c8f16c990c227200157fe2",
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/FocusedTextInsertionTests.swift": {
@@ -1260,8 +1240,8 @@
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/ReleaseIdentityTests.swift": {
-    "mtime": 1785921323.207834,
-    "ast_hash": "fc0ada07e52d3cfbbd781b06ee6bad4e",
+    "mtime": 1786271484.2656126,
+    "ast_hash": "11bf3ad87b1dee2369a051f933813b1f",
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/SettingsLocalizationTests.swift": {
@@ -1570,13 +1550,13 @@
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift": {
-    "mtime": 1786078411.03286,
-    "ast_hash": "9d8c0e81b22c9e5d741f7ba7da0608be",
+    "mtime": 1786271643.276854,
+    "ast_hash": "c525d62962b0921d95b649d43fd25502",
     "semantic_hash": ""
   },
   "Sources/NativeBolabol/Engines/GigaAMCoreMLEngine.swift": {
-    "mtime": 1785921793.0436265,
-    "ast_hash": "b9773d38310d58b2f93c10c9b675a793",
+    "mtime": 1786271649.5859149,
+    "ast_hash": "b28e7e8c8d62978d3fe9d9cc2de53a53",
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/CoreMLEngineTests.swift": {
@@ -1690,8 +1670,8 @@
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/FinalMaxCoverageMatrixTests.swift": {
-    "mtime": 1786207824.5129411,
-    "ast_hash": "b3cdd0877612b79e1a93325d57d57f35",
+    "mtime": 1786271469.6904016,
+    "ast_hash": "b8755224cf2298e58c308eebc703602a",
     "semantic_hash": ""
   },
   "Tests/NativeBolabolCoreTests/SecuritySurfaceRegressionTests.swift": {
@@ -1727,6 +1707,16 @@
   "script/qa/check_sec_worker_ipc.sh": {
     "mtime": 1786208188.7533884,
     "ast_hash": "f3468b3d0a0fdff6d6421a7babe55275",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabol/Views/LanguagePickerPopoverController.swift": {
+    "mtime": 1786271133.2618885,
+    "ast_hash": "b0a0039af76f1b02027c6459a1d2e54e",
+    "semantic_hash": ""
+  },
+  "Sources/NativeBolabolCore/Support/NotificationNames.swift": {
+    "mtime": 1786271692.1951087,
+    "ast_hash": "93253b14a1d75af7c10b0f875083e51e",
     "semantic_hash": ""
   }
 }

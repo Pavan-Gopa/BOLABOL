@@ -252,7 +252,7 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
 
     // MARK: - Chunking
 
-    // Internal seam for unit testing engine audio chunking contracts (BLOCK-S9-004)
+    // Keep chunking as a pure seam so audio-window boundaries remain testable.
     nonisolated internal static func chunk(samples: [Float], maxSamples: Int) -> [[Float]] {
         guard samples.count > maxSamples else { return [samples] }
         var chunks: [[Float]] = []
@@ -373,15 +373,15 @@ actor CanaryCoreMLEngine: TranscriptionEngine {
 
     // MARK: - Language Resolution
 
-    // Internal seam for language validation contract testing (BLOCK-S9-002)
+    // Keep language validation isolated so explicit-source requirements remain testable.
     internal func resolveLanguage(_ request: TranscriptionRequest) throws -> String {
         let supported = model.capabilities.explicitSupportedLanguageCodes
         guard !supported.isEmpty else {
             throw CanaryTranscriptionError.noSupportedLanguages
         }
 
-        // Explicit language required — no auto-detect (S9 contract).
-        // nil forcedLanguageCode (e.g. HUD A route) is an error, not a fallback.
+        // Explicit language is required; a HUD auto route is rejected rather than
+        // silently selecting a fallback source.
         guard let forced = request.forcedLanguageCode else {
             throw CanaryTranscriptionError.unsupportedLanguage("nil (explicit language required)")
         }
@@ -1374,7 +1374,7 @@ private func makeFloatArray(_ values: [Float], shape: [Int]) throws -> MLMultiAr
 
 // MARK: - Errors
 
-// Internal seam for unit testing engine error contracts (BLOCK-S9-004)
+// Keep engine errors stable for the transcription failure contract.
 internal enum CanaryTranscriptionError: LocalizedError, Equatable {
     case missingAudioFile
     case emptyAudio

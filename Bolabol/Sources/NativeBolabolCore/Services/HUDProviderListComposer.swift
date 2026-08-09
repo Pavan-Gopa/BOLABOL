@@ -1,5 +1,3 @@
-import Foundation
-
 /// Builds the ordered provider list for the floating HUD quick switcher.
 ///
 /// Contract (mirrors production ContentView):

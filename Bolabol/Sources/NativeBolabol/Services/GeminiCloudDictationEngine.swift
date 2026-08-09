@@ -343,7 +343,8 @@ struct GeminiCloudDictationEngine: Sendable {
         components?.queryItems = [URLQueryItem(name: "key", value: apiKey)]
         guard let url = components?.url else { throw DictationError.invalidEndpoint }
 
-        // VaniScript native contract: text prompt first, then inline_data (snake_case), temperature 0.0
+        // Keep the instruction before media data; Gemini expects snake_case media
+        // fields and deterministic sampling for this transcription request.
         let body: [String: Any] = [
             "contents": [
                 [
@@ -419,7 +420,8 @@ struct GeminiCloudDictationEngine: Sendable {
         components?.queryItems = [URLQueryItem(name: "key", value: apiKey)]
         guard let url = components?.url else { throw DictationError.invalidEndpoint }
 
-        // VaniScript native contract: text prompt first, then file_data (snake_case), temperature 0.0
+        // Keep the instruction before media data; Gemini expects snake_case media
+        // fields and deterministic sampling for this transcription request.
         let body: [String: Any] = [
             "contents": [
                 [

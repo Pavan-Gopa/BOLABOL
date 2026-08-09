@@ -1,5 +1,3 @@
-import Foundation
-
 public enum PolishingModelPromptControl {
     public static func needsThinkingSuppression(_ model: PolishingModelDescriptor) -> Bool {
         let searchable = searchableModelText(model)

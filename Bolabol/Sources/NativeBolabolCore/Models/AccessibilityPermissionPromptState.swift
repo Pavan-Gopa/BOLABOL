@@ -1,5 +1,3 @@
-import Foundation
-
 public struct AccessibilityPermissionPromptState: Codable, Equatable, Sendable {
     public private(set) var didRequestPrompt: Bool
 

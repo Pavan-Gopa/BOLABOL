@@ -401,7 +401,7 @@ func sidebarLayoutMetricsConstants() {
 
 @Test
 func nativeBolabolLogSubsystemIsStable() {
-  #expect(NativeBolabolLog.subsystem == "com.pavan.NativeBolabol")
+  #expect(NativeBolabolLog.subsystem == "com.bolabol.app")
 }
 
 // MARK: - Hotkey output modes

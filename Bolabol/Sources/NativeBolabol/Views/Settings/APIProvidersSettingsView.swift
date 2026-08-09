@@ -1,7 +1,7 @@
 import NativeBolabolCore
 import SwiftUI
 
-/// API Providers tab — Redesigned VaniScript-style minimalist & compact layout:
+/// API Providers tab — compact provider and usage configuration layout:
 /// 1) Provider dropdown with active status indicator
 /// 2) OpenRouter balance banner (green/yellow/red) + budget slider
 /// 3) Qwen subscription text model gating (6 text models)

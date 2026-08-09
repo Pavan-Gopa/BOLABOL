@@ -17,6 +17,7 @@ private struct BolabolPackageManifestFile: Codable {
 }
 
 enum ModelDownloadPathPolicy {
+    // Remote manifests must not escape the selected local model directory.
     static func isSafe(_ path: String) -> Bool {
         let components = path.split(separator: "/", omittingEmptySubsequences: false)
         return !path.isEmpty
@@ -378,22 +379,6 @@ final class TranscriptionModelStore: ObservableObject {
         guard let model = activeModel,
               let localURL = completeLocalURL(for: model)
         else {
-            return nil
-        }
-
-        return ActiveTranscriptionModel(
-            model: model,
-            modelFolderURL: localURL
-        )
-    }
-
-    /// Resolves any complete local model without changing the active model.
-    /// Translation can select Canary independently from the transcription model
-    /// used by the rest of the app.
-    func downloadedModel(
-        for model: TranscriptionModelDescriptor
-    ) -> ActiveTranscriptionModel? {
-        guard let localURL = completeLocalURL(for: model) else {
             return nil
         }
 

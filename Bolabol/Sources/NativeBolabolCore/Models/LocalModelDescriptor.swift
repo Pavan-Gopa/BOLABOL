@@ -1,5 +1,3 @@
-import Foundation
-
 public struct LocalModelDescriptor: Identifiable, Codable, Equatable, Sendable {
     public enum Role: String, Codable, Sendable {
         case transcription

@@ -570,13 +570,9 @@ public enum TranscriptionSessionResolver {
 
         switch snapshot.operation {
         case .asr:
-            // Parakeet auto-detect must not inherit a restrictive Whisper
-            // preference as a *forced* token. However, an auto session with a
-            // configured primary language carries that language as a deliberate
-            // script/anchor hint (e.g. Russian) so the engine cannot silently
-            // fall back to an English-oriented request. Explicit legacy
-            // preferences stay unanchored (the stale-preference protection from
-            // the accepted Vertical Pulse fix remains untouched).
+            // Parakeet receives a primary-language hint only for auto-detect. A
+            // saved Whisper preference must not become a forced token for an
+            // explicit legacy session.
             let autoAnchorHint: String?
             if model.backend == .fluidAudioCoreML,
                model.languageSupport == .multilingual,
@@ -887,6 +883,8 @@ public enum HUDLanguageMenuPolicy {
             codes = normalizedDistinctCodes(supportedSourceCodes)
             includesAutomatic = false
         case (.canaryCoreML, .targetLanguageSelection), (.gigaAMCoreML, .targetLanguageSelection):
+            // ADR-022 keeps these backends ASR-only; target-language conversion
+            // remains a separate post-transcription text operation.
             return []
         case (.gigaAMCoreML, .explicitASRSource):
             codes = ["ru"]
@@ -904,6 +902,8 @@ public enum HUDLanguageMenuPolicy {
         case (.canaryCoreML, .explicitASRSource):
             selectable = codes.count > 1
         case (.canaryCoreML, .targetLanguageSelection), (.gigaAMCoreML, .targetLanguageSelection):
+            // These backends expose source-language ASR only, so no target picker
+            // can be offered for their session plans.
             return []
         case (.gigaAMCoreML, .explicitASRSource):
             selectable = false

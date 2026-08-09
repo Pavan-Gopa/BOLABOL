@@ -1,5 +1,3 @@
-import Foundation
-
 /// How Bolabol turns microphone audio into text.
 ///
 /// - `localWhisper`: on-device speech models (requires a downloaded model).

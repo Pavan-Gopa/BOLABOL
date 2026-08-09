@@ -40,6 +40,8 @@ public enum SharedModelsRoot {
             isDirectory: true
         )
 
+        // Keep explicit, environment, config, default, and legacy roots in this
+        // order so configured installs remain discoverable without migration.
         return [
             configuredRoot,
             envRoot,
@@ -217,6 +219,7 @@ public enum SharedModelsRoot {
         _ url: URL,
         fileManager: FileManager
     ) -> Bool {
+        // A missing root is valid because the caller creates it during setup.
         var isDirectory: ObjCBool = false
         if fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) {
             return isDirectory.boolValue

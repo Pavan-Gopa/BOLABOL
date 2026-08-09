@@ -7,7 +7,7 @@ DISPLAY_NAME="Bolabol"
 BUNDLE_ID="com.bolabol.app"
 MIN_SYSTEM_VERSION="14.0"
 # Marketing / build versions embedded in Info.plist (override with env).
-APP_VERSION="${APP_VERSION:-1.0.3}"
+APP_VERSION="${APP_VERSION:-1.0.4}"
 APP_BUILD="${APP_BUILD:-$(date +%Y%m%d%H%M)}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -174,8 +174,6 @@ cat >"$INFO_PLIST" <<PLIST
   <true/>
   <key>NSMicrophoneUsageDescription</key>
   <string>Bolabol needs microphone access to record and transcribe speech.</string>
-  <key>NSSpeechRecognitionUsageDescription</key>
-  <string>Bolabol uses on-device speech recognition to transcribe recorded audio.</string>
   <key>NSAppleEventsUsageDescription</key>
   <string>Bolabol needs permission to paste transcribed text into the active app.</string>
 </dict>

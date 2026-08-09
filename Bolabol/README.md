@@ -26,7 +26,7 @@
 <p align="center">
   <a href="https://github.com/Pavan-Gopa/Bolabol/releases/latest">Download</a> ·
   <a href="#why-bolabol">Features</a> ·
-  <a href="#whats-new-in-v101">What's new</a> ·
+  <a href="#whats-new-in-v104">What's new</a> ·
   <a href="#install-end-users">Install</a> ·
   <a href="#license--distribution">License</a>
 </p>
@@ -42,24 +42,26 @@
 | **System-wide hotkeys** | Dictate from Slack, browser, IDE, or Notes. A floating **HUD** shows recording / processing without stealing keyboard focus. |
 | **Local + cloud** | Use on-device models when you want privacy and speed, or cloud APIs when you want more power — switch live from the HUD. |
 | **Real workspace** | Notes history, Raw / Variant 1 / Variant 2, Markdown, glossary, translation, prompt templates, usage stats, built-in Help. |
-| **Native quality** | Pure Swift / SwiftUI for Apple Silicon. Developer ID signed, Apple notarized DMG, dark/light UI, 15 interface languages. |
+| **Native quality** | Pure Swift / SwiftUI for Apple Silicon. Release builds support Developer ID signing and Apple notarization, with dark/light UI and 15 interface languages. |
 
 ### Under the hood (technical)
 
-Apple Silicon only · macOS 14+ · **WhisperKit** / **Parakeet** local ASR · **MLX** local polishing · optional Gemini / OpenAI / Anthropic / Qwen / OpenRouter · not Electron.
+Apple Silicon only · macOS 14+ · **WhisperKit**, **Parakeet / FluidAudio**, **Canary Core ML**, and **GigaAM Core ML** local ASR · **MLX** local polishing · optional Gemini / OpenAI / Qwen / OpenRouter · not Electron.
 
 ---
 
-## What's new in v1.0.3
+## What's new in v1.0.4
 
-### Bolabol 1.0.3 (in development)
+### Bolabol 1.0.4 current product surface
 
-- **Primary + additional** languages (onboarding + Settings); not “always translate to second language”.
-- **Canary Core ML** ASR only ([canary-1b-v2-coreml](https://huggingface.co/nvidia/canary-1b-v2)); **no Python** — Core ML + MLX polish only. Text-to-text translation uses the selected cloud API or an existing local MLX model.
-- Canary HUD: primary letter (e.g. **R**) ↔ additional (e.g. **E**); **A** off. Parakeet/Whisper keep auto (**A**).
-- Plan: [`BOLABOL_1.0.3_IMPLEMENTATION_PLAN.md`](BOLABOL_1.0.3_IMPLEMENTATION_PLAN.md).
+- Local ASR includes WhisperKit, Parakeet/FluidAudio, Canary Core ML, and GigaAM Core ML. Canary 1B requires macOS 15+.
+- Canary and GigaAM are ASR-only. They require an explicit source language and do not expose speech-translation targets.
+- Multilingual Whisper retains its native source-to-English path where supported. Other translation is post-ASR text processing through local MLX or the selected cloud provider.
+- Default hotkeys are Option+S for dictation, Option+1 for the full translation window, Option+2 for quick translation, and Option+~ for Settings.
+- Google cloud dictation sends audio to Google. Cloud polishing and translation send text and prompts to the selected provider; local model paths remain local.
+- Anthropic remains migration-compatible for stored settings but is not in the visible provider order.
 
-### Carried from v1.0.2 / v1.0.1
+### Carried from earlier releases
 
 - Turkish (and ja/ko/hi) archive-stats crash fix.
 - Anti-chat polishing contract; provider-aware sampling.
@@ -67,7 +69,7 @@ Apple Silicon only · macOS 14+ · **WhisperKit** / **Parakeet** local ASR · **
 
 ![Scroll providers + right-click models on the HUD](docs/screenshots/18_hud_provider_switcher.png)
 
-Full changelog: [Changelog — v1.0.3](#changelog--v103) · [`docs/RELEASE_NOTES.md`](docs/RELEASE_NOTES.md).
+Full changelog: [Changelog — v1.0.4](#changelog--v104) · [`docs/RELEASE_NOTES.md`](docs/RELEASE_NOTES.md).
 
 ---
 
@@ -87,7 +89,7 @@ Dictate over any app — red capsule while recording, green while processing:
 |:---:|:---:|:---:|
 | ![HUD over Telegram](docs/screenshots/08_hud_overlay.png) | ![Recording capsule](docs/screenshots/15_hud_recording.png) | ![Processing capsule](docs/screenshots/16_hud_processing.png) |
 
-**Scroll the capsule → pick provider; right-click → pick model** (the 1.0.1 highlight):
+**Scroll the capsule → pick provider; right-click → pick model**:
 
 ![HUD provider and model switcher](docs/screenshots/18_hud_provider_switcher.png)
 
@@ -122,7 +124,7 @@ Dictate over any app — red capsule while recording, green while processing:
 ### 1. Core workflow
 
 1. **Record** in-app, or **import / drag-and-drop** an audio file.  
-2. **Transcribe** with a local model (WhisperKit Core ML or Parakeet FluidAudio) or optional Gemini cloud dictation.  
+2. **Transcribe** with a local model (WhisperKit, Parakeet FluidAudio, Canary Core ML, or GigaAM Core ML) or optional Google Gemini cloud dictation.
 3. Review **Raw** text (closest to the audio).  
 4. **Polish** into **Variant 1** (light cleanup), **Variant 2** (stronger rewrite), or **Markdown**.  
 5. Optionally **translate**, apply the **glossary**, copy notes, or push text into another app with a hotkey.
@@ -133,8 +135,10 @@ Dictate over any app — red capsule while recording, green while processing:
 |--------|---------|--------|
 | **Parakeet TDT 0.6B v3** | FluidAudio · Core ML / ANE | Fast path; ~25 European languages (incl. EN/RU/UK/NL). ASR only. |
 | **Whisper Small / Medium** | WhisperKit · Core ML | English-only and multilingual variants. |
-| **Whisper Large v3 Turbo** | WhisperKit · Core ML | Strong multilingual quality, faster than full Large. |
-| **Whisper Large v3 Full** | WhisperKit · Core ML | Highest accuracy; solid quality default. |
+| **Whisper Large v3 Turbo** | WhisperKit · Core ML | Strong multilingual quality, faster than full Large; native English translation where supported. |
+| **Whisper Large v3 Full** | WhisperKit · Core ML | Highest accuracy; solid quality default and native English translation where supported. |
+| **Canary Flash / Canary 1B v2** | Core ML / ANE | ASR only with explicit source language; Canary 1B requires macOS 15+. |
+| **GigaAM v3** | Core ML / ANE | Russian ASR only with explicit source language. |
 | **Google Gemini (cloud)** | Gemini API | Optional cloud dictation when keys are configured. |
 
 Models download from **Settings → Local Models**. Storage prefers a shared root (`AI_LOCAL_MODELS_DIR` / `~/AI_LOCAL_MODELS`) with Application Support fallbacks.
@@ -151,9 +155,9 @@ Polishing rewrites **text** with prompts — it is not a second ASR pass.
 
 **Cloud polishing providers:**
 
-Google Gemini · OpenAI · Anthropic · Qwen (OpenAI-compatible) · OpenRouter · custom OpenAI-compatible base URL  
+Google Gemini · OpenAI · Qwen (OpenAI-compatible) · OpenRouter · custom OpenAI-compatible base URL
 
-Multi-key support, enable/disable keys, model pickers, retries for stalled cloud requests, optional “polishing disabled” mode.
+Multi-key support, enable/disable keys, model pickers, retries for stalled cloud requests, optional “polishing disabled” mode. Anthropic remains migration-compatible for stored settings but is not shown in the current provider order.
 
 All model-backed polishing requests include a non-conversational text-transformation system contract: questions and commands inside a transcript are edited as source material, never answered or executed. Generation settings use deterministic or low sampling where supported; model families that reject custom temperature use their documented low-reasoning/default-sampling configuration instead.
 
@@ -173,14 +177,16 @@ Customizable prompt slots: default + slots `1`–`4` + Markdown (`M`) in **Setti
 | Shortcut | Action |
 |----------|--------|
 | **⌥S** (Option+S) | Start/stop hotkey dictation |
-| **⇧⌥S** (Shift+Option+S) | Same, then auto-translate to the Glossary **Auto Translation Language** |
+| **⌥1** (Option+1) | Open the full translation window |
+| **⌥2** (Option+2) | Open the quick translation result window |
+| **⌥~** (Option+~) | Open Settings |
 
 - Floating **HUD** (non-activating): red = recording, green = processing; draggable; position remembered  
 - **Target:** Raw / Variant 1 / Variant 2  
 - **Mode:** Clipboard, or **Type into Active App** (Accessibility)  
-- Language control on the HUD (disabled for Parakeet / English-only Whisper where not applicable)  
+- Language control on the HUD follows each model's source-language capabilities; Canary and GigaAM remain ASR-only.
 - Start/finish sounds, volume, HUD size/opacity/style in General settings  
-- **v1.0.1:** scroll / right-click on the provider switcher (see above)
+- Scroll / right-click on the provider switcher (see above)
 
 ### 6. Translation
 
@@ -188,7 +194,7 @@ Customizable prompt slots: default + slots `1`–`4` + Markdown (`M`) in **Setti
 - Local MLX or cloud providers as engine
 - Dictate into the modal, paste from clipboard, copy result
 - Floating / quick translation windows  
-- Auto-translation language for ⇧⌥S  
+- Target language for the translation windows
 
 ### 7. Glossary (local, deterministic)
 
@@ -213,7 +219,7 @@ Customizable prompt slots: default + slots `1`–`4` + Markdown (`M`) in **Setti
 | **General** | Theme, UI scale, fonts, interface language, HUD style/size/opacity, sounds, log level, export logs, reset |
 | **Hotkeys** | Enable, shortcuts, language, Accessibility, output target/mode |
 | **API Providers** | Keys, models, custom endpoints, multi-key rotation, per-provider usage stats |
-| **Local Models** | Download / use / delete Whisper & Parakeet models |
+| **Local Models** | Download / use / delete WhisperKit, Parakeet, Canary, and GigaAM models |
 | **Polishing** | MLX models, scan local folders, engine selection |
 | **Prompts** | Variant 1 / 2 / Markdown templates and slots |
 | **Glossary** | Entries, import/export, auto-translation language |
@@ -221,43 +227,38 @@ Customizable prompt slots: default + slots `1`–`4` + Markdown (`M`) in **Setti
 
 ### 10. Onboarding, permissions, privacy
 
-First-run flow covers backend/model choice, microphone, speech recognition, and Accessibility. Help can **replay onboarding**.
+First-run flow covers backend/model choice and microphone access. Accessibility is needed for typing into another app or capturing selected text for translation. Help can **replay onboarding**.
 
 | Permission | Why |
 |------------|-----|
 | Microphone | Recording |
-| Speech recognition | Apple Speech paths where used |
-| Accessibility | Insert into focused apps |
+| Accessibility | Insert into focused apps and capture selected text for translation |
 | Apple Events | Paste automation where needed |
 
 **Privacy model**
 
-- Local engines run on-device  
-- Cloud is opt-in; text leaves the machine only when you select a cloud engine  
+- Local engines and local model paths stay on-device
+- Google cloud dictation uploads audio to Google; cloud polishing and translation send text and prompts only when you select a provider
 - API keys stay in the app credential store  
 - Release builds ship **without** bundled API keys or personal data  
 
 ---
 
-## Changelog — v1.0.3
+## Changelog — v1.0.4
 
-### In progress
+### Current release surface
 
-- **Primary + additional** languages; onboarding, Settings, Help, 15 locales.  
-- **Canary Core ML** ASR only; HUD primary↔additional; text translation uses cloud APIs or existing local MLX models.
+- Local ASR: WhisperKit, Parakeet/FluidAudio, Canary Core ML, and GigaAM Core ML.
+- Canary and GigaAM remain ASR-only; Whisper keeps native English translation where supported.
+- Translation after ASR uses local MLX or the selected cloud provider. Google cloud dictation uploads audio to Google.
+- Current default hotkeys: Option+S dictation, Option+1 full translation, Option+2 quick translation, Option+~ Settings.
+- API Providers shows Google, OpenAI, Qwen, OpenRouter, and Custom; Anthropic is retained for migration compatibility but hidden from the order.
 
-### From v1.0.2
-
-- Archive stats localization crash fix (tr/ja/ko/hi).  
-- **PolishingPromptPolicy** / **PolishingGenerationPolicy**.  
-
-### From v1.0.1
-
-- HUD provider quick switcher; onboarding HUD help; Parakeet / Google stability.  
+Historical 1.0.3 planning and spike evidence remains in the versioned plan and workflow records; this file describes the active 1.0.4 surface.
 
 ### Install asset
 
-- **`Bolabol.dmg`** on the [v1.0.3 release](https://github.com/Pavan-Gopa/Bolabol/releases/tag/v1.0.3) (when published).
+- **`Bolabol.dmg`** on the [v1.0.4 release](https://github.com/Pavan-Gopa/Bolabol/releases/tag/v1.0.4) (when published).
 
 ---
 
@@ -272,9 +273,9 @@ First-run flow covers backend/model choice, microphone, speech recognition, and 
 
 ## Install (end users)
 
-1. Download **`Bolabol.dmg`** from the [v1.0.3 release](https://github.com/Pavan-Gopa/Bolabol/releases/tag/v1.0.3) (sign in if the repo is private; when published).  
+1. Download **`Bolabol.dmg`** from the [v1.0.4 release](https://github.com/Pavan-Gopa/Bolabol/releases/tag/v1.0.4) (sign in if the repo is private; when published).
 2. Open the DMG → drag **Bolabol** into **Applications**.  
-3. Launch from Applications. Notarized Developer ID build — if Gatekeeper still prompts: right-click → Open.  
+3. Launch from Applications. If Gatekeeper prompts, right-click **Bolabol** and choose **Open**.
 
 Developers / automation can still use `./script/install.sh` from a local checkout; it is **not** required for normal install.
 
@@ -284,12 +285,12 @@ Developers / automation can still use `./script/install.sh` from a local checkou
 
 ```bash
 git clone https://github.com/Pavan-Gopa/Bolabol.git
-cd Bolabol   # this repository is the NativeAppleSilicon tree
+cd Bolabol   # repository root
 ./script/build_and_run.sh          # debug
 ./script/build_and_run.sh --verify
-APP_VERSION=1.0.3 ./script/build_release_dmg.sh
+APP_VERSION=1.0.4 ./script/build_release_dmg.sh
 # notarize (credentials stored once via notarytool):
-NOTARIZE=1 APP_VERSION=1.0.3 ./script/build_release_dmg.sh
+NOTARIZE=1 APP_VERSION=1.0.4 ./script/build_release_dmg.sh
 ```
 
 | Product | Role |
@@ -299,7 +300,7 @@ NOTARIZE=1 APP_VERSION=1.0.3 ./script/build_release_dmg.sh
 | `NativeBolabolCore` | Shared models, stores, services |
 | Tests | `NativeBolabolCoreTests` |
 
-Architecture: SwiftUI-first UI; Whisper → WhisperKit Core ML; Parakeet → FluidAudio Core ML/ANE; text translation → cloud APIs or existing local MLX engines; polish → MLX Swift in a separate worker process.
+Architecture: SwiftUI-first UI; Whisper → WhisperKit Core ML; Parakeet → FluidAudio Core ML/ANE; Canary and GigaAM → ASR-only Core ML/ANE; post-ASR text translation → selected cloud APIs or local MLX engines; polish → MLX Swift in a separate worker process.
 
 Checklist: [`docs/RELEASE.md`](docs/RELEASE.md)
 
@@ -325,7 +326,7 @@ Checklist: [`docs/RELEASE.md`](docs/RELEASE.md)
 
 This is **source-available**, not OSI “open source”: companies may not use Bolabol for commercial purposes without a paid agreement.
 
-Builds are signed with **Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)** and notarized by Apple.
+Release builds can be signed with **Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)** and notarized by Apple after release verification.
 
 ---
 

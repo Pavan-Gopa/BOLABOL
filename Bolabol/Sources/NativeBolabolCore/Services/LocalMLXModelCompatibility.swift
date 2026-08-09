@@ -1,5 +1,3 @@
-import Foundation
-
 public struct LocalMLXModelMetadata: Equatable, Sendable {
     public var directoryName: String
     public var repositoryID: String?

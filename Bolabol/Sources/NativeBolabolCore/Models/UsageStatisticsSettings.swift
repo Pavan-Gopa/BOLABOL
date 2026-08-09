@@ -1,5 +1,3 @@
-import Foundation
-
 public struct UsageTokenCount: Codable, Equatable, Sendable {
     public var promptTokens: Int
     public var completionTokens: Int

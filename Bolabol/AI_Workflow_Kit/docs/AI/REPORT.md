@@ -1,3 +1,45 @@
+# CODE-HYGIENE-BATCH-1-RETEST
+
+**Date:** 2026-08-09
+**Actor:** Test Engineer (retest after Reviewer-approved Coder Batch 1)
+**Result:** **`qa_green`**
+**Suite:** `CODE-HYGIENE-BATCH-1-RETEST`
+**Baseline:** `bolabol/pre-CODE-HYGIENE-RELEASE` at `1a8bf3d`
+
+## Gate Results
+
+| Command / check | Result |
+|---|---|
+| Required Graphify query | **PASS** - BFS depth 2, 161 nodes; no rebuild requested |
+| `swift test` | **PASS** - 744 tests in 32 suites |
+| `./script/qa/run_all.sh` | **PASS** - 39/39 |
+| `./script/qa/check_settings_surface.sh` | **PASS** |
+| `./script/qa/check_workspace_ui_surface.sh` | **PASS** |
+| Source/dead-symbol scan | **PASS** - deleted Apple Speech, Statistics, FullLogo wrapper, stale helper, Speech plist keys, and dead ContentView declarations remain absent |
+| Release identity | **PASS** - source and built bundle are `Bolabol`, `com.bolabol.app`, `1.0.4`; full logo SVG remains packaged |
+| Scoped `git diff --check` | **PASS** |
+
+## Hygiene Confirmation
+
+- `HYG-002..009` and `HYG-011..015` still hold. VaniScript attribution residue is absent from the approved files; the popover controller is present; the dead files/symbols and destructive script are absent; notification and logging identities remain canonical; settings/workspace surfaces pass.
+- HYG-006 negative checks remain clean for `import Speech`, `SFSpeech`, `NSSpeechRecognitionUsageDescription`, Apple Speech keys, and legacy Help fallback keys.
+- HYG-009 documentation states the restructure is complete, the script was removed, recreation is forbidden, and `RENAME_REPORT.md` is linked.
+- Exact HYG-016 key lines have no diff against the baseline. The `AppText.swift` diff is limited to the approved HYG-006/HYG-007 deletions; no HYG-016 localization/copy change was mixed in.
+
+## Gap Hunt
+
+Existing `HUDLanguagePickerPopoverTests`, `ReleaseIdentityTests`, localization/max-coverage tests, the S9 legacy-helper guard, and the settings/workspace guards cover the touched functional and surface contracts. HYG-009 was also manually checked as file/docs hygiene. No real Batch 1 gap or product bug was found, so no new tests or QA guards were added.
+
+## Scope
+
+- No `Sources/**`, `Package.swift`, `STATE.yaml`, or product behavior changes were made by Tester.
+- No rebuild, commit, tag, push, or release publication was performed.
+- `BUG_REPORT.md` remains unchanged with `bugs_open: 0`.
+
+**RESULT: `qa_green`**
+
+---
+
 # SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE
 
 **Date:** 2026-08-09

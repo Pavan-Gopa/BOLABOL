@@ -950,7 +950,7 @@ struct MaxAppTextSurfaceMatrix {
 
     private let touchedKeys: [AppTextKey] = [
         .settingsGeneral, .settingsAPIProviders, .settingsHotkey, .settingsLocalModels,
-        .settingsPolishing, .settingsPrompts, .settingsStatistics, .settingsHelp,
+        .settingsPolishing, .settingsPrompts, .settingsHelp,
         .hudStyle, .hudStyleCapsule, .hudStyleTech, .hudStyleVertical,
         .autoDetect, .translation, .notes, .settings, .search,
         .audioPlaybackModalTitle, .audioFileNotFound, .audioArchiveRetention,

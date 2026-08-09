@@ -5,90 +5,6 @@ import NativeBolabolCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Production `NSPopoverDelegate` backing the HUD language picker. The outside-
-/// close callback runs synchronously so no stale popover reference or identity
-/// survives after the system closes the popover.
-@MainActor
-final class PopoverDelegate: NSObject, NSPopoverDelegate {
-    private let onDidClose: () -> Void
-    init(onDidClose: @escaping () -> Void) {
-        self.onDidClose = onDidClose
-    }
-    func popoverDidClose(_ notification: Notification) {
-        onDidClose()
-    }
-}
-
-/// Testable production seam for the HUD language-picker popover lifecycle.
-/// Creates the real transient `NSPopover` hosting the compact
-/// `HUDLanguagePickerPopoverView` with a real `PopoverDelegate`; outside-close,
-/// selection and finish/hide invalidation all flow through this controller
-/// instead of duplicated view-local tokens.
-@MainActor
-final class LanguagePickerPopoverController {
-    private(set) var popover: NSPopover?
-    private(set) var popoverID: UUID?
-    private(set) var popoverDelegate: PopoverDelegate?
-
-    func present(
-        options: [HUDLanguageMenuOption],
-        languages: UserSpeechLanguages,
-        anchorView: NSView,
-        location: NSPoint,
-        onSelectLanguage: @escaping (UUID, String) -> Void,
-        onClose: @escaping (UUID) -> Void
-    ) {
-        dismiss()
-        let popoverID = UUID()
-        self.popoverID = popoverID
-
-        let pickerContentView = HUDLanguagePickerPopoverView(
-            options: options,
-            languages: languages,
-            onSelectLanguage: { [weak self] selectedCode in
-                guard let self, self.popoverID == popoverID else { return }
-                self.dismiss()
-                onSelectLanguage(popoverID, selectedCode)
-            },
-            onClose: { [weak self] in
-                guard let self, self.popoverID == popoverID else { return }
-                self.dismiss()
-                onClose(popoverID)
-            }
-        )
-
-        let popover = NSPopover()
-        popover.behavior = .transient
-        popover.animates = true
-        popover.contentViewController = NSHostingController(rootView: pickerContentView)
-        let delegate = PopoverDelegate { [weak self] in
-            guard let self, self.popoverID == popoverID else { return }
-            self.popover = nil
-            self.popoverID = nil
-            self.popoverDelegate = nil
-        }
-        popover.delegate = delegate
-        self.popoverDelegate = delegate
-        self.popover = popover
-        let anchorRect = NSRect(origin: location, size: .zero)
-        popover.show(relativeTo: anchorRect, of: anchorView, preferredEdge: .maxY)
-    }
-
-    func dismiss() {
-        popover?.close()
-        popover = nil
-        popoverID = nil
-        popoverDelegate = nil
-    }
-
-    /// Invalidates the picker as part of the common hotkey-session finish path.
-    /// Keeping this operation on the production controller lets the finish path
-    /// and the lifecycle tests exercise the same real popover state transition.
-    func invalidateForFinishedHotkeySession() {
-        dismiss()
-    }
-}
-
 @MainActor
 struct ContentView: View {
     private enum Layout {
@@ -121,8 +37,6 @@ struct ContentView: View {
     @State private var pendingHotkeySourcePID: pid_t?
     @State private var pendingHotkeyFocusedElement: AXUIElement?
     @State private var sessionWarningMessage: String?
-    @State private var settingsWindow: NSWindow?
-    @State private var lastSettingsToggleTime: Date = .distantPast
     @State private var isTogglingHotkeyRecording = false
     @State private var hotkeyOwnerID = UUID()
     @State private var hotkeySessionOverlayManager = HotkeySessionOverlayManager()
@@ -313,10 +227,6 @@ struct ContentView: View {
             outputMode: nil,
             forceTargetLanguage: effectiveHUDForceTargetLanguage
         )
-    }
-
-    private func updateRawText(noteID: BolabolNote.ID, text: String) {
-        noteStore.updateRawText(for: noteID, text: text)
     }
 
     private func updateText(
@@ -530,68 +440,6 @@ struct ContentView: View {
                     generalSettingsStore: generalSettingsStore
                 )
             }
-        }
-    }
-
-    private func toggleSettingsWindow() {
-        let now = Date()
-        guard now.timeIntervalSince(lastSettingsToggleTime) > 0.3 else { return }
-        lastSettingsToggleTime = now
-
-        NSApp.activate(ignoringOtherApps: true)
-
-        if let window = findOfficialSettingsWindow() {
-            if window.isVisible && window.isKeyWindow {
-                window.orderOut(nil)
-            } else {
-                window.makeKeyAndOrderFront(nil)
-            }
-            return
-        }
-
-        if triggerSettingsMenuItem() {
-            return
-        }
-
-        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
-            _ = NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
-    }
-
-    private func triggerSettingsMenuItem() -> Bool {
-        guard let mainMenu = NSApp.mainMenu else { return false }
-        for menuItem in mainMenu.items {
-            guard let submenu = menuItem.submenu else { continue }
-            for item in submenu.items {
-                let actionName = item.action.map { NSStringFromSelector($0) } ?? ""
-                if actionName == "showSettingsWindow:" ||
-                   actionName == "showPreferencesWindow:" ||
-                   (item.keyEquivalent == "," && item.keyEquivalentModifierMask.contains(.command)) {
-                    if let action = item.action {
-                        NSApp.sendAction(action, to: item.target, from: item)
-                        return true
-                    }
-                }
-            }
-        }
-        return false
-    }
-
-    private func findOfficialSettingsWindow() -> NSWindow? {
-        NSApp.windows.first { window in
-            let title = window.title
-            let className = String(describing: type(of: window))
-            let identifier = window.identifier?.rawValue ?? ""
-            return identifier.contains("Settings") ||
-                   className.contains("Settings") ||
-                   className.contains("Preferences") ||
-                   title == "Settings" ||
-                   title == "Настройки" ||
-                   title == "Ajustes" ||
-                   title == "Einstellungen" ||
-                   title == "Réglages" ||
-                   title.contains("Settings") ||
-                   title.contains("Настройки")
         }
     }
 
@@ -901,10 +749,8 @@ struct ContentView: View {
         }
     }
 
-    /// Translates the raw transcription to the target language using the active
-    /// polishing engine and overwrites `rawText` with the translated version.
-    /// Used for auto-translation when any non-auto transcription language is selected,
-    /// including English (all languages now share this LLM path).
+    /// Translates raw transcription into the requested target language through
+    /// the active polishing engine after transcription.
     private func autoTranslateRawText(
         noteID: BolabolNote.ID,
         rawText: String,
@@ -1540,19 +1386,8 @@ struct ContentView: View {
         )
     }
 
-    /// Target language code used when the HUD is in E (force target) mode.
-    ///
-    /// Priority:
-    /// 1. The transient HUD target selection while the app is running
-    /// 2. Configured Additional Language when it differs from Primary
-    /// 3. Glossary Auto Translation Language
-    /// 4. The opposite of Primary, or English as the final fallback
-    ///
-    /// This matches the settings copy: choosing a specific transcription language
-    /// enables auto-translation into that language regardless of what was spoken.
-    /// Target language code for auto-translation / HUD secondary language targeting.
-    /// Prefers the configured Additional Language from settings ("Your Languages" -> Additional Language).
-    /// If additional language matches primary (or is empty), falls back to the opposite default language.
+    /// Target language for HUD forced-target mode and post-ASR translation.
+    /// The transient HUD choice takes precedence over configured language fallbacks.
     private var targetLanguageCode: String {
         let speech = generalSettingsStore.speechLanguages
         let primary = normalizeLanguageCode(speech.primaryLanguageCode)

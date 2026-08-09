@@ -347,7 +347,7 @@ public final class NoteStore: ObservableObject {
     private var retentionSubscription: AnyCancellable?
 
     public func observeRetentionSettings() {
-        retentionSubscription = NotificationCenter.default.publisher(for: Notification.Name("didChangeAudioRetentionSettings"))
+        retentionSubscription = NotificationCenter.default.publisher(for: .didChangeAudioRetentionSettings)
             .compactMap { $0.object as? GeneralSettings }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] settings in

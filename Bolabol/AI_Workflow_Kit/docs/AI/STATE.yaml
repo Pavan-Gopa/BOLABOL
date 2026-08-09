@@ -3,60 +3,14 @@
 
 current_step: CODE-HYGIENE-RELEASE
 step_description: >-
-  Non-destructive release hygiene Batch 1 per Architect packet + ADR-023.
-  Coder executes only approved HYG-002..009,011..015 in mandatory order.
-  HYG-016 is a separate later batch. HYG-001/010/017-023 not Coder scope now.
+  Batch 1 hygiene approved by Reviewer. Tester retest full gate (no product
+  Sources edits). No Orchestrator rebuild. After qa_green → POST.
 target_files:
-  - Sources/NativeBolabol/Views/LanguagePickerPopoverController.swift
-  - Sources/NativeBolabol/Views/ContentView.swift
-  - Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
-  - Sources/NativeBolabol/Services/AppleSpeechTranscriptionEngine.swift
-  - Sources/NativeBolabol/Services/GeminiCloudDictationEngine.swift
-  - Sources/NativeBolabol/Views/Settings/APIProvidersSettingsView.swift
-  - Sources/NativeBolabol/Views/Settings/StatisticsSettingsView.swift
-  - Sources/NativeBolabol/Views/Components/BolabolFullLogoView.swift
-  - Sources/NativeBolabol/Views/AudioPlaybackModalView.swift
-  - Sources/NativeBolabol/Stores/GeneralSettingsStore.swift
-  - Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift
-  - Sources/NativeBolabol/Engines/GigaAMCoreMLEngine.swift
-  - Sources/NativeBolabol/Resources/Info.plist
-  - Sources/NativeBolabolCore/Services/AppText.swift
-  - Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift
-  - Sources/NativeBolabolCore/Services/SharedModelsRoot.swift
-  - Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift
-  - Sources/NativeBolabolCore/Support/NotificationNames.swift
-  - Sources/NativeBolabolCore/Support/NativeBolabolLog.swift
-  - Sources/NativeBolabolCore/Stores/NoteStore.swift
-  - Sources/NativeBolabolCore/Models/AccessibilityPermissionPromptState.swift
-  - Sources/NativeBolabolCore/Models/GlossaryEntry.swift
-  - Sources/NativeBolabolCore/Models/LocalModelDescriptor.swift
-  - Sources/NativeBolabolCore/Models/PolishingStatus.swift
-  - Sources/NativeBolabolCore/Models/ProcessingVariant.swift
-  - Sources/NativeBolabolCore/Models/TranscriptionBackend.swift
-  - Sources/NativeBolabolCore/Models/TranscriptionLanguageMode.swift
-  - Sources/NativeBolabolCore/Models/TranscriptionStatus.swift
-  - Sources/NativeBolabolCore/Models/UsageStatisticsSettings.swift
-  - Sources/NativeBolabolCore/Services/HUDProviderListComposer.swift
-  - Sources/NativeBolabolCore/Services/LocalMLXModelCompatibility.swift
-  - Sources/NativeBolabolCore/Services/PolishingEngineRegistry.swift
-  - Sources/NativeBolabolCore/Services/PolishingModelOptionsProvider.swift
-  - Sources/NativeBolabolCore/Services/PolishingModelPromptControl.swift
-  - Tests/NativeBolabolCoreTests/FinalMaxCoverageMatrixTests.swift
-  - Tests/NativeBolabolCoreTests/ReleaseIdentityTests.swift
-  - Tests/NativeBolabolCoreTests/DomainModelsExhaustiveTests.swift
-  - Tests/NativeBolabolCoreTests/HUDLanguagePickerPopoverTests.swift
-  - script/qa/check_settings_surface.sh
-  - script/qa/check_workspace_ui_surface.sh
-  - script/build_and_run.sh
-  - script/build_release_dmg.sh
-  - restructure.sh
-  - RESTRUCTURE_README.md
-  - README.md
-  - docs/RELEASE.md
-  - docs/RELEASE_NOTES.md
+  - Tests/NativeBolabolCoreTests/**
+  - script/qa/**
+  - AI_Workflow_Kit/docs/AI/REPORT.md
+  - AI_Workflow_Kit/docs/AI/BUG_REPORT.md
   - AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  - AI_Workflow_Kit/docs/AI/ARCHITECT_HANDOFF.md
-  - AI_Workflow_Kit/docs/DECISIONS.md
 completed_steps:
   - S0
   - S1
@@ -75,61 +29,32 @@ completed_steps:
   - VERTICAL-PULSE-HUD
 skipped_steps: []
 implementation:
-  status: pending
+  status: done
   attempts: 1
 review:
-  status: not_started
+  status: approved
+  verdict: approved_batch_1_hygiene
+  note: >-
+    Independent Reviewer APPROVED Batch 1. 744 tests, 39/39 QA, no findings.
+    HYG-016 not mixed. No behavior change.
 qa:
-  status: not_started
+  status: pending_retest
+  suite: CODE-HYGIENE-BATCH-1-RETEST
   bugs_open: 0
 security:
   status: medium_low_closed_sec005_deferred
   open:
     - SEC-005
-  closed:
-    - SEC-001
-    - SEC-002
-    - SEC-003
-    - SEC-004
-next_actor: coder
+next_actor: tester
 track: PRODUCT
-prior_track: VERTICAL-PULSE_HUD_COMPLETE
-go_list:
-  - id: canary-180m-flash-coreml
-    adr: ADR-014
-  - id: gigaam-v3-rnnt-coreml
-    adr: ADR-015
-  - id: canary-1b-v2-coreml
-    adr: ADR-017
-excluded:
-  - FluidInference/canary-1b-v2-coreml
-  - alexwengg/canary-1b-v2-coreml
-working_roots:
-  - Bolabol
 checkpoint:
   last_pre_tag: bolabol/pre-CODE-HYGIENE-RELEASE
   last_post_tag: bolabol/VERTICAL-PULSE-HUD-done
-  last_commit: 08adb91
-  last_pre_commit: 1a8bf3d
-  note_git: >-
-    Human requested commit+push before Coder. Committed Bolabol-only Architect
-    packet @ 08adb91. Monorepo remote pushurl is DISABLED
-    (legacy-mixed-workspace-origin -> NativeSmartScribe.git). No Pavan-Gopa/Bolabol
-    GitHub repo found. Push blocked until Human enables a Bolabol remote.
+  last_commit: 9826e64
 plan_files:
-  - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
-  - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
-  - AI_Workflow_Kit/docs/DECISIONS.md
   - AI_Workflow_Kit/docs/AI/ARCHITECT_HANDOFF.md
-coder_brief: |
-  Batch 1 ONLY per ARCHITECT_HANDOFF Exact Ordered Coder Scope orders 1-15:
-  HYG-004,003/011,005/011,006,007,008,009,002,011,012,013,014,015.
-  No HYG-016 in this attempt. No behavior change. ADR-023 non-destructive.
-  Compiler is proof for import removals. Full swift test + run_all + clean Release verify.
+  - AI_Workflow_Kit/docs/DECISIONS.md
 notes: |
-  Human `статус` #2: Coder Batch 1 STILL not handed off. next_actor=coder.
-  Status build only: Release PID 17123 (Sun Aug 9 14:45:00 2026); codesign OK.
-  CFBundleShortVersionString still 1.0.3 until HYG-015.
-  PRE bolabol/pre-CODE-HYGIENE-RELEASE @ 1a8bf3d remains rollback point.
-  Architect design_complete accepted earlier (PID 15280 status build).
-
+  Human `статус` after Reviewer APPROVED Batch 1. No rebuild (policy).
+  next_actor=tester retest only. POST after qa_green.
+  App 1.0.4 already verified; Tester should not require Orchestrator rebuild.

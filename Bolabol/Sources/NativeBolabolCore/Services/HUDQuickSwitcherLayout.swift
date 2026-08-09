@@ -298,22 +298,22 @@ public extension HUDQuickSwitcherLayout {
   }
 
   /// Base diameter of a round control button (language A / target D).
-  public static let controlButtonDiameter = 24.0
+  static let controlButtonDiameter = 24.0
 
   /// Capsule content inset used to anchor controls inside the pill, scaled.
-  public static func capsuleContentPad(for scale: Double) -> Double {
+  static func capsuleContentPad(for scale: Double) -> Double {
     4 * overlayVisualScale(for: scale)
   }
 
   /// Pointer forgiving margin around the visible control frame, scaled.
   /// The forgiving band stays within the approved 8–10pt range at every
   /// supported HUD visual scale so the hit area never overgrows.
-  public static func controlHitMargin(for scale: Double) -> Double {
+  static func controlHitMargin(for scale: Double) -> Double {
     min(10, 10 * overlayVisualScale(for: scale))
   }
 
   /// Diameter of a round control button, including capsule style scaling.
-  public static func controlDiameter(for scale: Double, style: OverlayHUDStyle) -> Double {
+  static func controlDiameter(for scale: Double, style: OverlayHUDStyle) -> Double {
     switch style {
     case .capsule:
       if scale <= 1 {
@@ -328,7 +328,7 @@ public extension HUDQuickSwitcherLayout {
   /// Exact circular interactive shape for a vertical-pulse control slot.
   /// Panels and SwiftUI consume this one shared circle, so their hit areas can
   /// never disagree (the bounding square alone would accept inert corners).
-  public static func verticalControlHitRegion(
+  static func verticalControlHitRegion(
     slot: HUDVerticalControlSlot,
     panelSize: HUDOverlaySize,
     scale: Double,
@@ -376,7 +376,7 @@ public extension HUDQuickSwitcherLayout {
   /// this single policy so they can never drift apart. The frame is derived
   /// from the shared circular hit region; it is the bounding square only, and
   /// point containment outside the circle must use `verticalControlHitRegion`.
-  public static func verticalControlHitFrame(
+  static func verticalControlHitFrame(
     slot: HUDVerticalControlSlot,
     panelSize: HUDOverlaySize,
     scale: Double,
@@ -397,8 +397,8 @@ public extension HUDQuickSwitcherLayout {
   }
 
   /// Maximum allowed width of the language picker popover. Kept compact so it
-  /// does not visually overwhelm the HUD (was 280pt before the rejection).
-  public static let languagePickerMaxWidth = 196.0
+  /// does not visually overwhelm the HUD.
+  static let languagePickerMaxWidth = 196.0
 }
 
 /// Which control slot a vertical-pulse hit rect belongs to.

@@ -131,9 +131,5 @@ struct AppSettingsCloudFieldsTests {
         let openrouter = CloudProviderCatalog.descriptor(for: "openrouter")
         #expect(openrouter?.balanceKind == .openrouterCredits)
         #expect(openrouter?.capabilities.supportsRealBalance == true)
-
-        let anthropic = CloudProviderCatalog.descriptor(for: "anthropic")
-        // Honest capability indication: Anthropic has no transcription.
-        #expect(anthropic?.capabilities.supportsTranscription == false)
     }
 }

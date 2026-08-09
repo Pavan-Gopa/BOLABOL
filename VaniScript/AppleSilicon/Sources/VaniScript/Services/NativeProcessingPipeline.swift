@@ -22,7 +22,7 @@ actor NativeProcessingPipeline {
 
     func processCurrentChunk(
         session: SessionState,
-        settings: AppSettings,
+        settings: inout AppSettings,
         projectId: String? = nil,
         progress: @Sendable @escaping (String, Double) async -> Void
     ) async -> SessionState {
@@ -109,7 +109,7 @@ actor NativeProcessingPipeline {
                     index: index,
                     audioURL: audioURL,
                     provider: cloudProvider,
-                    settings: settings
+                    settings: &settings
                 )
                 guard next.chunks[index].status == .done else {
                     await progress(next.chunks[index].original, 1)
@@ -118,7 +118,7 @@ actor NativeProcessingPipeline {
                 await translateCurrentChunkIfNeeded(
                     &next,
                     index: index,
-                    settings: settings,
+                    settings: &settings,
                     progress: progress
                 )
                 AppLogger.shared.info("Segment \(chunkNumber)/\(total) is ready for review.", settings: settings)
@@ -178,7 +178,7 @@ actor NativeProcessingPipeline {
             await translateCurrentChunkIfNeeded(
                 &next,
                 index: index,
-                settings: settings,
+                settings: &settings,
                 progress: progress
             )
 
@@ -194,7 +194,7 @@ actor NativeProcessingPipeline {
 
     func process(
         session: SessionState,
-        settings: AppSettings,
+        settings: inout AppSettings,
         projectId: String? = nil,
         progress: @Sendable @escaping (String, Double) async -> Void
     ) async -> SessionState {
@@ -280,14 +280,14 @@ actor NativeProcessingPipeline {
                         index: index,
                         audioURL: audioURL,
                         provider: cloudProvider,
-                        settings: settings
+                        settings: &settings
                     )
                 }
 
                 AppLogger.shared.info("Cloud transcription complete successfully.", settings: settings)
                 await translateChunksIfNeeded(
                     &next,
-                    settings: settings,
+                    settings: &settings,
                     progress: progress
                 )
 
@@ -369,7 +369,7 @@ actor NativeProcessingPipeline {
 
         await translateChunksIfNeeded(
             &next,
-            settings: settings,
+            settings: &settings,
             progress: progress
         )
 
@@ -382,7 +382,7 @@ actor NativeProcessingPipeline {
         index: Int,
         audioURL: URL,
         provider: ActiveCloudTranscriptionProvider,
-        settings: AppSettings
+        settings: inout AppSettings
     ) async throws {
         guard session.chunks.indices.contains(index) else { return }
 
@@ -399,6 +399,17 @@ actor NativeProcessingPipeline {
             chunkStartSec: chunk.startSec,
             chunkEndSec: chunk.endSec
         )
+
+        let audioMins = max(0, (chunk.endSec - chunk.startSec) / 60.0)
+        UsageRecorder.record(
+            into: &settings.usage,
+            providerId: provider.id,
+            model: provider.model,
+            delta: result.usage,
+            audioMinutes: audioMins,
+            purpose: "transcription"
+        )
+
         let glossaryOriginal = applySourceGlossary(text: result.text, cues: result.cues, settings: settings)
         let originalText = glossaryOriginal.text.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -543,7 +554,7 @@ actor NativeProcessingPipeline {
 
     private func translateChunksIfNeeded(
         _ session: inout SessionState,
-        settings: AppSettings,
+        settings: inout AppSettings,
         progress: @Sendable @escaping (String, Double) async -> Void
     ) async {
         guard session.targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "same" else {
@@ -556,7 +567,7 @@ actor NativeProcessingPipeline {
         ) {
             await translateChunksWithCloud(
                 &session,
-                settings: settings,
+                settings: &settings,
                 provider: cloudProvider,
                 progress: progress
             )
@@ -629,7 +640,7 @@ actor NativeProcessingPipeline {
     private func translateCurrentChunkIfNeeded(
         _ session: inout SessionState,
         index: Int,
-        settings: AppSettings,
+        settings: inout AppSettings,
         progress: @Sendable @escaping (String, Double) async -> Void
     ) async {
         guard session.chunks.indices.contains(index) else { return }
@@ -644,7 +655,7 @@ actor NativeProcessingPipeline {
             await translateCurrentChunkWithCloud(
                 &session,
                 index: index,
-                settings: settings,
+                settings: &settings,
                 provider: cloudProvider,
                 progress: progress
             )
@@ -703,7 +714,7 @@ actor NativeProcessingPipeline {
 
     private func translateChunksWithCloud(
         _ session: inout SessionState,
-        settings: AppSettings,
+        settings: inout AppSettings,
         provider: ActiveCloudTranslationProvider,
         progress: @Sendable @escaping (String, Double) async -> Void
     ) async {
@@ -746,6 +757,16 @@ actor NativeProcessingPipeline {
                     cues: glossaryTranslation.cues.isEmpty ? nil : glossaryTranslation.cues
                 )
                 completedTranslations += 1
+
+                let usageDelta = await cloudEngine.takeLastUsage()
+                UsageRecorder.record(
+                    into: &settings.usage,
+                    providerId: provider.id,
+                    model: provider.model,
+                    delta: usageDelta,
+                    audioMinutes: 0,
+                    purpose: "translation"
+                )
             } catch {
                 AppLogger.shared.error("Segment \(index + 1)/\(session.chunks.count) \(provider.label) translation failed: \(error.localizedDescription)", settings: settings)
                 session.chunks[index].translated = ""
@@ -761,7 +782,7 @@ actor NativeProcessingPipeline {
     private func translateCurrentChunkWithCloud(
         _ session: inout SessionState,
         index: Int,
-        settings: AppSettings,
+        settings: inout AppSettings,
         provider: ActiveCloudTranslationProvider,
         progress: @Sendable @escaping (String, Double) async -> Void
     ) async {
@@ -795,7 +816,18 @@ actor NativeProcessingPipeline {
                 cues: glossaryTranslation.cues.isEmpty ? nil : glossaryTranslation.cues
             )
             session.registerTranslationLanguage(session.targetLang)
-            AppLogger.shared.info("Segment \(index + 1)/\(session.chunks.count) \(provider.label) translation complete.", settings: settings)
+
+            let usageDelta = await cloudEngine.takeLastUsage()
+            UsageRecorder.record(
+                into: &settings.usage,
+                providerId: provider.id,
+                model: provider.model,
+                delta: usageDelta,
+                audioMinutes: 0,
+                purpose: "translation"
+            )
+
+            AppLogger.shared.info("Segment \(index + 1)/\(session.chunks.count) translation complete.", settings: settings)
         } catch {
             AppLogger.shared.error("Segment \(index + 1)/\(session.chunks.count) \(provider.label) translation failed: \(error.localizedDescription)", settings: settings)
             session.chunks[index].translated = ""

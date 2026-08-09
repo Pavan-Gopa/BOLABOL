@@ -6,9 +6,14 @@ struct ActiveCloudTranscriptionProvider: Equatable, Sendable {
     var label: String
     var model: String
     var apiKey: String
+    var baseURL: String? = nil
 
     static func resolve(settings: AppSettings, providerID: String) -> ActiveCloudTranscriptionProvider? {
-        switch providerID.trimmingCharacters(in: .whitespacesAndNewlines) {
+        let trimmedProvider = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !ProviderRegistry.isBudgetExceeded(providerID: trimmedProvider, settings: settings) else {
+            return nil
+        }
+        switch trimmedProvider {
         case "gemini-cloud":
             let key = settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !key.isEmpty else { return nil }
@@ -33,13 +38,20 @@ struct ActiveCloudTranscriptionProvider: Equatable, Sendable {
                 apiKey: key
             )
         default:
-            // A5: intentionally NO resolve cases for Qwen / OpenRouter / Ollama Cloud.
-            // Their CloudProviderCatalog capabilities honestly report
-            // `supportsTranscription == false` (no verified audio endpoint), so
-            // ProviderRegistry never offers them for transcription and resolving them
-            // here would be dead/dishonest code. When a provider's audio API is
-            // verified, flip the catalog flag and add the case here (§14 honesty).
-            return nil
+            guard let route = CloudChatRouter.route(providerID: trimmedProvider, settings: settings, purpose: .transcription) else {
+                return nil
+            }
+            guard CloudProviderCatalog.supportsTranscription(providerID: route.providerID, modelID: route.model) else {
+                return nil
+            }
+            let base = route.providerID == CloudProviderCatalog.qwenID ? settings.resolvedQwenBaseUrl(apiKey: route.apiKey) : nil
+            return ActiveCloudTranscriptionProvider(
+                id: route.providerID,
+                label: route.label,
+                model: route.model,
+                apiKey: route.apiKey,
+                baseURL: base
+            )
         }
     }
 
@@ -61,6 +73,13 @@ struct CloudAudioTranscriptionResult: Sendable {
 }
 
 actor CloudAudioTranscriptionEngine {
+    private static let networkSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 600 // 10 minutes request timeout for long audio uploads
+        config.timeoutIntervalForResource = 1800 // 30 minutes resource timeout
+        return URLSession(configuration: config)
+    }()
+
     enum CloudTranscriptionError: LocalizedError {
         case invalidEndpoint
         case cannotReadAudio(URL)
@@ -130,8 +149,24 @@ actor CloudAudioTranscriptionEngine {
                 sourceLang: sourceLang,
                 provider: provider
             )
+        case CloudProviderCatalog.qwenID:
+            (raw, usage) = try await transcribeWithQwen(
+                audioData: audioData,
+                fileName: audioURL.lastPathComponent,
+                mimeType: mimeType(for: audioURL),
+                prompt: prompt,
+                sourceLang: sourceLang,
+                provider: provider
+            )
         default:
-            throw CloudTranscriptionError.emptyResponse(provider: provider.label)
+            (raw, usage) = try await transcribeWithOpenAICompatible(
+                audioData: audioData,
+                fileName: audioURL.lastPathComponent,
+                mimeType: mimeType(for: audioURL),
+                prompt: prompt,
+                sourceLang: sourceLang,
+                provider: provider
+            )
         }
 
         return try parse(rawText: raw, provider: provider, usage: usage, chunkStartSec: chunkStartSec, chunkEndSec: chunkEndSec)
@@ -231,7 +266,7 @@ actor CloudAudioTranscriptionEngine {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await Self.networkSession.data(for: request)
         try validate(response: response, data: data, provider: provider.label)
         // A2: best-effort usage capture from the raw Gemini response. Never throws.
         let usage = UsageRecorder.parseGeminiUsage(from: data)
@@ -286,7 +321,7 @@ actor CloudAudioTranscriptionEngine {
             boundary: boundary
         )
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await Self.networkSession.data(for: request)
         try validate(response: response, data: data, provider: provider.label)
         // A2: some OpenAI-compatible transcription models return a `usage` block
         // (e.g. gpt-4o-transcribe); classic whisper-1 does not → nil. Never throws.
@@ -295,6 +330,149 @@ actor CloudAudioTranscriptionEngine {
         let text = decoded.text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw CloudTranscriptionError.emptyResponse(provider: provider.label) }
         return (text, usage)
+    }
+
+    private func transcribeWithOpenAICompatible(
+        audioData: Data,
+        fileName: String,
+        mimeType: String,
+        prompt: String,
+        sourceLang: String,
+        provider: ActiveCloudTranscriptionProvider
+    ) async throws -> (text: String, usage: TokenUsage?) {
+        let endpointString: String
+        if provider.id == CloudProviderCatalog.openrouterID {
+            endpointString = "https://openrouter.ai/api/v1/audio/transcriptions"
+        } else if provider.id == CloudProviderCatalog.qwenID {
+            let base = provider.baseURL ?? "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+            endpointString = base + (base.hasSuffix("/v1") ? "/audio/transcriptions" : "/v1/audio/transcriptions")
+        } else {
+            endpointString = "https://api.openai.com/v1/audio/transcriptions"
+        }
+
+        guard let url = URL(string: endpointString) else {
+            throw CloudTranscriptionError.invalidEndpoint
+        }
+
+        var fields = [
+            "model": provider.model,
+            "prompt": prompt,
+            "response_format": "json",
+            "temperature": "0",
+        ]
+        if let languageCode = isoLanguageCode(sourceLang) {
+            fields["language"] = languageCode
+        }
+
+        let boundary = "VaniScript-\(UUID().uuidString)"
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(provider.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.httpBody = multipartBody(
+            fields: fields,
+            fileFieldName: "file",
+            fileName: fileName,
+            mimeType: mimeType,
+            fileData: audioData,
+            boundary: boundary
+        )
+
+        if provider.id == CloudProviderCatalog.openrouterID {
+            request.setValue("https://vaniscript.app", forHTTPHeaderField: "HTTP-Referer")
+            request.setValue("VaniScript", forHTTPHeaderField: "X-Title")
+        }
+
+        let (data, response) = try await Self.networkSession.data(for: request)
+        try validate(response: response, data: data, provider: provider.label)
+        let usage = UsageRecorder.parseOpenAIUsage(from: data)
+        if let decoded = try? JSONDecoder().decode(OpenAITranscriptionResponse.self, from: data) {
+            let text = decoded.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !text.isEmpty {
+                return (text, usage)
+            }
+        }
+        if let chatDecoded = try? JSONDecoder().decode(OpenAICompatibleChatResponse.self, from: data),
+           let content = chatDecoded.choices.first?.message.content?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !content.isEmpty {
+            return (content, usage)
+        }
+
+        throw CloudTranscriptionError.emptyResponse(provider: provider.label)
+    }
+
+    private func transcribeWithQwen(
+        audioData: Data,
+        fileName: String,
+        mimeType: String,
+        prompt: String,
+        sourceLang: String,
+        provider: ActiveCloudTranscriptionProvider
+    ) async throws -> (text: String, usage: TokenUsage?) {
+        let base = provider.baseURL ?? "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+        var cleanBase = base
+        while cleanBase.hasSuffix("/") { cleanBase.removeLast() }
+        let endpointString = cleanBase.hasSuffix("/v1") ? "\(cleanBase)/chat/completions" : "\(cleanBase)/v1/chat/completions"
+
+        guard let url = URL(string: endpointString) else {
+            throw CloudTranscriptionError.invalidEndpoint
+        }
+
+        let audioFormat: String = {
+            let lowerExt = (fileName as NSString).pathExtension.lowercased()
+            if lowerExt == "wav" { return "wav" }
+            if lowerExt == "m4a" || lowerExt == "aac" { return "m4a" }
+            if lowerExt == "ogg" || lowerExt == "opus" { return "ogg" }
+            if lowerExt == "flac" { return "flac" }
+            return "mp3"
+        }()
+
+        let base64Audio = audioData.base64EncodedString()
+        let qwenModelToUse = CloudProviderCatalog.supportsTranscription(providerID: CloudProviderCatalog.qwenID, modelID: provider.model) ? provider.model : "qwen-omni-turbo"
+
+        let payload: [String: Any] = [
+            "model": qwenModelToUse,
+            "messages": [
+                [
+                    "role": "user",
+                    "content": [
+                        [
+                            "type": "input_audio",
+                            "input_audio": [
+                                "data": base64Audio,
+                                "format": audioFormat
+                            ]
+                        ],
+                        [
+                            "type": "text",
+                            "text": prompt
+                        ]
+                    ]
+                ]
+            ],
+            "temperature": 0.0
+        ]
+
+        let jsonData = try JSONSerialization.data(withJSONObject: payload)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(provider.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+
+        let (data, response) = try await Self.networkSession.data(for: request)
+        try validate(response: response, data: data, provider: provider.label)
+
+        let usage = UsageRecorder.parseOpenAIUsage(from: data)
+
+        if let chatDecoded = try? JSONDecoder().decode(OpenAICompatibleChatResponse.self, from: data),
+           let content = chatDecoded.choices.first?.message.content?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !content.isEmpty {
+            return (content, usage)
+        }
+
+        throw CloudTranscriptionError.emptyResponse(provider: provider.label)
     }
 
     private func parse(
@@ -548,8 +726,19 @@ private struct OpenAITranscriptionResponse: Decodable {
     var text: String
 }
 
+private struct OpenAICompatibleChatResponse: Decodable {
+    struct Choice: Decodable {
+        struct Message: Decodable {
+            var content: String?
+        }
+        var message: Message
+    }
+    var choices: [Choice]
+}
+
 private extension Data {
     mutating func appendUTF8(_ string: String) {
         append(Data(string.utf8))
     }
 }
+

@@ -56,9 +56,7 @@ public struct WorkflowState: Codable, Equatable, Sendable {
 
     public mutating func updateTargetLanguage(_ targetLang: String) {
         self.targetLang = targetLang
-        self.translationProvider = targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "same"
-            ? ""
-            : settings.translationProvider
+        self.translationProvider = settings.translationProvider
     }
 
     public mutating func synchronizeProviderSelections(
@@ -66,18 +64,25 @@ public struct WorkflowState: Codable, Equatable, Sendable {
         forceTranscriptionProvider: Bool = false,
         forceTranslationProvider: Bool = false
     ) {
+        let availableTranscriptionIDs = ProviderRegistry.availableTranscriptionProviders(settings: settings).map(\.id)
+        if !availableTranscriptionIDs.contains(settings.transcriptionProvider) {
+            settings.transcriptionProvider = availableTranscriptionIDs.first ?? "coreml-whisperkit"
+        }
         if forceTranscriptionProvider
             || transcriptionProvider.isEmpty
-            || transcriptionProvider == previousSettings.transcriptionProvider {
+            || transcriptionProvider == previousSettings.transcriptionProvider
+            || !availableTranscriptionIDs.contains(transcriptionProvider) {
             transcriptionProvider = settings.transcriptionProvider
         }
 
-        let targetIsSame = targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "same"
-        if targetIsSame {
-            translationProvider = ""
-        } else if forceTranslationProvider
+        let availableTranslationIDs = ProviderRegistry.availableTranslationProviders(settings: settings, targetLang: targetLang).providers.map(\.id)
+        if !availableTranslationIDs.contains(settings.translationProvider) {
+            settings.translationProvider = availableTranslationIDs.first ?? "mlx-native"
+        }
+        if forceTranslationProvider
             || translationProvider.isEmpty
-            || translationProvider == previousSettings.translationProvider {
+            || translationProvider == previousSettings.translationProvider
+            || !availableTranslationIDs.contains(translationProvider) {
             translationProvider = settings.translationProvider
         }
     }
@@ -90,11 +95,7 @@ public struct WorkflowState: Codable, Equatable, Sendable {
         if forceTranscriptionProvider {
             activeSession.transcriptionProvider = transcriptionProvider
         }
-
-        let targetIsSame = activeSession.targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "same"
-        if targetIsSame {
-            activeSession.translationProvider = ""
-        } else if forceTranslationProvider {
+        if forceTranslationProvider {
             activeSession.translationProvider = translationProvider
         }
         session = activeSession

@@ -2533,9 +2533,8 @@ final class WorkflowStore: ObservableObject {
             statusMessage = "No source media file is attached to this session."
             return
         }
-        let url = URL(fileURLWithPath: mediaInfo.filePath)
-        guard FileManager.default.fileExists(atPath: mediaInfo.filePath) else {
-            statusMessage = "Source media file is missing: \(mediaInfo.filePath)"
+        guard let url = resolveMediaFileURL(from: mediaInfo) else {
+            presentMissingFileAlert(path: mediaInfo.filePath)
             return
         }
         NSWorkspace.shared.open(url)
@@ -2546,9 +2545,8 @@ final class WorkflowStore: ObservableObject {
             statusMessage = "No source media file is attached to this session."
             return
         }
-        let url = URL(fileURLWithPath: mediaInfo.filePath)
-        guard FileManager.default.fileExists(atPath: mediaInfo.filePath) else {
-            statusMessage = "Source media file is missing: \(mediaInfo.filePath)"
+        guard let url = resolveMediaFileURL(from: mediaInfo) else {
+            presentMissingFileAlert(path: mediaInfo.filePath)
             return
         }
         NSWorkspace.shared.activateFileViewerSelecting([url])
@@ -2559,39 +2557,62 @@ final class WorkflowStore: ObservableObject {
             statusMessage = "No source media information is attached to this session."
             return
         }
-        let fileURL = URL(fileURLWithPath: mediaInfo.filePath)
-        guard FileManager.default.fileExists(atPath: mediaInfo.filePath) else {
-            statusMessage = "Source media file is missing: \(mediaInfo.filePath)"
-            return
-        }
-        statusMessage = "Reading source media details..."
-        Task { [weak self] in
-            let refreshedInfo = await SourceMediaInspector.inspect(
-                fileURL: fileURL,
-                originalURL: mediaInfo.originalURL,
-                title: mediaInfo.title,
-                durationSec: mediaInfo.durationSec
-            )
-            await MainActor.run {
-                guard let self else { return }
-                self.updateProjectSourceMediaInfo(refreshedInfo, for: id)
-                self.statusMessage = "Source media details refreshed."
-                self.presentSourceMediaInfo(refreshedInfo, id: id)
+        if let fileURL = resolveMediaFileURL(from: mediaInfo) {
+            statusMessage = "Reading source media details..."
+            Task { [weak self] in
+                let refreshedInfo = await SourceMediaInspector.inspect(
+                    fileURL: fileURL,
+                    originalURL: mediaInfo.originalURL,
+                    title: mediaInfo.title,
+                    durationSec: mediaInfo.durationSec
+                )
+                await MainActor.run {
+                    guard let self else { return }
+                    self.updateProjectSourceMediaInfo(refreshedInfo, for: id)
+                    self.statusMessage = "Source media details refreshed."
+                    self.presentSourceMediaInfo(refreshedInfo, id: id)
+                }
             }
+        } else {
+            presentSourceMediaInfo(mediaInfo, id: id)
         }
+    }
+
+    private func resolveMediaFileURL(from info: SourceMediaInfo) -> URL? {
+        let trimmedPath = info.filePath.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedPath.isEmpty && FileManager.default.fileExists(atPath: trimmedPath) {
+            return URL(fileURLWithPath: trimmedPath)
+        }
+        if let originalStr = info.originalURL, let originalURL = URL(string: originalStr), originalURL.isFileURL, FileManager.default.fileExists(atPath: originalURL.path) {
+            return originalURL
+        }
+        return nil
+    }
+
+    private func presentMissingFileAlert(path: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Source File Missing"
+        alert.informativeText = "The source media file was not found on disk at:\n\(path)\n\nIf the file was moved or deleted, you can re-import or re-link the file."
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     private func presentSourceMediaInfo(_ mediaInfo: SourceMediaInfo, id: String) {
         let alert = NSAlert()
-        alert.messageText = "Source Media"
+        alert.alertStyle = .informational
+        let titleText = mediaInfo.title ?? ""
+        alert.messageText = titleText.isEmpty ? mediaInfo.fileName : titleText
         alert.informativeText = sourceInfoDetails(mediaInfo)
-        alert.addButton(withTitle: "Open File")
-        alert.addButton(withTitle: "Reveal in Finder")
         alert.addButton(withTitle: "OK")
+        if resolveMediaFileURL(from: mediaInfo) != nil {
+            alert.addButton(withTitle: "Open File")
+            alert.addButton(withTitle: "Reveal in Finder")
+        }
         let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
+        if response == .alertSecondButtonReturn {
             openProjectSourceFile(id: id)
-        } else if response == .alertSecondButtonReturn {
+        } else if response == .alertThirdButtonReturn {
             revealProjectSourceFile(id: id)
         }
     }
@@ -2709,6 +2730,26 @@ final class WorkflowStore: ObservableObject {
                 forceTranscriptionProvider: transcriptionProviderChanged,
                 forceTranslationProvider: translationProviderChanged
             )
+            saveCurrentProject()
+        }
+    }
+
+    func setTranscriptionProvider(_ providerID: String) {
+        workflow.transcriptionProvider = providerID
+        updateSettings { $0.transcriptionProvider = providerID }
+        if var session = workflow.session {
+            session.transcriptionProvider = providerID
+            workflow.session = session
+            saveCurrentProject()
+        }
+    }
+
+    func setTranslationProvider(_ providerID: String) {
+        workflow.translationProvider = providerID
+        updateSettings { $0.translationProvider = providerID }
+        if var session = workflow.session {
+            session.translationProvider = providerID
+            workflow.session = session
             saveCurrentProject()
         }
     }
@@ -3077,18 +3118,20 @@ final class WorkflowStore: ObservableObject {
 
     private func refreshProviderSelections() {
         let transcriptionIDs = ProviderRegistry.availableTranscriptionProviders(settings: workflow.settings).map(\.id)
+        if !transcriptionIDs.contains(workflow.settings.transcriptionProvider) {
+            workflow.settings.transcriptionProvider = transcriptionIDs.first ?? "coreml-whisperkit"
+        }
         if !transcriptionIDs.contains(workflow.transcriptionProvider), let first = transcriptionIDs.first {
             workflow.transcriptionProvider = first
         }
 
         let availability = ProviderRegistry.availableTranslationProviders(settings: workflow.settings, targetLang: workflow.targetLang)
-        if !availability.enabled {
-            workflow.translationProvider = ""
-        } else {
-            let translationIDs = availability.providers.map(\.id)
-            if !translationIDs.contains(workflow.translationProvider), let first = translationIDs.first {
-                workflow.translationProvider = first
-            }
+        let translationIDs = availability.providers.map(\.id)
+        if !translationIDs.contains(workflow.settings.translationProvider) {
+            workflow.settings.translationProvider = translationIDs.first ?? "mlx-native"
+        }
+        if !translationIDs.contains(workflow.translationProvider), let first = translationIDs.first {
+            workflow.translationProvider = first
         }
     }
 
@@ -3286,9 +3329,10 @@ final class WorkflowStore: ObservableObject {
     private func processCurrentSession() async {
         guard let session = workflow.session else { return }
         let requestedIndex = session.currentChunkIndex
+        var currentSettings = workflow.settings
         let processed = await processingPipeline.processCurrentChunk(
             session: session,
-            settings: workflow.settings,
+            settings: &currentSettings,
             projectId: currentProjectID
         ) { [weak self] message, progress in
             await MainActor.run {
@@ -3297,6 +3341,9 @@ final class WorkflowStore: ObservableObject {
             }
         }
 
+        updateSettings { settings in
+            settings = currentSettings
+        }
         workflow.session = processed
         saveCurrentProject()
 
@@ -4395,9 +4442,10 @@ final class WorkflowStore: ObservableObject {
                     progress: Double(position) / Double(max(1, indexes.count)),
                     stage: "Processing segment \(position + 1) / \(indexes.count)"
                 )
+                var currentSettings = self.workflow.settings
                 let processed = await self.processingPipeline.processCurrentChunk(
                     session: current,
-                    settings: self.workflow.settings,
+                    settings: &currentSettings,
                     projectId: self.currentProjectID
                 ) { message, progress in
                     await MainActor.run {
@@ -4408,6 +4456,9 @@ final class WorkflowStore: ObservableObject {
                             stage: message
                         )
                     }
+                }
+                self.updateSettings { settings in
+                    settings = currentSettings
                 }
                 try reporter.checkCancellation()
                 self.workflow.session = processed

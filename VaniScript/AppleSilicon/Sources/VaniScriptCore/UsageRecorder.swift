@@ -67,6 +67,7 @@ public enum UsageRecorder {
         model: String,
         delta: TokenUsage?,
         audioMinutes: Double = 0,
+        purpose: String? = nil,
         now: Date = Date()
     ) {
         let hasTokens = (delta?.isEmpty == false)
@@ -87,6 +88,8 @@ public enum UsageRecorder {
         entry.lastOutputTokens = delta?.outputTokens
         entry.lastModel = model
         entry.lastTransactionAt = timestamp
+        entry.lastPurpose = purpose
+        entry.lastAudioMinutes = audioMinutes > 0 ? audioMinutes : nil
         usage[key] = entry
     }
 

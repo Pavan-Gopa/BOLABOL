@@ -173,6 +173,10 @@ public struct ProviderUsage: Codable, Equatable, Sendable {
     public var lastModel: String?
     /// ISO-8601 timestamp of the last transaction (used to sort the latest entry).
     public var lastTransactionAt: String?
+    /// Purpose of last transaction: "transcription" or "translation".
+    public var lastPurpose: String?
+    /// Audio minutes processed in the last transaction (if applicable).
+    public var lastAudioMinutes: Double?
 
     public init(
         sessions: Int = 0,
@@ -183,7 +187,9 @@ public struct ProviderUsage: Codable, Equatable, Sendable {
         lastInputTokens: Int? = nil,
         lastOutputTokens: Int? = nil,
         lastModel: String? = nil,
-        lastTransactionAt: String? = nil
+        lastTransactionAt: String? = nil,
+        lastPurpose: String? = nil,
+        lastAudioMinutes: Double? = nil
     ) {
         self.sessions = sessions
         self.inputTokens = inputTokens
@@ -194,6 +200,8 @@ public struct ProviderUsage: Codable, Equatable, Sendable {
         self.lastOutputTokens = lastOutputTokens
         self.lastModel = lastModel
         self.lastTransactionAt = lastTransactionAt
+        self.lastPurpose = lastPurpose
+        self.lastAudioMinutes = lastAudioMinutes
     }
 
     // Explicit decoder so new optional fields are migration-safe (decodeIfPresent).
@@ -202,7 +210,7 @@ public struct ProviderUsage: Codable, Equatable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case sessions, inputTokens, outputTokens, audioMinutes, lastUsed
         case lastInputTokens, lastOutputTokens
-        case lastModel, lastTransactionAt
+        case lastModel, lastTransactionAt, lastPurpose, lastAudioMinutes
     }
 
     public init(from decoder: Decoder) throws {
@@ -216,6 +224,8 @@ public struct ProviderUsage: Codable, Equatable, Sendable {
         self.lastOutputTokens = try container.decodeIfPresent(Int.self, forKey: .lastOutputTokens)
         self.lastModel = try container.decodeIfPresent(String.self, forKey: .lastModel)
         self.lastTransactionAt = try container.decodeIfPresent(String.self, forKey: .lastTransactionAt)
+        self.lastPurpose = try container.decodeIfPresent(String.self, forKey: .lastPurpose)
+        self.lastAudioMinutes = try container.decodeIfPresent(Double.self, forKey: .lastAudioMinutes)
     }
 }
 public struct CustomCloudProvider: Codable, Equatable, Identifiable, Sendable {
@@ -264,8 +274,11 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var qwenApiKey: String
     public var qwenCloudModel: String
     public var qwenBudgetUsd: Double
+    public var qwenBaseUrl: String
     public var openrouterApiKey: String
     public var openrouterModel: String
+    public var openrouterTranscriptionModel: String
+    public var openrouterTranslationModel: String
     public var openrouterBudgetUsd: Double
     public var ollamaCloudApiKey: String
     public var ollamaCloudModel: String
@@ -312,8 +325,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case geminiBudgetUsd, openaiBudgetUsd
         // A1 (§6.3): selected models for existing providers + new cloud providers.
         case geminiTextModel, openaiTextModel
-        case qwenApiKey, qwenCloudModel, qwenBudgetUsd
-        case openrouterApiKey, openrouterModel, openrouterBudgetUsd
+        case qwenApiKey, qwenCloudModel, qwenBudgetUsd, qwenBaseUrl
+        case openrouterApiKey, openrouterModel, openrouterTranscriptionModel, openrouterTranslationModel, openrouterBudgetUsd
         case ollamaCloudApiKey, ollamaCloudModel, ollamaCloudBaseUrl
         case theme, fontSize, fontScale, fontFamily
         case chunkDurationMin, sliceMode, silenceThreshDb, minSilenceMs
@@ -341,8 +354,11 @@ public struct AppSettings: Codable, Equatable, Sendable {
         qwenApiKey: String = "",
         qwenCloudModel: String = "",
         qwenBudgetUsd: Double = 0,
+        qwenBaseUrl: String = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
         openrouterApiKey: String = "",
         openrouterModel: String = "",
+        openrouterTranscriptionModel: String = "",
+        openrouterTranslationModel: String = "",
         openrouterBudgetUsd: Double = 0,
         ollamaCloudApiKey: String = "",
         ollamaCloudModel: String = "",
@@ -394,8 +410,11 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.qwenApiKey = qwenApiKey
         self.qwenCloudModel = qwenCloudModel
         self.qwenBudgetUsd = qwenBudgetUsd
+        self.qwenBaseUrl = qwenBaseUrl
         self.openrouterApiKey = openrouterApiKey
         self.openrouterModel = openrouterModel
+        self.openrouterTranscriptionModel = openrouterTranscriptionModel
+        self.openrouterTranslationModel = openrouterTranslationModel
         self.openrouterBudgetUsd = openrouterBudgetUsd
         self.ollamaCloudApiKey = ollamaCloudApiKey
         self.ollamaCloudModel = ollamaCloudModel
@@ -453,6 +472,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.qwenApiKey = try container.decodeIfPresent(String.self, forKey: .qwenApiKey) ?? ""
         self.qwenCloudModel = try container.decodeIfPresent(String.self, forKey: .qwenCloudModel) ?? ""
         self.qwenBudgetUsd = try container.decodeIfPresent(Double.self, forKey: .qwenBudgetUsd) ?? 0
+        self.qwenBaseUrl = try container.decodeIfPresent(String.self, forKey: .qwenBaseUrl) ?? "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
         self.openrouterApiKey = try container.decodeIfPresent(String.self, forKey: .openrouterApiKey) ?? ""
         self.openrouterModel = try container.decodeIfPresent(String.self, forKey: .openrouterModel) ?? ""
         self.openrouterBudgetUsd = try container.decodeIfPresent(Double.self, forKey: .openrouterBudgetUsd) ?? 0
@@ -494,7 +514,81 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.grokChatModelID = try container.decodeIfPresent(String.self, forKey: .grokChatModelID) ?? GrokChatModelCatalog.defaultModelID
         self.grokChatReasoningEffort = try container.decodeIfPresent(String.self, forKey: .grokChatReasoningEffort) ?? "medium"
         self.qwenChatModelID = try container.decodeIfPresent(String.self, forKey: .qwenChatModelID) ?? QwenChatModelCatalog.defaultModelID
+        self.openrouterTranscriptionModel = try container.decodeIfPresent(String.self, forKey: .openrouterTranscriptionModel) ?? ""
+        self.openrouterTranslationModel = try container.decodeIfPresent(String.self, forKey: .openrouterTranslationModel) ?? ""
         self.logLevel = try container.decodeIfPresent(LogLevel.self, forKey: .logLevel) ?? .info
+    }
+
+    public func transcriptionModel(for providerID: String) -> String {
+        let trimmed = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed == CloudProviderCatalog.openrouterID || trimmed == "openrouter" {
+            let specific = openrouterTranscriptionModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !specific.isEmpty { return specific }
+            return openrouterModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if trimmed == CloudProviderCatalog.qwenID {
+            return qwenCloudModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if trimmed == "gemini-cloud" {
+            let m = geminiTextModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            return m.isEmpty ? "gemini-2.5-flash" : m
+        }
+        if trimmed == "gpt-cloud" {
+            let m = openaiTextModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            return m.isEmpty ? "gpt-4o-mini" : m
+        }
+        return ""
+    }
+
+    public func translationModel(for providerID: String) -> String {
+        let trimmed = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed == CloudProviderCatalog.openrouterID || trimmed == "openrouter" {
+            let specific = openrouterTranslationModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !specific.isEmpty { return specific }
+            let base = openrouterModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            let lowerBase = base.lowercased()
+            let isDedicatedSTT = lowerBase.contains("whisper")
+                || lowerBase.contains("stt")
+                || lowerBase.contains("nova-3")
+                || lowerBase.contains("parakeet")
+                || lowerBase.contains("mai-transcribe")
+                || lowerBase.contains("chirp")
+                || lowerBase.contains("asr")
+                || lowerBase.contains("voxtral-mini")
+            return (base.isEmpty || isDedicatedSTT) ? "google/gemini-2.5-flash" : base
+        }
+        if trimmed == CloudProviderCatalog.qwenID {
+            let m = qwenCloudModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            return m.isEmpty ? "qwen-max" : m
+        }
+        if trimmed == "gemini-cloud" {
+            let m = geminiTextModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            return m.isEmpty ? "gemini-2.5-flash" : m
+        }
+        if trimmed == "gpt-cloud" {
+            let m = openaiTextModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            return m.isEmpty ? "gpt-4o-mini" : m
+        }
+        return ""
+    }
+
+    public func resolvedQwenBaseUrl(apiKey: String? = nil) -> String {
+        let raw = qwenBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        let effectiveKey = (apiKey ?? qwenApiKey).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if !raw.isEmpty && raw != "https://dashscope-intl.aliyuncs.com/compatible-mode/v1" && raw != "https://dashscope-intl.aliyuncs.com/compatible-mode" {
+            var clean = raw
+            while clean.hasSuffix("/") { clean.removeLast() }
+            return clean
+        }
+
+        if effectiveKey.hasPrefix("sk-sp-") || effectiveKey.hasPrefix("sk-ws-") {
+            return "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+        }
+
+        var clean = raw.isEmpty ? "https://dashscope-intl.aliyuncs.com/compatible-mode/v1" : raw
+        while clean.hasSuffix("/") { clean.removeLast() }
+        return clean
     }
 
     public static let defaults = AppSettings(
@@ -640,7 +734,7 @@ extension AppSettings {
 
     public mutating func synchronizeLocalModelsWithDisk() {
         let supportedTranslationKeys = Set(AppSettings.defaults.localTranslationModels.keys)
-        let supportedCloudTranslationKeys = Set(["gemini-cloud", "gpt-cloud"] + customCloudProviders.map(\.id))
+        let supportedCloudTranslationKeys = Set(["gemini-cloud", "gpt-cloud"] + CloudProviderCatalog.providers.map(\.id) + customCloudProviders.map(\.id))
         localTranslationModels = localTranslationModels.filter { supportedTranslationKeys.contains($0.key) }
         if translationProvider != AppSettings.defaults.translationProvider,
            !supportedTranslationKeys.contains(translationProvider),

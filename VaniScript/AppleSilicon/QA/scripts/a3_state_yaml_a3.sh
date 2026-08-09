@@ -7,7 +7,7 @@ cd "$AS_DIR"
 FILE="AI_Workflow_Kit/docs/AI/STATE.yaml"
 [[ -f "$FILE" ]] || { echo "FAIL: $FILE missing"; exit 1; }
 
-current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_]+).*/\1/p' "$FILE" | head -1)"
+current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_-]+).*/\1/p' "$FILE" | head -1)"
 if [[ "$current_step" != "A3" ]]; then
   echo "NOTE: current_step='$current_step' (not A3); A3 STATE gate is N/A."
   echo "RESULT: PASS (a3_state_yaml_a3, step-aware N/A)"

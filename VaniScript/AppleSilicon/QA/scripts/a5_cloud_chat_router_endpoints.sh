@@ -38,5 +38,7 @@ for t in ("qwenRoute", "openrouterRoute", "ollamaRouteDefaultBase", "ollamaBaseN
     if t not in test:
         raise SystemExit(f"FAIL: CloudProviderRoutingTests missing {t}")
 
+if "resolvedQwenBaseUrl" not in src and "qwenDefaultChatCompletionsURL" not in src:
+    raise SystemExit("FAIL: Qwen endpoint resolution missing")
 print("PASS: CloudChatRouter endpoints (DashScope/OpenRouter/Ollama /v1) + Bearer.")
 PY

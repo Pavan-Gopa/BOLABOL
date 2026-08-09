@@ -104,7 +104,16 @@ public final class ModelDownloadManager: Sendable {
                     guard let downloadUrl = URL(string: fileUrlString) else { continue }
 
                     let filename = (file as NSString).lastPathComponent
-                    let destFileUrl = modelDir.appendingPathComponent(filename)
+                    let relativePath: String
+                    if !subfolder.isEmpty && file.hasPrefix(subfolder) {
+                        relativePath = String(file.dropFirst(subfolder.count))
+                    } else {
+                        relativePath = filename
+                    }
+
+                    let destFileUrl = modelDir.appendingPathComponent(relativePath)
+                    let parentDir = destFileUrl.deletingLastPathComponent()
+                    try? fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
 
                     let baseProgress = Double(index) / Double(targetFiles.count)
                     let stepWeight = 1.0 / Double(targetFiles.count)
@@ -224,17 +233,17 @@ public final class ModelDownloadManager: Sendable {
             return ("mlx-community/NVIDIA-Nemotron-3-Nano-4B-4bit", "")
 
         case "whisper-small-en":
-            return ("awni/whisperkit-coreml", "huggingface/models/apple/ml-whisper/small.en/")
+            return ("argmaxinc/whisperkit-coreml", "openai_whisper-small.en/")
         case "whisper-small-multilingual":
-            return ("awni/whisperkit-coreml", "huggingface/models/apple/ml-whisper/small/")
+            return ("argmaxinc/whisperkit-coreml", "openai_whisper-small/")
         case "whisper-medium-en":
-            return ("awni/whisperkit-coreml", "huggingface/models/apple/ml-whisper/medium.en/")
+            return ("argmaxinc/whisperkit-coreml", "openai_whisper-medium.en/")
         case "whisper-medium-multilingual":
-            return ("awni/whisperkit-coreml", "huggingface/models/apple/ml-whisper/medium/")
+            return ("argmaxinc/whisperkit-coreml", "openai_whisper-medium/")
         case "whisper-large-v3-turbo":
-            return ("awni/whisperkit-coreml", "huggingface/models/apple/ml-whisper/large-v3-turbo/")
+            return ("argmaxinc/whisperkit-coreml", "openai_whisper-large-v3_turbo/")
         case "whisper-large-v3":
-            return ("awni/whisperkit-coreml", "huggingface/models/apple/ml-whisper/large-v3/")
+            return ("argmaxinc/whisperkit-coreml", "openai_whisper-large-v3/")
         default:
             return ("", "")
         }

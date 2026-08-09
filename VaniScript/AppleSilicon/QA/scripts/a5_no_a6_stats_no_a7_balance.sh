@@ -12,11 +12,18 @@ FILE="Sources/VaniScript/Views/SettingsView.swift"
 STATE_FILE="AI_Workflow_Kit/docs/AI/STATE.yaml"
 current_step=""
 if [[ -f "$STATE_FILE" ]]; then
-  current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_]+).*/\1/p' "$STATE_FILE" | head -1)"
+  current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_-]+).*/\1/p' "$STATE_FILE" | head -1)"
 fi
 
+
+# Post-API_USAGE tracks (CPS) count as A7+
+if [[ "$current_step" == CPS* || "$current_step" == CLOUD_PROVIDER* || "$current_step" == API_USAGE_DONE || "$current_step" == APIUSAGE_DONE ]]; then
+  _post_api_usage=1
+else
+  _post_api_usage=0
+fi
 a6_or_later=0
-if [[ "$current_step" =~ ^A([6-9]|[1-9][0-9]+)$ ]] || [[ "$current_step" == "A6" || "$current_step" == "A7" || "$current_step" == "A8" || "$current_step" == "API_USAGE_DONE" ]]; then
+if [[ "$current_step" =~ ^A([6-9]|[1-9][0-9]+)$ ]] || [[ "$current_step" == "A6" || "$current_step" == "A7" || "$current_step" == "A8" || "$current_step" == "API_USAGE_DONE" ]] || [[ "$_post_api_usage" -eq 1 ]]; then
   a6_or_later=1
 fi
 
@@ -41,7 +48,7 @@ fi
 if [[ -f "Sources/VaniScriptCore/CloudBalanceService.swift" ]] || \
    [[ -f "Sources/VaniScript/Services/CloudBalanceService.swift" ]]; then
   # Allow when current_step is A7+
-  if [[ "$current_step" =~ ^A([7-9]|[1-9][0-9]+)$ ]] || [[ "$current_step" == "A7" || "$current_step" == "A8" || "$current_step" == "API_USAGE_DONE" ]]; then
+  if [[ "$current_step" =~ ^A([7-9]|[1-9][0-9]+)$ ]] || [[ "$current_step" == "A7" || "$current_step" == "A8" || "$current_step" == "API_USAGE_DONE" ]] || [[ "$_post_api_usage" -eq 1 ]]; then
     echo "NOTE: CloudBalanceService present but current_step='$current_step' (≥ A7) — OK."
   else
     echo "FAIL: CloudBalanceService present (A7 out of scope for A5/A6)"; exit 1
@@ -49,7 +56,7 @@ if [[ -f "Sources/VaniScriptCore/CloudBalanceService.swift" ]] || \
 fi
 if grep -REq 'struct CloudBalanceService|class CloudBalanceService|enum CloudBalanceService|func fetchBalance' \
   Sources/VaniScriptCore Sources/VaniScript 2>/dev/null; then
-  if [[ "$current_step" =~ ^A([7-9]|[1-9][0-9]+)$ ]] || [[ "$current_step" == "A7" || "$current_step" == "A8" || "$current_step" == "API_USAGE_DONE" ]]; then
+  if [[ "$current_step" =~ ^A([7-9]|[1-9][0-9]+)$ ]] || [[ "$current_step" == "A7" || "$current_step" == "A8" || "$current_step" == "API_USAGE_DONE" ]] || [[ "$_post_api_usage" -eq 1 ]]; then
     :
   else
     echo "FAIL: balance service API leaked before A7"; exit 1

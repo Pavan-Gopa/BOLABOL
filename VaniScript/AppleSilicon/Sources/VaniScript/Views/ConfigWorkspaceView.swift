@@ -45,13 +45,13 @@ struct ConfigWorkspaceView: View {
                     HStack(spacing: 12) {
                         PickerBox(
                             label: "Transcription Model",
-                            selection: $store.workflow.transcriptionProvider,
+                            selection: transcriptionBinding,
                             values: transcriptionProviderIDs,
                             labelForValue: providerLabel
                         )
                         PickerBox(
                             label: "Translation Model",
-                            selection: $store.workflow.translationProvider,
+                            selection: translationBinding,
                             values: translationProviderIDs,
                             labelForValue: providerLabel
                         )
@@ -133,6 +133,22 @@ struct ConfigWorkspaceView: View {
             store.workflow.targetLang
         } set: { value in
             store.setTargetLanguage(value)
+        }
+    }
+
+    private var transcriptionBinding: Binding<String> {
+        Binding {
+            store.workflow.transcriptionProvider
+        } set: { value in
+            store.setTranscriptionProvider(value)
+        }
+    }
+
+    private var translationBinding: Binding<String> {
+        Binding {
+            store.workflow.translationProvider
+        } set: { value in
+            store.setTranslationProvider(value)
         }
     }
 }

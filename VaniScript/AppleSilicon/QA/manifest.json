@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "description": "VaniScript QA suite manifest. Order: build gates, MCP smoke, Q7 doc-delta, A1 catalog, A2 usage, A3 UI reorg, A4 key validation + model catalog, A5 Qwen/OpenRouter/Ollama Cloud full integration, A6 usage statistics UI, A7 real balance adapter (OpenRouter first). QA engineer adds N scripts per run.",
+  "version": 4,
+  "description": "VaniScript QA suite manifest. Order: build gates, MCP smoke, Q7, A1–A7 API_USAGE, CPS cloud-provider-stabilization delta.",
   "scripts": [
     {
       "path": "build_gate_as.sh",
@@ -932,6 +932,125 @@
       "area": "A7 real balance",
       "enabled": true,
       "note": "swift test green; soft-warn <331; ENV-ONLY soft-pass"
+    },
+    {
+      "path": "cps_acceptance_obs_registry.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_anthropic_catalog_gap.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_cloudmodel_openrouter_stt_inject.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_disclaimer_or_estimate_honesty.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_dual_provider_id_mapping.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_dynamic_model_capabilities.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_last_purpose_usage.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_no_keys_in_source.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_obs002_whitelist_includes_catalog.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_openrouter_dual_model_fields.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_openrouter_dual_ui_sections.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_provider_order_current.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_qwen_endpoint_profile_resolver.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_qwen_hardcoded_subscription_models.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_registry_transcription_dynamic.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_state_track.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "cps_usage_stats_redesign.sh",
+      "kind": "cps-delta",
+      "area": "Cloud provider stabilization / post-API_USAGE",
+      "enabled": true,
+      "note": "CPS / post-A7 product contract coverage"
     }
   ]
 }

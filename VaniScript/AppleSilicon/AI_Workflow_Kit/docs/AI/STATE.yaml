@@ -1,24 +1,25 @@
-# CLOUD_PROVIDER_STABILIZATION track — ACTIVE
-# Product scope: AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_STEPS.md
-# Architecture: AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_ARCHITECTURE.md
-# Acceptance: AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_ACCEPTANCE.md
+# LOCAL_ASR_COREML track — DESIGN (Architect)
+# Prior track CLOUD_PROVIDER_STABILIZATION parked mid-CPS-01 (CHANGES_REQUESTED on evidence).
+# Product scope (pending Architect): port Bolabol Core ML ASR models into VaniScript Apple Silicon.
+# Reference product: /Users/pavan/Documents/AI Projects/Bolabol
 
-current_step: CPS-01
+current_step: ASR-ARCH
 step_description: >
-  Evidence gate: воспроизвести OBS-002 (OpenRouter/generic Use for Translation
-  no-op), зафиксировать точный source-level root cause и проверить актуальные
-  контракты Qwen endpoint profiles, embedded Qwen auth/model и OpenRouter audio.
-  Product-код на этом шаге не изменяется.
+  Architect design gate: изучить реализацию Parakeet / Canary Flash / Canary 1B v2
+  в Bolabol (catalog, download/install sources, engines, language capabilities, UI Local Models)
+  и спроектировать трек переноса в VaniScript Apple Silicon. Product-код не писать.
+  Canary 1B — download с Google Drive (Human зальёт пакет); Parakeet и Canary Flash — Hugging Face.
+  GigaAM вне скоупа, пока Human явно не попросит.
 
 target_files:
-  - AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_ACCEPTANCE.md
+  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ARCHITECTURE.md
+  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_STEPS.md
+  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ACCEPTANCE.md
   - AI_Workflow_Kit/docs/DECISIONS.md
 
 coder_brief: >
-  Выполни только диагностический CPS-01 из CLOUD_PROVIDER_STABILIZATION_STEPS.md.
-  Собери black-box evidence на свежей native-сборке, установи точную причину
-  OBS-002, проверь drift-prone provider contracts и запиши доказательства только
-  в target_files. Не меняй Swift/JS/TS/Python, QA scripts или STATE.yaml.
+  Не Coder. Шаг ASR-ARCH — Architect only. Сдать ADR + ARCHITECTURE + STEPS + ACCEPTANCE skeleton.
+  После сдачи: next_actor=orchestrator; Human: «Готово. Скажи оркестратору: статус».
 
 completed_steps:
   - G0
@@ -63,15 +64,16 @@ review:
 qa:
   status: waived
   last_report: "QA/REPORT.md"
-  suite: "CPS-01 is diagnostic/doc-only; no product change. Existing baseline: 133 PASS / 0 FAIL."
+  suite: "ASR-ARCH is architect/doc-only; no product change."
   bugs_open: 0
-  note: "CPS-01 evidence is validated by Reviewer; product QA gate starts on coding steps."
+  note: "Design gate. Coding QA starts after Architect plan is accepted and first coding step opens."
 
-next_actor: implementation
+next_actor: architect
 
-track: CLOUD_PROVIDER_STABILIZATION
-prior_track: API_USAGE
-track_status: IN_PROGRESS
+track: LOCAL_ASR_COREML
+prior_track: CLOUD_PROVIDER_STABILIZATION
+prior_track_status: PARKED_AT_CPS-01_CHANGES_REQUESTED
+track_status: DESIGN
 
 working_roots:
   - AppleSilicon
@@ -80,11 +82,37 @@ checkpoint:
   last_pre_tag: "cloud-provider-stabilization/pre-CPS-01"
   last_post_tag: "apiusage/A8-done"
   last_commit: "496d0a1"
+  note: "ASR track pre-tag after Architect plan accepted and before first coding step."
 
 plan_files:
-  - AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_STEPS.md
-  - AI_Workflow_Kit/docs/CLOUD_PROVIDER_STABILIZATION_ARCHITECTURE.md
+  - AI_Workflow_Kit/docs/AI/ARCHITECT.md
   - AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
   - AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
+  - AI_Workflow_Kit/docs/QWEN_ARCHITECTURE.md
+  # Bolabol reference (read-only source of truth for port):
+  - /Users/pavan/Documents/AI Projects/Bolabol/Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
+  - /Users/pavan/Documents/AI Projects/Bolabol/Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
+  - /Users/pavan/Documents/AI Projects/Bolabol/Sources/NativeBolabol/Services/ParakeetTranscriptionEngine.swift
+  - /Users/pavan/Documents/AI Projects/Bolabol/Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift
+  - /Users/pavan/Documents/AI Projects/Bolabol/BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
+  - /Users/pavan/Documents/AI Projects/Bolabol/docs/canary/COREML_SPIKE.md
+
+human_notes:
+  models_in_scope:
+    - id: parakeet-tdt-06b-v3
+      backend: FluidAudio Core ML/ANE
+      download: Hugging Face (FluidInference/parakeet-tdt-0.6b-v3-coreml)
+    - id: canary-180m-flash-coreml
+      backend: Canary Core ML/ANE
+      languages: EN DE FR ES
+      download: Hugging Face (aufklarer/Canary-180M-Flash-CoreML in Bolabol)
+    - id: canary-1b-v2-coreml
+      backend: Canary Core ML/ANE
+      languages: ~25 EU + RU/UK
+      download: Google Drive (Human uploads custom working package; Bolabol used bolabolCDN package bolabol-canary-1b-v2-coreml-r1)
+  out_of_scope_unless_requested:
+    - GigaAM
+    - Electron
+    - CPS resume (parked)

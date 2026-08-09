@@ -184,7 +184,7 @@ private struct ProjectSidebarRow: View {
                     }
                 }
 
-                if summary.totalChunks > 0, summary.approvedChunks >= summary.totalChunks {
+                if summary.totalChunks > 0 {
                     Button {
                         store.openProject(id: summary.id, openExport: true)
                     } label: {

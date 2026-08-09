@@ -5877,3 +5877,126 @@ RESULT: approved
 - No worker kick. Await Human next directive.
 
 **RESULT: `step_complete`**
+
+---
+
+## CODE-HYGIENE-RELEASE - Orchestrator Open
+
+- Human requested non-destructive code hygiene / structure polish for a high-quality release.
+- PRE checkpoint created: **`bolabol/pre-CODE-HYGIENE-RELEASE` @ `1a8bf3d`** (LOCAL ONLY).
+- GraphiFy rebuilt before Architect kick (~6732 nodes).
+- Flow locked: **Architect design-only inventory first** (no Sources edits) → accept list →
+  Coder executes only approved items → Reviewer → Tester → POST.
+- Hard rule: no behavior change, no engine decode edits, no UserData wipe, no mass risky renames.
+
+**RESULT: `waiting_architect`**
+
+---
+
+## CODE-HYGIENE-RELEASE - Architect Packet
+
+### Meta
+
+| Field | Value |
+|---|---|
+| Step | `CODE-HYGIENE-RELEASE` |
+| Actor | Architect (design-only) |
+| Date | 2026-08-09 |
+| Baseline | `bolabol/pre-CODE-HYGIENE-RELEASE` at `1a8bf3d` |
+| Graphify | Both required queries ran first against `graphify-out/graph.json`; targeted explains then verified dead-symbol and god-file boundaries |
+| Product/test/runtime-script edits | None |
+| Packet | `AI_Workflow_Kit/docs/AI/ARCHITECT_HANDOFF.md` |
+| ADR | Proposed ADR-023 in `AI_Workflow_Kit/docs/DECISIONS.md` |
+| RESULT | `design_complete` |
+
+### Findings
+
+- Current product Swift, tests, and scripts are clean of SmartScribe,
+  NativeSmartScribe, Scribex, and Blaboom text. Former-brand evidence remains in
+  historical rename/UserData records and must be preserved. Tracked public
+  screenshots still visibly show SmartScribe and require a separate fresh
+  capture pass.
+- Graphify plus direct references prove low-risk dead candidates: the unused
+  Apple Speech engine, unreachable Statistics Settings view, unused full-logo
+  wrapper, a dead ContentView settings-window cluster/raw-text wrapper, and the
+  ADR-022-stale `downloadedModel(for:)` helper.
+- `ContentView` (2,184 lines, Graphify degree 100),
+  `HotkeySessionOverlayManager` (2,164 lines), `AppText` (9,990 lines), and the
+  engine/store god-files are not authorized for broad splitting. Only the
+  already-isolated 83-line HUD popover controller may move in batch 1.
+- Active release metadata/docs still default to 1.0.3 and describe obsolete
+  engines/hotkeys/privacy. Persisted `NativeBolabol` paths and keys are not
+  branding typos; blind renaming could orphan user data and is explicitly
+  deferred.
+- SEC-001...004 were not reopened. SEC-005 is unrelated and remains deferred.
+
+### Architect-Approved Scope
+
+- Batch 1 only: `HYG-002`, `HYG-003`, `HYG-004`, `HYG-005`, `HYG-006`,
+  `HYG-007`, `HYG-008`, `HYG-009`, `HYG-011`, `HYG-012`, `HYG-013`,
+  `HYG-014`, and `HYG-015`, exactly as ordered in the handoff.
+- Separate tiny localization attempt only: `HYG-016`, limited to exact AppText
+  keys and `SettingsLocalizationTests`.
+- Not Coder scope: screenshot recapture, tracked cache/index cleanup, generated
+  release staging cleanup, and workflow source-of-truth docs.
+- Deferred: persistence/Keychain/module renames, public API removal, broad file
+  splits, package/dependency cleanup, engine/concurrency changes, HUD geometry,
+  and Graphify corpus restructuring.
+
+### Required Coder Gates
+
+- Apply only accepted HYG IDs; report every skipped item.
+- `swift test` green.
+- `./script/qa/run_all.sh` green.
+- No new/suppressed warnings.
+- Clean `./script/build_and_run.sh --verify` green with Bolabol 1.0.4 bundle
+  identity and no stale release artifact in active staging.
+- Append FEEDBACK with before/after evidence and `RESULT: waiting_review`.
+- No product behavior change, UserData/model deletion, commit, tag, or push.
+
+**RESULT: `design_complete`**
+
+Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## CODE-HYGIENE-RELEASE - Orchestrator Accepts Architect Packet
+
+- Architect packet + ADR-023 accepted for **Batch 1 only**.
+- Approved Coder IDs: HYG-002…009, 011…015 (mandatory order in ARCHITECT_HANDOFF).
+- **Not this attempt:** HYG-016 (separate later), HYG-001 screenshots (Human),
+  HYG-010/021/022 (Orchestrator/workflow), HYG-017…020/023 deferred.
+- Per Human `статус`: Orchestrator status build only — Release PID `15280`
+  (`Sun Aug 9 14:22:43 2026`); codesign OK. No test suites by Orchestrator.
+- PRE rollback remains `bolabol/pre-CODE-HYGIENE-RELEASE` @ `1a8bf3d`.
+- `next_actor: coder`.
+
+**RESULT: `waiting_coder`**
+
+---
+
+## CODE-HYGIENE-RELEASE - Orchestrator Status (still waiting Coder Batch 1)
+
+- Human said `статус`. No Coder Batch 1 handoff in FEEDBACK yet.
+- Orchestrator closed old Bolabol; only
+  `swift package clean && ./script/build_and_run.sh --verify` (no test suites).
+- Fresh signed Release PID `17123` (`Sun Aug 9 14:45:00 2026`); codesign OK.
+- Bundle still reports marketing version **1.0.3** (expected until HYG-015).
+- PRE rollback unchanged: `bolabol/pre-CODE-HYGIENE-RELEASE` @ `1a8bf3d`.
+- `next_actor` remains **coder**. Kick re-issued.
+
+**RESULT: `waiting_coder`**
+
+---
+
+## CODE-HYGIENE-RELEASE - Orchestrator Status #3 (still waiting Coder)
+
+- Human said `статус` again. Still no Coder Batch 1 FEEDBACK section.
+- Spot-check: `AppleSpeechTranscriptionEngine.swift`, `StatisticsSettingsView.swift`,
+  `restructure.sh` still present; no `LanguagePickerPopoverController.swift` yet
+  → Batch 1 not applied.
+- Status build only: Release PID `20774` (`Sun Aug 9 15:05:19 2026`); codesign OK;
+  marketing version still **1.0.3**.
+- PRE: `bolabol/pre-CODE-HYGIENE-RELEASE` @ `1a8bf3d`. Kick re-issued.
+
+**RESULT: `waiting_coder`**

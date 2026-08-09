@@ -51235,6 +51235,110 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_orchestrator_after_coder_batch_1",
+      "label": "CODE-HYGIENE-RELEASE - Orchestrator After Coder Batch 1",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6097",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_orchestrator_policy_stop_rebuild_cult",
+      "label": "CODE-HYGIENE-RELEASE - Orchestrator Policy: Stop Rebuild Cult",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6114",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_independent_review_batch_1",
+      "label": "CODE-HYGIENE-RELEASE - Independent Review Batch 1",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6129",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_verdict_6134",
+      "label": "Verdict",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6134",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_graphify_first_6138",
+      "label": "Graphify First",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6138",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_independent_scope_review_6146",
+      "label": "Independent Scope Review",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6146",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_findings_6167",
+      "label": "Findings",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6167",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_verification_evidence_6171",
+      "label": "Verification Evidence",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6171",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_handoff_6185",
+      "label": "Handoff",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6185",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_orchestrator_after_reviewer_approval_batch_1",
+      "label": "CODE-HYGIENE-RELEASE - Orchestrator After Reviewer Approval (Batch 1)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6196",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_tester_batch_1_retest",
+      "label": "CODE-HYGIENE-RELEASE - Tester Batch 1 Retest",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6208",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_meta_6210",
+      "label": "Meta",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6210",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_feedback_retest_evidence",
+      "label": "Retest Evidence",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6223",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_ai_git_checkpoints",
       "label": "GIT_CHECKPOINTS.md",
       "file_type": "document",
@@ -51655,7 +51759,7 @@
       "label": "A) `review.status == approved` and implementation done",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L86",
+      "source_location": "L106",
       "_origin": "ast"
     },
     {
@@ -51663,7 +51767,7 @@
       "label": "A2) Security campaign (rare — not every step)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L102",
+      "source_location": "L122",
       "_origin": "ast"
     },
     {
@@ -51671,7 +51775,7 @@
       "label": "B) `changes_requested`",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L111",
+      "source_location": "L131",
       "_origin": "ast"
     },
     {
@@ -51679,7 +51783,7 @@
       "label": "C) `attempts >= 3`",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L117",
+      "source_location": "L137",
       "_origin": "ast"
     },
     {
@@ -51687,7 +51791,7 @@
       "label": "D) `waiting_review` / `next_actor: reviewer`",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L122",
+      "source_location": "L142",
       "_origin": "ast"
     },
     {
@@ -51695,7 +51799,7 @@
       "label": "E) `pending` / `next_actor: coder`",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L127",
+      "source_location": "L147",
       "_origin": "ast"
     },
     {
@@ -51703,7 +51807,7 @@
       "label": "F) Architect handoff / design needed",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L132",
+      "source_location": "L152",
       "_origin": "ast"
     },
     {
@@ -51711,7 +51815,7 @@
       "label": "G) B6 NO-GO",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L136",
+      "source_location": "L156",
       "_origin": "ast"
     },
     {
@@ -51719,7 +51823,7 @@
       "label": "Kick delivery format (каждый раз)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L142",
+      "source_location": "L162",
       "_origin": "ast"
     },
     {
@@ -51727,7 +51831,7 @@
       "label": "Checkpoints",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L151",
+      "source_location": "L171",
       "_origin": "ast"
     },
     {
@@ -51735,7 +51839,7 @@
       "label": "Graphify (перед началом работы, после каждого Coder и каждого POST-цикла)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L164",
+      "source_location": "L184",
       "_origin": "ast"
     },
     {
@@ -51743,7 +51847,7 @@
       "label": "Bolabol-specific rules",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L179",
+      "source_location": "L199",
       "_origin": "ast"
     },
     {
@@ -51751,7 +51855,7 @@
       "label": "Kick footer (append to every short kick)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L192",
+      "source_location": "L212",
       "_origin": "ast"
     },
     {
@@ -51763,8 +51867,8 @@
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_sec_fix_attempt_8_retest_plus_full_gate",
-      "label": "SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE",
+      "id": "ai_workflow_kit_docs_ai_report_code_hygiene_batch_1_retest",
+      "label": "CODE-HYGIENE-BATCH-1-RETEST",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
       "source_location": "L1",
@@ -51772,10 +51876,50 @@
     },
     {
       "id": "ai_workflow_kit_docs_ai_report_gate_results",
-      "label": "Gate results",
+      "label": "Gate Results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
       "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_hygiene_confirmation",
+      "label": "Hygiene Confirmation",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt",
+      "label": "Gap Hunt",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L29",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_scope",
+      "label": "Scope",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L33",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_sec_fix_attempt_8_retest_plus_full_gate",
+      "label": "SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L43",
+      "_origin": "ast"
+    },
+    {
+      "id": "ai_workflow_kit_docs_ai_report_gate_results_51",
+      "label": "Gate results",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L51",
       "_origin": "ast"
     },
     {
@@ -51783,7 +51927,7 @@
       "label": "Closure confirmation (independent retest)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L23",
+      "source_location": "L65",
       "_origin": "ast"
     },
     {
@@ -51791,15 +51935,15 @@
       "label": "Regression check (no SEC-fix fallout)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L33",
+      "source_location": "L75",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_gap_hunt",
+      "id": "ai_workflow_kit_docs_ai_report_gap_hunt_81",
       "label": "Gap-hunt",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L39",
+      "source_location": "L81",
       "_origin": "ast"
     },
     {
@@ -51807,7 +51951,7 @@
       "label": "FINAL-APPLICATION-EXHAUSTIVE-MAX-PLUS-SECURITY-SURFACE",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L47",
+      "source_location": "L89",
       "_origin": "ast"
     },
     {
@@ -51815,7 +51959,7 @@
       "label": "Gate summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L55",
+      "source_location": "L97",
       "_origin": "ast"
     },
     {
@@ -51823,7 +51967,7 @@
       "label": "New tests/scripts added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L66",
+      "source_location": "L108",
       "_origin": "ast"
     },
     {
@@ -51831,7 +51975,7 @@
       "label": "Interactive inventory → evidence map",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L81",
+      "source_location": "L123",
       "_origin": "ast"
     },
     {
@@ -51839,7 +51983,7 @@
       "label": "Security surface (detailed in SECURITY_REPORT.md)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L97",
+      "source_location": "L139",
       "_origin": "ast"
     },
     {
@@ -51847,7 +51991,7 @@
       "label": "NOT_EXECUTED residual (rare, justified)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L103",
+      "source_location": "L145",
       "_origin": "ast"
     },
     {
@@ -51855,7 +51999,7 @@
       "label": "HUD-HUMOR-PROMPTS Exhaustive Application QA",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L112",
+      "source_location": "L154",
       "_origin": "ast"
     },
     {
@@ -51863,7 +52007,7 @@
       "label": "Environment",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L120",
+      "source_location": "L162",
       "_origin": "ast"
     },
     {
@@ -51871,7 +52015,7 @@
       "label": "GraphiFy gate",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L132",
+      "source_location": "L174",
       "_origin": "ast"
     },
     {
@@ -51879,7 +52023,7 @@
       "label": "Baseline and isolation",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L150",
+      "source_location": "L192",
       "_origin": "ast"
     },
     {
@@ -51887,7 +52031,7 @@
       "label": "Application coverage inventory",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L167",
+      "source_location": "L209",
       "_origin": "ast"
     },
     {
@@ -51895,7 +52039,7 @@
       "label": "Humor slider feature matrix",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L192",
+      "source_location": "L234",
       "_origin": "ast"
     },
     {
@@ -51903,7 +52047,7 @@
       "label": "HUD prompt/provider interaction matrix",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L218",
+      "source_location": "L260",
       "_origin": "ast"
     },
     {
@@ -51911,7 +52055,7 @@
       "label": "Application regression summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L246",
+      "source_location": "L288",
       "_origin": "ast"
     },
     {
@@ -51919,7 +52063,7 @@
       "label": "New tests added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L265",
+      "source_location": "L307",
       "_origin": "ast"
     },
     {
@@ -51927,7 +52071,7 @@
       "label": "QA scripts",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L292",
+      "source_location": "L334",
       "_origin": "ast"
     },
     {
@@ -51935,7 +52079,7 @@
       "label": "Coverage summary",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L307",
+      "source_location": "L349",
       "_origin": "ast"
     },
     {
@@ -51943,7 +52087,7 @@
       "label": "Sanitizer and stress results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L324",
+      "source_location": "L366",
       "_origin": "ast"
     },
     {
@@ -51951,7 +52095,7 @@
       "label": "Focused command results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L337",
+      "source_location": "L379",
       "_origin": "ast"
     },
     {
@@ -51959,7 +52103,7 @@
       "label": "Full build and gate results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L357",
+      "source_location": "L399",
       "_origin": "ast"
     },
     {
@@ -51967,7 +52111,7 @@
       "label": "Real local engine smokes",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L372",
+      "source_location": "L414",
       "_origin": "ast"
     },
     {
@@ -51975,7 +52119,7 @@
       "label": "Manual release matrix",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L381",
+      "source_location": "L423",
       "_origin": "ast"
     },
     {
@@ -51983,7 +52127,7 @@
       "label": "Alerts, sheets, popovers, and errors inventory",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L398",
+      "source_location": "L440",
       "_origin": "ast"
     },
     {
@@ -51991,7 +52135,7 @@
       "label": "Accessibility results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L412",
+      "source_location": "L454",
       "_origin": "ast"
     },
     {
@@ -51999,7 +52143,7 @@
       "label": "Legacy QA triage",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L421",
+      "source_location": "L463",
       "_origin": "ast"
     },
     {
@@ -52007,7 +52151,7 @@
       "label": "Blocked and residual risks",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L431",
+      "source_location": "L473",
       "_origin": "ast"
     },
     {
@@ -52015,7 +52159,7 @@
       "label": "Final verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L440",
+      "source_location": "L482",
       "_origin": "ast"
     },
     {
@@ -52023,7 +52167,7 @@
       "label": "S9 BUG-003 Fix Feature QA Report",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L448",
+      "source_location": "L490",
       "_origin": "ast"
     },
     {
@@ -52031,7 +52175,7 @@
       "label": "1. Graphify gate",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L457",
+      "source_location": "L499",
       "_origin": "ast"
     },
     {
@@ -52039,7 +52183,7 @@
       "label": "2. Scratch assets",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L467",
+      "source_location": "L509",
       "_origin": "ast"
     },
     {
@@ -52047,7 +52191,7 @@
       "label": "3. Feature gate results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L477",
+      "source_location": "L519",
       "_origin": "ast"
     },
     {
@@ -52055,7 +52199,7 @@
       "label": "4. Independent gap-hunt mapping",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L490",
+      "source_location": "L532",
       "_origin": "ast"
     },
     {
@@ -52063,7 +52207,7 @@
       "label": "5. New tests and QA",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L505",
+      "source_location": "L547",
       "_origin": "ast"
     },
     {
@@ -52071,7 +52215,7 @@
       "label": "6. BUG-003 closure",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L511",
+      "source_location": "L553",
       "_origin": "ast"
     },
     {
@@ -52079,7 +52223,7 @@
       "label": "S4b Feature QA Report",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L517",
+      "source_location": "L559",
       "_origin": "ast"
     },
     {
@@ -52087,7 +52231,7 @@
       "label": "1. Feature gate results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L526",
+      "source_location": "L568",
       "_origin": "ast"
     },
     {
@@ -52095,7 +52239,7 @@
       "label": "1.1 BOLABOL_COREML_SPIKE.md Status GO + package id ✅",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L528",
+      "source_location": "L570",
       "_origin": "ast"
     },
     {
@@ -52103,7 +52247,7 @@
       "label": "1.2 check_s4b_canary_fix.sh ✅ (with caveat)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L533",
+      "source_location": "L575",
       "_origin": "ast"
     },
     {
@@ -52111,7 +52255,7 @@
       "label": "1.3 Preprocessor absent from package ✅",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L543",
+      "source_location": "L585",
       "_origin": "ast"
     },
     {
@@ -52119,7 +52263,7 @@
       "label": "1.4 MANIFEST SHA integrity ✅",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L547",
+      "source_location": "L589",
       "_origin": "ast"
     },
     {
@@ -52127,7 +52271,7 @@
       "label": "1.5 Product boundary check_no_canary_product ✅",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L555",
+      "source_location": "L597",
       "_origin": "ast"
     },
     {
@@ -52135,7 +52279,7 @@
       "label": "1.6 S4 NO-GO + S5 GO + S6 dual-checks still green via run_all ✅",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L562",
+      "source_location": "L604",
       "_origin": "ast"
     },
     {
@@ -52143,7 +52287,7 @@
       "label": "1.7 Runtime EN short — executed ✅",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L572",
+      "source_location": "L614",
       "_origin": "ast"
     },
     {
@@ -52151,7 +52295,7 @@
       "label": "1.8 Harness builds ✅",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L579",
+      "source_location": "L621",
       "_origin": "ast"
     },
     {
@@ -52159,7 +52303,7 @@
       "label": "2. Local execution — completed 2026-08-04 (verified)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L584",
+      "source_location": "L626",
       "_origin": "ast"
     },
     {
@@ -52167,7 +52311,7 @@
       "label": "3. Feature gaps (non-blocking)",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L610",
+      "source_location": "L652",
       "_origin": "ast"
     },
     {
@@ -52175,7 +52319,7 @@
       "label": "4. Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L623",
+      "source_location": "L665",
       "_origin": "ast"
     },
     {
@@ -52183,7 +52327,7 @@
       "label": "S7 Feature QA Report",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L633",
+      "source_location": "L675",
       "_origin": "ast"
     },
     {
@@ -52191,7 +52335,7 @@
       "label": "1. Feature gate",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L640",
+      "source_location": "L682",
       "_origin": "ast"
     },
     {
@@ -52199,7 +52343,7 @@
       "label": "2. Gap-hunt mapping",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L649",
+      "source_location": "L691",
       "_origin": "ast"
     },
     {
@@ -52207,7 +52351,7 @@
       "label": "3. New tests added",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L661",
+      "source_location": "L703",
       "_origin": "ast"
     },
     {
@@ -52215,7 +52359,7 @@
       "label": "4. Scope and verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L670",
+      "source_location": "L712",
       "_origin": "ast"
     },
     {
@@ -52223,15 +52367,15 @@
       "label": "S8 re-run",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L681",
+      "source_location": "L723",
       "_origin": "ast"
     },
     {
-      "id": "ai_workflow_kit_docs_ai_report_gate_results_688",
+      "id": "ai_workflow_kit_docs_ai_report_gate_results_730",
       "label": "Gate results",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L688",
+      "source_location": "L730",
       "_origin": "ast"
     },
     {
@@ -52239,7 +52383,7 @@
       "label": "Bug closure",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L698",
+      "source_location": "L740",
       "_origin": "ast"
     },
     {
@@ -52247,7 +52391,7 @@
       "label": "Regression and gap-hunt",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L703",
+      "source_location": "L745",
       "_origin": "ast"
     },
     {
@@ -52255,7 +52399,7 @@
       "label": "Verdict",
       "file_type": "document",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L710",
+      "source_location": "L752",
       "_origin": "ast"
     },
     {
@@ -183149,6 +183293,136 @@
       "_origin": "ast"
     },
     {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_orchestrator_after_coder_batch_1",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6097",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_orchestrator_policy_stop_rebuild_cult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6114",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_independent_review_batch_1",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6129",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_independent_review_batch_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_verdict_6134",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6134",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_independent_review_batch_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_graphify_first_6138",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6138",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_independent_review_batch_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_independent_scope_review_6146",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6146",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_independent_review_batch_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_findings_6167",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6167",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_independent_review_batch_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_verification_evidence_6171",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6171",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_independent_review_batch_1",
+      "target": "ai_workflow_kit_docs_ai_feedback_handoff_6185",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6185",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_orchestrator_after_reviewer_approval_batch_1",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6196",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_tester_batch_1_retest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6208",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_tester_batch_1_retest",
+      "target": "ai_workflow_kit_docs_ai_feedback_meta_6210",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6210",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_code_hygiene_release_tester_batch_1_retest",
+      "target": "ai_workflow_kit_docs_ai_feedback_retest_evidence",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L6223",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "ai_workflow_kit_docs_ai_git_checkpoints",
       "target": "ai_workflow_kit_docs_ai_git_checkpoints_git_checkpoints_bolabol_1_0_3",
       "relation": "contains",
@@ -183604,7 +183878,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L86",
+      "source_location": "L106",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183614,7 +183888,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L102",
+      "source_location": "L122",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183624,7 +183898,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L111",
+      "source_location": "L131",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183634,7 +183908,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L117",
+      "source_location": "L137",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183644,7 +183918,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L122",
+      "source_location": "L142",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183654,7 +183928,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L127",
+      "source_location": "L147",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183664,7 +183938,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L132",
+      "source_location": "L152",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183674,7 +183948,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L136",
+      "source_location": "L156",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183684,7 +183958,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L142",
+      "source_location": "L162",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183694,7 +183968,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L151",
+      "source_location": "L171",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183704,7 +183978,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L164",
+      "source_location": "L184",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183714,7 +183988,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L179",
+      "source_location": "L199",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183724,13 +183998,13 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/ORCHESTRATOR.md",
-      "source_location": "L192",
+      "source_location": "L212",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report",
-      "target": "ai_workflow_kit_docs_ai_report_sec_fix_attempt_8_retest_plus_full_gate",
+      "target": "ai_workflow_kit_docs_ai_report_code_hygiene_batch_1_retest",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
@@ -183739,7 +184013,7 @@
       "_origin": "ast"
     },
     {
-      "source": "ai_workflow_kit_docs_ai_report_sec_fix_attempt_8_retest_plus_full_gate",
+      "source": "ai_workflow_kit_docs_ai_report_code_hygiene_batch_1_retest",
       "target": "ai_workflow_kit_docs_ai_report_gate_results",
       "relation": "contains",
       "confidence": "EXTRACTED",
@@ -183749,12 +184023,62 @@
       "_origin": "ast"
     },
     {
+      "source": "ai_workflow_kit_docs_ai_report_code_hygiene_batch_1_retest",
+      "target": "ai_workflow_kit_docs_ai_report_hygiene_confirmation",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_code_hygiene_batch_1_retest",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_code_hygiene_batch_1_retest",
+      "target": "ai_workflow_kit_docs_ai_report_scope",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L33",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report",
+      "target": "ai_workflow_kit_docs_ai_report_sec_fix_attempt_8_retest_plus_full_gate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L43",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_report_sec_fix_attempt_8_retest_plus_full_gate",
+      "target": "ai_workflow_kit_docs_ai_report_gate_results_51",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
+      "source_location": "L51",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "ai_workflow_kit_docs_ai_report_sec_fix_attempt_8_retest_plus_full_gate",
       "target": "ai_workflow_kit_docs_ai_report_closure_confirmation_independent_retest",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L23",
+      "source_location": "L65",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183764,17 +184088,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L33",
+      "source_location": "L75",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_sec_fix_attempt_8_retest_plus_full_gate",
-      "target": "ai_workflow_kit_docs_ai_report_gap_hunt",
+      "target": "ai_workflow_kit_docs_ai_report_gap_hunt_81",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L39",
+      "source_location": "L81",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183784,7 +184108,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L47",
+      "source_location": "L89",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183794,7 +184118,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L55",
+      "source_location": "L97",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183804,7 +184128,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L66",
+      "source_location": "L108",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183814,7 +184138,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L81",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183824,7 +184148,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L97",
+      "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183834,7 +184158,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L103",
+      "source_location": "L145",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183844,7 +184168,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L112",
+      "source_location": "L154",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183854,7 +184178,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L120",
+      "source_location": "L162",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183864,7 +184188,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L132",
+      "source_location": "L174",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183874,7 +184198,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L150",
+      "source_location": "L192",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183884,7 +184208,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L167",
+      "source_location": "L209",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183894,7 +184218,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L192",
+      "source_location": "L234",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183904,7 +184228,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L218",
+      "source_location": "L260",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183914,7 +184238,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L246",
+      "source_location": "L288",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183924,7 +184248,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L265",
+      "source_location": "L307",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183934,7 +184258,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L292",
+      "source_location": "L334",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183944,7 +184268,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L307",
+      "source_location": "L349",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183954,7 +184278,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L324",
+      "source_location": "L366",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183964,7 +184288,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L337",
+      "source_location": "L379",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183974,7 +184298,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L357",
+      "source_location": "L399",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183984,7 +184308,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L372",
+      "source_location": "L414",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -183994,7 +184318,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L381",
+      "source_location": "L423",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184004,7 +184328,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L398",
+      "source_location": "L440",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184014,7 +184338,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L412",
+      "source_location": "L454",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184024,7 +184348,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L421",
+      "source_location": "L463",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184034,7 +184358,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L431",
+      "source_location": "L473",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184044,7 +184368,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L440",
+      "source_location": "L482",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184054,7 +184378,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L448",
+      "source_location": "L490",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184064,7 +184388,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L457",
+      "source_location": "L499",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184074,7 +184398,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L467",
+      "source_location": "L509",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184084,7 +184408,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L477",
+      "source_location": "L519",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184094,7 +184418,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L490",
+      "source_location": "L532",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184104,7 +184428,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L505",
+      "source_location": "L547",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184114,7 +184438,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L511",
+      "source_location": "L553",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184124,7 +184448,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L517",
+      "source_location": "L559",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184134,7 +184458,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L526",
+      "source_location": "L568",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184144,7 +184468,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L528",
+      "source_location": "L570",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184154,7 +184478,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L533",
+      "source_location": "L575",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184164,7 +184488,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L543",
+      "source_location": "L585",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184174,7 +184498,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L547",
+      "source_location": "L589",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184184,7 +184508,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L555",
+      "source_location": "L597",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184194,7 +184518,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L562",
+      "source_location": "L604",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184204,7 +184528,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L572",
+      "source_location": "L614",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184214,7 +184538,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L579",
+      "source_location": "L621",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184224,7 +184548,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L584",
+      "source_location": "L626",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184234,7 +184558,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L610",
+      "source_location": "L652",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184244,7 +184568,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L623",
+      "source_location": "L665",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184254,7 +184578,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L633",
+      "source_location": "L675",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184264,7 +184588,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L640",
+      "source_location": "L682",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184274,7 +184598,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L649",
+      "source_location": "L691",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184284,7 +184608,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L661",
+      "source_location": "L703",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184294,7 +184618,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L670",
+      "source_location": "L712",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184304,17 +184628,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L681",
+      "source_location": "L723",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "ai_workflow_kit_docs_ai_report_s8_re_run",
-      "target": "ai_workflow_kit_docs_ai_report_gate_results_688",
+      "target": "ai_workflow_kit_docs_ai_report_gate_results_730",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L688",
+      "source_location": "L730",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184324,7 +184648,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L698",
+      "source_location": "L740",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184334,7 +184658,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L703",
+      "source_location": "L745",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -184344,7 +184668,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/REPORT.md",
-      "source_location": "L710",
+      "source_location": "L752",
       "weight": 1.0,
       "_origin": "ast"
     },

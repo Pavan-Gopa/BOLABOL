@@ -1,5 +1,3 @@
-import Foundation
-
 /// Ephemeral language presentation state exposed by the HUD.
 ///
 /// `auto` and `target` remain the legacy Whisper-compatible values. The

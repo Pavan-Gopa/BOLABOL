@@ -1,5 +1,3 @@
-import Foundation
-
 public struct GlossaryEntry: Codable, Equatable, Identifiable, Sendable {
     public var id: String
     public var variants: [String]

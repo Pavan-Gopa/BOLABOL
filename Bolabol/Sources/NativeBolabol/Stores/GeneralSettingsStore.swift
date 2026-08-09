@@ -4,10 +4,6 @@ import Foundation
 import NativeBolabolCore
 import SwiftUI
 
-extension Notification.Name {
-    public static let didChangeAudioRetentionSettings = Notification.Name("didChangeAudioRetentionSettings")
-}
-
 @MainActor
 final class GeneralSettingsStore: ObservableObject {
     /// Canonical settings blob key. Internal so sibling stores

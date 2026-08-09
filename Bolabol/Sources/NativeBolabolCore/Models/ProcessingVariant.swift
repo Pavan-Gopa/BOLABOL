@@ -1,5 +1,3 @@
-import Foundation
-
 public enum ProcessingVariant: String, CaseIterable, Codable, Hashable, Identifiable, Sendable {
     case raw
     case variantOne

@@ -1,5 +1,3 @@
-import Foundation
-
 public struct PolishingEngineDescriptor: Equatable, Identifiable, Sendable {
     public var id: String
     public var displayName: String

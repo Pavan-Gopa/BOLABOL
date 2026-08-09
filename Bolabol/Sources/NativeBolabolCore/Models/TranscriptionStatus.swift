@@ -1,5 +1,3 @@
-import Foundation
-
 public struct TranscriptionStatus: Codable, Equatable, Sendable {
     public enum Phase: String, Codable, Sendable {
         case idle

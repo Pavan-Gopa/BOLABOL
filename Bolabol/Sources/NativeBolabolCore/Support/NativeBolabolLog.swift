@@ -2,7 +2,7 @@ import Foundation
 import os
 
 public enum NativeBolabolLog {
-    public static let subsystem = "com.pavan.NativeBolabol"
+    public static let subsystem = "com.bolabol.app"
 
     public static let app = Logger(subsystem: subsystem, category: "app")
     public static let audio = Logger(subsystem: subsystem, category: "audio")

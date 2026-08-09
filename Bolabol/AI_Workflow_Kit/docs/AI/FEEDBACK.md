@@ -6015,3 +6015,225 @@ RESULT: approved
 - Coder still next; local PRE rollback intact.
 
 **RESULT: `waiting_coder` (push blocked — needs Human remote)**
+
+---
+
+## CODE-HYGIENE-RELEASE - Coder Batch 1
+
+### Scope
+
+- Baseline: `bolabol/pre-CODE-HYGIENE-RELEASE` at `1a8bf3d`.
+- Applied only the accepted ordered Batch 1 IDs: `HYG-004`, `HYG-003`,
+  `HYG-005`, `HYG-006`, `HYG-007`, `HYG-008`, `HYG-009`, `HYG-002`,
+  `HYG-011`, `HYG-012`, `HYG-013`, `HYG-014`, and `HYG-015`.
+- No HYG-016 localization/copy changes. No UserData, model assets, engine
+  behavior, HUD geometry, routing, persistence, timing, dependency, or package changes.
+
+### Before/After
+
+- `HYG-004`: `PopoverDelegate` and `LanguagePickerPopoverController` moved from
+  `ContentView.swift` to the role-headed `LanguagePickerPopoverController.swift`;
+  declarations, actor isolation, internal visibility, lifecycle, callbacks, and
+  picker behavior are unchanged.
+- `HYG-003`: removed only the unused `ContentView` settings-window state and
+  private settings-window cluster plus the unused raw-text wrapper. The live
+  `NativeBolabolApp` settings implementation and `NoteStore.updateRawText` remain.
+- `HYG-005`: removed declaration-only `TranscriptionModelStore.downloadedModel(for:)`;
+  the remote-manifest path invariant is now documented without changing the policy.
+- `HYG-006`: removed `AppleSpeechTranscriptionEngine.swift`, the nine dead
+  AppText keys and all 15 locale-map entries per key, and generated
+  `NSSpeechRecognitionUsageDescription` entries. Negative source/plist scan is clean.
+- `HYG-007`: removed unreachable `StatisticsSettingsView` and
+  `settingsStatistics`; the guard now checks the eight real Settings tabs and the
+  existing `UsageInlineCard` statistics surface remains.
+- `HYG-008`: removed `BolabolFullLogoView` and wrapper-only test/guard assertions;
+  `BOLABOL_LOGO_Full.svg` remains packaged and is explicitly guarded as an asset.
+- `HYG-009`: removed destructive `restructure.sh`; `RESTRUCTURE_README.md` is
+  now a historical completed/do-not-run note linking `RENAME_REPORT.md`.
+- `HYG-002`: replaced the three VaniScript attribution comments with neutral
+  provider/API contract comments.
+- `HYG-011`: comment-only cleanup in `ContentView`, `TranscriptionLanguageRouting`,
+  `TranscriptionModelStore`, `SharedModelsRoot`, `HUDQuickSwitcherLayout`, Canary,
+  and GigaAM; incident IDs and rejected-width history were replaced by durable
+  invariants. No executable engine or HUD geometry line was changed.
+- `HYG-012`: removed only the seven redundant `public` modifiers in the existing
+  public HUD extension and the exact listed unused imports.
+- `HYG-013`: moved `didChangeAudioRetentionSettings` to Core
+  `NotificationNames.swift`; publisher and subscriber use the typed name and the
+  raw value remains `didChangeAudioRetentionSettings`.
+- `HYG-014`: changed only unified-log subsystem identity and its exact assertion
+  from `com.pavan.NativeBolabol` to `com.bolabol.app`.
+- `HYG-015`: set static and default active version to `1.0.4`; updated current
+  release docs, engine/provider/hotkey/permission/privacy statements, and the
+  repository-root build claim. Historical 1.0.3 records were not rewritten.
+
+### Skipped
+
+- `HYG-001`: screenshot recapture requires Human visual review.
+- `HYG-010`: ignore/untracking workflow belongs to the Orchestrator.
+- `HYG-016`: separate localization/copy batch, explicitly not mixed here.
+- `HYG-017`, `HYG-018`, `HYG-019`, `HYG-020`: deferred persistence/API/god-file/engine-HUD campaign.
+- `HYG-021`, `HYG-022`: release-artifact and workflow-document follow-up belongs to the Orchestrator.
+- `HYG-023`: separate Graphify campaign.
+
+### Verification
+
+- Required `graphify query "CODE-HYGIENE HYG ContentView AppleSpeech StatisticsSettingsView" --graph graphify-out/graph.json`: PASS, BFS traversal returned 444 nodes; no rebuild requested.
+- `swift test && ./script/qa/run_all.sh`: PASS; 39/39 QA checks passed.
+- `swift package clean && ./script/build_and_run.sh --verify`: PASS; production app and worker built, MLX Metal library built, bundle signed, verify process running.
+- `plutil -p dist/Bolabol.app/Contents/Info.plist`: PASS; `Bolabol`, `com.bolabol.app`, `1.0.4`.
+- `codesign --verify --deep --strict dist/Bolabol.app`: PASS.
+- `git diff --check -- .`: PASS.
+- Negative scans for deleted symbols, Speech API/plist declarations, former-brand comments, VaniScript residue, and HYG-016 source keys: PASS.
+- Existing build warnings remain visible and unsuppressed: dependency identity/unhandled resource warnings, the pre-existing AVAsset duration deprecation, and pre-existing Canary `await`/`try` warnings.
+- No git commit, amend, tag, push, release publication, or destructive cleanup was performed.
+
+**RESULT: `waiting_review`**
+
+Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## CODE-HYGIENE-RELEASE - Orchestrator After Coder Batch 1
+
+- Accepted Coder handoff: `RESULT: waiting_review` for Batch 1 HYG IDs.
+- Spot-check: AppleSpeech/Statistics/FullLogo/`restructure.sh` removed;
+  `LanguagePickerPopoverController.swift` present.
+- Per Human `статус` («надеюсь, ничего не сломалось»): Orchestrator ran only
+  `swift package clean && ./script/build_and_run.sh --verify` — **PASS**.
+- Fresh signed Release PID `39186` (`Sun Aug 9 16:30:18 2026`); codesign OK;
+  marketing version **1.0.4**. App is running for Human smoke.
+- GraphiFy rebuilt before Reviewer kick.
+- PRE rollback intact: `bolabol/pre-CODE-HYGIENE-RELEASE` @ `1a8bf3d`.
+- `next_actor: reviewer`. Nothing appears broken at status-build level.
+
+**RESULT: `waiting_review`**
+
+---
+
+## CODE-HYGIENE-RELEASE - Orchestrator Policy: Stop Rebuild Cult
+
+- Human correctly flagged endless clean Release rebuilds on every `статус`.
+- Reviewer/Tester/Architect do not edit `Sources/**`; rebuild after their handoff
+  wastes time and does not change the binary.
+- `ORCHESTRATOR.md` updated: build only after Coder product diff (when needed),
+  explicit Human «собери/запусти», or POST/pre-release — **not** every status.
+- Current next_actor remains **reviewer** (Batch 1). No rebuild this turn.
+- Last known good app: version **1.0.4** from Coder/Orchestrator verify; use for
+  smoke without another clean build unless Human says «собери».
+
+**RESULT: `waiting_review` (no rebuild)**
+
+---
+
+## CODE-HYGIENE-RELEASE - Independent Review Batch 1
+
+**Date:** 2026-08-09
+**Actor:** Verification Engineer (Reviewer)
+
+### Verdict
+
+`RESULT: approved`
+
+### Graphify First
+
+- Mandatory query ran before source review against `graphify-out/graph.json`.
+- BFS depth 2 returned 121 nodes, including `LanguagePickerPopoverController`,
+  `NotificationNames.swift`, `AppleSpeechTranscriptionEngine`,
+  `StatisticsSettingsView`, and the Batch 1 handoff/feedback nodes.
+- No Graphify rebuild was requested by this review.
+
+### Independent Scope Review
+
+- Applied scope is limited to the approved `HYG-002..009, HYG-011..015` set.
+- `HYG-016` localization keys are unchanged in the product diff. No HYG-016
+  copy or raw picker localization was mixed into Batch 1.
+- `HYG-004` is API-identical: the original `ContentView.swift` lines 8-90 and
+  the moved controller body compare with no diff. Actor isolation, internal
+  visibility, lifecycle, callbacks, and popover behavior remain unchanged.
+- Dead Apple Speech engine, Statistics view, FullLogo wrapper, stale helper,
+  statistics key, Speech plist declarations, and destructive restructure script
+  are absent. The full logo SVG asset and real usage-statistics card remain.
+- Engine, routing, persistence, and shared-root diffs contain no executable
+  churn beyond the explicitly approved typed notification-name move. Canary,
+  GigaAM, and routing changes are comment-only; HUD changes are limited to the
+  seven redundant `public` modifiers and comment cleanup.
+- The raw notification value remains `didChangeAudioRetentionSettings`.
+- Active `Info.plist`, build defaults, release docs, README, and release notes
+  resolve to Bolabol 1.0.4 / `com.bolabol.app` and preserve historical records.
+- No `Package.swift`, UserData, model assets, dependency, commit, or push change
+  was introduced by Batch 1.
+
+### Findings
+
+None. No blocking or non-blocking finding was identified within Batch 1 scope.
+
+### Verification Evidence
+
+| Command / check | Independent result |
+|---|---|
+| Mandatory `graphify query ... --graph graphify-out/graph.json` | PASS; current Batch 1 symbols and handoff were present before review. |
+| `swift test` | PASS; 744 tests in 32 suites. |
+| `./script/qa/run_all.sh` | PASS; 39/39 QA checks. |
+| `./script/qa/check_settings_surface.sh` | PASS. |
+| `./script/qa/check_workspace_ui_surface.sh` | PASS. |
+| `plutil -p dist/Bolabol.app/Contents/Info.plist` | PASS; `Bolabol`, `com.bolabol.app`, `1.0.4`. |
+| `codesign --verify --deep --strict dist/Bolabol.app` | PASS. |
+| `git diff --stat bolabol/pre-CODE-HYGIENE-RELEASE -- .` | Reviewed; expected Batch 1 product paths plus orchestrator/document and Graphify artifacts. |
+| `git diff --check -- .` | PASS; no whitespace errors. |
+
+### Handoff
+
+Reviewer did not edit product Sources, did not change `STATE.yaml`, and did not
+commit or push. Status returns to the Orchestrator with `approved`.
+
+RESULT: approved
+
+Готово. Вернись к оркестратору и скажи статус.
+
+---
+
+## CODE-HYGIENE-RELEASE - Orchestrator After Reviewer Approval (Batch 1)
+
+- Independent Reviewer **APPROVED** Batch 1 (no findings; 744 tests / 39/39 QA).
+- **No Orchestrator rebuild** (Reviewer does not edit Sources).
+- STATE: `review: approved`, `qa: pending_retest`, `next_actor: tester`.
+- Suite: `CODE-HYGIENE-BATCH-1-RETEST` — confirm gates + deleted symbols still gone.
+- POST after Tester `qa_green`. HYG-016 remains a later optional batch.
+
+**RESULT: `waiting_tester_retest` (no rebuild)**
+
+---
+
+## CODE-HYGIENE-RELEASE - Tester Batch 1 Retest
+
+### Meta
+
+| Field | Value |
+|---|---|
+| Step | `CODE-HYGIENE-RELEASE` |
+| Actor | Tester |
+| Suite | `CODE-HYGIENE-BATCH-1-RETEST` |
+| Baseline | `bolabol/pre-CODE-HYGIENE-RELEASE` at `1a8bf3d` |
+| Scope | Confirm approved `HYG-002..009`, `HYG-011..015`; HYG-016 excluded |
+| Sources changes | None |
+| Rebuild | Not requested or required |
+| BUG_REPORT | Unchanged; `bugs_open: 0` |
+
+### Retest Evidence
+
+- Required Graphify query ran first against `graphify-out/graph.json`: PASS, BFS depth 2, 161 nodes; no rebuild requested.
+- `swift test`: PASS, 744 tests in 32 suites.
+- `./script/qa/run_all.sh`: PASS, 39/39.
+- `./script/qa/check_settings_surface.sh`: PASS.
+- `./script/qa/check_workspace_ui_surface.sh`: PASS.
+- Deleted Apple Speech, Statistics Settings, FullLogo wrapper, stale helper, Speech plist declarations, and dead `ContentView` declarations remain absent. `LanguagePickerPopoverController.swift` remains present and the full logo SVG remains packaged.
+- Source and built bundle identity remains `Bolabol`, `com.bolabol.app`, `1.0.4`.
+- Exact HYG-016 key lines have no diff from the baseline. `AppText.swift` changes are limited to the approved HYG-006/HYG-007 key deletions; HYG-016 was not mixed.
+- HYG-009 file absence and the historical completed/do-not-run note with the `RENAME_REPORT.md` link were confirmed.
+- Gap-hunt found no real Batch 1 product or QA gap. Existing focused tests and guards cover the touched contracts; no new tests or QA guards were added.
+- No commit, tag, push, release publication, or product rebuild was performed by Tester.
+
+**RESULT: `qa_green`**
+
+Готово. Вернись к оркестратору и скажи статус.

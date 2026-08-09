@@ -76,12 +76,32 @@ Plan files:
 ## On turn («приступай» / «статус» / «дальше»)
 
 1. Read `STATE.yaml` + `FEEDBACK.md` (+ test reports if relevant).
-2. Если команда — `статус`: закрыть старый Bolabol process, выполнить clean Release
-   build через `swift package clean && ./script/build_and_run.sh --verify`, проверить
-   PID/signature и оставить свежий bundle открытым для Human. Не запускать test suites.
-3. Sync STATE if worker finished but STATE still stale.
-4. If Coder just finished implementation or a fix, rebuild Graphify before Reviewer.
-5. Branch **and always end with a full kick prompt** when `next_actor` is a worker:
+2. Sync STATE if worker finished but STATE still stale.
+3. If Coder just finished implementation or a fix, rebuild Graphify before Reviewer.
+4. Branch **and always end with a full kick prompt** when `next_actor` is a worker.
+5. **Release build policy (anti day-of-groundhog)** — do **NOT** clean-rebuild on
+   every `статус`:
+
+   | When | Orchestrator build? |
+   |------|---------------------|
+   | `статус` after Reviewer / Tester / Architect / docs-only | **No.** They must not edit `Sources/**`. Route only. |
+   | `статус` while waiting same worker, no new product diff | **No.** Re-issue kick if needed. |
+   | After **Coder** handoff (Sources changed) and Human wants smoke, or Coder did not leave a verified app | **Yes** — one clean Release verify is enough. |
+   | Human explicitly: «собери» / «запусти» / «rebuild» / manual test | **Yes.** |
+   | POST / pre-release package check | **Yes** if needed for ship evidence. |
+
+   When a build **is** authorized:
+   ```bash
+   # close old Bolabol only if replacing the running bundle
+   pkill -x Bolabol 2>/dev/null || true
+   swift package clean && ./script/build_and_run.sh --verify
+   codesign --verify --deep --strict dist/Bolabol.app
+   ```
+   Never run test suites as Orchestrator. Prefer the Coder-reported verified PID
+   when the tree has not changed since that handoff.
+
+6. Graphify: rebuild after Coder product diff and after POST — **not** after every
+   Reviewer/Tester docs-only handoff.
 
 ### A) `review.status == approved` and implementation done
 

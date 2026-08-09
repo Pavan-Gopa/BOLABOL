@@ -36,10 +36,10 @@ done
 # Logos / branding
 for f in \
   Sources/NativeBolabol/Views/Components/BolabolLogoView.swift \
-  Sources/NativeBolabol/Views/Components/BolabolWordmarkView.swift \
-  Sources/NativeBolabol/Views/Components/BolabolFullLogoView.swift; do
+  Sources/NativeBolabol/Views/Components/BolabolWordmarkView.swift; do
   require "$f"
 done
+require Sources/NativeBolabol/Resources/Logos/BOLABOL_LOGO_Full.svg
 
 if [ "$fail" -ne 0 ]; then
   exit 1

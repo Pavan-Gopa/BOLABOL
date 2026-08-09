@@ -77,18 +77,6 @@ func distributedLogoLookupDoesNotUseSwiftPMModuleBundle() throws {
 }
 
 @Test
-func fullLogoLookupDoesNotUseSwiftPMModuleBundle() throws {
-    let source = try String(
-        contentsOfFile: "Sources/NativeBolabol/Views/Components/BolabolFullLogoView.swift",
-        encoding: .utf8
-    )
-
-    #expect(source.contains("forResource: \"BOLABOL_LOGO_Full\""))
-    #expect(source.contains("subdirectory: \"Logos\""))
-    #expect(!source.contains("Bundle.module"))
-}
-
-@Test
 func wordmarkLogoLookupDoesNotUseSwiftPMModuleBundle() throws {
     let source = try String(
         contentsOfFile: "Sources/NativeBolabol/Views/Components/BolabolWordmarkView.swift",

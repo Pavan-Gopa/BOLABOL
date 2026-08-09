@@ -1,5 +1,3 @@
-import Foundation
-
 /// A lightweight, UI-agnostic description of a selectable polishing model.
 ///
 /// Shared between the note detail view, the HUD provider/model quick switcher

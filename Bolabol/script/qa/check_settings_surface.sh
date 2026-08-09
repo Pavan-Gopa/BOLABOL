@@ -14,7 +14,6 @@ required_views=(
   LocalModelsSettingsView.swift
   PolishingSettingsView.swift
   PromptsSettingsView.swift
-  StatisticsSettingsView.swift
   HelpSettingsView.swift
 )
 
@@ -27,7 +26,7 @@ for f in "${required_views[@]}"; do
 done
 
 # SettingsView must reference major tabs
-for needle in General Hotkey Glossary Polishing Help API Statistics Prompt; do
+for needle in General Hotkey Glossary Polishing Help API Prompt; do
   if ! grep -q "$needle" "$SETTINGS_DIR/SettingsView.swift"; then
     echo "SettingsView.swift may not reference tab: $needle"
     missing=1

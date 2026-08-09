@@ -5,6 +5,8 @@ public enum SharedModelRuntime: String, CaseIterable, Codable, Equatable, Sendab
     case gguf
     case ggml
     case whisperkit
+    case parakeet
+    case canary
 }
 
 public struct SharedModelLocation: Codable, Equatable, Sendable {
@@ -96,6 +98,29 @@ public enum SharedModelsRoot {
         )
         .appendingPathComponent(location.runtime.rawValue, isDirectory: true)
         .appendingPathComponent(location.name)
+    }
+
+    /// Resolves a descriptor's canonical destination without creating it.
+    /// The relative path is part of the descriptor so each installer can later
+    /// use the same destination as settings, presence and provider lookup.
+    public static func modelURL(
+        for descriptor: LocalASRModelDescriptor,
+        configuredRoot: URL? = nil,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
+        defaultRoot: URL? = nil,
+        legacyRoot: URL? = nil,
+        fileManager: FileManager = .default
+    ) -> URL {
+        resolve(
+            configuredRoot: configuredRoot,
+            environment: environment,
+            homeDirectory: homeDirectory,
+            defaultRoot: defaultRoot,
+            legacyRoot: legacyRoot,
+            fileManager: fileManager
+        )
+        .appendingPathComponent(descriptor.relativeStorageSubpath, isDirectory: true)
     }
 
     public static func location(

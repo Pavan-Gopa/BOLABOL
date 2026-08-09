@@ -8,6 +8,14 @@ cd "$AS_DIR"
 FILE="AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 [[ -f "$FILE" ]] || { echo "FAIL: $FILE missing"; exit 1; }
 
+STATE_FILE="AI_Workflow_Kit/docs/AI/STATE.yaml"
+current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_-]+).*/\1/p' "$STATE_FILE" | head -1)"
+if [[ -n "$current_step" && "$current_step" != "A4" ]]; then
+  echo "NOTE: current_step='$current_step' (not A4); A4 FEEDBACK gate is N/A."
+  echo "RESULT: PASS (a4_feedback_approved, step-aware N/A)"
+  exit 0
+fi
+
 python3 - <<'PY'
 from pathlib import Path
 import re

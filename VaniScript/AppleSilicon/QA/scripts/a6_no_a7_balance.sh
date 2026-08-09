@@ -15,8 +15,8 @@ if [[ -f "$STATE_FILE" ]]; then
 fi
 
 
-# Post-API_USAGE tracks (CPS) count as A7+
-if [[ "$current_step" == CPS* || "$current_step" == CLOUD_PROVIDER* || "$current_step" == API_USAGE_DONE || "$current_step" == APIUSAGE_DONE ]]; then
+# Post-API_USAGE and subsequent tracks count as A7+.
+if [[ "$current_step" == CPS* || "$current_step" == CLOUD_PROVIDER* || "$current_step" == LASR-* || "$current_step" == API_USAGE_DONE || "$current_step" == APIUSAGE_DONE ]]; then
   _post_api_usage=1
 else
   _post_api_usage=0

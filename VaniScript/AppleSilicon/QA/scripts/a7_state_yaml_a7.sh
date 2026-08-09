@@ -7,7 +7,7 @@ FILE="AI_Workflow_Kit/docs/AI/STATE.yaml"
 [[ -f "$FILE" ]] || { echo "FAIL: $FILE missing"; exit 1; }
 
 current_step="$(sed -nE 's/^current_step:[[:space:]]*([A-Za-z0-9_-]+).*/\1/p' "$FILE" | head -1)"
-if [[ "$current_step" == CPS* ]] || [[ "$current_step" == CLOUD_PROVIDER* ]]; then
+if [[ "$current_step" == CPS* ]] || [[ "$current_step" == CLOUD_PROVIDER* ]] || [[ "$current_step" == LASR-* ]]; then
   echo "NOTE: current_step='$current_step' (post API_USAGE); A7 STATE gate is N/A."
   exit 0
 fi

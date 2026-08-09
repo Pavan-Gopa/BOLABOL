@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "description": "VaniScript QA suite manifest. Order: build gates, MCP smoke, Q7, A1–A7 API_USAGE, CPS cloud-provider-stabilization delta.",
+  "version": 5,
+  "description": "VaniScript QA suite manifest. Order: build gates, MCP smoke, Q7, A1–A7 API_USAGE, CPS cloud-provider-stabilization, LASR-01 local-ASR contracts.",
   "scripts": [
     {
       "path": "build_gate_as.sh",
@@ -1051,6 +1051,62 @@
       "area": "Cloud provider stabilization / post-API_USAGE",
       "enabled": true,
       "note": "CPS / post-A7 product contract coverage"
+    },
+    {
+      "path": "lasr01_catalog_contracts.sh",
+      "kind": "lasr01-delta",
+      "area": "LASR-01 catalog and install-source contracts",
+      "enabled": true,
+      "note": "Required catalog types and exactly three ordered, unique LASR-01 ASR IDs."
+    },
+    {
+      "path": "lasr01_fluid_audio_pin.sh",
+      "kind": "lasr01-delta",
+      "area": "LASR-01 FluidAudio dependency pin",
+      "enabled": true,
+      "note": "FluidAudio exact 0.15.5 in Package.swift and Package.resolved; no floating requirement."
+    },
+    {
+      "path": "lasr01_capabilities.sh",
+      "kind": "lasr01-delta",
+      "area": "LASR-01 capability and source matrix",
+      "enabled": true,
+      "note": "Parakeet/Canary backend, language, auto, OS, immutable source and required-layout contracts."
+    },
+    {
+      "path": "lasr01_runtime_paths.sh",
+      "kind": "lasr01-delta",
+      "area": "LASR-01 runtimes and canonical storage",
+      "enabled": true,
+      "note": "Migration-safe local runtimes plus SharedModelsRoot Parakeet/Canary paths."
+    },
+    {
+      "path": "lasr01_remote_placeholder.sh",
+      "kind": "lasr01-delta",
+      "area": "LASR-01 Canary 1B placeholder",
+      "enabled": true,
+      "note": "Generic unbound remotePackage with no concrete URL, digest, Drive or Bolabol CDN leakage."
+    },
+    {
+      "path": "lasr01_settings_migration.sh",
+      "kind": "lasr01-delta",
+      "area": "LASR-01 settings migration",
+      "enabled": true,
+      "note": "Legacy decode merges defaults while preserving WhisperKit/MLX state and provider selection."
+    },
+    {
+      "path": "lasr01_no_future_wiring.sh",
+      "kind": "lasr01-delta",
+      "area": "LASR-01 future-step leakage",
+      "enabled": true,
+      "note": "No LASR-02+ downloader, engine, pipeline or Models UI wiring."
+    },
+    {
+      "path": "lasr01_review_state.sh",
+      "kind": "lasr01-delta",
+      "area": "LASR-01 review and workflow state",
+      "enabled": true,
+      "note": "Reviewer APPROVED; exact target files; current step/post-tag unchanged; coherent QA transition."
     }
   ]
 }

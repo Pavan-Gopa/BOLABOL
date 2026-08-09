@@ -36,9 +36,78 @@ struct UniversalSettingsTests {
         #expect(settings.localAsrModels["whisper-medium-en"]?.runtime == .whisper)
         #expect(settings.localAsrModels["whisper-medium-multilingual"]?.runtime == .whisper)
         #expect(settings.localAsrModels["whisper-large-v3"]?.runtime == .whisper)
+        #expect(settings.localAsrModels["parakeet-tdt-06b-v3"]?.runtime == .parakeet)
+        #expect(settings.localAsrModels["canary-180m-flash-coreml"]?.runtime == .canary)
+        #expect(settings.localAsrModels["canary-1b-v2-coreml"]?.runtime == .canary)
         #expect(settings.localTranslationModels["qwen35-4b-4bit"]?.runtime == .mlx)
         #expect(settings.localTranslationModels["qwen35-9b-4bit"]?.status == .notDownloaded)
         #expect(settings.localTranslationModels["nemotron3-nano-4b-4bit"]?.status == .notDownloaded)
+    }
+
+    @Test("legacy settings gain new ASR defaults without resetting selection")
+    func legacySettingsMergeNewASRDefaults() throws {
+        var legacySettings = AppSettings.defaults
+        legacySettings.transcriptionProvider = "whisper-large-v3"
+        legacySettings.localAsrModels["whisper-large-v3"] = LocalModelState(
+            status: .downloaded,
+            label: "Whisper Large v3",
+            path: "/legacy/whisper-large-v3",
+            runtime: .whisper
+        )
+        legacySettings.localTranslationModels["qwen35-4b-4bit"] = LocalModelState(
+            status: .downloaded,
+            label: "Qwen 3.5 4B 4bit",
+            path: "/legacy/qwen35-4b-4bit",
+            runtime: .mlx
+        )
+
+        var object = try #require(
+            JSONSerialization.jsonObject(
+                with: JSONEncoder().encode(legacySettings)
+            ) as? [String: Any]
+        )
+        var localASR = try #require(object["localAsrModels"] as? [String: Any])
+        localASR.removeValue(forKey: "parakeet-tdt-06b-v3")
+        localASR.removeValue(forKey: "canary-180m-flash-coreml")
+        localASR.removeValue(forKey: "canary-1b-v2-coreml")
+        object["localAsrModels"] = localASR
+
+        let legacyData = try JSONSerialization.data(withJSONObject: object)
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: legacyData)
+
+        #expect(decoded.transcriptionProvider == "whisper-large-v3")
+        #expect(decoded.localAsrModels["whisper-large-v3"]?.status == .downloaded)
+        #expect(decoded.localAsrModels["whisper-large-v3"]?.path == "/legacy/whisper-large-v3")
+        #expect(decoded.localTranslationModels["qwen35-4b-4bit"]?.status == .downloaded)
+        #expect(decoded.localAsrModels["parakeet-tdt-06b-v3"]?.status == .notDownloaded)
+        #expect(decoded.localAsrModels["canary-180m-flash-coreml"]?.runtime == .canary)
+        #expect(decoded.localAsrModels["canary-1b-v2-coreml"]?.runtime == .canary)
+    }
+
+    @Test("disk synchronization does not treat new ASR runtimes as WhisperKit")
+    func preservesNewASRRuntimeStateDuringSynchronization() {
+        var settings = AppSettings.defaults
+        settings.transcriptionProvider = "canary-1b-v2-coreml"
+        settings.localAsrModels["parakeet-tdt-06b-v3"] = LocalModelState(
+            status: .downloaded,
+            label: "Parakeet TDT 0.6B v3",
+            path: "/installed/parakeet-tdt-0.6b-v3",
+            runtime: .parakeet
+        )
+        settings.localAsrModels["canary-1b-v2-coreml"] = LocalModelState(
+            status: .downloaded,
+            label: "Canary 1B v2",
+            path: "/installed/canary-1b-v2",
+            runtime: .canary
+        )
+
+        settings.synchronizeLocalModelsWithDisk()
+
+        #expect(settings.transcriptionProvider == "canary-1b-v2-coreml")
+        #expect(settings.localAsrModels["parakeet-tdt-06b-v3"]?.status == .downloaded)
+        #expect(settings.localAsrModels["parakeet-tdt-06b-v3"]?.path == "/installed/parakeet-tdt-0.6b-v3")
+        #expect(settings.localAsrModels["canary-1b-v2-coreml"]?.status == .downloaded)
+        #expect(settings.localAsrModels["canary-1b-v2-coreml"]?.path == "/installed/canary-1b-v2")
     }
 
     @Test("active local model badge requires downloaded state")

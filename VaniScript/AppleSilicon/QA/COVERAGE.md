@@ -457,3 +457,45 @@ Area → script → asserts. Column **new this run** marks scripts added in the 
 - `a7_swift_test_green.sh` / `build_gate_as.sh` may hit sandbox "Operation not permitted" → **ENV-ONLY** (warn, exit 0), not product FAIL.
 
 ---
+
+## LASR-01 — Catalog + install-source contracts
+
+| Area | Script | Asserts | New this run |
+|---|---|---|---|
+| Catalog contracts + exact IDs | `lasr01_catalog_contracts.sh` | Required descriptor/backend/install-source types; exactly the three ordered, unique LASR-01 IDs; existing WhisperKit descriptors remain merged | **yes** |
+| FluidAudio dependency lock | `lasr01_fluid_audio_pin.sh` | One exact `0.15.5` requirement; no floating requirement; lockfile version + revision; app-target linkage | **yes** |
+| Capability/source matrix | `lasr01_capabilities.sh` | Parakeet v3/int8 + auto + 25 languages; Canary no-auto; Flash `en/de/fr/es` + immutable HF revision; 1B `ru/uk` + macOS 15; required layouts | **yes** |
+| Runtime + storage paths | `lasr01_runtime_paths.sh` | Existing runtime raw values retained; `.parakeet`/`.canary`; exact descriptor subpaths below `SharedModelsRoot` | **yes** |
+| Canary 1B placeholder | `lasr01_remote_placeholder.sh` | Generic `remotePackage`; environment-key indirection; no concrete URL, archive path, SHA-256, sizes, manifest, Bolabol/Drive/CDN source | **yes** |
+| Settings migration | `lasr01_settings_migration.sh` | Default merge uses `decodeIfPresent`; regression test preserves WhisperKit selection/path/status and MLX path/status | **yes** |
+| No future-step leakage | `lasr01_no_future_wiring.sh` | New IDs remain Core catalog/settings-only; no LASR-02+ installer/engine/router files; no download manager, pipeline or Models UI wiring | **yes** |
+| Review + workflow state | `lasr01_review_state.sh` | LASR-01 reviewer `[APPROVED]`; exact target files; current step/review; coherent pending/green/red QA ownership; unchanged post-tag | **yes** |
+
+## Gap Hunt Checklist (LASR-01)
+
+**Happy-path contracts:**
+- [x] Exactly three new, unique ASR IDs and no fourth model → `lasr01_catalog_contracts`
+- [x] Descriptor, backend, capabilities, required-layout and four install-source kinds exist → `lasr01_catalog_contracts`, `lasr01_capabilities`
+- [x] FluidAudio exact `0.15.5` is locked in both SwiftPM files → `lasr01_fluid_audio_pin`
+- [x] Parakeet auto/v3/int8/25-language contract; Canary no-auto; Flash four languages; 1B `ru/uk` and macOS 15+ → `lasr01_capabilities`
+- [x] `LocalModelRuntime.canary`, shared Parakeet/Canary runtimes and canonical paths → `lasr01_runtime_paths`
+- [x] Existing WhisperKit/MLX state and selected transcription provider survive legacy decode → `lasr01_settings_migration` + full Swift tests
+- [x] Reviewer result and LASR-01 STATE/target-file contract → `lasr01_review_state`
+
+**Negative contracts:**
+- [x] Canary 1B contains no fake/concrete URL, Google Drive URL, digest, archive metadata or Bolabol CDN naming → `lasr01_remote_placeholder`
+- [x] No new backend IDs/contracts in downloader, engine, pipeline, `WorkflowStore`, `SettingsView` or `ConfigWorkspaceView` → `lasr01_no_future_wiring`
+- [x] No LASR-02+ installer, preprocessor, engine or router source files → `lasr01_no_future_wiring`
+- [x] `current_step` and `checkpoint.last_post_tag` cannot advance during QA → `lasr01_review_state`
+
+**Regression and execution:**
+- [x] All eight LASR-01 scripts are enabled in `manifest.json`; `run_all.sh` already discovers enabled manifest entries without runner changes.
+- [x] Historical build/test, MCP, Q7, API_USAGE and CPS checks remain enabled for the full run.
+- [x] Final full run: **158 PASS / 0 FAIL**; Swift **338 tests / 47 suites / 0 failures**; Electron compile GREEN.
+- [x] Historical A3–A7 FEEDBACK/STATE/UI and CPS STATE gates are step-aware for the subsequent `LASR-*` track; no historical product assertion was disabled.
+
+**N/A (with reason):**
+- Interactive Models UI/download/transcription smoke — **N/A for LASR-01**: UI, downloader, engines and pipeline are explicitly future steps and their absence is a tested negative contract.
+- Concrete Canary 1B package/Drive/hash validation — **N/A until LASR-02 Human gate**: LASR-01 requires the metadata to remain unbound.
+
+---

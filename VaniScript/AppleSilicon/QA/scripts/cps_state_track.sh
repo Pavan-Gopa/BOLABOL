@@ -5,6 +5,12 @@ AS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$AS_DIR"
 FILE="AI_Workflow_Kit/docs/AI/STATE.yaml"
 [[ -f "$FILE" ]] || { echo "FAIL: $FILE missing"; exit 1; }
+track="$(sed -nE 's/^track:[[:space:]]*([A-Za-z0-9_-]+).*/\1/p' "$FILE" | head -1)"
+if [[ -n "$track" && "$track" != "CLOUD_PROVIDER_STABILIZATION" ]]; then
+  echo "NOTE: track='$track' (not CLOUD_PROVIDER_STABILIZATION); CPS STATE gate is N/A."
+  echo "RESULT: PASS (cps_state_track, step-aware N/A)"
+  exit 0
+fi
 grep -Eq '^track:[[:space:]]*CLOUD_PROVIDER_STABILIZATION' "$FILE" || {
   echo "FAIL: track is not CLOUD_PROVIDER_STABILIZATION"; exit 1
 }

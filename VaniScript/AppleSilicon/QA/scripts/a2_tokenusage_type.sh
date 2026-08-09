@@ -20,4 +20,4 @@ grep -Fq "public static func + (lhs: TokenUsage, rhs: TokenUsage) -> TokenUsage"
 grep -Fq "public init(inputTokens: Int, outputTokens: Int)" "$FILE" \
   || { echo "FAIL: TokenUsage public memberwise init missing"; exit 1; }
 
-echo "PASS: TokenUsage is a public, Sendable value type with isEmpty and `+`."
+echo 'PASS: TokenUsage is a public, Sendable value type with isEmpty and `+`.'

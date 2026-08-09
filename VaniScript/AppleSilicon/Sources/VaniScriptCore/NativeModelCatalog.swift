@@ -1,5 +1,182 @@
 import Foundation
 
+// LASR-01 owns model metadata only. Download, presence, engine and UI layers
+// must consume these contracts later without moving metadata into settings.
+/// Native ASR backend identity used by the catalog and future router.
+public enum LocalASRBackend: String, Codable, Equatable, Sendable {
+    case whisperKitCoreML
+    case fluidAudioCoreML
+    case canaryCoreML
+}
+
+/// Persist-free capability data used for language and OS preflight.
+public struct LocalASRCapabilities: Codable, Equatable, Sendable {
+    public var supportsAutoLanguageDetect: Bool
+    public var supportedLanguageCodes: [String]
+    public var maxEngineWindowSeconds: Double
+    public var minimumMacOSMajor: Int?
+    public var approximateDownloadBytes: Int64
+
+    public init(
+        supportsAutoLanguageDetect: Bool,
+        supportedLanguageCodes: [String],
+        maxEngineWindowSeconds: Double,
+        minimumMacOSMajor: Int? = nil,
+        approximateDownloadBytes: Int64
+    ) {
+        self.supportsAutoLanguageDetect = supportsAutoLanguageDetect
+        self.supportedLanguageCodes = supportedLanguageCodes
+        self.maxEngineWindowSeconds = maxEngineWindowSeconds
+        self.minimumMacOSMajor = minimumMacOSMajor
+        self.approximateDownloadBytes = approximateDownloadBytes
+    }
+
+    public func supportsSourceLanguage(_ languageCode: String) -> Bool {
+        let normalized = languageCode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalized.isEmpty else { return false }
+        if normalized == "auto" {
+            return supportsAutoLanguageDetect
+        }
+        return supportedLanguageCodes.contains(normalized)
+    }
+
+    public func isAvailable(onMacOSMajor major: Int) -> Bool {
+        guard let minimumMacOSMajor else { return true }
+        return major >= minimumMacOSMajor
+    }
+}
+
+/// Required model files or an SDK-owned completeness check for an install.
+public struct LocalASRRequiredLayout: Codable, Equatable, Sendable {
+    public var requiredRelativePaths: [String]
+    public var isSDKManaged: Bool
+
+    public init(
+        requiredRelativePaths: [String] = [],
+        isSDKManaged: Bool = false
+    ) {
+        self.requiredRelativePaths = requiredRelativePaths
+        self.isSDKManaged = isSDKManaged
+    }
+
+    public var requiredFiles: [String] {
+        requiredRelativePaths
+    }
+}
+
+/// Optional integrity metadata for one file in a remote model package.
+public struct RemoteModelPackageFile: Codable, Equatable, Sendable {
+    public var relativePath: String
+    public var expectedByteCount: Int64?
+    public var expectedSHA256: String?
+
+    public init(
+        relativePath: String,
+        expectedByteCount: Int64? = nil,
+        expectedSHA256: String? = nil
+    ) {
+        self.relativePath = relativePath
+        self.expectedByteCount = expectedByteCount
+        self.expectedSHA256 = expectedSHA256
+    }
+}
+
+/// Release metadata resolved by a later installer; LASR-01 may leave it unbound.
+public struct RemoteModelPackageRelease: Codable, Equatable, Sendable {
+    public var packageID: String
+    public var layoutVersion: String
+    public var directURLOverrideEnvironmentKey: String?
+    public var baseURLEnvironmentKey: String?
+    public var relativeArchivePath: String?
+    public var expectedArchiveSHA256: String?
+    public var expectedCompressedSizeBytes: Int64?
+    public var expectedUncompressedSizeBytes: Int64?
+    public var allowlistedFiles: [RemoteModelPackageFile]
+
+    public init(
+        packageID: String,
+        layoutVersion: String,
+        directURLOverrideEnvironmentKey: String? = nil,
+        baseURLEnvironmentKey: String? = nil,
+        relativeArchivePath: String? = nil,
+        expectedArchiveSHA256: String? = nil,
+        expectedCompressedSizeBytes: Int64? = nil,
+        expectedUncompressedSizeBytes: Int64? = nil,
+        allowlistedFiles: [RemoteModelPackageFile] = []
+    ) {
+        self.packageID = packageID
+        self.layoutVersion = layoutVersion
+        self.directURLOverrideEnvironmentKey = directURLOverrideEnvironmentKey
+        self.baseURLEnvironmentKey = baseURLEnvironmentKey
+        self.relativeArchivePath = relativeArchivePath
+        self.expectedArchiveSHA256 = expectedArchiveSHA256
+        self.expectedCompressedSizeBytes = expectedCompressedSizeBytes
+        self.expectedUncompressedSizeBytes = expectedUncompressedSizeBytes
+        self.allowlistedFiles = allowlistedFiles
+    }
+
+    // LASR-01 deliberately carries no concrete URL, digest or package manifest.
+    public static let canaryOneBPlaceholder = RemoteModelPackageRelease(
+        packageID: "canary-1b-v2-coreml",
+        layoutVersion: "path-b-v1",
+        directURLOverrideEnvironmentKey: "VANISCRIPT_CANARY_1B_PACKAGE_URL",
+        baseURLEnvironmentKey: "VANISCRIPT_MODEL_PACKAGE_BASE_URL"
+    )
+}
+
+/// Download origin contract kept separate from backend and persisted state.
+public enum LocalASRInstallSource: Codable, Equatable, Sendable {
+    case whisperKit(repositoryID: String, subfolder: String)
+    case fluidAudio(version: String, encoderPrecision: String)
+    case huggingFace(repositoryID: String, revision: String)
+    case remotePackage(RemoteModelPackageRelease)
+
+    public enum Kind: String, Codable, Equatable, Sendable {
+        case whisperKit
+        case fluidAudio
+        case huggingFace
+        case remotePackage
+    }
+
+    public var kind: Kind {
+        switch self {
+        case .whisperKit: .whisperKit
+        case .fluidAudio: .fluidAudio
+        case .huggingFace: .huggingFace
+        case .remotePackage: .remotePackage
+        }
+    }
+}
+
+/// Single non-persisted source of local ASR metadata.
+public struct LocalASRModelDescriptor: Identifiable, Codable, Equatable, Sendable {
+    public var id: String
+    public var displayName: String
+    public var backend: LocalASRBackend
+    public var installSource: LocalASRInstallSource
+    public var relativeStorageSubpath: String
+    public var capabilities: LocalASRCapabilities
+    public var requiredLayout: LocalASRRequiredLayout
+
+    public init(
+        id: String,
+        displayName: String,
+        backend: LocalASRBackend,
+        installSource: LocalASRInstallSource,
+        relativeStorageSubpath: String,
+        capabilities: LocalASRCapabilities,
+        requiredLayout: LocalASRRequiredLayout
+    ) {
+        self.id = id
+        self.displayName = displayName
+        self.backend = backend
+        self.installSource = installSource
+        self.relativeStorageSubpath = relativeStorageSubpath
+        self.capabilities = capabilities
+        self.requiredLayout = requiredLayout
+    }
+}
+
 public struct LocalModelVerification {
     public static nonisolated(unsafe) var skipVerificationForTesting: Bool = false
 
@@ -161,6 +338,167 @@ public struct ActiveMLXModel: Codable, Equatable, Sendable {
 }
 
 public enum NativeModelCatalog {
+    public static let parakeetLanguageCodes = [
+        "bg", "hr", "cs", "da", "nl", "en", "et", "fi", "fr", "de",
+        "el", "hu", "it", "lv", "lt", "mt", "pl", "pt", "ro", "sk",
+        "sl", "es", "sv", "ru", "uk"
+    ]
+
+    public static let canaryFlashLanguageCodes = ["en", "de", "fr", "es"]
+
+    private static let canaryFlashRevision = "ca44e0f5d816a2362cf01f7316e4932c86aafef6"
+
+    // These are the only new ASR descriptors in LASR-01. Whisper descriptors
+    // below retain the existing six model IDs as regression-visible metadata.
+    public static let newLocalASRModelDescriptors: [LocalASRModelDescriptor] = [
+        LocalASRModelDescriptor(
+            id: "parakeet-tdt-06b-v3",
+            displayName: "Parakeet TDT 0.6B v3",
+            backend: .fluidAudioCoreML,
+            installSource: .fluidAudio(version: "v3", encoderPrecision: "int8"),
+            relativeStorageSubpath: "parakeet/parakeet-tdt-0.6b-v3",
+            capabilities: LocalASRCapabilities(
+                supportsAutoLanguageDetect: true,
+                supportedLanguageCodes: parakeetLanguageCodes,
+                maxEngineWindowSeconds: 30,
+                approximateDownloadBytes: 482_000_000
+            ),
+            requiredLayout: LocalASRRequiredLayout(isSDKManaged: true)
+        ),
+        LocalASRModelDescriptor(
+            id: "canary-180m-flash-coreml",
+            displayName: "Canary Flash 180M",
+            backend: .canaryCoreML,
+            installSource: .huggingFace(
+                repositoryID: "aufklarer/Canary-180M-Flash-CoreML",
+                revision: canaryFlashRevision
+            ),
+            relativeStorageSubpath: "canary/180m-flash",
+            capabilities: LocalASRCapabilities(
+                supportsAutoLanguageDetect: false,
+                supportedLanguageCodes: canaryFlashLanguageCodes,
+                maxEngineWindowSeconds: 10,
+                approximateDownloadBytes: 180_000_000
+            ),
+            requiredLayout: LocalASRRequiredLayout(requiredRelativePaths: [
+                "CanaryEncoder.mlmodelc",
+                "CanaryPrefill.mlmodelc",
+                "CanaryDecoder.mlmodelc",
+                "config.json",
+                "vocab.json"
+            ])
+        ),
+        LocalASRModelDescriptor(
+            id: "canary-1b-v2-coreml",
+            displayName: "Canary 1B v2",
+            backend: .canaryCoreML,
+            installSource: .remotePackage(.canaryOneBPlaceholder),
+            relativeStorageSubpath: "canary/1b-v2",
+            capabilities: LocalASRCapabilities(
+                supportsAutoLanguageDetect: false,
+                supportedLanguageCodes: parakeetLanguageCodes,
+                maxEngineWindowSeconds: 15,
+                minimumMacOSMajor: 15,
+                approximateDownloadBytes: 1_884_267_035
+            ),
+            requiredLayout: LocalASRRequiredLayout(requiredRelativePaths: [
+                "canary_encoder.mlmodelc",
+                "canary_cross_kv.mlmodelc",
+                "canary_decoder_kv.mlmodelc",
+                "canary_spe.model"
+            ])
+        )
+    ]
+
+    public static let whisperKitModelDescriptors: [LocalASRModelDescriptor] = [
+        whisperDescriptor(
+            id: "whisper-small-en",
+            displayName: "Whisper Small English",
+            subfolder: "openai_whisper-small.en/",
+            supportsAutoLanguageDetect: false,
+            supportedLanguageCodes: ["en"],
+            approximateDownloadBytes: 487_000_000
+        ),
+        whisperDescriptor(
+            id: "whisper-small-multilingual",
+            displayName: "Whisper Small Multilingual",
+            subfolder: "openai_whisper-small/",
+            supportsAutoLanguageDetect: true,
+            supportedLanguageCodes: parakeetLanguageCodes,
+            approximateDownloadBytes: 486_000_000
+        ),
+        whisperDescriptor(
+            id: "whisper-medium-en",
+            displayName: "Whisper Medium English",
+            subfolder: "openai_whisper-medium.en/",
+            supportsAutoLanguageDetect: false,
+            supportedLanguageCodes: ["en"],
+            approximateDownloadBytes: 1_530_000_000
+        ),
+        whisperDescriptor(
+            id: "whisper-medium-multilingual",
+            displayName: "Whisper Medium Multilingual",
+            subfolder: "openai_whisper-medium/",
+            supportsAutoLanguageDetect: true,
+            supportedLanguageCodes: parakeetLanguageCodes,
+            approximateDownloadBytes: 1_530_000_000
+        ),
+        whisperDescriptor(
+            id: "whisper-large-v3-turbo",
+            displayName: "Whisper Large v3 Turbo",
+            subfolder: "openai_whisper-large-v3-v20240930_turbo_632MB/",
+            supportsAutoLanguageDetect: true,
+            supportedLanguageCodes: parakeetLanguageCodes,
+            approximateDownloadBytes: 1_600_000_000
+        ),
+        whisperDescriptor(
+            id: "whisper-large-v3",
+            displayName: "Whisper Large v3",
+            subfolder: "openai_whisper-large-v3-v20240930_626MB/",
+            supportsAutoLanguageDetect: true,
+            supportedLanguageCodes: parakeetLanguageCodes,
+            approximateDownloadBytes: 3_000_000_000
+        )
+    ]
+
+    public static let localASRModelDescriptors = whisperKitModelDescriptors + newLocalASRModelDescriptors
+    public static let localASRModels = localASRModelDescriptors
+
+    public static func descriptor(for id: String) -> LocalASRModelDescriptor? {
+        localASRModelDescriptors.first { $0.id == id }
+    }
+
+    public static func localASRModel(for id: String) -> LocalASRModelDescriptor? {
+        descriptor(for: id)
+    }
+
+    private static func whisperDescriptor(
+        id: String,
+        displayName: String,
+        subfolder: String,
+        supportsAutoLanguageDetect: Bool,
+        supportedLanguageCodes: [String],
+        approximateDownloadBytes: Int64
+    ) -> LocalASRModelDescriptor {
+        LocalASRModelDescriptor(
+            id: id,
+            displayName: displayName,
+            backend: .whisperKitCoreML,
+            installSource: .whisperKit(
+                repositoryID: "argmaxinc/whisperkit-coreml",
+                subfolder: subfolder
+            ),
+            relativeStorageSubpath: "whisperkit/\(id)",
+            capabilities: LocalASRCapabilities(
+                supportsAutoLanguageDetect: supportsAutoLanguageDetect,
+                supportedLanguageCodes: supportedLanguageCodes,
+                maxEngineWindowSeconds: 30,
+                approximateDownloadBytes: approximateDownloadBytes
+            ),
+            requiredLayout: LocalASRRequiredLayout()
+        )
+    }
+
     public static func whisperKitVariant(for id: String) -> String? {
         switch id {
         case "whisper-medium-en":

@@ -1,25 +1,37 @@
-# LOCAL_ASR_COREML track — DESIGN (Architect)
-# Prior track CLOUD_PROVIDER_STABILIZATION parked mid-CPS-01 (CHANGES_REQUESTED on evidence).
-# Product scope (pending Architect): port Bolabol Core ML ASR models into VaniScript Apple Silicon.
-# Reference product: /Users/pavan/Documents/AI Projects/Bolabol
+# LOCAL_ASR_COREML track — ACTIVE
+# Product scope: AI_Workflow_Kit/docs/LOCAL_ASR_COREML_STEPS.md
+# Architecture: AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ARCHITECTURE.md
+# Acceptance: AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ACCEPTANCE.md
+# Reference product (read-only): /Users/pavan/Documents/AI Projects/Bolabol
+# Prior track CLOUD_PROVIDER_STABILIZATION parked mid-CPS-01.
 
-current_step: ASR-ARCH
+current_step: LASR-01
 step_description: >
-  Architect design gate: изучить реализацию Parakeet / Canary Flash / Canary 1B v2
-  в Bolabol (catalog, download/install sources, engines, language capabilities, UI Local Models)
-  и спроектировать трек переноса в VaniScript Apple Silicon. Product-код не писать.
-  Canary 1B — download с Google Drive (Human зальёт пакет); Parakeet и Canary Flash — Hugging Face.
-  GigaAM вне скоупа, пока Human явно не попросит.
+  Catalog + install-source contracts: LocalASRModelDescriptor, backends,
+  capabilities, required layout, install sources for Parakeet / Canary Flash /
+  Canary 1B; SharedModelsRoot paths; migration-safe AppSettings; pin FluidAudio
+  0.15.5. No download/engine/UI yet.
 
 target_files:
-  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ARCHITECTURE.md
-  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_STEPS.md
-  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ACCEPTANCE.md
-  - AI_Workflow_Kit/docs/DECISIONS.md
+  - Package.swift
+  - Package.resolved
+  - Sources/VaniScriptCore/NativeModelCatalog.swift
+  - Sources/VaniScriptCore/AppSettings.swift
+  - Sources/VaniScriptCore/SharedModelsRoot.swift
+  - Sources/VaniScript/Services/SettingsDiskStore.swift
+  - Tests/VaniScriptCoreTests/NativeModelCatalogTests.swift
+  - Tests/VaniScriptCoreTests/SharedModelsRootTests.swift
+  - Tests/VaniScriptCoreTests/UniversalSettingsTests.swift
+  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
 
 coder_brief: >
-  Не Coder. Шаг ASR-ARCH — Architect only. Сдать ADR + ARCHITECTURE + STEPS + ACCEPTANCE skeleton.
-  После сдачи: next_actor=orchestrator; Human: «Готово. Скажи оркестратору: статус».
+  LASR-01 only. Create descriptor-driven Core contracts for WhisperKit + three
+  in-scope models (parakeet-tdt-06b-v3, canary-180m-flash-coreml,
+  canary-1b-v2-coreml). Pin FluidAudio exact 0.15.5. Migration-safe decode.
+  Canary 1B install source = generic remotePackage placeholder (no Bolabol CDN,
+  no fake Drive URL). Unit tests for IDs/capabilities/paths/Codable. No download
+  bytes, no engines, no UI. Follow LOCAL_ASR_COREML_ARCHITECTURE.md §4–6 and
+  LOCAL_ASR_COREML_STEPS.md LASR-01. Verify: swift build && swift test.
 
 completed_steps:
   - G0
@@ -52,67 +64,60 @@ completed_steps:
   - A7
   - A8
   - API_USAGE_DONE
+  - ASR-ARCH
 
 implementation:
-  status: pending
+  status: approved
   attempts: 0
 
 review:
-  status: pending
+  status: approved
   last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
 
 qa:
-  status: waived
+  status: green
   last_report: "QA/REPORT.md"
-  suite: "ASR-ARCH is architect/doc-only; no product change."
+  suite: "LASR-01 full suite: 158/158 PASS; Swift 338 tests in 47 suites; Electron compile GREEN."
   bugs_open: 0
-  note: "Design gate. Coding QA starts after Architect plan is accepted and first coding step opens."
+  note: "QA GREEN. LASR-01 gaps closed; no product bugs. No post-tag advanced."
 
-next_actor: architect
+next_actor: orchestrator
 
 track: LOCAL_ASR_COREML
 prior_track: CLOUD_PROVIDER_STABILIZATION
 prior_track_status: PARKED_AT_CPS-01_CHANGES_REQUESTED
-track_status: DESIGN
+track_status: IN_PROGRESS
 
 working_roots:
   - AppleSilicon
 
 checkpoint:
-  last_pre_tag: "cloud-provider-stabilization/pre-CPS-01"
-  last_post_tag: "apiusage/A8-done"
-  last_commit: "496d0a1"
-  note: "ASR track pre-tag after Architect plan accepted and before first coding step."
+  last_pre_tag: "local-asr-coreml/pre-LASR-01"
+  last_post_tag: "local-asr-coreml/ASR-ARCH-done"
+  last_commit: "4b59628"
+  note: "Remote push DISABLED — local tags only. Human: git push && git push --tags when ready."
 
 plan_files:
-  - AI_Workflow_Kit/docs/AI/ARCHITECT.md
+  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_STEPS.md
+  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ARCHITECTURE.md
+  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ACCEPTANCE.md
   - AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
   - AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
-  - AI_Workflow_Kit/docs/QWEN_ARCHITECTURE.md
-  # Bolabol reference (read-only source of truth for port):
-  - /Users/pavan/Documents/AI Projects/Bolabol/Sources/NativeBolabolCore/Models/TranscriptionModelDescriptor.swift
-  - /Users/pavan/Documents/AI Projects/Bolabol/Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
-  - /Users/pavan/Documents/AI Projects/Bolabol/Sources/NativeBolabol/Services/ParakeetTranscriptionEngine.swift
-  - /Users/pavan/Documents/AI Projects/Bolabol/Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift
-  - /Users/pavan/Documents/AI Projects/Bolabol/BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
-  - /Users/pavan/Documents/AI Projects/Bolabol/docs/canary/COREML_SPIKE.md
+  - AI_Workflow_Kit/docs/AI/IMPLEMENTATION_ENGINEER.md
 
 human_notes:
   models_in_scope:
     - id: parakeet-tdt-06b-v3
       backend: FluidAudio Core ML/ANE
-      download: Hugging Face (FluidInference/parakeet-tdt-0.6b-v3-coreml)
+      download: Hugging Face / FluidAudio (LASR-02)
     - id: canary-180m-flash-coreml
       backend: Canary Core ML/ANE
       languages: EN DE FR ES
-      download: Hugging Face (aufklarer/Canary-180M-Flash-CoreML in Bolabol)
+      download: HF aufklarer/Canary-180M-Flash-CoreML (LASR-02)
     - id: canary-1b-v2-coreml
       backend: Canary Core ML/ANE
-      languages: ~25 EU + RU/UK
-      download: Google Drive (Human uploads custom working package; Bolabol used bolabolCDN package bolabol-canary-1b-v2-coreml-r1)
-  out_of_scope_unless_requested:
-    - GigaAM
-    - Electron
-    - CPS resume (parked)
+      download: Google Drive remote package — Human must supply URL/layout/hashes before LASR-02 close
+  blocked_later:
+    - LASR-02 Canary 1B concrete release metadata (Drive URL, package ID, SHA-256, layout)

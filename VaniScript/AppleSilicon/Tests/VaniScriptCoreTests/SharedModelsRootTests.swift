@@ -78,6 +78,44 @@ struct SharedModelsRootTests {
         #expect(whisperkit == root.appendingPathComponent("whisperkit", isDirectory: true))
     }
 
+    @Test("resolves canonical Parakeet and Canary model paths")
+    func resolvesCanonicalASRModelPaths() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let parakeet = try SharedModelsRoot.modelsDirectory(
+            for: .parakeet,
+            configuredRoot: root
+        )
+        let canary = try SharedModelsRoot.modelsDirectory(
+            for: .canary,
+            configuredRoot: root
+        )
+
+        #expect(parakeet == root.appendingPathComponent("parakeet", isDirectory: true))
+        #expect(canary == root.appendingPathComponent("canary", isDirectory: true))
+
+        let parakeetDescriptor = NativeModelCatalog.localASRModel(for: "parakeet-tdt-06b-v3")!
+        let flashDescriptor = NativeModelCatalog.localASRModel(for: "canary-180m-flash-coreml")!
+        let oneBDescriptor = NativeModelCatalog.localASRModel(for: "canary-1b-v2-coreml")!
+
+        #expect(SharedModelsRoot.modelURL(for: parakeetDescriptor, configuredRoot: root).path
+            == root.appendingPathComponent("parakeet/parakeet-tdt-0.6b-v3").path)
+        #expect(SharedModelsRoot.modelURL(for: flashDescriptor, configuredRoot: root).path
+            == root.appendingPathComponent("canary/180m-flash").path)
+        #expect(SharedModelsRoot.modelURL(for: oneBDescriptor, configuredRoot: root).path
+            == root.appendingPathComponent("canary/1b-v2").path)
+
+        let parakeetLocation = SharedModelLocation(
+            runtime: .parakeet,
+            name: "parakeet-tdt-0.6b-v3"
+        )
+        let canaryLocation = SharedModelLocation(runtime: .canary, name: "180m-flash")
+        #expect(SharedModelsRoot.modelURL(for: parakeetLocation, configuredRoot: root).path
+            == root.appendingPathComponent("parakeet/parakeet-tdt-0.6b-v3").path)
+        #expect(SharedModelsRoot.modelURL(for: canaryLocation, configuredRoot: root).path
+            == root.appendingPathComponent("canary/180m-flash").path)
+    }
+
     @Test("local model settings encode shared paths as relative locations")
     func localModelStateEncodesSharedPathAsRelativeLocation() throws {
         let sharedPath = FileManager.default.homeDirectoryForCurrentUser

@@ -1,11 +1,62 @@
 # Bolabol 1.0.4 ASR Core ML — live orchestration state
 # Orchestrator owns this file.
 
-current_step: IDLE
+current_step: CODE-HYGIENE-RELEASE
 step_description: >-
-  VERTICAL-PULSE-HUD cycle is complete. Awaiting Human direction for the next
-  product step (plan S10+ remainder, polish, SEC-005, or release prep).
-target_files: []
+  Non-destructive release hygiene Batch 1 per Architect packet + ADR-023.
+  Coder executes only approved HYG-002..009,011..015 in mandatory order.
+  HYG-016 is a separate later batch. HYG-001/010/017-023 not Coder scope now.
+target_files:
+  - Sources/NativeBolabol/Views/LanguagePickerPopoverController.swift
+  - Sources/NativeBolabol/Views/ContentView.swift
+  - Sources/NativeBolabol/Stores/TranscriptionModelStore.swift
+  - Sources/NativeBolabol/Services/AppleSpeechTranscriptionEngine.swift
+  - Sources/NativeBolabol/Services/GeminiCloudDictationEngine.swift
+  - Sources/NativeBolabol/Views/Settings/APIProvidersSettingsView.swift
+  - Sources/NativeBolabol/Views/Settings/StatisticsSettingsView.swift
+  - Sources/NativeBolabol/Views/Components/BolabolFullLogoView.swift
+  - Sources/NativeBolabol/Views/AudioPlaybackModalView.swift
+  - Sources/NativeBolabol/Stores/GeneralSettingsStore.swift
+  - Sources/NativeBolabol/Engines/CanaryCoreMLEngine.swift
+  - Sources/NativeBolabol/Engines/GigaAMCoreMLEngine.swift
+  - Sources/NativeBolabol/Resources/Info.plist
+  - Sources/NativeBolabolCore/Services/AppText.swift
+  - Sources/NativeBolabolCore/Services/TranscriptionLanguageRouting.swift
+  - Sources/NativeBolabolCore/Services/SharedModelsRoot.swift
+  - Sources/NativeBolabolCore/Services/HUDQuickSwitcherLayout.swift
+  - Sources/NativeBolabolCore/Support/NotificationNames.swift
+  - Sources/NativeBolabolCore/Support/NativeBolabolLog.swift
+  - Sources/NativeBolabolCore/Stores/NoteStore.swift
+  - Sources/NativeBolabolCore/Models/AccessibilityPermissionPromptState.swift
+  - Sources/NativeBolabolCore/Models/GlossaryEntry.swift
+  - Sources/NativeBolabolCore/Models/LocalModelDescriptor.swift
+  - Sources/NativeBolabolCore/Models/PolishingStatus.swift
+  - Sources/NativeBolabolCore/Models/ProcessingVariant.swift
+  - Sources/NativeBolabolCore/Models/TranscriptionBackend.swift
+  - Sources/NativeBolabolCore/Models/TranscriptionLanguageMode.swift
+  - Sources/NativeBolabolCore/Models/TranscriptionStatus.swift
+  - Sources/NativeBolabolCore/Models/UsageStatisticsSettings.swift
+  - Sources/NativeBolabolCore/Services/HUDProviderListComposer.swift
+  - Sources/NativeBolabolCore/Services/LocalMLXModelCompatibility.swift
+  - Sources/NativeBolabolCore/Services/PolishingEngineRegistry.swift
+  - Sources/NativeBolabolCore/Services/PolishingModelOptionsProvider.swift
+  - Sources/NativeBolabolCore/Services/PolishingModelPromptControl.swift
+  - Tests/NativeBolabolCoreTests/FinalMaxCoverageMatrixTests.swift
+  - Tests/NativeBolabolCoreTests/ReleaseIdentityTests.swift
+  - Tests/NativeBolabolCoreTests/DomainModelsExhaustiveTests.swift
+  - Tests/NativeBolabolCoreTests/HUDLanguagePickerPopoverTests.swift
+  - script/qa/check_settings_surface.sh
+  - script/qa/check_workspace_ui_surface.sh
+  - script/build_and_run.sh
+  - script/build_release_dmg.sh
+  - restructure.sh
+  - RESTRUCTURE_README.md
+  - README.md
+  - docs/RELEASE.md
+  - docs/RELEASE_NOTES.md
+  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  - AI_Workflow_Kit/docs/AI/ARCHITECT_HANDOFF.md
+  - AI_Workflow_Kit/docs/DECISIONS.md
 completed_steps:
   - S0
   - S1
@@ -24,65 +75,55 @@ completed_steps:
   - VERTICAL-PULSE-HUD
 skipped_steps: []
 implementation:
-  status: done
-  attempts: 9
+  status: pending
+  attempts: 1
 review:
-  status: approved
-  last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: approved_attempt_7_vph_and_attempt_8_sec
+  status: not_started
 qa:
-  status: green
-  last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: SEC-FIX-ATTEMPT-8-RETEST-PLUS-FULL-GATE
+  status: not_started
   bugs_open: 0
-  note: >-
-    Final retest qa_green: 745 tests, 39/39 QA, SEC-001..004 confirmed closed,
-    VPH contract green. MAX campaign earlier also qa_green.
 security:
   status: medium_low_closed_sec005_deferred
-  last_report: AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md
   open:
-    - SEC-005  # info deferred — does not block
+    - SEC-005
   closed:
     - SEC-001
     - SEC-002
     - SEC-003
     - SEC-004
-  next_run: optional_human_request_or_pre_release
-next_actor: human
+next_actor: coder
 track: PRODUCT
-prior_track: SPIKE_COMPLETE
+prior_track: VERTICAL-PULSE_HUD_COMPLETE
 go_list:
   - id: canary-180m-flash-coreml
     adr: ADR-014
-    source: aufklarer/Canary-180M-Flash-CoreML
   - id: gigaam-v3-rnnt-coreml
     adr: ADR-015
-    source: huggingfinger0/gigaam-v3-coreml
   - id: canary-1b-v2-coreml
     adr: ADR-017
-    source: bolabol-canary-1b-v2-coreml-r1 Path B (Bolabol CDN package)
 excluded:
   - FluidInference/canary-1b-v2-coreml
   - alexwengg/canary-1b-v2-coreml
 working_roots:
   - Bolabol
 checkpoint:
-  last_pre_tag: bolabol/pre-VERTICAL-PULSE-HUD
+  last_pre_tag: bolabol/pre-CODE-HYGIENE-RELEASE
   last_post_tag: bolabol/VERTICAL-PULSE-HUD-done
-  last_commit: b43da84
-  post_tag_commit: 95fdca7
+  last_commit: 1a8bf3d
 plan_files:
   - BOLABOL_ASR_COREML_INTEGRATION_PLAN.md
   - AI_Workflow_Kit/docs/ASR_COREML_STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
+  - AI_Workflow_Kit/docs/AI/ARCHITECT_HANDOFF.md
 coder_brief: |
-  No active coder brief. Step closed. Await Human next directive.
+  Batch 1 ONLY per ARCHITECT_HANDOFF Exact Ordered Coder Scope orders 1-15:
+  HYG-004,003/011,005/011,006,007,008,009,002,011,012,013,014,015.
+  No HYG-016 in this attempt. No behavior change. ADR-023 non-destructive.
+  Compiler is proof for import removals. Full swift test + run_all + clean Release verify.
 notes: |
-  POST bolabol/VERTICAL-PULSE-HUD-done @ 95fdca7 (LOCAL ONLY — remote push DISABLED).
-  Human `статус` after Tester retest qa_green:
-  - Orchestrator status build: Release PID 62726 (Sun Aug 9 01:36:21 2026); codesign OK.
-  - GraphiFy rebuilt after POST.
-  - checkpoint.sh extended to accept AD-HOC step ids (VERTICAL-PULSE-HUD).
-  - SEC-005 info remains deferred backlog.
-  - next_actor=human. Say next step or «приступай» with direction.
+  Human `статус` #2: Coder Batch 1 STILL not handed off. next_actor=coder.
+  Status build only: Release PID 17123 (Sun Aug 9 14:45:00 2026); codesign OK.
+  CFBundleShortVersionString still 1.0.3 until HYG-015.
+  PRE bolabol/pre-CODE-HYGIENE-RELEASE @ 1a8bf3d remains rollback point.
+  Architect design_complete accepted earlier (PID 15280 status build).
+

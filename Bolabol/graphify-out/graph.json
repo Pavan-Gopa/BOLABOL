@@ -51451,6 +51451,14 @@
       "_origin": "ast"
     },
     {
+      "id": "ai_workflow_kit_docs_ai_feedback_vertical_pulse_hud_orchestrator_post_cycle_complete",
+      "label": "VERTICAL-PULSE-HUD - Orchestrator POST (cycle complete)",
+      "file_type": "document",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L5866",
+      "_origin": "ast"
+    },
+    {
       "id": "ai_workflow_kit_docs_ai_git_checkpoints",
       "label": "GIT_CHECKPOINTS.md",
       "file_type": "document",
@@ -184429,6 +184437,16 @@
       "confidence": "EXTRACTED",
       "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
       "source_location": "L5855",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "ai_workflow_kit_docs_ai_feedback_feedback_bolabol_1_0_4_asr_core_ml",
+      "target": "ai_workflow_kit_docs_ai_feedback_vertical_pulse_hud_orchestrator_post_cycle_complete",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+      "source_location": "L5866",
       "weight": 1.0,
       "_origin": "ast"
     },

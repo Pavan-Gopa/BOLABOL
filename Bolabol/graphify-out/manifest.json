@@ -15,8 +15,8 @@
     "semantic_hash": "cbe7d63d842fcac44f4fe4130c145c29"
   },
   "AI_Workflow_Kit/script/checkpoint.sh": {
-    "mtime": 1785818513.5307322,
-    "ast_hash": "47468d5acb1c5534a12ddd88f2eb4be9",
+    "mtime": 1786219614.0004616,
+    "ast_hash": "d602a122582b90178688f92d00f1b601",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/script/graphify_rebuild.sh": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/FEEDBACK.md": {
-    "mtime": 1786213512.7976804,
-    "ast_hash": "66d7a6c302bd5ebc0a93b81101f85dc7",
+    "mtime": 1786218491.302517,
+    "ast_hash": "ac7669d3d9085d507e3324f0bbb31f1f",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REPORT.md": {
-    "mtime": 1786208680.969028,
-    "ast_hash": "973078182bae36fa1e448e2cfd71a50c",
+    "mtime": 1786218476.6887107,
+    "ast_hash": "2fb1dcbe0b8e58aac9ea6bbe07c0c8d5",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/REVIEW_TEMPLATE.md": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/STATE.yaml": {
-    "mtime": 1786211515.150327,
-    "ast_hash": "b6bfece19b3dc20415ed36443af50594",
+    "mtime": 1786217983.897658,
+    "ast_hash": "cc4ff34e6e4b4fa8681324106cd08d40",
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md": {
@@ -1520,8 +1520,8 @@
     "semantic_hash": ""
   },
   "AI_Workflow_Kit/docs/AI/SECURITY_REPORT.md": {
-    "mtime": 1786213000.7544456,
-    "ast_hash": "0a2f2e16ff13c92b1fbae6da342501b7",
+    "mtime": 1786218500.3176358,
+    "ast_hash": "4da4b663575f26809ccdfb64895af382",
     "semantic_hash": ""
   },
   "docs/asr/canary-1b/BOLABOL_COREML_SPIKE.md": {

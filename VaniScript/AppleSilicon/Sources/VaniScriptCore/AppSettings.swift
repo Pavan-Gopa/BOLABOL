@@ -41,6 +41,7 @@ public enum LocalModelStatus: String, Codable, Equatable, Sendable {
 public enum LocalModelRuntime: String, Codable, Equatable, Sendable {
     case whisper
     case parakeet
+    case canary
     case mlx
 }
 
@@ -94,15 +95,18 @@ public struct LocalModelState: Codable, Equatable, Sendable {
         self.progress = try container.decodeIfPresent(Double.self, forKey: .progress)
         self.progressLabel = try container.decodeIfPresent(String.self, forKey: .progressLabel)
         self.label = try container.decode(String.self, forKey: .label)
-        self.location = try container.decodeIfPresent(SharedModelLocation.self, forKey: .location)
-        if let location {
-            self.path = SharedModelsRoot.modelURL(for: location).path
+        let decodedLocation = try container.decodeIfPresent(SharedModelLocation.self, forKey: .location)
+        self.location = decodedLocation
+        if let decodedLocation {
+            self.path = SharedModelsRoot.modelURL(for: decodedLocation).path
         } else {
             self.path = try container.decodeIfPresent(String.self, forKey: .path)
             self.location = Self.location(for: path)
         }
         self.error = try container.decodeIfPresent(String.self, forKey: .error)
-        self.runtime = try container.decode(LocalModelRuntime.self, forKey: .runtime)
+        self.runtime = try container.decodeIfPresent(LocalModelRuntime.self, forKey: .runtime)
+            ?? Self.runtime(for: decodedLocation ?? self.location)
+            ?? .whisper
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -122,6 +126,22 @@ public struct LocalModelState: Codable, Equatable, Sendable {
     private static func location(for path: String?) -> SharedModelLocation? {
         guard let path, !path.isEmpty else { return nil }
         return SharedModelsRoot.location(for: URL(fileURLWithPath: path))
+    }
+
+    private static func runtime(for location: SharedModelLocation?) -> LocalModelRuntime? {
+        guard let location else { return nil }
+        switch location.runtime {
+        case .whisperkit:
+            return .whisper
+        case .parakeet:
+            return .parakeet
+        case .canary:
+            return .canary
+        case .mlx:
+            return .mlx
+        case .gguf, .ggml:
+            return nil
+        }
     }
 }
 
@@ -491,7 +511,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.transcriptionProvider = try container.decodeIfPresent(String.self, forKey: .transcriptionProvider) ?? "coreml-whisperkit"
         self.translationProvider = try container.decodeIfPresent(String.self, forKey: .translationProvider) ?? "mlx-native"
         self.defaultTargetLang = try container.decodeIfPresent(String.self, forKey: .defaultTargetLang) ?? "Russian"
-        self.localAsrModels = try container.decodeIfPresent([String: LocalModelState].self, forKey: .localAsrModels) ?? AppSettings.defaults.localAsrModels
+        let decodedLocalASRModels = try container.decodeIfPresent([String: LocalModelState].self, forKey: .localAsrModels) ?? [:]
+        self.localAsrModels = Self.mergeLocalASRDefaults(decodedLocalASRModels)
         self.localTranslationModels = try container.decodeIfPresent([String: LocalModelState].self, forKey: .localTranslationModels) ?? AppSettings.defaults.localTranslationModels
         self.promptPresets = try container.decodeIfPresent([String: PromptPresetSettings].self, forKey: .promptPresets) ?? DefaultPrompts.defaultPresets
         self.usage = try container.decodeIfPresent([String: ProviderUsage].self, forKey: .usage) ?? [:]
@@ -640,6 +661,21 @@ public struct AppSettings: Codable, Equatable, Sendable {
                 label: "Whisper Large v3",
                 runtime: .whisper
             ),
+            "parakeet-tdt-06b-v3": LocalModelState(
+                status: .notDownloaded,
+                label: "Parakeet TDT 0.6B v3",
+                runtime: .parakeet
+            ),
+            "canary-180m-flash-coreml": LocalModelState(
+                status: .notDownloaded,
+                label: "Canary Flash 180M",
+                runtime: .canary
+            ),
+            "canary-1b-v2-coreml": LocalModelState(
+                status: .notDownloaded,
+                label: "Canary 1B v2",
+                runtime: .canary
+            ),
         ],
         localTranslationModels: [
             "qwen35-08b-4bit": LocalModelState(status: .notDownloaded, label: "Qwen 3.5 0.8B 4bit", runtime: .mlx),
@@ -668,6 +704,16 @@ public struct AppSettings: Codable, Equatable, Sendable {
         grokChatReasoningEffort: "medium",
         qwenChatModelID: QwenChatModelCatalog.defaultModelID
     )
+
+    private static func mergeLocalASRDefaults(
+        _ decodedModels: [String: LocalModelState]
+    ) -> [String: LocalModelState] {
+        var merged = decodedModels
+        for (id, defaultModel) in AppSettings.defaults.localAsrModels where merged[id] == nil {
+            merged[id] = defaultModel
+        }
+        return merged
+    }
 }
 
 extension AppSettings {
@@ -755,8 +801,11 @@ extension AppSettings {
         for (id, model) in localAsrModels {
             if model.status == .notDownloaded {
                 localAsrModels[id] = resetToNotDownloaded(model)
-            } else if model.status == .downloaded,
+            } else if model.runtime == .whisper,
+                      model.status == .downloaded,
                       !LocalModelVerification.verifyModelPath(model.path, isWhisper: true) {
+                // LASR-02 owns Parakeet/Canary completeness. LASR-01 must not
+                // classify their native folders as WhisperKit and erase state.
                 localAsrModels[id] = resetToNotDownloaded(model)
             }
         }

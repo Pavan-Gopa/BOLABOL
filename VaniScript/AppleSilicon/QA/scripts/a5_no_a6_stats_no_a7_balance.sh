@@ -16,8 +16,8 @@ if [[ -f "$STATE_FILE" ]]; then
 fi
 
 
-# Post-API_USAGE tracks (CPS) count as A7+
-if [[ "$current_step" == CPS* || "$current_step" == CLOUD_PROVIDER* || "$current_step" == API_USAGE_DONE || "$current_step" == APIUSAGE_DONE ]]; then
+# Post-API_USAGE and subsequent tracks count as A7+.
+if [[ "$current_step" == CPS* || "$current_step" == CLOUD_PROVIDER* || "$current_step" == LASR-* || "$current_step" == API_USAGE_DONE || "$current_step" == APIUSAGE_DONE ]]; then
   _post_api_usage=1
 else
   _post_api_usage=0
@@ -64,7 +64,7 @@ if grep -REq 'struct CloudBalanceService|class CloudBalanceService|enum CloudBal
 fi
 
 if [[ "$a6_or_later" -eq 1 ]]; then
-  echo "PASS: A6+ stats rewrite N/A; no A7 balance service (step=$current_step)."
+  echo "PASS: A6+ stats rewrite accepted; A7 balance presence is step-aware (step=$current_step)."
 else
   echo "PASS: no A6 stats rewrite; no A7 balance service."
 fi

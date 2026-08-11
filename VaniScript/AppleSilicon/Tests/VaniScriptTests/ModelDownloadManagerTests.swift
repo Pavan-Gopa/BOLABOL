@@ -224,10 +224,10 @@ struct ModelDownloadManagerTests {
         #expect(!FileManager.default.fileExists(atPath: root.appendingPathComponent("canary/180m-flash").path))
     }
 
-    @Test("Canary 1B remains disabled while the catalog release is unbound")
-    func canaryOneBDownloadIsDisabled() async throws {
+    @Test("Canary 1B download is unavailable until a source is configured")
+    func canaryOneBDownloadRequiresConfiguredSource() async throws {
         let manager = ModelDownloadManager(configuredRoot: temporaryRoot())
-        await #expect(throws: ModelDownloadManagerError.self) {
+        await #expect(throws: RemoteModelPackageInstallerError.sourceNotConfigured) {
             try await manager.downloadModel(id: "canary-1b-v2-coreml")
         }
     }

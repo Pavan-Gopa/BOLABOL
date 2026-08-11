@@ -88,10 +88,12 @@ Objective gates are green.
 - `Tests/VaniScriptTests/ParakeetTranscriptionEngineTests.swift`
 
 **Do:**
-- [ ] Add minimal local ASR engine and audio preparation contracts
-- [ ] Port Parakeet v3/int8 loading, request validation, decoding, cancellation, and unload behavior
-- [ ] Preserve unanchored auto-detect and safe explicit language hints
-- [ ] Add deterministic tests without real model weights or network access
+- [x] Add minimal local ASR engine and audio preparation contracts
+- [x] Port Parakeet v3/int8 loading, request validation, decoding, cancellation, and unload behavior
+- [x] Preserve unanchored auto-detect and safe explicit language hints
+- [x] Add deterministic tests without real model weights or network access
+- [x] Repair the pre-existing Canary release namespace test blocker
+- [x] Repair the stale Canary 1B download-source test blocker
 
 **Out of scope:**
 - Canary engines, pipeline routing, Models UI, or cloud package metadata
@@ -100,14 +102,14 @@ Objective gates are green.
 
 ### Objective gates
 
-- [ ] `swift build` exits 0
-- [ ] focused Parakeet/audio tests pass
-- [ ] `swift test` exits 0
+- [x] `swift build` exits 0
+- [x] focused Parakeet/audio tests pass
+- [x] `swift test` exits 0
 
 ### Judgment gates
 
-- [ ] BOLABOL behavior is ported without importing BOLABOL product dependencies
-- [ ] engine residency, cleanup, and error semantics are bounded
+- [x] BOLABOL behavior is ported without importing BOLABOL product dependencies
+- [x] engine residency, cleanup, and error semantics are bounded
 
 **Ready for review when:** S1 implementation and objective gates are green.
 

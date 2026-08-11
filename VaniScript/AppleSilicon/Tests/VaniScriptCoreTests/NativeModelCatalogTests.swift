@@ -108,7 +108,7 @@ struct NativeModelCatalogTests {
             return
         }
         #expect(oneB.installSource.kind == .remotePackage)
-        #expect(release == NativeModelCatalog.canaryOneBRelease)
+        #expect(release == RemoteModelPackageRelease.canaryOneBRelease)
         #expect(release.packageID == "bolabol-canary-1b-v2-coreml-r1")
         #expect(release.layoutVersion == "path-b-v1")
         #expect(release.directURLOverrideEnvironmentKey == "VANISCRIPT_CANARY_1B_PACKAGE_URL")
@@ -355,7 +355,7 @@ struct NativeModelCatalogTests {
             return
         }
 
-        #expect(release == NativeModelCatalog.canaryOneBRelease)
+        #expect(release == RemoteModelPackageRelease.canaryOneBRelease)
         #expect(release.isBound)
     }
 

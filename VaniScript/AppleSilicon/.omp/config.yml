@@ -5,11 +5,11 @@ modelRoles:
   workflow_orchestrator_backup: xai-oauth/grok-4.5:high
   workflow_architect: google-antigravity/claude-opus-4-6:high
   workflow_architect_backup: openrouter/openai/gpt-5.6-sol:high
-  workflow_coder: openrouter/openai/gpt-5.6-luna:max
+  workflow_coder: openai-codex/gpt-5.6-luna:max
   workflow_coder_backup: nvidia/deepseek-ai/deepseek-v4-flash:max
   workflow_reviewer: xai-oauth/grok-4.5:high
   workflow_reviewer_backup: google-antigravity/claude-opus-4-6:high
-  workflow_tester: google-antigravity/claude-sonnet-4-5:high
+  workflow_tester: google-antigravity/gemini-3.6-flash:high
   workflow_tester_backup: google-antigravity/gemini-2.5-pro:high
   workflow_security: google-antigravity/claude-opus-4-6:high
   workflow_security_backup: openrouter/openai/gpt-5.5-pro:high

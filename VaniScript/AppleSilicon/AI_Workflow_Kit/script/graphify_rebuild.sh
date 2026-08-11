@@ -1,59 +1,74 @@
 #!/usr/bin/env bash
-# graphify_rebuild.sh — rebuild the VaniScript knowledge graph (agent token savings).
+# graphify_rebuild.sh — rebuild project knowledge graph (agent token savings)
 #
-# Role: DEV-WORFLOW tool for building VaniScript with AI agents — NOT product code.
-# Agents must prefer `graphify query / explain / path` over dumping whole trees
-# or bulk greps (see TEAM_CONTRACT.md, Graphify rule).
+# Dev-workflow tool — NOT product code. Agents prefer:
+#   graphify query | explain | path
+# over dumping whole source trees.
 #
-# The graph covers the whole VaniScript product (AppleSilicon Swift + Electron TS
-# + Shared) in ONE graph, mirroring the DialGent single-graph convention.
-# Output: <VaniScript>/graphify-out/graph.json
+# Usage (from project root that contains AI_Workflow_Kit/):
+#   bash AI_Workflow_Kit/script/graphify_rebuild.sh
+#   bash AI_Workflow_Kit/script/graphify_rebuild.sh --force
 #
-# Usage (from anywhere):
-#   ./AppleSilicon/AI_Workflow_Kit/script/graphify_rebuild.sh
-#   ./AppleSilicon/AI_Workflow_Kit/script/graphify_rebuild.sh --force
+# Requires: `graphify` on PATH (e.g. uv tool install graphifyy)
 #
-# Requires: `graphify` on PATH (installed via `uv tool install graphifyy`).
+# Env:
+#   WF_GRAPHIFY_ROOT   path to scan (default: project root = parent of AI_Workflow_Kit)
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# script/ -> AI_Workflow_Kit -> AppleSilicon -> VaniScript (product root)
-VANI_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-OUT_DIR="$VANI_ROOT/graphify-out"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+SCAN_ROOT="${WF_GRAPHIFY_ROOT:-$PROJECT_ROOT}"
+OUT_DIR="$PROJECT_ROOT/graphify-out"
 GRAPH_JSON="$OUT_DIR/graph.json"
 
-cd "$VANI_ROOT"
+cd "$PROJECT_ROOT"
 
 if ! command -v graphify &>/dev/null; then
   echo "ERROR: graphify not on PATH." >&2
   echo "Install: uv tool install graphifyy" >&2
+  echo "Or skip Graphify and rely on PROJECT_CONTEXT.md + scoped file reads." >&2
   exit 1
 fi
 
-EXTRA_ARGS=(--no-cluster)   # code extraction only, no LLM clustering (fast, deterministic)
+EXTRACT_ARGS=(--out "$PROJECT_ROOT" --no-cluster)
 if [[ "${1:-}" == "--force" ]] || [[ "${GRAPHIFY_FORCE:-}" == "1" ]]; then
-  EXTRA_ARGS+=(--force)     # overwrite even if rebuild has fewer nodes (after big deletes)
+  EXTRACT_ARGS+=(--force)
 fi
 
-echo "Rebuilding VaniScript knowledge graph"
-echo "  product root: $VANI_ROOT"
-echo "  output:       $GRAPH_JSON"
+echo "Rebuilding knowledge graph"
+echo "  scan root: $SCAN_ROOT"
+echo "  output:    $GRAPH_JSON"
 mkdir -p "$OUT_DIR"
 
-# `update` re-extracts code files (no LLM). Walks the product root so AppleSilicon
-# (Swift), Electron (TS/JS) and Shared share one graph. Heavy media under UserData
-# is not transcribed by `update` (that only happens in the full /graphify pipeline).
-graphify update "$VANI_ROOT" "${EXTRA_ARGS[@]}"
+build_graph() {
+  if graphify extract "$SCAN_ROOT" "${EXTRACT_ARGS[@]}"; then
+    return 0
+  fi
+
+  echo "warn: semantic extraction unavailable; retrying local AST code-only build" >&2
+  graphify extract "$SCAN_ROOT" "${EXTRACT_ARGS[@]}" --code-only
+}
+
+# Incremental updates are local and deterministic. A first build tries semantic
+# extraction, then degrades to code-only when no supported LLM backend is set.
+if [[ -f "$GRAPH_JSON" ]]; then
+  if ! graphify update "$SCAN_ROOT" --no-cluster; then
+    echo "warn: graphify update failed; rebuilding from source" >&2
+    build_graph
+  fi
+else
+  build_graph
+fi
 
 if [[ -f "$GRAPH_JSON" ]]; then
-  NODES=$(python3 -c "import json;g=json.load(open('$GRAPH_JSON'));print(len(g.get('nodes',g if isinstance(g,list) else [])))" 2>/dev/null || echo "?")
+  NODES=$(python3 -c 'import json,sys;g=json.load(open(sys.argv[1]));print(len(g.get("nodes",g if isinstance(g,list) else [])))' "$GRAPH_JSON" 2>/dev/null || echo "?")
   echo "OK: graphify-out/graph.json ready (nodes≈$NODES)"
-  echo "Query examples (from AppleSilicon/ working dir):"
-  echo "  graphify explain \"McpServer\" --graph \"$GRAPH_JSON\""
-  echo "  graphify path \"ChatSidebarView\" \"McpToolRegistry\" --graph \"$GRAPH_JSON\""
-  echo "  graphify query \"how does the embedded Grok chat call MCP tools\" --graph \"$GRAPH_JSON\""
+  echo "Query examples:"
+  echo "  graphify explain \"SomeSymbol\" --graph \"$GRAPH_JSON\""
+  echo "  graphify path \"ModuleA\" \"ModuleB\" --graph \"$GRAPH_JSON\""
+  echo "  graphify query \"where is X handled\" --graph \"$GRAPH_JSON\""
 else
-  echo "WARN: graph.json not found after update — inspect graphify output above." >&2
+  echo "WARN: graph.json not found after rebuild — inspect graphify output above." >&2
   exit 1
 fi

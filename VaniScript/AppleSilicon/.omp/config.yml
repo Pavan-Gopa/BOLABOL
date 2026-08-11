@@ -1,0 +1,38 @@
+modelRoleStorage: project
+
+modelRoles:
+  workflow_orchestrator: openrouter/openai/gpt-5.6-sol:high
+  workflow_orchestrator_backup: xai-oauth/grok-4.5:high
+  workflow_architect: google-antigravity/claude-opus-4-6:high
+  workflow_architect_backup: openrouter/openai/gpt-5.6-sol:high
+  workflow_coder: openrouter/openai/gpt-5.6-luna:max
+  workflow_coder_backup: nvidia/deepseek-ai/deepseek-v4-flash:max
+  workflow_reviewer: xai-oauth/grok-4.5:high
+  workflow_reviewer_backup: google-antigravity/claude-opus-4-6:high
+  workflow_tester: google-antigravity/claude-sonnet-4-5:high
+  workflow_tester_backup: google-antigravity/gemini-2.5-pro:high
+  workflow_security: google-antigravity/claude-opus-4-6:high
+  workflow_security_backup: openrouter/openai/gpt-5.5-pro:high
+
+retry:
+  enabled: true
+  # Persistent model/provider failure pauses the workflow. Human authorizes backup.
+  modelFallback: false
+
+async:
+  enabled: true
+
+task:
+  batch: true
+  enableLsp: true
+  maxConcurrency: 1
+  maxRecursionDepth: 1
+  maxRuntimeMs: 1800000
+  softRequestBudget: 120
+  showResolvedModelBadge: true
+
+skills:
+  enabled: true
+  enableSkillCommands: true
+  customDirectories:
+    - .

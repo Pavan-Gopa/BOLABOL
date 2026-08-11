@@ -1,7 +1,9 @@
+import CryptoKit
 import Foundation
 
-// LASR-01 owns model metadata only. Download, presence, engine and UI layers
-// must consume these contracts later without moving metadata into settings.
+// The catalog owns native model metadata and the shared LASR-02 presence policy.
+// Download, engine and UI layers consume these contracts without duplicating
+// model-specific readiness rules in settings.
 /// Native ASR backend identity used by the catalog and future router.
 public enum LocalASRBackend: String, Codable, Equatable, Sendable {
     case whisperKitCoreML
@@ -64,6 +66,37 @@ public struct LocalASRRequiredLayout: Codable, Equatable, Sendable {
     }
 }
 
+/// Relative paths accepted by model installers and scanners. A model archive is
+/// never allowed to turn a relative path into an arbitrary filesystem path.
+public enum NativeModelPathPolicy {
+    public static func isSafeRelativePath(_ path: String) -> Bool {
+        guard !path.isEmpty,
+              !path.hasPrefix("/"),
+              !path.contains("\\"),
+              !path.contains("\0"),
+              !path.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) })
+        else {
+            return false
+        }
+
+        let components = path.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        guard !components.isEmpty,
+              !components.dropLast().contains(where: { $0.isEmpty }),
+              !components.contains(where: { $0 == "." || $0 == ".." })
+        else {
+            return false
+        }
+
+        return components.last != ""
+            || path.hasSuffix("/")
+    }
+
+    public static func normalizedRelativePath(_ path: String) -> String? {
+        guard isSafeRelativePath(path) else { return nil }
+        return path.hasSuffix("/") ? String(path.dropLast()) : path
+    }
+}
+
 /// Optional integrity metadata for one file in a remote model package.
 public struct RemoteModelPackageFile: Codable, Equatable, Sendable {
     public var relativePath: String
@@ -115,12 +148,155 @@ public struct RemoteModelPackageRelease: Codable, Equatable, Sendable {
         self.allowlistedFiles = allowlistedFiles
     }
 
-    // LASR-01 deliberately carries no concrete URL, digest or package manifest.
-    public static let canaryOneBPlaceholder = RemoteModelPackageRelease(
-        packageID: "canary-1b-v2-coreml",
+    /// A release is installable only when the Human-supplied integrity contract
+    /// is complete. Environment keys alone intentionally do not bind Canary 1B.
+    public var isBound: Bool {
+        let directKey = directURLOverrideEnvironmentKey?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let baseKey = baseURLEnvironmentKey?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let hasSource = !directKey.isEmpty
+            || (!baseKey.isEmpty && relativeArchivePath.flatMap(NativeModelPathPolicy.normalizedRelativePath) != nil)
+        let hasArchiveHash = expectedArchiveSHA256.map(Self.isSHA256) ?? false
+        let hasArchiveSizes = (expectedCompressedSizeBytes ?? 0) > 0
+            && (expectedUncompressedSizeBytes ?? 0) > 0
+        let normalizedManifestPaths = allowlistedFiles.compactMap {
+            NativeModelPathPolicy.normalizedRelativePath($0.relativePath)
+        }
+        let hasManifest = !allowlistedFiles.isEmpty
+            && normalizedManifestPaths.count == allowlistedFiles.count
+            && Set(normalizedManifestPaths).count == allowlistedFiles.count
+            && allowlistedFiles.allSatisfy {
+                guard let normalized = NativeModelPathPolicy.normalizedRelativePath($0.relativePath) else {
+                    return false
+                }
+                return normalized == $0.relativePath
+                    && ($0.expectedByteCount ?? -1) >= 0
+                    && $0.expectedSHA256.map(Self.isSHA256) == true
+            }
+
+        return !packageID.isEmpty
+            && !layoutVersion.isEmpty
+            && hasSource
+            && hasArchiveHash
+            && hasArchiveSizes
+            && hasManifest
+    }
+
+    private static func isSHA256(_ value: String) -> Bool {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.count == 64 && normalized.allSatisfy(\.isHexDigit)
+    }
+
+    private static let canaryOneBAllowlistedFiles: [RemoteModelPackageFile] = [
+        RemoteModelPackageFile(
+            relativePath: "canary_cross_kv.mlmodelc/analytics/coremldata.bin",
+            expectedByteCount: 243,
+            expectedSHA256: "3553add8e4c4f4351f2e127d0a9c4b9f0ee7885503db507603fdfcb35f395250"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_cross_kv.mlmodelc/coremldata.bin",
+            expectedByteCount: 470,
+            expectedSHA256: "21cceed24d63e235b0d7a1bc93fbce5c040e9c6a3e4485bc6525ec874086baa7"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_cross_kv.mlmodelc/metadata.json",
+            expectedByteCount: 2171,
+            expectedSHA256: "f9069ae0272fbe7022dc8bcde6ecb1d723fb9c4b4bbddd755c646eb745b86f69"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_cross_kv.mlmodelc/model.mil",
+            expectedByteCount: 26105,
+            expectedSHA256: "a6682677e1f8312e3ae814c2a076acfcf161529d26066555b517cefb10ddde01"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_cross_kv.mlmodelc/weights/weight.bin",
+            expectedByteCount: 33_589_312,
+            expectedSHA256: "02bf8060427056b229b8406434f4ffd00748a7ecf4c22b463ddb87f33de510d2"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_decoder_kv.mlmodelc/analytics/coremldata.bin",
+            expectedByteCount: 243,
+            expectedSHA256: "d986857aada35955d23c8451f035387b7aadcf7d1ef59b6fa40d4e042650457b"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_decoder_kv.mlmodelc/coremldata.bin",
+            expectedByteCount: 957,
+            expectedSHA256: "0d6b71c6182ec837f211caed7fa42ae60faf82cd30e55312fa48ef6fef24b141"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_decoder_kv.mlmodelc/metadata.json",
+            expectedByteCount: 7702,
+            expectedSHA256: "87f539ea9c64fb10fe3f6858a7b426948235a7c1b184a2ff7394714834da136b"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_decoder_kv.mlmodelc/model.mil",
+            expectedByteCount: 190_311,
+            expectedSHA256: "c8510b97c57c5cc72312301d2c7aaa1ec3b8d2d16007d16bf8478e59c9ec1b1c"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_decoder_kv.mlmodelc/weights/weight.bin",
+            expectedByteCount: 270_864_448,
+            expectedSHA256: "b1e1ca6a08e0ba5c8bae40847faf728fe77920245a163fe30a52cdd9f9f7dd02"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_encoder.mlmodelc/analytics/coremldata.bin",
+            expectedByteCount: 243,
+            expectedSHA256: "dbfd16062a736f344edce2c16c2fcb84e9a55ce5979fb1d26192c8846a902b24"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_encoder.mlmodelc/coremldata.bin",
+            expectedByteCount: 488,
+            expectedSHA256: "4d912b07f00d4fd24bd9b577faa8692c2075a65e560bfebcc649d68b691f5151"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_encoder.mlmodelc/metadata.json",
+            expectedByteCount: 2842,
+            expectedSHA256: "cb42b036f98dd7fbcedaabb501e5470e29d4de7cba1dfef94448da3a44314758"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_encoder.mlmodelc/model.mil",
+            expectedByteCount: 1_227_185,
+            expectedSHA256: "54b1155214e3726d01a45d6ff28fbec71be09c9c143c80ed81c3d9cc40211f54"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_encoder.mlmodelc/weights/weight.bin",
+            expectedByteCount: 1_579_377_472,
+            expectedSHA256: "a23ab46649b973c30598b5340f4740101dea8ec6aabfe7f3b336ad3e4c5d71c8"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "canary_spe.model",
+            expectedByteCount: 503_803,
+            expectedSHA256: "c36395c4fc6074512648baa557586c535f92b9d9682f66bf967bf4cc3ab749b8"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "FRONTEND.md",
+            expectedByteCount: 2298,
+            expectedSHA256: "fcf748399547af47872f48d2436b988e72664673419a9c8d38c2db11687f513a"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "LICENSE.txt",
+            expectedByteCount: 964,
+            expectedSHA256: "944212da165ee581a024c9d51bd21ef7badbf72ad4d00b23a731706ae1ce3c98"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "metadata.json",
+            expectedByteCount: 1005,
+            expectedSHA256: "1d98e1cceaf4ab9fc69e9178b1a3dedf46e11d835e006f9e88b00f77cc722be7"
+        ),
+        RemoteModelPackageFile(
+            relativePath: "MANIFEST.json",
+            expectedByteCount: 3172,
+            expectedSHA256: "3a258e36b6a71b95e538656569c455a76c302cd7ca69724b3a7075f0f20202a5"
+        )
+    ]
+
+    public static let canaryOneBRelease = RemoteModelPackageRelease(
+        packageID: "bolabol-canary-1b-v2-coreml-r1",
         layoutVersion: "path-b-v1",
         directURLOverrideEnvironmentKey: "VANISCRIPT_CANARY_1B_PACKAGE_URL",
-        baseURLEnvironmentKey: "VANISCRIPT_MODEL_PACKAGE_BASE_URL"
+        expectedArchiveSHA256: "5aa3cd51d0cc7b807e7a7b0eb9620c33cd81e64a06775edc0496f3019ed91c48",
+        expectedCompressedSizeBytes: 1_735_607_621,
+        expectedUncompressedSizeBytes: 1_885_801_434,
+        allowlistedFiles: canaryOneBAllowlistedFiles
     )
 }
 
@@ -145,6 +321,35 @@ public enum LocalASRInstallSource: Codable, Equatable, Sendable {
         case .huggingFace: .huggingFace
         case .remotePackage: .remotePackage
         }
+    }
+}
+
+/// The trusted sidecar written after a remote package passes every integrity
+/// check. Presence validation compares it with the catalog release, so a
+/// downloaded package cannot become Ready by merely containing model-looking
+/// files.
+public struct RemoteModelPackageInstallationManifest: Codable, Equatable, Sendable {
+    public var packageID: String
+    public var layoutVersion: String
+    public var archiveSHA256: String
+    public var archiveSizeBytes: Int64
+    public var uncompressedSizeBytes: Int64
+    public var files: [RemoteModelPackageFile]
+
+    public init(
+        packageID: String,
+        layoutVersion: String,
+        archiveSHA256: String,
+        archiveSizeBytes: Int64,
+        uncompressedSizeBytes: Int64,
+        files: [RemoteModelPackageFile]
+    ) {
+        self.packageID = packageID
+        self.layoutVersion = layoutVersion
+        self.archiveSHA256 = archiveSHA256
+        self.archiveSizeBytes = archiveSizeBytes
+        self.uncompressedSizeBytes = uncompressedSizeBytes
+        self.files = files
     }
 }
 
@@ -175,6 +380,56 @@ public struct LocalASRModelDescriptor: Identifiable, Codable, Equatable, Sendabl
         self.capabilities = capabilities
         self.requiredLayout = requiredLayout
     }
+
+    public var storageRuntime: SharedModelRuntime {
+        switch backend {
+        case .whisperKitCoreML:
+            .whisperkit
+        case .fluidAudioCoreML:
+            .parakeet
+        case .canaryCoreML:
+            .canary
+        }
+    }
+
+    public var settingsRuntime: LocalModelRuntime {
+        switch backend {
+        case .whisperKitCoreML:
+            .whisper
+        case .fluidAudioCoreML:
+            .parakeet
+        case .canaryCoreML:
+            .canary
+        }
+    }
+}
+
+/// Catalog entry used by the app downloader for ASR and the pre-existing MLX
+/// translation models. Keeping translation sources here removes the old
+/// model-ID switch from the app target without adding them to the ASR catalog.
+public struct NativeModelInstallDescriptor: Identifiable, Equatable, Sendable {
+    public var id: String
+    public var displayName: String
+    public var installSource: LocalASRInstallSource
+    public var relativeStorageSubpath: String
+    public var requiredLayout: LocalASRRequiredLayout
+    public var storageRuntime: SharedModelRuntime
+
+    public init(
+        id: String,
+        displayName: String,
+        installSource: LocalASRInstallSource,
+        relativeStorageSubpath: String,
+        requiredLayout: LocalASRRequiredLayout = LocalASRRequiredLayout(),
+        storageRuntime: SharedModelRuntime
+    ) {
+        self.id = id
+        self.displayName = displayName
+        self.installSource = installSource
+        self.relativeStorageSubpath = relativeStorageSubpath
+        self.requiredLayout = requiredLayout
+        self.storageRuntime = storageRuntime
+    }
 }
 
 public struct LocalModelVerification {
@@ -191,7 +446,7 @@ public struct LocalModelVerification {
             return false
         }
         if isWhisper {
-            return canonicalWhisperKitModelPath(path) != nil
+            return verifyWhisperKitModelPath(path)
         }
         guard isDir.boolValue else { return false }
         return isMLXModelDirectory(path, fileManager: fm)
@@ -235,6 +490,13 @@ public struct LocalModelVerification {
             }
         }
         return nil
+    }
+
+    public static func verifyWhisperKitModelPath(_ path: String?) -> Bool {
+        if skipVerificationForTesting {
+            return true
+        }
+        return canonicalWhisperKitModelPath(path) != nil
     }
 
     private static func isWhisperKitModelDirectory(_ path: String, fileManager: FileManager) -> Bool {
@@ -324,11 +586,236 @@ public struct LocalModelVerification {
     }
 }
 
+/// One model-specific readiness predicate shared by scan, Locate, settings
+/// reconciliation and provider lookup. It deliberately does not infer
+/// completeness from directory existence or a single marker file.
+public enum LocalASRPresencePolicy {
+    public static let remoteManifestFilename = ".vaniscript-package-manifest.json"
+
+    public static func isPresent(
+        _ descriptor: LocalASRModelDescriptor,
+        at url: URL,
+        fileManager: FileManager = .default
+    ) -> Bool {
+        guard isDirectory(url, fileManager: fileManager),
+              !isSymbolicLink(url, fileManager: fileManager)
+        else {
+            return false
+        }
+
+        if descriptor.backend == .whisperKitCoreML {
+            return LocalModelVerification.verifyWhisperKitModelPath(url.path)
+        }
+
+        guard requiredLayoutExists(
+            descriptor.requiredLayout,
+            at: url,
+            fileManager: fileManager
+        ) else {
+            return false
+        }
+
+        if case let .remotePackage(release) = descriptor.installSource {
+            return isRemotePackagePresent(
+                release: release,
+                descriptor: descriptor,
+                at: url,
+                fileManager: fileManager
+            )
+        }
+
+        return !containsSymbolicLink(at: url, fileManager: fileManager)
+    }
+
+    public static func requiredLayoutExists(
+        _ layout: LocalASRRequiredLayout,
+        at url: URL,
+        fileManager: FileManager = .default
+    ) -> Bool {
+        layout.requiredFiles.allSatisfy { relativePath in
+            guard let normalized = NativeModelPathPolicy.normalizedRelativePath(relativePath) else {
+                return false
+            }
+            let itemURL = url.appendingPathComponent(normalized, isDirectory: normalized.hasSuffix(".mlmodelc"))
+            guard fileManager.fileExists(atPath: itemURL.path),
+                  !isSymbolicLink(itemURL, fileManager: fileManager)
+            else {
+                return false
+            }
+
+            var isDir = ObjCBool(false)
+            let existsAsDirectory = fileManager.fileExists(atPath: itemURL.path, isDirectory: &isDir)
+            if normalized.hasSuffix(".mlmodelc") {
+                return existsAsDirectory && isDir.boolValue
+            }
+            return existsAsDirectory && !isDir.boolValue
+        }
+    }
+
+    public static func installationManifestURL(at destination: URL) -> URL {
+        destination.appendingPathComponent(remoteManifestFilename)
+    }
+
+    private static func isRemotePackagePresent(
+        release: RemoteModelPackageRelease,
+        descriptor: LocalASRModelDescriptor,
+        at url: URL,
+        fileManager: FileManager
+    ) -> Bool {
+        guard release.isBound,
+              !containsSymbolicLink(at: url, fileManager: fileManager),
+              let manifestData = try? Data(contentsOf: installationManifestURL(at: url)),
+              let manifest = try? JSONDecoder().decode(
+                RemoteModelPackageInstallationManifest.self,
+                from: manifestData
+              ),
+              manifest.packageID == release.packageID,
+              manifest.layoutVersion == release.layoutVersion,
+              manifest.archiveSHA256.caseInsensitiveCompare(release.expectedArchiveSHA256 ?? "") == .orderedSame,
+              manifest.archiveSizeBytes == release.expectedCompressedSizeBytes,
+              manifest.uncompressedSizeBytes == release.expectedUncompressedSizeBytes,
+              sameFiles(manifest.files, release.allowlistedFiles)
+        else {
+            return false
+        }
+
+        guard requiredLayoutExists(descriptor.requiredLayout, at: url, fileManager: fileManager) else {
+            return false
+        }
+
+        guard let expectedFiles = uniqueFiles(release.allowlistedFiles) else { return false }
+
+        for (relativePath, file) in expectedFiles {
+            let fileURL = url.appendingPathComponent(relativePath)
+            guard fileManager.fileExists(atPath: fileURL.path),
+                  !isSymbolicLink(fileURL, fileManager: fileManager),
+                  let attributes = try? fileManager.attributesOfItem(atPath: fileURL.path),
+                  (attributes[.type] as? FileAttributeType) == .typeRegular,
+                  let expectedSize = file.expectedByteCount,
+                  (attributes[.size] as? NSNumber)?.int64Value == expectedSize,
+                  let expectedHash = file.expectedSHA256,
+                  sha256(fileURL, fileManager: fileManager)?.caseInsensitiveCompare(expectedHash) == .orderedSame
+            else {
+                return false
+            }
+        }
+
+        return extractedRegularFiles(at: url, fileManager: fileManager)
+            .subtracting(expectedFiles.keys)
+            .isEmpty
+    }
+
+    private static func sameFiles(
+        _ lhs: [RemoteModelPackageFile],
+        _ rhs: [RemoteModelPackageFile]
+    ) -> Bool {
+        guard let left = uniqueFiles(lhs),
+              let right = uniqueFiles(rhs)
+        else {
+            return false
+        }
+        return left == right && left.count == lhs.count && right.count == rhs.count
+    }
+
+    private static func uniqueFiles(
+        _ files: [RemoteModelPackageFile]
+    ) -> [String: RemoteModelPackageFile]? {
+        var result: [String: RemoteModelPackageFile] = [:]
+        for file in files {
+            guard let path = NativeModelPathPolicy.normalizedRelativePath(file.relativePath),
+                  result.updateValue(file, forKey: path) == nil
+            else {
+                return nil
+            }
+        }
+        return result
+    }
+
+    private static func extractedRegularFiles(at root: URL, fileManager: FileManager) -> Set<String> {
+        guard let enumerator = fileManager.enumerator(
+            at: root,
+            includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey],
+            options: []
+        ) else {
+            return []
+        }
+
+        var result = Set<String>()
+        let rootPath = root.standardizedFileURL.path.hasSuffix("/")
+            ? root.standardizedFileURL.path
+            : root.standardizedFileURL.path + "/"
+        let manifestPath = root.appendingPathComponent(remoteManifestFilename).standardizedFileURL.path
+        for case let itemURL as URL in enumerator {
+            if itemURL.standardizedFileURL.path == manifestPath {
+                continue
+            }
+            if isSymbolicLink(itemURL, fileManager: fileManager) {
+                continue
+            }
+            var isDir = ObjCBool(false)
+            guard fileManager.fileExists(atPath: itemURL.path, isDirectory: &isDir), !isDir.boolValue else {
+                continue
+            }
+            guard itemURL.standardizedFileURL.path.hasPrefix(rootPath) else { continue }
+            let relative = String(itemURL.standardizedFileURL.path.dropFirst(rootPath.count))
+            if let normalized = NativeModelPathPolicy.normalizedRelativePath(relative) {
+                result.insert(normalized)
+            }
+        }
+        return result
+    }
+
+    private static func isDirectory(_ url: URL, fileManager: FileManager) -> Bool {
+        var isDir = ObjCBool(false)
+        return fileManager.fileExists(atPath: url.path, isDirectory: &isDir) && isDir.boolValue
+    }
+
+    private static func isSymbolicLink(_ url: URL, fileManager: FileManager) -> Bool {
+        guard let attributes = try? fileManager.attributesOfItem(atPath: url.path) else { return false }
+        return (attributes[.type] as? FileAttributeType) == .typeSymbolicLink
+    }
+
+    private static func containsSymbolicLink(at url: URL, fileManager: FileManager) -> Bool {
+        guard let enumerator = fileManager.enumerator(at: url, includingPropertiesForKeys: [], options: []) else {
+            return false
+        }
+        for case let itemURL as URL in enumerator where isSymbolicLink(itemURL, fileManager: fileManager) {
+            return true
+        }
+        return false
+    }
+
+    private static func sha256(_ url: URL, fileManager: FileManager) -> String? {
+        guard let stream = InputStream(url: url) else { return nil }
+        stream.open()
+        defer { stream.close() }
+
+        var hasher = SHA256()
+        var buffer = [UInt8](repeating: 0, count: 64 * 1024)
+        while stream.hasBytesAvailable {
+            let count = buffer.withUnsafeMutableBytes { rawBuffer in
+                stream.read(rawBuffer.bindMemory(to: UInt8.self).baseAddress!, maxLength: rawBuffer.count)
+            }
+            guard count >= 0 else { return nil }
+            if count == 0 { break }
+            hasher.update(data: Data(buffer.prefix(count)))
+        }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+}
+
 public struct ActiveWhisperKitModel: Codable, Equatable, Sendable {
     public var id: String
     public var variant: String
     public var path: String
     public var label: String
+}
+
+public struct ActiveLocalASRModel: Codable, Equatable, Sendable {
+    public var id: String
+    public var path: String
+    public var label: String
+    public var descriptor: LocalASRModelDescriptor
 }
 
 public struct ActiveMLXModel: Codable, Equatable, Sendable {
@@ -363,7 +850,18 @@ public enum NativeModelCatalog {
                 maxEngineWindowSeconds: 30,
                 approximateDownloadBytes: 482_000_000
             ),
-            requiredLayout: LocalASRRequiredLayout(isSDKManaged: true)
+            // FluidAudio v0.15.5 stores v3/int8 in this repo folder. These
+            // names are frozen here so an SDK partial install cannot be Ready.
+            requiredLayout: LocalASRRequiredLayout(
+                requiredRelativePaths: [
+                    "Preprocessor.mlmodelc",
+                    "Encoder.mlmodelc",
+                    "Decoder.mlmodelc",
+                    "JointDecisionv3.mlmodelc",
+                    "parakeet_vocab.json"
+                ],
+                isSDKManaged: true
+            )
         ),
         LocalASRModelDescriptor(
             id: "canary-180m-flash-coreml",
@@ -392,14 +890,14 @@ public enum NativeModelCatalog {
             id: "canary-1b-v2-coreml",
             displayName: "Canary 1B v2",
             backend: .canaryCoreML,
-            installSource: .remotePackage(.canaryOneBPlaceholder),
+            installSource: .remotePackage(.canaryOneBRelease),
             relativeStorageSubpath: "canary/1b-v2",
             capabilities: LocalASRCapabilities(
                 supportsAutoLanguageDetect: false,
                 supportedLanguageCodes: parakeetLanguageCodes,
                 maxEngineWindowSeconds: 15,
                 minimumMacOSMajor: 15,
-                approximateDownloadBytes: 1_884_267_035
+                approximateDownloadBytes: 1_735_607_621
             ),
             requiredLayout: LocalASRRequiredLayout(requiredRelativePaths: [
                 "canary_encoder.mlmodelc",
@@ -464,12 +962,62 @@ public enum NativeModelCatalog {
     public static let localASRModelDescriptors = whisperKitModelDescriptors + newLocalASRModelDescriptors
     public static let localASRModels = localASRModelDescriptors
 
+    public static let localTranslationInstallDescriptors: [NativeModelInstallDescriptor] = [
+        translationDescriptor(
+            id: "qwen35-08b-4bit",
+            displayName: "Qwen 3.5 0.8B 4bit",
+            repositoryID: "mlx-community/Qwen3.5-0.8B-4bit"
+        ),
+        translationDescriptor(
+            id: "qwen35-2b-4bit",
+            displayName: "Qwen 3.5 2B 4bit",
+            repositoryID: "mlx-community/Qwen3.5-2B-4bit"
+        ),
+        translationDescriptor(
+            id: "qwen35-4b-4bit",
+            displayName: "Qwen 3.5 4B 4bit",
+            repositoryID: "mlx-community/Qwen3.5-4B-4bit"
+        ),
+        translationDescriptor(
+            id: "qwen35-9b-4bit",
+            displayName: "Qwen 3.5 9B 4bit",
+            repositoryID: "mlx-community/Qwen3.5-9B-4bit"
+        ),
+        translationDescriptor(
+            id: "nemotron3-nano-4b-4bit",
+            displayName: "NVIDIA Nemotron-3 Nano 4B",
+            repositoryID: "mlx-community/NVIDIA-Nemotron-3-Nano-4B-4bit"
+        )
+    ]
+
     public static func descriptor(for id: String) -> LocalASRModelDescriptor? {
         localASRModelDescriptors.first { $0.id == id }
     }
 
     public static func localASRModel(for id: String) -> LocalASRModelDescriptor? {
         descriptor(for: id)
+    }
+
+    public static func installDescriptor(for id: String) -> NativeModelInstallDescriptor? {
+        if let descriptor = descriptor(for: id) {
+            return NativeModelInstallDescriptor(
+                id: descriptor.id,
+                displayName: descriptor.displayName,
+                installSource: descriptor.installSource,
+                relativeStorageSubpath: descriptor.relativeStorageSubpath,
+                requiredLayout: descriptor.requiredLayout,
+                storageRuntime: descriptor.storageRuntime
+            )
+        }
+        return localTranslationInstallDescriptors.first { $0.id == id }
+    }
+
+    public static func isModelPresent(
+        _ descriptor: LocalASRModelDescriptor,
+        at url: URL,
+        fileManager: FileManager = .default
+    ) -> Bool {
+        LocalASRPresencePolicy.isPresent(descriptor, at: url, fileManager: fileManager)
     }
 
     private static func whisperDescriptor(
@@ -499,6 +1047,20 @@ public enum NativeModelCatalog {
         )
     }
 
+    private static func translationDescriptor(
+        id: String,
+        displayName: String,
+        repositoryID: String
+    ) -> NativeModelInstallDescriptor {
+        NativeModelInstallDescriptor(
+            id: id,
+            displayName: displayName,
+            installSource: .huggingFace(repositoryID: repositoryID, revision: "main"),
+            relativeStorageSubpath: "mlx/\(id)",
+            storageRuntime: .mlx
+        )
+    }
+
     public static func whisperKitVariant(for id: String) -> String? {
         switch id {
         case "whisper-medium-en":
@@ -521,7 +1083,8 @@ public enum NativeModelCatalog {
     public static func activeWhisperKitModel(settings: AppSettings, providerID: String) -> ActiveWhisperKitModel? {
         let candidateIDs: [String]
         if providerID == "coreml-whisperkit" {
-            candidateIDs = settings.localAsrModels.keys.sorted { lhs, rhs in
+            let whisperIDs = Set(whisperKitModelDescriptors.map(\.id))
+            candidateIDs = settings.localAsrModels.keys.filter { whisperIDs.contains($0) }.sorted { lhs, rhs in
                 preferredRank(lhs) < preferredRank(rhs)
             }
         } else {
@@ -534,12 +1097,50 @@ public enum NativeModelCatalog {
                   model.runtime == .whisper,
                   let path = model.path,
                   !path.isEmpty,
-                  LocalModelVerification.verifyModelPath(path, isWhisper: true),
+                  LocalModelVerification.verifyWhisperKitModelPath(path),
                   let variant = whisperKitVariant(for: id)
             else {
                 continue
             }
-            return ActiveWhisperKitModel(id: id, variant: variant, path: path, label: model.label)
+            let resolvedPath = LocalModelVerification.canonicalWhisperKitModelPath(path) ?? path
+            return ActiveWhisperKitModel(id: id, variant: variant, path: resolvedPath, label: model.label)
+        }
+        return nil
+    }
+
+    public static func activeLocalASRModel(
+        settings: AppSettings,
+        providerID: String,
+        onMacOSMajor: Int? = nil,
+        fileManager: FileManager = .default
+    ) -> ActiveLocalASRModel? {
+        let candidateIDs: [String]
+        if providerID == "coreml-whisperkit" {
+            let whisperIDs = Set(whisperKitModelDescriptors.map(\.id))
+            candidateIDs = settings.localAsrModels.keys.filter { whisperIDs.contains($0) }.sorted { lhs, rhs in
+                preferredRank(lhs) < preferredRank(rhs)
+            }
+        } else {
+            candidateIDs = [providerID]
+        }
+
+        let osMajor = onMacOSMajor ?? ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        for id in candidateIDs {
+            guard let descriptor = descriptor(for: id),
+                  let model = settings.localAsrModels[id],
+                  model.status == .downloaded,
+                  model.runtime == descriptor.settingsRuntime,
+                  let path = model.path,
+                  !path.isEmpty,
+                  descriptor.capabilities.isAvailable(onMacOSMajor: osMajor),
+                  isModelPresent(descriptor, at: URL(fileURLWithPath: path), fileManager: fileManager)
+            else {
+                continue
+            }
+            let resolvedPath = descriptor.backend == .whisperKitCoreML
+                ? (LocalModelVerification.canonicalWhisperKitModelPath(path) ?? path)
+                : path
+            return ActiveLocalASRModel(id: id, path: resolvedPath, label: model.label, descriptor: descriptor)
         }
         return nil
     }
@@ -626,6 +1227,7 @@ public struct LocalModelScanner: Sendable {
         let fm = FileManager.default
         var resultsByKey: [String: ScannedModel] = [:]
         var visited = 0
+        let nativeASRModels = NativeModelCatalog.newLocalASRModelDescriptors
 
         let asrModels = [
             ModelPattern(id: "whisper-large-v3-turbo", patterns: ["whisperkit-large-v3-turbo", "large-v3-turbo", "large-v3-v20240930_turbo_632mb"]),
@@ -658,9 +1260,27 @@ public struct LocalModelScanner: Sendable {
             if let direct = scannedModel(
                 at: searchPath,
                 asrModels: asrModels,
-                translationModels: translationModels
+                translationModels: translationModels,
+                nativeASRModels: nativeASRModels,
+                fileManager: fm
             ) {
                 record(direct)
+            }
+
+            for descriptor in nativeASRModels {
+                for candidate in nativeCandidateURLs(for: descriptor, under: searchPath, fileManager: fm) {
+                    guard LocalASRPresencePolicy.isPresent(descriptor, at: candidate, fileManager: fm) else {
+                        continue
+                    }
+                    record(
+                        ScannedModel(
+                            id: descriptor.id,
+                            path: candidate.standardizedFileURL.resolvingSymlinksInPath().path,
+                            isTranslation: false,
+                            label: descriptor.displayName
+                        )
+                    )
+                }
             }
 
             guard let enumerator = fm.enumerator(
@@ -682,7 +1302,9 @@ public struct LocalModelScanner: Sendable {
                 if let scanned = scannedModel(
                     at: fileURL,
                     asrModels: asrModels,
-                    translationModels: translationModels
+                    translationModels: translationModels,
+                    nativeASRModels: nativeASRModels,
+                    fileManager: fm
                 ) {
                     record(scanned)
                     if !scanned.isTranslation {
@@ -716,7 +1338,7 @@ public struct LocalModelScanner: Sendable {
             try? SharedModelsRoot.modelsDirectory(for: $0)
         }
 
-        return sharedDirs + [
+        return [SharedModelsRoot.resolve()] + sharedDirs + [
             libraryDir.appendingPathComponent("NativeSmartScribe/Models/Transcription/WhisperKit", isDirectory: true),
             libraryDir.appendingPathComponent("NativeSmartScribe/Models", isDirectory: true),
             libraryDir.appendingPathComponent("VaniScript/Models", isDirectory: true),
@@ -747,8 +1369,25 @@ public struct LocalModelScanner: Sendable {
     private static func scannedModel(
         at url: URL,
         asrModels: [ModelPattern],
-        translationModels: [ModelPattern]
+        translationModels: [ModelPattern],
+        nativeASRModels: [LocalASRModelDescriptor],
+        fileManager: FileManager
     ) -> ScannedModel? {
+        for descriptor in nativeASRModels {
+            let expectedName = URL(fileURLWithPath: descriptor.relativeStorageSubpath).lastPathComponent
+            guard url.lastPathComponent == expectedName,
+                  LocalASRPresencePolicy.isPresent(descriptor, at: url, fileManager: fileManager)
+            else {
+                continue
+            }
+            return ScannedModel(
+                id: descriptor.id,
+                path: url.standardizedFileURL.resolvingSymlinksInPath().path,
+                isTranslation: false,
+                label: descriptor.displayName
+            )
+        }
+
         let haystack = [url.lastPathComponent, url.path]
             .joined(separator: " ")
             .lowercased()
@@ -766,6 +1405,28 @@ public struct LocalModelScanner: Sendable {
         }
 
         return nil
+    }
+
+    private static func nativeCandidateURLs(
+        for descriptor: LocalASRModelDescriptor,
+        under searchPath: URL,
+        fileManager: FileManager
+    ) -> [URL] {
+        var candidates = [
+            searchPath.appendingPathComponent(descriptor.relativeStorageSubpath, isDirectory: true)
+        ]
+        let runtimePrefix = descriptor.storageRuntime.rawValue + "/"
+        if descriptor.relativeStorageSubpath.hasPrefix(runtimePrefix),
+           searchPath.lastPathComponent == descriptor.storageRuntime.rawValue {
+            let runtimeRelativePath = String(descriptor.relativeStorageSubpath.dropFirst(runtimePrefix.count))
+            candidates.append(searchPath.appendingPathComponent(runtimeRelativePath, isDirectory: true))
+        }
+
+        var seen = Set<String>()
+        return candidates.filter {
+            let path = $0.standardizedFileURL.path
+            return fileManager.fileExists(atPath: path) && seen.insert(path).inserted
+        }
     }
 
     private static func shouldPrune(_ url: URL) -> Bool {

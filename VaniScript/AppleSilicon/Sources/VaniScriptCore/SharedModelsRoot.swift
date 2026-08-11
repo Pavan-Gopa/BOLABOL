@@ -123,6 +123,114 @@ public enum SharedModelsRoot {
         .appendingPathComponent(descriptor.relativeStorageSubpath, isDirectory: true)
     }
 
+    /// Returns a canonical path only when every component below the storage
+    /// root stays inside that root. A symlinked parent must never redirect an
+    /// owned install or deletion to a user-owned directory.
+    public static func canonicalRootRelativeURL(
+        candidate: URL,
+        root: URL,
+        fileManager: FileManager = .default
+    ) -> URL? {
+        let rootURL = root.standardizedFileURL
+        let candidateURL = candidate.standardizedFileURL
+        let rootPath = rootURL.path.hasSuffix("/") ? rootURL.path : rootURL.path + "/"
+        guard candidateURL.path.hasPrefix(rootPath) else { return nil }
+
+        let relativePath = String(candidateURL.path.dropFirst(rootPath.count))
+        guard NativeModelPathPolicy.normalizedRelativePath(relativePath) == relativePath else {
+            return nil
+        }
+        guard !isSymbolicLink(rootURL, fileManager: fileManager),
+              !hasSymbolicLinkInRelativePath(
+                  relativePath,
+                  below: rootURL,
+                  fileManager: fileManager
+              )
+        else {
+            return nil
+        }
+
+        let canonicalRoot = rootURL.resolvingSymlinksInPath()
+        let canonicalCandidate = candidateURL.resolvingSymlinksInPath()
+        let expectedCanonical = canonicalRoot
+            .appendingPathComponent(relativePath, isDirectory: true)
+            .standardizedFileURL
+            .path
+        guard canonicalCandidate.path == expectedCanonical else { return nil }
+        return URL(
+            fileURLWithPath: canonicalCandidate.path,
+            isDirectory: candidateURL.hasDirectoryPath
+        )
+    }
+
+    /// Returns true only for the exact descriptor-owned destination. Located
+    /// paths outside this canonical directory remain user-owned and must never
+    /// be recursively deleted by VaniScript.
+    public static func isOwnedModelDirectory(
+        for descriptor: LocalASRModelDescriptor,
+        candidate: URL,
+        configuredRoot: URL? = nil,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
+        defaultRoot: URL? = nil,
+        legacyRoot: URL? = nil,
+        fileManager: FileManager = .default
+    ) -> Bool {
+        guard let canonicalURL = canonicalOwnedModelDirectoryURL(
+            for: descriptor,
+            candidate: candidate,
+            configuredRoot: configuredRoot,
+            environment: environment,
+            homeDirectory: homeDirectory,
+            defaultRoot: defaultRoot,
+            legacyRoot: legacyRoot,
+            fileManager: fileManager
+        ) else {
+            return false
+        }
+
+        var isDirectory = ObjCBool(false)
+        return fileManager.fileExists(atPath: canonicalURL.path, isDirectory: &isDirectory)
+            && isDirectory.boolValue
+    }
+
+    @discardableResult
+    public static func removeOwnedModelDirectory(
+        for descriptor: LocalASRModelDescriptor,
+        candidate: URL?,
+        configuredRoot: URL? = nil,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
+        defaultRoot: URL? = nil,
+        legacyRoot: URL? = nil,
+        fileManager: FileManager = .default
+    ) throws -> Bool {
+        guard let candidate,
+              let canonicalURL = canonicalOwnedModelDirectoryURL(
+                for: descriptor,
+                candidate: candidate,
+                configuredRoot: configuredRoot,
+                environment: environment,
+                homeDirectory: homeDirectory,
+                defaultRoot: defaultRoot,
+                legacyRoot: legacyRoot,
+                fileManager: fileManager
+              )
+        else {
+            return false
+        }
+
+        var isDirectory = ObjCBool(false)
+        guard fileManager.fileExists(atPath: canonicalURL.path, isDirectory: &isDirectory),
+              isDirectory.boolValue
+        else {
+            return false
+        }
+
+        try fileManager.removeItem(at: canonicalURL)
+        return true
+    }
+
     public static func location(
         for modelURL: URL,
         configuredRoot: URL? = nil,
@@ -203,6 +311,61 @@ public enum SharedModelsRoot {
             return isDirectory.boolValue
         }
         return true
+    }
+
+    private static func isSymbolicLink(_ url: URL, fileManager: FileManager) -> Bool {
+        guard let attributes = try? fileManager.attributesOfItem(atPath: url.path) else { return false }
+        return (attributes[.type] as? FileAttributeType) == .typeSymbolicLink
+    }
+
+    private static func canonicalOwnedModelDirectoryURL(
+        for descriptor: LocalASRModelDescriptor,
+        candidate: URL,
+        configuredRoot: URL?,
+        environment: [String: String],
+        homeDirectory: URL,
+        defaultRoot: URL?,
+        legacyRoot: URL?,
+        fileManager: FileManager
+    ) -> URL? {
+        guard let relativePath = NativeModelPathPolicy.normalizedRelativePath(
+            descriptor.relativeStorageSubpath
+        ) else {
+            return nil
+        }
+
+        let root = resolve(
+            configuredRoot: configuredRoot,
+            environment: environment,
+            homeDirectory: homeDirectory,
+            defaultRoot: defaultRoot,
+            legacyRoot: legacyRoot,
+            fileManager: fileManager
+        )
+        let expected = root.appendingPathComponent(relativePath, isDirectory: true)
+        guard candidate.standardizedFileURL.path == expected.standardizedFileURL.path else {
+            return nil
+        }
+        return canonicalRootRelativeURL(
+            candidate: candidate,
+            root: root,
+            fileManager: fileManager
+        )
+    }
+
+    private static func hasSymbolicLinkInRelativePath(
+        _ relativePath: String,
+        below root: URL,
+        fileManager: FileManager
+    ) -> Bool {
+        var current = root
+        for component in relativePath.split(separator: "/") {
+            current.appendPathComponent(String(component), isDirectory: true)
+            if isSymbolicLink(current, fileManager: fileManager) {
+                return true
+            }
+        }
+        return false
     }
 }
 

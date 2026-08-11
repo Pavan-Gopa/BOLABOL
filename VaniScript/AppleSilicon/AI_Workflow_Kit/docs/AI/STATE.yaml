@@ -1,123 +1,100 @@
-# LOCAL_ASR_COREML track — ACTIVE
-# Product scope: AI_Workflow_Kit/docs/LOCAL_ASR_COREML_STEPS.md
-# Architecture: AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ARCHITECTURE.md
-# Acceptance: AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ACCEPTANCE.md
-# Reference product (read-only): /Users/pavan/Documents/AI Projects/Bolabol
-# Prior track CLOUD_PROVIDER_STABILIZATION parked mid-CPS-01.
+# Live orchestration state — Orchestrator owns this file.
+# Keep it simple. Project-agnostic template.
 
-current_step: LASR-01
-step_description: >
-  Catalog + install-source contracts: LocalASRModelDescriptor, backends,
-  capabilities, required layout, install sources for Parakeet / Canary Flash /
-  Canary 1B; SharedModelsRoot paths; migration-safe AppSettings; pin FluidAudio
-  0.15.5. No download/engine/UI yet.
-
+project_prefix: vaniscript-as
+onboarding:
+  status: complete
+  model_pairs_confirmed: true
+  completed_at: 2026-08-11T05:55:29Z
+current_step: S1
+# Exact STEPS.md Do text while one item is actively assigned; Main owns/clears it.
+current_work_item: Add minimal local ASR engine and audio preparation contracts
+step_description: >-
+  Port the BOLABOL Parakeet Core ML engine and robust 16 kHz mono preparation
+  into VaniScript without wiring Canary or the product pipeline yet.
 target_files:
-  - Package.swift
-  - Package.resolved
-  - Sources/VaniScriptCore/NativeModelCatalog.swift
-  - Sources/VaniScriptCore/AppSettings.swift
-  - Sources/VaniScriptCore/SharedModelsRoot.swift
-  - Sources/VaniScript/Services/SettingsDiskStore.swift
-  - Tests/VaniScriptCoreTests/NativeModelCatalogTests.swift
-  - Tests/VaniScriptCoreTests/SharedModelsRootTests.swift
-  - Tests/VaniScriptCoreTests/UniversalSettingsTests.swift
-  - AI_Workflow_Kit/docs/AI/FEEDBACK.md
-
-coder_brief: >
-  LASR-01 only. Create descriptor-driven Core contracts for WhisperKit + three
-  in-scope models (parakeet-tdt-06b-v3, canary-180m-flash-coreml,
-  canary-1b-v2-coreml). Pin FluidAudio exact 0.15.5. Migration-safe decode.
-  Canary 1B install source = generic remotePackage placeholder (no Bolabol CDN,
-  no fake Drive URL). Unit tests for IDs/capabilities/paths/Codable. No download
-  bytes, no engines, no UI. Follow LOCAL_ASR_COREML_ARCHITECTURE.md §4–6 and
-  LOCAL_ASR_COREML_STEPS.md LASR-01. Verify: swift build && swift test.
-
+  - Sources/VaniScript/Services/LocalASREngine.swift
+  - Sources/VaniScript/Services/LocalASRAudioPreprocessor.swift
+  - Sources/VaniScript/Services/ParakeetTranscriptionEngine.swift
+  - Tests/VaniScriptTests/LocalASRAudioPreprocessorTests.swift
+  - Tests/VaniScriptTests/ParakeetTranscriptionEngineTests.swift
 completed_steps:
-  - G0
-  - G1
-  - G2
-  - G3
-  - G4
-  - G5
-  - G6
-  - GROK_DONE
-  - U0
-  - U1
-  - U2
-  - U3
-  - UI_DONE
-  - Q1
-  - Q2
-  - Q3
-  - Q4
-  - Q5
-  - Q6
-  - Q7
-  - QWEN_DONE
-  - A1
-  - A2
-  - A3
-  - A4
-  - A5
-  - A6
-  - A7
-  - A8
-  - API_USAGE_DONE
-  - ASR-ARCH
-
+  - S0
+skipped_steps: []
 implementation:
-  status: approved
+  # pending | running | waiting_review | changes_requested | blocked | complete
+  status: pending
   attempts: 0
-
+  # Increment only after evidence evaluates an implementation attempt.
+  # Runtime/provider interruption alone is not an implementation attempt.
+retry_guard:
+  max_attempts_without_progress: 3
+  # Consecutive verified failures for the current approach/failure signature.
+  # First occurrence = 1; same approach + same failure increments; a new
+  # approach/evidence/material failure signature starts a new count at 1.
+  repeated_failure_count: 0
+  last_failure_signature: null
+  blocker: null
+omp:
+  active_agent: null
+  active_role: null
+  last_result_artifact: null
+  model_failure:
+    # none | awaiting_human | backup_authorized
+    status: none
+    role: null
+    primary_agent: null
+    failed_model: null
+    evidence: null
+    backup_agent: null
+    human_instruction: null
+    authorized_at: null
+  interruption:
+    # none | interrupted_no_changes | interrupted_partial | recovered_result | indeterminate
+    status: none
+    role: null
+    agent: null
+    changed_files: []
+    evidence: null
+    recorded_at: null
 review:
-  status: approved
-  last_feedback_file: "AI_Workflow_Kit/docs/AI/FEEDBACK.md"
-
+  status: pending
+  last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  verdict: null
+  note: null
+  # default on unless Human explicitly skips
+  enabled: true
+  # use status: skipped only after an explicit Human opt-out; record why in note
 qa:
-  status: green
-  last_report: "QA/REPORT.md"
-  suite: "LASR-01 full suite: 158/158 PASS; Swift 338 tests in 47 suites; Electron compile GREEN."
+  status: pending
+  last_report: AI_Workflow_Kit/docs/AI/REPORT.md
+  suite: null
   bugs_open: 0
-  note: "QA GREEN. LASR-01 gaps closed; no product bugs. No post-tag advanced."
-
-next_actor: orchestrator
-
+  note: null
+  # recommended on; Human may opt out
+  enabled: true
+  # use status: skipped only after an explicit Human opt-out; record why in note
+security:
+  next_run: none
+  note: >-
+    Offer once near release when work is ready (optional). Top models only:
+    GLM 5.2 max, Sol max, or Opus 5 max. Not every step. Not Terra/Luna.
+next_actor: coder
 track: LOCAL_ASR_COREML
-prior_track: CLOUD_PROVIDER_STABILIZATION
-prior_track_status: PARKED_AT_CPS-01_CHANGES_REQUESTED
-track_status: IN_PROGRESS
-
-working_roots:
-  - AppleSilicon
-
-checkpoint:
-  last_pre_tag: "local-asr-coreml/pre-LASR-01"
-  last_post_tag: "local-asr-coreml/ASR-ARCH-done"
-  last_commit: "4b59628"
-  note: "Remote push DISABLED — local tags only. Human: git push && git push --tags when ready."
-
 plan_files:
-  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_STEPS.md
-  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ARCHITECTURE.md
-  - AI_Workflow_Kit/docs/LOCAL_ASR_COREML_ACCEPTANCE.md
-  - AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md
-  - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
-  - AI_Workflow_Kit/docs/AI/GIT_CHECKPOINTS.md
+  - PIPELINE.md
+  - AI_Workflow_Kit/docs/STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
-  - AI_Workflow_Kit/docs/AI/IMPLEMENTATION_ENGINEER.md
-
-human_notes:
-  models_in_scope:
-    - id: parakeet-tdt-06b-v3
-      backend: FluidAudio Core ML/ANE
-      download: Hugging Face / FluidAudio (LASR-02)
-    - id: canary-180m-flash-coreml
-      backend: Canary Core ML/ANE
-      languages: EN DE FR ES
-      download: HF aufklarer/Canary-180M-Flash-CoreML (LASR-02)
-    - id: canary-1b-v2-coreml
-      backend: Canary Core ML/ANE
-      download: Google Drive remote package — Human must supply URL/layout/hashes before LASR-02 close
-  blocked_later:
-    - LASR-02 Canary 1B concrete release metadata (Drive URL, package ID, SHA-256, layout)
+  - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
+checkpoint:
+  last_pre_tag: null
+  last_post_tag: null
+  last_commit: null
+coder_brief: |
+  S1 only: port the BOLABOL Parakeet engine, minimal app-target engine contract,
+  and robust audio preprocessor. Preserve current catalog/download work. Do not
+  wire Canary, NativeProcessingPipeline, Models UI, or cloud download behavior.
+notes: |
+  Human requested all three BOLABOL Core ML engines. Existing LASR-01 catalog
+  and LASR-02 download/presence work is preserved. Canary 1B cloud metadata is
+  intentionally deferred; current scope assumes a verified local package.

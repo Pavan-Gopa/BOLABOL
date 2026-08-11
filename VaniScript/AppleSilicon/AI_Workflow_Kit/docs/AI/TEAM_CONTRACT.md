@@ -1,143 +1,157 @@
-# AI Team Contract — VaniScript
+# AI Team Contract
+
+Keep this light. Human ↔ **Orchestrator** only for process control.
 
 ## Source of truth (priority)
 
-1. `AI_Workflow_Kit/docs/AI/STATE.yaml` — **what to do right now**
-2. `AI_Workflow_Kit/docs/QWEN_MCP_STEPS.md` / `GROK_MCP_STEPS.md` / `UI_AS_STEPS.md` — step card for `current_step`
-3. `AI_Workflow_Kit/docs/QWEN_ARCHITECTURE.md` — architectural spec (Qwen track)
-4. `AI_Workflow_Kit/docs/PROJECT_CONTEXT.md` — repo map
-5. `AI_Workflow_Kit/docs/DECISIONS.md` — ADR log / escalations / narrowed scope
+1. Authoritative plan files listed in `PROJECT_CONTEXT.md` (if any)  
+2. `STATE.yaml` — what to do **right now**  
+3. `STEPS.md` — step cards  
+4. `DECISIONS.md` — ADRs  
+5. `PROJECT_CONTEXT.md` — repo map + commands  
+6. `PIPELINE.md` — simple human overview  
+
+Higher wins on conflict. Plan vs code conflict → **Architect** before large Coder work.
+
+---
 
 ## Roles
 
-| Role | Model | Writes code? | Updates |
-|------|-------|--------------|---------|
-| **Architect** *(on demand)* | Qwen 3.8 Max / Claude | no product features | ADR → `DECISIONS.md`, `*_ARCHITECTURE.md`, `*_STEPS.md`; role doc: `ARCHITECT.md` |
-| **Planner** *(on demand)* | Qwen 3.8 Max / Claude | no product features | `*_STEPS.md` |
-| **Orchestrator** | Grok / Claude | only if attempts ≥ 3 | `STATE.yaml`, `DECISIONS.md`, checkpoints; triages bugs |
-| **Implementation Engineer** | **Hy3 / Hi3 / Coder** | **yes** product | code in `target_files`, then `implementation.status` |
-| **Verification Engineer** | **Gemini 3.5 Flash** | no | `FEEDBACK.md`, `review.status` |
-| **QA Script Engineer** | Qwen 3.8 Max | **QA scripts only** under `QA/` | `QA/scripts`, `manifest.json`, `BUG_REPORT.md`, `REPORT.md` |
-| **Human** | you | — | switches models; short commands; dogfood |
+| Role | Writes product code? | Job / write boundary |
+|------|----------------------|----------------------|
+| **Main Orchestrator** | No | Sole owner of state, plans, feedback, reports, routing, checkpoints, and passive metrics recording |
+| **Coder** | Yes, assignment target files only | One implementation/fix; structured result to Main |
+| **Reviewer** | No | Read-only verdict and findings |
+| **Tester** | Tests / QA scripts only | Gate, gap-hunt, structured evidence |
+| **Architect** | No | Read-only research, questions, Architecture Package |
+| **Security** | No | Read-only optional final vulnerability audit |
+| **Human** | — | Context, preferences, supervision and intervention |
 
-No role redesigns architecture unless Orchestrator explicitly allows (Architect packet).
+### Models (summary)
 
-## Workflow — hub = Orchestrator (обязательно)
+| Role | Default |
+|------|---------|
+| Orchestrator | **Grok 4.5 · Max / High** · or **GPT 5.6 Sol · Medium** |
+| Coder | Luna / DeepSeek Flash / Gemini Flash · Max–High |
+| Reviewer | Luna / Gemini · **no DeepSeek** |
+| Tester | Terra · Max / Extra High |
+| Architect | Sol High–Extra High or Terra Max · **not Ultra** |
+| Security | **GLM 5.2 · max** · Sol max · Opus 5 max (final offer only) |
 
-**Все роли общаются только через файлы + Orchestrator.** Human открывает
-**новое окно** для Coder / Reviewer / QA и вставляет **Kick, который выдал
-Orchestrator**. Агенты **не** зовут друг друга («зови Gemini», «зови QA» — **запрещено**).
+Full table: `MODELS.md`.
 
-```
-Human → Orchestrator: «статус» / «приступай»
-        ↓
-Orchestrator читает STATE + FEEDBACK + QA reports
-        → обновляет STATE / checkpoints
-        → выдаёт готовый Kick (copy-paste) + «На очереди: <роль>»
-        ↓
-Human открывает НОВОЕ окно нужного агента → вставляет Kick
-        ↓
-Agent работает → пишет файлы (код / FEEDBACK / QA report)
-        → STATE: next_actor = orchestrator
-        → Human: «Готово. Скажи оркестратору: статус»
-        ↓
-Human → Orchestrator: «статус»  →  (loop)
-```
+---
 
-Типичный круг одного coding-шага:
+## OMP pipeline
 
-```
-Orchestrator PRE-tag + Kick Coder
-  → Coder → waiting_review + next_actor=orchestrator
-Orchestrator Kick Reviewer (Gemini)
-  → Reviewer → approved|changes_requested + next_actor=orchestrator
-Orchestrator Kick QA   (если coding + QA gate)
-  → QA → REPORT/BUG_REPORT + next_actor=orchestrator
-Orchestrator: green → POST-tag → open next → PRE next → Kick Coder
+```text
+Human ↔ Main
+  → fresh Coder → Main verification
+  → fresh Reviewer → Main verification
+  → fresh Tester → Main verification
+  → next step
 ```
 
-### Handoff phrase (все агенты → Human)
+Main dispatches project agents through OMP `task`. Children do not inherit
+Main's conversation history. Every retry is a new task-agent session.
 
-| Кто закончил | Что сказать Human |
-|--------------|-------------------|
-| **Любой** (Coder / Reviewer / QA) | **«Готово. Скажи оркестратору: статус»** |
-| **Запрещено** | «зови Gemini», «зови ревью», «зови QA», «зови Hy3», «зови кодера» |
+### Quality gates (Human preferences)
 
-`next_actor` после сдачи агента **всегда** `orchestrator`. Кого звать дальше
-решает только Orchestrator (и выдаёт Kick).
+| Gate | Default | Notes |
+|------|---------|-------|
+| **Code review** | **On** | Minimum recommended bar. Skip only if Human says so. |
+| **Tester** | **Recommended on** | Orchestrator should include Tester unless Human opts out. |
+| **Security** | **Offer once** near release | Optional. Expensive top models. Not every step. |
 
-### Кто что делает, когда QA нашёл баг
+### Verification gates
 
-| Actor | Action |
-|-------|--------|
-| **QA** | Детектит, пишет `QA/BUG_REPORT.md`, Human: «скажи оркестратору: статус» |
-| **Orchestrator** | Читает баги, открывает fix/retry шаг (scope, `target_files`, PRE-tag), Kick Coder |
-| **Coder** | **Единственный, кто чинит product-код** → снова «статус» оркестратору |
-| **Verifier** | Ре-ревьюит фикс **после Kick от Orchestrator** |
-| **QA** | Ре-ранит suite **после Kick от Orchestrator** |
+This section is the canonical gate contract. Step cards separate:
 
-**Не:** отправлять QA-баги Verifier'у «починить» (Verifier не пишет product-код).
-**Не:** пропускать Orchestrator (потеряются STATE/checkpoints + нет Kick).
-**OK для minor/flaky:** Orchestrator может открыть крошечный fix-шаг с Coder в один прыжок.
+- **Objective gates** — deterministic evidence such as command exit codes,
+  test/build/typecheck results, or artifact existence. Coder runs the assigned
+  objective gates; Tester owns runtime/QA objective gates. Reviewer may repeat
+  relevant commands.
+- **Judgment gates** — engineering evaluation of semantics, accepted
+  architecture, scope, public contracts, failure behavior, and trust
+  boundaries. Reviewer is the primary evaluator; Coder never marks these green.
+
+`waiting_review` means the scoped implementation and required Coder objective
+gates are ready for independent judgment, not that the step is proven correct.
+Only Main combines verified objective evidence, Reviewer judgment, and enabled
+QA results to transition the step.
+
+### Tester (when enabled)
+
+1. Run the assigned runtime/QA Objective Gates.
+2. Gap-hunt intended feature behavior and coverage against current source.
+3. Add tests only in assignment-approved test/QA paths.
+4. Return structured counts, commands, new tests, and failures to Main.
+5. Main inspects every Tester-authored test diff for weakened assertions,
+   implementation-coupled checks, and real product-behavior coverage.
+6. A substantial test diff receives a short targeted Reviewer pass before the
+   step closes.
+7. Main verifies and writes `REPORT.md` / `BUG_REPORT.md`.
+
+### Architect (when needed)
+
+Research → options/questions → recommendation → Architecture Package. Main
+persists accepted steps and ADRs.
+
+### Bugs and security findings
+
+| Who | Action |
+|-----|--------|
+| Tester / Security | Return structured evidence to Main |
+| Main | Verify, write canonical report/state, issue Coder fix assignment |
+| Coder | Patch product within target files |
+| Reviewer | Re-review after fix |
+
+Do not send bugs to another worker directly. Do not put live secrets in output.
+
+---
 
 ## Hard rules
 
-1. Keep project **buildable/testable** every step (`swift test` / `swift build`; Electron `npm run compile`).
-2. **One step at a time** (G1…G6 / U0…U3 / Q1…Q7).
-3. Diff **only** in `STATE.yaml` → `target_files`.
-4. **Git checkpoint before every step and after every approved step** — commit + annotated tag + push when remote allows. See `GIT_CHECKPOINTS.md`. Script: `AI_Workflow_Kit/script/checkpoint.sh`.
-5. Communication between agents is **via files only** — human switches models.
-6. Do **not** force-update (`-f`) tags; preserve rollback points.
-7. GROK_MCP: no UI density redesign. UI_AS: Apple Silicon only. QWEN_MCP: parity с Codex/Grok, no UI redesign.
-8. **No silent MCP→API chat fallback** (Codex/Grok/Qwen parity).
-9. **Readable, well-commented code** — see § Comments below.
-10. **Graphify first (token savings — mandatory for orientation):** before bulk greps / multi-file dumps, query the knowledge graph. Prefer Cline MCP tools (server `graphify`); else CLI `graphify query|explain|path --graph "$GRAPH"`. Skill: `VaniScript/.agents/skills/graphify/SKILL.md`. Rebuild: `./AI_Workflow_Kit/script/graphify_rebuild.sh`. Dev-tool, not product code.
-11. **QA прогоняет ВСЕ suite'ы при каждом QA-шаге** (`swift test`/`swift build` + Electron `npm run compile` + MCP black-box smoke). Любой suite красный → RED. Тестер отвечает за всё приложение, не только за свой шаг.
-12. **Никогда** `git add -A` вне VaniScript-скопа (монорепо `AI Projects`).
+1. One step and one active specialized worker at a time.
+2. Product diffs stay inside `STATE.yaml` / assignment target files.
+3. Specialized agents return only to Main; no worker-to-worker handoff.
+4. Only Main writes workflow documents or commits/tags/pushes.
+5. No silent architecture redesign by Coder.
+6. No fake data or fake green in production.
+7. Graphify first when current; verify in real source.
+8. Fresh worker context for every role run and retry.
+9. Main verifies repository/test evidence before every transition.
+10. Passive metrics are Main-only observation. Telemetry failure never changes
+    workflow state, gates, retries, failover, recovery, checkpoints, or routing.
+11. Stop three materially identical failures of the same approach and surface
+    the blocker; changed approaches/evidence/failure states are progress.
+12. Three failed Coder runs never authorize Main to write product code; stop,
+    route to Architect when appropriate, or request Human direction.
+13. Main alone checks or reopens `STEPS.md` `Do` boxes after source/evidence
+    verification; workers never mutate canonical checklist state.
 
-## Comments (mandatory quality bar)
+---
 
-Цель: человек или другой агент через месяцы понимает **what / why / constraints** без восстановления плана.
+## Comments (quality bar)
 
-**Required:**
+| Where | What |
+|-------|------|
+| Module header | Role, ownership, must-not (short) |
+| Non-obvious logic | **Why** |
+| Public API | Intent + invariants |
+| TODOs | Tied to a step id |
 
-| Where | What to document |
-|-------|------------------|
-| File / module header | Role in system (1–5 lines): layer, what it owns, what it must not do |
-| Non-obvious logic | **Why**, not a restate of the code |
-| Public API | Brief intent + types/invariants |
-| Async / concurrency | Ownership, cancel/termination rules, "no blocking here" |
-| IPC / protocol | Message format, who sends/receives, error handling |
-| Safety / permissions | Token handling, MCP isolation, no-fallback |
-| TODOs | `// TODO(Q3): …` tied to a step ID when deferral is intentional |
+No secrets in comments. No novel on every getter.
 
-**Forbidden:** комментировать тривиальные getter/setter; устаревшие комменты; фейковые пояснения для stub; секреты/ключи в комментах.
+---
 
-**Language:** English preferred in code comments; Russian OK in plan docs и Human communication.
+## Worker handoff
 
-**Verifier:** отсутствие essential comments на новом нетривиальном коде (типы, схемы, provider/MCP логика) = **changes_requested**.
+Workers return the structured schema defined by their `.omp/agents/*.md` file.
+They do not write `FEEDBACK.md`, route the next role, or ask the Human to copy a
+prompt. Main validates the result and persists the canonical workflow record.
 
-## Graphify (development of this repo)
-
-| Item | Path / command |
-|------|----------------|
-| Graph output | `VaniScript/graphify-out/graph.json` |
-| Skill | `VaniScript/.agents/skills/graphify/SKILL.md` (+ `.cline/skills/graphify/`) |
-| Cline MCP | `~/.cline/mcp.json` + `~/.cline/data/settings/cline_mcp_settings.json` — `./AI_Workflow_Kit/script/cline_graphify_mcp.sh` |
-| Rebuild | `./AI_Workflow_Kit/script/graphify_rebuild.sh` (`--force` after big deletes) |
-| Prefer | MCP tools **or** `graphify query/explain/path` over dumping trees |
-| When | Coder, Verifier, QA, Orchestrator — anytime navigating code beyond `target_files` |
-| Not | Substitute for `STATE.yaml` / `target_files` / step cards — still follow scope |
-
-## Human short commands
-
-**Основной (и почти единственный) цикл:**
-
-| Phrase | Кто | Что происходит |
-|--------|-----|----------------|
-| **`статус`** / `приступай` / `зови оркестратора` | **Orchestrator** | Читает файлы, двигает STATE, выдаёт **Kick** следующего |
-| *(вставить Kick в новое окно)* | Coder / Reviewer / QA | Работает по Kick; сдаёт с `next_actor: orchestrator` |
-
-Legacy-фразы (`зови Hy3`, `зови Gemini`, `зови QA`) **не нужны** — Kick всегда
-из ответа Orchestrator. Если агент сам сказал «зови Gemini» — **игнор**; скажи
-оркестратору `статус`.
+On a retry, Main adds only verified attempt memory: approach, observed result,
+evidence, and why it was rejected. Worker transcripts and reasoning are never
+handoff context. The durable record lives in `FEEDBACK.md`; the assignment
+carries only the compact task-relevant subset.

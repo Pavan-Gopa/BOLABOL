@@ -49,6 +49,15 @@ ZerdaProject/
 # shared assets in this repository, while preserving Electron as its own nested
 # git project and keeping local user data/generated artifacts out of git.
 VaniScript/*
+# Project-level OMP workflow installed for the mixed VaniScript workspace.
+!VaniScript/.omp/
+!VaniScript/.omp/**
+!VaniScript/AI_Workflow_Kit/
+!VaniScript/AI_Workflow_Kit/**
+!VaniScript/grilling/
+!VaniScript/grilling/**
+!VaniScript/PIPELINE.md
+!VaniScript/ORCHESTRATOR_FIRST_PROMPT.md
 !VaniScript/AppleSilicon/
 !VaniScript/AppleSilicon/**
 !VaniScript/Shared/

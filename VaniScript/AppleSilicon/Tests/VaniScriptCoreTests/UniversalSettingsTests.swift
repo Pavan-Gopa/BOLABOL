@@ -84,7 +84,7 @@ struct UniversalSettingsTests {
         #expect(decoded.localAsrModels["canary-1b-v2-coreml"]?.runtime == .canary)
     }
 
-    @Test("disk synchronization does not treat new ASR runtimes as WhisperKit")
+    @Test("disk synchronization validates new ASR runtimes with their own presence policy")
     func preservesNewASRRuntimeStateDuringSynchronization() {
         var settings = AppSettings.defaults
         settings.transcriptionProvider = "canary-1b-v2-coreml"
@@ -104,9 +104,9 @@ struct UniversalSettingsTests {
         settings.synchronizeLocalModelsWithDisk()
 
         #expect(settings.transcriptionProvider == "canary-1b-v2-coreml")
-        #expect(settings.localAsrModels["parakeet-tdt-06b-v3"]?.status == .downloaded)
+        #expect(settings.localAsrModels["parakeet-tdt-06b-v3"]?.status == .failed)
         #expect(settings.localAsrModels["parakeet-tdt-06b-v3"]?.path == "/installed/parakeet-tdt-0.6b-v3")
-        #expect(settings.localAsrModels["canary-1b-v2-coreml"]?.status == .downloaded)
+        #expect(settings.localAsrModels["canary-1b-v2-coreml"]?.status == .failed)
         #expect(settings.localAsrModels["canary-1b-v2-coreml"]?.path == "/installed/canary-1b-v2")
     }
 

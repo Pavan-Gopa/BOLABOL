@@ -771,7 +771,25 @@ extension AppSettings {
     }
 
     public func isDownloadedLocalASRModelActive(id: String) -> Bool {
-        transcriptionProvider == id && localAsrModels[id]?.status == .downloaded
+        guard transcriptionProvider == id,
+              let model = localAsrModels[id],
+              model.status == .downloaded,
+              let descriptor = NativeModelCatalog.descriptor(for: id),
+              model.runtime == descriptor.settingsRuntime,
+              descriptor.capabilities.isAvailable(
+                  onMacOSMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+              )
+        else {
+            return false
+        }
+
+        // Keep legacy path-less states visible until disk reconciliation can
+        // migrate them; any persisted path must pass the exact presence policy.
+        guard let path = model.path, !path.isEmpty else { return true }
+        return NativeModelCatalog.isModelPresent(
+            descriptor,
+            at: URL(fileURLWithPath: path, isDirectory: true)
+        )
     }
 
     public func isDownloadedLocalTranslationModelActive(id: String) -> Bool {
@@ -801,12 +819,52 @@ extension AppSettings {
         for (id, model) in localAsrModels {
             if model.status == .notDownloaded {
                 localAsrModels[id] = resetToNotDownloaded(model)
-            } else if model.runtime == .whisper,
-                      model.status == .downloaded,
-                      !LocalModelVerification.verifyModelPath(model.path, isWhisper: true) {
-                // LASR-02 owns Parakeet/Canary completeness. LASR-01 must not
-                // classify their native folders as WhisperKit and erase state.
-                localAsrModels[id] = resetToNotDownloaded(model)
+                continue
+            }
+
+            guard let descriptor = NativeModelCatalog.descriptor(for: id),
+                  model.runtime == descriptor.settingsRuntime
+            else {
+                continue
+            }
+
+            // An in-flight manager operation owns its staged directory. Do not
+            // turn a progress update into a failed state before its atomic
+            // replacement has completed.
+            guard model.status != .downloading else { continue }
+
+            let presentPath: String? = {
+                guard let path = model.path, !path.isEmpty,
+                      LocalASRPresencePolicy.isPresent(
+                          descriptor,
+                          at: URL(fileURLWithPath: path)
+                      )
+                else {
+                    return nil
+                }
+                if descriptor.backend == .whisperKitCoreML {
+                    return LocalModelVerification.canonicalWhisperKitModelPath(path) ?? path
+                }
+                return path
+            }()
+
+            if let presentPath {
+                var ready = model
+                ready.status = .downloaded
+                ready.path = presentPath
+                ready.progress = 1
+                ready.progressLabel = ready.progressLabel ?? "Ready"
+                ready.error = nil
+                localAsrModels[id] = ready
+            } else if model.status == .downloaded || model.status == .failed {
+                // Preserve an external path/reference for migration, but never
+                // leave an invalid or disappeared install in a Ready state.
+                var failed = model
+                failed.status = .failed
+                failed.progress = nil
+                failed.progressLabel = "Validation failed"
+                failed.error = "Model files are incomplete or failed integrity validation."
+                localAsrModels[id] = failed
             }
         }
         for (id, model) in localTranslationModels {

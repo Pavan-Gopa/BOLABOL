@@ -1,74 +1,101 @@
-# Project Context — VaniScript (Apple Silicon + Electron)
+# Project Context
 
-## What this is
+> Fill this once when dropping the kit into a new repo.  
+> Orchestrator and workers treat this as the map of the territory.
 
-**VaniScript** — macOS app for lecture/kirtan transcription, translation, review, and Shorts/Reels export.
+## Identity
 
-| Variant | Path | Stack | Local MCP |
-|---------|------|-------|-----------|
-| **Apple Silicon (primary)** | `VaniScript/AppleSilicon/` | SwiftUI + VaniScriptCore | `127.0.0.1:19790` |
-| **Electron** | `VaniScript/Electron/` | React + Electron | `127.0.0.1:19789` |
+| | |
+|--|--|
+| **Product** | VaniScript Apple Silicon |
+| **One-liner** | Native macOS workflow for media import/recording, transcription, translation, review, and export using local and explicitly configured cloud providers. |
+| **Platform** | macOS 14+, Apple Silicon (`arm64`) |
+| **Stack** | Swift 6, SwiftUI, AppKit, SwiftPM, WhisperKit/Core ML, MLX Swift, FluidAudio |
+| **Current train / version** | Active native Apple Silicon application |
+| **Project prefix** (git tags) | `vaniscript-as` |
+| **Master plan file** | `STEPS.md` only until a product task supplies a more specific plan |
 
-Workspace root: `AI Projects/` (multi-project). **Do not** put app source in workspace root. Nested Electron has its own `.git`; Apple Silicon is tracked in the workspace repo.
+## Architecture (one-liner)
 
-## Active tracks (orchestrated)
+SwiftUI/AppKit views → `WorkflowStore` orchestration → native processing, provider, MCP, and export services → `VaniScriptCore` domain models, contracts, and persistence.
 
-| Track | Steps | Goal |
-|-------|-------|------|
-| **GROK_MCP** | G1 → G6 → `GROK_DONE` | Grok as external MCP client + embedded chat (mirror Codex on AS; Electron functional) |
-| **UI_AS** | U0 → U3 → `UI_DONE` | Density / visual polish **Apple Silicon only** (after GROK_DONE) |
-| **QWEN_MCP** | Q1 → Q7 → `QWEN_DONE` | Qwen 3.8 Max-Preview as first-class AI provider (3 surfaces) |
-| **API_USAGE** | A1 → A8 → `API_USAGE_DONE` | API & Usage tab reorg + new cloud providers (AS only) |
+## Repo map
 
-Plans: `AI_Workflow_Kit/docs/GROK_MCP_STEPS.md`, `UI_AS_STEPS.md`, `QWEN_MCP_STEPS.md`, `API_USAGE_STEPS.md`.  
-State of truth: `AI_Workflow_Kit/docs/AI/STATE.yaml`.
-
-## Architecture notes (relevant)
-
-### MCP
-
-- VaniScript is an **MCP server** (SSE / Streamable HTTP) with scoped tools.
-- External agents (Codex, Claude, Cursor, Antigravity, **Grok**) connect in.
-- **Embedded AS chat (MCP route):** launches **Codex CLI** subprocess with isolated MCP profile `vaniscript_embedded` (`CodexAgentService`).
-- **Embedded Electron chat today:** Gemini API function-calling (not Codex CLI).
-- Security: no API keys in project state; token only in env / settings; destructive tools need confirmation.
-
-### Codex reference (do not break)
-
-- `Sources/VaniScriptCore/CodexAgentSupport.swift`
-- `Sources/VaniScript/Services/CodexAgentService.swift`
-- `Sources/VaniScript/Views/ChatSidebarView.swift` (MCP vs API routes)
-- `Sources/VaniScriptCore/McpContracts.swift` (`McpClientProfileID`, setupText, classifier)
-
-### Grok target behavior
-
-- External profile like Codex (`grok mcp add …`).
-- Embedded: Grok CLI headless (`~/.grok/bin/grok`, `grok -p`, MCP isolated), account via `grok login` — **no silent fallback** to Gemini.
-- Isolation: ephemeral project config; token only in child env.
-
-### UI redesign (track UI_AS only)
-
-- Theme: `Sources/VaniScript/Theme/VaniScriptTheme.swift`
-- Editor: `Sources/VaniScript/Views/VisualClipEditorView.swift` (`SliderRow`, inspector)
-- **Electron visual redesign is out of scope** for this program of work.
-
-## Verify commands
-
-```bash
-# Apple Silicon
-cd "VaniScript/AppleSilicon" && swift test
-# or
-cd "VaniScript/AppleSilicon" && swift build
-
-# Electron (only when step G5 / Electron target_files)
-cd "VaniScript/Electron" && npm test
+```text
+VaniScript/AppleSilicon/
+├── Sources/VaniScript/        # executable app, views, stores, native services
+├── Sources/VaniScriptCore/    # reusable domain models, contracts, provider logic
+├── Tests/                     # app and core Swift tests
+├── QA/                        # surface/contract QA and reports
+├── script/                    # build, run, packaging, media-tool scripts
+├── Assets/                    # application icons
+├── AI_Workflow_Kit/           # orchestration state and scripts
+├── .omp/                      # project agents, commands, role-model mappings
+├── grilling/                  # discovery and decision skill
+└── graphify-out/              # ignored local knowledge graph
 ```
 
-## Rules
+**Git layout:** workspace repository rooted at `AI Projects`; this project is
+the `VaniScript/AppleSilicon` subfolder. Checkpoints must stay scoped to this
+stage path and must not include sibling projects.
 
-1. One step at a time; only `STATE.yaml` → `target_files`.
-2. Agents talk **via files only**; human switches models.
-3. **Git checkpoint before every step and after every approved step** (commit + annotated tag + push when remote allows). See `docs/AI/GIT_CHECKPOINTS.md`.
-4. No UI density work during GROK_MCP steps.
-5. No MCP tools catalog expansion unless a step explicitly says so.
-6. Orchestrator does not write product code until `attempts >= 3`.
+## OMP workflow
+
+Launch from this project root:
+
+```bash
+bash AI_Workflow_Kit/script/omp_workflow.sh
+```
+
+Project agents and primary/backup model aliases live in `.omp/`. The Human may
+change any `modelRoles.workflow_*` mapping through `Alt+M` without changing role
+instructions.
+
+## Build / test commands
+
+Always run from `VaniScript/AppleSilicon`:
+
+```bash
+swift build
+swift test
+bash QA/run_all.sh
+
+# Build and launch the fresh native app
+./script/build_and_run.sh
+
+# Build/run verification mode
+./script/build_and_run.sh --verify
+```
+
+## Key constraints
+
+| Allowed | Forbidden |
+|---------|-----------|
+| Native Swift/SwiftUI/AppKit, Core ML/WhisperKit, MLX Swift, explicit CLI/cloud integrations | Electron, Node, or browser runtimes inside the native app |
+| Secrets in settings, Keychain, or child-process environment | Secrets in sources, logs, Git, or workflow reports |
+| Explicit provider selection and honest capability/error reporting | Silent MCP-chat → API fallback or fabricated provider balances/capabilities |
+
+Additional hard rules for this product:
+
+- Build only for Apple Silicon (`arm64`) and preserve the macOS 14 minimum.
+- Do not modify the Electron VaniScript or SmartScribe sibling projects.
+- Keep provider usage recording best-effort; telemetry failure must not break product operations.
+
+## Workflow docs priority
+
+1. Master plan file (if any)
+2. `AI_Workflow_Kit/docs/AI/STATE.yaml`
+3. `AI_Workflow_Kit/docs/STEPS.md`
+4. `AI_Workflow_Kit/docs/DECISIONS.md`
+5. This file
+
+## Graphify
+
+```bash
+cd "<PROJECT_ROOT>"
+bash AI_Workflow_Kit/script/graphify_rebuild.sh
+graphify query "…" --graph graphify-out/graph.json
+```
+
+The rebuild attempts semantic extraction and falls back to local AST code-only
+indexing when no supported LLM backend is configured.

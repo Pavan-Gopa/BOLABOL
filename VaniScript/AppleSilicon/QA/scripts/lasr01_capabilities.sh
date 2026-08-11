@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # LASR-01: backend, source, language, auto-detect, layout and OS capability matrix.
+# Step-aware: LASR-01 keeps its original SDK-layout spelling; LASR-02+ validates the explicit required SDK layout.
 set -uo pipefail
 AS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$AS_DIR"
@@ -12,6 +13,13 @@ path = Path("Sources/VaniScriptCore/NativeModelCatalog.swift")
 if not path.is_file():
     raise SystemExit(f"FAIL: {path} missing")
 text = path.read_text(encoding="utf-8")
+
+state_path = Path("AI_Workflow_Kit/docs/AI/STATE.yaml")
+state = state_path.read_text(encoding="utf-8") if state_path.is_file() else ""
+step_match = re.search(r"^current_step:\s*([A-Za-z0-9_-]+)", state, re.M)
+current_step = step_match.group(1) if step_match else ""
+lasr_match = re.fullmatch(r"LASR-(\d+)", current_step)
+is_lasr02_or_later = lasr_match is not None and int(lasr_match.group(1)) >= 2
 
 expected_25 = [
     "bg", "hr", "cs", "da", "nl", "en", "et", "fi", "fr", "de",
@@ -53,7 +61,6 @@ required = {
         "supportsAutoLanguageDetect: true",
         "supportedLanguageCodes: parakeetLanguageCodes",
         "maxEngineWindowSeconds: 30",
-        "LocalASRRequiredLayout(isSDKManaged: true)",
     ),
     ids[1]: (
         "backend: .canaryCoreML",
@@ -87,6 +94,37 @@ for model_id, snippets in required.items():
         if snippet not in segments[model_id]:
             raise SystemExit(f"FAIL: {model_id} missing capability/source contract: {snippet}")
 
+parakeet_segment = segments[ids[0]]
+if is_lasr02_or_later:
+    layout_match = re.search(
+        r"requiredLayout:\s*LocalASRRequiredLayout\(\s*"
+        r"requiredRelativePaths:\s*\[(?P<paths>.*?)\],\s*"
+        r"isSDKManaged:\s*true\s*\)",
+        parakeet_segment,
+        re.S,
+    )
+    if not layout_match:
+        raise SystemExit(
+            "FAIL: parakeet-tdt-06b-v3 must retain its explicit SDK-managed required layout in LASR-02+"
+        )
+    expected_parakeet_layout = [
+        "Preprocessor.mlmodelc",
+        "Encoder.mlmodelc",
+        "Decoder.mlmodelc",
+        "JointDecisionv3.mlmodelc",
+        "parakeet_vocab.json",
+    ]
+    actual_parakeet_layout = re.findall(r'"([^"]+)"', layout_match.group("paths"))
+    if actual_parakeet_layout != expected_parakeet_layout:
+        raise SystemExit(
+            "FAIL: parakeet-tdt-06b-v3 required SDK layout no longer matches the LASR-02 presence contract"
+        )
+else:
+    if "LocalASRRequiredLayout(isSDKManaged: true)" not in parakeet_segment:
+        raise SystemExit(
+            "FAIL: parakeet-tdt-06b-v3 missing capability/source contract: LocalASRRequiredLayout(isSDKManaged: true)"
+        )
+
 for canary_id in ids[1:]:
     if "supportsAutoLanguageDetect: true" in segments[canary_id]:
         raise SystemExit(f"FAIL: {canary_id} must not support auto language detection")
@@ -97,5 +135,8 @@ revision = re.search(r'canaryFlashRevision\s*=\s*"([0-9a-f]+)"', text)
 if not revision or len(revision.group(1)) != 40:
     raise SystemExit("FAIL: Canary Flash Hugging Face revision is not an immutable 40-hex commit")
 
-print("PASS: LASR-01 capabilities, install sources, layouts and OS gates match the contract.")
+if is_lasr02_or_later:
+    print("PASS: LASR-02+ capabilities retain the Parakeet SDK-managed required layout and source matrix.")
+else:
+    print("PASS: LASR-01 capabilities, install sources, layouts and OS gates match the contract.")
 PY

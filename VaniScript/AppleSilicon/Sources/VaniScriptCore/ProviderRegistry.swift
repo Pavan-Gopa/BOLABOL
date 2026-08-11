@@ -160,7 +160,23 @@ public enum ProviderRegistry {
                 guard state.status == .downloaded else { return false }
                 switch kind {
                 case .transcription:
-                    return LocalModelVerification.verifyModelPath(state.path, isWhisper: true)
+                    guard let descriptor = NativeModelCatalog.descriptor(for: id),
+                          state.runtime == descriptor.settingsRuntime,
+                          descriptor.capabilities.isAvailable(
+                              onMacOSMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+                          )
+                    else {
+                        return false
+                    }
+                    if descriptor.backend == .whisperKitCoreML,
+                       LocalModelVerification.skipVerificationForTesting {
+                        return LocalModelVerification.verifyModelPath(state.path, isWhisper: true)
+                    }
+                    guard let path = state.path, !path.isEmpty else { return false }
+                    return NativeModelCatalog.isModelPresent(
+                        descriptor,
+                        at: URL(fileURLWithPath: path, isDirectory: true)
+                    )
                 case .translation:
                     return state.runtime == .mlx
                         && LocalModelVerification.verifyTranslationModelPath(state.path, modelID: id)

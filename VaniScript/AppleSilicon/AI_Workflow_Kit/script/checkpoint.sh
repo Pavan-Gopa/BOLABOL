@@ -1,111 +1,166 @@
 #!/usr/bin/env bash
-# Git checkpoints for GROK_MCP (G0–G6), UI_AS (U0–U3), QWEN_MCP (Q0–Q7) and API_USAGE (A1–A8).
-# Scoped to VaniScript paths — never git add -A on the whole AI Projects monorepo.
+# checkpoint.sh — scoped git checkpoints for the universal AI workflow kit
 #
-# Usage:
-#   ./AI_Workflow_Kit/script/checkpoint.sh pre G1
-#   ./AI_Workflow_Kit/script/checkpoint.sh post G1 "short description"
-#   ./AI_Workflow_Kit/script/checkpoint.sh pre Q1
-#   ./AI_Workflow_Kit/script/checkpoint.sh post Q1 "short description"
-#   ./AI_Workflow_Kit/script/checkpoint.sh pre A1
-#   ./AI_Workflow_Kit/script/checkpoint.sh post A1 "short description"
-#   ./AI_Workflow_Kit/script/checkpoint.sh list
-#   ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post G1
+# Stages only this project tree (or WF_STAGE_PATHS). Never blindly git add -A
+# on a monorepo parent.
+#
+# Usage (from project root that contains AI_Workflow_Kit/):
+#   bash AI_Workflow_Kit/script/checkpoint.sh pre S1
+#   bash AI_Workflow_Kit/script/checkpoint.sh post S1 "short description"
+#   bash AI_Workflow_Kit/script/checkpoint.sh list
+#   bash AI_Workflow_Kit/script/checkpoint.sh rollback pre|post S1
+#
+# Env:
+#   WF_PROJECT_PREFIX   tag/commit prefix (default: proj)
+#   WF_STAGE_PATHS      explicit whitespace-separated paths relative to git root;
+#                       use newline separation for paths containing spaces.
+#                       Required whenever dirty work should be committed.
+#   WF_PUSH_CHECKPOINTS set to 1 to push branch and tag (default: local only)
+
 set -euo pipefail
 
-AS_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-# Git root may be monorepo (AI Projects) or a nested repo.
-cd "$AS_ROOT"
-GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
-  echo "error: not inside a git work tree" >&2
-  exit 1
-}
-cd "$GIT_ROOT"
-
-# Paths relative to git root to stage (Apple Silicon always; Electron optional via ENV).
-REL_AS="VaniScript/AppleSilicon"
-REL_ELECTRON="VaniScript/Electron"
-INCLUDE_ELECTRON="${CHECKPOINT_INCLUDE_ELECTRON:-0}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PRODUCT_PREFIX="${WF_PROJECT_PREFIX:-proj}"
+PUSH_CHECKPOINTS="${WF_PUSH_CHECKPOINTS:-0}"
 
 die() { echo "error: $*" >&2; exit 1; }
 
+case "$PUSH_CHECKPOINTS" in
+  0|1) ;;
+  *) die "WF_PUSH_CHECKPOINTS must be 0 or 1" ;;
+esac
+
+cd "$PROJECT_ROOT"
+GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git work tree"
+cd "$GIT_ROOT"
+
+# Resolve the explicitly authorized commit scope. With no scope, checkpoints may
+# tag a clean HEAD but never absorb working-tree changes.
+STAGE_PATHS=()
+if [[ -n "${WF_STAGE_PATHS:-}" ]]; then
+  if [[ "$WF_STAGE_PATHS" == *$'\n'* ]]; then
+    while IFS= read -r stage_path; do
+      [[ -n "$stage_path" ]] && STAGE_PATHS+=("$stage_path")
+    done <<<"$WF_STAGE_PATHS"
+  else
+    # shellcheck disable=SC2206
+    STAGE_PATHS=($WF_STAGE_PATHS)
+  fi
+fi
+
+for ((i = 0; i < ${#STAGE_PATHS[@]}; i++)); do
+  stage_path="${STAGE_PATHS[$i]}"
+  stage_path="${stage_path#./}"
+  stage_path="${stage_path%/}"
+  [[ -n "$stage_path" ]] || die "WF_STAGE_PATHS contains an empty path"
+  [[ "$stage_path" != /* ]] || die "stage path must be relative to git root: $stage_path"
+  if [[ "/$stage_path/" == *"/../"* ]]; then
+    die "stage path may not traverse outside git root: $stage_path"
+  fi
+  STAGE_PATHS[$i]="$stage_path"
+done
+
 resolve_step() {
   local step="${1:-}"
-  if [[ "$step" =~ ^G[0-6]$|^GROK_DONE$ ]]; then
-    TRACK_PREFIX="grok"
-    TRACK_LABEL="GROK_MCP"
-  elif [[ "$step" =~ ^U[0-3]$|^UI_DONE$ ]]; then
-    TRACK_PREFIX="ui"
-    TRACK_LABEL="UI_AS"
-  elif [[ "$step" =~ ^Q[0-7]$|^QWEN_DONE$ ]]; then
-    TRACK_PREFIX="qwen"
-    TRACK_LABEL="QWEN_MCP"
-  elif [[ "$step" =~ ^A[1-8]$|^API_USAGE_DONE$ ]]; then
-    TRACK_PREFIX="apiusage"
-    TRACK_LABEL="API_USAGE"
-  elif [[ "$step" =~ ^ASR-ARCH$|^LASR-0[1-9]$|^LOCAL_ASR_DONE$ ]]; then
-    TRACK_PREFIX="local-asr-coreml"
-    TRACK_LABEL="LOCAL_ASR_COREML"
-  else
-    die "step must be G0..G6, GROK_DONE, U0..U3, UI_DONE, Q0..Q7, QWEN_DONE, A1..A8, API_USAGE_DONE, ASR-ARCH, LASR-01..LASR-09, or LOCAL_ASR_DONE; got: ${step:-empty}"
+  if [[ -z "$step" ]]; then
+    die "step id required (e.g. S0, S1, B1, feature-auth)"
+  fi
+  # Allow freeform step ids: letters, digits, dots, underscores, hyphens
+  if [[ ! "$step" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+    die "invalid step id: $step (use letters, digits, . _ -)"
   fi
 }
 
-pre_tag_for() {
-  local step="$1"
-  resolve_step "$step"
-  echo "${TRACK_PREFIX}/pre-${step}"
-}
+pre_tag_for()  { echo "${PRODUCT_PREFIX}/pre-${1}"; }
+post_tag_for() { echo "${PRODUCT_PREFIX}/${1}-done"; }
 
-post_tag_for() {
-  local step="$1"
-  resolve_step "$step"
-  echo "${TRACK_PREFIX}/${step}-done"
-}
-
-has_remote_push() {
+resolve_push_remote() {
+  local remote
   local url
-  url="$(git remote get-url origin 2>/dev/null || true)"
-  if [[ -z "$url" ]]; then
-    # try first remote
-    url="$(git remote -v 2>/dev/null | awk '/\(push\)/{print $2; exit}')"
-  fi
-  [[ -n "$url" && "$url" != "DISABLED" && "$url" != *"DISABLED"* ]]
+  while IFS= read -r remote; do
+    [[ -n "$remote" ]] || continue
+    url="$(git remote get-url --push "$remote" 2>/dev/null || true)"
+    if [[ -n "$url" && "$url" != "DISABLED" && "$url" != *"DISABLED"* ]]; then
+      printf '%s\n' "$remote"
+      return 0
+    fi
+  done < <(git remote)
+  return 1
 }
 
-push_all() {
+push_checkpoint() {
   local tag="$1"
-  if has_remote_push; then
-    local remote
-    remote="$(git remote | head -1)"
+  if [[ "$PUSH_CHECKPOINTS" != "1" ]]; then
+    echo "checkpoint kept local (set WF_PUSH_CHECKPOINTS=1 to push branch and tag)"
+    return 0
+  fi
+  local remote
+  if remote="$(resolve_push_remote)"; then
     echo "→ git push $remote HEAD"
     git push -u "$remote" HEAD || echo "warn: push branch failed — local commit/tag kept"
     echo "→ git push $remote $tag"
     git push "$remote" "$tag" || echo "warn: push tag failed — local tag kept"
   else
-    echo "warn: no pushable remote (DISABLED or missing) — commit/tag are LOCAL ONLY"
-    echo "      human: enable remote and run: git push && git push --tags"
+    echo "warn: push requested but no pushable remote exists — commit/tag are LOCAL ONLY"
+  fi
+}
+
+changed_paths() {
+  git diff --name-only -z
+  git diff --cached --name-only -z
+  git ls-files --others --exclude-standard -z
+}
+
+path_is_allowed() {
+  local changed="$1"
+  local allowed
+  for allowed in "${STAGE_PATHS[@]}"; do
+    if [[ "$allowed" == "." || "$changed" == "$allowed" || "$changed" == "$allowed/"* ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+assert_scope_safe() {
+  local changed
+  local unsafe=()
+  while IFS= read -r -d '' changed; do
+    if ! path_is_allowed "$changed"; then
+      unsafe+=("$changed")
+    fi
+  done < <(changed_paths)
+
+  if (( ${#unsafe[@]} > 0 )); then
+    echo "error: changed paths exist outside the authorized checkpoint scope:" >&2
+    printf '  %s\n' "${unsafe[@]}" >&2
+    if (( ${#STAGE_PATHS[@]} == 0 )); then
+      echo "Set WF_STAGE_PATHS explicitly, or commit/stash the changes before checkpointing." >&2
+    else
+      echo "Commit/stash unrelated changes or deliberately expand WF_STAGE_PATHS." >&2
+    fi
+    exit 1
   fi
 }
 
 stage_scoped() {
-  # Stage Apple Silicon tree; optionally Electron.
-  if [[ -d "$GIT_ROOT/$REL_AS" ]]; then
-    git add -A -- "$REL_AS"
-  else
-    # If git root IS AppleSilicon (nested in future)
-    git add -A -- .
-  fi
-  if [[ "$INCLUDE_ELECTRON" == "1" && -d "$GIT_ROOT/$REL_ELECTRON" ]]; then
-    git add -A -- "$REL_ELECTRON"
-  fi
+  local p
+  for p in "${STAGE_PATHS[@]}"; do
+    git add -A -- "$p"
+  done
 }
 
 commit_if_dirty_scoped() {
   local message="$1"
+  assert_scope_safe
+  if (( ${#STAGE_PATHS[@]} == 0 )); then
+    echo "clean worktree and no WF_STAGE_PATHS — tagging current HEAD without a commit"
+    return 0
+  fi
   stage_scoped
   if git diff --cached --quiet; then
-    echo "nothing staged under VaniScript scope — no new commit"
+    echo "nothing staged under authorized scope — no new commit"
     return 0
   fi
   git commit -m "$message"
@@ -122,10 +177,10 @@ cmd_pre() {
     echo "skipping pre-commit (checkpoint already taken)"
     return 0
   fi
-  commit_if_dirty_scoped "chore(${TRACK_PREFIX}): checkpoint before ${step}"
-  git tag -a "$tag" -m "${TRACK_LABEL} checkpoint before ${step}"
+  commit_if_dirty_scoped "chore(${PRODUCT_PREFIX}): checkpoint before ${step}"
+  git tag -a "$tag" -m "${PRODUCT_PREFIX} checkpoint before ${step}"
   echo "created tag $tag → $(git rev-parse --short HEAD)"
-  push_all "$tag"
+  push_checkpoint "$tag"
   echo "PRE-CHECK DONE: $tag"
 }
 
@@ -138,25 +193,23 @@ cmd_post() {
   if git rev-parse "$tag" >/dev/null 2>&1; then
     die "tag $tag already exists — refuse to overwrite. Delete manually if intentional."
   fi
-  commit_if_dirty_scoped "feat(${TRACK_PREFIX}): ${step} — ${detail}"
-  git tag -a "$tag" -m "${TRACK_LABEL} ${step} approved: ${detail}"
+  commit_if_dirty_scoped "feat(${PRODUCT_PREFIX}): ${step} — ${detail}"
+  git tag -a "$tag" -m "${PRODUCT_PREFIX} ${step} done: ${detail}"
   echo "created tag $tag → $(git rev-parse --short HEAD)"
-  push_all "$tag"
+  push_checkpoint "$tag"
   echo "POST-CHECK DONE: $tag"
 }
 
 cmd_list() {
-  echo "=== grok/* tags ==="
-  git tag -l 'grok/*' --sort=creatordate
-  echo "=== ui/* tags ==="
-  git tag -l 'ui/*' --sort=creatordate
-  echo "=== qwen/* tags ==="
-  git tag -l 'qwen/*' --sort=creatordate
-  echo "=== apiusage/* tags ==="
-  git tag -l 'apiusage/*' --sort=creatordate
-  echo "=== local-asr-coreml/* tags ==="
-  git tag -l 'local-asr-coreml/*' --sort=creatordate
-  echo "=== recent commits ==="
+  echo "=== ${PRODUCT_PREFIX}/* tags ==="
+  git tag -l "${PRODUCT_PREFIX}/*" --sort=creatordate
+  echo "=== authorized stage paths ==="
+  if (( ${#STAGE_PATHS[@]} > 0 )); then
+    printf '  %s\n' "${STAGE_PATHS[@]}"
+  else
+    echo "  (none; dirty checkpoints require WF_STAGE_PATHS)"
+  fi
+  echo "=== recent commits (15) ==="
   git log --oneline --decorate -15
 }
 
@@ -179,15 +232,21 @@ cmd_rollback() {
 }
 
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 Usage:
-  ./AI_Workflow_Kit/script/checkpoint.sh pre <G0..G6|U0..U3|Q0..Q7|A1..A8|ASR-ARCH|LASR-01..09>
-  ./AI_Workflow_Kit/script/checkpoint.sh post <G0..G6|U0..U3|Q0..Q7|A1..A8|ASR-ARCH|LASR-01..09> [description]
-  ./AI_Workflow_Kit/script/checkpoint.sh list
-  ./AI_Workflow_Kit/script/checkpoint.sh rollback pre|post <step>
+  bash AI_Workflow_Kit/script/checkpoint.sh pre <step>
+  bash AI_Workflow_Kit/script/checkpoint.sh post <step> [description]
+  bash AI_Workflow_Kit/script/checkpoint.sh list
+  bash AI_Workflow_Kit/script/checkpoint.sh rollback pre|post <step>
 
 Env:
-  CHECKPOINT_INCLUDE_ELECTRON=1  also stage VaniScript/Electron
+  WF_PROJECT_PREFIX    default: proj
+  WF_STAGE_PATHS       explicit paths relative to git root; required for dirty
+                       checkpoints. Use "." only to authorize the whole repo.
+  WF_PUSH_CHECKPOINTS  1 pushes branch and tag; default 0 keeps both local.
+
+Tags: <prefix>/pre-<step>, <prefix>/<step>-done
+Refuses changed paths outside WF_STAGE_PATHS.
 EOF
 }
 

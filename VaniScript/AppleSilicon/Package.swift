@@ -48,6 +48,11 @@ let package = Package(
             name: "VaniScriptCoreTests",
             dependencies: ["VaniScriptCore"],
             path: "Tests/VaniScriptCoreTests"
+        ),
+        .testTarget(
+            name: "VaniScriptTests",
+            dependencies: ["VaniScript", "VaniScriptCore"],
+            path: "Tests/VaniScriptTests"
         )
     ]
 )

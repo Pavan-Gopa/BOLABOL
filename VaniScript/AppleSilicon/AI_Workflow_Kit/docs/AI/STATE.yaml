@@ -98,8 +98,8 @@ plan_files:
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
 checkpoint:
   last_pre_tag: vaniscript-as/pre-S1
-  last_post_tag: null
-  last_commit: 37b649e
+  last_post_tag: vaniscript-as/S1-done
+  last_commit: 87bee27
 coder_brief: |
   S1 only: port the BOLABOL Parakeet engine, minimal app-target engine contract,
   and robust audio preprocessor. Preserve current catalog/download work. Do not
@@ -112,3 +112,6 @@ notes: |
   checkpoint is local only.
   Human requested a pause after S1 Tester completion so the workflow can be
   updated before any further product work.
+  Workflow framework updated directly from Pavan-Gopa/Pavans-Workflow main at
+  e8b963c57839439d11ae72108711a1e637b7bc7c. Only the launcher changed; project
+  configuration, plans, reports, and live state were preserved.

@@ -362,8 +362,8 @@ struct MaxHUDLanguageMenuPolicyMatrix {
         }
     }
 
-    @Test("ADR-022: Canary and GigaAM never expose a target-language picker")
-    func adr022NoTargetPickerForAsrOnlyBackends() {
+    @Test("Canary and GigaAM expose target-language picker for post-ASR LLM polishing translation")
+    func targetPickerForCanaryAndGigaAM() {
         for backend in [TranscriptionModelDescriptor.Backend.canaryCoreML, .gigaAMCoreML] {
             let options = HUDLanguageMenuPolicy.options(
                 backend: backend,
@@ -375,7 +375,8 @@ struct MaxHUDLanguageMenuPolicyMatrix {
                 systemLocale: Locale(identifier: "en_US"),
                 purpose: .targetLanguageSelection
             )
-            #expect(options.isEmpty, "\(backend) must not offer target selection")
+            #expect(!options.isEmpty, "\(backend) must offer target selection for polishing pass")
+            #expect(options.allSatisfy { $0.isSelectable })
         }
     }
 
@@ -570,8 +571,8 @@ struct MaxSessionResolverMatrix {
         #expect(parakeet.route.forcedLanguageCode == nil, "auto must not force a Whisper token")
         #expect(parakeet.route.translateToEnglish == false)
         #expect(parakeet.route.postASRTextTranslationTargetLanguageCode == nil, "no silent English route")
-        #expect(parakeet.route.languageHint == "ru", "auto session must anchor to Primary Russian")
-        #expect(parakeet.request.languageHint == "ru")
+        #expect(parakeet.route.languageHint == nil, "auto session must never carry a hardcoded language anchor")
+        #expect(parakeet.request.languageHint == nil)
         #expect(parakeet.request.forcedLanguageCode == nil)
     }
 

@@ -6,6 +6,7 @@ struct HUDLanguagePickerPopoverView: View {
     let options: [HUDLanguageMenuOption]
     let languages: UserSpeechLanguages
     let onSelectLanguage: (String) -> Void
+    var onSelectPrimaryLanguage: ((String) -> Void)? = nil
     var onClose: (() -> Void)? = nil
 
     @State private var searchText = ""
@@ -17,11 +18,13 @@ struct HUDLanguagePickerPopoverView: View {
         options: [HUDLanguageMenuOption],
         languages: UserSpeechLanguages,
         onSelectLanguage: @escaping (String) -> Void,
+        onSelectPrimaryLanguage: ((String) -> Void)? = nil,
         onClose: (() -> Void)? = nil
     ) {
         self.options = options
         self.languages = languages
         self.onSelectLanguage = onSelectLanguage
+        self.onSelectPrimaryLanguage = onSelectPrimaryLanguage
         self.onClose = onClose
     }
 
@@ -30,6 +33,7 @@ struct HUDLanguagePickerPopoverView: View {
         currentCode: String,
         supportedCodes: [String],
         onSelectLanguage: @escaping (String) -> Void,
+        onSelectPrimaryLanguage: ((String) -> Void)? = nil,
         onClose: (() -> Void)? = nil
     ) {
         let options = HUDLanguageMenuPolicy.options(
@@ -41,7 +45,13 @@ struct HUDLanguagePickerPopoverView: View {
             uiLanguage: .russian,
             systemLocale: .current
         )
-        self.init(options: options, languages: languages, onSelectLanguage: onSelectLanguage, onClose: onClose)
+        self.init(
+            options: options,
+            languages: languages,
+            onSelectLanguage: onSelectLanguage,
+            onSelectPrimaryLanguage: onSelectPrimaryLanguage,
+            onClose: onClose
+        )
     }
 
     private var filteredOptions: [HUDLanguageMenuOption] {
@@ -150,12 +160,21 @@ struct HUDLanguagePickerPopoverView: View {
         let isPrimary = option.code.lowercased() == languages.primaryLanguageCode.lowercased()
         let isAdditional = option.isAdditional
 
-        Button {
-            cancelHoverExitTimer()
-            if option.isSelectable {
-                onSelectLanguage(option.code)
+        PrimaryOrAdditionalClickView(
+            isSelectable: option.isSelectable,
+            onLeftClick: {
+                cancelHoverExitTimer()
+                if option.isSelectable {
+                    onSelectLanguage(option.code)
+                }
+            },
+            onRightClick: {
+                cancelHoverExitTimer()
+                if option.isSelectable {
+                    onSelectPrimaryLanguage?(option.code)
+                }
             }
-        } label: {
+        ) {
             HStack(spacing: 6) {
                 Text(option.displayName)
                     .font(.system(size: 12, weight: option.isCurrent ? .bold : .regular))
@@ -202,9 +221,8 @@ struct HUDLanguagePickerPopoverView: View {
                     : (isHighlighted ? Color.primary.opacity(0.08) : Color.clear)
             )
             .cornerRadius(5)
+            .opacity(option.isSelectable ? 1.0 : 0.5)
         }
-        .buttonStyle(.plain)
-        .disabled(!option.isSelectable)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(option.displayName), \(option.code.uppercased())")
         .accessibilityValue(option.isCurrent ? "Selected" : "")
@@ -270,5 +288,66 @@ struct HUDLanguagePickerPopoverView: View {
     private func cancelHoverExitTimer() {
         hoverExitTimer?.invalidate()
         hoverExitTimer = nil
+    }
+}
+private struct PrimaryOrAdditionalClickView<Content: View>: NSViewRepresentable {
+    let isSelectable: Bool
+    let onLeftClick: () -> Void
+    let onRightClick: () -> Void
+    let content: Content
+
+    init(
+        isSelectable: Bool,
+        onLeftClick: @escaping () -> Void,
+        onRightClick: @escaping () -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.isSelectable = isSelectable
+        self.onLeftClick = onLeftClick
+        self.onRightClick = onRightClick
+        self.content = content()
+    }
+
+    func makeNSView(context: Context) -> ClickHostingView<Content> {
+        let hostingView = ClickHostingView(rootView: content)
+        hostingView.isSelectable = isSelectable
+        hostingView.onLeftClick = onLeftClick
+        hostingView.onRightClick = onRightClick
+        return hostingView
+    }
+
+    func updateNSView(_ nsView: ClickHostingView<Content>, context: Context) {
+        nsView.rootView = content
+        nsView.isSelectable = isSelectable
+        nsView.onLeftClick = onLeftClick
+        nsView.onRightClick = onRightClick
+    }
+}
+
+private final class ClickHostingView<Content: View>: NSHostingView<Content> {
+    var isSelectable: Bool = true
+    var onLeftClick: (() -> Void)?
+    var onRightClick: (() -> Void)?
+
+    override func resetCursorRects() {
+        if isSelectable {
+            addCursorRect(bounds, cursor: .pointingHand)
+        }
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        guard isSelectable else {
+            super.mouseDown(with: event)
+            return
+        }
+        onLeftClick?()
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        guard isSelectable else {
+            super.rightMouseDown(with: event)
+            return
+        }
+        onRightClick?()
     }
 }

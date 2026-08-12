@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEFAULT_DMG="$ROOT_DIR/dist/Bolabol.dmg"
+DEFAULT_DMG="$ROOT_DIR/dist/BOLABOL.dmg"
 DEFAULT_PROFILE="${NOTARY_KEYCHAIN_PROFILE:-Bolabol-Notary}"
 TEAM_ID="${NOTARY_TEAM_ID:-438UQRF7JV}"
 
@@ -52,9 +52,13 @@ xcrun notarytool submit "$DMG_PATH" \
   --wait
 
 echo "=== Stapling notarization ticket ==="
+if [[ -d "$ROOT_DIR/dist/release/Bolabol.app" ]]; then
+  echo "Stapling App Bundle..."
+  xcrun stapler staple "$ROOT_DIR/dist/release/Bolabol.app" || true
+fi
+echo "Stapling DMG..."
 xcrun stapler staple "$DMG_PATH"
 xcrun stapler validate "$DMG_PATH"
-
 echo "=== Gatekeeper assessment ==="
 spctl -a -vv -t install "$DMG_PATH"
 

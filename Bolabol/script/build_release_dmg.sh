@@ -280,8 +280,8 @@ cp -R "$APP_BUNDLE" "$DMG_TEMP_DIR/"
 ln -s /Applications "$DMG_TEMP_DIR/Applications"
 
 # Output DMG path
-OUTPUT_DMG="$DIST_DIR/Bolabol.dmg"
-rm -f "$OUTPUT_DMG"
+OUTPUT_DMG="$DIST_DIR/BOLABOL.dmg"
+rm -f "$OUTPUT_DMG" "$DIST_DIR/Bolabol.dmg"
 
 echo "Creating raw DMG image..."
 hdiutil create -fs HFS+ -srcfolder "$DMG_TEMP_DIR" -volname "$DISPLAY_NAME" -format UDRW "$DIST_DIR/temp.dmg"
@@ -318,17 +318,17 @@ fi
 # Release handoff folder (checksums + install helper copy for recipients)
 HANDOFF_DIR="$DIST_DIR/handoff"
 mkdir -p "$HANDOFF_DIR"
-cp "$OUTPUT_DMG" "$HANDOFF_DIR/Bolabol.dmg"
+cp "$OUTPUT_DMG" "$HANDOFF_DIR/BOLABOL.dmg"
 cp "$ROOT_DIR/script/install.sh" "$HANDOFF_DIR/install.sh"
 chmod +x "$HANDOFF_DIR/install.sh"
 (
   cd "$HANDOFF_DIR"
-  shasum -a 256 Bolabol.dmg install.sh > SHA256SUMS.txt
+  shasum -a 256 BOLABOL.dmg install.sh > SHA256SUMS.txt
 )
 
 echo "=== DMG successfully created at: $OUTPUT_DMG ==="
 echo "    Version: $APP_VERSION ($APP_BUILD)"
 echo "    Identity: $SIGN_IDENTITY"
 echo "    Handoff: $HANDOFF_DIR"
-ls -lh "$OUTPUT_DMG" "$HANDOFF_DIR/Bolabol.dmg"
+ls -lh "$OUTPUT_DMG" "$HANDOFF_DIR/BOLABOL.dmg"
 cat "$HANDOFF_DIR/SHA256SUMS.txt"

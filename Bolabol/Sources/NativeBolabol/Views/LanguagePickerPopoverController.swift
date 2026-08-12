@@ -36,6 +36,7 @@ final class LanguagePickerPopoverController {
         anchorView: NSView,
         location: NSPoint,
         onSelectLanguage: @escaping (UUID, String) -> Void,
+        onSelectPrimaryLanguage: ((UUID, String) -> Void)? = nil,
         onClose: @escaping (UUID) -> Void
     ) {
         dismiss()
@@ -49,6 +50,11 @@ final class LanguagePickerPopoverController {
                 guard let self, self.popoverID == popoverID else { return }
                 self.dismiss()
                 onSelectLanguage(popoverID, selectedCode)
+            },
+            onSelectPrimaryLanguage: { [weak self] selectedCode in
+                guard let self, self.popoverID == popoverID else { return }
+                self.dismiss()
+                onSelectPrimaryLanguage?(popoverID, selectedCode)
             },
             onClose: { [weak self] in
                 guard let self, self.popoverID == popoverID else { return }

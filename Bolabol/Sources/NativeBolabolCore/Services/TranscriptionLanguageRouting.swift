@@ -570,17 +570,13 @@ public enum TranscriptionSessionResolver {
 
         switch snapshot.operation {
         case .asr:
-            // Parakeet receives a primary-language hint only for auto-detect. A
-            // saved Whisper preference must not become a forced token for an
-            // explicit legacy session.
-            let autoAnchorHint: String?
-            if model.backend == .fluidAudioCoreML,
-               model.languageSupport == .multilingual,
-               languageCode == "auto" {
-                autoAnchorHint = normalizedOptionalLanguageCode(snapshot.primaryLanguageCode)
-            } else {
-                autoAnchorHint = nil
-            }
+            // Parakeet is an unanchored auto-detect engine in Auto mode. Passing any
+            // hardcoded language hint or primary-language anchor acts as a strict
+            // script filter in FluidAudio, which forces the engine to translate
+            // speech directly into the hinted language instead of auto-detecting.
+            // To guarantee true multilingual Auto (A) behavior, we must never pass
+            // a language hint for Parakeet auto-detect.
+            let autoAnchorHint: String? = nil
             route = model.backend == .fluidAudioCoreML
                 ? TranscriptionLanguageRoute(
                     forcedLanguageCode: nil,
@@ -878,39 +874,31 @@ public enum HUDLanguageMenuPolicy {
         let effectiveBackend = backend ?? .whisperKitCoreML
         let codes: [String]
         let includesAutomatic: Bool
-        switch (effectiveBackend, purpose) {
-        case (.canaryCoreML, .explicitASRSource):
-            codes = normalizedDistinctCodes(supportedSourceCodes)
+        switch purpose {
+        case .explicitASRSource:
+            switch effectiveBackend {
+            case .canaryCoreML, .whisperKitCoreML, .fluidAudioCoreML:
+                codes = normalizedDistinctCodes(supportedSourceCodes)
+            case .gigaAMCoreML:
+                codes = ["ru"]
+            }
             includesAutomatic = false
-        case (.canaryCoreML, .targetLanguageSelection), (.gigaAMCoreML, .targetLanguageSelection):
-            // ADR-022 keeps these backends ASR-only; target-language conversion
-            // remains a separate post-transcription text operation.
-            return []
-        case (.gigaAMCoreML, .explicitASRSource):
-            codes = ["ru"]
-            includesAutomatic = false
-        case (.whisperKitCoreML, .explicitASRSource), (.fluidAudioCoreML, .explicitASRSource):
-            codes = normalizedDistinctCodes(supportedSourceCodes)
-            includesAutomatic = false
-        case (.whisperKitCoreML, .targetLanguageSelection), (.fluidAudioCoreML, .targetLanguageSelection):
+        case .targetLanguageSelection:
             codes = completeTargetCatalog
             includesAutomatic = true
         }
 
         let selectable: Bool
-        switch (effectiveBackend, purpose) {
-        case (.canaryCoreML, .explicitASRSource):
-            selectable = codes.count > 1
-        case (.canaryCoreML, .targetLanguageSelection), (.gigaAMCoreML, .targetLanguageSelection):
-            // These backends expose source-language ASR only, so no target picker
-            // can be offered for their session plans.
-            return []
-        case (.gigaAMCoreML, .explicitASRSource):
-            selectable = false
-        case (.whisperKitCoreML, .targetLanguageSelection), (.fluidAudioCoreML, .targetLanguageSelection):
+        switch purpose {
+        case .explicitASRSource:
+            switch effectiveBackend {
+            case .canaryCoreML, .whisperKitCoreML, .fluidAudioCoreML:
+                selectable = codes.count > 1
+            case .gigaAMCoreML:
+                selectable = false
+            }
+        case .targetLanguageSelection:
             selectable = true
-        case (.whisperKitCoreML, .explicitASRSource), (.fluidAudioCoreML, .explicitASRSource):
-            selectable = codes.count > 1
         }
 
         let automaticOption = includesAutomatic

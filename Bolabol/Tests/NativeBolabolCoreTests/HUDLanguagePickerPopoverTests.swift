@@ -333,8 +333,8 @@ struct HUDLanguagePickerPopoverTests {
         let nextFromEN = HUDLanguageMenuPolicy.nextCode(current: "en", choices: choices)
         #expect(nextFromEN == "ru")
     }
-    @Test("ADR-022 fail-closed: Canary and GigaAM reject targetLanguageSelection purpose")
-    func testCanaryAndGigaAMTargetLanguageSelectionFailsClosed() {
+    @Test("Canary and GigaAM support targetLanguageSelection purpose for polishing translation")
+    func testCanaryAndGigaAMTargetLanguageSelectionOffersOptions() {
         let languages = UserSpeechLanguages(primaryLanguageCode: "ru", additionalLanguageCode: "en")
 
         let canaryTargetOptions = HUDLanguageMenuPolicy.options(
@@ -346,7 +346,7 @@ struct HUDLanguagePickerPopoverTests {
             uiLanguage: .english,
             purpose: .targetLanguageSelection
         )
-        #expect(canaryTargetOptions.isEmpty, "Canary must fail closed for targetLanguageSelection purpose")
+        #expect(!canaryTargetOptions.isEmpty, "Canary must offer options for targetLanguageSelection purpose")
 
         let gigaAMTargetOptions = HUDLanguageMenuPolicy.options(
             backend: .gigaAMCoreML,
@@ -357,7 +357,7 @@ struct HUDLanguagePickerPopoverTests {
             uiLanguage: .english,
             purpose: .targetLanguageSelection
         )
-        #expect(gigaAMTargetOptions.isEmpty, "GigaAM must fail closed for targetLanguageSelection purpose")
+        #expect(!gigaAMTargetOptions.isEmpty, "GigaAM must offer options for targetLanguageSelection purpose")
     }
 
     @Test("Picker selection does not mutate persisted UserSpeechLanguages settings")

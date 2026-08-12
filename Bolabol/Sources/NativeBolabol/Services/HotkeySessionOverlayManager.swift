@@ -226,12 +226,7 @@ final class HotkeySessionOverlayManager {
         sessionPlan: TranscriptionSessionPlan,
         legacyLanguageControlEnabled: Bool
     ) {
-        state.languageMode = sessionPlan.languageMode
-        state.targetLanguageLabel = sessionPlan.hudLanguageLabel
-        state.languageControlEnabled = sessionPlan.backend == .canaryCoreML
-            || sessionPlan.backend == .gigaAMCoreML
-            ? sessionPlan.languageControlEnabled
-            : legacyLanguageControlEnabled
+        state.languageControlEnabled = legacyLanguageControlEnabled
     }
 
     private func makePanel() -> DraggableOverlayPanel {

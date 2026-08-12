@@ -81,6 +81,29 @@ func polishingWorkflowRetriesVariantTwoWhenRussianSourceReturnsEnglishOutput() a
     #expect(store.selectedNote?.polishedVariantTwo == "Это русский исходный текст про API и prompt template.")
     #expect(await engine.callCount == 2)
 }
+@MainActor
+@Test
+func polishingWorkflowAppliesLanguageGuardToShortRussianPhrases() async {
+    let store = NoteStore()
+    let note = store.addEmptyNote()
+    store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+            text: "Привет",
+            diagnostics: EngineDiagnostics(backendName: "Test Transcriber")
+        )
+    )
+    let engine = LanguageRetryPolishingEngine()
+    let workflow = PolishingWorkflow(
+        noteStore: store,
+        engine: engine
+    )
+
+    await workflow.polishNote(note.id, variants: [.variantOne])
+
+    #expect(store.selectedNote?.polishedVariantOne == "Это русский исходный текст про API и prompt template.")
+    #expect(await engine.callCount == 2)
+}
 
 @MainActor
 @Test

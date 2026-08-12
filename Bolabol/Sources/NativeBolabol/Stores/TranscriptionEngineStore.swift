@@ -242,4 +242,17 @@ final class TranscriptionEngineStore: ObservableObject {
         gigaAMEngines[cacheKey] = engine
         return engine
     }
+
+    /// Clears cached session state for all engines, forcing a fresh start
+    /// on the next transcription. Prevents stale language filters or cached
+    /// context from lingering across HUD toggles (e.g. A ↔ E).
+    func resetAllEnginesState() {
+        for (_, engine) in parakeetEngines {
+            Task { await engine.resetAsrManager() }
+        }
+        parakeetEngines.removeAll()
+        whisperKitEngines.removeAll()
+        canaryEngines.removeAll()
+        gigaAMEngines.removeAll()
+    }
 }

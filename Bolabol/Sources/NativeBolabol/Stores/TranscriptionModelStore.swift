@@ -218,11 +218,12 @@ final class TranscriptionModelStore: ObservableObject {
         settings.resetInterruptedDownloads()
         for model in catalog.models {
             let state = settings.installationState(for: model.id)
-            guard state.status != .downloading else { continue }
-
+            // If a model folder already exists on disk (e.g. after a
+            // partial download was interrupted), restore the downloaded
+            // state from the file system instead of demanding a new download.
             if let localURL = completeLocalURL(for: model) {
                 settings.markDownloaded(modelID: model.id, localURL: localURL)
-            } else if state.status == .downloaded || state.status == .failed {
+            } else {
                 settings.remove(modelID: model.id)
             }
         }
@@ -303,12 +304,8 @@ final class TranscriptionModelStore: ObservableObject {
             }
             finishDownload(model, localURL: downloadedURL)
         } catch {
-            if model.id == "canary-1b-v2-coreml" {
-                cleanupCanary1BArtifacts(
-                    at: destinationURL(for: model),
-                    packageID: "bolabol-canary-1b-v2-coreml-r1"
-                )
-            }
+            let dest = destinationURL(for: model)
+            cleanupCanary1BArtifacts(at: dest, packageID: "bolabol-canary-1b-v2-coreml-r1")
             settings.markFailed(
                 modelID: model.id,
                 errorMessage: boundedDownloadError(for: model, error: error)
@@ -559,6 +556,13 @@ final class TranscriptionModelStore: ObservableObject {
                 destination: destination,
                 progressHandler: progressHandler
             )
+        case .googleDrive(let packageID, let fileIDs):
+            return try await downloadGoogleDrivePackage(
+                packageID: packageID,
+                fileIDs: fileIDs,
+                destination: destination,
+                progressHandler: progressHandler
+            )
         case .fluidAudio:
             throw NSError(
                 domain: "TranscriptionModelStore",
@@ -722,6 +726,100 @@ final class TranscriptionModelStore: ObservableObject {
         }
 
         return destination
+    }
+
+    private func downloadGoogleDrivePackage(
+        packageID: String,
+        fileIDs: [String: String],
+        destination: URL,
+        progressHandler: @escaping @Sendable (Double) -> Void
+    ) async throws -> URL {
+        guard let manifestID = fileIDs["MANIFEST.json"] else {
+            throw NSError(
+                domain: "TranscriptionModelStore",
+                code: 11,
+                userInfo: [NSLocalizedDescriptionKey: "Missing MANIFEST.json file ID for Google Drive package \(packageID)"]
+            )
+        }
+
+        let manifestData = try await downloadDriveFileData(fileID: manifestID)
+        let manifest = try validatedManifest(data: manifestData, packageID: packageID)
+
+        let localManifestURL = destination.appendingPathComponent("MANIFEST.json")
+        try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
+        try manifestData.write(to: localManifestURL, options: .atomic)
+
+        let totalBytes = manifest.files.reduce(0) { $0 + $1.sizeBytes }
+        var downloadedBytes: Int64 = 0
+
+        for file in manifest.files {
+            guard let fileID = fileIDs[file.path] else {
+                throw NSError(
+                    domain: "TranscriptionModelStore",
+                    code: 12,
+                    userInfo: [NSLocalizedDescriptionKey: "No Google Drive file ID registered for \(file.path) in package \(packageID)"]
+                )
+            }
+
+            let localFileURL = destination.appendingPathComponent(file.path)
+            try fileManager.createDirectory(at: localFileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+            if fileManager.fileExists(atPath: localFileURL.path),
+               verifyFileSHA256(localFileURL, expectedHash: file.sha256) {
+                downloadedBytes += file.sizeBytes
+                let fraction = totalBytes > 0 ? Double(downloadedBytes) / Double(totalBytes) : 1.0
+                progressHandler(fraction)
+                continue
+            }
+
+            let (tempURL, fileRes) = try await urlSession.download(from: driveBinaryURL(fileID: fileID))
+            guard let fileHTTPRes = fileRes as? HTTPURLResponse, (200...299).contains(fileHTTPRes.statusCode) else {
+                throw NSError(
+                    domain: "TranscriptionModelStore",
+                    code: 13,
+                    userInfo: [NSLocalizedDescriptionKey: "Failed to download \(file.path) for Google Drive package \(packageID)"]
+                )
+            }
+
+            if fileManager.fileExists(atPath: localFileURL.path) {
+                try fileManager.removeItem(at: localFileURL)
+            }
+            try fileManager.moveItem(at: tempURL, to: localFileURL)
+
+            guard verifyFileSHA256(localFileURL, expectedHash: file.sha256) else {
+                try? fileManager.removeItem(at: localFileURL)
+                throw NSError(
+                    domain: "TranscriptionModelStore",
+                    code: 14,
+                    userInfo: [NSLocalizedDescriptionKey: "SHA-256 integrity verification failed for \(file.path)"]
+                )
+            }
+
+            downloadedBytes += file.sizeBytes
+            let fraction = totalBytes > 0 ? Double(downloadedBytes) / Double(totalBytes) : 1.0
+            progressHandler(fraction)
+        }
+
+        return destination
+    }
+
+    /// Direct binary endpoint (drive.usercontent.google.com) that skips the
+    /// HTML virus-scan page Google serves on the regular /uc endpoint for
+    /// large files.
+    private func driveBinaryURL(fileID: String) -> URL {
+        URL(string: "https://drive.usercontent.google.com/download?id=\(fileID)&export=download&confirm=1")!
+    }
+
+    private func downloadDriveFileData(fileID: String) async throws -> Data {
+        let (data, response) = try await urlSession.data(from: driveBinaryURL(fileID: fileID))
+        guard let httpRes = response as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) else {
+            throw NSError(
+                domain: "TranscriptionModelStore",
+                code: 15,
+                userInfo: [NSLocalizedDescriptionKey: "Failed to fetch file \(fileID) from Google Drive"]
+            )
+        }
+        return data
     }
 
     private func validatedManifest(

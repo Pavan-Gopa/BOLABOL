@@ -356,9 +356,13 @@ struct HelpSettingsView: View {
 
     /// Replays the first-launch welcome tour on the main window.
     private func replayOnboarding() {
-        NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApp.windows.first(where: { !$0.isKind(of: NSPanel.self) && $0.title == "Bolabol" }) {
-            window.makeKeyAndOrderFront(nil)
+        if let appDelegate = AppDelegate.shared {
+            appDelegate.showMainWindow()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+            if let window = NSApp.windows.first(where: { !$0.isKind(of: NSPanel.self) && ($0.title == "BOLABOL" || $0.title == "Bolabol") }) {
+                window.makeKeyAndOrderFront(nil)
+            }
         }
         NotificationCenter.default.post(name: .showOnboarding, object: nil)
     }

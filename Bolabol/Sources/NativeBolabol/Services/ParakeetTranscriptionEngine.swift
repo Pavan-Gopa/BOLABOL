@@ -93,6 +93,15 @@ actor ParakeetTranscriptionEngine: TranscriptionEngine {
         self.manager = manager
         return manager
     }
+
+    /// Resets the loaded FluidAudio ASR manager. Parakeet keeps a cached internal
+    /// language state between sessions. If a previous session carried an English
+    /// hint, the manager will keep filtering Russian speech to English tokens even
+    /// when a later session explicitly asks for unanchored auto-detect. We must
+    /// explicitly tear down the manager to force clean auto-detect on the next run.
+    func resetAsrManager() async {
+        self.manager = nil
+    }
 }
 
 private enum ParakeetTranscriptionError: LocalizedError {

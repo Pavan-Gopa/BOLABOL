@@ -235,9 +235,40 @@ public struct TranscriptionModelDescriptor: Identifiable, Codable, Equatable, Se
 
 /// Explicit install source for transcription models (ADR-018 requirement).
 /// Decouples download origins from upstream metadata repository IDs.
+/// Google Drive file IDs for the Canary 1B v2 Core ML package hosted on the
+/// user's shared Drive folder. Every path from the package MANIFEST.json maps
+/// to a Drive file ID; downloads use the binary direct endpoint
+/// (drive.usercontent.google.com), which skips the HTML virus-scan page for
+/// large files.
+    public enum Canary1BDriveFileIDs: Sendable {
+        public static let table: [String: String] = [
+            "MANIFEST.json": "14VIGcqZijS70HXnLrdvUJqRDRika6R0E",
+            "metadata.json": "1Qo6Q2kq7-QhNWivD-y45cXGhlWP8aTW4",
+            "FRONTEND.md": "1ipZQcYPwftb5pJTeJhhhnE8-GtVlgX_E",
+            "LICENSE.txt": "1HIOaWXWXV46nG8PCB6VpsnnJ72_aLfUa",
+            "canary_spe.model": "1BWzdWKht4Q4RYokkZHT8bdkvjDEpVamZ",
+            "canary_encoder.mlmodelc/metadata.json": "1juR_Sn8oMwGtByK2Zfow1WtiAw_fY2KG",
+            "canary_encoder.mlmodelc/model.mil": "1NZSPOtMT-8HbVQbQcn6NSz2sU5JZQIpU",
+            "canary_encoder.mlmodelc/coremldata.bin": "1RlT2vAhdV_8SYCaROOzHqksNEwUp_tn4",
+            "canary_encoder.mlmodelc/analytics/coremldata.bin": "1UvRRwsvb4KE0K8NVCch_V0oibRVWHIg7",
+            "canary_encoder.mlmodelc/weights/weight.bin": "1qk0pioVzir39oyvJ-v09X1bFAQFuJ-Qw",
+            "canary_decoder_kv.mlmodelc/metadata.json": "1LSaiXo6p8Y_h_nLC8f8uGG4x2EtrA3wY",
+            "canary_decoder_kv.mlmodelc/model.mil": "13BEr3nnM1jV-FN3s96rAxMsyfl-TJ6Kl",
+            "canary_decoder_kv.mlmodelc/coremldata.bin": "1-Zj-p7jkQeLs1rGaTSBUvHTnN4czkqkv",
+            "canary_decoder_kv.mlmodelc/analytics/coremldata.bin": "1jqTfjWSnpYZ4Cw69KubgDm5gIyNmE-dB",
+            "canary_decoder_kv.mlmodelc/weights/weight.bin": "1HLVbnd7zb0qrPMn_NDmpio3NRCO1nF72",
+            "canary_cross_kv.mlmodelc/metadata.json": "1di4vhBimV8o6uJWvex4mBT7waAI_o02P",
+            "canary_cross_kv.mlmodelc/model.mil": "1MNtC0ZsOEs1rDxeeCHjTdUBDicXf569o",
+            "canary_cross_kv.mlmodelc/coremldata.bin": "1beAi3pOArWpCPnG33mKUbuz2lYA40_rV",
+            "canary_cross_kv.mlmodelc/analytics/coremldata.bin": "1LgdqjHKkL8w2rTmJgd3snocsq4xWVG85",
+            "canary_cross_kv.mlmodelc/weights/weight.bin": "1qmRo_FUiN6c9H3xRvwMWVkEJAHopq2Hv",
+        ]
+    }
+
 public enum ModelInstallSource: Equatable, Sendable, Codable {
     case huggingFace(repositoryID: String)
     case bolabolCDN(packageID: String, baseURL: URL)
+    case googleDrive(packageID: String, fileIDs: [String: String])
     case fluidAudio(version: String)
 }
 
@@ -305,9 +336,9 @@ public enum ModelInstallSource: Equatable, Sendable, Codable {
         case "gigaam-v3-rnnt-coreml":
             return .huggingFace(repositoryID: "huggingfinger0/gigaam-v3-coreml")
         case "canary-1b-v2-coreml":
-            return .bolabolCDN(
+            return .googleDrive(
                 packageID: "bolabol-canary-1b-v2-coreml-r1",
-                baseURL: Self.defaultBolabolCDNBaseURL
+                fileIDs: Canary1BDriveFileIDs.table
             )
         default:
             if backend == .fluidAudioCoreML {

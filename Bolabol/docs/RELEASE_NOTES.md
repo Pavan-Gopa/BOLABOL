@@ -5,6 +5,13 @@ translation, and hotkey insertion into other apps.
 
 **Version:** 1.0.4 (build 1)
 
+## Renaming
+
+The project previously known as **Smart Sky / SmartScribe** is now **Bolabol**.
+The app bundle, bundle identifier (`com.bolabol.app`), repository, and download
+asset (`Bolabol.dmg`) carry the new name. Signed and notarized with Developer ID
+Application: Stichting Kadamba Foundation (438UQRF7JV).
+
 ## Current product surface
 
 - Local ASR includes WhisperKit, Parakeet/FluidAudio, Canary Core ML, and GigaAM Core ML.

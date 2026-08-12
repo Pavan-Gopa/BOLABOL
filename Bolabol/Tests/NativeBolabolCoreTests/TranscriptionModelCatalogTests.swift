@@ -234,9 +234,9 @@ func nativeTranscriptionCatalogMapsExplicitInstallSourcesAndStoragePaths() throw
     #expect(gigaAM.relativeStorageSubpath == "gigaam/v3-rnnt")
 
     let canary1B = try #require(catalog.model(withID: "canary-1b-v2-coreml"))
-    #expect(canary1B.installSource == .bolabolCDN(
+    #expect(canary1B.installSource == .googleDrive(
         packageID: "bolabol-canary-1b-v2-coreml-r1",
-        baseURL: TranscriptionModelDescriptor.defaultBolabolCDNBaseURL
+        fileIDs: TranscriptionModelDescriptor.Canary1BDriveFileIDs.table
     ))
     #expect(canary1B.relativeStorageSubpath == "canary/1b-v2")
 }

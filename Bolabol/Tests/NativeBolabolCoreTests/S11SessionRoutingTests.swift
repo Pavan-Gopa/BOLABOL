@@ -1,0 +1,594 @@
+import Foundation
+@testable import NativeBolabol
+import NativeBolabolCore
+import Testing
+
+private let s11OS15 = ASRModelCapabilities.OSVersion(majorVersion: 15)
+private let s11OS14 = ASRModelCapabilities.OSVersion(majorVersion: 14)
+
+private func s11Model(_ id: String) throws -> TranscriptionModelDescriptor {
+    try #require(TranscriptionModelCatalog.nativeWhisperKit.model(withID: id))
+}
+
+private func s11Resolve(
+    modelID: String,
+    primary: String?,
+    additional: String?,
+    operation: TranscriptionSessionOperation = .asr,
+    os: ASRModelCapabilities.OSVersion = s11OS15,
+    complete: Bool = true,
+    sourceLanguageOverride: String? = nil
+) throws -> TranscriptionSessionResolution {
+    let model = try s11Model(modelID)
+    return TranscriptionSessionResolver.resolve(
+        activeModel: model,
+        modelFolderURL: URL(fileURLWithPath: "/tmp/s11-\(modelID)"),
+        engineIdentity: "engine-\(modelID)",
+        currentOSVersion: os,
+        hasCompleteModel: complete,
+        primaryLanguageCode: primary,
+        additionalLanguageCode: additional,
+        operation: operation,
+        legacyLanguageCode: "auto",
+        sourceLanguageOverride: sourceLanguageOverride
+    )
+}
+
+@Test
+func s11CanaryFlashPairMatrixUsesOnlyConfiguredSupportedSources() throws {
+    let both = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "en", additional: "de")
+    guard case .available(let bothPlan) = both else {
+        Issue.record("Flash en/de should be available")
+        return
+    }
+    #expect(bothPlan.languageMode == .switchable)
+    #expect(bothPlan.languageControlEnabled)
+    #expect(bothPlan.sourceLanguageCode == "en")
+    #expect(bothPlan.hudLanguageLabel == "E")
+    #expect(bothPlan.request.forcedLanguageCode == "en")
+    #expect(!bothPlan.request.translateToEnglish)
+    #expect(bothPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    #expect(bothPlan.sourceLanguageChoices == ["en", "de"])
+
+    let german = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "de", additional: "fr")
+    guard case .available(let germanPlan) = german else {
+        Issue.record("Flash de/fr should provide a fixed German source")
+        return
+    }
+    #expect(germanPlan.languageMode == .switchable)
+    #expect(germanPlan.languageControlEnabled)
+    #expect(germanPlan.sourceLanguageChoices == ["de", "fr"])
+    #expect(germanPlan.sourceLanguageCode == "de")
+    #expect(germanPlan.hudLanguageLabel == "G")
+    #expect(germanPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let primaryOnly = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "en", additional: "ru")
+    guard case .available(let primaryPlan) = primaryOnly else {
+        Issue.record("Flash en/ru should clamp to English")
+        return
+    }
+    #expect(primaryPlan.languageMode == .fixed)
+    #expect(primaryPlan.sourceLanguageChoices == ["en"])
+    #expect(!primaryPlan.languageControlEnabled)
+
+    let unsupportedPrimary = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "ru", additional: "es")
+    guard case .unavailable(.unsupportedSourceLanguage(
+        let modelID,
+        let requestedCode,
+        let supportedCodes
+    )) = unsupportedPrimary else {
+        Issue.record("Flash ru/es should reject unsupported Primary instead of falling back")
+        return
+    }
+    #expect(modelID == "canary-180m-flash-coreml")
+    #expect(requestedCode == "ru")
+    #expect(supportedCodes == ["en", "de", "fr", "es"])
+
+    let same = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "fr", additional: "fr")
+    guard case .available(let samePlan) = same else {
+        Issue.record("Flash fr/fr should provide a fixed source")
+        return
+    }
+    #expect(samePlan.sourceLanguageChoices == ["fr"])
+    #expect(samePlan.languageMode == .fixed)
+
+    let blank = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: nil, additional: " es ")
+    guard case .unavailable(.noSupportedSource) = blank else {
+        Issue.record("Flash requires an explicit Primary source")
+        return
+    }
+
+    let none = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "ru", additional: "uk")
+    guard case .unavailable(.unsupportedSourceLanguage(let modelID, let requestedCode, let supportedCodes)) = none else {
+        Issue.record("Flash ru/uk should reject unsupported Primary")
+        return
+    }
+    #expect(modelID == "canary-180m-flash-coreml")
+    #expect(requestedCode == "ru")
+    #expect(supportedCodes == ["en", "de", "fr", "es"])
+
+    let defensiveAuto = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "auto", additional: nil)
+    guard case .unavailable(.noSupportedSource) = defensiveAuto else {
+        Issue.record("Flash auto must never become an explicit source")
+        return
+    }
+}
+
+@Test
+func s11CanaryOneBUsesExplicitMultilingualSourceASR() throws {
+    let english = try s11Resolve(modelID: "canary-1b-v2-coreml", primary: "en", additional: "fr")
+    guard case .available(let plan) = english else {
+        Issue.record("Canary 1B en/fr should provide an English ASR plan")
+        return
+    }
+    #expect(plan.languageMode == .switchable)
+    #expect(plan.languageControlEnabled)
+    #expect(plan.sourceLanguageChoices == ["en", "fr"])
+    #expect(plan.sourceLanguageCode == "en")
+    #expect(plan.hudLanguageLabel == "E")
+    #expect(plan.request.forcedLanguageCode == "en")
+    #expect(!plan.request.translateToEnglish)
+    #expect(plan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let englishOverride = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en",
+        sourceLanguageOverride: "en"
+    )
+    guard case .available(let englishPlan) = englishOverride else {
+        Issue.record("Canary 1B ru/en source override should be available")
+        return
+    }
+    #expect(englishPlan.languageMode == .switchable)
+    #expect(englishPlan.sourceLanguageChoices == ["ru", "en"])
+    #expect(englishPlan.sourceLanguageCode == "en")
+    #expect(englishPlan.hudLanguageLabel == "E")
+    #expect(englishPlan.request.forcedLanguageCode == "en")
+    #expect(!englishPlan.request.translateToEnglish)
+    #expect(englishPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let italianOverride = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en",
+        sourceLanguageOverride: "it"
+    )
+    guard case .available(let italianPlan) = italianOverride else {
+        Issue.record("Canary 1B full-catalog Italian override should be available")
+        return
+    }
+    #expect(italianPlan.sourceLanguageChoices == ["ru", "en"])
+    #expect(italianPlan.sourceLanguageCode == "it")
+    #expect(italianPlan.requestedLanguageCode == "it")
+    #expect(italianPlan.hudLanguageLabel == "I")
+    #expect(italianPlan.request.forcedLanguageCode == "it")
+    #expect(!italianPlan.request.translateToEnglish)
+    #expect(italianPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let unsupportedOverride = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en",
+        sourceLanguageOverride: "xx"
+    )
+    guard case .unavailable(.unsupportedSourceLanguage(
+        _,
+        let requestedOverride,
+        let overrideSupportedCodes
+    )) = unsupportedOverride else {
+        Issue.record("Canary 1B must reject an unsupported full-catalog override")
+        return
+    }
+    #expect(requestedOverride == "xx")
+    #expect(overrideSupportedCodes == CanaryLanguageCatalog.oneBV2LanguageCodes)
+
+    let russianAgain = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en",
+        sourceLanguageOverride: "ru"
+    )
+    guard case .available(let russianAgainPlan) = russianAgain else {
+        Issue.record("Canary 1B source cycle should return to Russian")
+        return
+    }
+    #expect(russianAgainPlan.sourceLanguageChoices == ["ru", "en"])
+    #expect(russianAgainPlan.sourceLanguageCode == "ru")
+    #expect(russianAgainPlan.hudLanguageLabel == "R")
+    #expect(russianAgainPlan.request.forcedLanguageCode == "ru")
+    #expect(!russianAgainPlan.request.translateToEnglish)
+
+    let unsupportedPrimary = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "xx",
+        additional: "en"
+    )
+    guard case .unavailable(.unsupportedSourceLanguage(
+        let blockedModelID,
+        let blockedCode,
+        let blockedSupportedCodes
+    )) = unsupportedPrimary else {
+        Issue.record("Canary 1B must not fall back from an unsupported Primary")
+        return
+    }
+    #expect(blockedModelID == "canary-1b-v2-coreml")
+    #expect(blockedCode == "xx")
+    #expect(blockedSupportedCodes == CanaryLanguageCatalog.oneBV2LanguageCodes)
+
+    let russian = try s11Resolve(modelID: "canary-1b-v2-coreml", primary: "ru", additional: "en")
+    guard case .available(let russianPlan) = russian else {
+        Issue.record("Canary 1B ru/en should provide a Russian ASR plan")
+        return
+    }
+    #expect(russianPlan.languageMode == .switchable)
+    #expect(russianPlan.languageControlEnabled)
+    #expect(russianPlan.sourceLanguageChoices == ["ru", "en"])
+    #expect(russianPlan.sourceLanguageCode == "ru")
+    #expect(russianPlan.hudLanguageLabel == "R")
+    #expect(russianPlan.request.forcedLanguageCode == "ru")
+    #expect(!russianPlan.request.translateToEnglish)
+    #expect(russianPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let frenchOnly = try s11Resolve(modelID: "canary-1b-v2-coreml", primary: "fr", additional: "de")
+    guard case .available(let frenchPlan) = frenchOnly else {
+        Issue.record("Canary 1B should accept French without requiring English")
+        return
+    }
+    #expect(frenchPlan.sourceLanguageCode == "fr")
+    #expect(frenchPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let oldOS = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "en",
+        additional: "fr",
+        os: s11OS14
+    )
+    guard case .unavailable(.unsupportedOS(let modelID, let required, let current)) = oldOS else {
+        Issue.record("Canary 1B must be gated on macOS 15+")
+        return
+    }
+    #expect(modelID == "canary-1b-v2-coreml")
+    #expect(required == s11OS15)
+    #expect(current == s11OS14)
+
+    let incomplete = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "en",
+        additional: "fr",
+        complete: false
+    )
+    guard case .unavailable(.incompleteModel("canary-1b-v2-coreml")) = incomplete else {
+        Issue.record("Canary 1B incomplete folder must be unavailable")
+        return
+    }
+}
+
+@Test
+func s11CanarySourceReplacementKeepsFrozenSessionInputs() throws {
+    let initial = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "ru",
+        additional: "en"
+    )
+    guard case .available(let initialPlan) = initial else {
+        Issue.record("Canary 1B should provide a replacement source plan")
+        return
+    }
+
+    let replacement = TranscriptionSessionResolver.replacingCanarySource(
+        in: initialPlan,
+        with: "it"
+    )
+    guard case .available(let replacementPlan) = replacement else {
+        Issue.record("Canary 1B should accept a full-catalog replacement source")
+        return
+    }
+
+    #expect(replacementPlan.model == initialPlan.model)
+    #expect(replacementPlan.modelFolderURL == initialPlan.modelFolderURL)
+    #expect(replacementPlan.engineIdentity == initialPlan.engineIdentity)
+    #expect(replacementPlan.operation == initialPlan.operation)
+    #expect(replacementPlan.sourceLanguageChoices == initialPlan.sourceLanguageChoices)
+    #expect(replacementPlan.sourceLanguageCode == "it")
+    #expect(replacementPlan.request.forcedLanguageCode == "it")
+    #expect(!replacementPlan.request.translateToEnglish)
+    #expect(replacementPlan.route.postASRTextTranslationTargetLanguageCode == nil)
+
+    let rejected = TranscriptionSessionResolver.replacingCanarySource(
+        in: initialPlan,
+        with: "xx"
+    )
+    #expect(
+        rejected == .unavailable(
+            .unsupportedSourceLanguage(
+                modelID: initialPlan.modelID,
+                requestedCode: "xx",
+                supportedCodes: CanaryLanguageCatalog.oneBV2LanguageCodes
+            )
+        )
+    )
+}
+
+@Test
+func s11GigaAMIsFixedRussianAndRejectsTranslation() throws {
+    let result = try s11Resolve(modelID: "gigaam-v3-rnnt-coreml", primary: "en", additional: "fr")
+    guard case .available(let plan) = result else {
+        Issue.record("GigaAM should provide fixed RU ASR")
+        return
+    }
+    #expect(plan.languageMode == .fixed)
+    #expect(plan.sourceLanguageChoices == ["ru"])
+    #expect(plan.sourceLanguageCode == "ru")
+    #expect(plan.hudLanguageLabel == "R")
+    #expect(!plan.languageControlEnabled)
+    #expect(plan.request.forcedLanguageCode == "ru")
+    #expect(!plan.request.translateToEnglish)
+
+    let translation = try s11Resolve(
+        modelID: "gigaam-v3-rnnt-coreml",
+        primary: "ru",
+        additional: "en",
+        operation: .whisperTargetTranslation(languageCode: "en")
+    )
+    guard case .unavailable(.translationUnsupported("gigaam-v3-rnnt-coreml")) = translation else {
+        Issue.record("GigaAM translation must be unavailable")
+        return
+    }
+
+    let typedTranslation = try s11Resolve(
+        modelID: "gigaam-v3-rnnt-coreml",
+        primary: "ru",
+        additional: "en",
+        operation: .whisperTargetTranslation(languageCode: "en")
+    )
+    #expect(typedTranslation == .unavailable(.translationUnsupported(modelID: "gigaam-v3-rnnt-coreml")))
+}
+
+@Test
+func s11EveryCoreMLASRPlanHasTheNoAutoInvariant() throws {
+    let cases = [
+        ("canary-180m-flash-coreml", "de"),
+        ("canary-1b-v2-coreml", "en"),
+        ("gigaam-v3-rnnt-coreml", "ru"),
+    ]
+
+    for (modelID, source) in cases {
+        let result = try s11Resolve(
+            modelID: modelID,
+            primary: source,
+            additional: source
+        )
+        guard case .available(let plan) = result else {
+            Issue.record("Expected a valid plan for \(modelID)")
+            continue
+        }
+        let forced = plan.request.forcedLanguageCode
+        #expect(forced != nil)
+        #expect(!forced!.isEmpty)
+        #expect(forced != "auto")
+        #expect(plan.capabilities.explicitSupportedLanguageCodes.contains(forced!))
+        #expect(!plan.request.translateToEnglish)
+    }
+}
+
+@Test
+func s11WhisperAndParakeetKeepLegacyAutoBehavior() throws {
+    let whisper = try s11Resolve(modelID: "whisperkit-large-v3-full", primary: "en", additional: "ru")
+    guard case .available(let whisperPlan) = whisper else {
+        Issue.record("Whisper plan should be available")
+        return
+    }
+    #expect(whisperPlan.languageMode == .auto)
+    #expect(whisperPlan.request.forcedLanguageCode == nil)
+    #expect(!whisperPlan.request.translateToEnglish)
+
+    let whisperTarget = try s11Resolve(
+        modelID: "whisperkit-large-v3-full",
+        primary: "en",
+        additional: "ru",
+        operation: .whisperTargetTranslation(languageCode: "en")
+    )
+    guard case .available(let targetPlan) = whisperTarget else {
+        Issue.record("Whisper target plan should be available")
+        return
+    }
+    #expect(targetPlan.languageMode == .target)
+    #expect(targetPlan.request.forcedLanguageCode == nil)
+    #expect(targetPlan.request.translateToEnglish)
+
+    let parakeet = try s11Resolve(modelID: "parakeet-tdt-06b-v3", primary: "ru", additional: "en")
+    guard case .available(let parakeetPlan) = parakeet else {
+        Issue.record("Parakeet plan should be available")
+        return
+    }
+    #expect(parakeetPlan.languageMode == .auto)
+    #expect(parakeetPlan.request.forcedLanguageCode == nil)
+    #expect(!parakeetPlan.request.translateToEnglish)
+}
+
+@Test
+func s11SessionPlanFreezesModelAndPairUntilNextSession() throws {
+    let first = try s11Resolve(modelID: "canary-180m-flash-coreml", primary: "en", additional: "de")
+    guard case .available(let firstPlan) = first else {
+        Issue.record("Initial Flash plan should be available")
+        return
+    }
+
+    let next = try s11Resolve(modelID: "gigaam-v3-rnnt-coreml", primary: "ru", additional: "en")
+    guard case .available(let nextPlan) = next else {
+        Issue.record("Next GigaAM plan should be available")
+        return
+    }
+
+    #expect(firstPlan.modelID == "canary-180m-flash-coreml")
+    #expect(firstPlan.backend == .canaryCoreML)
+    #expect(firstPlan.sourceLanguageCode == "en")
+    #expect(firstPlan.sourceLanguageChoices == ["en", "de"])
+    #expect(firstPlan.request.forcedLanguageCode == "en")
+    #expect(nextPlan.modelID == "gigaam-v3-rnnt-coreml")
+    #expect(nextPlan.request.forcedLanguageCode == "ru")
+    #expect(firstPlan.modelID != nextPlan.modelID)
+    #expect(firstPlan.sourceLanguageCode != nextPlan.sourceLanguageCode)
+}
+
+@Test
+func s11MissingActiveModelIsTypedUnavailable() {
+    let result = TranscriptionSessionResolver.resolve(
+        activeModel: nil,
+        currentOSVersion: s11OS15,
+        primaryLanguageCode: "en",
+        additionalLanguageCode: "de",
+        operation: .asr
+    )
+    #expect(result == .unavailable(.noActiveModel))
+    #expect(result.hudLanguageMode == .unavailable)
+    #expect(TranscriptionLanguageMode.unavailable.id == "unavailable")
+}
+
+@MainActor
+@Test
+func s11EngineBindingFreezesDescriptorBackendAndEngineIdentity() throws {
+    let catalog = TranscriptionModelCatalog.nativeWhisperKit
+    let flash = try s11Model("canary-180m-flash-coreml")
+    let gigaAM = try s11Model("gigaam-v3-rnnt-coreml")
+    let root = FileManager.default.temporaryDirectory
+        .appendingPathComponent("bolabol-s11-binding-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: root) }
+    try s11CreateCompleteFolder(for: flash, under: root)
+    try s11CreateCompleteFolder(for: gigaAM, under: root)
+
+    let suiteName = "bolabol-s11-binding-\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let general = GeneralSettings(
+        speechLanguages: UserSpeechLanguages(
+            primaryLanguageCode: "en",
+            additionalLanguageCode: "de"
+        )
+    )
+    defaults.set(try JSONEncoder().encode(general), forKey: "general.settings")
+
+    let modelStore = TranscriptionModelStore(
+        catalog: catalog,
+        userDefaults: defaults,
+        modelsDirectory: root
+    )
+    modelStore.activate(flash)
+    let engineStore = TranscriptionEngineStore.live()
+    let first = engineStore.makeSession(
+        modelStore: modelStore,
+        operation: .asr
+    )
+    guard case .available(let firstSession) = first else {
+        Issue.record("Flash should produce an engine-bound session")
+        return
+    }
+
+    let switched = engineStore.makeSession(
+        modelStore: modelStore,
+        operation: .asr,
+        sourceLanguageOverride: "fr"
+    )
+    guard case .available(let switchedSession) = switched else {
+        Issue.record("Flash source override should produce a replacement session")
+        return
+    }
+    #expect(switchedSession.plan.sourceLanguageChoices == ["en", "de"])
+    #expect(switchedSession.plan.sourceLanguageCode == "fr")
+    #expect(switchedSession.plan.hudLanguageLabel == "F")
+    #expect(switchedSession.plan.request.forcedLanguageCode == "fr")
+    #expect(!switchedSession.plan.request.translateToEnglish)
+    #expect(switchedSession.plan.route.postASRTextTranslationTargetLanguageCode == nil)
+    #expect(switchedSession.plan != firstSession.plan)
+    #expect(modelStore.speechLanguages == UserSpeechLanguages(
+        primaryLanguageCode: "en",
+        additionalLanguageCode: "de"
+    ))
+
+    modelStore.activate(gigaAM)
+    let second = engineStore.makeSession(
+        modelStore: modelStore,
+        operation: .asr
+    )
+    guard case .available(let secondSession) = second else {
+        Issue.record("GigaAM should produce the next engine-bound session")
+        return
+    }
+
+    #expect(firstSession.plan.modelID == "canary-180m-flash-coreml")
+    #expect(firstSession.plan.backend == .canaryCoreML)
+    #expect(firstSession.plan.engineIdentity == firstSession.engine.id)
+    #expect(firstSession.plan.request.forcedLanguageCode == "en")
+    #expect(secondSession.plan.modelID == "gigaam-v3-rnnt-coreml")
+    #expect(secondSession.plan.backend == .gigaAMCoreML)
+    #expect(secondSession.plan.engineIdentity == secondSession.engine.id)
+    #expect(secondSession.plan.request.forcedLanguageCode == "ru")
+    #expect(firstSession.plan.modelID != secondSession.plan.modelID)
+    #expect(firstSession.engine.id != secondSession.engine.id)
+}
+
+@Test
+func s11TypedWhisperTargetTranslationIsUnavailableForCanaryAndParakeet() throws {
+    let result = try s11Resolve(
+        modelID: "canary-1b-v2-coreml",
+        primary: "en",
+        additional: "ru",
+        operation: .whisperTargetTranslation(languageCode: "ru")
+    )
+
+    #expect(result == .unavailable(.translationUnsupported(modelID: "canary-1b-v2-coreml")))
+
+    let parakeet = try s11Resolve(
+        modelID: "parakeet-tdt-06b-v3",
+        primary: "en",
+        additional: "ru",
+        operation: .whisperTargetTranslation(languageCode: "en")
+    )
+    #expect(parakeet == .unavailable(.translationUnsupported(modelID: "parakeet-tdt-06b-v3")))
+}
+
+private func s11CreateCompleteFolder(
+    for model: TranscriptionModelDescriptor,
+    under root: URL
+) throws {
+    let folder = root.appendingPathComponent(model.relativeStorageSubpath, isDirectory: true)
+    let fileManager = FileManager.default
+    try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
+    let items: [(String, Bool)]
+    switch model.id {
+    case "canary-1b-v2-coreml":
+        items = [
+            ("canary_encoder.mlmodelc", true),
+            ("canary_cross_kv.mlmodelc", true),
+            ("canary_decoder_kv.mlmodelc", true),
+            ("canary_spe.model", false),
+        ]
+    case "canary-180m-flash-coreml":
+        items = [
+            ("CanaryEncoder.mlmodelc", true),
+            ("CanaryPrefill.mlmodelc", true),
+            ("CanaryDecoder.mlmodelc", true),
+            ("config.json", false),
+            ("vocab.json", false),
+        ]
+    case "gigaam-v3-rnnt-coreml":
+        items = [
+            ("Encoder.mlmodelc", true),
+            ("Predictor.mlmodelc", true),
+            ("JointDecision.mlmodelc", true),
+            ("vocab.txt", false),
+        ]
+    default:
+        items = []
+    }
+    for (name, isDirectory) in items {
+        let url = folder.appendingPathComponent(name, isDirectory: isDirectory)
+        if isDirectory {
+            try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+        } else {
+            try Data([0]).write(to: url)
+        }
+    }
+}

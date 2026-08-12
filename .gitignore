@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Swift / Xcode build outputs
+.build/
+.swiftpm/
+DerivedData/
+build/
+dist/
+*.app/
+*.dmg
+*.dSYM/
+*.xcarchive/
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Local models, runtime data, logs, and temporary files
+ModelAssets/
+UserData/
+Research/
+*.part
+*.log
+tmp/
+temp/

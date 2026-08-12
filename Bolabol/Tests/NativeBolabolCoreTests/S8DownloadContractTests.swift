@@ -19,8 +19,8 @@ func s8GoInstallSourcesNeverUseUpstreamModelRepositoryIDs() throws {
     #expect(gigaAM.installSource == .huggingFace(repositoryID: "huggingfinger0/gigaam-v3-coreml"))
     #expect(gigaAM.installSource != .huggingFace(repositoryID: gigaAM.modelRepositoryID))
 
-    guard case .bolabolCDN(let packageID, _) = canary1B.installSource else {
-        #expect(Bool(false), "Canary 1B must use the explicit Bolabol CDN source")
+    guard case .googleDrive(let packageID, _) = canary1B.installSource else {
+        #expect(Bool(false), "Canary 1B must use the explicit Google Drive source")
         return
     }
     #expect(packageID == "bolabol-canary-1b-v2-coreml-r1")

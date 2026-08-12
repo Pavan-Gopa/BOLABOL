@@ -172,9 +172,9 @@ struct BUGVPH006ParakeetRussianRoutingTests {
         #expect(plan.hudLanguageLabel == "A")
         // The S11 auto contract stays intact: no forced language token.
         #expect(plan.request.forcedLanguageCode == nil)
-        // BUG-VPH-006 fix: the request must carry the Primary Russian anchor.
-        #expect(plan.route.languageHint == "ru")
-        #expect(plan.request.languageHint == "ru")
+        // Parakeet Auto must never carry a hardcoded language anchor.
+        #expect(plan.route.languageHint == nil)
+        #expect(plan.request.languageHint == nil)
         // Never a translation route for an auto session.
         #expect(!plan.request.translateToEnglish)
         #expect(plan.route.postASRTextTranslationTargetLanguageCode == nil)
@@ -189,7 +189,7 @@ struct BUGVPH006ParakeetRussianRoutingTests {
         }
 
         let request = plan.request(audioFileURL: URL(fileURLWithPath: "/tmp/ru-speech.wav"))
-        #expect(request.languageHint == "ru")
+        #expect(request.languageHint == nil)
         #expect(request.audioFileURL != nil)
     }
 

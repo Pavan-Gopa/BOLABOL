@@ -483,14 +483,7 @@ struct HotkeySettingsView: View {
     }
 
     private var availableSpeechLanguages: [SpeechLanguage] {
-        guard let model = transcriptionModelStore.activeModel,
-              model.backend == .canaryCoreML || model.backend == .gigaAMCoreML
-        else {
-            return LanguagePickerOrder.speechLanguages
-        }
-
-        let supported = Set(model.capabilities.explicitSupportedLanguageCodes)
-        return LanguagePickerOrder.speechLanguages.filter { supported.contains($0.code) }
+        LanguagePickerOrder.speechLanguages
     }
 
     private func unavailableMessage(

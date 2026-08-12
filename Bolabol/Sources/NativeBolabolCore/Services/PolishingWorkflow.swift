@@ -231,20 +231,30 @@ private struct PolishingLanguageGuard {
         }
 
         let instruction: String
+        let footer: String
         if strict {
             instruction = """
             CRITICAL LANGUAGE LOCK:
-            - The source text is primarily Russian written in Cyrillic.
-            - Your output MUST remain primarily Russian written in Cyrillic.
-            - If you answer mostly in English or another non-Cyrillic language, the answer is wrong.
+            - The source text is written in Russian (Cyrillic).
+            - Your output MUST remain in Russian (Cyrillic).
+            - Do NOT translate the Russian text into English or any other language.
             - Preserve embedded English technical terms, product names, APIs, commands, code fragments, file paths, UI labels, and abbreviations exactly where appropriate.
+            """
+            footer = """
+            === CRITICAL LANGUAGE LOCK REMINDER ===
+            Output the final cleaned text in RUSSIAN (Cyrillic). Do NOT translate to English.
             """
         } else {
             instruction = """
             LANGUAGE LOCK:
-            - The source text is primarily Russian written in Cyrillic.
-            - Keep the output primarily in Russian written in Cyrillic.
+            - The source text is written in Russian (Cyrillic).
+            - Keep the output in Russian (Cyrillic).
+            - Do NOT translate the text into English.
             - Preserve embedded English technical terms, product names, APIs, commands, code fragments, file paths, UI labels, and abbreviations exactly where appropriate.
+            """
+            footer = """
+            === LANGUAGE LOCK REMINDER ===
+            Output ONLY the final polished text in RUSSIAN (Cyrillic). Do NOT translate to English.
             """
         }
 
@@ -255,6 +265,8 @@ private struct PolishingLanguageGuard {
             \(instruction)
 
             \(template.body)
+
+            \(footer)
             """
         )
     }
@@ -292,10 +304,10 @@ private struct ScriptProfile {
     }
 
     var isCyrillicDominant: Bool {
-        cyrillicCount >= 8 && cyrillicCount > latinCount
+        cyrillicCount >= 4 || (cyrillicCount >= 1 && cyrillicCount >= latinCount)
     }
 
     var isClearlyNonCyrillicComparedToCyrillicSource: Bool {
-        latinCount >= 12 && cyrillicCount * 2 < latinCount
+        (cyrillicCount == 0 && latinCount >= 2) || (latinCount >= 4 && cyrillicCount * 2 < latinCount)
     }
 }

@@ -1,30 +1,41 @@
-# Commercial use of Bolabol
+# BOLABOL Commercial Licensing
 
-Bolabol is free for **personal / noncommercial** use under the
-[PolyForm Noncommercial License 1.0.0](LICENSE).
+BOLABOL is released under **Business Source License 1.1 (BSL 1.1)** with a Five-Person Additional Use Grant.
+
+The short version:
+
+> **Up to five active human users in one organization can use BOLABOL in production for free. The sixth active user requires a commercial license.**
+
+The canonical legal terms are in [`../LICENSE`](../LICENSE). A plain-language explanation of the model is in [`../LICENSING.md`](../LICENSING.md).
 
 ## When you need a commercial license
 
-You need a **paid commercial license** if Bolabol is used for a
-**business or company purpose**, including for example:
+A commercial license is required when:
 
-- Installing or running Bolabol on company-owned devices
-- Using Bolabol as part of paid work, client delivery, or internal business operations
-- Deploying Bolabol for employees, contractors, or teams in an organization
-- Bundling, reselling, or offering Bolabol (or a modified version) as a product or service
-- Any use primarily intended for commercial advantage or monetary compensation
+- **6 or more Active Users** use BOLABOL in production on behalf of the same Organization;
+- you want to resell, white-label, sublicense, rent, or commercially redistribute BOLABOL or a derivative work;
+- you want to provide BOLABOL or a derivative as a hosted, managed, or similar service to third parties;
+- you want to embed BOLABOL or a derivative into a commercial product or service where BOLABOL provides a material part of the functionality;
+- you need alternative deployment, redistribution, OEM, or contractual terms outside the public BSL grant.
 
-Personal hobby use, private study, and noncommercial experimentation remain free.
+A company does **not** need a commercial license merely because it makes money. If only five or fewer people in that organization actively use BOLABOL in production, that production use is covered by the Five-Person Grant, subject to the other limits in the LICENSE.
 
-## How to get a commercial license
+## What the commercial license can cover
 
-Contact the maintainer to discuss pricing and terms:
+Commercial terms can be tailored for the deployment, including 6+ user teams, larger internal deployments, OEM and bundled distribution, managed or hosted offerings, white-label use, alternative redistribution rights, and separately agreed support or deployment arrangements.
+
+## The Freedom Clock still matters
+
+Every specific BOLABOL version automatically transitions to **GNU GPL v3 or later three years after that version is first publicly distributed**.
+
+A commercial license is therefore about rights to use the **current protected version** outside the Five-Person Grant. It does not cancel or postpone the Freedom Date of any public release.
+
+## Contact
+
+To discuss commercial licensing:
 
 - **Email:** [dhamamedia@gmail.com](mailto:dhamamedia@gmail.com)
-- **Telegram / WhatsApp:** [+91 84366 99835](https://wa.me/918436699835) (message only — Indian number)
-- GitHub: open an issue on this repository, or message **@Pavan-Gopa**
-- Subject line suggestion: `Bolabol commercial license`
+- **GitHub:** contact **@Pavan-Gopa** or open an issue in this repository
+- Suggested subject: `BOLABOL commercial license`
 
-Do **not** assume that downloading a public binary or cloning this repository
-grants commercial rights. Public availability is for distribution convenience;
-commercial rights require a separate written agreement.
+Please include the approximate number of users and whether the intended use is internal, OEM, hosted/managed, redistribution, or another deployment model.

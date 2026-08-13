@@ -203,12 +203,16 @@ struct LicensingSettingsView: View {
     }
 
     private var bundledLicenseText: String {
-        guard let url = Bundle.module.url(forResource: "BOLABOL_LICENSE", withExtension: "txt"),
-              let text = try? String(contentsOf: url, encoding: .utf8)
-        else {
-            return "The bundled license could not be loaded. The canonical license is available in the BOLABOL GitHub repository."
+        let releaseURL = Bundle.main.url(forResource: "BOLABOL_LICENSE", withExtension: "txt")
+        let developmentURL = Bundle.module.url(forResource: "BOLABOL_LICENSE", withExtension: "txt")
+
+        for url in [releaseURL, developmentURL].compactMap({ $0 }) {
+            if let text = try? String(contentsOf: url, encoding: .utf8) {
+                return text
+            }
         }
-        return text
+
+        return "The bundled license could not be loaded. The canonical license is available in the BOLABOL GitHub repository."
     }
 
     @ViewBuilder

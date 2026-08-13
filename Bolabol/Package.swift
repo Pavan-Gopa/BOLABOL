@@ -50,7 +50,8 @@ let package = Package(
             ],
             resources: [
                 .copy("Resources/AppIcon.icns"),
-                .copy("Resources/Logos")
+                .copy("Resources/Logos"),
+                .copy("Resources/BOLABOL_LICENSE.txt")
             ]
         ),
         .target(

@@ -138,6 +138,16 @@ for svg_name in BOLABOL_LOGO.svg BOLABOL_LOGO_Full.svg BOLABOL_Wordmark.svg BOLA
   fi
 done
 
+# Ship the exact BOLABOL license inside the application bundle so
+# Settings > License can display the controlling legal text offline.
+LICENSE_SRC="$ROOT_DIR/Sources/NativeBolabol/Resources/BOLABOL_LICENSE.txt"
+if [[ -f "$LICENSE_SRC" ]]; then
+  cp "$LICENSE_SRC" "$APP_RESOURCES/BOLABOL_LICENSE.txt"
+else
+  echo "error: bundled BOLABOL license is missing: $LICENSE_SRC" >&2
+  exit 1
+fi
+
 echo "=== Generating Info.plist ==="
 cat >"$INFO_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

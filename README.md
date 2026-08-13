@@ -24,6 +24,9 @@
   <img src="https://img.shields.io/badge/Apple%20Silicon-M1%20or%20later-111111?style=flat-square" alt="Apple Silicon">
   <img src="https://img.shields.io/badge/Swift-SwiftUI-F05138?style=flat-square&logo=swift&logoColor=white" alt="Swift / SwiftUI">
   <img src="https://img.shields.io/badge/local--first-privacy-2ea44f?style=flat-square" alt="Local-first">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-6f42c1?style=flat-square" alt="Business Source License 1.1"></a>
+  <a href="LICENSING.md"><img src="https://img.shields.io/badge/production-5%20humans%20free-2ea44f?style=flat-square" alt="Five active human users free"></a>
+  <a href="LICENSING.md#the-freedom-clock"><img src="https://img.shields.io/badge/Freedom%20Clock-3%20years-blue?style=flat-square" alt="Open Source after three years"></a>
 </p>
 
 <p align="center">
@@ -31,7 +34,8 @@
   <a href="#what-bolabol-does">Features</a> ·
   <a href="#local--cloud-ai">AI engines</a> ·
   <a href="#translation">Translation</a> ·
-  <a href="#install">Install</a>
+  <a href="#install">Install</a> ·
+  <a href="#license">Licensing</a>
 </p>
 
 ---
@@ -221,6 +225,16 @@ The native application is split into:
 
 ## License
 
-BOLABOL is distributed under the **PolyForm Noncommercial License**. See [`Bolabol/LICENSE`](Bolabol/LICENSE) for the license text and [`Bolabol/COMMERCIAL.md`](Bolabol/COMMERCIAL.md) for commercial licensing information.
+BOLABOL uses **Business Source License 1.1** with the **Five-Person Grant** and a three-year **Freedom Clock**.
+
+**Up to five active human users in one organization may use the current BOLABOL release in production for free. The sixth active user requires a commercial license.** Commercial OEM, resale, white-label, hosted/managed service, and similar productized uses also require separate commercial terms.
+
+Every specific BOLABOL version automatically becomes available under **GNU GPL v3 or later three years after that version is first publicly distributed**.
+
+Before its Freedom Date, BOLABOL is **source-available, not OSI Open Source**. After that date, the specific version is Open Source under GPL v3-or-later.
+
+Read the [legal license](LICENSE), the plain-language [licensing guide](LICENSING.md), and [commercial licensing terms](COMMERCIAL.md).
+
+> **Free for people. Sustainable for builders. Open with time.**
 
 <sub>BOLABOL was previously released under the name <strong>SmartScribe</strong>. Current product documentation uses the BOLABOL name.</sub>

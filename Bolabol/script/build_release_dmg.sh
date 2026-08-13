@@ -148,6 +148,28 @@ else
   exit 1
 fi
 
+# Preserve third-party license notices for every SwiftPM checkout that
+# participates in the build. This keeps binary redistribution notices
+# alongside the app without maintaining a fragile hand-written list.
+THIRD_PARTY_NOTICES="$APP_RESOURCES/THIRD_PARTY_NOTICES.txt"
+{
+  echo "BOLABOL Third-Party Notices"
+  echo "Generated from the Swift Package Manager checkouts used for this build."
+  echo
+  for checkout in "$ROOT_DIR/.build/checkouts"/*; do
+    [[ -d "$checkout" ]] || continue
+    project_name="$(basename "$checkout")"
+    while IFS= read -r license_file; do
+      [[ -n "$license_file" ]] || continue
+      echo "===============================================================================" 
+      echo "$project_name / $(basename "$license_file")"
+      echo "===============================================================================" 
+      cat "$license_file"
+      echo
+    done < <(find "$checkout" -maxdepth 1 -type f       \( -iname 'LICENSE' -o -iname 'LICENSE.*' -o -iname 'COPYING' -o -iname 'COPYING.*' \)       -print | sort)
+  done
+} > "$THIRD_PARTY_NOTICES"
+
 echo "=== Generating Info.plist ==="
 cat >"$INFO_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

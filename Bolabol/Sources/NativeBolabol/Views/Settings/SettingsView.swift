@@ -46,6 +46,11 @@ struct SettingsView: View {
                     Label(generalSettingsStore.text(.settingsGlossary), systemImage: "text.book.closed")
                 }
 
+            LicensingSettingsView()
+                .tabItem {
+                    Label("License", systemImage: "checkmark.seal")
+                }
+
             HelpSettingsView()
                 .tabItem {
                     Label(generalSettingsStore.text(.settingsHelp), systemImage: "questionmark.circle")

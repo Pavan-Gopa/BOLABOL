@@ -18,7 +18,8 @@
   <a href="https://github.com/Pavan-Gopa/BOLABOL/releases/latest"><img src="https://img.shields.io/github/v/release/Pavan-Gopa/BOLABOL?style=flat-square&label=release&color=2ea44f" alt="Release"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B%20Apple%20Silicon-111111?style=flat-square" alt="macOS 14+ Apple Silicon">
   <img src="https://img.shields.io/badge/Swift-SwiftUI-F05138?style=flat-square" alt="Swift / SwiftUI">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-6f42c1?style=flat-square" alt="PolyForm Noncommercial"></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-6f42c1?style=flat-square" alt="Business Source License 1.1"></a>
+  <a href="../LICENSING.md"><img src="https://img.shields.io/badge/production-5%20humans%20free-2ea44f?style=flat-square" alt="Five active human users free"></a>
 </p>
 
 ---
@@ -81,7 +82,7 @@
 
 ```bash
 git clone https://github.com/Pavan-Gopa/BOLABOL.git
-cd BOLABOL
+cd BOLABOL/Bolabol
 ./script/build_and_run.sh
 ```
 
@@ -94,4 +95,10 @@ To build a notarized release DMG:
 
 ## License
 
-Distributed under the PolyForm Noncommercial License. See [LICENSE](LICENSE) for details.
+BOLABOL uses **Business Source License 1.1** with a **Five-Person Grant**.
+
+Up to **five active human users** in one organization may use BOLABOL in production for free. The **sixth active user** requires a commercial license. Certain OEM, resale, white-label, hosted/managed service, and embedded product uses require commercial terms regardless of team size.
+
+Every specific BOLABOL version has a **three-year Freedom Clock** and automatically transitions to **GNU GPL v3 or later** three years after its first public distribution.
+
+See the canonical [`LICENSE`](../LICENSE), the human-readable [`LICENSING.md`](../LICENSING.md), and [`COMMERCIAL.md`](../COMMERCIAL.md).

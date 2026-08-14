@@ -46,9 +46,10 @@ Full table: `MODELS.md`.
 
 ```text
 Human ↔ Main
-  → fresh Coder → Main verification
-  → fresh Reviewer → Main verification
-  → fresh Tester → Main verification
+  → fresh Coder → Main verification/build/fresh app
+  → Human acceptance test
+  → one fresh Reviewer → Main verification
+  → one fresh Tester → Main verification
   → next step
 ```
 
@@ -59,8 +60,9 @@ Main's conversation history. Every retry is a new task-agent session.
 
 | Gate | Default | Notes |
 |------|---------|-------|
-| **Code review** | **On** | Minimum recommended bar. Skip only if Human says so. |
-| **Tester** | **Recommended on** | Orchestrator should include Tester unless Human opts out. |
+| **Human acceptance** | **On before formal review** | Human exercises the fresh app; a rejection routes directly to a fresh Coder. |
+| **Code review** | **One pass after acceptance** | Skip only if Human says so. |
+| **Tester** | **One pass after approved review** | Orchestrator includes it unless Human opts out. |
 | **Security** | **Offer once** near release | Optional. Expensive top models. Not every step. |
 
 ### Verification gates
@@ -76,8 +78,10 @@ This section is the canonical gate contract. Step cards separate:
   boundaries. Reviewer is the primary evaluator; Coder never marks these green.
 
 `waiting_review` means the scoped implementation and required Coder objective
-gates are ready for independent judgment, not that the step is proven correct.
-Only Main combines verified objective evidence, Reviewer judgment, and enabled
+gates are ready for Main verification and a fresh-app Human acceptance test,
+not that Reviewer should run immediately. Main dispatches the candidate's one
+Reviewer only after the Human confirms the intended behavior. Only Main combines
+verified objective evidence, Human acceptance, Reviewer judgment, and enabled
 QA results to transition the step.
 
 ### Tester (when enabled)
@@ -88,8 +92,8 @@ QA results to transition the step.
 4. Return structured counts, commands, new tests, and failures to Main.
 5. Main inspects every Tester-authored test diff for weakened assertions,
    implementation-coupled checks, and real product-behavior coverage.
-6. A substantial test diff receives a short targeted Reviewer pass before the
-   step closes.
+6. Main accepts or rejects that test diff directly; it does not launch a second
+   Reviewer pass after Tester.
 7. Main verifies and writes `REPORT.md` / `BUG_REPORT.md`.
 
 ### Architect (when needed)

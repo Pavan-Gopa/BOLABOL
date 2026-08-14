@@ -48,7 +48,7 @@ FAILURE_CATEGORIES = {
     "other",
 }
 DETECTED_BY = {"main", "reviewer", "tester", "architect"}
-REVIEW_KINDS = {"product", "test_diff"}
+REVIEW_KINDS = {"product", "test_diff"}  # test_diff is read-only legacy history
 ARCHITECT_MODES = {"advisory", "design", "grilling"}
 GATES = {"reviewer", "qa", "security"}
 RATINGS = {"good", "overkill", "underchecked"}
@@ -923,7 +923,7 @@ def synthetic_events() -> list[dict[str, Any]]:
     add("gate_skipped", "gate_skipped:S4:qa", 42, step="S4", gate="qa", evidence_ref="AI_Workflow_Kit/docs/AI/STATE.yaml")
     add("step_completed", "step_completed:S4", 43, step="S4")
 
-    # S5: deep Architect, runtime interruption, model failure, targeted review, retry safeguard.
+    # S5: deep Architect, runtime interruption, model failure, retry safeguard.
     add("step_started", "step_started:S5", 44, step="S5")
     add("worker_started", "worker_started:a5", 45, step="S5", run_id="a5", role="architect", mode="grilling")
     add("worker_result", "worker_result:a5", 46, step="S5", run_id="a5", role="architect", result="design_ready", evidence_ref="AI_Workflow_Kit/docs/DECISIONS.md")
@@ -936,8 +936,6 @@ def synthetic_events() -> list[dict[str, Any]]:
     add("worker_result", "worker_result:r5", 53, step="S5", run_id="r5", candidate_id="c5", role="reviewer", result="approved", review_kind="product", evidence_ref="AI_Workflow_Kit/docs/AI/FEEDBACK.md")
     add("worker_started", "worker_started:t5", 54, step="S5", run_id="t5", role="tester")
     add("worker_result", "worker_result:t5", 55, step="S5", run_id="t5", candidate_id="c5", role="tester", result="qa_green", evidence_ref="AI_Workflow_Kit/docs/AI/REPORT.md")
-    add("worker_started", "worker_started:r5targeted", 56, step="S5", run_id="r5targeted", role="reviewer")
-    add("worker_result", "worker_result:r5targeted", 57, step="S5", run_id="r5targeted", candidate_id="c5", role="reviewer", result="changes_requested", review_kind="test_diff", evidence_ref="AI_Workflow_Kit/docs/AI/FEEDBACK.md")
     add("retry_safeguard_triggered", "retry_safeguard:S5:signature1", 58, step="S5", repeat_count=3, threshold=3, evidence_ref="AI_Workflow_Kit/docs/AI/FEEDBACK.md")
     add("step_completed", "step_completed:S5", 59, step="S5")
     return events
@@ -980,8 +978,19 @@ def command_selftest(_args: argparse.Namespace) -> int:
         cases.append("H advisory Architect")
         assert_equal("I deep Architect", summary["architect_escalation"], ratio(1, 5))
         cases.append("I deep Architect")
-        assert_equal("J targeted review excluded", summary["reviewer_rejection"]["count"], 1)
-        cases.append("J targeted test-diff review excluded")
+        make_event(
+            iso_at(59, 10),
+            "worker_result",
+            "worker_result:legacy-targeted-review",
+            step="S5",
+            run_id="legacy-targeted-review",
+            candidate_id="c5",
+            role="reviewer",
+            result="approved",
+            review_kind="test_diff",
+            evidence_ref="AI_Workflow_Kit/docs/AI/FEEDBACK.md",
+        )
+        cases.append("J legacy test-diff event remains readable")
 
         assert_equal("M Coder runs", report["role_stats"]["coder"]["runs"], 8)
         assert_equal("M Coder verified results", report["role_stats"]["coder"]["verified_results"], 7)

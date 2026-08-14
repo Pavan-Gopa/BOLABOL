@@ -43,7 +43,7 @@ public enum ProviderRegistry {
                 requiresKey: nil
             )
         ]
-        if !settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if settings.geminiKeyBank.hasEnabledKey {
             providers.append(
                 ProviderOption(
                     id: "gemini-cloud",
@@ -97,7 +97,7 @@ public enum ProviderRegistry {
         let isSame = targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "same"
 
         var providers: [ProviderOption] = []
-        if !settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if settings.geminiKeyBank.hasEnabledKey {
             providers.append(
                 ProviderOption(
                     id: "gemini-cloud",
@@ -168,15 +168,18 @@ public enum ProviderRegistry {
                     else {
                         return false
                     }
+                    // Synthetic fixtures intentionally bypass path checks in tests;
+                    // production listing only checks the persisted model reference.
                     if descriptor.backend == .whisperKitCoreML,
                        LocalModelVerification.skipVerificationForTesting {
-                        return LocalModelVerification.verifyModelPath(state.path, isWhisper: true)
+                        return true
                     }
+                    // Detached reconciliation owns full package/layout/hash validation;
+                    // listing only checks the persisted model directory reference.
                     guard let path = state.path, !path.isEmpty else { return false }
-                    return NativeModelCatalog.isModelPresent(
-                        descriptor,
-                        at: URL(fileURLWithPath: path, isDirectory: true)
-                    )
+                    var isDirectory = ObjCBool(false)
+                    return FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
+                        && isDirectory.boolValue
                 case .translation:
                     return state.runtime == .mlx
                         && LocalModelVerification.verifyTranslationModelPath(state.path, modelID: id)

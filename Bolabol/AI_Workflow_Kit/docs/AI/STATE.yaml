@@ -1,57 +1,91 @@
-# Bolabol 1.0.4 ASR Core ML — live orchestration state
-# Orchestrator owns this file.
+# Live orchestration state — Orchestrator owns this file.
+# Keep it simple. Project-agnostic template.
 
-current_step: IDLE
+project_prefix: proj
+onboarding:
+  status: pending
+  model_pairs_confirmed: false
+  completed_at: null
+current_step: S0
+# Exact STEPS.md Do text while one item is actively assigned; Main owns/clears it.
+current_work_item: null
 step_description: >-
-  CODE-HYGIENE-RELEASE Batch 1 complete. Awaiting Human direction for optional
-  HYG-016 copy batch, screenshots HYG-001, SEC-005, or next product work.
+  Session start: Orchestrator confirms workflow readiness, asks Human for
+  project context, then minimal plan or Architect.
 target_files: []
-completed_steps:
-  - S0
-  - S1
-  - RENAME
-  - S1b
-  - S1c
-  - S2
-  - S3
-  - S4
-  - S5
-  - S6
-  - S4b
-  - S7
-  - S8
-  - S9
-  - VERTICAL-PULSE-HUD
-  - CODE-HYGIENE-RELEASE
+completed_steps: []
 skipped_steps: []
 implementation:
-  status: done
+  # pending | running | waiting_review | changes_requested | blocked | complete
+  status: pending
+  attempts: 0
+  # Increment only after evidence evaluates an implementation attempt.
+  # Runtime/provider interruption alone is not an implementation attempt.
+retry_guard:
+  max_attempts_without_progress: 3
+  # Consecutive verified failures for the current approach/failure signature.
+  # First occurrence = 1; same approach + same failure increments; a new
+  # approach/evidence/material failure signature starts a new count at 1.
+  repeated_failure_count: 0
+  last_failure_signature: null
+  blocker: null
+omp:
+  active_agent: null
+  active_role: null
+  last_result_artifact: null
+  model_failure:
+    # none | awaiting_human | backup_authorized
+    status: none
+    role: null
+    primary_agent: null
+    failed_model: null
+    evidence: null
+    backup_agent: null
+    human_instruction: null
+    authorized_at: null
+  interruption:
+    # none | interrupted_no_changes | interrupted_partial | recovered_result | indeterminate
+    status: none
+    role: null
+    agent: null
+    changed_files: []
+    evidence: null
+    recorded_at: null
 review:
-  status: approved
+  status: pending
+  last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  verdict: null
+  note: null
+  # default on unless Human explicitly skips
+  enabled: true
+  # use status: skipped only after an explicit Human opt-out; record why in note
 qa:
-  status: green
-  suite: CODE-HYGIENE-BATCH-1-RETEST
+  status: pending
+  last_report: AI_Workflow_Kit/docs/AI/REPORT.md
+  suite: null
   bugs_open: 0
+  note: null
+  # recommended on; Human may opt out
+  enabled: true
+  # use status: skipped only after an explicit Human opt-out; record why in note
 security:
-  status: medium_low_closed_sec005_deferred
-  open:
-    - SEC-005
-  closed:
-    - SEC-001
-    - SEC-002
-    - SEC-003
-    - SEC-004
-next_actor: human
-track: PRODUCT
-checkpoint:
-  last_pre_tag: bolabol/pre-CODE-HYGIENE-RELEASE
-  last_post_tag: bolabol/CODE-HYGIENE-RELEASE-done
-  last_commit: 5243228
-  note: LOCAL ONLY — remote push DISABLED
+  next_run: none
+  note: >-
+    Offer once near release when work is ready (optional). Top models only:
+    GLM 5.2 max, Sol max, or Opus 5 max. Not every step. Not Terra/Luna.
+next_actor: orchestrator
+track: BOOTSTRAP
 plan_files:
-  - AI_Workflow_Kit/docs/AI/ARCHITECT_HANDOFF.md
+  - PIPELINE.md
+  - AI_Workflow_Kit/docs/STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
+  - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
+checkpoint:
+  last_pre_tag: null
+  last_post_tag: null
+  last_commit: null
+coder_brief: |
+  No product coding yet. After Human context: minimal plan and first step, or
+  Architect research if context is insufficient.
 notes: |
-  POST bolabol/CODE-HYGIENE-RELEASE-done @ 5243228 (LOCAL ONLY).
-  No rebuild on this status (Tester docs-only). Graphify rebuilt after POST.
-  Optional next: HYG-016 AppText copy, HYG-001 screenshots, enable GitHub remote.
+  Fresh kit. Simple pipeline: ready → context → plan or Architect → code → review → test.

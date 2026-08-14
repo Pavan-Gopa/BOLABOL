@@ -100,7 +100,8 @@ Advance the established workflow automatically inside this OMP session:
 - write canonical feedback/reports/state yourself;
 - stop after three materially identical failed attempts and surface a blocker;
 - separate Objective Gates from Reviewer-owned Judgment Gates; Coder
-  `waiting_review` means objective-ready for independent judgment, not step-complete;
+  `waiting_review` means ready for Main verification/build and Human acceptance,
+  not immediate Reviewer dispatch or step completion;
 - on a verified retry, persist attempt history in `FEEDBACK.md` and give the
   fresh Coder only compact approach/result/evidence/rejection memory;
 - use `workflow-architect` with `Mode: advisory` only for an optional bounded
@@ -117,8 +118,11 @@ Advance the established workflow automatically inside this OMP session:
 - preserve reviewer/tester/security preferences recorded in `STATE.yaml`;
 - record explicit Human gate skips and reasons instead of leaving impossible
   stop-gates;
-- inspect Tester-authored test diffs and request a short targeted review when
-  they are substantial;
+- require a fresh-app Human acceptance before Reviewer; route Human rejection
+  directly to a fresh Coder and run exactly one Reviewer then one Tester only
+  after the Human accepts the unchanged candidate;
+- inspect and accept or reject Tester-authored test diffs directly; never launch
+  a second Reviewer pass after Tester;
 - use focused Graphify navigation when a current graph exists, then verify against real source;
 - never ask a worker to route or contact another worker.
 - record passive local events at the exact verified Main transitions defined in

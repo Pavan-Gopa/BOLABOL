@@ -1,160 +1,157 @@
-# AI Team Contract — Bolabol 1.0.3
+# AI Team Contract
+
+Keep this light. Human ↔ **Orchestrator** only for process control.
 
 ## Source of truth (priority)
 
-1. `BOLABOL_1.0.3_IMPLEMENTATION_PLAN.md` — authoritative product plan
-2. `AI_Workflow_Kit/docs/AI/STATE.yaml` — what to do right now
-3. `AI_Workflow_Kit/docs/BOLABOL_STEPS.md` — condensed step cards B0–B12
-4. `AI_Workflow_Kit/docs/DECISIONS.md` — ADR log
-5. `AI_Workflow_Kit/docs/PROJECT_CONTEXT.md` — repo map + build commands
+1. Authoritative plan files listed in `PROJECT_CONTEXT.md` (if any)  
+2. `STATE.yaml` — what to do **right now**  
+3. `STEPS.md` — step cards  
+4. `DECISIONS.md` — ADRs  
+5. `PROJECT_CONTEXT.md` — repo map + commands  
+6. `PIPELINE.md` — simple human overview  
+
+Higher wins on conflict. Plan vs code conflict → **Architect** before large Coder work.
+
+---
 
 ## Roles
 
-| Role | Actor | Writes code? | Updates |
-|------|-------|--------------|---------|
-| **Orchestrator** | This session (hub) | **no product code, tests, or QA execution** | workflow/docs, STATE, checkpoints, kick prompts, graphify, status build/launch |
-| **Implementation Engineer** | Coder (fresh terminal) | **yes** product | `target_files` only; FEEDBACK §1–4 |
-| **Verification Engineer** | Reviewer (fresh terminal) | no | `FEEDBACK.md` review verdict |
-| **Test Engineer** | Tester (fresh terminal) | **feature test / QA scripts only** (no product) | feature tests, `script/qa`, `REPORT.md`, `BUG_REPORT.md` |
-| **Security Engineer** | Security (fresh terminal, **rare**) | **security probes / sec tests only** (no product) | `SECURITY_REPORT.md`, optional `check_sec_*.sh` / security unit tests |
-| **Architect** *(on demand)* | Orchestrator or dedicated | no product features | ADR → DECISIONS |
-| **Human** | Pavel | — | paste kicks, say «статус», approve product decisions; request security audit when needed |
+| Role | Writes product code? | Job / write boundary |
+|------|----------------------|----------------------|
+| **Main Orchestrator** | No | Sole owner of state, plans, feedback, reports, routing, checkpoints, and passive metrics recording |
+| **Coder** | Yes, assignment target files only | One implementation/fix; structured result to Main |
+| **Reviewer** | No | Read-only verdict and findings |
+| **Tester** | Tests / QA scripts only | Gate, gap-hunt, structured evidence |
+| **Architect** | No | Read-only research, questions, Architecture Package |
+| **Security** | No | Read-only optional final vulnerability audit |
+| **Human** | — | Context, preferences, supervision and intervention |
 
-## Workflow (hub = Orchestrator)
+### Models (summary)
 
-Каждая роль открывается в **новом терминальном окне** (пустой контекст).
-**Каждый** kick-промпт пишет **Orchestrator**; Human только копирует.
+| Role | Default |
+|------|---------|
+| Orchestrator | **Grok 4.5 · Max / High** · or **GPT 5.6 Sol · Medium** |
+| Coder | Luna / DeepSeek Flash / Gemini Flash · Max–High |
+| Reviewer | Luna / Gemini · **no DeepSeek** |
+| Tester | Terra · Max / Extra High |
+| Architect | Sol High–Extra High or Terra Max · **not Ultra** |
+| Security | **GLM 5.2 · max** · Sol max · Opus 5 max (final offer only) |
 
+Full table: `MODELS.md`.
+
+---
+
+## OMP pipeline
+
+```text
+Human ↔ Main
+  → fresh Coder → Main verification
+  → fresh Reviewer → Main verification
+  → fresh Tester → Main verification
+  → next step
 ```
-Human ↔ Orchestrator only (control plane)
-  Orchestrator: PRE tag + STATE update
-  → Orchestrator выдаёт kick Coder (full prompt)
-  → Human: новое окно → Coder
-  → Coder: code + FEEDBACK waiting_review → «вернись к оркестратору»
-  → Human → Orchestrator «статус»
-  → Orchestrator: close old app + clean Release build + launch fresh bundle
-  → Orchestrator: graphify rebuild по последнему Coder diff
-  → Orchestrator выдаёт kick Reviewer
-  → Human: новое окно → Reviewer
-  → Reviewer: APPROVED | CHANGES_REQUESTED → «вернись к оркестратору»
-  → Human → Orchestrator
-  → if approved: Orchestrator выдаёт kick Tester
-  → Tester: REPORT/BUG_REPORT → «вернись к оркестратору»
-  → Orchestrator: green → POST + graphify + PRE next + kick Coder; red → fix + kick Coder
-```
 
-### Test Engineer after every coding step (mandatory)
+Main dispatches project agents through OMP `task`. Children do not inherit
+Main's conversation history. Every retry is a new task-agent session.
 
-After Reviewer **APPROVED**, Tester does **not** only re-run what Coder already wrote.
+### Quality gates (Human preferences)
 
-| Duty | Detail |
-|------|--------|
-| **1. Run full gate** | `swift test` + `./script/qa/run_all.sh` (or STATE-scoped suite) |
-| **2. Gap-hunt** | Compare step Done / plan / coder_brief vs existing tests |
-| **3. Add tests** | Missing unit/integration/`script/qa` for **this step’s feature** |
-| **4. Report** | Green → `REPORT.md` (**new tests listed**); red product bug → `BUG_REPORT.md`. **No product fix.** |
+| Gate | Default | Notes |
+|------|---------|-------|
+| **Code review** | **On** | Minimum recommended bar. Skip only if Human says so. |
+| **Tester** | **Recommended on** | Orchestrator should include Tester unless Human opts out. |
+| **Security** | **Offer once** near release | Optional. Expensive top models. Not every step. |
 
-**Split with Coder:**
+### Verification gates
 
-- **Coder** ships feature + **minimum** tests so the change is not blind.
-- **Tester** is the **feature coverage** owner for the step (edges, regression, surface QA).
-- **Tester never** edits `Sources/**` product code (only `Tests/**`, `script/qa/**`, report files).
-- **Cheap hygiene** already in `run_all` (e.g. `check_no_secrets.sh`) is enough for every step — **not** a full security campaign.
+This section is the canonical gate contract. Step cards separate:
 
-If gap-hunt finds **product** defects → `BUG_REPORT.md` → Orchestrator kicks Coder.  
-If only coverage is thin → Tester **adds tests in the same turn**, re-runs, then REPORT green.
+- **Objective gates** — deterministic evidence such as command exit codes,
+  test/build/typecheck results, or artifact existence. Coder runs the assigned
+  objective gates; Tester owns runtime/QA objective gates. Reviewer may repeat
+  relevant commands.
+- **Judgment gates** — engineering evaluation of semantics, accepted
+  architecture, scope, public contracts, failure behavior, and trust
+  boundaries. Reviewer is the primary evaluator; Coder never marks these green.
 
-### Human `статус` and fresh builds
+`waiting_review` means the scoped implementation and required Coder objective
+gates are ready for independent judgment, not that the step is proven correct.
+Only Main combines verified objective evidence, Reviewer judgment, and enabled
+QA results to transition the step.
 
-- Every Coder handoff must include a clean Release `./script/build_and_run.sh --verify`
-  and leave the fresh `dist/Bolabol.app` open for immediate Human testing.
-- When Human says `статус`, Orchestrator independently closes the old process, performs
-  the clean Release build/launch, and reports the new PID/build. Orchestrator does not
-  run tests; test evidence belongs to Coder/Reviewer/Tester roles.
-- A successful build or Human visual acceptance never replaces independent Reviewer,
-  exhaustive Tester, or scheduled Security gates.
+### Tester (when enabled)
 
-### Security Engineer (separate agent — **rare**)
+1. Run the assigned runtime/QA Objective Gates.
+2. Gap-hunt intended feature behavior and coverage against current source.
+3. Add tests only in assignment-approved test/QA paths.
+4. Return structured counts, commands, new tests, and failures to Main.
+5. Main inspects every Tester-authored test diff for weakened assertions,
+   implementation-coupled checks, and real product-behavior coverage.
+6. A substantial test diff receives a short targeted Reviewer pass before the
+   step closes.
+7. Main verifies and writes `REPORT.md` / `BUG_REPORT.md`.
 
-Full vuln hunt is **not** on every step (cost). Orchestrator kicks Security only when
-Human asks, pre-release / train close, or after a large attack-surface change.
-See `AI_Workflow_Kit/docs/AI/SECURITY.md` and `KICK_SECURITY.md`.
+### Architect (when needed)
 
-| Duty | Detail |
-|------|--------|
-| Hunt | Network, keys, downloads, paths, workers, etc. (scoped or full per kick) |
-| Report | `SECURITY_REPORT.md` (`security_clean` \| `findings_open`) |
-| Guards | Optional `check_sec_*.sh` / security unit tests |
-| Product code | **Never** — only describe + suspect files |
+Research → options/questions → recommendation → Architecture Package. Main
+persists accepted steps and ADRs.
 
-### Who does what when bugs or security findings appear
+### Bugs and security findings
 
-| Actor | Action |
-|-------|--------|
-| **Tester** | Functional bugs → `BUG_REPORT.md`; «вернись к оркестратору» |
-| **Security** | SEC-* → `SECURITY_REPORT.md`; «вернись к оркестратору» |
-| **Orchestrator** | Reads reports; **full Coder fix kick** with BUG/SEC list + target_files |
-| **Coder** | **Only one who fixes product code** |
-| **Reviewer** | Re-reviews after Orchestrator kick |
-| **Tester** | Re-runs feature gate after fix (every step path) |
-| **Security** | Re-pass only if Orchestrator/Human schedules another security kick |
+| Who | Action |
+|-----|--------|
+| Tester / Security | Return structured evidence to Main |
+| Main | Verify, write canonical report/state, issue Coder fix assignment |
+| Coder | Patch product within target files |
+| Reviewer | Re-review after fix |
 
-**Do not:** send bugs/SEC to Reviewer to "fix".  
-**Do not:** skip Orchestrator.  
-**Do not:** merge Security into every Tester turn.  
-**Do not:** paste live API keys into reports.
+Do not send bugs to another worker directly. Do not put live secrets in output.
+
+---
 
 ## Hard rules
 
-1. **Graphify first.** Before large exploration: `graphify query` on `graphify-out/graph.json`.
-2. **Graphify update.** A new Orchestrator rebuilds before starting work. Orchestrator
-   then runs `graphify_rebuild.sh` after every Coder handoff (including fix/retry)
-   before Reviewer, and again after each POST green cycle.
-3. Keep project **testable** every step: `swift test` (and QA scripts when on B11 or when STATE requires).
-4. **One step at a time** (B0…B12). No skipping stop-gates.
-5. Diff **only** in `STATE.yaml` → `target_files`.
-6. Communication between agents **via files only**.
-7. **Коммитит только Orchestrator.** Workers leave working tree dirty; Orchestrator commits + tags (+ push if allowed).
-8. No silent architecture redesign by Coder.
-9. No fake data / fake states in production code.
-10. **Never** `git add -A` on monorepo root without Bolabol path scope.
-11. Product scope = `Bolabol/`. Tags: `bolabol/pre-<step>`, `bolabol/<step>-done`.
-12. **Readable, well-commented code** — see § Comments.
-13. Human communicates **only with Orchestrator** for workflow.
-14. **No Python** in Bolabol runtime / Sources.
-15. Terminology: **primary** + **additional** speech languages — not «target always output».
-16. Canary = Core ML only; polish = MLX/cloud after ASR text.
-17. Parakeet/Whisper auto (HUD **A**) remains default for non-Canary.
-18. Version string **1.0.3** (not «1.3»).
-19. English for code comments.
-20. Orchestrator never edits product/tests and never executes test/QA/security suites.
+1. One step and one active specialized worker at a time.
+2. Product diffs stay inside `STATE.yaml` / assignment target files.
+3. Specialized agents return only to Main; no worker-to-worker handoff.
+4. Only Main writes workflow documents or commits/tags/pushes.
+5. No silent architecture redesign by Coder.
+6. No fake data or fake green in production.
+7. Graphify first when current; verify in real source.
+8. Fresh worker context for every role run and retry.
+9. Main verifies repository/test evidence before every transition.
+10. Passive metrics are Main-only observation. Telemetry failure never changes
+    workflow state, gates, retries, failover, recovery, checkpoints, or routing.
+11. Stop three materially identical failures of the same approach and surface
+    the blocker; changed approaches/evidence/failure states are progress.
+12. Three failed Coder runs never authorize Main to write product code; stop,
+    route to Architect when appropriate, or request Human direction.
+13. Main alone checks or reopens `STEPS.md` `Do` boxes after source/evidence
+    verification; workers never mutate canonical checklist state.
 
-## Comments (mandatory quality bar)
+---
 
-| Where | What to document |
-|-------|------------------|
-| File / module header | Role in system (1–5 lines): layer, ownership, must-not |
-| Non-obvious logic | **Why**, not a restate of the code |
-| Public API | Brief intent + types/invariants |
-| Speech language | primary vs additional; Canary source/target matrix |
-| Core ML / download | Paths, presence rules, no Python note |
-| TODOs | `// TODO(B9): …` tied to a step ID |
+## Comments (quality bar)
 
-### Forbidden
+| Where | What |
+|-------|------|
+| Module header | Role, ownership, must-not (short) |
+| Non-obvious logic | **Why** |
+| Public API | Intent + invariants |
+| TODOs | Tied to a step id |
 
-- Comment every line of trivial getters/setters
-- Outdated comments that contradict code
-- Secrets, keys, credentials in comments
+No secrets in comments. No novel on every getter.
 
-## Build bar (default)
+---
 
-```bash
-cd "/Users/pavan/Documents/AI Projects/Bolabol"
-swift test
-# when STATE requires surface QA:
-./script/qa/run_all.sh
-```
+## Worker handoff
 
-## Handoff phrase (all workers)
+Workers return the structured schema defined by their `.omp/agents/*.md` file.
+They do not write `FEEDBACK.md`, route the next role, or ask the Human to copy a
+prompt. Main validates the result and persists the canonical workflow record.
 
-> **Готово. Вернись к оркестратору** и скажи «статус» или «приступай».
+On a retry, Main adds only verified attempt memory: approach, observed result,
+evidence, and why it was rejected. Worker transcripts and reasoning are never
+handoff context. The durable record lives in `FEEDBACK.md`; the assignment
+carries only the compact task-relevant subset.

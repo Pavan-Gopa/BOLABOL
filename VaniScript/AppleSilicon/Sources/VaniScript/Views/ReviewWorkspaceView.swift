@@ -6,19 +6,39 @@ struct ReviewWorkspaceView: View {
     @EnvironmentObject private var store: WorkflowStore
     @Environment(\.openSettings) private var openSettings
     @State private var keyMonitor: Any?
+    @State private var documentScrollCoordinator = DocumentDualScrollCoordinator()
     @State private var editDraft: ReviewEditDraft?
     @State private var glossaryDraft: ReviewGlossaryDraft?
     @State private var searchReplaceDraft: SearchReplaceDraft?
 
     var body: some View {
         if let session = store.session, let chunk = store.currentChunk {
+            let documentPresentation = DocumentReviewPresentationPolicy.make(session: session, chunk: chunk)
+            let isDocument = documentPresentation != nil
+            let activeLanguage = session.selectedTranslationLanguage
+            let documentScrollEnabled = isDocument && store.viewMode == .dual && activeLanguage != nil
+            let documentScrollScope = documentPresentation.map { _ in
+                DocumentScrollScope(
+                    documentID: documentScrollIdentity(session),
+                    chunkID: chunk.id,
+                    language: activeLanguage ?? session.targetLang
+                )
+            }
             ZStack {
                 VStack(spacing: 0) {
                     topBar(session: session, chunk: chunk)
-                    audioBar(session: session, chunk: chunk)
+                    if !isDocument {
+                        audioBar(session: session, chunk: chunk)
+                    }
                     thinProgress(session: session)
-                    panes(session: session, chunk: chunk)
-                    actionBar(session: session, chunk: chunk)
+                    panes(
+                        session: session,
+                        chunk: chunk,
+                        documentPresentation: documentPresentation,
+                        documentScrollEnabled: documentScrollEnabled,
+                        documentScrollScope: documentScrollScope
+                    )
+                    actionBar(session: session, chunk: chunk, documentPresentation: documentPresentation)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.black.opacity(0.08))
@@ -70,6 +90,15 @@ struct ReviewWorkspaceView: View {
             }
             .onAppear(perform: installSpacebarMonitor)
             .onDisappear(perform: removeSpacebarMonitor)
+            .onDisappear { documentScrollCoordinator.detach() }
+            .onChange(of: documentScrollEnabled) { _, enabled in
+                if !enabled {
+                    documentScrollCoordinator.detach()
+                }
+            }
+            .onChange(of: documentScrollScope) { _, scope in
+                documentScrollCoordinator.setScope(scope)
+            }
         } else {
             UploadWorkspaceView()
         }
@@ -96,6 +125,12 @@ struct ReviewWorkspaceView: View {
                 .background(VaniScriptTheme.green.opacity(0.1))
                 .overlay(Capsule().stroke(VaniScriptTheme.green.opacity(0.25), lineWidth: 1))
                 .clipShape(Capsule())
+            }
+            if let presentation = DocumentReviewPresentationPolicy.make(session: session, chunk: chunk) {
+                Text(presentation.displayLabel)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .lineLimit(1)
             }
 
             Spacer()
@@ -263,14 +298,77 @@ struct ReviewWorkspaceView: View {
         .frame(height: 2)
     }
 
-    private func panes(session: SessionState, chunk: ChunkData) -> some View {
+    private func panes(
+        session: SessionState,
+        chunk: ChunkData,
+        documentPresentation: DocumentReviewPresentation?,
+        documentScrollEnabled: Bool,
+        documentScrollScope: DocumentScrollScope?
+    ) -> some View {
         let activeLanguage = session.selectedTranslationLanguage
         let hasTranslation = activeLanguage != nil
         return Group {
-            if store.viewMode == .dual,
-               hasTranslation,
-               !store.currentOriginalCues.isEmpty,
-               !store.currentTranslationCues.isEmpty {
+            if let presentation = documentPresentation {
+                HStack(spacing: 0) {
+                    if store.viewMode == .source || store.viewMode == .dual || !hasTranslation {
+                        ReviewTextPane(
+                            title: "ORIGINAL DOCUMENT · \(presentation.displayLabel)",
+                            metadata: session.metadata,
+                            translationLanguage: nil,
+                            content: Binding(
+                                get: {
+                                    let current = store.currentChunk?.original ?? ""
+                                    return current.isEmpty
+                                        ? DocumentReviewPresentationPolicy.visibleSourceText(session: session, chunk: chunk)
+                                        : current
+                                },
+                                set: { store.updateCurrentOriginal($0) }
+                            ),
+                            cues: [],
+                            playbackTime: 0,
+                            updateCue: { _, _ in },
+                            side: .original,
+                            accent: false,
+                            exportAction: { store.export(side: .original, format: store.outputFormat) },
+                            polishAction: nil,
+                            beginInlineEdit: beginInlineEdit,
+                            beginGlossaryDraft: beginGlossaryDraft,
+                            documentScrollCoordinator: documentScrollEnabled ? documentScrollCoordinator : nil,
+                            documentScrollPane: documentScrollEnabled ? .source : nil,
+                            documentScrollScope: documentScrollScope
+                        )
+                        .onboardingTarget("review-pane-original")
+                    }
+
+                    if hasTranslation, store.viewMode == .translated || store.viewMode == .dual {
+                        ReviewTextPane(
+                            title: "TRANSLATED DOCUMENT · \((activeLanguage ?? session.targetLang).uppercased())",
+                            metadata: session.metadata,
+                            translationLanguage: activeLanguage ?? session.targetLang,
+                            content: Binding(
+                                get: { store.currentTranslationText },
+                                set: { store.updateCurrentTranslated($0) }
+                            ),
+                            cues: [],
+                            playbackTime: 0,
+                            updateCue: { _, _ in },
+                            side: .translated,
+                            accent: true,
+                            exportAction: { store.export(side: .translated, format: store.outputFormat) },
+                            polishAction: nil,
+                            beginInlineEdit: beginInlineEdit,
+                            beginGlossaryDraft: beginGlossaryDraft,
+                            documentScrollCoordinator: documentScrollEnabled ? documentScrollCoordinator : nil,
+                            documentScrollPane: documentScrollEnabled ? .translated : nil,
+                            documentScrollScope: documentScrollScope
+                        )
+                        .onboardingTarget("review-pane-translation")
+                    }
+                }
+            } else if store.viewMode == .dual,
+                      hasTranslation,
+                      !store.currentOriginalCues.isEmpty,
+                      !store.currentTranslationCues.isEmpty {
                 DualTimedReviewPane(
                     metadata: session.metadata,
                     translationTitle: "TRANSLATED: \((activeLanguage ?? session.targetLang).uppercased())",
@@ -337,8 +435,19 @@ struct ReviewWorkspaceView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func actionBar(session: SessionState, chunk: ChunkData) -> some View {
-        HStack {
+    @ViewBuilder
+    private func actionBar(
+        session: SessionState,
+        chunk: ChunkData,
+        documentPresentation: DocumentReviewPresentation?
+    ) -> some View {
+        if let presentation = documentPresentation {
+            VStack(spacing: 0) {
+                documentQualityPanel(chunk: chunk)
+                documentActionBar(session: session, presentation: presentation)
+            }
+        } else {
+            HStack {
             HStack(spacing: 10) {
                 Text("Segment \(session.currentChunkIndex + 1) / \(session.chunks.count) · \(formatClock(chunk.startSec))-\(formatClock(chunk.endSec))")
                     .font(.system(size: 12))
@@ -451,6 +560,106 @@ struct ReviewWorkspaceView: View {
         .background(Color(red: 10 / 255, green: 12 / 255, blue: 28 / 255).opacity(0.86))
         .overlay(Rectangle().fill(Color.white.opacity(0.07)).frame(height: 1), alignment: .top)
     }
+        }
+
+    private func documentActionBar(
+        session: SessionState,
+        presentation: DocumentReviewPresentation
+    ) -> some View {
+        HStack {
+            HStack(spacing: 10) {
+                Text("\(presentation.displayLabel) · \(session.currentChunkIndex + 1) / \(session.chunks.count)")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.58))
+
+                ProgressView(value: reviewProgress(session))
+                    .tint(VaniScriptTheme.accent)
+                    .frame(width: 120)
+
+                Text("\(store.approvedCount)/\(session.chunks.count) approved")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.white.opacity(0.32))
+            }
+
+            Spacer()
+
+            Button {
+                store.retranslateCurrentDocumentChunk()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.clockwise")
+                    Text(store.isDocumentTranslationActive ? "Retranslating" : "Retranslate Current")
+                }
+            }
+            .buttonStyle(ReviewTextButtonStyle())
+            .disabled(store.isDocumentTranslationActive)
+            .help("Translate only the selected document chunk; the replacement requires manual approval.")
+
+            Button("‹ Previous") {
+                store.moveChunk(delta: -1)
+            }
+            .buttonStyle(ReviewTextButtonStyle())
+            .disabled(session.currentChunkIndex == 0)
+            .onboardingTarget("previous-segment-btn")
+
+            Button(session.currentChunkIndex < session.chunks.count - 1 ? "✓ Approve & Next ›" : "✓ Complete & Export") {
+                store.approveAndAdvance()
+            }
+            .buttonStyle(ReviewApproveButtonStyle())
+            .onboardingTarget("approve-next-btn")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color(red: 10 / 255, green: 12 / 255, blue: 28 / 255).opacity(0.86))
+        .overlay(Rectangle().fill(Color.white.opacity(0.07)).frame(height: 1), alignment: .top)
+    }
+
+    @ViewBuilder
+    private func documentQualityPanel(chunk: ChunkData) -> some View {
+        let errors = chunk.qualityReport?.errors ?? []
+        let warnings = chunk.qualityReport?.warnings ?? []
+        if !errors.isEmpty || !warnings.isEmpty {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: errors.isEmpty ? "exclamationmark.circle" : "xmark.octagon.fill")
+                    .foregroundStyle(errors.isEmpty ? VaniScriptTheme.accent : Color.red)
+                    .padding(.top, 2)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(errors.isEmpty ? "Translation warning" : "Translation needs review")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(errors.isEmpty ? VaniScriptTheme.accent : Color.red)
+                    ForEach(Array((errors + warnings).enumerated()), id: \.offset) { _, issue in
+                        Text(issue.message)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.white.opacity(0.72))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer(minLength: 8)
+                Button {
+                    store.retranslateCurrentDocumentChunk()
+                } label: {
+                    Label("Retry Current", systemImage: "arrow.clockwise")
+                }
+                .buttonStyle(ReviewTextButtonStyle())
+                .disabled(store.isDocumentTranslationActive)
+                .help("Retry translation for this document chunk without advancing.")
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 9)
+            .background(Color.red.opacity(errors.isEmpty ? 0.06 : 0.12))
+            .overlay(Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1), alignment: .top)
+        }
+    }
+
+    private func documentScrollIdentity(_ session: SessionState) -> String {
+        if let sourceFile = session.sourceFile, !sourceFile.isEmpty {
+            return sourceFile
+        }
+        if !session.sourceFileName.isEmpty {
+            return session.sourceFileName
+        }
+        return "document"
+    }
 
     private func statusLabel(_ status: ChunkStatus) -> String {
         switch status {
@@ -516,7 +725,7 @@ struct ReviewWorkspaceView: View {
     }
 
     private func shouldHandlePlaybackSpacebar(_ event: NSEvent) -> Bool {
-        guard store.session != nil, !store.isProcessingSegment else { return false }
+        guard store.session?.sourceKind == .media, !store.isProcessingSegment else { return false }
         guard let firstResponder = event.window?.firstResponder else { return true }
         if firstResponder is NSTextView {
             return false
@@ -1255,8 +1464,62 @@ private struct ReviewTextPane: View {
     let polishAction: (() -> Void)?
     let beginInlineEdit: (TranscriptCue.ID, TranscriptSide, String, String) -> Void
     let beginGlossaryDraft: (String, TranscriptSide) -> Void
+    let documentScrollCoordinator: DocumentDualScrollCoordinator?
+    let documentScrollPane: DocumentScrollPane?
+    let documentScrollScope: DocumentScrollScope?
+
+    init(
+        title: String,
+        metadata: AudioMetadata,
+        translationLanguage: String?,
+        content: Binding<String>,
+        cues: [TranscriptCue],
+        playbackTime: Double,
+        updateCue: @escaping (TranscriptCue.ID, String) -> Void,
+        side: TranscriptSide,
+        accent: Bool,
+        exportAction: @escaping () -> Void,
+        polishAction: (() -> Void)?,
+        beginInlineEdit: @escaping (TranscriptCue.ID, TranscriptSide, String, String) -> Void,
+        beginGlossaryDraft: @escaping (String, TranscriptSide) -> Void,
+        documentScrollCoordinator: DocumentDualScrollCoordinator? = nil,
+        documentScrollPane: DocumentScrollPane? = nil,
+        documentScrollScope: DocumentScrollScope? = nil
+    ) {
+        self.title = title
+        self.metadata = metadata
+        self.translationLanguage = translationLanguage
+        self._content = content
+        self.cues = cues
+        self.playbackTime = playbackTime
+        self.updateCue = updateCue
+        self.side = side
+        self.accent = accent
+        self.exportAction = exportAction
+        self.polishAction = polishAction
+        self.beginInlineEdit = beginInlineEdit
+        self.beginGlossaryDraft = beginGlossaryDraft
+        self.documentScrollCoordinator = documentScrollCoordinator
+        self.documentScrollPane = documentScrollPane
+        self.documentScrollScope = documentScrollScope
+    }
 
     @State private var isCopied = false
+
+    @ViewBuilder
+    private var documentScrollBridge: some View {
+        if let documentScrollCoordinator,
+           let documentScrollPane,
+           let documentScrollScope {
+            DocumentScrollSyncBridge(
+                coordinator: documentScrollCoordinator,
+                pane: documentScrollPane,
+                scope: documentScrollScope
+            )
+            .frame(width: 0, height: 0)
+            .allowsHitTesting(false)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1381,6 +1644,7 @@ private struct ReviewTextPane: View {
                         dark: Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255).opacity(0.82)
                     ))
                     .background(ThinScrollbarTuner())
+                    .background(documentScrollBridge)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .stroke(Color.white.opacity(0.08), lineWidth: 1)

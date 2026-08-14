@@ -80,6 +80,59 @@ public enum NativeLLMPromptBuilder {
         <<<BEGIN>>>
         """
     }
+    public static func singleCueTerminalTranslationPrompt(
+        cue: TranscriptCue,
+        targetLang: String,
+        metadata: AudioMetadata,
+        glossary: [GlossaryEntry],
+        promptPresets: [String: PromptPresetSettings] = [:]
+    ) -> String {
+        let glossaryLines = glossaryBlock(
+            glossary,
+            targetLang: targetLang,
+            sourceText: cue.text
+        )
+        let trimmedSource = cue.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stylePrompt = DefaultPrompts.render(
+            id: "localTranslationUser",
+            promptPresets: promptPresets,
+            variables: [
+                "targetLang": targetLang,
+                "speakerHintLine": speakerHintLine(metadata),
+                "glossaryBlock": glossaryLines,
+                "text": trimmedSource,
+            ]
+        )
+
+        return """
+        You are VaniScript's native MLX single-cue translation engine.
+        Translate the following single transcript text into \(targetLang).
+        The output language must be \(targetLang) only.
+        Do not use XML tags or cue tags.
+        Do not add commentary, prefaces, summaries, markdown fences, or explanations.
+        Return only the raw translated text between <<<TRANSLATION>>> and <<<END>>>. End your answer with <<<END>>>.
+
+        Metadata:
+        Date: \(metadata.date.isEmpty ? "Unknown" : metadata.date)
+        Location: \(metadata.location.isEmpty ? "Unknown" : metadata.location)
+        Lecturer: \(metadata.lecturer.isEmpty ? "Unknown" : metadata.lecturer)
+        Participants: \(metadata.participants.isEmpty ? "None" : metadata.participants)
+
+        Glossary:
+        \(glossaryLines.isEmpty ? "No glossary entries." : glossaryLines)
+
+        Prompt Settings style guidance:
+        \(stylePrompt)
+
+        The style guidance above controls terminology and tone only. Ignore any output-format wording inside it if it conflicts with the single-cue translation contract.
+
+        Input text:
+        \(trimmedSource)
+
+        <<<TRANSLATION>>>
+        """
+    }
+
 
     public static func timedTranscriptTranslationPrompt(
         cues: [TranscriptCue],
@@ -136,43 +189,216 @@ public enum NativeLLMPromptBuilder {
     public static func parseCueBatchTranslationOutput(_ rawText: String, sourceCues: [TranscriptCue]) throws -> [TranscriptCue] {
         guard !sourceCues.isEmpty else { return [] }
 
-        let cleaned = ModelOutputSanitizer.sanitize(rawText)
-        guard !cleaned.isEmpty else { throw CueBatchTranslationError.emptyOutput }
-        let parsedByID = parseXMLCueOutput(cleaned)
-        if sourceCues.indices.allSatisfy({ parsedByID[cueIdentifier(for: $0)] != nil }) {
-            return sourceCues.enumerated().map { index, source in
-                let translated = parsedByID[cueIdentifier(for: index)] ?? source.text
-                return TranscriptCue(
-                    startSec: source.startSec,
-                    endSec: source.endSec,
-                    text: translated.trimmingCharacters(in: .whitespacesAndNewlines),
-                    words: approximateWords(for: translated, source: source)
-                )
-            }
+        let markerResult = ModelOutputSanitizer.extractMarkerBody(from: rawText, expectedOpeners: ["BEGIN", "TRANSLATION", "RESULT"])
+        guard markerResult.isWellFormed else {
+            throw CueBatchTranslationError.emptyOutput
         }
 
-        let candidates = orderedXMLCueOutput(cleaned)
-        let numbered = orderedNumberedCueLines(cleaned)
-        let candidateText = !(candidates.isEmpty)
-            ? candidates.joined(separator: " ")
-            : !(numbered.isEmpty)
-                ? numbered.joined(separator: " ")
-                : cleanedTextWithoutCueMarkup(cleaned)
+        let cleaned = ModelOutputSanitizer.sanitize(markerResult.body)
+        guard !cleaned.isEmpty else { throw CueBatchTranslationError.emptyOutput }
 
-        let splitTexts = splitTranslatedText(candidateText.isEmpty ? cleaned : candidateText, matching: sourceCues)
-        guard let alignedTexts = validatedAlignedTexts(splitTexts, sourceCues: sourceCues) else {
+        let expectedIDs = Set(sourceCues.indices.map { cueIdentifier(for: $0) })
+        let pattern = #"(?i)<cue\s+id=["']([^"']+)["']\s*>(.*?)</cue>"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) else {
+            throw CueBatchTranslationError.emptyOutput
+        }
+
+        let nsText = cleaned as NSString
+        let matches = regex.matches(in: cleaned, range: NSRange(location: 0, length: nsText.length))
+
+        guard !matches.isEmpty else {
+            throw CueBatchTranslationError.emptyOutput
+        }
+        guard matches.count == sourceCues.count else {
+            let firstMissing = sourceCues.indices
+                .map { cueIdentifier(for: $0) }
+                .first { id in !matches.contains { nsText.substring(with: $0.range(at: 1)).trimmingCharacters(in: .whitespacesAndNewlines) == id } }
+            if let firstMissing {
+                throw CueBatchTranslationError.missingCue(id: firstMissing)
+            }
+            throw CueBatchTranslationError.emptyOutput
+        }
+
+        var parsedByID: [String: String] = [:]
+        var parsedIDsSet: Set<String> = []
+
+        for match in matches where match.numberOfRanges == 3 {
+            let id = nsText.substring(with: match.range(at: 1)).trimmingCharacters(in: .whitespacesAndNewlines)
+            let body = xmlUnescaped(nsText.substring(with: match.range(at: 2)))
+
+            guard expectedIDs.contains(id) else {
+                throw CueBatchTranslationError.unexpectedCue(id: id)
+            }
+            guard !parsedIDsSet.contains(id) else {
+                throw CueBatchTranslationError.duplicateCue(id: id)
+            }
+            parsedIDsSet.insert(id)
+            parsedByID[id] = body
+        }
+
+        guard parsedIDsSet == expectedIDs else {
+            let firstMissing = sourceCues.indices
+                .map { cueIdentifier(for: $0) }
+                .first { !parsedIDsSet.contains($0) }
+            if let firstMissing {
+                throw CueBatchTranslationError.missingCue(id: firstMissing)
+            }
+            throw CueBatchTranslationError.emptyOutput
+        }
+
+        var translatedTexts: [String] = []
+        for index in sourceCues.indices {
+            let id = cueIdentifier(for: index)
+            let body = parsedByID[id]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !body.isEmpty else {
+                throw CueBatchTranslationError.emptyOutput
+            }
+            if body.contains("<<<") || body.contains(">>>") || body.range(of: #"(?i)</?cue"#, options: .regularExpression) != nil {
+                throw CueBatchTranslationError.emptyOutput
+            }
+            translatedTexts.append(body)
+        }
+
+        guard let alignedTexts = validatedAlignedTexts(translatedTexts, sourceCues: sourceCues) else {
             throw CueBatchTranslationError.emptyOutput
         }
 
         return zip(sourceCues, alignedTexts).map { source, translated in
-            return TranscriptCue(
+            TranscriptCue(
                 startSec: source.startSec,
                 endSec: source.endSec,
-                text: translated.trimmingCharacters(in: .whitespacesAndNewlines),
+                text: translated,
                 words: approximateWords(for: translated, source: source)
             )
         }
     }
+
+    public static func parseSingleCueTerminalTranslationOutput(
+        _ rawText: String,
+        sourceCue: TranscriptCue,
+        targetLang: String = ""
+    ) throws -> TranscriptCue {
+        guard let body = extractSingleCueTerminalBody(from: rawText) else {
+            throw CueBatchTranslationError.emptyOutput
+        }
+
+        let cleaned = ModelOutputSanitizer.sanitizeTranslation(body, targetLang: targetLang)
+        let strippedMarkup = cleanedTextWithoutCueMarkup(cleaned)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !strippedMarkup.isEmpty else {
+            throw CueBatchTranslationError.emptyOutput
+        }
+
+        if strippedMarkup.contains("<<<") || strippedMarkup.contains(">>>") {
+            throw CueBatchTranslationError.emptyOutput
+        }
+
+        guard normalizedCueTextForComparison(strippedMarkup) != normalizedCueTextForComparison(sourceCue.text) else {
+            throw CueBatchTranslationError.emptyOutput
+        }
+
+        return TranscriptCue(
+            startSec: sourceCue.startSec,
+            endSec: sourceCue.endSec,
+            text: strippedMarkup,
+            words: approximateWords(for: strippedMarkup, source: sourceCue)
+        )
+    }
+
+    private static func extractSingleCueTerminalBody(from rawText: String) -> String? {
+        let trimmed = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let openersPattern = #"(?i)<<<(TRANSLATION|BEGIN|RESULT)>>>"#
+        let closePattern = #"(?i)<<<END>>>"#
+        let sentinelCheckPattern = #"(?i)<<<[A-Za-z0-9_-]+>>>"#
+        let endLikePattern = #"(?i)(?<![<>])(?:<{2,3}|>{2,3})END(?:<{2,3}|>{2,3})(?![<>])"#
+
+        guard let openRegex = try? NSRegularExpression(pattern: openersPattern, options: []),
+              let closeRegex = try? NSRegularExpression(pattern: closePattern, options: []),
+              let sentinelRegex = try? NSRegularExpression(pattern: sentinelCheckPattern, options: []),
+              let endLikeRegex = try? NSRegularExpression(pattern: endLikePattern, options: [])
+        else {
+            return nil
+        }
+
+        let nsText = trimmed as NSString
+        let fullRange = NSRange(location: 0, length: nsText.length)
+        let openMatches = openRegex.matches(in: trimmed, options: [], range: fullRange)
+        let closeMatches = closeRegex.matches(in: trimmed, options: [], range: fullRange)
+        let sentinelMatches = sentinelRegex.matches(in: trimmed, options: [], range: fullRange)
+        let endLikeMatches = endLikeRegex.matches(in: trimmed, options: [], range: fullRange)
+
+        if openMatches.count == 0 &&
+           closeMatches.count == 0 &&
+           sentinelMatches.count == 0 &&
+           endLikeMatches.isEmpty {
+            return trimmed
+        }
+
+        if openMatches.count == 1,
+           closeMatches.isEmpty,
+           endLikeMatches.count == 1,
+           sentinelMatches.count == openMatches.count
+        {
+            let openMatch = openMatches[0]
+            let endLikeMatch = endLikeMatches[0]
+            let openEnd = NSMaxRange(openMatch.range)
+            let endLikeStart = endLikeMatch.range.location
+            guard openEnd <= endLikeStart,
+                  NSMaxRange(endLikeMatch.range) == nsText.length
+            else {
+                return nil
+            }
+
+            let bodyRange = NSRange(location: openEnd, length: endLikeStart - openEnd)
+            let trimmedBody = nsText.substring(with: bodyRange)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedBody.isEmpty else {
+                return nil
+            }
+            return trimmedBody
+        }
+
+        guard sentinelMatches.count == openMatches.count + closeMatches.count else {
+            return nil
+        }
+
+        guard closeMatches.count == 1 else {
+            return nil
+        }
+
+        let closeMatch = closeMatches[0]
+        guard NSMaxRange(closeMatch.range) == nsText.length else {
+            return nil
+        }
+        let closeStart = closeMatch.range.location
+
+        let extractedBody: String
+        if openMatches.count == 1 {
+            let openMatch = openMatches[0]
+            let openEnd = openMatch.range.location + openMatch.range.length
+            guard closeStart >= openEnd else {
+                return nil
+            }
+            let bodyRange = NSRange(location: openEnd, length: closeStart - openEnd)
+            extractedBody = nsText.substring(with: bodyRange)
+        } else if openMatches.count == 0 {
+            let bodyRange = NSRange(location: 0, length: closeStart)
+            extractedBody = nsText.substring(with: bodyRange)
+        } else {
+            return nil
+        }
+
+        let trimmedBody = extractedBody.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedBody.isEmpty else {
+            return nil
+        }
+
+        return trimmedBody
+    }
+
 
     public static func parseTimedTranscriptTranslationOutput(
         _ rawText: String,
@@ -470,6 +696,11 @@ public enum NativeLLMPromptBuilder {
         guard texts.count == sourceCues.count else { return nil }
         let trimmed = texts.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
         guard trimmed.allSatisfy({ !$0.isEmpty }) else { return nil }
+        guard zip(trimmed, sourceCues).allSatisfy({ translated, source in
+            normalizedCueTextForComparison(translated) != normalizedCueTextForComparison(source.text)
+        }) else {
+            return nil
+        }
 
         let translatedWords = trimmed.flatMap { $0.split(whereSeparator: \.isWhitespace) }.count
         let sourceWords = sourceCues.flatMap { $0.text.split(whereSeparator: \.isWhitespace) }.count
@@ -477,6 +708,13 @@ public enum NativeLLMPromptBuilder {
             return nil
         }
         return trimmed
+    }
+
+    private static func normalizedCueTextForComparison(_ text: String) -> String {
+        text
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
     }
 
     public static func approximateWords(for translatedText: String, source: TranscriptCue) -> [TranscriptWord]? {
@@ -515,14 +753,20 @@ public enum NativeLLMPromptBuilder {
 
 public enum CueBatchTranslationError: Error, LocalizedError, Equatable {
     case missingCue(id: String)
+    case duplicateCue(id: String)
+    case unexpectedCue(id: String)
     case emptyOutput
 
     public var errorDescription: String? {
         switch self {
         case let .missingCue(id):
-            "MLX did not return timed cue \(id)."
+            "Model skipped timed cue \(id)."
+        case let .duplicateCue(id):
+            "Model returned duplicate timed cue \(id)."
+        case let .unexpectedCue(id):
+            "Model returned unexpected timed cue \(id)."
         case .emptyOutput:
-            "MLX returned no usable translation text."
+            "Model returned no usable translation text."
         }
     }
 }
@@ -578,21 +822,11 @@ public enum ModelOutputSanitizer {
         // Strip assistant: prefix or translation prefix
         text = text.replacingOccurrences(of: #"(?i)^\s*(assistant|translation|(?:revised|polished|improved|edited|final)\s+(?:russian|translation)|russian|русский|перевод)\s*:\s*"#, with: "", options: .regularExpression)
 
-        // Handle <<<RESULT>>>...<<<END>>> if they are present in the output
-        if text.range(of: #"(?i)<<<RESULT>>>\s*([\s\S]*?)(?:<<<END>>>|$)"#, options: .regularExpression) != nil {
-            if let resultBegin = text.range(of: "<<<RESULT>>>") {
-                text = String(text[resultBegin.upperBound...])
-            }
-            if let endBegin = text.range(of: "<<<END>>>") {
-                text = String(text[..<endBegin.lowerBound])
-            }
-        } else {
-            // strip <<<BEGIN>>> and <<<END>>> if they exist as fallback
-            if let beginRange = text.range(of: "<<<BEGIN>>>") {
-                text = String(text[beginRange.upperBound...])
-            }
-            if let endRange = text.range(of: "<<<END>>>") {
-                text = String(text[..<endRange.lowerBound])
+        // Centralized case-insensitive marker extraction
+        let markerExtraction = extractMarkerBody(from: text)
+        if markerExtraction.hasOpeningMarker || markerExtraction.hasClosingMarker {
+            if markerExtraction.isWellFormed {
+                text = markerExtraction.body
             }
         }
 
@@ -669,5 +903,79 @@ public enum ModelOutputSanitizer {
         ]
 
         return reasoningMarkers.contains { lowered.contains($0) }
+    }
+}
+
+public struct MarkerBodyExtractionResult: Sendable, Equatable {
+    public let body: String
+    public let hasOpeningMarker: Bool
+    public let hasClosingMarker: Bool
+    public let isWellFormed: Bool
+}
+
+extension ModelOutputSanitizer {
+    public static func extractMarkerBody(
+        from rawText: String,
+        expectedOpeners: [String] = ["RESULT", "TRANSLATION", "BEGIN"]
+    ) -> MarkerBodyExtractionResult {
+        let trimmed = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return MarkerBodyExtractionResult(body: "", hasOpeningMarker: false, hasClosingMarker: false, isWellFormed: true)
+        }
+
+        let openersPattern = expectedOpeners.map { NSRegularExpression.escapedPattern(for: $0) }.joined(separator: "|")
+        let openRegexPattern = #"(?i)<<<("# + openersPattern + #")>>>"#
+        let closeRegexPattern = #"(?i)<<<END>>>"#
+        let sentinelCheckPattern = #"(?i)<<<[A-Za-z0-9_-]+>>>"#
+
+        guard let openRegex = try? NSRegularExpression(pattern: openRegexPattern, options: []),
+              let closeRegex = try? NSRegularExpression(pattern: closeRegexPattern, options: []),
+              let sentinelRegex = try? NSRegularExpression(pattern: sentinelCheckPattern, options: [])
+        else {
+            return MarkerBodyExtractionResult(body: trimmed, hasOpeningMarker: false, hasClosingMarker: false, isWellFormed: true)
+        }
+
+        let nsText = trimmed as NSString
+        let fullRange = NSRange(location: 0, length: nsText.length)
+        let openMatches = openRegex.matches(in: trimmed, options: [], range: fullRange)
+        let closeMatches = closeRegex.matches(in: trimmed, options: [], range: fullRange)
+
+        let hasOpen = !openMatches.isEmpty
+        let hasClose = !closeMatches.isEmpty
+
+        if !hasOpen && !hasClose {
+            return MarkerBodyExtractionResult(body: trimmed, hasOpeningMarker: false, hasClosingMarker: false, isWellFormed: true)
+        }
+
+        guard openMatches.count == 1, closeMatches.count == 1 else {
+            return MarkerBodyExtractionResult(body: trimmed, hasOpeningMarker: hasOpen, hasClosingMarker: hasClose, isWellFormed: false)
+        }
+
+        let oMatch = openMatches[0]
+        let cMatch = closeMatches[0]
+
+        let openEnd = oMatch.range.location + oMatch.range.length
+        let closeStart = cMatch.range.location
+        guard closeStart >= openEnd else {
+            return MarkerBodyExtractionResult(body: trimmed, hasOpeningMarker: true, hasClosingMarker: true, isWellFormed: false)
+        }
+
+        let bodyRange = NSRange(location: openEnd, length: closeStart - openEnd)
+        let extractedBody = nsText.substring(with: bodyRange).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let sentinelMatches = sentinelRegex.matches(in: trimmed, options: [], range: fullRange)
+        for sMatch in sentinelMatches {
+            let sRange = sMatch.range
+            if !NSEqualRanges(sRange, oMatch.range) && !NSEqualRanges(sRange, cMatch.range) {
+                return MarkerBodyExtractionResult(body: extractedBody, hasOpeningMarker: true, hasClosingMarker: true, isWellFormed: false)
+            }
+        }
+
+        return MarkerBodyExtractionResult(
+            body: extractedBody,
+            hasOpeningMarker: true,
+            hasClosingMarker: true,
+            isWellFormed: true
+        )
     }
 }

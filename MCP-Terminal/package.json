@@ -1,0 +1,27 @@
+{
+  "name": "terminal-mcp-server",
+  "version": "1.0.0",
+  "description": "Custom MCP Server for executing terminal commands and running tests",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "terminal-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-esms src/index.ts"
+  },
+  "keywords": ["mcp", "terminal", "testing", "ai-agent"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  }
+}

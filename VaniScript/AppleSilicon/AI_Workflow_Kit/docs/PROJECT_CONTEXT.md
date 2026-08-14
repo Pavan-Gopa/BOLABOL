@@ -13,7 +13,7 @@
 | **Stack** | Swift 6, SwiftUI, AppKit, SwiftPM, WhisperKit/Core ML, MLX Swift, FluidAudio |
 | **Current train / version** | Active native Apple Silicon application |
 | **Project prefix** (git tags) | `vaniscript-as` |
-| **Master plan file** | `STEPS.md` only until a product task supplies a more specific plan |
+| **Master plan file** | `docs/PRD-Document-Literary-Translation.md` + `AI_Workflow_Kit/docs/STEPS.md` S7–S13 |
 
 ## Architecture (one-liner)
 

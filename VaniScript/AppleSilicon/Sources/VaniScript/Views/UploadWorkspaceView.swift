@@ -16,11 +16,12 @@ struct UploadWorkspaceView: View {
                 spacing: 16
             ) {
                 UploadOptionCard(
-                    title: "Upload Audio / Video",
-                    detail: "Import MP3, WAV, M4A, MP4, MOV, or lecture media.",
+                    title: "Upload Media / Document",
+                    detail: "Import audio, video, DOCX, TXT, MD, RTF, or PDF.",
                     systemImage: "tray.and.arrow.up",
                     dashed: true,
-                    action: store.chooseSourceFile
+                    action: store.chooseSourceFile,
+                    onDrop: store.handleDroppedSources
                 )
                 .onboardingTarget("workspace-dropzone")
 
@@ -478,11 +479,42 @@ private struct UploadOptionCard: View {
     let title: String
     let detail: String
     let systemImage: String
-    var dashed = false
-    var status: String?
+    let dashed: Bool
+    let status: String?
     let action: () -> Void
+    let onDrop: (([URL]) -> Bool)?
 
+    init(
+        title: String,
+        detail: String,
+        systemImage: String,
+        dashed: Bool = false,
+        status: String? = nil,
+        action: @escaping () -> Void,
+        onDrop: (([URL]) -> Bool)? = nil
+    ) {
+        self.title = title
+        self.detail = detail
+        self.systemImage = systemImage
+        self.dashed = dashed
+        self.status = status
+        self.action = action
+        self.onDrop = onDrop
+    }
+
+    @ViewBuilder
     var body: some View {
+        if let onDrop {
+            cardContent
+                .dropDestination(for: URL.self) { urls, _ in
+                    onDrop(urls)
+                }
+        } else {
+            cardContent
+        }
+    }
+
+    private var cardContent: some View {
         Button(action: action) {
             VStack(spacing: 12) {
                 ZStack {

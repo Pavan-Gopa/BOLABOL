@@ -1,23 +1,104 @@
 import Foundation
 import VaniScriptCore
-import WhisperKit
 import AVFoundation
 
-extension WhisperKit: @unchecked @retroactive Sendable {}
+protocol NativeLocalMLXEngine: Sendable {
+    func translate(
+        text: String,
+        targetLang: String,
+        metadata: AudioMetadata,
+        glossary: [GlossaryEntry],
+        model: ActiveMLXModel,
+        promptPresets: [String: PromptPresetSettings]
+    ) async throws -> String
+
+    func translateCues(
+        _ cues: [TranscriptCue],
+        targetLang: String,
+        metadata: AudioMetadata,
+        glossary: [GlossaryEntry],
+        model: ActiveMLXModel,
+        promptPresets: [String: PromptPresetSettings]
+    ) async throws -> [TranscriptCue]
+
+    func polish(
+        text: String,
+        targetLang: String,
+        model: ActiveMLXModel,
+        lecturer: String,
+        glossary: [GlossaryEntry],
+        promptPresets: [String: PromptPresetSettings]
+    ) async throws -> String
+
+    func formatDocument(
+        format: OutputFormat,
+        targetLang: String,
+        text: String,
+        model: ActiveMLXModel
+    ) async throws -> String
+
+    func planShorts(
+        transcript: String,
+        count: Int,
+        minDurationSec: Int,
+        maxDurationSec: Int,
+        outputLanguage: String,
+        speakerName: String?,
+        mode: ShortsPlanLanguageMode,
+        existingClips: [ShortsClipPlan],
+        model: ActiveMLXModel
+    ) async throws -> [ShortsClipPlan]
+
+    func translateShortsPlan(
+        _ plan: ShortsClipPlan,
+        targetLanguage: String,
+        model: ActiveMLXModel
+    ) async throws -> ShortsClipTranslation
+}
+
+extension MLXTextGenerationEngine: NativeLocalMLXEngine {}
 
 actor NativeProcessingPipeline {
-    private let mlxEngine = MLXTextGenerationEngine()
+    private let mlxEngine: any NativeLocalMLXEngine
     private let cloudEngine = CloudTextTranslationEngine()
     private let cloudTranscriptionEngine = CloudAudioTranscriptionEngine()
-    private var cachedWhisperKitModelID: String?
-    private var cachedWhisperKit: WhisperKit?
+    private let localASRRouter: LocalASREngineRouter
+
+    init(
+        localASRRouter: LocalASREngineRouter = LocalASREngineRouter(),
+        mlxEngine: any NativeLocalMLXEngine = MLXTextGenerationEngine()
+    ) {
+        self.localASRRouter = localASRRouter
+        self.mlxEngine = mlxEngine
+    }
 
     func unloadModels() async {
-        if let cached = cachedWhisperKit {
-            await cached.unloadModels()
-        }
-        cachedWhisperKit = nil
-        cachedWhisperKitModelID = nil
+        await localASRRouter.unload()
+    }
+
+    func releaseASRBeforeLocalMLX() async {
+        await localASRRouter.unloadBeforeHeavyLocalModel()
+    }
+
+    func invalidateASRBinding() async {
+        await localASRRouter.unload()
+    }
+
+    func transcribeLocalASR(
+        audioURL: URL,
+        sourceLang: String,
+        settings: AppSettings,
+        providerID: String
+    ) async throws -> LocalASRResult {
+        try await localASRRouter.transcribe(
+            settings: settings,
+            providerID: providerID,
+            request: LocalASRRequest(
+                audioFileURL: audioURL,
+                languageHint: NativeLanguagePolicy.canonicalCode(sourceLang),
+                translateToEnglish: false
+            )
+        )
     }
 
     func processCurrentChunk(
@@ -32,6 +113,7 @@ actor NativeProcessingPipeline {
 
         let readiness = NativeProcessingReadiness.evaluate(
             settings: settings,
+            sourceLang: session.sourceLang,
             targetLang: session.targetLang,
             transcriptionProvider: session.transcriptionProvider,
             translationProvider: session.translationProvider
@@ -121,12 +203,17 @@ actor NativeProcessingPipeline {
                     settings: &settings,
                     progress: progress
                 )
-                AppLogger.shared.info("Segment \(chunkNumber)/\(total) is ready for review.", settings: settings)
-                await progress("Segment \(chunkNumber) is ready for review.", 1)
-                return next
+                return await finishCurrentChunk(
+                    session: next,
+                    index: index,
+                    chunkNumber: chunkNumber,
+                    total: total,
+                    settings: settings,
+                    progress: progress
+                )
             }
 
-            guard let model = NativeModelCatalog.activeWhisperKitModel(
+            guard let activeModel = NativeModelCatalog.activeLocalASRModel(
                 settings: settings,
                 providerID: next.transcriptionProvider
             ) else {
@@ -136,21 +223,23 @@ actor NativeProcessingPipeline {
                 return next
             }
 
-            await progress("Loading \(model.label) with WhisperKit/Core ML...", 0.16)
+            await progress("Loading \(activeModel.label) local ASR...", 0.16)
+            AppLogger.shared.info(
+                "Loading local ASR model \(activeModel.label) (\(activeModel.id)) from \(activeModel.path)...",
+                settings: settings
+            )
 
-            AppLogger.shared.info("Loading Core ML model \(model.label) (\(model.variant)) from \(model.path)...", settings: settings)
-            let pipeline = try await loadWhisperKit(model: model)
-            AppLogger.shared.info("Core ML model loaded successfully for segment \(chunkNumber)/\(total).", settings: settings)
-
-            await progress("Transcribing segment \(chunkNumber) / \(total) with Core ML...", 0.38)
+            await progress("Transcribing segment \(chunkNumber) / \(total) with \(activeModel.label) local ASR...", 0.38)
             AppLogger.shared.info("Transcribing segment \(chunkNumber)/\(total) path: \(audioURL.path)", settings: settings)
 
-            let results = try await pipeline.transcribe(
-                audioPath: audioURL.path,
-                decodeOptions: decodeOptions(for: next)
+            let result = try await transcribeLocalASR(
+                audioURL: audioURL,
+                sourceLang: next.sourceLang,
+                settings: settings,
+                providerID: next.transcriptionProvider
             )
-            let text = results.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-            let rawOriginalCues = transcriptCues(from: results, chunk: next.chunks[index], fallbackText: text)
+            let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            let rawOriginalCues = Self.transcriptCues(from: result, chunk: next.chunks[index], fallbackText: text)
             let glossaryOriginal = applySourceGlossary(text: text, cues: rawOriginalCues, settings: settings)
             let originalText = glossaryOriginal.text
             let originalCues = glossaryOriginal.cues
@@ -158,9 +247,9 @@ actor NativeProcessingPipeline {
             guard !originalText.isEmpty else {
                 AppLogger.shared.warn("Segment \(chunkNumber)/\(total) returned empty transcript.", settings: settings)
                 next.chunks[index].status = .error
-                next.chunks[index].original = "WhisperKit returned an empty transcript."
+                next.chunks[index].original = "Local transcription returned no text."
                 next.chunks[index].translated = ""
-                await progress("WhisperKit returned an empty transcript.", 1)
+                await progress("Local transcription returned no text.", 1)
                 return next
             }
 
@@ -182,14 +271,38 @@ actor NativeProcessingPipeline {
                 progress: progress
             )
 
-            AppLogger.shared.info("Segment \(chunkNumber)/\(total) is ready for review.", settings: settings)
-            await progress("Segment \(chunkNumber) is ready for review.", 1)
-            return next
+            return await finishCurrentChunk(
+                session: next,
+                index: index,
+                chunkNumber: chunkNumber,
+                total: total,
+                settings: settings,
+                progress: progress
+            )
         } catch {
             markCurrentChunk(&next, status: .error, original: "Native segment processing failed: \(error.localizedDescription)", translated: "")
             await progress("Native segment processing failed.", 1)
             return next
         }
+    }
+
+    private func finishCurrentChunk(
+        session: SessionState,
+        index: Int,
+        chunkNumber: Int,
+        total: Int,
+        settings: AppSettings,
+        progress: @Sendable @escaping (String, Double) async -> Void
+    ) async -> SessionState {
+        if session.chunks[index].status == .error {
+            let rawFailure = session.chunks[index].translated.trimmingCharacters(in: .whitespacesAndNewlines)
+            let failureMessage = rawFailure.isEmpty ? "Translation failed." : rawFailure
+            await progress(failureMessage, 1)
+            return session
+        }
+        AppLogger.shared.info("Segment \(chunkNumber)/\(total) is ready for review.", settings: settings)
+        await progress("Segment \(chunkNumber) is ready for review.", 1)
+        return session
     }
 
     func process(
@@ -204,6 +317,7 @@ actor NativeProcessingPipeline {
 
         let readiness = NativeProcessingReadiness.evaluate(
             settings: settings,
+            sourceLang: session.sourceLang,
             targetLang: session.targetLang,
             transcriptionProvider: session.transcriptionProvider,
             translationProvider: session.translationProvider
@@ -295,19 +409,17 @@ actor NativeProcessingPipeline {
                 return next
             }
 
-            guard let model = NativeModelCatalog.activeWhisperKitModel(
+            guard let activeModel = NativeModelCatalog.activeLocalASRModel(
                 settings: settings,
                 providerID: next.transcriptionProvider
             ) else {
-                AppLogger.shared.error("ASR Model lookup failed.", settings: settings)
+                AppLogger.shared.error("ASR model lookup failed.", settings: settings)
                 markAllChunks(&next, status: .error, original: readiness.transcriptionMessage, translated: "")
                 return next
             }
 
-            AppLogger.shared.info("Loading Core ML model \(model.label) (\(model.variant)) from \(model.path)...", settings: settings)
-            await progress("Loading \(model.label) with WhisperKit/Core ML...", 0.16)
-            let pipeline = try await loadWhisperKit(model: model)
-            AppLogger.shared.info("Core ML model loaded successfully.", settings: settings)
+            AppLogger.shared.info("Loading local ASR model \(activeModel.label) (\(activeModel.id)) from \(activeModel.path)...", settings: settings)
+            await progress("Loading \(activeModel.label) local ASR...", 0.16)
 
             await progress("Slicing audio with AVFoundation...", 0.22)
             let chunkURLs = try await AudioChunkExporter.exportChunks(
@@ -327,17 +439,20 @@ actor NativeProcessingPipeline {
                 let total = next.chunks.count
                 next.chunks[index].status = .processing
                 let fraction = 0.28 + (Double(index) / Double(max(1, total))) * 0.50
-                await progress("Transcribing segment \(chunkNumber) / \(total) with Core ML...", fraction)
+
+                await progress("Transcribing segment \(chunkNumber) / \(total) with \(activeModel.label) local ASR...", fraction)
 
                 let audioURL = chunkURLs[next.chunks[index].index] ?? sourceURL
                 AppLogger.shared.debug("Transcribing segment \(chunkNumber)/\(total) path: \(audioURL.path)", settings: settings)
 
-                let results = try await pipeline.transcribe(
-                    audioPath: audioURL.path,
-                    decodeOptions: decodeOptions(for: next)
+                let result = try await transcribeLocalASR(
+                    audioURL: audioURL,
+                    sourceLang: next.sourceLang,
+                    settings: settings,
+                    providerID: next.transcriptionProvider
                 )
-                let text = results.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-                let rawOriginalCues = transcriptCues(from: results, chunk: next.chunks[index], fallbackText: text)
+                let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                let rawOriginalCues = Self.transcriptCues(from: result, chunk: next.chunks[index], fallbackText: text)
                 let glossaryOriginal = applySourceGlossary(text: text, cues: rawOriginalCues, settings: settings)
                 let originalText = glossaryOriginal.text
                 let originalCues = glossaryOriginal.cues
@@ -345,7 +460,7 @@ actor NativeProcessingPipeline {
                 if originalText.isEmpty {
                     AppLogger.shared.warn("Segment \(chunkNumber)/\(total) returned empty transcript.", settings: settings)
                     next.chunks[index].status = .error
-                    next.chunks[index].original = "WhisperKit returned an empty transcript."
+                    next.chunks[index].original = "Local transcription returned no text."
                     next.chunks[index].translated = ""
                 } else {
                     if glossaryOriginal.count > 0 {
@@ -431,81 +546,96 @@ actor NativeProcessingPipeline {
         session.chunks[index].status = .done
     }
 
-    private func decodeOptions(for session: SessionState) -> DecodingOptions {
-        let language = normalizedLanguage(session.sourceLang)
-        return DecodingOptions(
-            verbose: false,
-            task: .transcribe,
-            language: language,
-            temperature: 0,
-            usePrefillPrompt: true,
-            detectLanguage: language == nil,
-            skipSpecialTokens: true,
-            withoutTimestamps: false,
-            wordTimestamps: true
-        )
-    }
+    nonisolated internal static func transcriptCues(
+        from result: LocalASRResult,
+        chunk: ChunkData,
+        fallbackText: String
+    ) -> [TranscriptCue] {
+        guard let timedCues = result.cues else {
+            let clean = fallbackText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !clean.isEmpty, chunk.startSec.isFinite, chunk.endSec.isFinite, chunk.endSec > chunk.startSec else {
+                return []
+            }
+            return ParakeetTranscriptionEngine.boundedCuesFromUntimedText(
+                clean,
+                startSec: chunk.startSec,
+                endSec: chunk.endSec
+            )
+        }
 
-    private func transcriptCues(from results: [TranscriptionResult], chunk: ChunkData, fallbackText: String) -> [TranscriptCue] {
-        let cues = results
-            .flatMap(\.segments)
-            .compactMap { segment -> TranscriptCue? in
-                let text = segment.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !text.isEmpty else { return nil }
-                let start = chunk.startSec + Double(segment.start)
-                let end = chunk.startSec + Double(segment.end)
-                let words = (segment.words ?? []).compactMap { word -> TranscriptWord? in
-                    let wordText = word.word.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !wordText.isEmpty else { return nil }
-                    let wordStart = chunk.startSec + Double(word.start)
-                    let wordEnd = chunk.startSec + Double(word.end)
-                    return TranscriptWord(
-                        startSec: max(chunk.startSec, wordStart),
-                        endSec: min(chunk.endSec, max(wordStart + 0.05, wordEnd)),
+        var mapped: [TranscriptCue] = []
+        mapped.reserveCapacity(timedCues.count)
+        var previousCueEnd = chunk.startSec
+
+        for cue in timedCues {
+            let text = cue.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty,
+                  cue.startSec.isFinite,
+                  cue.endSec.isFinite
+            else {
+                continue
+            }
+
+            let rawStart = chunk.startSec + cue.startSec
+            let rawEnd = chunk.startSec + cue.endSec
+            guard rawStart.isFinite, rawEnd.isFinite else { continue }
+            let boundedStart = min(
+                chunk.endSec,
+                max(previousCueEnd, max(chunk.startSec, rawStart))
+            )
+            let boundedEnd = min(
+                chunk.endSec,
+                max(boundedStart, rawEnd)
+            )
+            guard boundedEnd > boundedStart else { continue }
+
+            var words: [TranscriptWord] = []
+            words.reserveCapacity(cue.words?.count ?? 0)
+            var previousWordEnd = boundedStart
+            for word in cue.words ?? [] {
+                let wordText = word.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !wordText.isEmpty,
+                      word.startSec.isFinite,
+                      word.endSec.isFinite
+                else {
+                    continue
+                }
+                let rawWordStart = chunk.startSec + word.startSec
+                let rawWordEnd = chunk.startSec + word.endSec
+                guard rawWordStart.isFinite, rawWordEnd.isFinite else { continue }
+                let boundedWordStart = min(
+                    boundedEnd,
+                    max(previousWordEnd, max(boundedStart, rawWordStart))
+                )
+                let boundedWordEnd = min(
+                    boundedEnd,
+                    max(boundedWordStart, rawWordEnd)
+                )
+                guard boundedWordEnd > boundedWordStart else { continue }
+                words.append(
+                    TranscriptWord(
+                        startSec: boundedWordStart,
+                        endSec: boundedWordEnd,
                         text: wordText
                     )
-                }
-                return TranscriptCue(
-                    startSec: max(chunk.startSec, start),
-                    endSec: min(chunk.endSec, max(start + 0.25, end)),
+                )
+                previousWordEnd = boundedWordEnd
+            }
+
+            mapped.append(
+                TranscriptCue(
+                    startSec: boundedStart,
+                    endSec: boundedEnd,
                     text: text,
                     words: words.isEmpty ? nil : words
                 )
-            }
-
-        if !cues.isEmpty {
-            return cues
+            )
+            previousCueEnd = boundedEnd
         }
 
-        let clean = fallbackText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return clean.isEmpty
-            ? []
-            : [TranscriptCue(startSec: chunk.startSec, endSec: chunk.endSec, text: clean)]
-    }
-
-    func loadWhisperKit(model: ActiveWhisperKitModel) async throws -> WhisperKit {
-        if cachedWhisperKitModelID == model.id, let cached = cachedWhisperKit {
-            return cached
-        }
-
-        if let oldPipeline = cachedWhisperKit {
-            await oldPipeline.unloadModels()
-        }
-        cachedWhisperKit = nil
-        cachedWhisperKitModelID = nil
-
-        let config = WhisperKitConfig(
-            model: model.variant,
-            modelFolder: model.path,
-            verbose: false,
-            prewarm: true,
-            load: true,
-            download: false
-        )
-        let pipeline = try await WhisperKit(config)
-        cachedWhisperKitModelID = model.id
-        cachedWhisperKit = pipeline
-        return pipeline
+        // A non-nil timed result is authoritative, including an empty array.
+        // Do not replace it with a whole-planned-chunk text cue.
+        return mapped
     }
 
     private func planChunks(
@@ -534,22 +664,26 @@ actor NativeProcessingPipeline {
         )
     }
 
-    private func normalizedLanguage(_ sourceLang: String) -> String? {
-        let trimmed = sourceLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return trimmed.isEmpty || trimmed == "auto" ? nil : trimmed
-    }
-
     private func translationSeed(for session: SessionState, settings: AppSettings) -> String {
-        if session.targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "same" {
+        guard NativeLanguagePolicy.translationNeeded(
+            sourceLang: session.sourceLang,
+            targetLang: session.targetLang
+        ) else {
             return ""
         }
-        let readiness = NativeProcessingReadiness.evaluate(
+        let translationOption = ProviderRegistry
+            .availableTranslationProviders(settings: settings, targetLang: session.targetLang)
+            .providers
+            .first { $0.id == session.translationProvider }
+        let cloudTranslationReady = translationOption?.group == .cloud
+        let localTranslationReady = NativeModelCatalog.activeMLXModel(
             settings: settings,
-            targetLang: session.targetLang,
-            transcriptionProvider: session.transcriptionProvider,
-            translationProvider: session.translationProvider
-        )
-        return readiness.canTranslate ? "" : "MLX translation requires a downloaded or located local model."
+            providerID: session.translationProvider
+        ) != nil
+        guard cloudTranslationReady || localTranslationReady else {
+            return "MLX translation requires a downloaded or located local model."
+        }
+        return ""
     }
 
     private func translateChunksIfNeeded(
@@ -557,10 +691,12 @@ actor NativeProcessingPipeline {
         settings: inout AppSettings,
         progress: @Sendable @escaping (String, Double) async -> Void
     ) async {
-        guard session.targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "same" else {
+        guard NativeLanguagePolicy.translationNeeded(
+            sourceLang: session.sourceLang,
+            targetLang: session.targetLang
+        ) else {
             return
         }
-
         if let cloudProvider = ActiveCloudTranslationProvider.resolve(
             settings: settings,
             providerID: session.translationProvider
@@ -591,6 +727,7 @@ actor NativeProcessingPipeline {
 
         let translatableIndices = session.chunks.indices.filter { session.chunks[$0].status == .done }
         guard !translatableIndices.isEmpty else { return }
+        await releaseASRBeforeLocalMLX()
 
         var completedTranslations = 0
         for (offset, index) in translatableIndices.enumerated() {
@@ -628,8 +765,11 @@ actor NativeProcessingPipeline {
                 )
                 completedTranslations += 1
             } catch {
-                session.chunks[index].translated = ""
-                session.chunks[index].status = .done
+                AppLogger.shared.error("Segment \(index + 1)/\(session.chunks.count) MLX translation failed: \(error.localizedDescription)", settings: settings)
+                let failureMessage = "MLX translation failed: \(error.localizedDescription)"
+                session.chunks[index].translated = failureMessage
+                session.chunks[index].setTranslation(failureMessage, language: session.targetLang)
+                session.chunks[index].status = .error
             }
         }
         if completedTranslations > 0 {
@@ -644,7 +784,10 @@ actor NativeProcessingPipeline {
         progress: @Sendable @escaping (String, Double) async -> Void
     ) async {
         guard session.chunks.indices.contains(index) else { return }
-        guard session.targetLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "same" else {
+        guard NativeLanguagePolicy.translationNeeded(
+            sourceLang: session.sourceLang,
+            targetLang: session.targetLang
+        ) else {
             return
         }
 
@@ -673,6 +816,7 @@ actor NativeProcessingPipeline {
             await progress(session.chunks[index].translated, 1)
             return
         }
+        await releaseASRBeforeLocalMLX()
 
         await progress("Translating segment \(index + 1) / \(session.chunks.count) with MLX...", 0.78)
         do {
@@ -707,8 +851,10 @@ actor NativeProcessingPipeline {
             AppLogger.shared.info("Segment \(index + 1)/\(session.chunks.count) translation complete.", settings: settings)
         } catch {
             AppLogger.shared.error("Segment \(index + 1)/\(session.chunks.count) MLX translation failed: \(error.localizedDescription)", settings: settings)
-            session.chunks[index].translated = ""
-            session.chunks[index].status = .done
+            let failureMessage = "MLX translation failed: \(error.localizedDescription)"
+            session.chunks[index].translated = failureMessage
+            session.chunks[index].setTranslation(failureMessage, language: session.targetLang)
+            session.chunks[index].status = .error
         }
     }
 
@@ -769,8 +915,10 @@ actor NativeProcessingPipeline {
                 )
             } catch {
                 AppLogger.shared.error("Segment \(index + 1)/\(session.chunks.count) \(provider.label) translation failed: \(error.localizedDescription)", settings: settings)
-                session.chunks[index].translated = ""
-                session.chunks[index].status = .done
+                let failureMessage = "\(provider.label) translation failed: \(error.localizedDescription)"
+                session.chunks[index].translated = failureMessage
+                session.chunks[index].setTranslation(failureMessage, language: session.targetLang)
+                session.chunks[index].status = .error
             }
         }
 
@@ -830,8 +978,10 @@ actor NativeProcessingPipeline {
             AppLogger.shared.info("Segment \(index + 1)/\(session.chunks.count) translation complete.", settings: settings)
         } catch {
             AppLogger.shared.error("Segment \(index + 1)/\(session.chunks.count) \(provider.label) translation failed: \(error.localizedDescription)", settings: settings)
-            session.chunks[index].translated = ""
-            session.chunks[index].status = .done
+            let failureMessage = "\(provider.label) translation failed: \(error.localizedDescription)"
+            session.chunks[index].translated = failureMessage
+            session.chunks[index].setTranslation(failureMessage, language: session.targetLang)
+            session.chunks[index].status = .error
         }
     }
 

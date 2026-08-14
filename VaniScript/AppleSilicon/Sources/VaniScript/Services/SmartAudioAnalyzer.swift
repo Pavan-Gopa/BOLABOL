@@ -56,14 +56,29 @@ enum SmartAudioAnalyzer {
     ) throws -> [AudioEnergyWindow] {
         let file = try AVAudioFile(forReading: sourceURL)
         let sampleRate = file.processingFormat.sampleRate
-        guard sampleRate > 0 else { return [] }
+        guard sampleRate > 0, sampleRate.isFinite else { return [] }
 
-        let startFrame = max(0, AVAudioFramePosition((max(0, startSec) * sampleRate).rounded(.down)))
-        let endFrame: AVAudioFramePosition = {
-            if endSec.isFinite, endSec > 0 {
-                return min(file.length, AVAudioFramePosition((endSec * sampleRate).rounded(.up)))
+        let fileLength = file.length
+        let fileDurationSec = Double(fileLength) / sampleRate
+        let startFrame: AVAudioFramePosition = {
+            let boundedStartSec: Double
+            if startSec.isNaN || startSec < 0 {
+                boundedStartSec = 0
+            } else if startSec.isFinite {
+                boundedStartSec = min(startSec, fileDurationSec)
+            } else {
+                boundedStartSec = fileDurationSec
             }
-            return file.length
+            let candidate = (boundedStartSec * sampleRate).rounded(.down)
+            return boundedFramePosition(candidate, fileLength: fileLength)
+        }()
+        let endFrame: AVAudioFramePosition = {
+            guard endSec.isFinite, endSec > 0 else {
+                return fileLength
+            }
+            let boundedEndSec = min(endSec, fileDurationSec)
+            let candidate = (boundedEndSec * sampleRate).rounded(.up)
+            return boundedFramePosition(candidate, fileLength: fileLength)
         }()
         guard endFrame > startFrame else { return [] }
 
@@ -131,6 +146,16 @@ enum SmartAudioAnalyzer {
         }
 
         return profile
+    }
+
+    private static func boundedFramePosition(
+        _ candidate: Double,
+        fileLength: AVAudioFramePosition
+    ) -> AVAudioFramePosition {
+        guard candidate.isFinite, candidate > 0 else { return 0 }
+        let fileLengthDouble = Double(fileLength)
+        guard candidate < fileLengthDouble else { return fileLength }
+        return AVAudioFramePosition(candidate)
     }
 
     private static func makeWindow(

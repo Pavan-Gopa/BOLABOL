@@ -126,15 +126,20 @@ Package, persist files, or choose the next worker. `Mode: design` and
 ### Per-step default
 
 ```text
-Main → Coder → Main verify/write state
+Main → Coder → Main verify/build/open fresh app
+     → Human acceptance test
      → Reviewer → Main verify/write state
      → Tester → Main verify/write state
      → checkpoint/next step
 ```
 
+- A Human rejection routes directly to a fresh Coder; do not spend Reviewer or
+  Tester runs on a candidate the Human has not accepted.
+- After Human acceptance, run at most one Reviewer and one Tester for the
+  unchanged candidate.
 - Review is required unless the Human explicitly disables it. Record a skipped
   gate and reason in `STATE.yaml`.
-- Tester is recommended on and runs unless the Human opts out. Record a skipped
+- Tester follows approved review unless the Human opts out. Record a skipped
   gate and reason in `STATE.yaml`.
 - Security is offered once near release; never forced.
 
@@ -152,12 +157,14 @@ before dispatching the fix. Workers never edit `STEPS.md` or this field.
 
 | Result | Main action |
 |--------|-------------|
-| Coder `waiting_review` | Verify target-only diff and evidence; set `implementation.status: waiting_review` (not `complete`); record feedback; rebuild Graphify; dispatch Reviewer |
+| Coder `waiting_review` | Verify target-only diff and evidence, build/open the fresh app, set `implementation.status: waiting_review`, and wait for the Human acceptance test; do not dispatch Reviewer yet |
+| Human accepts candidate | Record exact acceptance evidence, then dispatch the candidate's single Reviewer |
+| Human rejects candidate | Record the observed failure; dispatch a fresh Coder fix without Reviewer or Tester |
 | Coder `blocked` | Record blocker; decide whether new context or Architect is needed |
-| Reviewer `approved` | Verify review scope/evidence; dispatch Tester or close the step if QA was explicitly skipped |
-| Reviewer `changes_requested` | Record issues; increment attempts; dispatch a fresh Coder fix |
-| Tester `qa_green` | Verify commands/counts and inspect every Tester-authored test diff; write reports/state only after the tests prove product behavior without weakened assertions. Route a substantial test diff to a short targeted Reviewer pass before closing; then POST checkpoint, refresh Graphify, and open the next step |
-| Tester `bugs` | Record bugs; increment attempts; dispatch a fresh Coder fix, then re-review and re-test |
+| Reviewer `approved` | Verify review scope/evidence; dispatch the candidate's single Tester or close the step if QA was explicitly skipped |
+| Reviewer `changes_requested` | Record issues; increment attempts; dispatch a fresh Coder fix; the changed candidate returns through Human acceptance |
+| Tester `qa_green` | Verify commands/counts and inspect every Tester-authored test diff; write reports/state only after the tests prove product behavior without weakened assertions. Main accepts or rejects the test diff directly, then creates the POST checkpoint, refreshes Graphify, and opens the next step |
+| Tester `bugs` | Record bugs; increment attempts; dispatch a fresh Coder fix; the changed candidate returns through Human acceptance, Reviewer, and Tester |
 | Architect `needs_human_input` | Block state; relay only the returned material questions; then start a fresh Architect with the Human's exact answers and `grilling_checkpoint` |
 | Architect `design_ready` | Verify the Markdown package against project evidence and recorded Human confirmation; persist accepted plan/ADR |
 | Architect `advice_ready` | Verify cited repository evidence; use or reject the advice, record a decision only if consequential, and keep routing authority in Main |
@@ -272,9 +279,8 @@ verified full Stop-gate -> step_completed
 ```
 
 Use the OMP run/agent id as `run_id`. A Coder run id is also the candidate id
-carried through product Reviewer and Tester events. Mark targeted review of a
-Tester-authored diff as `review_kind: test_diff`; it must not be counted as a
-normal product rejection. Record actual resolved provider/model only when OMP
+carried through the single product Reviewer and Tester events. Reviewer events
+use `review_kind: product`. Record actual resolved provider/model only when OMP
 exposes them; never guess.
 
 The helper generates timestamps, validates a bounded allowlist, and deduplicates

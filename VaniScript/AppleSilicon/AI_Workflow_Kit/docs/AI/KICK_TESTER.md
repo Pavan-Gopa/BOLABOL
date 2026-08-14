@@ -3,8 +3,8 @@
 OMP agent: `workflow-tester`  
 Model pair: `@workflow_tester` → `@workflow_tester_backup`
 
-Tester is recommended on for every step. Each run is a fresh task-agent session
-after Main verifies Reviewer approval.
+Tester runs once after the Human accepts the fresh candidate and Main verifies
+its single Reviewer approval. Each run is a fresh task-agent session.
 
 ## Responsibilities
 
@@ -45,7 +45,6 @@ Commands:
 
 Return the schema in `.omp/agents/workflow-tester.md`: `qa_green`, `bugs`, or
 `blocked`; commands and counts; every created or modified test path;
-failures/reproductions; summary. Main inspects the actual test diff for genuine
-product-behavior coverage and weakened assertions. A substantial test diff gets
-a short targeted Reviewer pass before Main writes `REPORT.md`, `BUG_REPORT.md`,
-`FEEDBACK.md`, and state.
+failures/reproductions; summary. Main inspects and accepts or rejects the actual
+test diff directly for genuine product-behavior coverage and weakened
+assertions. Tester completion never triggers a second Reviewer pass.

@@ -6,7 +6,17 @@ struct ActiveCloudTranscriptionProvider: Equatable, Sendable {
     var label: String
     var model: String
     var apiKey: String
+    var apiKeys: [String] = []
     var baseURL: String? = nil
+
+    var rotationKeys: [String] {
+        let keys = apiKeys
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        if !keys.isEmpty { return keys }
+        let primary = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        return primary.isEmpty ? [] : [primary]
+    }
 
     static func resolve(settings: AppSettings, providerID: String) -> ActiveCloudTranscriptionProvider? {
         let trimmedProvider = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -15,15 +25,17 @@ struct ActiveCloudTranscriptionProvider: Equatable, Sendable {
         }
         switch trimmedProvider {
         case "gemini-cloud":
-            let key = settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !key.isEmpty else { return nil }
+            let bank = settings.geminiKeyBank
+            let keys = bank.enabledKeys
+            guard let key = keys.first else { return nil }
             return ActiveCloudTranscriptionProvider(
                 id: "gemini-cloud",
                 label: "Gemini Cloud",
                 // A4 (§9.2): Gemini transcription uses the user-selected text model
                 // (same generateContent endpoint); hardcode fallback for empty settings.
                 model: Self.resolvedModel(settings.geminiTextModel, fallback: "gemini-2.5-flash"),
-                apiKey: key
+                apiKey: key,
+                apiKeys: keys
             )
         case "gpt-cloud":
             let key = settings.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -228,6 +240,64 @@ actor CloudAudioTranscriptionEngine {
     }
 
     private func transcribeWithGemini(
+        audioData: Data,
+        fileName: String,
+        mimeType: String,
+        prompt: String,
+        provider: ActiveCloudTranscriptionProvider
+    ) async throws -> (text: String, usage: TokenUsage?) {
+        let keys = provider.rotationKeys
+        guard !keys.isEmpty else { throw CloudTranscriptionError.invalidEndpoint }
+
+        var lastError: Error?
+        // Two passes: first walk every key; if all hit only transient capacity,
+        // walk once more with backoff so a temporary Gemini outage can recover.
+        let maxPasses = 2
+        for pass in 0..<maxPasses {
+            for (index, apiKey) in keys.enumerated() {
+                var activeProvider = provider
+                activeProvider.apiKey = apiKey
+                do {
+                    return try await executeGeminiTranscription(
+                        audioData: audioData,
+                        fileName: fileName,
+                        mimeType: mimeType,
+                        prompt: prompt,
+                        provider: activeProvider
+                    )
+                } catch let error as CloudTranscriptionError {
+                    lastError = error
+                    if case .requestFailed(_, let status, let body) = error,
+                       GeminiAPIKeyBank.isRotatableFailure(status: status, body: body) {
+                        let kind = GeminiAPIKeyBank.isQuotaFailure(status: status, body: body)
+                            ? "quota/rate-limit"
+                            : "capacity/unavailable"
+                        let hasMoreKeys = index < keys.count - 1
+                        let hasMorePasses = pass < maxPasses - 1
+                        if hasMoreKeys || hasMorePasses {
+                            AppLogger.shared.info(
+                                "Gemini Cloud transcription key #\(index + 1) hit \(kind) (HTTP \(status)). \(hasMoreKeys ? "Rotating to next key." : "Retrying key set after short backoff.")"
+                            )
+                            if let delay = GeminiAPIKeyBank.retryDelayNanoseconds(
+                                status: status,
+                                body: body,
+                                attempt: pass * keys.count + index
+                            ) {
+                                try? await Task.sleep(nanoseconds: delay)
+                            }
+                            continue
+                        }
+                    }
+                    throw error
+                } catch {
+                    throw error
+                }
+            }
+        }
+        throw lastError ?? CloudTranscriptionError.invalidEndpoint
+    }
+
+    private func executeGeminiTranscription(
         audioData: Data,
         fileName: String,
         mimeType: String,

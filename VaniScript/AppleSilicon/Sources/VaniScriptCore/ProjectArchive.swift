@@ -59,7 +59,7 @@ public enum ProjectArchive {
         let decoder = JSONDecoder()
         func normalized(_ records: [ProjectRecord]) -> [ProjectRecord] {
             records.map { record in
-                var copy = record
+                var copy = ProjectMigrator.migrate(record, fromSchemaVersion: 1)
                 copy.session.normalizeTranslationArchive()
                 return copy
             }

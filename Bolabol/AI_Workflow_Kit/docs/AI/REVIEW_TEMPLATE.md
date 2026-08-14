@@ -1,21 +1,19 @@
-# Review Template — Bolabol
+# Review template
 
-Copy structure into `FEEDBACK.md` §5 when reviewing.
+Copy structure into `FEEDBACK.md` review section when reviewing.
 
 ## Checklist
 
 | Check | Pass? |
 |-------|-------|
-| Matches `coder_brief` / BOLABOL_STEPS Done | |
+| Matches `coder_brief` / STEPS Done | |
 | Diff only in `target_files` | |
-| No Python / ONNX / forbidden sidecar | |
-| primary + additional (not target-always) | |
-| Non-Canary auto (HUD A) preserved if applicable | |
-| Canary constraints if applicable (no auto, Core ML only) | |
+| PROJECT_CONTEXT constraints honored | |
+| No silent architecture redesign | |
 | Tests updated / green | |
 | Comments on new public modules | |
 | No secrets | |
-| Version 1.0.3 narrative if version files touched | |
+| No fake data / fake green paths | |
 
 ## Verdict
 

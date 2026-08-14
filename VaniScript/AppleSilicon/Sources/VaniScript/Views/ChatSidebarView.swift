@@ -118,7 +118,7 @@ struct ChatSidebarView: View {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.yellow)
-                            Text("No Local Whisper Model Connected")
+                            Text("No Local ASR Model Connected")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundStyle(.white)
                             Spacer()
@@ -131,7 +131,7 @@ struct ChatSidebarView: View {
                             }
                             .buttonStyle(.plain)
                         }
-                        Text("To use voice dictation, please select and download a Whisper model in Settings -> ASR.")
+                        Text("To use voice dictation, select and locate a complete local ASR model in Settings -> ASR.")
                             .font(.system(size: 11))
                             .foregroundStyle(.white.opacity(0.7))
                     }
@@ -361,14 +361,14 @@ struct ChatSidebarView: View {
         isLoading = true
 
         if chatRouteRaw == ChatRoute.gemini.rawValue {
-            let key = workflowStore.settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !key.isEmpty else {
+            let keys = workflowStore.settings.geminiKeyBank.enabledKeys
+            guard !keys.isEmpty else {
                 messages.append(MessageItem(sender: "system", text: "API mode requires an API key in Settings."))
                 isLoading = false
                 return
             }
             Task {
-                await executeGeminiRequest(text: text, key: key)
+                await executeGeminiRequest(text: text, keys: keys)
             }
             return
         }
@@ -609,7 +609,7 @@ struct ChatSidebarView: View {
         }
     }
 
-    private func executeGeminiRequest(text: String, key: String) async {
+    private func executeGeminiRequest(text: String, keys: [String]) async {
         do {
             // Initial prompt contents
             var contents: [GeminiChatContent] = []
@@ -637,12 +637,13 @@ struct ChatSidebarView: View {
             
             var loop = 0
             var finalText = "I have processed your request."
+            var keyIndex = 0
             
             while loop < 8 {
                 let requestBody = GeminiChatRequest(
                     contents: contents,
                     systemInstruction: GeminiSystemInstruction(
-                        parts: [GeminiChatPart(text: "You are the VaniScript AI Chat Assistant. Assist users by calling local tools to view state, edit translations, update subtitle styling, and structure vertical video shorts. Before any chunk or cue edit, call get_project_state and pass the exact numeric session.chunks[].index. Chunk indexes are zero-based: visible Chunk 5 requires chunkIndex 4. Never invent argument names such as chatindex. You are also a highly creative translation expert; suggest beautiful literary translations, rephrase subtitles, fix grammar, explain timeline cues, and converse naturally. CRITICAL: You must always respond to the user in the language they write in! If the user writes or speaks in Russian, you MUST respond in fluent Russian. If they write in English, respond in English. Do not speak English when the user addresses you in Russian. If the user provides a path to a screenshot/image, you can see and analyze it!")]
+                        parts: [GeminiChatPart(text: "You are the VaniScript AI Chat Assistant. Assist users by calling local tools to view state, edit translations, update subtitle styling, and structure vertical video shorts. Before any chunk or cue edit, call get_project_state and pass the exact numeric session.chunks[].index. Chunk indexes are zero-based: visible Chunk 5 requires chunkIndex 4. Never invent argument names such as chatindex. You are also a highly creative translation expert; suggest beautiful literary translations, rephrase subtitles, fix grammar, explain timeline cues, and converse naturally. CRITICAL: You must always respond to the user in the language they write in! If the user writes or speaks in Russian, you MUST respond in fluent Russian.")]
                     ),
                     tools: [
                         GeminiChatTool(
@@ -654,26 +655,65 @@ struct ChatSidebarView: View {
                     generationConfig: GeminiChatGenConfig(temperature: 0.1)
                 )
                 
-                var components = URLComponents(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent")
-                components?.queryItems = [URLQueryItem(name: "key", value: key)]
-                guard let url = components?.url else { return }
+                var requestSucceeded = false
+                var data = Data()
+                var lastError: Error?
                 
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                request.httpBody = try JSONEncoder().encode(requestBody)
-                
-                let (data, response) = try await URLSession.shared.data(for: request)
-                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                    let errorMsg: String
-                    if let apiError = try? JSONDecoder().decode(GeminiApiErrorResponse.self, from: data),
-                       let msg = apiError.error?.message {
-                        errorMsg = "API Error \(httpResponse.statusCode): \(msg)"
-                    } else {
-                        let bodyStr = String(data: data, encoding: .utf8) ?? ""
-                        errorMsg = "HTTP Error \(httpResponse.statusCode): \(bodyStr.prefix(200))"
+                while keyIndex < keys.count {
+                    let activeKey = keys[keyIndex]
+                    var components = URLComponents(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent")
+                    components?.queryItems = [URLQueryItem(name: "key", value: activeKey)]
+                    guard let url = components?.url else {
+                        lastError = NSError(domain: "Gemini", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid Gemini endpoint"])
+                        break
                     }
-                    throw NSError(domain: "Gemini", code: -1, userInfo: [NSLocalizedDescriptionKey: errorMsg])
+                    
+                    var request = URLRequest(url: url)
+                    request.httpMethod = "POST"
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    request.httpBody = try JSONEncoder().encode(requestBody)
+                    
+                    let (responseData, response) = try await URLSession.shared.data(for: request)
+                    if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                        let bodyStr = String(data: responseData, encoding: .utf8) ?? ""
+                        let errorMsg: String
+                        if let apiError = try? JSONDecoder().decode(GeminiApiErrorResponse.self, from: responseData),
+                           let msg = apiError.error?.message {
+                            errorMsg = "API Error \(httpResponse.statusCode): \(msg)"
+                        } else {
+                            errorMsg = "HTTP Error \(httpResponse.statusCode): \(bodyStr.prefix(200))"
+                        }
+                        
+                        if GeminiAPIKeyBank.isRotatableFailure(status: httpResponse.statusCode, body: bodyStr),
+                           keyIndex < keys.count - 1 {
+                            let kind = GeminiAPIKeyBank.isQuotaFailure(status: httpResponse.statusCode, body: bodyStr)
+                                ? "quota/rate-limit"
+                                : "capacity/unavailable"
+                            AppLogger.shared.info(
+                                "Gemini Chat key #\(keyIndex + 1) hit \(kind) (HTTP \(httpResponse.statusCode)). Rotating to key #\(keyIndex + 2)."
+                            )
+                            if let delay = GeminiAPIKeyBank.retryDelayNanoseconds(
+                                status: httpResponse.statusCode,
+                                body: bodyStr,
+                                attempt: keyIndex
+                            ) {
+                                try? await Task.sleep(nanoseconds: delay)
+                            }
+                            keyIndex += 1
+                            lastError = NSError(domain: "Gemini", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorMsg])
+                            continue
+                        }
+                        
+                        throw NSError(domain: "Gemini", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorMsg])
+                    }
+                    
+                    data = responseData
+                    requestSucceeded = true
+                    break
+                }
+                
+                guard requestSucceeded else {
+                    throw lastError ?? NSError(domain: "Gemini", code: -1, userInfo: [NSLocalizedDescriptionKey: "Gemini request failed"])
                 }
                 
                 let decoded = try JSONDecoder().decode(GeminiChatResponse.self, from: data)
@@ -744,16 +784,10 @@ struct ChatSidebarView: View {
             }
         }
     }
-
     private func checkModelPresence() {
-        if NativeModelCatalog.activeWhisperKitModel(
-            settings: workflowStore.settings,
-            providerID: workflowStore.settings.transcriptionProvider
-        ) == nil {
-            showNoModelWarning = true
-        } else {
-            showNoModelWarning = false
-        }
+        showNoModelWarning = !workflowStore.settings.isDownloadedLocalASRModelActive(
+            id: workflowStore.settings.transcriptionProvider
+        )
     }
 
     private func toggleDictation() {
@@ -785,14 +819,13 @@ struct ChatSidebarView: View {
                 }
             }
         } else {
-            if NativeModelCatalog.activeWhisperKitModel(
-                settings: workflowStore.settings,
-                providerID: workflowStore.settings.transcriptionProvider
-            ) == nil {
+            guard workflowStore.settings.isDownloadedLocalASRModelActive(
+                id: workflowStore.settings.transcriptionProvider
+            ) else {
                 showNoModelWarning = true
                 return
             }
-            
+
             AVCaptureDevice.requestAccess(for: .audio) { granted in
                 guard granted else {
                     Task { @MainActor in

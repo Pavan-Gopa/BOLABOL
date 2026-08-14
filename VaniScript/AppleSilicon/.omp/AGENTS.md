@@ -63,14 +63,14 @@ On conflict, follow `AI_Workflow_Kit/docs/AI/TEAM_CONTRACT.md`. Do not infer suc
    On retry include only verified approach/result/evidence/rejection memory from
    `FEEDBACK.md`; never pass worker transcripts or Main's conversation history.
 5. When its structured result arrives, inspect the actual diff/source/test
-   output. If Tester changed tests, inspect the test diff for weakened
-   assertions and real product behavior; use a short targeted Reviewer pass for
-   a substantial diff.
+   output. If Tester changed tests, Main alone inspects the test diff for
+   weakened assertions and real product behavior; Tester completion never
+   triggers a second Reviewer pass.
 6. Only after verification, write the canonical entry to `FEEDBACK.md`,
    `REPORT.md`, `BUG_REPORT.md`, or `SECURITY_REPORT.md`, update `STATE.yaml`,
    and route the next role.
 
-Default step flow remains `workflow-coder -> Main verification -> workflow-reviewer -> Main verification -> workflow-tester -> Main verification`. Reviewer is required unless the Human explicitly skips it. Tester is enabled unless the Human opts out. Record every skip and reason so the step gate remains satisfiable. Security is offered once near release and runs only after Human approval. Architect is used for unclear design, plan/code conflict, deep grilling, or implementation thrash.
+Default step flow is `workflow-coder -> Main verification/build/fresh app -> Human acceptance -> workflow-reviewer -> Main verification -> workflow-tester -> Main verification`. A Human rejection routes directly to a fresh Coder; do not spend Reviewer or Tester runs before acceptance. Each Human-accepted unchanged candidate receives at most one completed Reviewer verdict and one completed Tester verdict. A later gate failure creates a changed candidate that returns through Human acceptance; a launch/provider failure with no verdict does not count as a pass. Reviewer is required after acceptance unless the Human explicitly skips it. Tester follows approved review unless the Human opts out. Record every skip and reason so the step gate remains satisfiable. Security is offered once near release and runs only after Human approval. Architect is used for unclear design, plan/code conflict, deep grilling, or implementation thrash.
 
 `STEPS.md` `Do` items are Main-owned semantic completion memory. New cards use
 Markdown checkboxes. Before a worker dispatch, Main sets `current_work_item` in
@@ -80,8 +80,9 @@ active item after verification, and reopens it to `[ ]` when a downstream
 Reviewer/Tester finding invalidates that completion. Workers never edit this
 checklist or claim canonical completion.
 
-After a verified Coder handoff, persist `implementation.status: waiting_review`;
-reserve `complete` for a fully satisfied step Stop-gate.
+After a verified Coder handoff, persist `implementation.status: waiting_review`
+and `human_acceptance.status: pending`; reserve `complete` for a fully satisfied
+step Stop-gate. Reviewer dispatch requires `human_acceptance.status: accepted`.
 
 For bounded design uncertainty, Main may dispatch the existing
 `workflow-architect` with `Mode: advisory`. Advice is read-only and optional:

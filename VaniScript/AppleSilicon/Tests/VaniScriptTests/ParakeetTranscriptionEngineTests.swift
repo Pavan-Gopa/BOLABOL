@@ -47,6 +47,149 @@ struct ParakeetTranscriptionEngineTests {
         #expect(temporaryFiles(in: temporaryDirectory).isEmpty)
     }
 
+    @Test("preserves FluidAudio token timings as bounded word-bearing cues")
+    func preservesTokenTimingsAsReviewCues() async throws {
+        let fixture = try makeFixtureDirectory()
+        defer { try? FileManager.default.removeItem(at: fixture) }
+        let descriptor = try parakeetDescriptor()
+        let modelURL = try makeModelDirectory(in: fixture, descriptor: descriptor)
+        let source = try makeSourceAudio(in: fixture)
+        let timings = [
+            TokenTiming(token: "▁hello", tokenId: 1, startTime: 0.2, endTime: 0.7, confidence: 0.9),
+            TokenTiming(token: "▁world", tokenId: 2, startTime: 0.9, endTime: 1.4, confidence: 0.9),
+            TokenTiming(token: "▁again", tokenId: 3, startTime: 2.5, endTime: 3.0, confidence: 0.9),
+        ]
+        let session = RecordingSession(
+            result: ASRResult(
+                text: "hello world again",
+                confidence: 0.9,
+                duration: 4,
+                processingTime: 0.1,
+                tokenTimings: timings
+            )
+        )
+        let engine = ParakeetTranscriptionEngine(
+            model: descriptor,
+            modelFolderURL: modelURL,
+            temporaryDirectory: fixture.appendingPathComponent("temporary", isDirectory: true),
+            sessionLoader: { _ in session }
+        )
+
+        let result = try await engine.transcribe(LocalASRRequest(audioFileURL: source))
+        let cues = try #require(result.cues)
+
+        #expect(result.text == "hello world again")
+        #expect(cues.map(\.text) == ["hello world", "again"])
+        #expect(cues.allSatisfy { $0.startSec >= 0 && $0.endSec <= 4 && $0.endSec > $0.startSec })
+        #expect(cues[0].words?.map(\.text) == ["hello", "world"])
+        #expect(cues[1].words?.map(\.text) == ["again"])
+        #expect(cues[0].endSec <= cues[1].startSec)
+    }
+    @Test("segments missing token timings into bounded cues for short and long text")
+    func segmentsMissingTokenTimingsIntoBoundedCues() async throws {
+        let fixture = try makeFixtureDirectory()
+        defer { try? FileManager.default.removeItem(at: fixture) }
+        let descriptor = try parakeetDescriptor()
+        let modelURL = try makeModelDirectory(in: fixture, descriptor: descriptor)
+        let source = try makeSourceAudio(in: fixture)
+
+        let longText = "First sentence is here. Second sentence is also here. Third sentence is long and has many words to test splitting. Fourth sentence is final."
+        let session = RecordingSession(
+            result: ASRResult(
+                text: longText,
+                confidence: 0.9,
+                duration: 20,
+                processingTime: 0.1,
+                tokenTimings: nil
+            )
+        )
+        let engine = ParakeetTranscriptionEngine(
+            model: descriptor,
+            modelFolderURL: modelURL,
+            temporaryDirectory: fixture.appendingPathComponent("temporary", isDirectory: true),
+            sessionLoader: { _ in session }
+        )
+
+        let result = try await engine.transcribe(LocalASRRequest(audioFileURL: source))
+        let cues = try #require(result.cues)
+
+        #expect(result.text == longText)
+        #expect(cues.count > 1)
+        #expect(cues.allSatisfy { $0.startSec >= 0 && $0.endSec <= 20 && $0.endSec > $0.startSec })
+        #expect(cues.allSatisfy { $0.endSec - $0.startSec <= 5.0 })
+        #expect(cues.allSatisfy { $0.endSec - $0.startSec < 20.0 })
+        #expect(cues.allSatisfy { $0.words != nil && !$0.words!.isEmpty })
+        #expect(cues.map(\.text).joined(separator: " ") == longText)
+
+        let allExtractedWords = cues.compactMap(\.words).flatMap { $0 }.map(\.text)
+        let expectedWords = longText.split(whereSeparator: \.isWhitespace).map(String.init)
+        #expect(allExtractedWords == expectedWords)
+    }
+
+    @Test("bounds sparse text cues over a long duration without full-chunk stretching")
+    func boundsSparseTextCuesOverLongDuration() {
+        let rawText = "Sparse words here."
+        let cues = ParakeetTranscriptionEngine.boundedCuesFromUntimedText(rawText, startSec: 0, endSec: 60)
+
+        #expect(cues.count == 1)
+        #expect(cues[0].startSec == 0.0)
+        #expect(cues[0].endSec <= 5.0)
+        #expect(cues[0].endSec - cues[0].startSec <= 5.0)
+        #expect(cues[0].endSec - cues[0].startSec < 60.0)
+        #expect(cues[0].text == rawText)
+    }
+
+    @Test("bounds residual-window untimed cues so the final cue does not exceed 5 seconds")
+    func boundsResidualWindowCues() {
+        let rawText = "Sentence one. Sentence two is longer and reaches near the end. Sentence three."
+        let cues = ParakeetTranscriptionEngine.boundedCuesFromUntimedText(rawText, startSec: 0, endSec: 18)
+
+        #expect(cues.count > 1)
+        #expect(cues.allSatisfy { $0.endSec - $0.startSec <= 5.0 })
+        #expect(cues.allSatisfy { $0.endSec - $0.startSec < 18.0 })
+        #expect(cues.map(\.text).joined(separator: " ") == rawText)
+
+        let allExtractedWords = cues.compactMap(\.words).flatMap { $0 }.map(\.text)
+        let expectedWords = rawText.split(whereSeparator: \.isWhitespace).map(String.init)
+        #expect(allExtractedWords == expectedWords)
+    }
+
+    @Test("fails explicitly when missing token timings have invalid duration")
+    func failsExplicitlyWhenMissingTokenTimingsHaveInvalidDuration() async throws {
+        let fixture = try makeFixtureDirectory()
+        defer { try? FileManager.default.removeItem(at: fixture) }
+        let descriptor = try parakeetDescriptor()
+        let modelURL = try makeModelDirectory(in: fixture, descriptor: descriptor)
+        let source = try makeSourceAudio(in: fixture)
+
+        let session = RecordingSession(
+            result: ASRResult(
+                text: "Text without duration",
+                confidence: 0.9,
+                duration: 0,
+                processingTime: 0.1,
+                tokenTimings: nil
+            )
+        )
+        let engine = ParakeetTranscriptionEngine(
+            model: descriptor,
+            modelFolderURL: modelURL,
+            temporaryDirectory: fixture.appendingPathComponent("temporary", isDirectory: true),
+            sessionLoader: { _ in session }
+        )
+
+        do {
+            _ = try await engine.transcribe(LocalASRRequest(audioFileURL: source))
+            Issue.record("Expected invalid duration to fail")
+        } catch let error as LocalASREngineError {
+            guard case .inferenceFailed(let detail) = error else {
+                Issue.record("Unexpected error: \(error)")
+                return
+            }
+            #expect(detail.contains("valid duration"))
+        }
+    }
+
     @Test("rejects translation requests before loading a model")
     func rejectsTranslation() async throws {
         let fixture = try makeFixtureDirectory()
@@ -280,18 +423,28 @@ struct ParakeetTranscriptionEngineTests {
 }
 
 private actor RecordingSession: ParakeetTranscriptionSession {
-    private let response: String
+    private let result: ASRResult
     private let failure: RecordingSessionError?
     private var languages: [Language?] = []
     private var audioFilesExistedDuringTranscription: [Bool] = []
     private var unloaded = false
 
     init(response: String, failure: RecordingSessionError? = nil) {
-        self.response = response
+        self.result = ASRResult(
+            text: response,
+            confidence: 1,
+            duration: 1,
+            processingTime: 0.1
+        )
         self.failure = failure
     }
 
-    func transcribe(audioFileURL: URL, language: Language?) async throws -> String {
+    init(result: ASRResult, failure: RecordingSessionError? = nil) {
+        self.result = result
+        self.failure = failure
+    }
+
+    func transcribe(audioFileURL: URL, language: Language?) async throws -> ASRResult {
         languages.append(language)
         audioFilesExistedDuringTranscription.append(
             FileManager.default.fileExists(atPath: audioFileURL.path)
@@ -299,7 +452,7 @@ private actor RecordingSession: ParakeetTranscriptionSession {
         if let failure {
             throw failure
         }
-        return response
+        return result
     }
 
     func unload() {

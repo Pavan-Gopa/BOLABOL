@@ -4,7 +4,6 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 import VaniScriptCore
-import WhisperKit
 
 enum RecordingMode: String, CaseIterable, Identifiable {
     case system
@@ -94,6 +93,8 @@ final class WorkflowStore: ObservableObject {
     @Published var exportCompletionState: ExportCompletionState? = nil
     @Published var exportProgress: Double = 0.0
     @Published var exportStage = ""
+    @Published private(set) var isDocumentTranslationActive = false
+    @Published private(set) var documentTranslationProgress: DocumentTranslationCoordinatorProgress?
     @Published var exportClipProgressText = ""
     @Published var exportPhaseTag = ""
     @Published var exportTotalClips: Int = 1
@@ -113,11 +114,12 @@ final class WorkflowStore: ObservableObject {
     private var currentProjectID: String?
     private let clock: () -> Date
     private let buildIdentifier: String
-    private let processingPipeline = NativeProcessingPipeline()
-    private let reviewMLXEngine = MLXTextGenerationEngine()
+    private let processingPipeline: NativeProcessingPipeline
+    private let reviewMLXEngine: any NativeLocalMLXEngine
+    private let documentTranslationMLXEngine = MLXTextGenerationEngine()
     private let reviewCloudEngine = CloudTextTranslationEngine()
-    private let documentMLXEngine = MLXTextGenerationEngine()
-    private let shortsMLXEngine = MLXTextGenerationEngine()
+    private let documentMLXEngine: any NativeLocalMLXEngine
+    private let shortsMLXEngine: any NativeLocalMLXEngine
     private let shortsCloudEngine = CloudTextTranslationEngine()
     private let systemAudioRecorder = SystemAudioRecorder()
     private let microphoneAudioRecorder = MicrophoneAudioRecorder()
@@ -126,10 +128,64 @@ final class WorkflowStore: ObservableObject {
     private let mcpAuditStore = McpAuditStore()
     private let mcpRequestCache = McpRequestCache()
     private let mcpExportStore = McpExportStore()
+    private var documentTranslationTask: Task<Void, Never>?
+    private var documentTranslationCoordinator: DocumentTranslationCoordinator?
     private var visualEditorReturnScreen: UniversalWorkflowScreen = .export
     private var processingActivity: NSObjectProtocol?
     private var processingTask: Task<Void, Never>?
     private var settingsPersistenceTask: Task<Void, Never>?
+    private let settingsPersistence: @Sendable (AppSettings) throws -> Void
+    private var localModelOperationGenerations: [String: Int] = [:]
+    private var localModelScanGeneration = 0
+    private let localModelScanner: @Sendable (Int) async -> [LocalModelScanner.ScannedModel]
+    private let localModelPicker: @MainActor (SharedModelRuntime, String, Bool) -> URL?
+    private let localModelValidator: @Sendable (String, Bool, String) async -> (Bool, String?)
+    private let localModelScanCompletion: @MainActor (Bool) -> Void
+    private let localModelOperationCompletion: @MainActor (String, Bool) -> Void
+
+    private static let defaultLocalModelScanner: @Sendable (Int) async -> [LocalModelScanner.ScannedModel] = { _ in
+        LocalModelScanner.scanForLocalModels()
+    }
+    private static let defaultLocalModelPicker: @MainActor (SharedModelRuntime, String, Bool) -> URL? = {
+        runtime, message, canCreateDirectories in
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = true
+        panel.canCreateDirectories = canCreateDirectories
+        panel.directoryURL = try? LocalModelPickerDefaults.directory(for: runtime)
+        panel.message = message
+        guard panel.runModal() == .OK else { return nil }
+        return panel.url
+    }
+    private static let defaultLocalModelValidator: @Sendable (String, Bool, String) async -> (Bool, String?) = {
+        modelID, isTranslation, path in
+        if isTranslation {
+            guard LocalModelVerification.verifyTranslationModelPath(path, modelID: modelID) else {
+                return (false, nil)
+            }
+            return (true, path)
+        }
+
+        guard let descriptor = NativeModelCatalog.descriptor(for: modelID),
+              NativeModelCatalog.isModelPresent(
+                descriptor,
+                at: URL(fileURLWithPath: path, isDirectory: true)
+              )
+        else {
+            return (false, nil)
+        }
+
+        let storedPath = descriptor.backend == .whisperKitCoreML
+            ? (LocalModelVerification.canonicalWhisperKitModelPath(path) ?? path)
+            : path
+        return (true, storedPath)
+    }
+
+    private static let noModelScanCompletion: @MainActor (Bool) -> Void = { _ in }
+    private static let noModelOperationCompletion: @MainActor (String, Bool) -> Void = { _, _ in }
+
+    private var providerSelectionGeneration = 0
     private var localModelReconciliationGeneration = 0
     @Published private(set) var isProcessingSegment = false
     private var audioPlayer: AVPlayer?
@@ -142,18 +198,40 @@ final class WorkflowStore: ObservableObject {
     init(
         settings: AppSettings? = nil,
         projects: [ProjectRecord]? = nil,
+        settingsPersistence: @escaping @Sendable (AppSettings) throws -> Void = {
+            try SettingsDiskStore.save($0)
+        },
         clock: @escaping () -> Date = Date.init,
-        buildIdentifier: String = AppBuildIdentity.current
+        buildIdentifier: String = AppBuildIdentity.current,
+        localModelScanner: @escaping @Sendable (Int) async -> [LocalModelScanner.ScannedModel] = WorkflowStore.defaultLocalModelScanner,
+        localModelPicker: @escaping @MainActor (SharedModelRuntime, String, Bool) -> URL? = WorkflowStore.defaultLocalModelPicker,
+        localModelValidator: @escaping @Sendable (String, Bool, String) async -> (Bool, String?) = WorkflowStore.defaultLocalModelValidator,
+        localModelScanCompletion: @escaping @MainActor (Bool) -> Void = WorkflowStore.noModelScanCompletion,
+        localModelOperationCompletion: @escaping @MainActor (String, Bool) -> Void = WorkflowStore.noModelOperationCompletion,
+        startInitialModelScan: Bool = true,
+        processingPipeline: NativeProcessingPipeline = NativeProcessingPipeline(),
+        reviewMLXEngine: any NativeLocalMLXEngine = MLXTextGenerationEngine(),
+        documentMLXEngine: any NativeLocalMLXEngine = MLXTextGenerationEngine(),
+        shortsMLXEngine: any NativeLocalMLXEngine = MLXTextGenerationEngine()
     ) {
         var loadedSettings = settings ?? SettingsDiskStore.load()
         loadedSettings.adaptGlossaryToTargetLanguage(targetLang: loadedSettings.defaultTargetLang)
-        loadedSettings.synchronizeLocalModelsWithDisk()
         loadedSettings.normalizeMcpSettings()
         self.workflow = .initial(settings: loadedSettings)
         self.projects = ProjectArchive.sortedRecent(projects ?? ProjectDiskStore.load())
+        self.settingsPersistence = settingsPersistence
         self.clock = clock
         self.buildIdentifier = buildIdentifier
+        self.processingPipeline = processingPipeline
+        self.reviewMLXEngine = reviewMLXEngine
+        self.documentMLXEngine = documentMLXEngine
+        self.shortsMLXEngine = shortsMLXEngine
         self.archiveTargetLanguage = loadedSettings.defaultTargetLang
+        self.localModelScanner = localModelScanner
+        self.localModelPicker = localModelPicker
+        self.localModelValidator = localModelValidator
+        self.localModelScanCompletion = localModelScanCompletion
+        self.localModelOperationCompletion = localModelOperationCompletion
 
         // Initialize tour language based on system preferred locale
         if let preferred = Locale.preferredLanguages.first, preferred.lowercased().hasPrefix("ru") {
@@ -162,8 +240,10 @@ final class WorkflowStore: ObservableObject {
             self.tourLanguage = "en"
         }
 
-        Task { @MainActor [weak self] in
-            self?.scanForLocalModels(presentResult: false)
+        if startInitialModelScan {
+            Task { @MainActor [weak self] in
+                self?.scanForLocalModels(presentResult: false)
+            }
         }
     }
 
@@ -215,7 +295,7 @@ final class WorkflowStore: ObservableObject {
         guard OnboardingCompletionPolicy.needsOnboarding(settings: workflow.settings, currentBuildID: buildIdentifier) else { return }
         OnboardingCompletionPolicy.markCompleted(settings: &workflow.settings, currentBuildID: buildIdentifier)
         do {
-            try SettingsDiskStore.save(workflow.settings)
+            try settingsPersistence(workflow.settings)
         } catch {
             statusMessage = "Settings save failed: \(error.localizedDescription)"
         }
@@ -243,6 +323,24 @@ final class WorkflowStore: ObservableObject {
         session?.chunks.filter(\.approved).count ?? 0
     }
 
+    var documentAutoApprovedCount: Int {
+        guard session?.sourceKind == .document else { return 0 }
+        return session?.chunks.filter { $0.reviewDisposition == .autoApproved }.count ?? 0
+    }
+
+    var documentNeedsReviewCount: Int {
+        guard session?.sourceKind == .document else { return 0 }
+        return session?.chunks.filter {
+            $0.reviewDisposition == .needsReview
+                || ($0.status == .done && $0.reviewDisposition == .pending)
+        }.count ?? 0
+    }
+
+    var documentFailedCount: Int {
+        guard session?.sourceKind == .document else { return 0 }
+        return session?.chunks.filter { $0.reviewDisposition == .failed }.count ?? 0
+    }
+
     var projectSummaries: [ProjectSummary] {
         ProjectArchive.sortedRecent(projects).map(\.summary)
     }
@@ -253,6 +351,22 @@ final class WorkflowStore: ObservableObject {
 
     var settings: AppSettings {
         workflow.settings
+    }
+    private func releaseASRBeforeLocalMLX() async {
+        await processingPipeline.releaseASRBeforeLocalMLX()
+    }
+
+    private func invalidateASRBinding() {
+        Task { [processingPipeline] in
+            await processingPipeline.invalidateASRBinding()
+        }
+    }
+
+    /// The provider used by the active processing session, or the workflow
+    /// selection before a session exists. Models and processing must agree on
+    /// this value rather than reading settings in isolation.
+    var effectiveTranscriptionProvider: String {
+        session?.transcriptionProvider ?? workflow.transcriptionProvider
     }
 
     func configureMcpServer() {
@@ -269,9 +383,10 @@ final class WorkflowStore: ObservableObject {
     }
 
     var supportedTranslationLanguages: [String] {
-        ["Russian", "Czech", "French", "German", "Polish", "English", "Hindi", "Spanish", "Swedish", "Italian", "Portuguese", "Dutch"]
+        NativeLanguagePolicy.targetLanguageOptions
+            .filter { $0.code != NativeLanguagePolicy.keepOriginalCode }
+            .map(\.displayName)
     }
-
     var archivedTranslationLanguages: [String] {
         session?.availableTranslationLanguages ?? []
     }
@@ -282,7 +397,9 @@ final class WorkflowStore: ObservableObject {
 
     var currentTranslationText: String {
         guard let session, let chunk = currentChunk else { return "" }
-        let text = chunk.translationText(for: session.selectedTranslationLanguage) ?? chunk.translated
+        let text = session.sourceKind == .document
+            ? (session.documentTranslationText(for: chunk) ?? chunk.translated)
+            : (chunk.translationText(for: session.selectedTranslationLanguage) ?? chunk.translated)
         return TranslationArchive.isUsableTranslationText(text) ? text : ""
     }
 
@@ -385,22 +502,76 @@ final class WorkflowStore: ObservableObject {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.allowedContentTypes = [.audio, .movie, .mpeg4Movie, .quickTimeMovie]
-        panel.message = "Choose audio or video for VaniScript"
+        panel.allowedContentTypes = SourceClassifier.allowedContentTypes
+        panel.message = "Choose audio, video, or a document for VaniScript"
 
         guard panel.runModal() == .OK, let url = panel.url else {
             AppLogger.shared.info("User cancelled source file selection.", settings: workflow.settings)
             return
         }
+        handleSelectedSource(url)
+    }
+
+    @discardableResult
+    func handleDroppedSources(_ urls: [URL]) -> Bool {
+        guard let url = urls.first else { return false }
+        handleSelectedSource(url)
+        return true
+    }
+
+    private func handleSelectedSource(_ url: URL) {
+        guard url.isFileURL else {
+            statusMessage = "Only local files can be imported."
+            return
+        }
+        let sourceKind: WorkflowSourceKind
+        do {
+            sourceKind = try SourceClassifier.classification(for: url)
+        } catch {
+            statusMessage = error.localizedDescription
+            return
+        }
 
         AppLogger.shared.info("User selected source file: \(url.path)", settings: workflow.settings)
-        statusMessage = "Reading media metadata..."
-        Task {
-            let duration = await MediaDurationReader.durationSeconds(for: url)
-            let sourceInfo = await SourceMediaInspector.inspect(fileURL: url, durationSec: duration)
-            AppLogger.shared.info("Media duration resolved: \(duration) seconds.", settings: self.workflow.settings)
-            await MainActor.run {
-                selectSource(url: url, duration: duration, sourceMediaInfo: sourceInfo)
+        let securityScopeStarted = url.startAccessingSecurityScopedResource()
+        switch sourceKind {
+        case .media:
+            statusMessage = "Reading media metadata..."
+            Task {
+                defer {
+                    if securityScopeStarted {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
+                let duration = await MediaDurationReader.durationSeconds(for: url)
+                let sourceInfo = await SourceMediaInspector.inspect(fileURL: url, durationSec: duration)
+                AppLogger.shared.info("Media duration resolved: \(duration) seconds.", settings: self.workflow.settings)
+                await MainActor.run {
+                    self.selectSource(url: url, duration: duration, sourceMediaInfo: sourceInfo)
+                }
+            }
+        case .document:
+            statusMessage = "Importing document..."
+            let importTask = Task.detached(priority: .userInitiated) {
+                try DocumentImportService.importDocument(from: url)
+            }
+            Task { [weak self] in
+                defer {
+                    if securityScopeStarted {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
+                do {
+                    let result = try await importTask.value
+                    guard let self else { return }
+                    self.workflow.selectDocument(
+                        path: result.importedFileURL.path(percentEncoded: false),
+                        documentState: result.documentState
+                    )
+                    self.statusMessage = "Document loaded: \(result.originalFileName)"
+                } catch {
+                    self?.statusMessage = "Document import failed: \(error.localizedDescription)"
+                }
             }
         }
     }
@@ -726,8 +897,151 @@ final class WorkflowStore: ObservableObject {
         workflow.startSession()
         createProjectIfNeeded()
         saveCurrentProject()
+
+        guard workflow.sourceKind == .media else {
+            guard let approvalMode = workflow.session?.approvalMode else {
+                statusMessage = "Document plan ready."
+                return
+            }
+            startDocumentTranslation(intent: approvalMode == .automatic ? .automaticBatch : .manualCurrent)
+            return
+        }
+
         statusMessage = "Native segment processing started."
         processCurrentChunkIfNeeded()
+    }
+
+    func retranslateCurrentDocumentChunk() {
+        guard workflow.sourceKind == .document else { return }
+        startDocumentTranslation(intent: .targetedCurrent)
+    }
+
+    func pauseDocumentTranslation() {
+        guard isDocumentTranslationActive else { return }
+        Task { [weak self] in
+            guard let self, let coordinator = self.documentTranslationCoordinator else { return }
+            await coordinator.pause()
+        }
+        statusMessage = "Document translation paused."
+    }
+
+    func resumeDocumentTranslation() {
+        guard isDocumentTranslationActive else { return }
+        Task { [weak self] in
+            guard let self, let coordinator = self.documentTranslationCoordinator else { return }
+            await coordinator.resume()
+        }
+        statusMessage = "Document translation resumed."
+    }
+
+    func cancelDocumentTranslation() {
+        guard isDocumentTranslationActive else { return }
+        documentTranslationTask?.cancel()
+        Task { [weak self] in
+            guard let self, let coordinator = self.documentTranslationCoordinator else { return }
+            await coordinator.cancel()
+        }
+        statusMessage = "Cancelling document translation…"
+    }
+
+    private func startDocumentTranslation(intent: DocumentTranslationExecutionIntent) {
+        guard !isDocumentTranslationActive,
+              let activeSession = workflow.session,
+              activeSession.sourceKind == .document
+        else { return }
+        let providerID = activeSession.translationProvider
+        let engine: DocumentTranslationEngine
+        do {
+            engine = try DocumentTranslationEngine.live(
+                settings: workflow.settings,
+                providerID: providerID,
+                cloudEngine: reviewCloudEngine,
+                localEngine: documentTranslationMLXEngine
+            )
+        } catch {
+            statusMessage = "Document translation unavailable: \(error.localizedDescription)"
+            workflow.openReview()
+            return
+        }
+
+        isDocumentTranslationActive = true
+        workflow.screen = .processing
+        workflow.processingProgress = 0
+        workflow.processingMessage = intent == .targetedCurrent
+            ? "Retranslating current document chunk…"
+            : "Preparing document translation…"
+        documentTranslationProgress = nil
+
+        let coordinator = DocumentTranslationCoordinator(
+            session: activeSession,
+            engine: engine,
+            save: { [weak self] updated in
+                guard let self else { return }
+                await MainActor.run {
+                    guard self.currentProjectID != nil else { return }
+                    self.workflow.session = updated
+                    self.saveCurrentProject()
+                }
+            },
+            progress: { [weak self] progress in
+                guard let self else { return }
+                await MainActor.run {
+                    self.documentTranslationProgress = progress
+                    self.workflow.processingProgress = progress.fraction
+                    self.workflow.processingMessage = progress.message
+                }
+            }
+        )
+        documentTranslationCoordinator = coordinator
+        documentTranslationTask = Task { [weak self] in
+            do {
+                let result = try await coordinator.run(
+                    intent: intent,
+                    currentIndex: activeSession.currentChunkIndex
+                )
+                await MainActor.run {
+                    guard let self else { return }
+                    self.workflow.session = result.session
+                    self.workflow.screen = .review
+                    self.isDocumentTranslationActive = false
+                    self.documentTranslationTask = nil
+                    self.documentTranslationCoordinator = nil
+                    self.workflow.processingProgress = 1
+                    let message = result.message.isEmpty
+                        ? (result.outcome == .success
+                            ? "Document translation ready for Review."
+                            : "Document translation did not complete.")
+                        : result.message
+                    self.workflow.processingMessage = message
+                    if result.outcome != .success {
+                        self.statusMessage = message
+                    }
+                    self.saveCurrentProject()
+                }
+            } catch is CancellationError {
+                await MainActor.run {
+                    guard let self else { return }
+                    self.isDocumentTranslationActive = false
+                    self.documentTranslationTask = nil
+                    self.documentTranslationCoordinator = nil
+                    self.workflow.screen = .review
+                    self.workflow.processingMessage = "Document translation cancelled."
+                    self.statusMessage = "Document translation cancelled."
+                }
+            } catch {
+                await MainActor.run {
+                    guard let self else { return }
+                    self.isDocumentTranslationActive = false
+                    self.documentTranslationTask = nil
+                    self.documentTranslationCoordinator = nil
+                    self.workflow.screen = .review
+                    let message = error.localizedDescription
+                    self.workflow.processingMessage = message
+                    self.statusMessage = message
+                    self.saveCurrentProject()
+                }
+            }
+        }
     }
 
     func openExport() {
@@ -788,15 +1102,29 @@ final class WorkflowStore: ObservableObject {
         )
     }
 
+    func setSourceLanguage(_ sourceLang: String) {
+        guard sourceLang != NativeLanguagePolicy.chooseSourceCode else { return }
+        let storedLanguage = NativeLanguagePolicy.storageValue(for: sourceLang)
+        workflow.sourceLang = storedLanguage
+        updateSettings { settings in
+            settings.defaultSourceLang = storedLanguage
+        }
+        if var session = workflow.session {
+            session.sourceLang = storedLanguage
+            workflow.session = session
+            saveCurrentProject()
+        }
+    }
+
     func setTargetLanguage(_ targetLang: String) {
-        workflow.updateTargetLanguage(targetLang)
-        if TranslationArchive.isRealLanguage(targetLang) {
-            archiveTargetLanguage = targetLang
+        let storedLanguage = NativeLanguagePolicy.storageValue(for: targetLang)
+        workflow.updateTargetLanguage(storedLanguage)
+        if TranslationArchive.isRealLanguage(storedLanguage) {
+            archiveTargetLanguage = storedLanguage
         }
         updateSettings { settings in
-            settings.adaptGlossaryToTargetLanguage(targetLang: targetLang)
+            settings.adaptGlossaryToTargetLanguage(targetLang: storedLanguage)
         }
-        refreshProviderSelections()
     }
 
     func newSession() {
@@ -815,7 +1143,9 @@ final class WorkflowStore: ObservableObject {
         session.currentChunkIndex = next
         synchronizedReviewCueID = nil
         workflow.session = session
-        processCurrentChunkIfNeeded()
+        if session.sourceKind == .media {
+            processCurrentChunkIfNeeded()
+        }
     }
 
     func selectChunkIndex(_ index: Int) {
@@ -825,11 +1155,17 @@ final class WorkflowStore: ObservableObject {
         session.currentChunkIndex = index
         synchronizedReviewCueID = nil
         workflow.session = session
-        processCurrentChunkIfNeeded()
+        if session.sourceKind == .media {
+            processCurrentChunkIfNeeded()
+        }
     }
 
     func approveAndAdvance() {
         guard var session = workflow.session else { return }
+        if session.sourceKind == .document {
+            approveAndAdvanceDocument()
+            return
+        }
         guard session.chunks.indices.contains(session.currentChunkIndex) else { return }
         stopPlayback()
         session.chunks[session.currentChunkIndex].approved = true
@@ -848,6 +1184,102 @@ final class WorkflowStore: ObservableObject {
             workflow.openExport()
             saveCurrentProject()
         }
+    }
+
+    private func isDocumentChunkSourceEmpty(_ session: SessionState, chunkIndex: Int) -> Bool {
+        guard session.chunks.indices.contains(chunkIndex) else { return true }
+        let chunk = session.chunks[chunkIndex]
+        let blockTexts: [String]
+        if let documentState = session.documentState {
+            let plan: DocumentChunkPlan?
+            if case let .document(range) = chunk.sourceAnchor {
+                plan = documentState.chunks.first {
+                    $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID
+                }
+            } else {
+                plan = documentState.chunks.indices.contains(chunkIndex) ? documentState.chunks[chunkIndex] : nil
+            }
+            if let plan {
+                let blockMap = Dictionary(uniqueKeysWithValues: documentState.blocks.map { ($0.id, $0) })
+                blockTexts = plan.blockIDs.compactMap { blockMap[$0]?.spans.map(\.text).joined() }
+            } else {
+                blockTexts = []
+            }
+        } else {
+            blockTexts = []
+        }
+        return DocumentApprovalAdvancePolicy.isSourceEmptyChunk(
+            original: chunk.original,
+            blockTexts: blockTexts
+        )
+    }
+
+    private func approveAndAdvanceDocument() {
+        guard !isDocumentTranslationActive, var session = workflow.session,
+              session.chunks.indices.contains(session.currentChunkIndex)
+        else { return }
+        let currentIndex = session.currentChunkIndex
+        let currentChunk = session.chunks[currentIndex]
+
+        let isSourceEmpty = isDocumentChunkSourceEmpty(session, chunkIndex: currentIndex)
+
+        if !isSourceEmpty {
+            guard TranslationArchive.isUsableTranslationText(
+                session.documentTranslationText(for: currentChunk) ?? currentChunk.translated
+            ) else {
+                statusMessage = "Translate the current document chunk before approving it."
+                return
+            }
+        }
+
+        session.chunks[currentIndex].approved = true
+        session.chunks[currentIndex].reviewDisposition = .manuallyApproved
+        session.chunks[currentIndex].status = .done
+        markDocumentBlocksApproved(&session, chunkIndex: currentIndex)
+
+        if currentIndex < session.chunks.count - 1 {
+            let nextIndex = currentIndex + 1
+            session.currentChunkIndex = nextIndex
+            synchronizedReviewCueID = nil
+            workflow.session = session
+            workflow.screen = .review
+            saveCurrentProject()
+            let nextIsSourceEmpty = isDocumentChunkSourceEmpty(session, chunkIndex: nextIndex)
+            let nextText = session.documentTranslationText(for: session.chunks[nextIndex]) ?? session.chunks[nextIndex].translated
+            if !nextIsSourceEmpty && DocumentApprovalAdvancePolicy.shouldTranslateNext(
+                approvalMode: session.approvalMode,
+                hasNextChunk: true,
+                nextTranslationIsUsable: TranslationArchive.isUsableTranslationText(nextText)
+            ) {
+                startDocumentTranslation(intent: .manualCurrent)
+            }
+        } else {
+            workflow.session = session
+            workflow.openExport()
+            saveCurrentProject()
+        }
+    }
+
+    private func markDocumentBlocksApproved(_ session: inout SessionState, chunkIndex: Int) {
+        guard var documentState = session.documentState,
+              session.chunks.indices.contains(chunkIndex)
+        else { return }
+        let plan: DocumentChunkPlan?
+        if case let .document(range) = session.chunks[chunkIndex].sourceAnchor {
+            plan = documentState.chunks.first {
+                $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID
+            }
+        } else {
+            plan = documentState.chunks.indices.contains(chunkIndex) ? documentState.chunks[chunkIndex] : nil
+        }
+        guard let plan else { return }
+        let language = TranslationArchive.languageKey(session.targetLang)
+        var translations = documentState.translationsByLanguage[language] ?? [:]
+        for blockID in plan.blockIDs where translations[blockID] != nil {
+            translations[blockID]?.reviewDisposition = .manuallyApproved
+        }
+        documentState.translationsByLanguage[language] = translations
+        session.documentState = documentState
     }
 
     func updateCurrentOriginal(_ text: String) {
@@ -1247,6 +1679,7 @@ final class WorkflowStore: ObservableObject {
                     // A2: record cloud translation usage (best-effort, never fails op).
                     await recordCloudTranslationUsage(from: reviewCloudEngine, provider: cloudProvider)
                 } else if let model = activeTranslationModel(for: session) {
+                    await releaseASRBeforeLocalMLX()
                     translated = try await reviewMLXEngine.translate(
                         text: sourceCue.text,
                         targetLang: targetLanguage,
@@ -1289,6 +1722,7 @@ final class WorkflowStore: ObservableObject {
         statusMessage = "Polishing selected translation..."
         Task {
             do {
+                await releaseASRBeforeLocalMLX()
                 let polished = try await reviewMLXEngine.polish(
                     text: selected,
                     targetLang: targetLanguage,
@@ -1334,6 +1768,7 @@ final class WorkflowStore: ObservableObject {
         statusMessage = "Polishing translation with MLX..."
         Task {
             do {
+                await releaseASRBeforeLocalMLX()
                 let polished = try await reviewMLXEngine.polish(
                     text: textToPolish,
                     targetLang: language,
@@ -1387,6 +1822,9 @@ final class WorkflowStore: ObservableObject {
         saveCurrentProject()
 
         Task {
+            if model != nil {
+                await releaseASRBeforeLocalMLX()
+            }
             var updated = session
             do {
                 for index in updated.chunks.indices {
@@ -1503,6 +1941,9 @@ final class WorkflowStore: ObservableObject {
         archiveTargetLanguage = targetLanguage
 
         Task {
+            if model != nil {
+                await releaseASRBeforeLocalMLX()
+            }
             var updated = session
             do {
                 let sourceCues = updated.chunks[index].originalCues ?? []
@@ -1631,6 +2072,7 @@ final class WorkflowStore: ObservableObject {
         statusMessage = "Adding \(targetLanguage) Shorts/Reels translation..."
 
         Task {
+            await releaseASRBeforeLocalMLX()
             var updated = session
             do {
                 for index in plans.indices {
@@ -1686,9 +2128,9 @@ final class WorkflowStore: ObservableObject {
         statusMessage = "Formatting \(format.rawValue) export with MLX..."
         Task {
             do {
-                let formatted = try await documentMLXEngine.formatDocument(
+                let formatted = try await formatDocumentWithLocalMLX(
                     format: format,
-                    targetLang: exportTargetLanguage(side: side, session: session),
+                    targetLanguage: exportTargetLanguage(side: side, session: session),
                     text: baseContent,
                     model: model
                 )
@@ -1705,6 +2147,80 @@ final class WorkflowStore: ObservableObject {
                 }
             }
         }
+    }
+
+    func exportDocument(format: DocumentOutputFormat) {
+        guard let session = workflow.session, session.sourceKind == .document else { return }
+        guard let documentState = session.documentState else {
+            statusMessage = "No document state available for export."
+            return
+        }
+
+        let language = session.selectedTranslationLanguage ?? session.targetLang
+        let text = DocumentTranslationExportBuilder.translatedDocumentText(
+            documentState: documentState,
+            language: language
+        )
+
+        guard TranslationArchive.isUsableTranslationText(text) else {
+            statusMessage = "Translate the document before exporting it."
+            return
+        }
+
+        let baseName = URL(fileURLWithPath: session.sourceFileName).deletingPathExtension().lastPathComponent
+        let safeBase = baseName.isEmpty ? "Translated_Document" : baseName
+        let ext = format.rawValue.lowercased()
+        let langKey = TranslationArchive.languageKey(language)
+        let defaultFileName = "\(safeBase)_\(langKey).\(ext)"
+
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = defaultFileName
+        panel.canCreateDirectories = true
+
+        guard panel.runModal() == .OK, let destinationURL = panel.url else {
+            statusMessage = "Export cancelled."
+            return
+        }
+
+        do {
+            switch format {
+            case .txt:
+                try DocumentExportWriters.writeTXT(text: text, to: destinationURL)
+            case .pdf:
+                try DocumentExportWriters.writePDF(text: text, to: destinationURL)
+            case .docx:
+                let sourcePath = session.sourceFile ?? session.chunks.first?.filePath ?? workflow.sourceFile
+                guard !sourcePath.isEmpty, FileManager.default.fileExists(atPath: sourcePath) else {
+                    statusMessage = "Original source DOCX file could not be found for export."
+                    return
+                }
+                try DocumentExportWriters.writeDOCX(
+                    sourceDocxURL: URL(fileURLWithPath: sourcePath),
+                    documentState: documentState,
+                    language: language,
+                    to: destinationURL
+                )
+            case .markdown:
+                try DocumentExportWriters.writeTXT(text: text, to: destinationURL)
+            }
+            statusMessage = "Export saved: \(destinationURL.lastPathComponent)"
+        } catch {
+            statusMessage = "Export failed: \(error.localizedDescription)"
+        }
+    }
+    func formatDocumentWithLocalMLX(
+        format: OutputFormat,
+        targetLanguage: String,
+        text: String,
+        model: ActiveMLXModel
+    ) async throws -> String {
+        await releaseASRBeforeLocalMLX()
+        return try await documentMLXEngine.formatDocument(
+            format: format,
+            targetLang: targetLanguage,
+            text: text,
+            model: model
+        )
     }
 
     @discardableResult
@@ -2012,6 +2528,7 @@ final class WorkflowStore: ObservableObject {
                     // A2: record cloud Shorts-planning usage (best-effort).
                     await recordCloudTranslationUsage(from: shortsCloudEngine, provider: provider)
                 case let .mlx(model):
+                    await releaseASRBeforeLocalMLX()
                     plans = try await shortsMLXEngine.planShorts(
                         transcript: transcript,
                         count: count,
@@ -2431,33 +2948,38 @@ final class WorkflowStore: ObservableObject {
 
     func openProject(id: String, chunkIndex: Int? = nil, openExport: Bool = false) {
         if id == currentProjectID, let chunkIndex, var session = workflow.session {
+            let previousTranscriptionProvider = workflow.transcriptionProvider
             let maxIndex = max(0, session.chunks.count - 1)
             let newIndex = min(max(0, chunkIndex), maxIndex)
             stopPlayback()
             session.currentChunkIndex = newIndex
             synchronizedReviewCueID = nil
             workflow.session = session
+            let selectedProviderApplied = workflow.applySelectedTranscriptionProviderIfAvailable()
+            if workflow.transcriptionProvider != previousTranscriptionProvider {
+                invalidateASRBinding()
+            }
+            if selectedProviderApplied {
+                saveCurrentProject()
+            }
             if openExport {
                 workflow.screen = .export
             } else {
                 workflow.screen = .review
             }
             dismissProjectSidebar()
-            if !openExport {
+            if !openExport, session.sourceKind == .media {
                 processCurrentChunkIfNeeded()
             }
             return
         }
 
         guard let record = projects.first(where: { $0.id == id }) else { return }
+        let previousTranscriptionProvider = workflow.transcriptionProvider
         AppLogger.shared.info("Opening project: \(record.session.sourceFileName) (ID: \(id))", settings: workflow.settings)
         visualEditorDraft = nil
         var openedSession = record.session
         openedSession.normalizeTranslationArchive()
-        if let index = projects.firstIndex(where: { $0.id == record.id }) {
-            projects[index].session = openedSession
-            persistProjects()
-        }
         if let chunkIndex {
             let maxIndex = max(0, openedSession.chunks.count - 1)
             openedSession.currentChunkIndex = min(max(0, chunkIndex), maxIndex)
@@ -2477,16 +2999,29 @@ final class WorkflowStore: ObservableObject {
         workflow.sourceLang = openedSession.sourceLang
         workflow.targetLang = openedSession.targetLang
         workflow.transcriptionProvider = openedSession.transcriptionProvider
+        let selectedProviderApplied = workflow.applySelectedTranscriptionProviderIfAvailable()
+        if workflow.transcriptionProvider != previousTranscriptionProvider {
+            invalidateASRBinding()
+        }
         workflow.translationProvider = openedSession.translationProvider
+        workflow.sourceKind = openedSession.sourceKind
+        workflow.documentState = openedSession.documentState
+        workflow.documentApprovalMode = openedSession.approvalMode
         workflow.outputFormats = openedSession.outputFormats
         archiveTargetLanguage = openedSession.selectedTranslationLanguage ?? workflow.settings.defaultTargetLang
         updateSettings { settings in
             settings.adaptGlossaryToTargetLanguage(targetLang: openedSession.targetLang)
         }
+        if selectedProviderApplied {
+            saveCurrentProject()
+        } else if let index = projects.firstIndex(where: { $0.id == record.id }) {
+            projects[index].session = workflow.session ?? openedSession
+            persistProjects()
+        }
         statusMessage = "Project opened: \(openedSession.sourceFileName)"
         // Glossary application removed from navigation path to optimize performance
         dismissProjectSidebar()
-        if !openExport {
+        if !openExport, openedSession.sourceKind == .media {
             processCurrentChunkIfNeeded()
         }
     }
@@ -2703,11 +3238,17 @@ final class WorkflowStore: ObservableObject {
         }
     }
 
-    func updateSettings(_ mutate: (inout AppSettings) -> Void) {
+    func updateSettings(
+        _ mutate: (inout AppSettings) -> Void,
+        scheduleModelReconciliation: Bool = true
+    ) {
         let previousSettings = workflow.settings
         mutate(&workflow.settings)
-        workflow.settings.synchronizeLocalModelsWithDisk()
         workflow.settings.normalizeMcpSettings()
+
+        let localModelMapsChanged = workflow.settings.localAsrModels != previousSettings.localAsrModels
+            || workflow.settings.localTranslationModels != previousSettings.localTranslationModels
+        let localASRModelsChanged = workflow.settings.localAsrModels != previousSettings.localAsrModels
         let transcriptionProviderChanged = workflow.settings.transcriptionProvider != previousSettings.transcriptionProvider
         let translationProviderChanged = workflow.settings.translationProvider != previousSettings.translationProvider
         let mcpSettingsChanged = workflow.settings.mcpServerEnabled != previousSettings.mcpServerEnabled
@@ -2717,13 +3258,28 @@ final class WorkflowStore: ObservableObject {
             || workflow.settings.mcpAllowNetworkTools != previousSettings.mcpAllowNetworkTools
             || workflow.settings.mcpAllowDestructiveTools != previousSettings.mcpAllowDestructiveTools
             || workflow.settings.mcpAccessToken != previousSettings.mcpAccessToken
-        workflow.synchronizeProviderSelections(
+
+        if transcriptionProviderChanged || localASRModelsChanged {
+            invalidateASRBinding()
+        }
+
+        // Keep the in-memory selection responsive without asking the provider
+        // registry to hash model packages on MainActor. The detached pass
+        // reconciles only available selections and preserves unavailable
+        // archived routes so readiness can report an honest failure.
+        if transcriptionProviderChanged {
+            workflow.transcriptionProvider = workflow.settings.transcriptionProvider
+        }
+        if translationProviderChanged {
+            workflow.translationProvider = workflow.settings.translationProvider
+        }
+
+        persistSettings()
+        refreshProviderSelections(
             previousSettings: previousSettings,
             forceTranscriptionProvider: transcriptionProviderChanged,
             forceTranslationProvider: translationProviderChanged
         )
-        persistSettings()
-        refreshProviderSelections()
         if mcpSettingsChanged {
             configureMcpServer()
         }
@@ -2733,6 +3289,9 @@ final class WorkflowStore: ObservableObject {
                 forceTranslationProvider: translationProviderChanged
             )
             saveCurrentProject()
+        }
+        if scheduleModelReconciliation, localModelMapsChanged {
+            reconcileLocalModelStates()
         }
     }
 
@@ -2773,6 +3332,7 @@ final class WorkflowStore: ObservableObject {
                 else {
                     return
                 }
+                let localASRModelsChanged = synchronizedSettings.localAsrModels != currentSettings.localAsrModels
 
                 // Merge only the maps that were scanned. A full settings snapshot
                 // could roll back a download or an unrelated user edit completed
@@ -2782,56 +3342,133 @@ final class WorkflowStore: ObservableObject {
                 if self.workflow.settings.translationProvider == currentSettings.translationProvider {
                     self.workflow.settings.translationProvider = synchronizedSettings.translationProvider
                 }
+                if localASRModelsChanged {
+                    self.invalidateASRBinding()
+                }
                 self.persistSettings()
                 self.refreshProviderSelections()
             }
         }
     }
 
+    private func beginLocalModelOperation(id: String) -> Int {
+        let next = (localModelOperationGenerations[id] ?? 0) &+ 1
+        localModelOperationGenerations[id] = next
+        return next
+    }
+
     func locateLocalASRModel(id: String) {
         guard let descriptor = NativeModelCatalog.descriptor(for: id) else { return }
-        locateLocalModel(runtime: descriptor.storageRuntime) { path in
-            let url = URL(fileURLWithPath: path, isDirectory: true)
-            guard NativeModelCatalog.isModelPresent(descriptor, at: url) else {
-                updateSettings { settings in
-                    guard var model = settings.localAsrModels[id] else { return }
-                    model.status = .failed
-                    model.error = "Selected folder is incomplete or failed integrity validation."
-                    model.path = path
-                    model.progress = nil
-                    model.progressLabel = "Validation failed"
-                    settings.localAsrModels[id] = model
-                }
-                return
-            }
-            let storedPath = descriptor.backend == .whisperKitCoreML
-                ? (LocalModelVerification.canonicalWhisperKitModelPath(path) ?? path)
-                : path
-            updateSettings { settings in
+        locateLocalModel(runtime: descriptor.storageRuntime) { [weak self] path in
+            guard let self else { return }
+            let operation = self.beginLocalModelOperation(id: id)
+
+            // Return from the panel with an explicit in-flight state. The
+            // selected path remains unverified and is never treated as owned.
+            self.updateSettings({ settings in
                 guard var model = settings.localAsrModels[id] else { return }
-                model.status = .downloaded
-                model.path = storedPath
-                model.progress = 1
+                model.status = .downloading
+                model.path = path
+                model.progress = 0
+                model.progressLabel = "Validating selected model..."
                 model.error = nil
                 settings.localAsrModels[id] = model
+            }, scheduleModelReconciliation: false)
+
+            Task.detached(priority: .utility) {
+                let url = URL(fileURLWithPath: path, isDirectory: true)
+                let isPresent = NativeModelCatalog.isModelPresent(descriptor, at: url)
+                let storedPath: String? = isPresent
+                    ? (descriptor.backend == .whisperKitCoreML
+                        ? (LocalModelVerification.canonicalWhisperKitModelPath(path) ?? path)
+                        : path)
+                    : nil
+
+                await MainActor.run { [weak self] in
+                    guard let self,
+                          self.localModelOperationGenerations[id] == operation,
+                          let current = self.workflow.settings.localAsrModels[id],
+                          current.status == .downloading,
+                          current.path == path
+                    else {
+                        return
+                    }
+
+                    self.updateSettings({ settings in
+                        guard var model = settings.localAsrModels[id] else { return }
+                        if let storedPath {
+                            model.status = .downloaded
+                            model.path = storedPath
+                            model.progress = 1
+                            model.progressLabel = "Located"
+                            model.error = nil
+                        } else {
+                            model.status = .failed
+                            model.path = path
+                            model.progress = nil
+                            model.progressLabel = "Validation failed"
+                            model.error = "Selected folder is incomplete or failed integrity validation."
+                        }
+                        settings.localAsrModels[id] = model
+                    }, scheduleModelReconciliation: false)
+                }
             }
         }
     }
 
     func locateLocalTranslationModel(id: String) {
-        locateLocalModel(runtime: .mlx) { path in
-            updateSettings { settings in
+        locateLocalModel(runtime: .mlx) { [weak self] path in
+            guard let self else { return }
+            let operation = self.beginLocalModelOperation(id: id)
+            self.updateSettings({ settings in
                 guard var model = settings.localTranslationModels[id] else { return }
-                model.status = .downloaded
+                model.status = .downloading
                 model.path = path
-                model.progress = 1
+                model.progress = 0
+                model.progressLabel = "Validating selected model..."
                 model.error = nil
                 settings.localTranslationModels[id] = model
+            }, scheduleModelReconciliation: false)
+
+            let validator = self.localModelValidator
+            Task.detached(priority: .utility) {
+                let validation = await validator(id, true, path)
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
+                    guard self.localModelOperationGenerations[id] == operation,
+                          let current = self.workflow.settings.localTranslationModels[id],
+                          current.status == .downloading,
+                          current.path == path
+                    else {
+                        self.localModelOperationCompletion(id, false)
+                        return
+                    }
+
+                    self.updateSettings({ settings in
+                        guard var model = settings.localTranslationModels[id] else { return }
+                        if validation.0 {
+                            model.status = .downloaded
+                            model.path = validation.1 ?? path
+                            model.progress = 1
+                            model.progressLabel = "Located"
+                            model.error = nil
+                        } else {
+                            model.status = .failed
+                            model.path = path
+                            model.progress = nil
+                            model.progressLabel = "Validation failed"
+                            model.error = "Selected location is incomplete or failed integrity validation."
+                        }
+                        settings.localTranslationModels[id] = model
+                    }, scheduleModelReconciliation: false)
+                    self.localModelOperationCompletion(id, true)
+                }
             }
         }
     }
 
     func removeLocalASRModel(id: String) {
+        _ = beginLocalModelOperation(id: id)
         updateSettings { settings in
             guard var model = settings.localAsrModels[id] else { return }
             if let descriptor = NativeModelCatalog.descriptor(for: id),
@@ -2851,6 +3488,7 @@ final class WorkflowStore: ObservableObject {
     }
 
     func removeLocalTranslationModel(id: String) {
+        _ = beginLocalModelOperation(id: id)
         updateSettings { settings in
             guard var model = settings.localTranslationModels[id] else { return }
             model.status = .notDownloaded
@@ -2860,43 +3498,71 @@ final class WorkflowStore: ObservableObject {
         }
     }
 
-    private func markLocalModelDownloadFailed(id: String, isTranslation: Bool, message: String) {
-        updateSettings { settings in
-            func update(_ model: inout LocalModelState) {
-                guard model.status == .downloading else { return }
+    private func markLocalModelDownloadFailed(
+        id: String,
+        isTranslation: Bool,
+        message: String,
+        operation: Int
+    ) {
+        let currentModel = isTranslation
+            ? workflow.settings.localTranslationModels[id]
+            : workflow.settings.localAsrModels[id]
+        guard localModelOperationGenerations[id] == operation,
+              currentModel?.status == .downloading
+        else {
+            return
+        }
+        let existingPath = currentModel?.path
 
-                let hasExistingModel: Bool = {
-                    guard let path = model.path, !path.isEmpty else { return false }
-                    if isTranslation {
-                        return LocalModelVerification.verifyTranslationModelPath(path, modelID: id)
-                    }
-                    guard let descriptor = NativeModelCatalog.descriptor(for: id) else { return false }
-                    return NativeModelCatalog.isModelPresent(
-                        descriptor,
-                        at: URL(fileURLWithPath: path, isDirectory: true)
-                    )
-                }()
-
-                if hasExistingModel {
-                    // A failed replacement must not hide the last verified install.
-                    model.status = .downloaded
-                    model.progress = 1
-                    model.progressLabel = "Ready"
-                    model.error = nil
-                } else {
-                    model.status = .failed
-                    model.progress = nil
-                    model.progressLabel = "Failed"
-                    model.error = message
-                }
+        Task.detached(priority: .utility) {
+            let hasExistingModel: Bool
+            if let existingPath, !existingPath.isEmpty, isTranslation {
+                hasExistingModel = LocalModelVerification.verifyTranslationModelPath(
+                    existingPath,
+                    modelID: id
+                )
+            } else if let existingPath,
+                      !existingPath.isEmpty,
+                      let descriptor = NativeModelCatalog.descriptor(for: id) {
+                hasExistingModel = NativeModelCatalog.isModelPresent(
+                    descriptor,
+                    at: URL(fileURLWithPath: existingPath, isDirectory: true)
+                )
+            } else {
+                hasExistingModel = false
             }
 
-            if isTranslation, var model = settings.localTranslationModels[id] {
-                update(&model)
-                settings.localTranslationModels[id] = model
-            } else if !isTranslation, var model = settings.localAsrModels[id] {
-                update(&model)
-                settings.localAsrModels[id] = model
+            await MainActor.run { [weak self] in
+                guard let self,
+                      self.localModelOperationGenerations[id] == operation
+                else {
+                    return
+                }
+                self.updateSettings({ settings in
+                    func update(_ model: inout LocalModelState) {
+                        guard model.status == .downloading, model.path == existingPath else { return }
+                        if hasExistingModel {
+                            // A failed replacement must not hide the last verified install.
+                            model.status = .downloaded
+                            model.progress = 1
+                            model.progressLabel = "Ready"
+                            model.error = nil
+                        } else {
+                            model.status = .failed
+                            model.progress = nil
+                            model.progressLabel = "Failed"
+                            model.error = message
+                        }
+                    }
+
+                    if isTranslation, var model = settings.localTranslationModels[id] {
+                        update(&model)
+                        settings.localTranslationModels[id] = model
+                    } else if !isTranslation, var model = settings.localAsrModels[id] {
+                        update(&model)
+                        settings.localAsrModels[id] = model
+                    }
+                }, scheduleModelReconciliation: false)
             }
         }
     }
@@ -2906,8 +3572,9 @@ final class WorkflowStore: ObservableObject {
             ? workflow.settings.localTranslationModels[id]?.status == .downloading
             : workflow.settings.localAsrModels[id]?.status == .downloading
         guard !isAlreadyDownloading else { return }
+        let operation = beginLocalModelOperation(id: id)
 
-        updateSettings { settings in
+        updateSettings({ settings in
             if isTranslation {
                 guard var model = settings.localTranslationModels[id] else { return }
                 model.status = .downloading
@@ -2921,11 +3588,16 @@ final class WorkflowStore: ObservableObject {
                 model.progressLabel = "Initializing..."
                 settings.localAsrModels[id] = model
             }
-        }
+        }, scheduleModelReconciliation: false)
 
         ModelDownloadManager.shared.downloadModel(id: id) { [weak self] progress, label in
             Task { @MainActor in
-                self?.updateSettings { settings in
+                guard let self,
+                      self.localModelOperationGenerations[id] == operation
+                else {
+                    return
+                }
+                self.updateSettings({ settings in
                     if isTranslation {
                         guard var model = settings.localTranslationModels[id], model.status == .downloading else { return }
                         model.progress = progress
@@ -2937,11 +3609,16 @@ final class WorkflowStore: ObservableObject {
                         model.progressLabel = label
                         settings.localAsrModels[id] = model
                     }
-                }
+                }, scheduleModelReconciliation: false)
             }
         } onComplete: { [weak self] path in
             Task { @MainActor in
-                self?.updateSettings { settings in
+                guard let self,
+                      self.localModelOperationGenerations[id] == operation
+                else {
+                    return
+                }
+                self.updateSettings({ settings in
                     if isTranslation {
                         guard var model = settings.localTranslationModels[id], model.status == .downloading else { return }
                         model.status = .downloaded
@@ -2957,12 +3634,22 @@ final class WorkflowStore: ObservableObject {
                         model.progressLabel = "Done"
                         settings.localAsrModels[id] = model
                     }
-                }
+                }, scheduleModelReconciliation: false)
             }
         } onFailure: { [weak self] error in
             let message = error.localizedDescription
             Task { @MainActor in
-                self?.markLocalModelDownloadFailed(id: id, isTranslation: isTranslation, message: message)
+                guard let self,
+                      self.localModelOperationGenerations[id] == operation
+                else {
+                    return
+                }
+                self.markLocalModelDownloadFailed(
+                    id: id,
+                    isTranslation: isTranslation,
+                    message: message,
+                    operation: operation
+                )
             }
         }
     }
@@ -3184,13 +3871,14 @@ final class WorkflowStore: ObservableObject {
 
     private func persistSettings() {
         let settingsToSave = workflow.settings
+        let save = settingsPersistence
         let previousSave = settingsPersistenceTask
         let saveTask: Task<Void, Never> = Task.detached(priority: .background) { [weak self] in
             if let previousSave {
                 await previousSave.value
             }
             do {
-                try SettingsDiskStore.save(settingsToSave)
+                try save(settingsToSave)
             } catch {
                 await MainActor.run {
                     self?.statusMessage = "Settings save failed: \(error.localizedDescription)"
@@ -3200,34 +3888,106 @@ final class WorkflowStore: ObservableObject {
         settingsPersistenceTask = saveTask
     }
 
-    private func refreshProviderSelections() {
-        let transcriptionIDs = ProviderRegistry.availableTranscriptionProviders(settings: workflow.settings).map(\.id)
-        if !transcriptionIDs.contains(workflow.settings.transcriptionProvider) {
-            workflow.settings.transcriptionProvider = transcriptionIDs.first ?? "coreml-whisperkit"
-        }
-        if !transcriptionIDs.contains(workflow.transcriptionProvider), let first = transcriptionIDs.first {
-            workflow.transcriptionProvider = first
-        }
+    private func refreshProviderSelections(
+        previousSettings: AppSettings? = nil,
+        forceTranscriptionProvider: Bool = false,
+        forceTranslationProvider: Bool = false
+    ) {
+        providerSelectionGeneration &+= 1
+        let generation = providerSelectionGeneration
+        let workflowSnapshot = workflow
+        let priorSettings = previousSettings ?? workflowSnapshot.settings
 
-        let availability = ProviderRegistry.availableTranslationProviders(settings: workflow.settings, targetLang: workflow.targetLang)
-        let translationIDs = availability.providers.map(\.id)
-        if !translationIDs.contains(workflow.settings.translationProvider) {
-            workflow.settings.translationProvider = translationIDs.first ?? "mlx-native"
-        }
-        if !translationIDs.contains(workflow.translationProvider), let first = translationIDs.first {
-            workflow.translationProvider = first
+        Task.detached(priority: .utility) {
+            let transcriptionIDs = ProviderRegistry.availableTranscriptionProviders(
+                settings: workflowSnapshot.settings
+            ).map(\.id)
+            let translationIDs = ProviderRegistry.availableTranslationProviders(
+                settings: workflowSnapshot.settings,
+                targetLang: workflowSnapshot.targetLang
+            ).providers.map(\.id)
+
+            let selectedSettingsTranscription = workflowSnapshot.settings.transcriptionProvider
+            let settingsTranscriptionAvailable = transcriptionIDs.contains(selectedSettingsTranscription)
+            var selectedWorkflowTranscription = workflowSnapshot.transcriptionProvider
+            if settingsTranscriptionAvailable
+                && (
+                    forceTranscriptionProvider
+                        || selectedWorkflowTranscription.isEmpty
+                        || selectedWorkflowTranscription == priorSettings.transcriptionProvider
+                        || !transcriptionIDs.contains(selectedWorkflowTranscription)
+                )
+            {
+                selectedWorkflowTranscription = selectedSettingsTranscription
+            }
+
+            var selectedSettingsTranslation = workflowSnapshot.settings.translationProvider
+            if !translationIDs.contains(selectedSettingsTranslation) {
+                selectedSettingsTranslation = translationIDs.first ?? "mlx-native"
+            }
+            var selectedWorkflowTranslation = workflowSnapshot.translationProvider
+            if forceTranslationProvider
+                || selectedWorkflowTranslation.isEmpty
+                || selectedWorkflowTranslation == priorSettings.translationProvider
+                || !translationIDs.contains(selectedWorkflowTranslation) {
+                selectedWorkflowTranslation = selectedSettingsTranslation
+            }
+
+            await MainActor.run { [weak self] in
+                guard let self,
+                      self.providerSelectionGeneration == generation,
+                      self.workflow.settings.localAsrModels == workflowSnapshot.settings.localAsrModels,
+                      self.workflow.settings.localTranslationModels == workflowSnapshot.settings.localTranslationModels,
+                      self.workflow.settings.transcriptionProvider == workflowSnapshot.settings.transcriptionProvider,
+                      self.workflow.settings.translationProvider == workflowSnapshot.settings.translationProvider,
+                      self.workflow.transcriptionProvider == workflowSnapshot.transcriptionProvider,
+                      self.workflow.translationProvider == workflowSnapshot.translationProvider,
+                      self.workflow.targetLang == workflowSnapshot.targetLang
+                else {
+                    return
+                }
+
+                let settingsTranscriptionChanged =
+                    self.workflow.settings.transcriptionProvider != selectedSettingsTranscription
+                let settingsTranslationChanged =
+                    self.workflow.settings.translationProvider != selectedSettingsTranslation
+                let workflowTranscriptionChanged =
+                    self.workflow.transcriptionProvider != selectedWorkflowTranscription
+                let workflowTranslationChanged =
+                    self.workflow.translationProvider != selectedWorkflowTranslation
+
+                self.workflow.settings.transcriptionProvider = selectedSettingsTranscription
+                self.workflow.settings.translationProvider = selectedSettingsTranslation
+                self.workflow.transcriptionProvider = selectedWorkflowTranscription
+                self.workflow.translationProvider = selectedWorkflowTranslation
+                if workflowTranscriptionChanged {
+                    self.invalidateASRBinding()
+                }
+
+                if var session = self.workflow.session,
+                   session.transcriptionProvider == workflowSnapshot.session?.transcriptionProvider,
+                   session.translationProvider == workflowSnapshot.session?.translationProvider,
+                   settingsTranscriptionChanged || settingsTranslationChanged
+                        || workflowTranscriptionChanged || workflowTranslationChanged {
+                    if settingsTranscriptionChanged || workflowTranscriptionChanged {
+                        session.transcriptionProvider = self.workflow.transcriptionProvider
+                    }
+                    if settingsTranslationChanged || workflowTranslationChanged {
+                        session.translationProvider = self.workflow.translationProvider
+                    }
+                    self.workflow.session = session
+                    self.saveCurrentProject()
+                }
+
+                if settingsTranscriptionChanged || settingsTranslationChanged {
+                    self.persistSettings()
+                }
+            }
         }
     }
 
     private func locateLocalModel(runtime: SharedModelRuntime, _ apply: (String) -> Void) {
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = true
-        panel.canCreateDirectories = true
-        panel.directoryURL = try? LocalModelPickerDefaults.directory(for: runtime)
-        panel.message = "Choose a local model file or folder"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let url = localModelPicker(runtime, "Choose a local model file or folder", true) else { return }
         apply(url.path(percentEncoded: false))
     }
 
@@ -3471,27 +4231,47 @@ final class WorkflowStore: ObservableObject {
     }
 
     private func scanForLocalModels(presentResult: Bool) {
+        localModelScanGeneration &+= 1
+        let scanGeneration = localModelScanGeneration
+        let operationGenerationsAtStart = localModelOperationGenerations
+        let scanner = localModelScanner
         AppLogger.shared.info("Starting computer-wide scan for local models...", settings: workflow.settings)
         isScanning = true
         if presentResult {
             statusMessage = "Scanning computer for local models..."
         }
 
-        Task {
-            try? await Task.sleep(nanoseconds: 800_000_000)
-
+        Task { [weak self] in
             let found = await Task.detached(priority: .utility) {
-                LocalModelScanner.scanForLocalModels()
+                await scanner(scanGeneration)
             }.value
 
             await MainActor.run {
+                guard let self else {
+                    return
+                }
+                guard self.localModelScanGeneration == scanGeneration else {
+                    self.localModelScanCompletion(false)
+                    return
+                }
+
                 var updatedASR = 0
                 var updatedTranslation = 0
 
-                self.updateSettings { settings in
+                self.updateSettings({ settings in
                     for scanned in found {
+                        let canonicalLabel = NativeModelCatalog.displayName(for: scanned.id)
+                        let canonicalRuntime = NativeModelCatalog.settingsRuntime(for: scanned.id)
+                        guard self.localModelOperationGenerations[scanned.id] == operationGenerationsAtStart[scanned.id] else {
+                            continue
+                        }
                         if scanned.isTranslation {
                             if var model = settings.localTranslationModels[scanned.id] {
+                                guard model.status != .downloading else { continue }
+                                model.label = canonicalLabel ?? model.label
+                                if let canonicalRuntime {
+                                    model.runtime = canonicalRuntime
+                                }
                                 model.status = .downloaded
                                 model.path = scanned.path
                                 model.progress = 1.0
@@ -3503,24 +4283,27 @@ final class WorkflowStore: ObservableObject {
                                     status: .downloaded,
                                     progress: 1.0,
                                     progressLabel: "Done (Scanned)",
-                                    label: scanned.label ?? URL(fileURLWithPath: scanned.path).lastPathComponent,
+                                    label: canonicalLabel ?? scanned.label ?? URL(fileURLWithPath: scanned.path).lastPathComponent,
                                     path: scanned.path,
-                                    runtime: .mlx
+                                    runtime: canonicalRuntime ?? .mlx
                                 )
                                 updatedTranslation += 1
                             }
-                        } else {
-                            if var model = settings.localAsrModels[scanned.id] {
-                                model.status = .downloaded
-                                model.path = scanned.path
-                                model.progress = 1.0
-                                model.progressLabel = "Done (Scanned)"
-                                settings.localAsrModels[scanned.id] = model
-                                updatedASR += 1
+                        } else if var model = settings.localAsrModels[scanned.id] {
+                            model.label = canonicalLabel ?? model.label
+                            if let canonicalRuntime {
+                                model.runtime = canonicalRuntime
                             }
+                            model.status = .downloaded
+                            model.path = scanned.path
+                            model.progress = 1.0
+                            model.progressLabel = "Done (Scanned)"
+                            settings.localAsrModels[scanned.id] = model
+                            updatedASR += 1
                         }
                     }
-                }
+                }, scheduleModelReconciliation: false)
+                self.reconcileLocalModelStates()
 
                 self.isScanning = false
                 let total = updatedASR + updatedTranslation
@@ -3536,6 +4319,7 @@ final class WorkflowStore: ObservableObject {
                     }
                     self.isScanResultAlertPresented = true
                 }
+                self.localModelScanCompletion(true)
             }
         }
     }
@@ -3606,11 +4390,16 @@ final class WorkflowStore: ObservableObject {
             guard !indexes.isEmpty else {
                 throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "No matching segments require translation"])
             }
+            let batchUsesLocalMLX = activeCloudTranslationProvider(for: session) == nil
+                && activeTranslationModel(for: session) != nil
             jobID = mcpJobManager.start(
                 kind: name,
                 message: "Translating \(indexes.count) segment(s) to \(language)"
             ) { [weak self] reporter in
                 guard let self else { throw CancellationError() }
+                if batchUsesLocalMLX {
+                    await self.releaseASRBeforeLocalMLX()
+                }
                 var revision = currentRevision
                 var translatedIDs = [String]()
                 for (position, chunkIndex) in indexes.enumerated() {
@@ -3623,7 +4412,8 @@ final class WorkflowStore: ObservableObject {
                         chunkIndex: chunkIndex,
                         language: language,
                         expectedRevision: revision,
-                        reporter: reporter
+                        reporter: reporter,
+                        shouldReleaseASRBeforeLocalMLX: false
                     )
                     translatedIDs.append(result["chunkId"] as? String ?? "")
                     revision = McpProjectRevision.make(workflow: self.workflow)
@@ -3650,11 +4440,15 @@ final class WorkflowStore: ObservableObject {
             let cueIndex = scope == "cue"
                 ? try mcpCueArrayIndex(arguments: arguments, chunk: session.chunks[indexes[0]], side: "translated")
                 : nil
+            let polishUsesLocalMLX = activeTranslationModel(for: session) != nil
             jobID = mcpJobManager.start(
                 kind: name,
                 message: "Polishing \(scope) translation in \(language)"
             ) { [weak self] reporter in
                 guard let self else { throw CancellationError() }
+                if polishUsesLocalMLX {
+                    await self.releaseASRBeforeLocalMLX()
+                }
                 var revision = currentRevision
                 var polishedIDs = [String]()
                 for (position, chunkIndex) in indexes.enumerated() {
@@ -3668,7 +4462,8 @@ final class WorkflowStore: ObservableObject {
                         cueIndex: cueIndex,
                         language: language,
                         expectedRevision: revision,
-                        reporter: reporter
+                        reporter: reporter,
+                        shouldReleaseASRBeforeLocalMLX: false
                     )
                     polishedIDs.append(result["chunkId"] as? String ?? "")
                     revision = McpProjectRevision.make(workflow: self.workflow)
@@ -3692,7 +4487,8 @@ final class WorkflowStore: ObservableObject {
         chunkIndex: Int,
         language: String,
         expectedRevision: String,
-        reporter: McpJobReporter
+        reporter: McpJobReporter,
+        shouldReleaseASRBeforeLocalMLX: Bool = true
     ) async throws -> [String: Any] {
         try reporter.checkCancellation()
         guard McpProjectRevision.make(workflow: workflow) == expectedRevision,
@@ -3734,6 +4530,9 @@ final class WorkflowStore: ObservableObject {
                 : translatedCues.map(\.text).joined(separator: "\n")
             providerID = cloudProvider.id
         } else if let model {
+            if shouldReleaseASRBeforeLocalMLX {
+                await releaseASRBeforeLocalMLX()
+            }
             translatedCues = try await translateCurrentStoredCues(
                 chunk.originalCues ?? [],
                 targetLanguage: language,
@@ -3819,6 +4618,7 @@ final class WorkflowStore: ObservableObject {
             )
             providerID = cloudProvider.id
         } else if let model {
+            await releaseASRBeforeLocalMLX()
             translated = try await reviewMLXEngine.translate(
                 text: sourceCue.text,
                 targetLang: language,
@@ -3875,7 +4675,8 @@ final class WorkflowStore: ObservableObject {
         cueIndex: Int?,
         language: String,
         expectedRevision: String,
-        reporter: McpJobReporter
+        reporter: McpJobReporter,
+        shouldReleaseASRBeforeLocalMLX: Bool = true
     ) async throws -> [String: Any] {
         try reporter.checkCancellation()
         guard McpProjectRevision.make(workflow: workflow) == expectedRevision,
@@ -3899,6 +4700,9 @@ final class WorkflowStore: ObservableObject {
             throw NSError(domain: "WorkflowStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "No usable translated text is available to polish"])
         }
         reporter.update(progress: 0.2, stage: "Running polish model")
+        if shouldReleaseASRBeforeLocalMLX {
+            await releaseASRBeforeLocalMLX()
+        }
         let polished = try await reviewMLXEngine.polish(
             text: text,
             targetLang: language,
@@ -4447,7 +5251,11 @@ final class WorkflowStore: ObservableObject {
             guard available.contains(where: { $0.id == provider }) else {
                 throw mcpError(-10, "PROVIDER_NOT_READY: Transcription provider is unavailable")
             }
+            let previousTranscriptionProvider = workflow.transcriptionProvider
             workflow.transcriptionProvider = provider
+            if workflow.transcriptionProvider != previousTranscriptionProvider {
+                invalidateASRBinding()
+            }
         }
         if let provider = mcpString(arguments["translationProvider"]) {
             let available = ProviderRegistry.availableTranslationProviders(
@@ -4614,6 +5422,7 @@ final class WorkflowStore: ObservableObject {
                 // A2: record cloud Shorts-planning usage (best-effort).
                 await self.recordCloudTranslationUsage(from: self.shortsCloudEngine, provider: provider)
             case let .mlx(model):
+                await self.releaseASRBeforeLocalMLX()
                 plans = try await self.shortsMLXEngine.planShorts(
                     transcript: transcript,
                     count: count,
@@ -4833,6 +5642,9 @@ final class WorkflowStore: ObservableObject {
         let startingRevision = McpProjectRevision.make(workflow: workflow)
         let jobID = mcpJobManager.start(kind: "translate_shorts_plans", message: "Translating Shorts metadata to \(language)") { [weak self] reporter in
             guard let self else { throw NSError(domain: "VaniScriptMCP", code: -1) }
+            if case .mlx = route {
+                await self.releaseASRBeforeLocalMLX()
+            }
             for (position, index) in selectedIndexes.enumerated() {
                 try reporter.checkCancellation()
                 guard var latest = self.workflow.session,
@@ -5913,17 +6725,17 @@ final class WorkflowStore: ObservableObject {
     }
 
     private func mcpModelDictionary(id: String, model: LocalModelState, kind: String) -> [String: Any] {
-        let isPresent: Bool
-        if kind == "translation" {
-            isPresent = model.status == .downloaded
-                && LocalModelVerification.verifyTranslationModelPath(model.path, modelID: id)
-        } else if let descriptor = NativeModelCatalog.descriptor(for: id),
-                  let path = model.path {
-            isPresent = model.status == .downloaded
-                && NativeModelCatalog.isModelPresent(descriptor, at: URL(fileURLWithPath: path, isDirectory: true))
-        } else {
-            isPresent = false
-        }
+        let isPresent: Bool = {
+            guard model.status == .downloaded,
+                  let path = model.path,
+                  !path.isEmpty
+            else {
+                return false
+            }
+            // Integrity is reconciled off-actor. MCP serialization only reports
+            // the persisted state plus this cheap reference check.
+            return FileManager.default.fileExists(atPath: path)
+        }()
         return [
             "modelId": id,
             "label": model.label,
@@ -5949,7 +6761,8 @@ final class WorkflowStore: ObservableObject {
         }
         guard reference.model.status != .downloading else { throw mcpError(-4, "JOB_ALREADY_RUNNING: This model is already downloading") }
         let isTranslation = reference.isTranslation
-        updateSettings { settings in
+        let operation = beginLocalModelOperation(id: modelID)
+        updateSettings({ settings in
             if isTranslation, var model = settings.localTranslationModels[modelID] {
                 model.status = .downloading
                 model.progress = 0
@@ -5963,7 +6776,7 @@ final class WorkflowStore: ObservableObject {
                 model.error = nil
                 settings.localAsrModels[modelID] = model
             }
-        }
+        }, scheduleModelReconciliation: false)
         let jobID = mcpJobManager.start(kind: "download_model", message: "Downloading \(reference.model.label)", cancellable: false) { [weak self] reporter in
             guard let self else { throw NSError(domain: "VaniScriptMCP", code: -1) }
             let path: String
@@ -5972,13 +6785,14 @@ final class WorkflowStore: ObservableObject {
                     ModelDownloadManager.shared.downloadModel(id: modelID) { progress, label in
                         Task { @MainActor in
                             reporter.update(progress: progress, stage: label)
-                            self.updateSettings { settings in
+                            guard self.localModelOperationGenerations[modelID] == operation else { return }
+                            self.updateSettings({ settings in
                                 if isTranslation, var model = settings.localTranslationModels[modelID], model.status == .downloading {
                                     model.progress = progress; model.progressLabel = label; settings.localTranslationModels[modelID] = model
                                 } else if !isTranslation, var model = settings.localAsrModels[modelID], model.status == .downloading {
                                     model.progress = progress; model.progressLabel = label; settings.localAsrModels[modelID] = model
                                 }
-                            }
+                            }, scheduleModelReconciliation: false)
                         }
                     } onComplete: { path in
                         continuation.resume(returning: path)
@@ -5990,19 +6804,24 @@ final class WorkflowStore: ObservableObject {
                 self.markLocalModelDownloadFailed(
                     id: modelID,
                     isTranslation: isTranslation,
-                    message: error.localizedDescription
+                    message: error.localizedDescription,
+                    operation: operation
                 )
                 throw error
             }
-            self.updateSettings { settings in
+            self.updateSettings({ settings in
                 if isTranslation, var model = settings.localTranslationModels[modelID] {
-                    guard model.status == .downloading else { return }
+                    guard model.status == .downloading,
+                          self.localModelOperationGenerations[modelID] == operation
+                    else { return }
                     model.status = .downloaded; model.path = path; model.progress = 1; model.progressLabel = "Done"; model.error = nil; settings.localTranslationModels[modelID] = model
                 } else if !isTranslation, var model = settings.localAsrModels[modelID] {
-                    guard model.status == .downloading else { return }
+                    guard model.status == .downloading,
+                          self.localModelOperationGenerations[modelID] == operation
+                    else { return }
                     model.status = .downloaded; model.path = path; model.progress = 1; model.progressLabel = "Done"; model.error = nil; settings.localAsrModels[modelID] = model
                 }
-            }
+            }, scheduleModelReconciliation: false)
             guard let final = self.mcpModelReference(modelID)?.model else { throw self.mcpError(-6, "Model settings changed during download") }
             return ["model": self.mcpModelDictionary(id: modelID, model: final, kind: isTranslation ? "translation" : "transcription")]
         }
@@ -6013,42 +6832,124 @@ final class WorkflowStore: ObservableObject {
         guard let modelID = mcpString(arguments["modelId"]), let reference = mcpModelReference(modelID) else {
             throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown modelId")
         }
-        let runtime: SharedModelRuntime = reference.isTranslation
+        let isTranslation = reference.isTranslation
+        let runtime: SharedModelRuntime = isTranslation
             ? .mlx
             : NativeModelCatalog.descriptor(for: modelID)?.storageRuntime ?? .whisperkit
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = true
-        panel.directoryURL = try? LocalModelPickerDefaults.directory(for: runtime)
-        panel.message = "Choose the local model file or folder requested by VaniScript"
-        guard panel.runModal() == .OK, let url = panel.url else { throw mcpError(-9, "USER_CANCELLED: Model selection was cancelled") }
-        let valid: Bool
-        if reference.isTranslation {
-            valid = LocalModelVerification.verifyTranslationModelPath(url.path, modelID: modelID)
-        } else if let descriptor = NativeModelCatalog.descriptor(for: modelID) {
-            valid = NativeModelCatalog.isModelPresent(descriptor, at: url)
-        } else {
-            valid = false
+        guard let url = localModelPicker(
+            runtime,
+            "Choose the local model file or folder requested by VaniScript",
+            false
+        ) else {
+            throw mcpError(-9, "USER_CANCELLED: Model selection was cancelled")
         }
-        guard valid else { throw mcpError(-2, "VALIDATION_FAILED: The selected location is not a valid \(reference.model.label) model") }
-        let storedPath: String
-        if !reference.isTranslation,
-           let descriptor = NativeModelCatalog.descriptor(for: modelID),
-           descriptor.backend == .whisperKitCoreML {
-            storedPath = LocalModelVerification.canonicalWhisperKitModelPath(url.path) ?? url.path
-        } else {
-            storedPath = url.path
-        }
-        updateSettings { settings in
-            if reference.isTranslation, var model = settings.localTranslationModels[modelID] {
-                model.status = .downloaded; model.path = storedPath; model.progress = 1; model.progressLabel = "Located"; model.error = nil; settings.localTranslationModels[modelID] = model
-            } else if !reference.isTranslation, var model = settings.localAsrModels[modelID] {
-                model.status = .downloaded; model.path = storedPath; model.progress = 1; model.progressLabel = "Located"; model.error = nil; settings.localAsrModels[modelID] = model
+
+        let selectedPath = url.path(percentEncoded: false)
+        let operation = beginLocalModelOperation(id: modelID)
+        updateSettings({ settings in
+            if isTranslation, var model = settings.localTranslationModels[modelID] {
+                model.status = .downloading
+                model.path = selectedPath
+                model.progress = 0
+                model.progressLabel = "Validating selected model..."
+                model.error = nil
+                settings.localTranslationModels[modelID] = model
+            } else if !isTranslation, var model = settings.localAsrModels[modelID] {
+                model.status = .downloading
+                model.path = selectedPath
+                model.progress = 0
+                model.progressLabel = "Validating selected model..."
+                model.error = nil
+                settings.localAsrModels[modelID] = model
             }
+        }, scheduleModelReconciliation: false)
+
+        let validator = localModelValidator
+        let label = reference.model.label
+        let jobID = mcpJobManager.start(
+            kind: "locate_model",
+            message: "Validating \(label)",
+            cancellable: false
+        ) { [weak self] reporter in
+            guard let self else {
+                throw NSError(domain: "VaniScriptMCP", code: -1)
+            }
+            reporter.update(progress: 0.1, stage: "Validating selected model...")
+            let validation = await Task.detached(priority: .utility) {
+                await validator(modelID, isTranslation, selectedPath)
+            }.value
+            try reporter.checkCancellation()
+
+            guard self.localModelOperationGenerations[modelID] == operation,
+                  let current = self.mcpModelReference(modelID),
+                  current.isTranslation == isTranslation,
+                  current.model.status == .downloading,
+                  current.model.path == selectedPath
+            else {
+                self.localModelOperationCompletion(modelID, false)
+                throw self.mcpError(-6, "Model operation was superseded before Locate validation completed")
+            }
+
+            guard validation.0 else {
+                self.updateSettings({ settings in
+                    if isTranslation, var model = settings.localTranslationModels[modelID] {
+                        model.status = .failed
+                        model.path = selectedPath
+                        model.progress = nil
+                        model.progressLabel = "Validation failed"
+                        model.error = "Selected location is incomplete or failed integrity validation."
+                        settings.localTranslationModels[modelID] = model
+                    } else if !isTranslation, var model = settings.localAsrModels[modelID] {
+                        model.status = .failed
+                        model.path = selectedPath
+                        model.progress = nil
+                        model.progressLabel = "Validation failed"
+                        model.error = "Selected location is incomplete or failed integrity validation."
+                        settings.localAsrModels[modelID] = model
+                    }
+                }, scheduleModelReconciliation: false)
+                self.localModelOperationCompletion(modelID, true)
+                throw self.mcpError(-2, "VALIDATION_FAILED: The selected location is not a valid \(label) model")
+            }
+
+            let storedPath = validation.1 ?? selectedPath
+            self.updateSettings({ settings in
+                if isTranslation, var model = settings.localTranslationModels[modelID] {
+                    model.status = .downloaded
+                    model.path = storedPath
+                    model.progress = 1
+                    model.progressLabel = "Located"
+                    model.error = nil
+                    settings.localTranslationModels[modelID] = model
+                } else if !isTranslation, var model = settings.localAsrModels[modelID] {
+                    model.status = .downloaded
+                    model.path = storedPath
+                    model.progress = 1
+                    model.progressLabel = "Located"
+                    model.error = nil
+                    settings.localAsrModels[modelID] = model
+                }
+            }, scheduleModelReconciliation: false)
+            self.localModelOperationCompletion(modelID, true)
+            guard let updated = self.mcpModelReference(modelID)?.model else {
+                throw self.mcpError(-6, "Model settings changed during Locate validation")
+            }
+            return [
+                "success": true,
+                "model": self.mcpModelDictionary(
+                    id: modelID,
+                    model: updated,
+                    kind: isTranslation ? "translation" : "transcription"
+                ),
+            ]
         }
-        guard let updated = mcpModelReference(modelID)?.model else { throw mcpError(-6, "Model settings changed during selection") }
-        return ["success": true, "model": mcpModelDictionary(id: modelID, model: updated, kind: reference.isTranslation ? "translation" : "transcription")]
+        return [
+            "jobId": jobID,
+            "status": "queued",
+            "kind": "locate_model",
+            "modelId": modelID,
+            "cancellable": false,
+        ]
     }
 
     private func mcpRemoveModel(arguments: [String: Any]) throws -> [String: Any] {
@@ -6853,48 +7754,25 @@ final class WorkflowStore: ObservableObject {
             throw NSError(domain: "WorkflowStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Audio recording is empty (0 bytes)."])
         }
 
-        guard let model = NativeModelCatalog.activeWhisperKitModel(
-            settings: workflow.settings,
-            providerID: workflow.settings.transcriptionProvider
-        ) else {
-            throw NSError(domain: "WorkflowStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "No local Whisper model is selected. Please check Settings."])
+        let sourceLang = workflow.sourceLang.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? workflow.settings.defaultSourceLang
+            : workflow.sourceLang
+        do {
+            let result = try await processingPipeline.transcribeLocalASR(
+                audioURL: url,
+                sourceLang: sourceLang,
+                settings: workflow.settings,
+                providerID: workflow.settings.transcriptionProvider
+            )
+            return result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch let error as LocalASREngineError {
+            guard case .unsupportedModel = error else { throw error }
+            throw NSError(
+                domain: "WorkflowStore",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "No complete local ASR model is selected. Please check Settings."]
+            )
         }
-        
-        let defaultLang = workflow.settings.defaultSourceLang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let langCode: String?
-        if defaultLang.hasPrefix("ru") {
-            langCode = "ru"
-        } else if defaultLang.hasPrefix("en") {
-            langCode = "en"
-        } else if defaultLang.hasPrefix("es") {
-            langCode = "es"
-        } else if defaultLang.hasPrefix("fr") {
-            langCode = "fr"
-        } else if defaultLang.hasPrefix("de") {
-            langCode = "de"
-        } else if defaultLang.hasPrefix("it") {
-            langCode = "it"
-        } else if defaultLang.hasPrefix("pt") {
-            langCode = "pt"
-        } else if defaultLang.hasPrefix("hi") {
-            langCode = "hi"
-        } else {
-            langCode = nil
-        }
-
-        let pipeline = try await processingPipeline.loadWhisperKit(model: model)
-        let options = DecodingOptions(
-            verbose: false,
-            task: .transcribe,
-            language: langCode,
-            temperature: 0,
-            detectLanguage: langCode == nil,
-            skipSpecialTokens: true,
-            withoutTimestamps: true
-        )
-        let results = try await pipeline.transcribe(audioPath: url.path, decodeOptions: options)
-        let text = results.map { $0.text }.joined(separator: " ")
-        return text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
     }
 }
 

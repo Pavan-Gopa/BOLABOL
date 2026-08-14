@@ -67,8 +67,8 @@ struct NativeModelRoutingTests {
         )
     }
 
-    @Test("provider lookup validates native ASR presence against the selected descriptor")
-    func providerLookupRejectsAValidDifferentNativeModel() throws {
+    @Test("provider lookup consumes reconciled native ASR presence state")
+    func providerLookupUsesReconciledNativeASRState() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("VaniScriptProvider-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -76,9 +76,15 @@ struct NativeModelRoutingTests {
         let flash = try #require(
             NativeModelCatalog.localASRModel(for: "canary-180m-flash-coreml")
         )
-        let path = root.appendingPathComponent("flash", isDirectory: true)
+        let canaryOneB = try #require(
+            NativeModelCatalog.localASRModel(for: "canary-1b-v2-coreml")
+        )
+        let mismatchedPath = root.appendingPathComponent("flash", isDirectory: true)
         for relativePath in flash.requiredLayout.requiredFiles {
-            let url = path.appendingPathComponent(relativePath, isDirectory: relativePath.hasSuffix(".mlmodelc"))
+            let url = mismatchedPath.appendingPathComponent(
+                relativePath,
+                isDirectory: relativePath.hasSuffix(".mlmodelc")
+            )
             if relativePath.hasSuffix(".mlmodelc") {
                 try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
             } else {
@@ -91,15 +97,21 @@ struct NativeModelRoutingTests {
         }
 
         var settings = AppSettings.defaults
-        settings.localAsrModels["canary-1b-v2-coreml"] = LocalModelState(
+        settings.localAsrModels[canaryOneB.id] = LocalModelState(
             status: .downloaded,
-            label: "Canary 1B v2",
-            path: path.path,
-            runtime: .canary
+            label: canaryOneB.displayName,
+            path: mismatchedPath.path,
+            runtime: canaryOneB.settingsRuntime
         )
 
-        let providers = ProviderRegistry.availableTranscriptionProviders(settings: settings)
-        #expect(!providers.contains { $0.id == "canary-1b-v2-coreml" })
+        let staleProviders = ProviderRegistry.availableTranscriptionProviders(settings: settings)
+        #expect(staleProviders.contains { $0.id == canaryOneB.id })
+
+        settings.synchronizeLocalModelsWithDisk()
+
+        #expect(settings.localAsrModels[canaryOneB.id]?.status == .failed)
+        let reconciledProviders = ProviderRegistry.availableTranscriptionProviders(settings: settings)
+        #expect(!reconciledProviders.contains { $0.id == canaryOneB.id })
     }
 
     @Test("reconciles a missing external ASR path and clears its active badge")
@@ -126,4 +138,24 @@ struct NativeModelRoutingTests {
         #expect(settings.localAsrModels[id]?.path == missingPath.path)
         #expect(!settings.isDownloadedLocalASRModelActive(id: id))
     }
+
+    @Test("pathless downloaded ASR state is inactive before and after reconciliation")
+    func pathlessDownloadedASRStateIsNotReady() {
+        let id = "canary-180m-flash-coreml"
+        var settings = AppSettings.defaults
+        settings.transcriptionProvider = id
+        settings.localAsrModels[id] = LocalModelState(
+            status: .downloaded,
+            label: "Canary Flash 180M",
+            runtime: .canary
+        )
+
+        #expect(!settings.isDownloadedLocalASRModelActive(id: id))
+
+        settings.synchronizeLocalModelsWithDisk()
+
+        #expect(settings.localAsrModels[id]?.status == .failed)
+        #expect(!settings.isDownloadedLocalASRModelActive(id: id))
+    }
+
 }

@@ -1,3 +1,4 @@
+import CryptoKit
 import Testing
 import Foundation
 @testable import VaniScriptCore
@@ -345,6 +346,145 @@ struct NativeModelCatalogTests {
         )
     }
 
+    @Test("discovers a complete Canary 1B layout below a nested local-model root")
+    func scansNestedCanaryOneBRootAndRejectsIncompletePackage() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptNestedCanary-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let descriptor = LocalASRModelDescriptor(
+            id: "canary-1b-v2-coreml",
+            displayName: "Canary 1B v2",
+            backend: .canaryCoreML,
+            installSource: .huggingFace(repositoryID: "fixture/canary", revision: "test"),
+            relativeStorageSubpath: "canary/1b-v2",
+            capabilities: LocalASRCapabilities(
+                supportsAutoLanguageDetect: false,
+                supportedLanguageCodes: ["en"],
+                maxEngineWindowSeconds: 15,
+                minimumMacOSMajor: 15,
+                approximateDownloadBytes: 1
+            ),
+            requiredLayout: LocalASRRequiredLayout(requiredRelativePaths: [
+                "canary_encoder.mlmodelc",
+                "canary_cross_kv.mlmodelc",
+                "canary_decoder_kv.mlmodelc",
+                "canary_spe.model",
+            ])
+        )
+        let installation = root
+            .appendingPathComponent("whisperkit/canary/1b-v2", isDirectory: true)
+        for relativePath in descriptor.requiredLayout.requiredFiles {
+            let item = installation.appendingPathComponent(
+                relativePath,
+                isDirectory: relativePath.hasSuffix(".mlmodelc")
+            )
+            if relativePath.hasSuffix(".mlmodelc") {
+                try FileManager.default.createDirectory(at: item, withIntermediateDirectories: true)
+            } else {
+                try FileManager.default.createDirectory(
+                    at: item.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
+                try Data("fixture".utf8).write(to: item)
+            }
+        }
+
+        let found = LocalModelScanner.scanForLocalModels(
+            searchPaths: [root],
+            maxVisitedItems: 10_000,
+            nativeASRModels: [descriptor]
+        )
+        let expectedPath = installation.standardizedFileURL.resolvingSymlinksInPath().path
+        #expect(found.contains {
+            $0.id == descriptor.id && !$0.isTranslation && $0.path == expectedPath
+        })
+
+        try FileManager.default.removeItem(
+            at: installation.appendingPathComponent("canary_spe.model")
+        )
+        let incomplete = LocalModelScanner.scanForLocalModels(
+            searchPaths: [root],
+            maxVisitedItems: 10_000,
+            nativeASRModels: [descriptor]
+        )
+        #expect(!incomplete.contains { $0.id == descriptor.id && !$0.isTranslation })
+    }
+
+    @Test("accepts the exact BOLABOL legacy MANIFEST.json package")
+    func acceptsLegacyBolabolManifest() throws {
+        let fixture = try makeLegacyPackage()
+        defer { try? FileManager.default.removeItem(at: fixture.root) }
+
+        #expect(NativeModelCatalog.isModelPresent(fixture.descriptor, at: fixture.root))
+    }
+
+    @Test("rejects a legacy manifest with the wrong package identity")
+    func rejectsLegacyManifestWrongPackage() throws {
+        let fixture = try makeLegacyPackage(manifestPackageID: "wrong-package")
+        defer { try? FileManager.default.removeItem(at: fixture.root) }
+
+        #expect(!NativeModelCatalog.isModelPresent(fixture.descriptor, at: fixture.root))
+    }
+
+    @Test("rejects legacy packages with tampered, missing, or unexpected files")
+    func rejectsLegacyPackageFileIntegrityFailures() throws {
+        let tampered = try makeLegacyPackage()
+        defer { try? FileManager.default.removeItem(at: tampered.root) }
+        try Data("tampered".utf8).write(
+            to: tampered.root.appendingPathComponent("canary_spe.model"),
+            options: .atomic
+        )
+        #expect(!NativeModelCatalog.isModelPresent(tampered.descriptor, at: tampered.root))
+
+        let missing = try makeLegacyPackage()
+        defer { try? FileManager.default.removeItem(at: missing.root) }
+        try FileManager.default.removeItem(
+            at: missing.root.appendingPathComponent("canary_spe.model")
+        )
+        #expect(!NativeModelCatalog.isModelPresent(missing.descriptor, at: missing.root))
+
+        let unexpected = try makeLegacyPackage()
+        defer { try? FileManager.default.removeItem(at: unexpected.root) }
+        try Data("unexpected".utf8).write(
+            to: unexpected.root.appendingPathComponent("unexpected.txt")
+        )
+        #expect(!NativeModelCatalog.isModelPresent(unexpected.descriptor, at: unexpected.root))
+    }
+    @Test("accepts remote package with nested .DS_Store metadata but rejects other unexpected files")
+    func remotePackageIgnoresDSStoreAndRejectsOtherUnexpectedFiles() throws {
+        let fixture = try makeLegacyPackage()
+        defer { try? FileManager.default.removeItem(at: fixture.root) }
+
+        let finderFolder = fixture.root.appendingPathComponent("canary_encoder.mlmodelc", isDirectory: true)
+        try FileManager.default.createDirectory(at: finderFolder, withIntermediateDirectories: true)
+        let dsStoreURL = finderFolder.appendingPathComponent(".DS_Store")
+        try Data("finder-metadata".utf8).write(to: dsStoreURL)
+
+        #expect(NativeModelCatalog.isModelPresent(fixture.descriptor, at: fixture.root))
+        #expect(FileManager.default.fileExists(atPath: dsStoreURL.path))
+        let searchRoot = fixture.root
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let discovered = LocalModelScanner.scanForLocalModels(
+            searchPaths: [searchRoot],
+            maxVisitedItems: 10_000,
+            nativeASRModels: [fixture.descriptor]
+        )
+        #expect(discovered.contains {
+            $0.id == fixture.descriptor.id
+                && !$0.isTranslation
+                && $0.path == fixture.root.standardizedFileURL.resolvingSymlinksInPath().path
+        })
+
+
+        let extraFileURL = fixture.root.appendingPathComponent("unexpected_extra.txt")
+        try Data("unexpected".utf8).write(to: extraFileURL)
+
+        #expect(!NativeModelCatalog.isModelPresent(fixture.descriptor, at: fixture.root))
+    }
+
+
     @Test("binds Canary 1B to the verified Path B release")
     func canaryOneBReleaseIsBound() throws {
         let descriptor = try #require(
@@ -436,5 +576,75 @@ struct NativeModelCatalogTests {
                 && !$0.isTranslation
                 && $0.path == canonicalPath
         })
+    }
+    private func makeLegacyPackage(
+        at requestedRoot: URL? = nil,
+        manifestPackageID: String? = nil
+    ) throws -> (root: URL, descriptor: LocalASRModelDescriptor) {
+        let root = requestedRoot
+            ?? FileManager.default.temporaryDirectory
+                .appendingPathComponent("VaniScriptLegacyPackage-\(UUID().uuidString)", isDirectory: true)
+                .appendingPathComponent("canary/1b-v2", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+
+        let modelData = Data("model".utf8)
+        let modelHash = SHA256.hash(data: modelData)
+            .map { String(format: "%02x", $0) }
+            .joined()
+        try modelData.write(to: root.appendingPathComponent("canary_spe.model"))
+
+        let manifestObject: [String: Any] = [
+            "packageId": manifestPackageID ?? "fixture-bolabol-canary-1b",
+            "modelFamily": "canary-1b-v2",
+            "files": [[
+                "path": "canary_spe.model",
+                "sha256": modelHash,
+                "sizeBytes": modelData.count
+            ]]
+        ]
+        let manifestData = try JSONSerialization.data(withJSONObject: manifestObject, options: [.sortedKeys])
+        try manifestData.write(to: root.appendingPathComponent("MANIFEST.json"))
+        let manifestHash = SHA256.hash(data: manifestData)
+            .map { String(format: "%02x", $0) }
+            .joined()
+
+        let release = RemoteModelPackageRelease(
+            packageID: "fixture-bolabol-canary-1b",
+            layoutVersion: "path-b-v1",
+            directURLOverrideEnvironmentKey: "FIXTURE_URL",
+            expectedArchiveSHA256: String(repeating: "a", count: 64),
+            expectedCompressedSizeBytes: 1,
+            expectedUncompressedSizeBytes: 1,
+            allowlistedFiles: [
+                RemoteModelPackageFile(
+                    relativePath: "canary_spe.model",
+                    expectedByteCount: Int64(modelData.count),
+                    expectedSHA256: modelHash
+                ),
+                RemoteModelPackageFile(
+                    relativePath: "MANIFEST.json",
+                    expectedByteCount: Int64(manifestData.count),
+                    expectedSHA256: manifestHash
+                )
+            ]
+        )
+        let descriptor = LocalASRModelDescriptor(
+            id: release.packageID,
+            displayName: "Fixture Canary 1B",
+            backend: .canaryCoreML,
+            installSource: .remotePackage(release),
+            relativeStorageSubpath: "canary/1b-v2",
+            capabilities: LocalASRCapabilities(
+                supportsAutoLanguageDetect: false,
+                supportedLanguageCodes: ["en"],
+                maxEngineWindowSeconds: 15,
+                minimumMacOSMajor: 15,
+                approximateDownloadBytes: 1
+            ),
+            requiredLayout: LocalASRRequiredLayout(
+                requiredRelativePaths: ["canary_spe.model"]
+            )
+        )
+        return (root, descriptor)
     }
 }

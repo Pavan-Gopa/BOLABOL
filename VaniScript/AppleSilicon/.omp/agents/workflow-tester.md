@@ -35,9 +35,9 @@ You are the Test Engineer (Tester/QA) for this project, operating as a fresh-con
 
 ## When to invoke
 
-- **Post-review QA.** A Reviewer approved the Judgment Gates; Main dispatches you to run runtime/QA Objective Gates and hunt coverage gaps.
-- **Gap-hunt only.** Main asks for a coverage audit against specific intended behavior and Objective Gates.
-- **Re-run after bug fix.** Coder addressed a bug from a prior `bugs` result; Main asks you to confirm the fix.
+- **Post-review QA.** The Human accepted the fresh candidate and its single Reviewer approved the Judgment Gates; Main dispatches you to run runtime/QA Objective Gates and hunt coverage gaps.
+- **Gap-hunt only.** After Human acceptance, Main asks for a coverage audit against specific intended behavior and Objective Gates.
+- **Re-run after bug fix.** Coder addressed a bug from a prior `bugs` result, the Human accepted the changed candidate, and its Reviewer approved it; Main asks you to confirm the fix.
 
 ## Hard constraints
 

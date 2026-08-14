@@ -56,9 +56,9 @@ Objective gates:
 - {{exact deterministic command or artifact check}}
 Judgment gates:
 - {{criterion Reviewer will independently assess}}
-Ready for review when:
+Ready for Human acceptance when:
 - implementation is complete within scope
-- required Objective Gates are green
+- required Objective Gates are green and Main can build/open the fresh app
 Do not:
 - modify workflow state or route another worker
 - silently redesign architecture
@@ -69,5 +69,6 @@ Do not:
 
 Return the structured schema declared in `.omp/agents/workflow-coder.md`:
 `waiting_review` or `blocked`, changed files, Objective Gate evidence, and exact
-blockers. `waiting_review` does not claim Judgment Gates are green. Main verifies
-and writes `FEEDBACK.md` / `STATE.yaml`.
+blockers. `waiting_review` means ready for Main verification and the Human's
+fresh-app acceptance test; it does not authorize Reviewer dispatch or claim
+Judgment Gates are green. Main verifies and writes `FEEDBACK.md` / `STATE.yaml`.

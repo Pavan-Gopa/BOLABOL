@@ -10,9 +10,21 @@ import VaniScriptCore
 extension ChatSession: @unchecked @retroactive Sendable {}
 
 actor MLXTextGenerationEngine {
+    typealias GenerationOverride = @Sendable (
+        _ prompt: String,
+        _ model: ActiveMLXModel,
+        _ sourceLength: Int,
+        _ maxTokens: Int
+    ) async throws -> String
+
     private var cachedModelID: String?
     private var cachedContainer: ModelContainer?
     private let generationTimeoutSeconds: TimeInterval = 180
+    private let generationOverride: GenerationOverride?
+
+    init(generationOverride: GenerationOverride? = nil) {
+        self.generationOverride = generationOverride
+    }
 
     func translate(
         text: String,
@@ -37,6 +49,28 @@ actor MLXTextGenerationEngine {
         )
     }
 
+    /// Runs the strict document contract without transcript sanitization. The
+    /// document engine owns JSON parsing and validation, so model output must
+    /// remain byte-for-byte available to that gate.
+    func generateDocumentTranslation(
+        prompt: String,
+        model: ActiveMLXModel,
+        sourceLength: Int,
+        maxTokens: Int? = nil
+    ) async throws -> String {
+        let raw = try await generate(
+            prompt: prompt,
+            model: model,
+            sourceLength: max(1, sourceLength),
+            maxTokens: maxTokens ?? min(max(sourceLength * 4 + 1_024, 2_048), 8_192),
+            sanitizeOutput: false
+        )
+        guard !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw MLXTextGenerationError.emptyDocumentOutput
+        }
+        return raw
+    }
+
     func translateCues(
         _ cues: [TranscriptCue],
         targetLang: String,
@@ -50,23 +84,260 @@ actor MLXTextGenerationEngine {
         var translated: [TranscriptCue] = []
         let batches = NativeLLMPromptBuilder.cueTranslationBatches(cues, maxSourceCharacters: 1_400)
         for batch in batches {
+            let recovered = try await translateCueBatchWithRecovery(
+                batch,
+                targetLang: targetLang,
+                metadata: metadata,
+                glossary: glossary,
+                model: model,
+                promptPresets: promptPresets,
+                allowsSourceFallback: cues.count > 1
+            )
+            translated.append(contentsOf: recovered)
+        }
+
+        guard Self.isReviewableCueTranslation(translated, sourceCues: cues),
+              Self.containsRealCueTranslation(translated, sourceCues: cues)
+        else {
+            throw CueBatchTranslationError.emptyOutput
+        }
+        return translated
+    }
+
+    private func translateCueBatchWithRecovery(
+        _ cues: [TranscriptCue],
+        targetLang: String,
+        metadata: AudioMetadata,
+        glossary: [GlossaryEntry],
+        model: ActiveMLXModel,
+        promptPresets: [String: PromptPresetSettings],
+        allowsSourceFallback: Bool
+    ) async throws -> [TranscriptCue] {
+        do {
             let prompt = NativeLLMPromptBuilder.cueBatchTranslationPrompt(
-                cues: batch,
+                cues: cues,
                 targetLang: targetLang,
                 metadata: metadata,
                 glossary: glossary,
                 promptPresets: promptPresets
             )
-            let sourceLength = batch.reduce(0) { $0 + $1.text.count }
+            let sourceLength = cues.reduce(0) { $0 + $1.text.count }
             let raw = try await generate(
                 prompt: prompt,
                 model: model,
                 sourceLength: sourceLength,
                 maxTokens: translationTokenLimit(for: sourceLength)
             )
-            translated += try NativeLLMPromptBuilder.parseCueBatchTranslationOutput(raw, sourceCues: batch)
+            let translated = try NativeLLMPromptBuilder.parseCueBatchTranslationOutput(
+                raw,
+                sourceCues: cues
+            )
+            guard Self.isCompleteCueTranslation(translated, sourceCues: cues) else {
+                throw CueBatchTranslationError.emptyOutput
+            }
+            return translated
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as CueBatchTranslationError {
+            if cues.count == 1, let singleCue = cues.first {
+                return try await translateSingleCueTerminalWithRecovery(
+                    singleCue,
+                    targetLang: targetLang,
+                    metadata: metadata,
+                    glossary: glossary,
+                    model: model,
+                    promptPresets: promptPresets,
+                    allowsSourceFallback: allowsSourceFallback
+                )
+            }
+
+            guard cues.count > 1 else { throw error }
+
+            // Each retry strictly halves the failed input; binary splitting visits
+            // at most 2n - 1 batches, so a bad model response cannot loop forever.
+            let splitIndex = cues.count / 2
+            let left = try await translateCueBatchWithRecovery(
+                Array(cues[..<splitIndex]),
+                targetLang: targetLang,
+                metadata: metadata,
+                glossary: glossary,
+                model: model,
+                promptPresets: promptPresets,
+                allowsSourceFallback: allowsSourceFallback
+            )
+            let right = try await translateCueBatchWithRecovery(
+                Array(cues[splitIndex...]),
+                targetLang: targetLang,
+                metadata: metadata,
+                glossary: glossary,
+                model: model,
+                promptPresets: promptPresets,
+                allowsSourceFallback: allowsSourceFallback
+            )
+            return left + right
+        } catch {
+            throw error
         }
-        return translated
+    }
+
+    private func translateSingleCueTerminalWithRecovery(
+        _ cue: TranscriptCue,
+        targetLang: String,
+        metadata: AudioMetadata,
+        glossary: [GlossaryEntry],
+        model: ActiveMLXModel,
+        promptPresets: [String: PromptPresetSettings],
+        allowsSourceFallback: Bool
+    ) async throws -> [TranscriptCue] {
+        let prompt = NativeLLMPromptBuilder.singleCueTerminalTranslationPrompt(
+            cue: cue,
+            targetLang: targetLang,
+            metadata: metadata,
+            glossary: glossary,
+            promptPresets: promptPresets
+        )
+        let sourceLength = cue.text.count
+        let maxTokens = translationTokenLimit(for: sourceLength)
+        let raw = try await generate(
+            prompt: prompt,
+            model: model,
+            sourceLength: sourceLength,
+            maxTokens: maxTokens,
+            sanitizeOutput: false
+        )
+
+        do {
+            let translatedCue = try NativeLLMPromptBuilder.parseSingleCueTerminalTranslationOutput(
+                raw,
+                sourceCue: cue,
+                targetLang: targetLang
+            )
+            guard Self.isCompleteCueTranslation([translatedCue], sourceCues: [cue]) else {
+                throw CueBatchTranslationError.emptyOutput
+            }
+            return [translatedCue]
+        } catch let error as CueBatchTranslationError {
+            guard case .emptyOutput = error else { throw error }
+        }
+
+        let retryPrompt = Self.terminalRetryPrompt(from: prompt, targetLang: targetLang)
+        let retryRaw = try await generate(
+            prompt: retryPrompt,
+            model: model,
+            sourceLength: sourceLength,
+            maxTokens: maxTokens,
+            sanitizeOutput: false
+        )
+
+        do {
+            let translatedCue = try NativeLLMPromptBuilder.parseSingleCueTerminalTranslationOutput(
+                retryRaw,
+                sourceCue: cue,
+                targetLang: targetLang
+            )
+            guard Self.isCompleteCueTranslation([translatedCue], sourceCues: [cue]) else {
+                throw CueBatchTranslationError.emptyOutput
+            }
+            return [translatedCue]
+        } catch let error as CueBatchTranslationError {
+            guard case .emptyOutput = error else { throw error }
+            guard allowsSourceFallback else { throw CueBatchTranslationError.emptyOutput }
+
+            // Preserve the failed source leaf for review while the caller retains
+            // any real translations recovered from its sibling leaves.
+            return [Self.sourcePreservingFallbackCue(for: cue)]
+        }
+    }
+
+    private nonisolated static func sourcePreservingFallbackText(for cue: TranscriptCue) -> String {
+        guard !cue.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return "[Untranslated source cue]"
+        }
+        return cue.text
+    }
+
+    private nonisolated static func sourcePreservingFallbackCue(for cue: TranscriptCue) -> TranscriptCue {
+        TranscriptCue(
+            startSec: cue.startSec,
+            endSec: cue.endSec,
+            text: sourcePreservingFallbackText(for: cue),
+            words: cue.words
+        )
+    }
+
+
+    private nonisolated static func terminalRetryPrompt(from prompt: String, targetLang: String) -> String {
+        let marker = "<<<TRANSLATION>>>"
+        let retryInstructions = """
+        Recovery requirement: the previous terminal response was empty.
+        Do not return <<<END>>> or <<END>> by itself.
+        Return one nonempty translation in \(targetLang) between <<<TRANSLATION>>> and <<<END>>>.
+        Do not answer with a marker, explanation, or empty body.
+        """
+
+        guard let markerRange = prompt.range(of: marker, options: .backwards) else {
+            return "\(prompt)\n\n\(retryInstructions)\n\(marker)\n"
+        }
+
+        var retryPrompt = prompt
+        retryPrompt.replaceSubrange(markerRange, with: "\(retryInstructions)\n\(marker)")
+        return retryPrompt
+    }
+
+    private nonisolated static func isReviewableCueTranslation(
+        _ translated: [TranscriptCue],
+        sourceCues: [TranscriptCue]
+    ) -> Bool {
+        guard translated.count == sourceCues.count else { return false }
+        return zip(translated, sourceCues).allSatisfy { translated, source in
+            let translatedText = translated.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !translatedText.isEmpty,
+                  translated.startSec == source.startSec,
+                  translated.endSec == source.endSec
+            else {
+                return false
+            }
+
+            if translated.text == sourcePreservingFallbackText(for: source) {
+                return true
+            }
+            return isCompleteCueTranslation([translated], sourceCues: [source])
+        }
+    }
+
+    private nonisolated static func containsRealCueTranslation(
+        _ translated: [TranscriptCue],
+        sourceCues: [TranscriptCue]
+    ) -> Bool {
+        zip(translated, sourceCues).contains { translated, source in
+            translated.text != sourcePreservingFallbackText(for: source)
+                && isCompleteCueTranslation([translated], sourceCues: [source])
+        }
+    }
+
+    private nonisolated static func isCompleteCueTranslation(
+        _ translated: [TranscriptCue],
+        sourceCues: [TranscriptCue]
+    ) -> Bool {
+        guard translated.count == sourceCues.count else { return false }
+        return zip(translated, sourceCues).allSatisfy { translated, source in
+            let translatedText = translated.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !translatedText.isEmpty,
+                  translated.startSec == source.startSec,
+                  translated.endSec == source.endSec
+            else {
+                return false
+            }
+            let normalizedTranslated = translatedText
+                .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+                .split(whereSeparator: \.isWhitespace)
+                .joined(separator: " ")
+            let normalizedSource = source.text
+                .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+                .split(whereSeparator: \.isWhitespace)
+                .joined(separator: " ")
+            return normalizedTranslated != normalizedSource
+        }
     }
 
     func polish(
@@ -193,12 +464,25 @@ actor MLXTextGenerationEngine {
         prompt: String,
         model: ActiveMLXModel,
         sourceLength: Int,
-        maxTokens: Int? = nil
+        maxTokens: Int? = nil,
+        sanitizeOutput: Bool = true
     ) async throws -> String {
-        let container = try await modelContainer(for: model)
         let resolvedMaxTokens = maxTokens ?? generationTokenLimit(for: sourceLength)
-
         AppLogger.shared.info("MLX LLM generating with model \(model.id), prompt length: \(prompt.count), maxTokens: \(resolvedMaxTokens)")
+
+        if let generationOverride {
+            let raw = try await generationOverride(prompt, model, sourceLength, resolvedMaxTokens)
+            AppLogger.shared.info("MLX LLM raw generated output length: \(raw.count)")
+            if sanitizeOutput {
+                let sanitized = ModelOutputSanitizer.sanitize(raw)
+                AppLogger.shared.info("MLX LLM sanitized output length: \(sanitized.count)")
+                return sanitized
+            } else {
+                return raw
+            }
+        }
+
+        let container = try await modelContainer(for: model)
 
         let systemInstructions = """
         You are VaniScript's local translation engine.
@@ -260,9 +544,13 @@ actor MLXTextGenerationEngine {
                 }
 
                 AppLogger.shared.info("MLX LLM raw generated output length: \(output.count)")
-                let sanitized = ModelOutputSanitizer.sanitize(output)
-                AppLogger.shared.info("MLX LLM sanitized output length: \(sanitized.count)")
-                return sanitized
+                if sanitizeOutput {
+                    let sanitized = ModelOutputSanitizer.sanitize(output)
+                    AppLogger.shared.info("MLX LLM sanitized output length: \(sanitized.count)")
+                    return sanitized
+                } else {
+                    return output
+                }
             }
 
             group.addTask {
@@ -351,11 +639,14 @@ actor MLXTextGenerationEngine {
 
 enum MLXTextGenerationError: LocalizedError {
     case generationTimedOut(seconds: TimeInterval)
+    case emptyDocumentOutput
 
     var errorDescription: String? {
         switch self {
         case let .generationTimedOut(seconds):
             "MLX generation exceeded \(Int(seconds)) seconds."
+        case .emptyDocumentOutput:
+            "MLX returned no usable document translation output."
         }
     }
 }

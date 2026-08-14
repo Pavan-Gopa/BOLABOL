@@ -104,9 +104,8 @@ public struct LocalModelState: Codable, Equatable, Sendable {
             self.location = Self.location(for: path)
         }
         self.error = try container.decodeIfPresent(String.self, forKey: .error)
-        self.runtime = try container.decodeIfPresent(LocalModelRuntime.self, forKey: .runtime)
-            ?? Self.runtime(for: decodedLocation ?? self.location)
-            ?? .whisper
+        let decodedRuntime = try? container.decodeIfPresent(LocalModelRuntime.self, forKey: .runtime)
+        self.runtime = decodedRuntime ?? Self.runtime(for: decodedLocation ?? self.location) ?? .whisper
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -280,7 +279,14 @@ public struct CustomCloudProvider: Codable, Equatable, Identifiable, Sendable {
 }
 
 public struct AppSettings: Codable, Equatable, Sendable {
-    public var geminiKey: String
+    /// Primary/legacy Gemini key. Kept in sync with the first enabled `geminiKeys` entry.
+    public var geminiKey: String {
+        didSet { syncGeminiBankFromPrimaryKeyIfNeeded() }
+    }
+    /// Multi-key Gemini bank (max 10). Entries may use `#DISABLED#` prefix.
+    public var geminiKeys: [String] {
+        didSet { syncGeminiPrimaryKeyFromBankIfNeeded() }
+    }
     public var openaiKey: String
     public var anthropicKey: String
     public var geminiBudgetUsd: Double
@@ -315,6 +321,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var transcriptionProvider: String
     public var translationProvider: String
     public var defaultTargetLang: String
+    public var documentApprovalModeDefault: ApprovalMode
     public var localAsrModels: [String: LocalModelState]
     public var localTranslationModels: [String: LocalModelState]
     public var promptPresets: [String: PromptPresetSettings]
@@ -341,7 +348,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var logLevel: LogLevel
 
     private enum CodingKeys: String, CodingKey {
-        case geminiKey, openaiKey, anthropicKey
+        case geminiKey, geminiKeys, openaiKey, anthropicKey
         case geminiBudgetUsd, openaiBudgetUsd
         // A1 (§6.3): selected models for existing providers + new cloud providers.
         case geminiTextModel, openaiTextModel
@@ -351,6 +358,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case theme, fontSize, fontScale, fontFamily
         case chunkDurationMin, sliceMode, silenceThreshDb, minSilenceMs
         case defaultSourceLang, transcriptionProvider, translationProvider, defaultTargetLang
+        case documentApprovalModeDefault
         case localAsrModels, localTranslationModels, promptPresets, usage, glossary, customCloudProviders
         case hasCompletedOnboarding, completedOnboardingBuildID
         case mediaResolverEndpoint, mediaResolverToken
@@ -364,7 +372,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     }
 
     public init(
-        geminiKey: String,
+        geminiKey: String = "",
+        geminiKeys: [String] = [],
         openaiKey: String,
         anthropicKey: String,
         geminiBudgetUsd: Double,
@@ -395,6 +404,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         transcriptionProvider: String,
         translationProvider: String,
         defaultTargetLang: String,
+        documentApprovalModeDefault: ApprovalMode = .manual,
         localAsrModels: [String: LocalModelState],
         localTranslationModels: [String: LocalModelState],
         promptPresets: [String: PromptPresetSettings],
@@ -420,7 +430,14 @@ public struct AppSettings: Codable, Equatable, Sendable {
         qwenChatModelID: String = QwenChatModelCatalog.defaultModelID,
         logLevel: LogLevel = .info
     ) {
-        self.geminiKey = geminiKey
+        let bank: GeminiAPIKeyBank
+        if !geminiKeys.isEmpty {
+            bank = GeminiAPIKeyBank(entries: geminiKeys)
+        } else {
+            bank = GeminiAPIKeyBank(primaryKey: geminiKey)
+        }
+        self.geminiKeys = bank.entries
+        self.geminiKey = bank.primaryKey
         self.openaiKey = openaiKey
         self.anthropicKey = anthropicKey
         self.geminiBudgetUsd = geminiBudgetUsd
@@ -451,6 +468,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.transcriptionProvider = transcriptionProvider
         self.translationProvider = translationProvider
         self.defaultTargetLang = defaultTargetLang
+        self.documentApprovalModeDefault = documentApprovalModeDefault
         self.localAsrModels = localAsrModels
         self.localTranslationModels = localTranslationModels
         self.promptPresets = promptPresets
@@ -479,7 +497,17 @@ public struct AppSettings: Codable, Equatable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.geminiKey = try container.decodeIfPresent(String.self, forKey: .geminiKey) ?? ""
+        let legacyGeminiKey = try container.decodeIfPresent(String.self, forKey: .geminiKey) ?? ""
+        let decodedGeminiKeys = try container.decodeIfPresent([String].self, forKey: .geminiKeys) ?? []
+        if !decodedGeminiKeys.isEmpty {
+            let bank = GeminiAPIKeyBank(entries: decodedGeminiKeys)
+            self.geminiKeys = bank.entries
+            self.geminiKey = bank.primaryKey
+        } else {
+            let bank = GeminiAPIKeyBank(primaryKey: legacyGeminiKey)
+            self.geminiKeys = bank.entries
+            self.geminiKey = bank.primaryKey
+        }
         self.openaiKey = try container.decodeIfPresent(String.self, forKey: .openaiKey) ?? ""
         self.anthropicKey = try container.decodeIfPresent(String.self, forKey: .anthropicKey) ?? ""
         self.geminiBudgetUsd = try container.decodeIfPresent(Double.self, forKey: .geminiBudgetUsd) ?? 0
@@ -511,6 +539,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.transcriptionProvider = try container.decodeIfPresent(String.self, forKey: .transcriptionProvider) ?? "coreml-whisperkit"
         self.translationProvider = try container.decodeIfPresent(String.self, forKey: .translationProvider) ?? "mlx-native"
         self.defaultTargetLang = try container.decodeIfPresent(String.self, forKey: .defaultTargetLang) ?? "Russian"
+        self.documentApprovalModeDefault = try container.decodeIfPresent(ApprovalMode.self, forKey: .documentApprovalModeDefault) ?? .manual
         let decodedLocalASRModels = try container.decodeIfPresent([String: LocalModelState].self, forKey: .localAsrModels) ?? [:]
         self.localAsrModels = Self.mergeLocalASRDefaults(decodedLocalASRModels)
         self.localTranslationModels = try container.decodeIfPresent([String: LocalModelState].self, forKey: .localTranslationModels) ?? AppSettings.defaults.localTranslationModels
@@ -612,6 +641,39 @@ public struct AppSettings: Codable, Equatable, Sendable {
         return clean
     }
 
+    public var geminiKeyBank: GeminiAPIKeyBank {
+        get {
+            if geminiKeys.isEmpty && !geminiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return GeminiAPIKeyBank(primaryKey: geminiKey)
+            }
+            return GeminiAPIKeyBank(entries: geminiKeys)
+        }
+        set {
+            geminiKeys = newValue.entries
+            geminiKey = newValue.primaryKey
+        }
+    }
+
+    public mutating func setGeminiKeyBank(_ bank: GeminiAPIKeyBank) {
+        geminiKeyBank = bank
+    }
+
+    private mutating func syncGeminiPrimaryKeyFromBankIfNeeded() {
+        let primary = GeminiAPIKeyBank(entries: geminiKeys).primaryKey
+        if geminiKey != primary {
+            geminiKey = primary
+        }
+    }
+
+    private mutating func syncGeminiBankFromPrimaryKeyIfNeeded() {
+        var bank = GeminiAPIKeyBank(entries: geminiKeys)
+        if bank.primaryKey != geminiKey {
+            bank.primaryKey = geminiKey
+            if geminiKeys != bank.entries {
+                geminiKeys = bank.entries
+            }
+        }
+    }
     public static let defaults = AppSettings(
         geminiKey: "",
         openaiKey: "",
@@ -678,10 +740,10 @@ public struct AppSettings: Codable, Equatable, Sendable {
             ),
         ],
         localTranslationModels: [
-            "qwen35-08b-4bit": LocalModelState(status: .notDownloaded, label: "Qwen 3.5 0.8B 4bit", runtime: .mlx),
-            "qwen35-2b-4bit": LocalModelState(status: .notDownloaded, label: "Qwen 3.5 2B 4bit", runtime: .mlx),
-            "qwen35-4b-4bit": LocalModelState(status: .notDownloaded, label: "Qwen 3.5 4B 4bit", runtime: .mlx),
-            "qwen35-9b-4bit": LocalModelState(status: .notDownloaded, label: "Qwen 3.5 9B 4bit", runtime: .mlx),
+            "qwen35-08b-4bit": LocalModelState(status: .notDownloaded, label: "Qwen 3.5 0.8B 4-bit", runtime: .mlx),
+            "qwen35-2b-4bit": LocalModelState(status: .notDownloaded, label: "Qwen 3.5 2B 4-bit", runtime: .mlx),
+            "qwen35-4b-4bit": LocalModelState(status: .notDownloaded, label: "Qwen 3.5 4B 4-bit", runtime: .mlx),
+            "qwen35-9b-4bit": LocalModelState(status: .notDownloaded, label: "Qwen 3.5 9B 4-bit", runtime: .mlx),
             "nemotron3-nano-4b-4bit": LocalModelState(status: .notDownloaded, label: "NVIDIA Nemotron-3 Nano 4B", runtime: .mlx),
         ],
         promptPresets: DefaultPrompts.defaultPresets,
@@ -708,9 +770,29 @@ public struct AppSettings: Codable, Equatable, Sendable {
     private static func mergeLocalASRDefaults(
         _ decodedModels: [String: LocalModelState]
     ) -> [String: LocalModelState] {
+        mergeLocalModelMetadata(
+            decodedModels,
+            defaults: AppSettings.defaults.localAsrModels,
+            overwriteMetadata: false
+        )
+    }
+
+    private static func mergeLocalModelMetadata(
+        _ decodedModels: [String: LocalModelState],
+        defaults: [String: LocalModelState],
+        overwriteMetadata: Bool
+    ) -> [String: LocalModelState] {
         var merged = decodedModels
-        for (id, defaultModel) in AppSettings.defaults.localAsrModels where merged[id] == nil {
-            merged[id] = defaultModel
+        for (id, defaultModel) in defaults {
+            guard var model = merged[id] else {
+                merged[id] = defaultModel
+                continue
+            }
+            if overwriteMetadata {
+                model.label = NativeModelCatalog.displayName(for: id) ?? defaultModel.label
+                model.runtime = NativeModelCatalog.settingsRuntime(for: id) ?? defaultModel.runtime
+                merged[id] = model
+            }
         }
         return merged
     }
@@ -728,6 +810,21 @@ extension AppSettings {
             .replacingOccurrences(of: "-", with: "")
             .lowercased()
     }
+    /// Reconciles persisted local-model metadata with the source catalog while
+    /// retaining user-owned state such as status, progress, location and errors.
+    public mutating func normalizeLocalModelMetadata() {
+        localAsrModels = Self.mergeLocalModelMetadata(
+            localAsrModels,
+            defaults: AppSettings.defaults.localAsrModels,
+            overwriteMetadata: true
+        )
+        localTranslationModels = Self.mergeLocalModelMetadata(
+            localTranslationModels,
+            defaults: AppSettings.defaults.localTranslationModels,
+            overwriteMetadata: true
+        )
+    }
+
 
     public mutating func normalizeMcpSettings(generateToken: () -> String = { AppSettings.generateMcpAccessToken() }) {
         mcpAccessToken = mcpAccessToken.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -771,25 +868,37 @@ extension AppSettings {
     }
 
     public func isDownloadedLocalASRModelActive(id: String) -> Bool {
-        guard transcriptionProvider == id,
-              let model = localAsrModels[id],
-              model.status == .downloaded,
-              let descriptor = NativeModelCatalog.descriptor(for: id),
-              model.runtime == descriptor.settingsRuntime,
-              descriptor.capabilities.isAvailable(
-                  onMacOSMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion
-              )
-        else {
-            return false
+        let candidateIDs: [String]
+        if id == "coreml-whisperkit" {
+            candidateIDs = NativeModelCatalog.whisperKitModelDescriptors.map(\.id)
+        } else {
+            candidateIDs = [id]
         }
 
-        // Keep legacy path-less states visible until disk reconciliation can
-        // migrate them; any persisted path must pass the exact presence policy.
-        guard let path = model.path, !path.isEmpty else { return true }
-        return NativeModelCatalog.isModelPresent(
-            descriptor,
-            at: URL(fileURLWithPath: path, isDirectory: true)
-        )
+        guard transcriptionProvider == id else { return false }
+
+        let osMajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        for candidateID in candidateIDs {
+            guard let model = localAsrModels[candidateID],
+                  model.status == .downloaded,
+                  let descriptor = NativeModelCatalog.descriptor(for: candidateID),
+                  model.runtime == descriptor.settingsRuntime,
+                  descriptor.capabilities.isAvailable(onMacOSMajor: osMajor),
+                  let path = model.path,
+                  !path.isEmpty
+            else {
+                continue
+            }
+
+            // UI/MainActor readiness is intentionally reference-only. The
+            // actor-isolated router performs the authoritative package check.
+            var isDirectory = ObjCBool(false)
+            if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory),
+               isDirectory.boolValue {
+                return true
+            }
+        }
+        return false
     }
 
     public func isDownloadedLocalTranslationModelActive(id: String) -> Bool {

@@ -65,20 +65,20 @@ accepted plan/ADR changes.
 
 ```text
 Human ↔ Main Orchestrator only
-  → fresh workflow-coder runs assigned Objective Gates
-  → Main verifies source/diff/evidence
-  → fresh workflow-reviewer evaluates Judgment Gates
-  → Main verifies findings
-  → fresh workflow-tester runs runtime/QA Objective Gates
-  → Main verifies tests/reports
-  → green → Main updates state and opens the next step
-  → red → Main records verified attempt memory and starts a fresh Coder fix run
+  → fresh workflow-coder implements the scoped candidate
+  → Main verifies source/diff/evidence, builds, and opens the fresh app
+  → Human exercises the real behavior
+  → red → Main records evidence and starts a fresh Coder fix run
+  → accepted → one fresh workflow-reviewer evaluates Judgment Gates
+  → approved → one fresh workflow-tester runs runtime/QA Objective Gates
+  → Main verifies tests/reports and opens the next step
 ```
 
 | Gate | Default | Human choice |
 |------|---------|--------------|
-| **Code review** | **On** every step | Explicit skip is recorded in state |
-| **Tester** | **Recommended on** | Explicit opt-out is recorded in state |
+| **Human acceptance** | **On before formal review** | Candidate stays in the coding loop until the Human confirms the real behavior |
+| **Code review** | **One pass after Human acceptance** | Explicit skip is recorded in state |
+| **Tester** | **One pass after approved review** | Explicit opt-out is recorded in state |
 | **Security** | **Offer once** near release | Optional, expensive |
 
 Workers never invent the pipeline, write workflow-state files, invoke another

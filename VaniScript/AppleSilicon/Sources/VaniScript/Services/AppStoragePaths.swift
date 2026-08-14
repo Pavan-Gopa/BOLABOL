@@ -29,4 +29,24 @@ enum AppStoragePaths {
         applicationSupportDirectory(fileManager: fileManager)
             .appendingPathComponent("bin", isDirectory: true)
     }
+    static func projectsDirectory(fileManager: FileManager = .default) -> URL {
+        applicationSupportDirectory(fileManager: fileManager)
+            .appendingPathComponent("Projects", isDirectory: true)
+    }
+
+    static func projectDirectory(
+        id: String,
+        fileManager: FileManager = .default
+    ) -> URL {
+        projectsDirectory(fileManager: fileManager)
+            .appendingPathComponent(id, isDirectory: true)
+    }
+
+    static func projectSourceDirectory(
+        id: String,
+        fileManager: FileManager = .default
+    ) -> URL {
+        projectDirectory(id: id, fileManager: fileManager)
+            .appendingPathComponent("source", isDirectory: true)
+    }
 }

@@ -9,10 +9,12 @@
 
 | Field | Value |
 |-------|-------|
-| Step | S1 — Parakeet engine |
-| Date | 2026-08-11T06:57:11Z |
+| Step | S2 — Canary Flash and Canary 1B engines |
+| Date | 2026-08-11T12:51:07Z |
 | Status | qa_green |
-| Suite | `LocalASRAudioPreprocessorTests|ParakeetTranscriptionEngineTests` |
+| Candidate | `S2CanaryDeterministicTestFix1` |
+| Suite | `CanaryCoreMLEngineTests` |
+| Human-requested rerun | `S2CanaryTesterBackup1` (`workflow-tester-backup`) |
 
 ---
 
@@ -20,29 +22,37 @@
 
 | Command | Result |
 |---------|--------|
-| `swift test --filter 'LocalASRAudioPreprocessorTests|ParakeetTranscriptionEngineTests'` | PASS — 9 tests / 2 suites / 0 failures |
+| Initial Tester: `swift test --filter CanaryCoreMLEngineTests` | PASS — 9 tests / 1 suite / 0 failures |
+| Human-authorized backup rerun: `swift test --filter CanaryCoreMLEngineTests` | PASS — 9 tests / 1 suite / 0 failures |
+| `swift test` | PASS — Main full-suite verification |
+| `./script/build_and_run.sh --verify` | PASS — fresh `dist/VaniScript.app` built, signed, launched, and detected running |
 
 ---
 
 ## 2. Gap-hunt mapping
 
-| Requirement (from STEPS / plan) | Coverage | Result |
-|---------------------------------|----------|--------|
-| Canonical 16 kHz mono int16 WAV; loudest-channel selection; invalid/empty input cleanup | `LocalASRAudioPreprocessorTests` | PASS |
-| Catalog binding; language hints; translation rejection; empty/inference/state errors | `ParakeetTranscriptionEngineTests` | PASS |
-| Resident session, explicit unload, temporary WAV cleanup, missing audio/model boundaries | `ParakeetTranscriptionEngineTests` | PASS |
+| Requirement (from S2) | Coverage | Result |
+|-----------------------|----------|--------|
+| Bounded Flash chunks and sustained-silence boundaries | `chunksRespectWindowAndSilenceBoundaries` | PASS |
+| Path B mask/position shapes and macOS 15 gate | `pathBMaskAndPositionContracts`, `earlyRequestFailures` | PASS |
+| Explicit source language, ASR-only requests, fail-closed variants/layouts | `requestAndLanguageValidation`, `modelLayoutValidation`, `earlyRequestFailures` | PASS |
+| One resident session, shared concurrent load, unload/cancellation cleanup | `residentSessionLifecycle`, `concurrentTranscriptionsShareOneLoad`, `unloadDuringPendingLoadDisposesLateSession`, `cancellationCleansTemporaryAudio` | PASS |
 
 ---
 
-## 3. New tests added
+## 3. Tester changes
 
-- `Tests/VaniScriptTests/LocalASRAudioPreprocessorTests.swift` — invalid source and source/destination identity boundaries.
-- `Tests/VaniScriptTests/ParakeetTranscriptionEngineTests.swift` — missing audio and unavailable model boundaries.
+- None. Tester added or modified no files.
 
 ---
 
 ## 4. Notes
 
-- Tester primary was changed by the Human to `google-antigravity/gemini-3.6-flash:high` after the previous primary failed before execution with provider HTTP 404.
-- Main inspected both added tests; assertions cover observable domain errors and do not weaken existing coverage.
-- Full `swift test` was green at 369 tests before the QA-only additions; the post-addition focused gate is green at 9 tests.
+- Initial Tester returned `qa_green`. The Human then explicitly requested a
+  second verification after changing the Tester model.
+- Two `synthetic/hf` primary launches failed before execution with
+  `401 Invalid API Key`; neither produced a verdict or file change.
+- Human authorized `workflow-tester-backup`; it ran the focused gate and
+  returned 9/9 with no test diff.
+- Main verified the backup transcript and exact command. No post-Tester
+  Reviewer pass was launched.

@@ -645,7 +645,7 @@ struct SettingsView: View {
                         ModelSettingsRow(
                             id: id,
                             model: model,
-                            isActive: store.settings.isDownloadedLocalASRModelActive(id: id),
+                            isActive: store.effectiveTranscriptionProvider == id && store.settings.isDownloadedLocalASRModelActive(id: id),
                             downloadUrl: modelDownloadUrl(id: id),
                             download: {
                                 store.downloadLocalModel(id: id, isTranslation: false)
@@ -654,9 +654,7 @@ struct SettingsView: View {
                                 store.locateLocalASRModel(id: id)
                             },
                             use: {
-                                store.updateSettings { settings in
-                                    settings.transcriptionProvider = id
-                                }
+                                store.setTranscriptionProvider(id)
                             },
                             remove: {
                                 store.removeLocalASRModel(id: id)
@@ -681,9 +679,7 @@ struct SettingsView: View {
                                 store.locateLocalTranslationModel(id: id)
                             },
                             use: {
-                                store.updateSettings { settings in
-                                    settings.translationProvider = id
-                                }
+                                store.setTranslationProvider(id)
                             },
                             remove: {
                                 store.removeLocalTranslationModel(id: id)
@@ -1492,12 +1488,15 @@ private struct ProviderCardView: View {
             }
         )) {
             VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
-                Text("Google Gemini API key for cloud transcription, translation, and editing.")
+                Text("Google Gemini API keys for cloud transcription, translation, and editing. When one key hits quota, VaniScript rotates to the next enabled key automatically.")
                     .font(.system(size: 11))
                     .foregroundStyle(VaniScriptTheme.text2)
                     .padding(.bottom, 2)
 
-                ApiKeyInputRow(title: "Gemini Key", text: binding(\.geminiKey), urlString: descriptor.getApiKeyURL)
+                GeminiAPIKeysEditor(
+                    bank: geminiKeyBankBinding,
+                    getApiKeyURL: descriptor.getApiKeyURL
+                )
                 CloudKeyModelRow(
                     descriptor: descriptor,
                     apiKey: store.settings.geminiKey,
@@ -1942,6 +1941,16 @@ private struct ProviderCardView: View {
         }
     }
 
+    private var geminiKeyBankBinding: Binding<GeminiAPIKeyBank> {
+        Binding {
+            store.settings.geminiKeyBank
+        } set: { bank in
+            store.updateSettings { settings in
+                settings.geminiKeyBank = bank
+            }
+        }
+    }
+
     private func statusBadge(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 8, weight: .heavy))
@@ -1950,6 +1959,170 @@ private struct ProviderCardView: View {
             .padding(.vertical, 1)
             .background(VaniScriptTheme.green)
             .cornerRadius(4)
+    }
+}
+
+private struct GeminiAPIKeysEditor: View {
+    @Binding var bank: GeminiAPIKeyBank
+    let getApiKeyURL: String
+    @State private var isRevealed = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(bank.entries.count > 1 ? "API Keys (\(bank.configuredCount)/\(GeminiAPIKeyBank.maxKeys))" : "API Key")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(VaniScriptTheme.text2)
+
+                Spacer()
+
+                if bank.entries.count > 1 {
+                    Menu {
+                        Button("Enable All Keys") {
+                            bank.enableAll()
+                        }
+                        Divider()
+                        ForEach(Array(bank.entries.indices), id: \.self) { index in
+                            let preview = String(bank.cleanKey(at: index).suffix(6))
+                            Button("Test Only Key #\(index + 1)" + (preview.isEmpty ? "" : " (…\(preview))")) {
+                                bank.disableAllExcept(at: index)
+                            }
+                        }
+                    } label: {
+                        Label("Manage Keys", systemImage: "slider.horizontal.3")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .menuStyle(.borderlessButton)
+                    .help("Enable all keys or isolate one key for testing.")
+                }
+
+                if bank.entries.count < GeminiAPIKeyBank.maxKeys {
+                    Button {
+                        if bank.entries.isEmpty {
+                            bank.entries = ["", ""]
+                        } else {
+                            bank.addKey("")
+                        }
+                    } label: {
+                        Label("Add Key", systemImage: "plus")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Add another Gemini API key for automatic quota rotation (up to 10).")
+                }
+
+                Button {
+                    if let url = URL(string: getApiKeyURL) {
+                        NSWorkspace.shared.open(url)
+                    }
+                } label: {
+                    Label("Get API Key", systemImage: "arrow.up.right.square")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.borderless)
+            }
+
+            let keyCount = max(1, bank.entries.count)
+            ForEach(0..<keyCount, id: \.self) { index in
+                let disabled = bank.isDisabled(at: index)
+                HStack(spacing: 8) {
+                    Button {
+                        ensureSlot(index)
+                        bank.toggleDisabled(at: index)
+                    } label: {
+                        Image(systemName: disabled ? "circle.slash" : "checkmark.circle.fill")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(disabled ? VaniScriptTheme.text2.opacity(0.55) : VaniScriptTheme.green)
+                    }
+                    .buttonStyle(.plain)
+                    .help(disabled ? "Key disabled" : "Key active")
+
+                    Group {
+                        if isRevealed {
+                            TextField(keyPlaceholder(at: index), text: keyBinding(at: index))
+                        } else {
+                            SecureField(keyPlaceholder(at: index), text: keyBinding(at: index))
+                        }
+                    }
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(VaniScriptTheme.text0)
+                    .padding(.horizontal, 10)
+                    .frame(height: 34)
+                    .background(VaniScriptTheme.input)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .opacity(disabled ? 0.5 : 1)
+
+                    if disabled {
+                        Text("Disabled")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.text2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 4))
+                    }
+
+                    Button {
+                        isRevealed.toggle()
+                    } label: {
+                        Image(systemName: isRevealed ? "eye.slash" : "eye")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.text2)
+                    }
+                    .buttonStyle(.plain)
+                    .help(isRevealed ? "Hide API keys" : "Show API keys")
+
+                    if keyCount > 1 {
+                        Button {
+                            bank.removeKey(at: index)
+                        } label: {
+                            Image(systemName: "trash")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(Color.red.opacity(0.85))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Remove API key")
+                    }
+                }
+            }
+        }
+    }
+
+    private func keyPlaceholder(at index: Int) -> String {
+        if max(1, bank.entries.count) == 1 {
+            return "Enter Gemini API key"
+        }
+        return index == 0 ? "Primary key #1" : "API key #\(index + 1)"
+    }
+
+    private func ensureSlot(_ index: Int) {
+        if bank.entries.isEmpty {
+            bank.entries = [""]
+        }
+        while bank.entries.count <= index && bank.entries.count < GeminiAPIKeyBank.maxKeys {
+            bank.addKey("")
+        }
+    }
+
+    private func keyBinding(at index: Int) -> Binding<String> {
+        Binding(
+            get: {
+                if bank.entries.indices.contains(index) {
+                    return bank.cleanKey(at: index)
+                }
+                return ""
+            },
+            set: { newValue in
+                if bank.entries.isEmpty {
+                    bank.entries = [newValue]
+                } else if bank.entries.indices.contains(index) {
+                    bank.updateKey(newValue, at: index)
+                } else if bank.entries.count < GeminiAPIKeyBank.maxKeys {
+                    bank.addKey(newValue)
+                }
+            }
+        )
     }
 }
 

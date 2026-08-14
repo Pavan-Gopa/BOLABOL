@@ -82,6 +82,41 @@ struct McpSecurityContractTests {
         #expect(json.contains("\"Private Model\""))
     }
 
+    @Test("project state snapshot reports Gemini readiness from enabled bank keys only")
+    func projectStateSnapshotGeminiReadinessFollowsEnabledBankKeys() throws {
+        func geminiConfigured(_ settings: AppSettings) throws -> Bool {
+            let snapshot = McpProjectStateSnapshot.build(workflow: WorkflowState.initial(settings: settings))
+            let data = try JSONSerialization.data(withJSONObject: snapshot, options: [.sortedKeys])
+            let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+            let settingsDict = try #require(object["settings"] as? [String: Any])
+            let providers = try #require(settingsDict["providers"] as? [String: Any])
+            let gemini = try #require(providers["gemini"] as? [String: Any])
+            return try #require(gemini["configured"] as? Bool)
+        }
+
+        // Any single enabled key marks Gemini configured, even when later keys are disabled.
+        var enabled = AppSettings.defaults
+        enabled.geminiKeyBank = GeminiAPIKeyBank(entries: [
+            "live-key",
+            "\(GeminiAPIKeyBank.disabledPrefix)mothballed-key"
+        ])
+        #expect(try geminiConfigured(enabled))
+
+        // A bank where every stored key is disabled reports not configured...
+        var allDisabled = AppSettings.defaults
+        allDisabled.geminiKeyBank = GeminiAPIKeyBank(entries: [
+            "\(GeminiAPIKeyBank.disabledPrefix)only-disabled-key"
+        ])
+        #expect(try !geminiConfigured(allDisabled))
+
+        // ...even though the synced legacy primary string is non-empty (the
+        // synced value still carries the disabled marker as its clean text path).
+        #expect(allDisabled.geminiKey.isEmpty || !allDisabled.geminiKeyBank.hasEnabledKey)
+
+        // An empty bank reports not configured.
+        #expect(try !geminiConfigured(.defaults))
+    }
+
     @Test("tool registry exposes the same complete catalog and filters mutating tools")
     func toolRegistryFiltersMutatingTools() {
         let readOnlyTools = McpToolRegistry.definitions(allowMutatingTools: false).map(\.name)

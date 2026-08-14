@@ -22,13 +22,16 @@ struct LocalASRRequest: Sendable, Equatable {
     }
 }
 
-/// A successful local ASR response. Cue construction belongs to the caller;
-/// engines only guarantee usable source-language text.
+/// A successful local ASR response. `cues` are relative to the audio request
+/// and are present when an engine can preserve real timing. A nil value means
+/// the engine only returned text, allowing the pipeline's bounded fallback.
 struct LocalASRResult: Sendable, Equatable {
     var text: String
+    var cues: [TranscriptCue]?
 
-    init(text: String) {
+    init(text: String, cues: [TranscriptCue]? = nil) {
         self.text = text
+        self.cues = cues
     }
 }
 
@@ -37,6 +40,8 @@ enum LocalASREngineError: LocalizedError, Equatable, Sendable {
     case translationUnsupported
     case unsupportedModel(String)
     case modelUnavailable(URL)
+    case unsupportedLanguage(String)
+    case unsupportedOS(requiredMajor: Int, currentMajor: Int)
     case audioPreparationFailed(String)
     case inferenceFailed(String)
     case emptyResult
@@ -52,6 +57,10 @@ enum LocalASREngineError: LocalizedError, Equatable, Sendable {
             return "The selected local ASR model is unsupported: \(detail)"
         case .modelUnavailable(let url):
             return "The selected local ASR model is not available at \(url.path)."
+        case .unsupportedLanguage(let language):
+            return "The selected local ASR model does not support source language '\(language)'."
+        case .unsupportedOS(let requiredMajor, let currentMajor):
+            return "The selected local ASR model requires macOS \(requiredMajor) or later (current: macOS \(currentMajor))."
         case .audioPreparationFailed(let detail):
             return "Could not prepare audio for local transcription: \(detail)"
         case .inferenceFailed(let detail):

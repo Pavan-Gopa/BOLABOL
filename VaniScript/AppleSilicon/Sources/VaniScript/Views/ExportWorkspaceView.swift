@@ -145,18 +145,34 @@ struct ExportWorkspaceView: View {
         VStack(alignment: .leading, spacing: 14) {
             ExportSectionHeading(
                 title: "Document export",
-                subtitle: "Download the reviewed transcript as text, subtitles, or a formatted Markdown document."
+                subtitle: session.sourceKind == .document
+                    ? "Download the reviewed document in DOCX, PDF, or TXT format."
+                    : "Download the reviewed transcript as text, subtitles, or a formatted Markdown document."
             )
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
-                ForEach(OutputFormat.allCases, id: \.rawValue) { format in
-                    ExportButton(title: "Original \(format.rawValue)", primary: false) {
-                        store.export(side: .original, format: format)
+            if session.sourceKind == .document {
+                HStack(spacing: 8) {
+                    ExportButton(title: "DOCX", primary: true) {
+                        store.exportDocument(format: .docx)
+                    }
+                    ExportButton(title: "PDF", primary: false) {
+                        store.exportDocument(format: .pdf)
+                    }
+                    ExportButton(title: "TXT", primary: false) {
+                        store.exportDocument(format: .txt)
                     }
                 }
-                if session.selectedTranslationLanguage != nil {
+            } else {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                     ForEach(OutputFormat.allCases, id: \.rawValue) { format in
-                        ExportButton(title: "Target \(format.rawValue)", primary: true) {
-                            store.export(side: .translated, format: format)
+                        ExportButton(title: "Original \(format.rawValue)", primary: false) {
+                            store.export(side: .original, format: format)
+                        }
+                    }
+                    if session.selectedTranslationLanguage != nil {
+                        ForEach(OutputFormat.allCases, id: \.rawValue) { format in
+                            ExportButton(title: "Target \(format.rawValue)", primary: true) {
+                                store.export(side: .translated, format: format)
+                            }
                         }
                     }
                 }

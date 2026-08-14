@@ -8,22 +8,17 @@ enum SettingsDiskStore {
         let loadedSettings = (try? JSONDecoder().decode(AppSettings.self, from: data)) ?? .defaults
         var settings = loadedSettings
 
-        // Keep only supported keys and merge missing defaults for local translation models
+        // Canonicalize known model labels and runtimes while retaining all
+        // user-owned install state, then discard unsupported legacy IDs.
+        settings.normalizeLocalModelMetadata()
         let supportedTranslationKeys = Set(AppSettings.defaults.localTranslationModels.keys)
-        settings.localTranslationModels = settings.localTranslationModels.filter { supportedTranslationKeys.contains($0.key) }
-        for (key, defaultModel) in AppSettings.defaults.localTranslationModels {
-            if settings.localTranslationModels[key] == nil {
-                settings.localTranslationModels[key] = defaultModel
-            }
+        settings.localTranslationModels = settings.localTranslationModels.filter {
+            supportedTranslationKeys.contains($0.key)
         }
 
-        // Keep only supported keys and merge missing defaults for local ASR models
         let supportedAsrKeys = Set(AppSettings.defaults.localAsrModels.keys)
-        settings.localAsrModels = settings.localAsrModels.filter { supportedAsrKeys.contains($0.key) }
-        for (key, defaultModel) in AppSettings.defaults.localAsrModels {
-            if settings.localAsrModels[key] == nil {
-                settings.localAsrModels[key] = defaultModel
-            }
+        settings.localAsrModels = settings.localAsrModels.filter {
+            supportedAsrKeys.contains($0.key)
         }
 
         // Merge missing default keys for prompt presets
@@ -35,7 +30,8 @@ enum SettingsDiskStore {
 
         // Merge latest Vaishnava starter glossary terms
         settings.glossary = StarterGlossary.mergeStarterGlossary(settings.glossary)
-        settings.synchronizeLocalModelsWithDisk()
+        // Model file presence and integrity are reconciled asynchronously by WorkflowStore
+        // so a large package cannot hash on the MainActor during startup.
         settings.normalizeMcpSettings()
         if settings != loadedSettings {
             try? save(settings, fileManager: fileManager)

@@ -172,6 +172,102 @@ Transcript:
 """
         ),
         PromptDefinition(
+            id: "documentLiteraryTranslationSystem",
+            label: "Document Translation · System",
+            stage: "Document Translation",
+            description: "Strict system contract for literary document translation.",
+            variables: ["targetLang", "responseTemplate", "chunkId", "requiredBlockIDs", "allowedStyleIDs"],
+            defaultText: """
+You translate structured literary documents for VaniScript.
+
+Return exactly one JSON object matching this canonical response object shape:
+{{responseTemplate}}
+
+The exact request identity is:
+- chunkId: {{chunkId}}
+- required block IDs, in this exact order: {{requiredBlockIDs}}
+- allowed style IDs: {{allowedStyleIDs}}
+
+Return one output block for every required block ID, in the exact requested order.
+Never merge, drop, duplicate, or invent block IDs. Never translate read-only context.
+Use only captured style IDs. Preserve protected blocks and protected spans byte-for-byte,
+including names, numbers, placeholders, citations, and transliteration. Do not add
+headings, explanations, summaries, notes, markdown fences, or labels such as
+"Translation:". Preserve the author's person, modality, repetition, and meaning.
+The target language is {{targetLang}}.
+"""
+        ),
+        PromptDefinition(
+            id: "documentLiteraryTranslationUser",
+            label: "Document Translation · User",
+            stage: "Document Translation",
+            description: "Structured request for one semantic document chunk.",
+            variables: ["requestJson", "responseTemplate", "chunkId", "requiredBlockIDs", "allowedStyleIDs"],
+            defaultText: """
+Translate only the requested blocks in this document translation request.
+The request JSON is authoritative. Do not translate read-only context.
+Return the exact canonical JSON object shape shown below, with the exact chunkId,
+required block IDs/order, and allowed style IDs:
+{{responseTemplate}}
+chunkId: {{chunkId}}
+required block IDs/order: {{requiredBlockIDs}}
+allowed style IDs: {{allowedStyleIDs}}
+
+Return strict JSON and nothing else:
+
+{{requestJson}}
+"""
+        ),
+        PromptDefinition(
+            id: "documentTranslationRepair",
+            label: "Document Translation · Targeted Repair",
+            stage: "Document Translation",
+            description: "Repairs only invalid block IDs from one translation response.",
+            variables: ["requestJson", "issues"],
+            defaultText: """
+Repair only the listed invalid block IDs in the supplied document translation request.
+Do not regenerate or alter any other block. Preserve all protected material and style IDs.
+Return the same strict vaniscript.document.translation.v1 JSON shape, with exactly the
+requested block IDs in their original order and no explanation.
+
+Validation issues:
+{{issues}}
+
+Request:
+{{requestJson}}
+"""
+        ),
+        PromptDefinition(
+            id: "documentTranslationQualityReview",
+            label: "Document Translation · Quality Review",
+            stage: "Document Translation",
+            description: "Optional issue-only quality review; never rewrites translation text.",
+            variables: ["requestJson", "responseJson"],
+            defaultText: """
+Review this structured document translation without rewriting it.
+Return JSON with an issues array only. Do not return replacement text.
+Request:
+{{requestJson}}
+
+Response:
+{{responseJson}}
+"""
+        ),
+        PromptDefinition(
+            id: "documentVerseClassification",
+            label: "Document Translation · Verse Classification",
+            stage: "Document Translation",
+            description: "Optional preflight classification for ambiguous verse blocks.",
+            variables: ["text"],
+            defaultText: """
+Classify the supplied document block for preflight only.
+Return strict JSON with one policy: preserveExact, preserveTransliterationTranslateGloss,
+or editorApprovedAdaptation. Do not translate or rewrite the text.
+Block:
+{{text}}
+"""
+        ),
+        PromptDefinition(
             id: "literaryPolishSystem",
             label: "Polish · System",
             stage: "Editing",

@@ -66,9 +66,11 @@ Supported event types:
 | `human_rating` | Optional `good`, `overkill`, or `underchecked` rating |
 
 Architect `worker_started` records `mode: advisory`, `design`, or `grilling`.
-Reviewer `worker_result` records `review_kind: product` or `test_diff`. Every
-product Reviewer/Tester result carries the candidate's Coder `run_id` as
-`candidate_id`; that stable link is what makes QA-escape calculation honest.
+New Reviewer `worker_result` events record `review_kind: product`.
+`review_kind: test_diff` remains readable only as legacy telemetry; current
+routing never emits it. Every Reviewer/Tester result carries the candidate's
+Coder `run_id` as `candidate_id`; that stable link makes QA-escape calculation
+honest.
 
 ### Stable keys
 
@@ -172,8 +174,7 @@ All counts use unique valid events after `event_key` deduplication.
   product steps divided by completed product steps. Runtime interruptions and
   model launch failures without a verified Coder result are excluded.
 - **Reviewer rejection rate**: product-review `changes_requested` divided by
-  product-review `approved + changes_requested`. `review_kind: test_diff` is
-  excluded.
+  product-review `approved + changes_requested`.
 - **QA escape rate**: Reviewer-approved candidate IDs that later receive Tester
   `bugs`, divided by Reviewer-approved candidate IDs actually sent to Tester.
   QA-skipped candidates are excluded.
@@ -253,4 +254,5 @@ scores, rankings, cost estimates, or external telemetry.
   product workflow remain available.
 - `selftest` uses temporary stores only and covers first pass, Reviewer catch,
   QA escape, both gate skips, runtime/model isolation, advisory/deep Architect,
-  targeted test-diff review, duplicate keys, and malformed trailing JSONL.
+  legacy post-Tester event compatibility, duplicate keys, and malformed
+  trailing JSONL.

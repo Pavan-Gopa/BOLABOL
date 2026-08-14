@@ -122,6 +122,35 @@ struct WorkflowStateTests {
         #expect(state.session?.translationProvider == "gemini-cloud")
     }
 
+    @Test("opening with an available settings provider synchronizes the active session")
+    func availableSettingsProviderBecomesEffectiveSelection() {
+        var state = WorkflowState.initial(settings: .defaults)
+        state.selectSource(path: "/audio/lecture.wav", durationSec: 120)
+        state.startSession()
+        state.transcriptionProvider = "whisper-large-v3"
+        if var session = state.session {
+            session.transcriptionProvider = "whisper-large-v3"
+            state.session = session
+        }
+
+        let didApplySelectedTranscriptionProvider = state.applySelectedTranscriptionProviderIfAvailable()
+        #expect(didApplySelectedTranscriptionProvider)
+        #expect(state.transcriptionProvider == "coreml-whisperkit")
+        #expect(state.session?.transcriptionProvider == "coreml-whisperkit")
+    }
+
+    @Test("unavailable settings provider leaves the archived route unchanged")
+    func unavailableSettingsProviderPreservesArchivedSelection() {
+        var settings = AppSettings.defaults
+        settings.transcriptionProvider = "canary-1b-v2-coreml"
+        var state = WorkflowState.initial(settings: settings)
+        state.transcriptionProvider = "whisper-large-v3"
+
+        let didApplySelectedTranscriptionProvider = state.applySelectedTranscriptionProviderIfAvailable()
+        #expect(!didApplySelectedTranscriptionProvider)
+        #expect(state.transcriptionProvider == "whisper-large-v3")
+    }
+
     @Test("same target language preserves translation provider for polishing and editing")
     func sameTargetLanguagePreservesTranslationProviderAfterSettingsSync() {
         let previousSettings = AppSettings.defaults

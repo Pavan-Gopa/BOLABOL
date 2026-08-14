@@ -6,11 +6,21 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
     var label: String
     var model: String
     var apiKey: String
+    var apiKeys: [String] = []
     // A5: OpenAI-compatible routing for the new providers (Qwen/OpenRouter/Ollama
     // Cloud). `nil` endpoint = legacy hardcoded providers (gemini-cloud/gpt-cloud),
     // whose URLs stay inside the engine — behavior 1:1 with pre-A5.
     var endpoint: URL? = nil
     var headers: [String: String] = [:]
+
+    var rotationKeys: [String] {
+        let keys = apiKeys
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        if !keys.isEmpty { return keys }
+        let primary = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        return primary.isEmpty ? [] : [primary]
+    }
 
     static func resolve(settings: AppSettings, providerID: String) -> ActiveCloudTranslationProvider? {
         let trimmedProvider = providerID.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -19,15 +29,17 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
         }
         switch trimmedProvider {
         case "gemini-cloud":
-            let key = settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !key.isEmpty else { return nil }
+            let bank = settings.geminiKeyBank
+            let keys = bank.enabledKeys
+            guard let key = keys.first else { return nil }
             return ActiveCloudTranslationProvider(
                 id: "gemini-cloud",
                 label: "Gemini Cloud",
                 // A4 (§9.2): use the user-selected model; fall back to the previous
                 // hardcode when settings is empty so legacy behavior is unchanged.
                 model: Self.resolvedModel(settings.geminiTextModel, fallback: "gemini-2.5-flash"),
-                apiKey: key
+                apiKey: key,
+                apiKeys: keys
             )
         case "gpt-cloud":
             let key = settings.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -65,13 +77,121 @@ struct ActiveCloudTranslationProvider: Equatable, Sendable {
     }
 }
 
+enum CloudTextTranslationResponseMode: Equatable, Sendable {
+    case text
+    case documentJSON
+}
+
+/// Pure request-body construction keeps provider contracts testable without
+/// opening a network connection. The default `.text` mode deliberately omits
+/// structured-output fields so media/chat/Shorts requests retain their former
+/// payload shape.
+enum CloudTextTranslationRequestBuilder {
+    static func isGemini3(model: String?) -> Bool {
+        guard let model = model?.lowercased() else { return false }
+        return model.contains("gemini-3") || model.contains("gemini-v3")
+    }
+
+    static func geminiBody(
+        prompt: String,
+        model: String? = nil,
+        maxOutputTokens: Int? = nil,
+        responseMode: CloudTextTranslationResponseMode = .text
+    ) throws -> Data {
+        let isDoc = responseMode == .documentJSON
+        let isG3 = isGemini3(model: model)
+
+        let resolvedTokens: Int?
+        if isDoc {
+            if isG3 {
+                resolvedTokens = max(maxOutputTokens ?? 32_768, 32_768)
+            } else {
+                resolvedTokens = maxOutputTokens ?? 8_192
+            }
+        } else {
+            resolvedTokens = maxOutputTokens
+        }
+
+        let thinkingConfig = (isDoc && isG3) ? GeminiThinkingConfig(thinkingLevel: "LOW") : nil
+
+        let body = GeminiGenerateContentRequest(
+            contents: [
+                GeminiContent(
+                    role: "user",
+                    parts: [GeminiPart(text: prompt)]
+                )
+            ],
+            generationConfig: GeminiGenerationConfig(
+                temperature: 0.2,
+                maxOutputTokens: resolvedTokens,
+                responseMimeType: isDoc ? "application/json" : "text/plain",
+                responseJsonSchema: isDoc ? GeminiSchema.documentTranslationSchema : nil,
+                thinkingConfig: thinkingConfig
+            )
+        )
+        return try JSONEncoder().encode(body)
+    }
+
+    static func openAIBody(
+        prompt: String,
+        model: String,
+        providerID: String,
+        responseMode: CloudTextTranslationResponseMode = .text
+    ) throws -> Data {
+        let responseFormat = responseMode == .documentJSON
+            && supportsStructuredJSON(providerID: providerID)
+            ? OpenAIResponseFormat(type: "json_object")
+            : nil
+        let body = OpenAIChatCompletionRequest(
+            model: model,
+            temperature: 0.2,
+            messages: [
+                OpenAIMessage(
+                    role: "system",
+                    content: "You are VaniScript's translation engine. Return only the requested translation output, with no commentary."
+                ),
+                OpenAIMessage(role: "user", content: prompt),
+            ],
+            responseFormat: responseFormat
+        )
+        return try JSONEncoder().encode(body)
+    }
+
+    static func supportsStructuredJSON(providerID: String) -> Bool {
+        switch providerID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "gpt-cloud", "openai", "qwen", "openrouter":
+            return true
+        default:
+            // Ollama Cloud and unknown/custom routes are not known to accept the
+            // OpenAI `response_format` field, so leave the field out.
+            return false
+        }
+    }
+}
+
+
 actor CloudTextTranslationEngine {
-    private static let networkSession: URLSession = {
+    public typealias HTTPHandler = @Sendable (URLRequest) async throws -> (Data, URLResponse)
+
+    private let httpHandler: HTTPHandler?
+
+    private static let defaultNetworkSession: URLSession = {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 600 // 10 minutes request timeout for long LLM translations
         config.timeoutIntervalForResource = 1800 // 30 minutes resource timeout
         return URLSession(configuration: config)
     }()
+
+    init(httpHandler: HTTPHandler? = nil) {
+        self.httpHandler = httpHandler
+    }
+
+    private func performRequest(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        if let httpHandler {
+            return try await httpHandler(request)
+        }
+        return try await Self.defaultNetworkSession.data(for: request)
+    }
     // A2 (§8.1): usage accumulator. Each low-level `generate*` call adds the token
     // counters it parsed out of the API response here; a high-level operation may
     // fan out into several HTTP calls (e.g. batched cue translation), so we SUM.
@@ -107,13 +227,10 @@ actor CloudTextTranslationEngine {
                 return "Cloud translation endpoint is invalid."
             case let .emptyResponse(provider):
                 return "\(provider) returned no usable translation text."
-            case let .unusableResponse(provider, detail):
-                return "\(provider) returned no usable translation text. \(detail)"
-            case let .requestFailed(provider, status, body):
-                let message = body.trimmingCharacters(in: .whitespacesAndNewlines)
-                return message.isEmpty
-                    ? "\(provider) translation failed with HTTP \(status)."
-                    : "\(provider) translation failed with HTTP \(status): \(message)"
+            case let .unusableResponse(provider, _):
+                return "\(provider) returned no usable translation text."
+            case let .requestFailed(provider, status, _):
+                return "\(provider) translation failed with HTTP \(status)."
             }
         }
     }
@@ -144,6 +261,26 @@ actor CloudTextTranslationEngine {
         return cleaned
     }
 
+    /// Generates one strict document-translation response while preserving the
+    /// existing provider routing, key rotation, and usage accounting path.
+    func translateDocument(
+        prompt: String,
+        provider: ActiveCloudTranslationProvider,
+        maxOutputTokens: Int? = nil
+    ) async throws -> String {
+        let defaultTokens = CloudTextTranslationRequestBuilder.isGemini3(model: provider.model) ? 32_768 : 8_192
+        let raw = try await generate(
+            prompt: prompt,
+            provider: provider,
+            maxOutputTokens: maxOutputTokens ?? defaultTokens,
+            responseMode: .documentJSON
+        )
+        guard !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw CloudTranslationError.emptyResponse(provider: provider.label)
+        }
+        return raw
+    }
+
     func translateCues(
         _ cues: [TranscriptCue],
         targetLang: String,
@@ -165,7 +302,48 @@ actor CloudTextTranslationEngine {
                 promptPresets: promptPresets
             )
             let raw = try await generate(prompt: prompt, provider: provider)
-            translated += try NativeLLMPromptBuilder.parseCueBatchTranslationOutput(raw, sourceCues: batch)
+            do {
+                translated += try NativeLLMPromptBuilder.parseCueBatchTranslationOutput(raw, sourceCues: batch)
+                continue
+            } catch {
+                // Cloud models (Gemini / OpenRouter / etc.) often ignore the MLX cue-XML
+                // contract and return plain or timestamped text. Accept those shapes
+                // before failing the whole segment.
+                AppLogger.shared.info(
+                    "\(provider.label) cue-XML parse missed (\(error.localizedDescription)). Trying freeform/timestamped fallback."
+                )
+            }
+
+            if let freeform = try? NativeLLMPromptBuilder.parseTimedTranscriptTranslationOutput(
+                raw,
+                sourceCues: batch,
+                targetLang: targetLang
+            ), !freeform.isEmpty {
+                translated += freeform
+                continue
+            }
+
+            // Last resort: translate the batch as one blob, then realign to source cues.
+            let joined = batch
+                .map { $0.text.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+                .joined(separator: "\n")
+            let blobRaw = try await generate(
+                prompt: NativeLLMPromptBuilder.translationPrompt(
+                    text: joined,
+                    targetLang: targetLang,
+                    metadata: metadata,
+                    glossary: glossary,
+                    promptPresets: promptPresets
+                ),
+                provider: provider
+            )
+            let blobTranslated = try NativeLLMPromptBuilder.parseTimedTranscriptTranslationOutput(
+                blobRaw,
+                sourceCues: batch,
+                targetLang: targetLang
+            )
+            translated += blobTranslated
         }
         return translated
     }
@@ -215,13 +393,23 @@ actor CloudTextTranslationEngine {
     private func generate(
         prompt: String,
         provider: ActiveCloudTranslationProvider,
-        maxOutputTokens: Int? = 8192
+        maxOutputTokens: Int? = nil,
+        responseMode: CloudTextTranslationResponseMode = .text
     ) async throws -> String {
         switch provider.id {
         case "gemini-cloud":
-            return try await generateGemini(prompt: prompt, provider: provider, maxOutputTokens: maxOutputTokens)
+            return try await generateGemini(
+                prompt: prompt,
+                provider: provider,
+                maxOutputTokens: maxOutputTokens,
+                responseMode: responseMode
+            )
         case "gpt-cloud":
-            return try await generateOpenAI(prompt: prompt, provider: provider)
+            return try await generateOpenAI(
+                prompt: prompt,
+                provider: provider,
+                responseMode: responseMode
+            )
         default:
             // A5: routed providers (Qwen/OpenRouter/Ollama Cloud) carry their own
             // OpenAI-compatible endpoint + auth headers, resolved by CloudChatRouter.
@@ -230,7 +418,8 @@ actor CloudTextTranslationEngine {
                     prompt: prompt,
                     provider: provider,
                     url: endpoint,
-                    headers: provider.headers
+                    headers: provider.headers,
+                    responseMode: responseMode
                 )
             }
             throw CloudTranslationError.emptyResponse(provider: provider.label)
@@ -240,51 +429,189 @@ actor CloudTextTranslationEngine {
     private func generateGemini(
         prompt: String,
         provider: ActiveCloudTranslationProvider,
-        maxOutputTokens: Int? = 8192
+        maxOutputTokens: Int? = nil,
+        responseMode: CloudTextTranslationResponseMode = .text
+    ) async throws -> String {
+        let keys = provider.rotationKeys
+        guard !keys.isEmpty else { throw CloudTranslationError.invalidEndpoint }
+
+        var lastError: Error?
+        let totalStartTime = DispatchTime.now()
+
+        for (index, apiKey) in keys.enumerated() {
+            var activeProvider = provider
+            activeProvider.apiKey = apiKey
+            do {
+                return try await executeGeminiGeneration(
+                    prompt: prompt,
+                    provider: activeProvider,
+                    maxOutputTokens: maxOutputTokens,
+                    responseMode: responseMode,
+                    keyIndex: index,
+                    keyCount: keys.count
+                )
+            } catch let error as CloudTranslationError {
+                lastError = error
+                switch error {
+                case .requestFailed(_, let status, let body):
+                    if GeminiAPIKeyBank.isRotatableFailure(status: status, body: body) {
+                        let hasMoreKeys = index < keys.count - 1
+                        if hasMoreKeys {
+                            if let delay = GeminiAPIKeyBank.retryDelayNanoseconds(
+                                status: status,
+                                body: body,
+                                attempt: index
+                            ) {
+                                try? await Task.sleep(nanoseconds: delay)
+                            }
+                            continue
+                        } else {
+                            let totalElapsedMs = Int(Double(DispatchTime.now().uptimeNanoseconds - totalStartTime.uptimeNanoseconds) / 1_000_000)
+                            let failureClass = GeminiAPIKeyBank.isQuotaFailure(status: status, body: body)
+                                ? "quota-exhausted (HTTP \(status))"
+                                : "capacity-exhausted (HTTP \(status))"
+                            AppLogger.shared.warn(
+                                "Gemini terminal failure [attempted \(keys.count)/\(keys.count) keys] model: \(provider.model) elapsedMs: \(totalElapsedMs) failureClass: \(failureClass)"
+                            )
+                        }
+                    }
+                    // Non-rotatable HTTP error or exhausted all keys
+                    throw error
+                case .emptyResponse, .unusableResponse, .invalidEndpoint:
+                    // Output contract / model response failures stop immediately and are not misclassified as key exhaustion.
+                    throw error
+                }
+            } catch {
+                throw error
+            }
+        }
+        throw lastError ?? CloudTranslationError.invalidEndpoint
+    }
+
+    private func executeGeminiGeneration(
+        prompt: String,
+        provider: ActiveCloudTranslationProvider,
+        maxOutputTokens: Int? = nil,
+        responseMode: CloudTextTranslationResponseMode = .text,
+        keyIndex: Int = 0,
+        keyCount: Int = 1
     ) async throws -> String {
         var components = URLComponents(string: "https://generativelanguage.googleapis.com/v1beta/models/\(provider.model):generateContent")
         components?.queryItems = [URLQueryItem(name: "key", value: provider.apiKey)]
         guard let url = components?.url else { throw CloudTranslationError.invalidEndpoint }
 
-        let body = GeminiGenerateContentRequest(
-            contents: [
-                GeminiContent(
-                    role: "user",
-                    parts: [GeminiPart(text: prompt)]
-                )
-            ],
-            generationConfig: GeminiGenerationConfig(
-                temperature: 0.2,
-                maxOutputTokens: maxOutputTokens,
-                responseMimeType: "text/plain"
-            )
-        )
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = try CloudTextTranslationRequestBuilder.geminiBody(
+            prompt: prompt,
+            model: provider.model,
+            maxOutputTokens: maxOutputTokens,
+            responseMode: responseMode
+        )
 
-        let (data, response) = try await Self.networkSession.data(for: request)
-        try validate(response: response, data: data, provider: provider.label)
-        // A2: best-effort usage capture — parse the token counters from the raw
-        // response and fold them into the accumulator. Never throws.
+        let startTime = DispatchTime.now()
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await performRequest(request)
+        } catch {
+            let elapsedMs = Int(Double(DispatchTime.now().uptimeNanoseconds - startTime.uptimeNanoseconds) / 1_000_000)
+            AppLogger.shared.warn(
+                "Gemini attempt [key \(keyIndex + 1)/\(keyCount)] model: \(provider.model) status: network-error elapsedMs: \(elapsedMs) responseChars: 0"
+            )
+            throw error
+        }
+        let elapsedMs = Int(Double(DispatchTime.now().uptimeNanoseconds - startTime.uptimeNanoseconds) / 1_000_000)
+
+        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            let isRotatable = GeminiAPIKeyBank.isRotatableFailure(status: http.statusCode, body: body)
+            let statusLabel: String
+            if isRotatable {
+                statusLabel = GeminiAPIKeyBank.isQuotaFailure(status: http.statusCode, body: body)
+                    ? "quota (HTTP \(http.statusCode))"
+                    : "capacity (HTTP \(http.statusCode))"
+            } else {
+                statusLabel = "HTTP \(http.statusCode)"
+            }
+            AppLogger.shared.info(
+                "Gemini attempt [key \(keyIndex + 1)/\(keyCount)] model: \(provider.model) status: \(statusLabel) elapsedMs: \(elapsedMs) responseChars: 0"
+            )
+            if !isRotatable {
+                AppLogger.shared.warn(
+                    "Gemini terminal failure [attempted key \(keyIndex + 1)/\(keyCount)] model: \(provider.model) elapsedMs: \(elapsedMs) failureClass: non-rotatable (HTTP \(http.statusCode))"
+                )
+            }
+            throw CloudTranslationError.requestFailed(provider: provider.label, status: http.statusCode, body: body)
+        }
+
+        // Best-effort usage capture
         accumulate(UsageRecorder.parseGeminiUsage(from: data))
         let decoded = try JSONDecoder().decode(GeminiGenerateContentResponse.self, from: data)
+        let finishReason = decoded.candidates?.first?.finishReason ?? "NONE"
+        let normalizedFinishReason = finishReason.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         let text = decoded.candidates?
             .flatMap { $0.content?.parts ?? [] }
             .compactMap(\.text)
             .joined(separator: "\n")
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !text.isEmpty else {
+
+        AppLogger.shared.info(
+            "Gemini attempt [key \(keyIndex + 1)/\(keyCount)] model: \(provider.model) status: HTTP 200 elapsedMs: \(elapsedMs) responseChars: \(text.count) finishReason: \(finishReason)"
+        )
+
+        guard let candidates = decoded.candidates, !candidates.isEmpty else {
+            AppLogger.shared.warn(
+                "Gemini terminal failure [key \(keyIndex + 1)/\(keyCount)] model: \(provider.model) elapsedMs: \(elapsedMs) failureClass: empty-candidates"
+            )
             throw CloudTranslationError.unusableResponse(
                 provider: provider.label,
                 detail: geminiEmptyResponseDetail(decoded, rawData: data)
             )
         }
+
+        if normalizedFinishReason == "MAX_TOKENS" {
+            AppLogger.shared.warn(
+                "Gemini terminal failure [key \(keyIndex + 1)/\(keyCount)] model: \(provider.model) elapsedMs: \(elapsedMs) failureClass: max-tokens (\(finishReason))"
+            )
+            let detail = "Gemini reached maximum output token limit (\(finishReason)) and produced incomplete output. \(geminiEmptyResponseDetail(decoded, rawData: data))"
+            throw CloudTranslationError.unusableResponse(
+                provider: provider.label,
+                detail: detail
+            )
+        }
+
+        if normalizedFinishReason != "STOP" && normalizedFinishReason != "NONE" && normalizedFinishReason != "FINISH_REASON_UNSPECIFIED" && !normalizedFinishReason.isEmpty {
+            AppLogger.shared.warn(
+                "Gemini terminal failure [key \(keyIndex + 1)/\(keyCount)] model: \(provider.model) elapsedMs: \(elapsedMs) failureClass: finish-reason-\(normalizedFinishReason.lowercased()) (\(finishReason))"
+            )
+            throw CloudTranslationError.unusableResponse(
+                provider: provider.label,
+                detail: geminiEmptyResponseDetail(decoded, rawData: data)
+            )
+        }
+
+        guard !text.isEmpty else {
+            AppLogger.shared.warn(
+                "Gemini terminal failure [key \(keyIndex + 1)/\(keyCount)] model: \(provider.model) elapsedMs: \(elapsedMs) failureClass: empty-output (\(finishReason))"
+            )
+            throw CloudTranslationError.unusableResponse(
+                provider: provider.label,
+                detail: geminiEmptyResponseDetail(decoded, rawData: data)
+            )
+        }
+
+        AppLogger.shared.info(
+            "Gemini completed successfully [key \(keyIndex + 1)/\(keyCount)] model: \(provider.model) elapsedMs: \(elapsedMs) responseChars: \(text.count) finishReason: \(finishReason)"
+        )
         return text
     }
 
-    private func generateOpenAI(prompt: String, provider: ActiveCloudTranslationProvider) async throws -> String {
+    private func generateOpenAI(
+        prompt: String,
+        provider: ActiveCloudTranslationProvider,
+        responseMode: CloudTextTranslationResponseMode = .text
+    ) async throws -> String {
         // Legacy gpt-cloud path: fixed OpenAI URL + Bearer, now delegating to the
         // shared OpenAI-compatible builder (A5 refactor — behavior unchanged).
         guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
@@ -294,7 +621,8 @@ actor CloudTextTranslationEngine {
             prompt: prompt,
             provider: provider,
             url: url,
-            headers: ["Authorization": "Bearer \(provider.apiKey)"]
+            headers: ["Authorization": "Bearer \(provider.apiKey)"],
+            responseMode: responseMode
         )
     }
 
@@ -306,19 +634,9 @@ actor CloudTextTranslationEngine {
         prompt: String,
         provider: ActiveCloudTranslationProvider,
         url: URL,
-        headers: [String: String]
+        headers: [String: String],
+        responseMode: CloudTextTranslationResponseMode = .text
     ) async throws -> String {
-        let body = OpenAIChatCompletionRequest(
-            model: provider.model,
-            temperature: 0.2,
-            messages: [
-                OpenAIMessage(
-                    role: "system",
-                    content: "You are VaniScript's translation engine. Return only the requested translation output, with no commentary."
-                ),
-                OpenAIMessage(role: "user", content: prompt),
-            ]
-        )
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         // Auth comes from the caller (Bearer for all current providers); the key is
@@ -327,9 +645,14 @@ actor CloudTextTranslationEngine {
             request.setValue(value, forHTTPHeaderField: field)
         }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = try CloudTextTranslationRequestBuilder.openAIBody(
+            prompt: prompt,
+            model: provider.model,
+            providerID: provider.id,
+            responseMode: responseMode
+        )
 
-        let (data, response) = try await Self.networkSession.data(for: request)
+        let (data, response) = try await performRequest(request)
         try validate(response: response, data: data, provider: provider.label)
         // A2: best-effort usage capture (OpenAI-compatible `usage` block). Never throws.
         accumulate(UsageRecorder.parseOpenAIUsage(from: data))
@@ -388,23 +711,82 @@ actor CloudTextTranslationEngine {
     }
 }
 
-private struct GeminiGenerateContentRequest: Encodable {
+fileprivate struct GeminiGenerateContentRequest: Encodable {
     var contents: [GeminiContent]
     var generationConfig: GeminiGenerationConfig
 }
 
-private struct GeminiGenerationConfig: Encodable {
+/// An immutable JSON Schema model for Gemini structured output (`responseJsonSchema`).
+/// Declared as a final reference type to allow recursive nesting (`items` and `properties`) without infinite value-type layout.
+/// All stored properties are immutable `let` values, ensuring safe cross-actor usage.
+fileprivate final class GeminiSchema: Encodable, @unchecked Sendable {
+    let type: String
+    let properties: [String: GeminiSchema]?
+    let required: [String]?
+    let items: GeminiSchema?
+
+    init(
+        type: String,
+        properties: [String: GeminiSchema]? = nil,
+        required: [String]? = nil,
+        items: GeminiSchema? = nil
+    ) {
+        self.type = type
+        self.properties = properties
+        self.required = required
+        self.items = items
+    }
+
+    static let documentTranslationSchema = GeminiSchema(
+        type: "object",
+        properties: [
+            "schema": GeminiSchema(type: "string"),
+            "chunkId": GeminiSchema(type: "string"),
+            "blocks": GeminiSchema(
+                type: "array",
+                items: GeminiSchema(
+                    type: "object",
+                    properties: [
+                        "id": GeminiSchema(type: "string"),
+                        "spans": GeminiSchema(
+                            type: "array",
+                            items: GeminiSchema(
+                                type: "object",
+                                properties: [
+                                    "id": GeminiSchema(type: "string"),
+                                    "style": GeminiSchema(type: "string"),
+                                    "text": GeminiSchema(type: "string")
+                                ],
+                                required: ["style", "text"]
+                            )
+                        )
+                    ],
+                    required: ["id", "spans"]
+                )
+            )
+        ],
+        required: ["schema", "chunkId", "blocks"]
+    )
+}
+
+fileprivate struct GeminiThinkingConfig: Encodable {
+    var thinkingLevel: String?
+}
+
+fileprivate struct GeminiGenerationConfig: Encodable {
     var temperature: Double
     var maxOutputTokens: Int?
     var responseMimeType: String
+    var responseJsonSchema: GeminiSchema?
+    var thinkingConfig: GeminiThinkingConfig?
 }
 
-private struct GeminiContent: Codable {
+fileprivate struct GeminiContent: Codable {
     var role: String?
     var parts: [GeminiPart]
 }
 
-private struct GeminiPart: Codable {
+fileprivate struct GeminiPart: Codable {
     var text: String?
 }
 
@@ -431,13 +813,23 @@ private struct GeminiSafetyRating: Decodable {
     var blocked: Bool?
 }
 
-private struct OpenAIChatCompletionRequest: Encodable {
+fileprivate struct OpenAIChatCompletionRequest: Encodable {
     var model: String
     var temperature: Double
     var messages: [OpenAIMessage]
+    var responseFormat: OpenAIResponseFormat?
+
+    enum CodingKeys: String, CodingKey {
+        case model, temperature, messages
+        case responseFormat = "response_format"
+    }
 }
 
-private struct OpenAIMessage: Codable {
+fileprivate struct OpenAIResponseFormat: Encodable {
+    var type: String
+}
+
+fileprivate struct OpenAIMessage: Codable {
     var role: String
     var content: String
 }

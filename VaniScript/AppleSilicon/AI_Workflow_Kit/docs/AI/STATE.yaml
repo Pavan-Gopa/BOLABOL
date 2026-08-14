@@ -6,42 +6,83 @@ onboarding:
   status: complete
   model_pairs_confirmed: true
   completed_at: 2026-08-11T05:55:29Z
-current_step: S1
-# Exact STEPS.md Do text while one item is actively assigned; Main owns/clears it.
+current_step: S7
 current_work_item: null
 step_description: >-
-  Port the BOLABOL Parakeet Core ML engine and robust 16 kHz mono preparation
-  into VaniScript without wiring Canary or the product pipeline yet.
+  Deliver document translation: strict structured output, sequential batch
+  auto-approve, and isolated manual retranslation of one selected chunk.
 target_files:
-  - Sources/VaniScript/Services/LocalASREngine.swift
-  - Sources/VaniScript/Services/LocalASRAudioPreprocessor.swift
-  - Sources/VaniScript/Services/ParakeetTranscriptionEngine.swift
-  - Tests/VaniScriptTests/LocalASRAudioPreprocessorTests.swift
-  - Tests/VaniScriptTests/ParakeetTranscriptionEngineTests.swift
-  - Tests/VaniScriptCoreTests/NativeModelCatalogTests.swift
-  - Tests/VaniScriptTests/ModelDownloadManagerTests.swift
+  - Sources/VaniScriptCore/DocumentModels.swift
+  - Sources/VaniScriptCore/DocumentTranslationProfile.swift
+  - Sources/VaniScriptCore/ProjectAssetManifest.swift
+  - Sources/VaniScriptCore/ProjectMigrator.swift
+  - Sources/VaniScriptCore/WorkflowState.swift
+  - Sources/VaniScriptCore/SessionModels.swift
+  - Sources/VaniScriptCore/AppSettings.swift
+  - Sources/VaniScriptCore/ProjectArchive.swift
+  - Sources/VaniScriptCore/ProjectBundleExporter.swift
+  - Sources/VaniScriptCore/ProjectBundleImporter.swift
+  - Sources/VaniScript/Views/UploadWorkspaceView.swift
+  - Sources/VaniScript/Stores/WorkflowStore.swift
+  - Sources/VaniScript/Services/SourceClassifier.swift
+  - Sources/VaniScript/Services/DocumentImportService.swift
+  - Sources/VaniScript/Services/DOCXPackageReader.swift
+  - Sources/VaniScript/Services/AppStoragePaths.swift
+  - Sources/VaniScript/Views/ConfigWorkspaceView.swift
+  - Sources/VaniScript/Views/ReviewWorkspaceView.swift
+  - Sources/VaniScriptCore/SemanticChunkPlanner.swift
+  - Sources/VaniScriptCore/TranslationBudgetPlanner.swift
+  - Sources/VaniScriptCore/DefaultPrompts.swift
+  - Sources/VaniScriptCore/DocumentTranslationContracts.swift
+  - Sources/VaniScriptCore/DocumentTranslationValidator.swift
+  - Sources/VaniScript/Services/DocumentTranslationEngine.swift
+  - Sources/VaniScript/Services/DocumentTranslationCoordinator.swift
+  - Sources/VaniScript/Services/CloudTextTranslationEngine.swift
+  - Sources/VaniScript/Services/MLXTextGenerationEngine.swift
+  - Sources/VaniScript/Views/ProcessingWorkspaceView.swift
+  - Tests/VaniScriptCoreTests/DocumentModelTests.swift
+  - Tests/VaniScriptCoreTests/ProjectMigrationTests.swift
+  - Tests/VaniScriptTests/SourceClassifierTests.swift
+  - Tests/VaniScriptTests/DocumentImportServiceTests.swift
+  - Tests/VaniScriptTests/DOCXPackageReaderTests.swift
+  - Tests/VaniScriptTests/DocumentConfigWorkflowTests.swift
+  - Tests/VaniScriptCoreTests/SemanticChunkPlannerTests.swift
+  - Tests/VaniScriptCoreTests/TranslationBudgetPlannerTests.swift
+  - Tests/VaniScriptTests/DocumentReviewWorkflowTests.swift
+  - Tests/VaniScriptCoreTests/DocumentTranslationContractTests.swift
+  - Tests/VaniScriptCoreTests/DocumentTranslationValidatorTests.swift
+  - Tests/VaniScriptTests/DocumentTranslationEngineTests.swift
+  - Tests/VaniScriptTests/DocumentCoordinatorTests.swift
+  - Tests/VaniScriptTests/DocumentCloudStructuredOutputTests.swift
+  - Tests/Fixtures/synthetic-document.docx
 completed_steps:
   - S0
   - S1
+  - S2
+  - S3
+  - S4
 skipped_steps: []
+parked_steps:
+  - S5
+  - S6
+absorbed_steps:
+  - S9
+  - S10
+  - S11
 implementation:
   # pending | running | waiting_review | changes_requested | blocked | complete
-  status: complete
-  attempts: 1
+  status: waiting_review
+  attempts: 17
   # Increment only after evidence evaluates an implementation attempt.
   # Runtime/provider interruption alone is not an implementation attempt.
 retry_guard:
   max_attempts_without_progress: 3
-  # Consecutive verified failures for the current approach/failure signature.
-  # First occurrence = 1; same approach + same failure increments; a new
-  # approach/evidence/material failure signature starts a new count at 1.
-  repeated_failure_count: 0
-  last_failure_signature: null
-  blocker: null
+  last_failure_signature: chunk29_duplicateBlockID_deterministic_echo_plus_decade_numbersChanged
+  repeated_failure_count: 1
 omp:
   active_agent: null
   active_role: null
-  last_result_artifact: agent://LASR03ParakeetQA2
+  last_result_artifact: agent://S7EmptyChunkExportChooserCandidate17
   model_failure:
     # none | awaiting_human | backup_authorized
     status: none
@@ -55,32 +96,35 @@ omp:
   interruption:
     # none | interrupted_no_changes | interrupted_partial | recovered_result | indeterminate
     status: recovered_result
-    role: tester
-    agent: LASR03ParakeetQA2
-    changed_files:
-      - Tests/VaniScriptTests/LocalASRAudioPreprocessorTests.swift
-      - Tests/VaniScriptTests/ParakeetTranscriptionEngineTests.swift
-    evidence: >-
-      The original Tester primary failed before execution with provider HTTP
-      404. The Human selected google-antigravity/gemini-3.6-flash:high as the
-      new primary. It completed targeted QA; Main inspected both added boundary
-      tests and independently verified 9 focused tests in 2 suites with 0
-      failures.
-    recorded_at: 2026-08-11T06:57:11Z
+    role: coder
+    run_id: S7DocumentLiveRuntimeRecovery07B
+    candidate_id: S7DocumentLiveTranslationRuntimeCandidate07
+    classification: interrupted_partial
+    recovered_artifact: agent://S7DocumentLiveRuntimeRecovery07B
+    recorded_at: 2026-08-14T15:44:00Z
+human_acceptance:
+  # pending | accepted | changes_requested
+  status: pending
+  candidate_id: S7EmptyChunkExportChooserCandidate17
+  evidence: Main verified focused 48/48, full 556/556, fresh build, app pid 71025; Human live empty-chunk pass and DOCX/PDF/TXT export acceptance required
 review:
-  status: approved
+  status: pending
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
-  verdict: APPROVED
-  note: Human-authorized Reviewer backup approved both S1 Judgment Gates.
-  # default on unless Human explicitly skips
-  enabled: true
+  verdict: null
+  note: >-
+    Candidate 17 approves source-empty chunks without translation and adds
+    the DOCX/PDF/TXT document export chooser. Review package prepared in
+    AI_Workflow_Kit/docs/AI/REVIEW_PACKAGE_S7.md; Reviewer dispatch held by
+    Human experiment until explicit go-ahead.
   # use status: skipped only after an explicit Human opt-out; record why in note
 qa:
-  status: qa_green
-  last_report: AI_Workflow_Kit/docs/AI/REPORT.md
-  suite: "swift test --filter 'LocalASRAudioPreprocessorTests|ParakeetTranscriptionEngineTests'"
+  status: pending
+  last_report: AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  suite: direct Gemini document output and real dual-pane scroll
   bugs_open: 0
-  note: Two deterministic boundary tests added; focused gate passed 9/9.
+  note: >-
+    Chunk 29 paid provider calls all returned HTTP 200 STOP but were rejected
+    locally by duplicateBlockID/blockOrder/numbersChanged; no 30-chunk limit exists.
   # recommended on; Human may opt out
   enabled: true
   # use status: skipped only after an explicit Human opt-out; record why in note
@@ -90,28 +134,112 @@ security:
     Offer once near release when work is ready (optional). Top models only:
     GLM 5.2 max, Sol max, or Opus 5 max. Not every step. Not Terra/Luna.
 next_actor: human
-track: LOCAL_ASR_COREML
 plan_files:
   - PIPELINE.md
   - AI_Workflow_Kit/docs/STEPS.md
   - AI_Workflow_Kit/docs/DECISIONS.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
+  - docs/PRD-Document-Literary-Translation.md
 checkpoint:
   last_pre_tag: vaniscript-as/pre-S1
   last_post_tag: vaniscript-as/S1-done
   last_commit: 87bee27
+  last_attempt: post-S2-refused-unrelated-worktree
+  note: >-
+    Pre-S2 and post-S2 checkpoints were refused because unrelated workspace
+    changes were outside the authorized scope; no unrelated paths were staged.
 coder_brief: |
-  S1 only: port the BOLABOL Parakeet engine, minimal app-target engine contract,
-  and robust audio preprocessor. Preserve current catalog/download work. Do not
-  wire Canary, NativeProcessingPipeline, Models UI, or cloud download behavior.
+  Preserve candidate 08 translation correctness and candidate 09 no-jump work.
+  Make the real document Dual View bind two distinct pane-owned NSScrollViews
+  and synchronize every user scroll path. Fix direct Gemini structured output
+  budget/terminal diagnostics and prove ordered five-key rotation safely.
 notes: |
-  Human requested all three BOLABOL Core ML engines. Existing LASR-01 catalog
-  and LASR-02 download/presence work is preserved. Canary 1B cloud metadata is
-  intentionally deferred; current scope assumes a verified local package.
-  No Git remote is configured for the workspace repository, so the pre-S1
-  checkpoint is local only.
-  Human requested a pause after S1 Tester completion so the workflow can be
-  updated before any further product work.
-  Workflow framework updated directly from Pavan-Gopa/Pavans-Workflow main at
-  e8b963c57839439d11ae72108711a1e637b7bc7c. Only the launcher changed; project
-  configuration, plans, reports, and live state were preserved.
+  Human requested all three BOLABOL Core ML engines. Existing LASR-01 catalog,
+  LASR-02 download/presence, and completed S1 Parakeet work are preserved.
+  Canary 1B cloud metadata remains intentionally deferred; S2 assumes a
+  verified local package and must not fabricate a download source.
+  No Git remote is configured for the workspace repository, so checkpoints are
+  local only.
+  Human explicitly resumed the workflow after the S1 pause and framework update.
+  Human set the default to one completed Reviewer verdict and one completed
+  Tester verdict per unchanged Coder candidate. Failed launches do not count;
+  a changed candidate after a real gate failure must pass the normal gates again.
+  Pre-S2 checkpoint was not created because the workspace repository contains
+  extensive unrelated Human changes outside this project's authorized paths;
+  the checkpoint helper refused to stage across that boundary.
+  Post-S2 checkpoint was also refused for the same unrelated-worktree boundary;
+  no unrelated paths were staged.
+  Human explicitly requested an extra Tester rerun. Two synthetic/hf primary
+  launches failed before execution with 401; the authorized backup rerun passed
+  9 tests with no file changes.
+  S3 opened after the Human reported that Canary 1B was not auto-connected and
+  selecting it produced a spinning wait cursor. The verified package is at
+  /Users/pavan/AI_LOCAL_MODELS/whisperkit/canary/1b-v2 with BOLABOL's
+  MANIFEST.json; its files match the catalog allowlist, but current presence
+  requires a VaniScript-only sidecar and synchronous callers can hash 1.88 GB
+  on MainActor.
+  Human reproduced BUG-001 in the fresh 20260811133359 build by selecting
+  Canary 1B and starting native re-transcription for chunk 1. Crash report
+  B03A6D52-4873-4BE1-A51C-E4178E24E8D7 faults in SmartAudioAnalyzer.swift:64.
+  Main reproduced the identical Swift Int64 conversion trap: the no-range
+  sentinel Double.greatestFiniteMagnitude multiplied by sampleRate becomes
+  infinity before AVAudioFramePosition conversion.
+  Candidate 4 passed build, focused tests, and all 387 tests, but a fresh-app
+  debugger trace found ConfigWorkspaceView calling ProviderRegistry on
+  MainActor, which synchronously hashed Canary 1B's 1.58 GB encoder. The app
+  exposed no window and MCP timed out while the hash ran. Candidate 5 must
+  make provider listing consume reconciled state without full caller-thread
+  revalidation.
+
+  Candidate 5's Reviewer correctly found a pathless local ASR active badge and
+  a candidate-created translation Locate validation regression. Main rejected
+  the manifest finding after reading the real shared package: MANIFEST.json
+  identifies `bolabol-canary-1b-v2-coreml-r1`, matching the current catalog
+  and tests; the Reviewer assignment had supplied incorrect alternate metadata.
+  Human then selected Canary Flash in the fresh candidate 7 app. Initialize
+  Engine failed with `Core ML transcription requires a downloaded or located
+  WhisperKit model.` Settings persisted Canary Flash as the selected provider;
+  NativeProcessingReadiness still called activeWhisperKitModel. MCP timeouts
+  after relaunch were expected because persisted `mcpServerEnabled` is false.
+  Human changed the default gate order: Coder, then Main verification/build and
+  fresh app, then Human acceptance. Only an accepted unchanged candidate gets
+  one Reviewer and then one Tester. Human-rejected candidates return directly
+  to Coder.
+  Human confirmed BUG-002's next requirement: Target Language does not satisfy
+  Canary's explicit source-language requirement. Config must expose separate
+  Source Language and Target Language controls like BOLABOL Language and
+  Secondary Language. Equal normalized languages must not invoke translation.
+  S3 formal QA was explicitly deferred into the first working S4 candidate.
+  Human explicitly skipped the optional S4 Architect advisory after both the
+  primary and authorized backup failed before reading source. The bounded S4
+  contract proceeds directly to Coder.
+  Human rejected S4 candidate 2 with four screenshots from a meaningful
+  10-minute speech test. Parakeet and Canary Flash produced one whole-chunk cue
+  instead of review-ready timestamped cues, the processing UI said only
+  "local ASR" rather than naming the active model, and local scan did not
+  discover the verified Canary 1B package. Future cloud distribution for
+  Canary 1B is desired, but the current fix must not fabricate a package URL.
+  Human rejected S4 candidate 5. The exact progress label correctly exposed
+  that processing used Whisper Large v3 while Models displayed Canary Flash as
+  Active. Persisted settings select Canary Flash, but the reopened project's
+  persisted session selects Whisper Large v3. Scan finds six models but not
+  Canary 1B; its 19 manifest-listed files all match size/hash, while a harmless
+  Finder-created `.DS_Store` is the only unexpected regular file.
+  Human rejected candidate 9 after the app disappeared during Canary Flash
+  processing. App logs prove Canary Flash itself completed segment 1/5 with
+  3382 characters before termination. The fresh builder emitted
+  `mlx.metallib not found in cache`; MLX Swift's runtime requires that library
+  when downstream local translation begins. The build must produce or bundle
+  the required Metal library deterministically instead of shipping a warning.
+  Candidate 11 builds MLX's complete official Metal kernel library from the
+  pinned mlx-swift checkout, fails hard on missing tools/output/copy mismatch,
+  and installs identical mlx.metallib copies beside the executable and under
+  Contents/Resources. Main executed an MLX array operation inside the packaged
+  app process and received [2, 3, 4], proving the prior missing-library crash
+  boundary no longer fails. Human meaningful-speech acceptance remains required.
+  Architect PR 9891897 (`docs/PRD-Document-Literary-Translation.md`) is now the
+  document-train source of truth. STEPS S7–S13 map PRD §20 slices 1–9 (S11 merges
+  coordinator+UX; S12 merges writer+package). Human parked S5 and S6 on
+  2026-08-14 and opened S7. Default literary profile until publisher answers:
+  protected Sanskrit exact, translate existing English gloss, glossary names,
+  free repagination.

@@ -1195,7 +1195,8 @@ struct AppStoreNativeComplianceTests {
         #expect(storeSource.contains("OnboardingCompletionPolicy.markCompleted(settings: &workflow.settings, currentBuildID: buildIdentifier)"))
         #expect(storeSource.contains("startFirstRunOnboardingIfNeeded"))
         #expect(storeSource.contains("markOnboardingCompleted"))
-        #expect(storeSource.contains("SettingsDiskStore.save(workflow.settings)"))
+        #expect(storeSource.contains("try settingsPersistence(workflow.settings)"))
+        #expect(storeSource.contains("settingsPersistence: @escaping @Sendable (AppSettings) throws -> Void = {\n            try SettingsDiskStore.save($0)\n        },"))
         #expect(storeSource.contains("markOnboardingCompleted()"))
     }
 

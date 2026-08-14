@@ -13,7 +13,7 @@ struct ProcessingWorkspaceView: View {
                 ProgressView()
                     .controlSize(.large)
                     .tint(VaniScriptTheme.accent)
-                Text("Processing Data...")
+                Text(store.session?.sourceKind == .document ? "Translating Document…" : "Processing Data…")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(VaniScriptTheme.text0)
                 ProgressView(value: store.workflow.processingProgress)
@@ -23,9 +23,19 @@ struct ProcessingWorkspaceView: View {
                     .font(.system(size: 13))
                     .italic()
                     .foregroundStyle(VaniScriptTheme.accent)
-                Text("This may take a moment depending on the length of the audio track.")
-                    .font(.system(size: 11))
+                if store.session?.sourceKind == .document {
+                    HStack(spacing: 12) {
+                        Text("Auto-approved \(store.documentAutoApprovedCount)")
+                        Text("Needs review \(store.documentNeedsReviewCount)")
+                        Text("Failed \(store.documentFailedCount)")
+                    }
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(VaniScriptTheme.text2)
+                } else {
+                    Text("This may take a moment depending on the length of the audio track.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                }
             }
             .frame(width: 480)
             .padding(48)

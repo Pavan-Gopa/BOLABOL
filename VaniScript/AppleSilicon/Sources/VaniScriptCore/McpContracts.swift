@@ -1209,7 +1209,7 @@ public enum McpProjectStateSnapshot {
     private static func sanitizedSettings(_ settings: AppSettings) -> [String: Any] {
         [
             "providers": [
-                "gemini": ["configured": !settings.geminiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty],
+                "gemini": ["configured": settings.geminiKeyBank.hasEnabledKey],
                 "openai": ["configured": !settings.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty],
                 "anthropic": ["configured": !settings.anthropicKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty],
                 "mediaResolver": ["configured": !settings.mediaResolverToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty],

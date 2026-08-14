@@ -3,9 +3,9 @@
 OMP agent: `workflow-reviewer`  
 Model pair: `@workflow_reviewer` → `@workflow_reviewer_backup`
 
-Review is required by default. Every review is a fresh, read-only task-agent
-session started only after Main verifies the Coder handoff and refreshes
-Graphify when used.
+Review is required after Human acceptance by default. Every review is a fresh,
+read-only task-agent session started only after Main verifies the Coder handoff,
+opens the fresh app, and records the Human's acceptance evidence.
 
 ## Responsibilities
 

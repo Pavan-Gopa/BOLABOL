@@ -147,10 +147,7 @@ struct SharedModelsRootTests {
             .appendingPathComponent("VaniScriptSharedRoot-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
 
-        func createMLXModel(named name: String) throws -> URL {
-            let modelRoot = root
-                .appendingPathComponent("mlx", isDirectory: true)
-                .appendingPathComponent(name, isDirectory: true)
+        func createMLXModel(at modelRoot: URL) throws -> URL {
             try FileManager.default.createDirectory(at: modelRoot, withIntermediateDirectories: true)
             try #"{"model_type":"qwen2"}"#.write(to: modelRoot.appendingPathComponent("config.json"), atomically: true, encoding: .utf8)
             try #"{}"#.write(to: modelRoot.appendingPathComponent("tokenizer.json"), atomically: true, encoding: .utf8)
@@ -158,13 +155,43 @@ struct SharedModelsRootTests {
             return modelRoot
         }
 
+        func createMLXModel(named name: String) throws -> URL {
+            try createMLXModel(
+                at: root
+                    .appendingPathComponent("mlx", isDirectory: true)
+                    .appendingPathComponent(name, isDirectory: true)
+            )
+        }
+
         let catalogModel = try createMLXModel(named: "Qwen3.5-4B-4bit")
+        let huggingFaceRoot = root
+            .appendingPathComponent("Direct", isDirectory: true)
+        let directQwenSnapshot = try createMLXModel(
+            at: huggingFaceRoot
+                .appendingPathComponent("models--mlx-community--Qwen3.5-4B-4bit", isDirectory: true)
+                .appendingPathComponent("snapshots", isDirectory: true)
+                .appendingPathComponent("revision-4b", isDirectory: true)
+        )
+        let emptyNemotronSnapshot = huggingFaceRoot
+            .appendingPathComponent("models--mlx-community--NVIDIA-Nemotron-3-Nano-4B-4bit", isDirectory: true)
+            .appendingPathComponent("snapshots", isDirectory: true)
+            .appendingPathComponent("revision-nemotron", isDirectory: true)
+        try FileManager.default.createDirectory(at: emptyNemotronSnapshot, withIntermediateDirectories: true)
         let legacyFlavor = "Opt" + "iQ"
         _ = try createMLXModel(named: "Qwen3.5-0.8B-\(legacyFlavor)-4bit")
         _ = try createMLXModel(named: "main")
         _ = try createMLXModel(named: "15fed4eafb456c6fcb2a1165f19ac609670ed14b")
 
         let found = LocalModelScanner.scanForLocalModels(searchPaths: [root])
+        let foundInHuggingFace = LocalModelScanner.scanForLocalModels(searchPaths: [huggingFaceRoot])
+        let expectedDirectQwenPath = directQwenSnapshot.standardizedFileURL.resolvingSymlinksInPath().path
+        #expect(foundInHuggingFace.contains {
+            $0.id == "qwen35-4b-4bit"
+                && $0.isTranslation
+                && $0.label == "Qwen 3.5 4B 4-bit"
+                && URL(fileURLWithPath: $0.path).standardizedFileURL.resolvingSymlinksInPath().path == expectedDirectQwenPath
+        })
+        #expect(!foundInHuggingFace.contains { $0.id == "nemotron3-nano-4b-4bit" })
         let expectedPath = catalogModel.standardizedFileURL.resolvingSymlinksInPath().path
 
         #expect(found.contains {

@@ -197,6 +197,77 @@ public enum ChunkStatus: String, Codable, Equatable, Sendable {
     case done
     case error
 }
+public enum ApprovalMode: String, Codable, CaseIterable, Equatable, Sendable {
+    case manual
+    case automatic
+}
+
+public enum ReviewDisposition: String, Codable, CaseIterable, Equatable, Sendable {
+    case pending
+    case autoApproved
+    case manuallyApproved
+    case needsReview
+    case failed
+
+    public var isApproved: Bool {
+        switch self {
+        case .autoApproved, .manuallyApproved:
+            return true
+        case .pending, .needsReview, .failed:
+            return false
+        }
+    }
+}
+
+public enum QualityIssueSeverity: String, Codable, CaseIterable, Equatable, Sendable {
+    case error
+    case warning
+}
+
+public struct QualityIssue: Codable, Equatable, Sendable {
+    public var code: String
+    public var message: String
+    public var severity: QualityIssueSeverity
+    public var blockID: String?
+
+    public init(
+        code: String,
+        message: String,
+        severity: QualityIssueSeverity = .error,
+        blockID: String? = nil
+    ) {
+        self.code = code
+        self.message = message
+        self.severity = severity
+        self.blockID = blockID
+    }
+}
+
+public struct ChunkQualityReport: Codable, Equatable, Sendable {
+    public var validatorVersion: Int
+    public var errors: [QualityIssue]
+    public var warnings: [QualityIssue]
+    public var attempts: Int
+    public var sourceHash: String
+    public var outputHash: String?
+
+    public init(
+        validatorVersion: Int = 1,
+        errors: [QualityIssue] = [],
+        warnings: [QualityIssue] = [],
+        attempts: Int = 0,
+        sourceHash: String = "",
+        outputHash: String? = nil
+    ) {
+        self.validatorVersion = validatorVersion
+        self.errors = errors
+        self.warnings = warnings
+        self.attempts = attempts
+        self.sourceHash = sourceHash
+        self.outputHash = outputHash
+    }
+}
+
 
 public struct ChunkData: Codable, Equatable, Identifiable, Sendable {
     public var id: Int { index }
@@ -214,7 +285,25 @@ public struct ChunkData: Codable, Equatable, Identifiable, Sendable {
     public var translationsByLanguage: [String: TranslationVariant]?
     public var unrecognizedFragments: [String]?
     public var status: ChunkStatus
-    public var approved: Bool
+    public var reviewDisposition: ReviewDisposition {
+        didSet {
+            let dispositionApproved = reviewDisposition.isApproved
+            if approved != dispositionApproved {
+                approved = dispositionApproved
+            }
+        }
+    }
+    public var qualityReport: ChunkQualityReport?
+    public var sourceAnchor: SourceAnchor?
+    public var approved: Bool {
+        didSet {
+            if approved, !reviewDisposition.isApproved {
+                reviewDisposition = .manuallyApproved
+            } else if !approved, reviewDisposition.isApproved {
+                reviewDisposition = .pending
+            }
+        }
+    }
 
     public init(
         index: Int,
@@ -230,7 +319,10 @@ public struct ChunkData: Codable, Equatable, Identifiable, Sendable {
         translationsByLanguage: [String: TranslationVariant]? = nil,
         unrecognizedFragments: [String]? = nil,
         status: ChunkStatus,
-        approved: Bool
+        approved: Bool,
+        sourceAnchor: SourceAnchor? = nil,
+        reviewDisposition: ReviewDisposition? = nil,
+        qualityReport: ChunkQualityReport? = nil
     ) {
         self.index = index
         self.filePath = filePath
@@ -245,13 +337,16 @@ public struct ChunkData: Codable, Equatable, Identifiable, Sendable {
         self.translationsByLanguage = translationsByLanguage
         self.unrecognizedFragments = unrecognizedFragments
         self.status = status
-        self.approved = approved
+        self.reviewDisposition = reviewDisposition ?? (approved ? .manuallyApproved : .pending)
+        self.qualityReport = qualityReport
+        self.sourceAnchor = sourceAnchor ?? .media(startSec: startSec, endSec: endSec)
+        self.approved = self.reviewDisposition.isApproved
     }
 
     enum CodingKeys: String, CodingKey {
         case index, filePath, durationSec, startSec, endSec, original, translated
         case originalCues, originalFormats, translatedFormats, translationsByLanguage
-        case unrecognizedFragments, status, approved
+        case unrecognizedFragments, status, approved, reviewDisposition, qualityReport, sourceAnchor
     }
 
     public init(from decoder: Decoder) throws {
@@ -275,7 +370,13 @@ public struct ChunkData: Codable, Equatable, Identifiable, Sendable {
             self.status = .pending
         }
 
-        self.approved = try container.decodeIfPresent(Bool.self, forKey: .approved) ?? false
+        let decodedApproved = try container.decodeIfPresent(Bool.self, forKey: .approved) ?? false
+        self.reviewDisposition = try container.decodeIfPresent(ReviewDisposition.self, forKey: .reviewDisposition)
+            ?? (decodedApproved ? .manuallyApproved : .pending)
+        self.qualityReport = try container.decodeIfPresent(ChunkQualityReport.self, forKey: .qualityReport)
+        self.sourceAnchor = try container.decodeIfPresent(SourceAnchor.self, forKey: .sourceAnchor)
+            ?? .media(startSec: self.startSec, endSec: self.endSec)
+        self.approved = self.reviewDisposition.isApproved
     }
 }
 
@@ -475,6 +576,8 @@ public struct SessionState: Codable, Equatable, Sendable {
     public var sourceFile: String?
     public var sourceFileName: String
     public var sourceMediaInfo: SourceMediaInfo?
+    public var sourceKind: WorkflowSourceKind
+    public var documentState: DocumentState?
     public var durationSec: Double
     public var metadata: AudioMetadata
     public var sourceLang: String
@@ -484,6 +587,7 @@ public struct SessionState: Codable, Equatable, Sendable {
     public var outputFormats: [OutputFormat]
     public var chunks: [ChunkData]
     public var currentChunkIndex: Int
+    public var approvalMode: ApprovalMode
     public var availableTranslationLanguages: [String]? = nil
     public var activeTranslationLanguage: String? = nil
     public var shortsPlans: [ShortsClipPlan]? = nil
@@ -505,11 +609,16 @@ public struct SessionState: Codable, Equatable, Sendable {
         activeTranslationLanguage: String? = nil,
         shortsPlans: [ShortsClipPlan]? = nil,
         shortsRejectedPlans: [ShortsClipPlan]? = nil,
-        sourceMediaInfo: SourceMediaInfo? = nil
+        sourceMediaInfo: SourceMediaInfo? = nil,
+        sourceKind: WorkflowSourceKind = .media,
+        documentState: DocumentState? = nil,
+        approvalMode: ApprovalMode = .manual
     ) {
         self.sourceFile = sourceFile
         self.sourceFileName = sourceFileName
         self.sourceMediaInfo = sourceMediaInfo
+        self.sourceKind = sourceKind
+        self.documentState = documentState
         self.durationSec = durationSec
         self.metadata = metadata
         self.sourceLang = sourceLang
@@ -523,12 +632,15 @@ public struct SessionState: Codable, Equatable, Sendable {
         self.activeTranslationLanguage = activeTranslationLanguage
         self.shortsPlans = shortsPlans
         self.shortsRejectedPlans = shortsRejectedPlans
+        self.approvalMode = approvalMode
     }
 
     enum CodingKeys: String, CodingKey {
-        case sourceFile, sourceFileName, sourceMediaInfo, durationSec, metadata, sourceLang, targetLang
+        case sourceFile, sourceFileName, sourceMediaInfo, sourceKind, documentState
+        case durationSec, metadata, sourceLang, targetLang
         case transcriptionProvider, translationProvider, outputFormats, chunks, currentChunkIndex
         case availableTranslationLanguages, activeTranslationLanguage, shortsPlans, shortsRejectedPlans
+        case approvalMode
     }
 
     public init(from decoder: Decoder) throws {
@@ -536,6 +648,8 @@ public struct SessionState: Codable, Equatable, Sendable {
         self.sourceFile = try container.decodeIfPresent(String.self, forKey: .sourceFile)
         self.sourceFileName = try container.decodeIfPresent(String.self, forKey: .sourceFileName) ?? "Imported Session"
         self.sourceMediaInfo = try container.decodeIfPresent(SourceMediaInfo.self, forKey: .sourceMediaInfo)
+        self.sourceKind = try container.decodeIfPresent(WorkflowSourceKind.self, forKey: .sourceKind) ?? .media
+        self.documentState = try container.decodeIfPresent(DocumentState.self, forKey: .documentState)
         self.durationSec = try container.decodeIfPresent(Double.self, forKey: .durationSec) ?? 0.0
         self.metadata = try container.decodeIfPresent(AudioMetadata.self, forKey: .metadata) ?? AudioMetadata.empty
         self.sourceLang = try container.decodeIfPresent(String.self, forKey: .sourceLang) ?? "auto"
@@ -547,10 +661,165 @@ public struct SessionState: Codable, Equatable, Sendable {
         self.outputFormats = try container.decodeIfPresent([OutputFormat].self, forKey: .outputFormats) ?? []
         self.chunks = try container.decodeIfPresent([ChunkData].self, forKey: .chunks) ?? []
         self.currentChunkIndex = try container.decodeIfPresent(Int.self, forKey: .currentChunkIndex) ?? 0
+        self.approvalMode = try container.decodeIfPresent(ApprovalMode.self, forKey: .approvalMode) ?? .manual
         self.availableTranslationLanguages = try container.decodeIfPresent([String].self, forKey: .availableTranslationLanguages)
         self.activeTranslationLanguage = try container.decodeIfPresent(String.self, forKey: .activeTranslationLanguage)
         self.shortsPlans = try container.decodeIfPresent([ShortsClipPlan].self, forKey: .shortsPlans)
         self.shortsRejectedPlans = try container.decodeIfPresent([ShortsClipPlan].self, forKey: .shortsRejectedPlans)
+    }
+}
+
+/// The data-only presentation contract used by the document Review surface.
+/// Media Review continues to use timed cues and playback controls; document
+/// Review uses this value when a chunk has no cues at all.
+public struct DocumentReviewPresentation: Equatable, Sendable {
+    public let sourceText: String
+    public let translatedText: String
+    public let chapterLabel: String
+    public let blockRangeLabel: String
+    public let displayLabel: String
+    public let blockRoles: [String]
+    public let showsAudioBar: Bool
+    public let showsWaveform: Bool
+    public let showsTimecode: Bool
+    public let usesSourceTextFallback: Bool
+
+    public init(
+        sourceText: String,
+        translatedText: String,
+        chapterLabel: String,
+        blockRangeLabel: String,
+        displayLabel: String,
+        blockRoles: [String],
+        showsAudioBar: Bool = false,
+        showsWaveform: Bool = false,
+        showsTimecode: Bool = false,
+        usesSourceTextFallback: Bool = true
+    ) {
+        self.sourceText = sourceText
+        self.translatedText = translatedText
+        self.chapterLabel = chapterLabel
+        self.blockRangeLabel = blockRangeLabel
+        self.displayLabel = displayLabel
+        self.blockRoles = blockRoles
+        self.showsAudioBar = showsAudioBar
+        self.showsWaveform = showsWaveform
+        self.showsTimecode = showsTimecode
+        self.usesSourceTextFallback = usesSourceTextFallback
+    }
+}
+
+public enum DocumentReviewPresentationPolicy {
+    public static func make(
+        session: SessionState,
+        chunk: ChunkData
+    ) -> DocumentReviewPresentation? {
+        guard session.sourceKind == .document else { return nil }
+        let documentState = session.documentState
+        let plan = documentState?.chunks.first { plan in
+            guard case let .document(range) = chunk.sourceAnchor else { return false }
+            return plan.blockIDs.first == range.startBlockID
+                && plan.blockIDs.last == range.endBlockID
+        }
+        let blockIDs: [String]
+        if let plan {
+            blockIDs = plan.blockIDs
+        } else if case let .document(range) = chunk.sourceAnchor {
+            blockIDs = [range.startBlockID, range.endBlockID].uniquedPreservingOrder()
+        } else {
+            blockIDs = []
+        }
+        let blocks = blockIDs.compactMap { id in
+            documentState?.blocks.first(where: { $0.id == id })
+        }
+        let derivedText = aggregateSourceText(blocks: blocks, plan: plan)
+        let sourceText = chunk.original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? derivedText
+            : chunk.original
+        let roles = blocks.map(role(for:))
+        let firstBlock = blocks.first
+        let lastBlock = blocks.last ?? firstBlock
+        let startOrdinal = firstBlock?.location.paragraphOrdinal ?? 0
+        let endOrdinal = lastBlock?.location.paragraphOrdinal ?? startOrdinal
+        let blockRangeLabel = startOrdinal == endOrdinal
+            ? "paragraph \(startOrdinal + 1)"
+            : "paragraphs \(startOrdinal + 1)–\(endOrdinal + 1)"
+        let chapter = chapterLabel(for: firstBlock, in: documentState?.blocks ?? [])
+        return DocumentReviewPresentation(
+            sourceText: sourceText,
+            translatedText: session.documentTranslationText(for: chunk) ?? chunk.translated,
+            chapterLabel: chapter,
+            blockRangeLabel: blockRangeLabel,
+            displayLabel: "\(chapter) · \(blockRangeLabel)",
+            blockRoles: roles,
+            usesSourceTextFallback: (chunk.originalCues ?? []).isEmpty
+        )
+    }
+
+    public static func visibleSourceText(session: SessionState, chunk: ChunkData) -> String {
+        make(session: session, chunk: chunk)?.sourceText ?? chunk.original
+    }
+
+    private static func aggregateSourceText(
+        blocks: [DocumentBlock],
+        plan: DocumentChunkPlan?
+    ) -> String {
+        guard let plan, let slices = plan.blockSlices, !slices.isEmpty else {
+            return blocks.map { $0.spans.map(\.text).joined() }.joined(separator: "\n\n")
+        }
+        let byID = Dictionary(uniqueKeysWithValues: blocks.map { ($0.id, $0) })
+        return slices.compactMap { slice in
+            guard let block = byID[slice.blockID] else { return nil }
+            let text = block.spans.map(\.text).joined()
+            let start = text.index(text.startIndex, offsetBy: min(slice.startOffset, text.count))
+            let end = text.index(text.startIndex, offsetBy: min(max(slice.endOffset, slice.startOffset), text.count))
+            return String(text[start..<end])
+        }.joined(separator: "\n\n")
+    }
+
+    private static func chapterLabel(for block: DocumentBlock?, in blocks: [DocumentBlock]) -> String {
+        guard let block else { return "Document" }
+        let prior = blocks.filter {
+            $0.location.part == block.location.part
+                && $0.location.paragraphOrdinal <= block.location.paragraphOrdinal
+                && isChapterTitle($0)
+        }.last
+        return prior
+            .map { $0.spans.map(\.text).joined().trimmingCharacters(in: .whitespacesAndNewlines) }
+            .flatMap { $0.isEmpty ? nil : $0 }
+            ?? "Document"
+    }
+
+    private static func role(for block: DocumentBlock) -> String {
+        if block.kind == .heading { return "heading" }
+        if block.kind == .quote { return "quote" }
+        if block.kind == .verse { return "verse" }
+        let style = (block.styleID ?? "").lowercased()
+        if style.contains("verse") || style.contains("shlok") || style.contains("stanza") || style.contains("poem") {
+            return "verse"
+        }
+        if style.contains("quote") { return "quote" }
+        if block.kind == .empty { return "empty" }
+        return "body"
+    }
+
+    private static func isChapterTitle(_ block: DocumentBlock) -> Bool {
+        guard block.kind == .heading || (block.styleID?.lowercased().contains("chapter") == true) else { return false }
+        let style = (block.styleID ?? "").lowercased()
+        if style.contains("book title") || style.contains("book-title") { return false }
+        if style.contains("chapter") { return true }
+        let rawText = block.spans.map(\.text).joined().trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let text = rawText.replacingOccurrences(of: #"^#+\s*"#, with: "", options: .regularExpression)
+        return ["chapter ", "глава ", "part ", "часть ", "prologue", "epilogue", "preface", "afterword"]
+            .contains(where: text.hasPrefix)
+    }
+}
+
+private extension Array where Element: Equatable {
+    func uniquedPreservingOrder() -> [Element] {
+        reduce(into: []) { result, element in
+            if !result.contains(element) { result.append(element) }
+        }
     }
 }
 
@@ -746,6 +1015,16 @@ public extension SessionState {
                 chunks[index].translated = ""
             }
         }
+    }
+
+    func documentTranslationText(for chunk: ChunkData, language: String? = nil) -> String? {
+        guard sourceKind == .document, let documentState else { return nil }
+        let selected = language ?? selectedTranslationLanguage ?? targetLang
+        let key = TranslationArchive.languageKey(selected)
+        let translations = documentState.translationsByLanguage[key] ?? [:]
+        guard let plan = documentPlan(for: chunk, in: documentState) else { return nil }
+        let text = plan.blockIDs.compactMap { translations[$0]?.text }.joined(separator: "\n\n")
+        return TranslationArchive.isUsableTranslationText(text) ? text : nil
     }
 
     mutating func extractMetadataFromCuesIfNeeded() {
@@ -954,7 +1233,10 @@ public extension SessionState {
     }
 
     mutating func normalizeTranslationArchive() {
-        extractMetadataFromCuesIfNeeded()
+        if sourceKind == .media {
+            extractMetadataFromCuesIfNeeded()
+        }
+
         if shortsPlans != nil {
             for index in shortsPlans!.indices {
                 if shortsPlans![index].stableID == nil {
@@ -991,56 +1273,72 @@ public extension SessionState {
             registerTranslationLanguage(legacyLanguage)
         }
 
-        for index in chunks.indices {
-            // Reconstruct original cues if missing.
-            let originalText = chunks[index].original.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !originalText.isEmpty && (chunks[index].originalCues == nil || chunks[index].originalCues?.isEmpty == true) {
-                // Prefer real timing parsed from inline [mm:ss] markers
-                // (VaniScript/Electron transcripts) over the even-distribution
-                // fallback, and strip the markers so they don't render as text.
-                let timestampedCues = SessionState.reconstructCuesFromTimestampedText(
-                    chunks[index].original,
-                    startSec: chunks[index].startSec,
-                    endSec: chunks[index].endSec
-                )
-                if !timestampedCues.isEmpty {
-                    chunks[index].originalCues = timestampedCues
-                    chunks[index].original = SessionState.strippingInlineTimestampMarkers(chunks[index].original)
-                } else {
-                    chunks[index].originalCues = SessionState.reconstructCuesFromRawText(
-                        originalText,
+        if sourceKind == .document, let documentState {
+            let documentLanguage = TranslationArchive.languageKey(targetLang)
+            let translations = documentState.translationsByLanguage[documentLanguage] ?? [:]
+            for index in chunks.indices {
+                guard let plan = documentPlan(for: chunks[index], in: documentState) else { continue }
+                let text = plan.blockIDs.compactMap { translations[$0]?.text }
+                    .joined(separator: "\n\n")
+                if TranslationArchive.isUsableTranslationText(text) {
+                    chunks[index].translated = text
+                }
+            }
+            registerTranslationLanguage(targetLang)
+        }
+
+        if sourceKind == .media {
+            for index in chunks.indices {
+                // Reconstruct original cues if missing.
+                let originalText = chunks[index].original.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !originalText.isEmpty && (chunks[index].originalCues == nil || chunks[index].originalCues?.isEmpty == true) {
+                    // Prefer real timing parsed from inline [mm:ss] markers
+                    // (VaniScript/Electron transcripts) over the even-distribution
+                    // fallback, and strip the markers so they don't render as text.
+                    let timestampedCues = SessionState.reconstructCuesFromTimestampedText(
+                        chunks[index].original,
                         startSec: chunks[index].startSec,
                         endSec: chunks[index].endSec
                     )
-                }
-            }
-
-            // Reconstruct translation cues if missing. Electron transcripts carry
-            // their own [mm:ss] markers in the translation, so parse those for real
-            // timing (and strip them); otherwise distribute evenly over the source cues.
-            if var translations = chunks[index].translationsByLanguage {
-                for key in translations.keys {
-                    if translations[key]?.cues == nil || translations[key]?.cues?.isEmpty == true {
-                        let variantText = translations[key]?.text ?? ""
-                        let trimmedVariant = variantText.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmedVariant.isEmpty else { continue }
-                        let timestamped = SessionState.reconstructCuesFromTimestampedText(
-                            variantText,
+                    if !timestampedCues.isEmpty {
+                        chunks[index].originalCues = timestampedCues
+                        chunks[index].original = SessionState.strippingInlineTimestampMarkers(chunks[index].original)
+                    } else {
+                        chunks[index].originalCues = SessionState.reconstructCuesFromRawText(
+                            originalText,
                             startSec: chunks[index].startSec,
                             endSec: chunks[index].endSec
                         )
-                        if !timestamped.isEmpty {
-                            translations[key]?.cues = timestamped
-                            translations[key]?.text = SessionState.strippingInlineTimestampMarkers(variantText)
-                        } else if let originalCues = chunks[index].originalCues, !originalCues.isEmpty {
-                            translations[key]?.cues = SessionState.reconstructTranslationCues(
-                                from: trimmedVariant,
-                                matching: originalCues
-                            )
-                        }
                     }
                 }
-                chunks[index].translationsByLanguage = translations
+
+                // Reconstruct translation cues if missing. Electron transcripts carry
+                // their own [mm:ss] markers in the translation, so parse those for real
+                // timing (and strip them); otherwise distribute evenly over the source cues.
+                if var translations = chunks[index].translationsByLanguage {
+                    for key in translations.keys {
+                        if translations[key]?.cues == nil || translations[key]?.cues?.isEmpty == true {
+                            let variantText = translations[key]?.text ?? ""
+                            let trimmedVariant = variantText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !trimmedVariant.isEmpty else { continue }
+                            let timestamped = SessionState.reconstructCuesFromTimestampedText(
+                                variantText,
+                                startSec: chunks[index].startSec,
+                                endSec: chunks[index].endSec
+                            )
+                            if !timestamped.isEmpty {
+                                translations[key]?.cues = timestamped
+                                translations[key]?.text = SessionState.strippingInlineTimestampMarkers(variantText)
+                            } else if let originalCues = chunks[index].originalCues, !originalCues.isEmpty {
+                                translations[key]?.cues = SessionState.reconstructTranslationCues(
+                                    from: trimmedVariant,
+                                    matching: originalCues
+                                )
+                            }
+                        }
+                    }
+                    chunks[index].translationsByLanguage = translations
+                }
             }
         }
 
@@ -1072,6 +1370,17 @@ public extension SessionState {
         if let activeTranslationLanguage {
             setActiveTranslationLanguage(activeTranslationLanguage)
         }
+    }
+
+    private func documentPlan(for chunk: ChunkData, in state: DocumentState) -> DocumentChunkPlan? {
+        if case let .document(range) = chunk.sourceAnchor {
+            if let matched = state.chunks.first(where: {
+                $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID
+            }) {
+                return matched
+            }
+        }
+        return state.chunks.indices.contains(chunk.index) ? state.chunks[chunk.index] : nil
     }
 
     static func reconstructCuesFromRawText(_ text: String, startSec: Double, endSec: Double) -> [TranscriptCue] {

@@ -353,6 +353,25 @@ public struct RemoteModelPackageInstallationManifest: Codable, Equatable, Sendab
     }
 }
 
+/// BOLABOL's package authenticity sidecar predates the VaniScript installer
+/// manifest. It authenticates only the package identity and catalog file list;
+/// the normal presence pass still hashes every catalog file afterward.
+private struct LegacyRemoteModelPackageManifest: Decodable {
+    struct File: Decodable {
+        var path: String
+        var sha256: String
+        var sizeBytes: Int64
+    }
+
+    var packageID: String
+    var files: [File]
+
+    private enum CodingKeys: String, CodingKey {
+        case packageID = "packageId"
+        case files
+    }
+}
+
 /// Single non-persisted source of local ASR metadata.
 public struct LocalASRModelDescriptor: Identifiable, Codable, Equatable, Sendable {
     public var id: String
@@ -435,8 +454,12 @@ public struct NativeModelInstallDescriptor: Identifiable, Equatable, Sendable {
 public struct LocalModelVerification {
     public static nonisolated(unsafe) var skipVerificationForTesting: Bool = false
 
-    public static func verifyModelPath(_ path: String?, isWhisper: Bool) -> Bool {
-        if skipVerificationForTesting {
+    public static func verifyModelPath(
+        _ path: String?,
+        isWhisper: Bool,
+        allowTestingBypass: Bool = true
+    ) -> Bool {
+        if skipVerificationForTesting, allowTestingBypass {
             return true
         }
         guard let path = path, !path.isEmpty else { return false }
@@ -452,14 +475,22 @@ public struct LocalModelVerification {
         return isMLXModelDirectory(path, fileManager: fm)
     }
 
-    public static func verifyTranslationModelPath(_ path: String?, modelID: String) -> Bool {
+    public static func verifyTranslationModelPath(
+        _ path: String?,
+        modelID: String,
+        allowTestingBypass: Bool = true
+    ) -> Bool {
         guard expectedMLXPathMarkers[modelID] != nil else { return false }
-        if skipVerificationForTesting {
+        if skipVerificationForTesting, allowTestingBypass {
             return !containsKnownUnsupportedMLXMarker(path)
         }
         guard let path, !path.isEmpty else { return false }
         guard !isKnownUnsupportedMLXPath(path) else { return false }
-        guard verifyModelPath(path, isWhisper: false) else { return false }
+        guard verifyModelPath(
+            path,
+            isWhisper: false,
+            allowTestingBypass: allowTestingBypass
+        ) else { return false }
         return pathMatchesExpectedMLXModelID(path, modelID: modelID)
     }
 
@@ -664,17 +695,11 @@ public enum LocalASRPresencePolicy {
     ) -> Bool {
         guard release.isBound,
               !containsSymbolicLink(at: url, fileManager: fileManager),
-              let manifestData = try? Data(contentsOf: installationManifestURL(at: url)),
-              let manifest = try? JSONDecoder().decode(
-                RemoteModelPackageInstallationManifest.self,
-                from: manifestData
-              ),
-              manifest.packageID == release.packageID,
-              manifest.layoutVersion == release.layoutVersion,
-              manifest.archiveSHA256.caseInsensitiveCompare(release.expectedArchiveSHA256 ?? "") == .orderedSame,
-              manifest.archiveSizeBytes == release.expectedCompressedSizeBytes,
-              manifest.uncompressedSizeBytes == release.expectedUncompressedSizeBytes,
-              sameFiles(manifest.files, release.allowlistedFiles)
+              hasAuthenticityManifest(
+                  for: release,
+                  at: url,
+                  fileManager: fileManager
+              )
         else {
             return false
         }
@@ -703,6 +728,55 @@ public enum LocalASRPresencePolicy {
         return extractedRegularFiles(at: url, fileManager: fileManager)
             .subtracting(expectedFiles.keys)
             .isEmpty
+    }
+
+    private static func hasAuthenticityManifest(
+        for release: RemoteModelPackageRelease,
+        at url: URL,
+        fileManager: FileManager
+    ) -> Bool {
+        let installerManifestURL = installationManifestURL(at: url)
+        if fileManager.fileExists(atPath: installerManifestURL.path) {
+            guard let manifestData = try? Data(contentsOf: installerManifestURL),
+                  let manifest = try? JSONDecoder().decode(
+                      RemoteModelPackageInstallationManifest.self,
+                      from: manifestData
+                  )
+            else {
+                return false
+            }
+
+            return manifest.packageID == release.packageID
+                && manifest.layoutVersion == release.layoutVersion
+                && manifest.archiveSHA256.caseInsensitiveCompare(release.expectedArchiveSHA256 ?? "") == .orderedSame
+                && manifest.archiveSizeBytes == release.expectedCompressedSizeBytes
+                && manifest.uncompressedSizeBytes == release.expectedUncompressedSizeBytes
+                && sameFiles(manifest.files, release.allowlistedFiles)
+        }
+
+        let legacyManifestURL = url.appendingPathComponent("MANIFEST.json")
+        guard fileManager.fileExists(atPath: legacyManifestURL.path),
+              let manifestData = try? Data(contentsOf: legacyManifestURL),
+              let manifest = try? JSONDecoder().decode(
+                  LegacyRemoteModelPackageManifest.self,
+                  from: manifestData
+              )
+        else {
+            return false
+        }
+
+        let legacyFiles = manifest.files.map {
+            RemoteModelPackageFile(
+                relativePath: $0.path,
+                expectedByteCount: $0.sizeBytes,
+                expectedSHA256: $0.sha256
+            )
+        }
+        let catalogFiles = release.allowlistedFiles.filter { file in
+            file.relativePath != "MANIFEST.json"
+        }
+        return manifest.packageID == release.packageID
+            && sameFiles(legacyFiles, catalogFiles)
     }
 
     private static func sameFiles(
@@ -754,6 +828,12 @@ public enum LocalASRPresencePolicy {
             }
             var isDir = ObjCBool(false)
             guard fileManager.fileExists(atPath: itemURL.path, isDirectory: &isDir), !isDir.boolValue else {
+                continue
+            }
+            // Finder may place this exact metadata file at any package depth.
+            // Ignore no other regular file; manifest entries remain fully
+            // checked above and symlinks are rejected before this filter.
+            if itemURL.lastPathComponent == ".DS_Store" {
                 continue
             }
             guard itemURL.standardizedFileURL.path.hasPrefix(rootPath) else { continue }
@@ -965,22 +1045,22 @@ public enum NativeModelCatalog {
     public static let localTranslationInstallDescriptors: [NativeModelInstallDescriptor] = [
         translationDescriptor(
             id: "qwen35-08b-4bit",
-            displayName: "Qwen 3.5 0.8B 4bit",
+            displayName: "Qwen 3.5 0.8B 4-bit",
             repositoryID: "mlx-community/Qwen3.5-0.8B-4bit"
         ),
         translationDescriptor(
             id: "qwen35-2b-4bit",
-            displayName: "Qwen 3.5 2B 4bit",
+            displayName: "Qwen 3.5 2B 4-bit",
             repositoryID: "mlx-community/Qwen3.5-2B-4bit"
         ),
         translationDescriptor(
             id: "qwen35-4b-4bit",
-            displayName: "Qwen 3.5 4B 4bit",
+            displayName: "Qwen 3.5 4B 4-bit",
             repositoryID: "mlx-community/Qwen3.5-4B-4bit"
         ),
         translationDescriptor(
             id: "qwen35-9b-4bit",
-            displayName: "Qwen 3.5 9B 4bit",
+            displayName: "Qwen 3.5 9B 4-bit",
             repositoryID: "mlx-community/Qwen3.5-9B-4bit"
         ),
         translationDescriptor(
@@ -1011,6 +1091,26 @@ public enum NativeModelCatalog {
         }
         return localTranslationInstallDescriptors.first { $0.id == id }
     }
+    public static func displayName(for id: String) -> String? {
+        installDescriptor(for: id)?.displayName
+    }
+
+    public static func settingsRuntime(for id: String) -> LocalModelRuntime? {
+        guard let descriptor = installDescriptor(for: id) else { return nil }
+        switch descriptor.storageRuntime {
+        case .whisperkit:
+            return .whisper
+        case .parakeet:
+            return .parakeet
+        case .canary:
+            return .canary
+        case .mlx:
+            return .mlx
+        case .gguf, .ggml:
+            return nil
+        }
+    }
+
 
     public static func isModelPresent(
         _ descriptor: LocalASRModelDescriptor,
@@ -1224,10 +1324,23 @@ public struct LocalModelScanner: Sendable {
         searchPaths: [URL],
         maxVisitedItems: Int = 250_000
     ) -> [ScannedModel] {
+        scanForLocalModels(
+            searchPaths: searchPaths,
+            maxVisitedItems: maxVisitedItems,
+            nativeASRModels: NativeModelCatalog.newLocalASRModelDescriptors
+        )
+    }
+
+    /// Test seam for exercising scanner path discovery with a bounded fixture.
+    /// Production callers always use the catalog's trusted descriptors above.
+    static func scanForLocalModels(
+        searchPaths: [URL],
+        maxVisitedItems: Int,
+        nativeASRModels: [LocalASRModelDescriptor]
+    ) -> [ScannedModel] {
         let fm = FileManager.default
         var resultsByKey: [String: ScannedModel] = [:]
         var visited = 0
-        let nativeASRModels = NativeModelCatalog.newLocalASRModelDescriptors
 
         let asrModels = [
             ModelPattern(id: "whisper-large-v3-turbo", patterns: ["whisperkit-large-v3-turbo", "large-v3-turbo", "large-v3-v20240930_turbo_632mb"]),
@@ -1339,6 +1452,10 @@ public struct LocalModelScanner: Sendable {
         }
 
         return [SharedModelsRoot.resolve()] + sharedDirs + [
+            // Keep the conventional user-local root discoverable even when a
+            // prior configuration selected a different shared-model root.
+            homeDir.appendingPathComponent("AI_LOCAL_MODELS", isDirectory: true),
+            homeDir.appendingPathComponent("AI_LOCAL_MODELS/whisperkit", isDirectory: true),
             libraryDir.appendingPathComponent("NativeSmartScribe/Models/Transcription/WhisperKit", isDirectory: true),
             libraryDir.appendingPathComponent("NativeSmartScribe/Models", isDirectory: true),
             libraryDir.appendingPathComponent("VaniScript/Models", isDirectory: true),
@@ -1396,12 +1513,26 @@ public struct LocalModelScanner: Sendable {
             guard let canonical = LocalModelVerification.canonicalWhisperKitModelPath(url.path),
                   LocalModelVerification.verifyModelPath(canonical, isWhisper: true)
             else { continue }
-            return ScannedModel(id: model.id, path: canonical, isTranslation: false)
+            return ScannedModel(
+                id: model.id,
+                path: canonical,
+                isTranslation: false,
+                label: NativeModelCatalog.displayName(for: model.id)
+            )
         }
 
         for model in translationModels where model.patterns.contains(where: { haystack.contains($0) }) {
-            guard LocalModelVerification.verifyTranslationModelPath(url.path, modelID: model.id) else { continue }
-            return ScannedModel(id: model.id, path: url.path, isTranslation: true)
+            guard LocalModelVerification.verifyTranslationModelPath(
+                url.path,
+                modelID: model.id,
+                allowTestingBypass: false
+            ) else { continue }
+            return ScannedModel(
+                id: model.id,
+                path: url.path,
+                isTranslation: true,
+                label: NativeModelCatalog.displayName(for: model.id)
+            )
         }
 
         return nil
@@ -1413,7 +1544,10 @@ public struct LocalModelScanner: Sendable {
         fileManager: FileManager
     ) -> [URL] {
         var candidates = [
-            searchPath.appendingPathComponent(descriptor.relativeStorageSubpath, isDirectory: true)
+            searchPath.appendingPathComponent(descriptor.relativeStorageSubpath, isDirectory: true),
+            searchPath
+                .appendingPathComponent("whisperkit", isDirectory: true)
+                .appendingPathComponent(descriptor.relativeStorageSubpath, isDirectory: true)
         ]
         let runtimePrefix = descriptor.storageRuntime.rawValue + "/"
         if descriptor.relativeStorageSubpath.hasPrefix(runtimePrefix),

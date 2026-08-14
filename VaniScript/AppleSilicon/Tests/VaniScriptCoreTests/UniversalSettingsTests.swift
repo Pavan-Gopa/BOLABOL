@@ -111,7 +111,11 @@ struct UniversalSettingsTests {
     }
 
     @Test("active local model badge requires downloaded state")
-    func activeLocalModelBadgeRequiresDownloadedState() {
+    func activeLocalModelBadgeRequiresDownloadedState() throws {
+        let fixtureRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptUniversalSettings-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: fixtureRoot) }
+
         var settings = AppSettings.defaults
 
         settings.transcriptionProvider = "whisper-large-v3"
@@ -119,6 +123,11 @@ struct UniversalSettingsTests {
         #expect(!settings.isDownloadedLocalASRModelActive(id: "whisper-large-v3"))
 
         settings.localAsrModels["whisper-large-v3"]?.status = .downloaded
+        #expect(!settings.isDownloadedLocalASRModelActive(id: "whisper-large-v3"))
+
+        let modelDirectory = fixtureRoot.appendingPathComponent("whisper-large-v3", isDirectory: true)
+        try FileManager.default.createDirectory(at: modelDirectory, withIntermediateDirectories: true)
+        settings.localAsrModels["whisper-large-v3"]?.path = modelDirectory.path
         #expect(settings.isDownloadedLocalASRModelActive(id: "whisper-large-v3"))
         #expect(!settings.isDownloadedLocalASRModelActive(id: "whisper-medium-en"))
 
@@ -129,6 +138,25 @@ struct UniversalSettingsTests {
         settings.localTranslationModels["qwen35-9b-4bit"]?.status = .downloaded
         #expect(settings.isDownloadedLocalTranslationModelActive(id: "qwen35-9b-4bit"))
         #expect(!settings.isDownloadedLocalTranslationModelActive(id: "qwen35-4b-4bit"))
+    }
+
+    @Test("generic Whisper availability uses a cheap persisted directory reference")
+    func genericWhisperAvailabilityUsesReferenceOnly() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptGenericWhisper-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+
+        var settings = AppSettings.defaults
+        settings.transcriptionProvider = "coreml-whisperkit"
+        settings.localAsrModels["whisper-large-v3"] = LocalModelState(
+            status: .downloaded,
+            label: "Whisper Large v3",
+            path: root.path,
+            runtime: .whisper
+        )
+
+        #expect(settings.isDownloadedLocalASRModelActive(id: "coreml-whisperkit"))
     }
 
     @Test("removes unsupported local translation model ids during disk synchronization")

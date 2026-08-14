@@ -82,24 +82,91 @@ chmod 755 "$APP_RESOURCES/bin/yt-dlp" "$APP_RESOURCES/bin/ffmpeg"
 /usr/bin/codesign --force --sign - "$APP_RESOURCES/bin/yt-dlp"
 /usr/bin/codesign --force --sign - "$APP_RESOURCES/bin/ffmpeg"
 
-# Locate and bundle precompiled mlx.metallib to prevent GPU/JIT shader runtime crashes
-MLX_METALLIB=""
-if [[ -f "/Users/pavan/.cache/uv/archive-v0/TACwTF-MNNR0LcPgtH6k7/mlx/lib/mlx.metallib" ]]; then
-  MLX_METALLIB="/Users/pavan/.cache/uv/archive-v0/TACwTF-MNNR0LcPgtH6k7/mlx/lib/mlx.metallib"
-else
-  FOUND_METALLIB="$(find ~/.cache -name "mlx.metallib" 2>/dev/null | head -n 1)"
-  if [[ -n "$FOUND_METALLIB" ]]; then
-    MLX_METALLIB="$FOUND_METALLIB"
-  fi
+# Build and bundle the pinned MLX Swift checkout's official Metal library.
+MLX_SWIFT_CHECKOUT="$ROOT_DIR/.build/checkouts/mlx-swift"
+MLX_SOURCE_DIR="$MLX_SWIFT_CHECKOUT/Source/Cmlx/mlx"
+MLX_METAL_KERNELS_CMAKE="$MLX_SOURCE_DIR/mlx/backend/metal/kernels/CMakeLists.txt"
+MLX_METALLIB_BUILD_DIR="$ROOT_DIR/.build/mlx-metallib"
+MLX_METALLIB="$MLX_METALLIB_BUILD_DIR/mlx/backend/metal/kernels/mlx.metallib"
+
+if [[ ! -f "$MLX_METAL_KERNELS_CMAKE" ]]; then
+  echo "error: pinned mlx-swift checkout does not contain MLX's official Metal build definition: $MLX_METAL_KERNELS_CMAKE" >&2
+  exit 1
 fi
 
-if [[ -n "$MLX_METALLIB" ]]; then
-  echo "Bundling precompiled MLX Metal library from: $MLX_METALLIB"
-  cp "$MLX_METALLIB" "$APP_RESOURCES/mlx.metallib"
-  cp "$MLX_METALLIB" "$APP_MACOS/mlx.metallib"
-else
-  echo "warning: mlx.metallib not found in cache. MLX text operations might crash." >&2
+if ! CMAKE_BIN="$(command -v cmake)"; then
+  echo "error: CMake is required to build MLX's Metal library." >&2
+  exit 1
 fi
+
+if ! C_COMPILER_BIN="$(/usr/bin/xcrun --sdk macosx --find clang)"; then
+  echo "error: the macOS C compiler is unavailable." >&2
+  exit 1
+fi
+
+if ! CXX_COMPILER_BIN="$(/usr/bin/xcrun --sdk macosx --find clang++)"; then
+  echo "error: the macOS C++ compiler is unavailable." >&2
+  exit 1
+fi
+
+if ! METAL_COMPILER_BIN="$(/usr/bin/xcrun --sdk macosx --find metal)"; then
+  echo "error: the macOS Metal compiler is unavailable." >&2
+  exit 1
+fi
+
+if ! METALLIB_COMPILER_BIN="$(/usr/bin/xcrun --sdk macosx --find metallib)"; then
+  echo "error: the macOS Metal library linker is unavailable." >&2
+  exit 1
+fi
+
+if [[ ! -x "$CMAKE_BIN" || ! -x "$C_COMPILER_BIN" || ! -x "$CXX_COMPILER_BIN" || ! -x "$METAL_COMPILER_BIN" || ! -x "$METALLIB_COMPILER_BIN" ]]; then
+  echo "error: the required MLX Metal build toolchain is not executable." >&2
+  exit 1
+fi
+
+rm -rf "$MLX_METALLIB_BUILD_DIR"
+"$CMAKE_BIN" \
+  -S "$MLX_SOURCE_DIR" \
+  -B "$MLX_METALLIB_BUILD_DIR" \
+  -D CMAKE_BUILD_TYPE=Release \
+  -D CMAKE_C_COMPILER="$C_COMPILER_BIN" \
+  -D CMAKE_CXX_COMPILER="$CXX_COMPILER_BIN" \
+  -D CMAKE_OSX_ARCHITECTURES=arm64 \
+  -D CMAKE_OSX_DEPLOYMENT_TARGET="$MIN_SYSTEM_VERSION" \
+  -D FETCHCONTENT_FULLY_DISCONNECTED=ON \
+  -D "FETCHCONTENT_SOURCE_DIR_METAL_CPP=$MLX_SWIFT_CHECKOUT/Source/Cmlx/metal-cpp" \
+  -D "FETCHCONTENT_SOURCE_DIR_JSON=$MLX_SWIFT_CHECKOUT/Source/Cmlx/json" \
+  -D "FETCHCONTENT_SOURCE_DIR_FMT=$MLX_SWIFT_CHECKOUT/Source/Cmlx/fmt" \
+  -D MLX_BUILD_METAL=ON \
+  -D MLX_METAL_JIT=OFF \
+  -D MLX_BUILD_CPU=OFF \
+  -D MLX_BUILD_CUDA=OFF \
+  -D MLX_BUILD_TESTS=OFF \
+  -D MLX_BUILD_EXAMPLES=OFF \
+  -D MLX_BUILD_BENCHMARKS=OFF \
+  -D MLX_BUILD_PYTHON_BINDINGS=OFF \
+  -D MLX_BUILD_GGUF=OFF \
+  -D MLX_BUILD_SAFETENSORS=OFF \
+  -D MLX_USE_CCACHE=OFF
+"$CMAKE_BIN" --build "$MLX_METALLIB_BUILD_DIR" --target mlx-metallib --parallel
+
+if [[ ! -f "$MLX_METALLIB" || ! -s "$MLX_METALLIB" ]]; then
+  echo "error: MLX's official Metal build did not produce a non-empty library: $MLX_METALLIB" >&2
+  exit 1
+fi
+
+install_mlx_metallib() {
+  local destination="$1"
+
+  cp "$MLX_METALLIB" "$destination"
+  if [[ ! -s "$destination" ]] || ! /usr/bin/cmp -s "$MLX_METALLIB" "$destination"; then
+    echo "error: failed to install MLX Metal library at: $destination" >&2
+    exit 1
+  fi
+}
+
+install_mlx_metallib "$APP_RESOURCES/mlx.metallib"
+install_mlx_metallib "$APP_MACOS/mlx.metallib"
 
 ARCHS="$(/usr/bin/lipo -archs "$APP_BINARY")"
 if [[ "$ARCHS" != "arm64" ]]; then

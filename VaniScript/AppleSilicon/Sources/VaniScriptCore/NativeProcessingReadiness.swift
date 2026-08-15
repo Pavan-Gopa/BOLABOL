@@ -33,7 +33,22 @@ public enum NativeLanguagePolicy {
         NativeLanguageOption(code: "sv", displayName: "Swedish"),
         NativeLanguageOption(code: "it", displayName: "Italian"),
         NativeLanguageOption(code: "pt", displayName: "Portuguese"),
-        NativeLanguageOption(code: "nl", displayName: "Dutch")
+        NativeLanguageOption(code: "nl", displayName: "Dutch"),
+        NativeLanguageOption(code: "af", displayName: "Afrikaans"),
+        NativeLanguageOption(code: "bn", displayName: "Bengali"),
+        NativeLanguageOption(code: "bg", displayName: "Bulgarian"),
+        NativeLanguageOption(code: "hr", displayName: "Croatian"),
+        NativeLanguageOption(code: "el", displayName: "Greek"),
+        NativeLanguageOption(code: "gu", displayName: "Gujarati"),
+        NativeLanguageOption(code: "hu", displayName: "Hungarian"),
+        NativeLanguageOption(code: "ko", displayName: "Korean"),
+        NativeLanguageOption(code: "no", displayName: "Norwegian"),
+        NativeLanguageOption(code: "ro", displayName: "Romanian"),
+        NativeLanguageOption(code: "sk", displayName: "Slovak"),
+        NativeLanguageOption(code: "sl", displayName: "Slovenian"),
+        NativeLanguageOption(code: "te", displayName: "Telugu"),
+        NativeLanguageOption(code: "uk", displayName: "Ukrainian"),
+        NativeLanguageOption(code: "yo", displayName: "Yoruba")
     ]
 
     public static func canonicalCode(_ value: String) -> String {
@@ -108,7 +123,9 @@ public enum NativeLanguagePolicy {
     }
 
     private static let languageNames: [String: String] = [
+        "af": "Afrikaans",
         "bg": "Bulgarian",
+        "bn": "Bengali",
         "hr": "Croatian",
         "cs": "Czech",
         "da": "Danish",
@@ -119,12 +136,15 @@ public enum NativeLanguagePolicy {
         "fr": "French",
         "de": "German",
         "el": "Greek",
+        "gu": "Gujarati",
         "hi": "Hindi",
         "hu": "Hungarian",
         "it": "Italian",
+        "ko": "Korean",
         "lv": "Latvian",
         "lt": "Lithuanian",
         "mt": "Maltese",
+        "no": "Norwegian",
         "pl": "Polish",
         "pt": "Portuguese",
         "ro": "Romanian",
@@ -133,7 +153,9 @@ public enum NativeLanguagePolicy {
         "es": "Spanish",
         "sv": "Swedish",
         "ru": "Russian",
-        "uk": "Ukrainian"
+        "te": "Telugu",
+        "uk": "Ukrainian",
+        "yo": "Yoruba"
     ]
 
     private static let aliases: [String: String] = [
@@ -145,7 +167,9 @@ public enum NativeLanguagePolicy {
         "keep original": keepOriginalCode,
         "keep original (same)": keepOriginalCode,
         "keeporiginal": keepOriginalCode,
+        "af": "af", "afr": "af", "afrikaans": "af",
         "bg": "bg", "bul": "bg", "bulgarian": "bg",
+        "bn": "bn", "ben": "bn", "bengali": "bn",
         "hr": "hr", "hrv": "hr", "croatian": "hr",
         "cs": "cs", "cz": "cs", "ces": "cs", "czech": "cs",
         "da": "da", "dan": "da", "danish": "da",
@@ -156,12 +180,15 @@ public enum NativeLanguagePolicy {
         "fr": "fr", "fra": "fr", "fre": "fr", "french": "fr",
         "de": "de", "deu": "de", "ger": "de", "german": "de",
         "el": "el", "ell": "el", "gre": "el", "greek": "el",
+        "gu": "gu", "guj": "gu", "gujarati": "gu",
         "hi": "hi", "hin": "hi", "hindi": "hi",
         "hu": "hu", "hun": "hu", "hungarian": "hu",
         "it": "it", "ita": "it", "italian": "it",
+        "ko": "ko", "kor": "ko", "korean": "ko",
         "lv": "lv", "lav": "lv", "latvian": "lv",
         "lt": "lt", "lit": "lt", "lithuanian": "lt",
         "mt": "mt", "mlt": "mt", "maltese": "mt",
+        "no": "no", "nor": "no", "norwegian": "no",
         "pl": "pl", "pol": "pl", "polish": "pl",
         "pt": "pt", "por": "pt", "portuguese": "pt",
         "ro": "ro", "ron": "ro", "rum": "ro", "romanian": "ro",
@@ -170,7 +197,9 @@ public enum NativeLanguagePolicy {
         "es": "es", "spa": "es", "spanish": "es",
         "sv": "sv", "swe": "sv", "swedish": "sv",
         "ru": "ru", "rus": "ru", "russian": "ru",
-        "uk": "uk", "ukr": "uk", "ukrainian": "uk"
+        "te": "te", "tel": "te", "telugu": "te",
+        "uk": "uk", "ukr": "uk", "ukrainian": "uk",
+        "yo": "yo", "yor": "yo", "yoruba": "yo"
     ]
 }
 public struct NativeProcessingReadinessResult: Codable, Equatable, Sendable {

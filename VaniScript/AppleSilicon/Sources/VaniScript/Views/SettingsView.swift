@@ -177,7 +177,7 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
-                    .background(Color.white.opacity(0.04))
+                    .background(VaniScriptTheme.control)
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
 
@@ -210,7 +210,7 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
-                    .background(Color.white.opacity(0.04))
+                    .background(VaniScriptTheme.control)
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
                 }
@@ -244,7 +244,7 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
-                    .background(Color.white.opacity(0.04))
+                    .background(VaniScriptTheme.control)
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
 
@@ -277,7 +277,7 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
-                    .background(Color.white.opacity(0.04))
+                    .background(VaniScriptTheme.control)
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
                 }
@@ -311,7 +311,7 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
-                    .background(Color.white.opacity(0.04))
+                    .background(VaniScriptTheme.control)
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
                 }
@@ -343,7 +343,7 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
-                    .background(Color.white.opacity(0.04))
+                    .background(VaniScriptTheme.control)
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
 
@@ -377,7 +377,7 @@ struct SettingsView: View {
 
                         if profile.id != McpAgentProfileCatalog.all.last?.id {
                             Divider()
-                                .background(Color.white.opacity(0.08))
+                                .background(VaniScriptTheme.separator)
                                 .padding(.leading, 44)
                         }
                     }
@@ -456,7 +456,7 @@ struct SettingsView: View {
                             .buttonStyle(.plain)
                         }
                         .padding(8)
-                        .background(Color.white.opacity(0.02))
+                        .background(VaniScriptTheme.surfaceSubtle)
                         .cornerRadius(6)
                     }
                 }
@@ -808,7 +808,7 @@ struct SettingsView: View {
                             .padding(.horizontal, 10)
                             .frame(height: 34)
                             .background(VaniScriptTheme.input)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     Text("Comma-separated spelling variations or incorrect spellings (e.g. Srila Prabhupada, Prabhupad)")
@@ -976,7 +976,7 @@ struct SettingsView: View {
             promptsSidebar
 
             Divider()
-                .background(Color.white.opacity(0.12))
+                .background(VaniScriptTheme.separator)
 
             promptEditor
         }
@@ -1004,7 +1004,7 @@ struct SettingsView: View {
                                     HStack {
                                         Text(def.label)
                                             .font(.system(size: 12, weight: selectedPromptId == def.id ? .bold : .regular))
-                                            .foregroundStyle(selectedPromptId == def.id ? Color(red: 10/255, green: 10/255, blue: 18/255) : VaniScriptTheme.text0)
+                                            .foregroundStyle(selectedPromptId == def.id ? VaniScriptTheme.onAccent : VaniScriptTheme.text0)
                                             .lineLimit(1)
                                         Spacer()
                                     }
@@ -1051,7 +1051,7 @@ struct SettingsView: View {
                                         .foregroundStyle(VaniScriptTheme.accent)
                                         .padding(.horizontal, 5)
                                         .padding(.vertical, 1.5)
-                                        .background(Color.white.opacity(0.06))
+                                        .background(VaniScriptTheme.control)
                                         .cornerRadius(4)
                                 }
                             }
@@ -1112,9 +1112,9 @@ struct SettingsView: View {
                         .font(.system(size: 12, design: .monospaced))
                         .foregroundStyle(VaniScriptTheme.text1)
                         .padding(6)
-                        .background(Color.white.opacity(0.02))
+                        .background(VaniScriptTheme.surfaceSubtle)
                         .cornerRadius(8)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                         .disabled(true)
                 } else {
                     TextEditor(text: Binding(
@@ -1136,7 +1136,7 @@ struct SettingsView: View {
                     .padding(6)
                     .background(VaniScriptTheme.input)
                     .cornerRadius(8)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                 }
             } else {
                 Spacer()
@@ -1371,8 +1371,8 @@ private struct SettingsSection<Content: View>: View {
             }
         }
         .padding(14)
-        .background(Color.white.opacity(0.035))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.09), lineWidth: 1))
+        .background(VaniScriptTheme.control)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
     }
 }
@@ -1393,7 +1393,7 @@ private struct SettingsRow: View {
         .font(.system(size: 13))
         .padding(.horizontal, 12)
         .frame(height: VaniScriptTheme.Density.controlHeightLG)
-        .background(Color.white.opacity(0.04))
+        .background(VaniScriptTheme.control)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
@@ -1414,7 +1414,7 @@ private struct TextInputRow: View {
                 .padding(.horizontal, 10)
                 .frame(height: 34)
                 .background(VaniScriptTheme.input)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .font(.system(size: 13))
@@ -1436,7 +1436,7 @@ private struct SecureInputRow: View {
                 .padding(.horizontal, 10)
                 .frame(height: 34)
                 .background(VaniScriptTheme.input)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .font(.system(size: 13))
@@ -1701,10 +1701,10 @@ private struct ProviderCardView: View {
                         }
                     }
                     .padding(10)
-                    .background(activeTranscription ? VaniScriptTheme.accent.opacity(0.08) : Color.white.opacity(0.02))
+                    .background(activeTranscription ? VaniScriptTheme.accent.opacity(0.08) : VaniScriptTheme.surfaceSubtle)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(activeTranscription ? VaniScriptTheme.accent : Color.white.opacity(0.1), lineWidth: activeTranscription ? 1.5 : 1)
+                            .stroke(activeTranscription ? VaniScriptTheme.accent : VaniScriptTheme.border, lineWidth: activeTranscription ? 1.5 : 1)
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
@@ -1764,10 +1764,10 @@ private struct ProviderCardView: View {
                         }
                     }
                     .padding(10)
-                    .background(activeTranslation ? VaniScriptTheme.accent.opacity(0.08) : Color.white.opacity(0.02))
+                    .background(activeTranslation ? VaniScriptTheme.accent.opacity(0.08) : VaniScriptTheme.surfaceSubtle)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(activeTranslation ? VaniScriptTheme.accent : Color.white.opacity(0.1), lineWidth: activeTranslation ? 1.5 : 1)
+                            .stroke(activeTranslation ? VaniScriptTheme.accent : VaniScriptTheme.border, lineWidth: activeTranslation ? 1.5 : 1)
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 } else {
@@ -2050,7 +2050,7 @@ private struct GeminiAPIKeysEditor: View {
                     .padding(.horizontal, 10)
                     .frame(height: 34)
                     .background(VaniScriptTheme.input)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .opacity(disabled ? 0.5 : 1)
 
@@ -2060,7 +2060,7 @@ private struct GeminiAPIKeysEditor: View {
                             .foregroundStyle(VaniScriptTheme.text2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 4))
+                            .background(VaniScriptTheme.control, in: RoundedRectangle(cornerRadius: 4))
                     }
 
                     Button {
@@ -2170,7 +2170,7 @@ private struct ApiKeyInputRow: View {
             .padding(.horizontal, 10)
             .frame(height: 34)
             .background(VaniScriptTheme.input)
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 8))
 
             Button {
@@ -2204,7 +2204,7 @@ private struct ReadOnlyRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(height: 34)
                 .background(VaniScriptTheme.input)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.06), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.border, lineWidth: 1))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .font(.system(size: 13))
@@ -2487,7 +2487,7 @@ private struct CloudKeyModelRow: View {
                     .padding(.horizontal, 10)
                     .frame(height: 34)
                     .background(VaniScriptTheme.input)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 Button {
@@ -2571,7 +2571,7 @@ private struct CloudKeyModelRow: View {
                     .padding(.horizontal, 10)
                     .frame(height: 34)
                     .background(VaniScriptTheme.input)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .buttonStyle(.plain)
@@ -2758,7 +2758,7 @@ private struct SmartModelPickerSheet: View {
             .padding(.top, 14)
             .padding(.bottom, 10)
 
-            Divider().background(Color.white.opacity(0.12))
+            Divider().background(VaniScriptTheme.separator)
 
             // Search Bar & Filter Chips
             VStack(spacing: 10) {
@@ -2785,7 +2785,7 @@ private struct SmartModelPickerSheet: View {
                 .frame(height: 32)
                 .background(VaniScriptTheme.input)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
 
                 // Filter Chips
                 HStack(spacing: 6) {
@@ -2825,11 +2825,11 @@ private struct SmartModelPickerSheet: View {
                             .padding(.vertical, 5)
                             .frame(maxWidth: .infinity)
                             .background(selectedFilter == category ? VaniScriptTheme.accent.opacity(0.25) : VaniScriptTheme.input)
-                            .foregroundStyle(selectedFilter == category ? Color.white : VaniScriptTheme.text2)
+                            .foregroundStyle(selectedFilter == category ? VaniScriptTheme.onAccent : VaniScriptTheme.text2)
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(selectedFilter == category ? VaniScriptTheme.accent : Color.white.opacity(0.12), lineWidth: 1)
+                                    .stroke(selectedFilter == category ? VaniScriptTheme.accent : VaniScriptTheme.controlBorder, lineWidth: 1)
                             )
                         }
                         .buttonStyle(.plain)
@@ -2838,7 +2838,7 @@ private struct SmartModelPickerSheet: View {
             }
             .padding(12)
 
-            Divider().background(Color.white.opacity(0.12))
+            Divider().background(VaniScriptTheme.separator)
 
             // Models List
             if filteredModels.isEmpty {
@@ -2874,7 +2874,7 @@ private struct SmartModelPickerSheet: View {
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(model.id)
                                             .font(.system(size: 12, weight: isSelected ? .bold : .medium, design: .monospaced))
-                                            .foregroundStyle(isSelected ? Color.white : VaniScriptTheme.text0)
+                                            .foregroundStyle(isSelected ? VaniScriptTheme.onAccent : VaniScriptTheme.text0)
 
                                         HStack(spacing: 4) {
                                             if isAudio {
@@ -2898,7 +2898,7 @@ private struct SmartModelPickerSheet: View {
                                                 .font(.system(size: 9))
                                                 .padding(.horizontal, 5)
                                                 .padding(.vertical, 2)
-                                                .background(Color.white.opacity(0.08))
+                                                .background(VaniScriptTheme.control)
                                                 .foregroundStyle(VaniScriptTheme.text2)
                                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                                             }
@@ -2953,7 +2953,7 @@ private struct SettingsToggleRow: View {
         .tint(VaniScriptTheme.accent)
         .padding(.horizontal, 12)
         .frame(height: VaniScriptTheme.Density.controlHeightLG)
-        .background(Color.white.opacity(0.04))
+        .background(VaniScriptTheme.control)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
@@ -2972,7 +2972,7 @@ private struct CompactMcpToggleCard: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(isEnabled ? VaniScriptTheme.accent : VaniScriptTheme.text2)
                 .frame(width: 24, height: 24)
-                .background(Color.white.opacity(0.045))
+                .background(VaniScriptTheme.control)
                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
 
             VStack(alignment: .leading, spacing: 2) {
@@ -2995,7 +2995,7 @@ private struct CompactMcpToggleCard: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
         .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
-        .background(Color.white.opacity(0.04))
+        .background(VaniScriptTheme.control)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
         .disabled(!isEnabled)
@@ -3033,7 +3033,7 @@ private struct McpStatusSummaryTile: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
-        .background(Color.white.opacity(0.04))
+        .background(VaniScriptTheme.control)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
@@ -3059,7 +3059,7 @@ private struct McpAgentProfileRow: View {
         HStack(alignment: .center, spacing: VaniScriptTheme.Density.space8) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.white.opacity(0.05))
+                    .fill(VaniScriptTheme.control)
                 Image(systemName: profile.id.symbolName)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(VaniScriptTheme.accent)
@@ -3208,7 +3208,7 @@ private struct ProviderList: View {
                             .foregroundStyle(provider.group == .local ? VaniScriptTheme.accent : VaniScriptTheme.green)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color.white.opacity(0.06))
+                            .background(VaniScriptTheme.control)
                             .clipShape(Capsule())
                     }
                     .font(.system(size: 12))
@@ -3234,7 +3234,7 @@ private struct RatingDotsView: View {
         HStack(spacing: 3) {
             ForEach(0..<5, id: \.self) { i in
                 Circle()
-                    .fill(i < count ? VaniScriptTheme.accent : Color.white.opacity(0.15))
+                    .fill(i < count ? VaniScriptTheme.accent : VaniScriptTheme.border)
                     .frame(width: 5, height: 5)
             }
         }
@@ -3322,7 +3322,7 @@ private struct ModelSettingsRow: View {
                         .font(.system(size: 16))
                         .foregroundStyle(VaniScriptTheme.accent)
                         .frame(width: 32, height: 32)
-                        .background(Color.white.opacity(0.04))
+                        .background(VaniScriptTheme.control)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
 
                     Text(model.runtime == .mlx ? "METAL" : "NE/GPU")
@@ -3330,7 +3330,7 @@ private struct ModelSettingsRow: View {
                         .foregroundStyle(VaniScriptTheme.accent)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1.5)
-                        .background(Color.white.opacity(0.06))
+                        .background(VaniScriptTheme.control)
                         .clipShape(Capsule())
                 }
 
@@ -3354,7 +3354,7 @@ private struct ModelSettingsRow: View {
                         if isActive {
                             Text("Active")
                                 .font(.system(size: 8, weight: .heavy))
-                                .foregroundStyle(Color(red: 10/255, green: 10/255, blue: 18/255))
+                                .foregroundStyle(VaniScriptTheme.onAccent)
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 0.5)
                                 .background(VaniScriptTheme.green)
@@ -3457,8 +3457,8 @@ private struct ModelSettingsRow: View {
             }
         }
         .padding(12)
-        .background(Color.white.opacity(isActive ? 0.05 : 0.02))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(isActive ? VaniScriptTheme.accent.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1))
+        .background(isActive ? VaniScriptTheme.accent.opacity(0.08) : VaniScriptTheme.surfaceSubtle)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(isActive ? VaniScriptTheme.accent.opacity(0.4) : VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
     }
 }
@@ -3525,27 +3525,49 @@ private struct GlossarySettingsRow: View {
 }
 
 private struct SettingsPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255))
+            .foregroundStyle(isEnabled ? VaniScriptTheme.onAccent : VaniScriptTheme.disabledText)
             .padding(.vertical, 9)
-            .background(configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(isEnabled ? Color.clear : VaniScriptTheme.controlBorder, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
 private struct SettingsSmallButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
     let primary: Bool
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(primary ? Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255) : VaniScriptTheme.text1)
+            .foregroundStyle(
+                isEnabled
+                    ? (primary ? VaniScriptTheme.onAccent : VaniScriptTheme.text1)
+                    : VaniScriptTheme.disabledText
+            )
             .padding(.horizontal, 10)
             .frame(height: VaniScriptTheme.Density.controlHeightMD)
-            .background(primary ? VaniScriptTheme.accent : Color.white.opacity(configuration.isPressed ? 0.1 : 0.06))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(primary ? Color.clear : Color.white.opacity(0.12), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (primary ? VaniScriptTheme.accent : (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control))
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isEnabled ? (primary ? Color.clear : VaniScriptTheme.controlBorder) : VaniScriptTheme.border, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
@@ -3606,7 +3628,7 @@ private struct GlossaryEditSheet: View {
                             .frame(height: 100)
                             .scrollContentBackground(.hidden)
                             .background(VaniScriptTheme.input)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .padding(.top, 4)
@@ -3657,15 +3679,25 @@ private struct GlossaryEditSheet: View {
 }
 
 private struct CornerIconButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+            .foregroundStyle(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text1)
+                    : VaniScriptTheme.disabledText
+            )
             .frame(width: 32, height: 32)
-            .background(Color.white.opacity(configuration.isPressed ? 0.12 : 0.07))
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    .stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }

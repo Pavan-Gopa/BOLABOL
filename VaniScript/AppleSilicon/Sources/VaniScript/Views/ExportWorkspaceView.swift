@@ -146,13 +146,16 @@ struct ExportWorkspaceView: View {
             ExportSectionHeading(
                 title: "Document export",
                 subtitle: session.sourceKind == .document
-                    ? "Download the reviewed document in DOCX, PDF, or TXT format."
+                    ? "Download the localized DOCX, a three-file translation package, or standalone PDF / TXT."
                     : "Download the reviewed transcript as text, subtitles, or a formatted Markdown document."
             )
             if session.sourceKind == .document {
                 HStack(spacing: 8) {
                     ExportButton(title: "DOCX", primary: true) {
                         store.exportDocument(format: .docx)
+                    }
+                    ExportButton(title: "Package (3 files)", primary: false) {
+                        store.exportDocumentTranslationPackage()
                     }
                     ExportButton(title: "PDF", primary: false) {
                         store.exportDocument(format: .pdf)
@@ -375,7 +378,7 @@ struct ExportWorkspaceView: View {
             .disabled(!canUseTarget)
         }
         .padding(4)
-        .background(Color.dynamic(light: Color.black.opacity(0.045), dark: Color.white.opacity(0.045)))
+        .background(VaniScriptTheme.control)
         .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
     }
 
@@ -577,7 +580,7 @@ private struct ShortsStepSection<Content: View, Trailing: View>: View {
                 HStack(spacing: 10) {
                     Text("\(number)")
                         .font(.system(size: 14, weight: .heavy))
-                        .foregroundStyle(Color.black)
+                        .foregroundStyle(VaniScriptTheme.onAccent)
                         .frame(width: 24, height: 24)
                         .background(VaniScriptTheme.accent)
                         .clipShape(Circle())
@@ -591,8 +594,8 @@ private struct ShortsStepSection<Content: View, Trailing: View>: View {
             content
         }
         .padding(VaniScriptTheme.Density.space12)
-        .background(Color.dynamic(light: Color.black.opacity(0.02), dark: Color.white.opacity(0.035)))
-        .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(Color.dynamic(light: Color.black.opacity(0.1), dark: Color.white.opacity(0.12)), lineWidth: 1))
+        .background(VaniScriptTheme.surfaceSubtle)
+        .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
@@ -656,9 +659,9 @@ private struct ShortsPlanCard: View {
                     Image(systemName: "checkmark")
                         .font(.system(size: 12, weight: .heavy))
                         .frame(width: 24, height: 24)
-                        .foregroundStyle(Color.black)
+                        .foregroundStyle(VaniScriptTheme.onAccent)
                         .opacity(selected ? 1 : 0)
-                        .background(selected ? VaniScriptTheme.accent : Color.dynamic(light: Color.black.opacity(0.06), dark: Color.white.opacity(0.06)))
+                        .background(selected ? VaniScriptTheme.accent : VaniScriptTheme.control)
                         .overlay(RoundedRectangle(cornerRadius: 7).stroke(VaniScriptTheme.accent.opacity(selected ? 0 : 0.6), lineWidth: 1))
                         .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                 }
@@ -697,10 +700,10 @@ private struct ShortsPlanCard: View {
             }
         }
         .padding(14)
-        .background(selected ? Color.dynamic(light: VaniScriptTheme.accent.opacity(0.15), dark: Color(red: 55 / 255, green: 45 / 255, blue: 44 / 255).opacity(0.76)) : Color.dynamic(light: Color.white, dark: Color.white.opacity(0.03)))
+        .background(selected ? VaniScriptTheme.controlSelected : VaniScriptTheme.card)
         .overlay(
             RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM)
-                .stroke(selected ? VaniScriptTheme.accent.opacity(0.9) : Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1)
+                .stroke(selected ? VaniScriptTheme.controlSelectedBorder : VaniScriptTheme.border, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
@@ -759,7 +762,7 @@ private struct ClipDetailsSheet: View {
                         .buttonStyle(TogglePillStyle(active: displayLanguage == .target))
                 }
                 .padding(4)
-                .background(Color.dynamic(light: Color.black.opacity(0.045), dark: Color.white.opacity(0.045)))
+                .background(VaniScriptTheme.control)
                 .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
             }
 
@@ -811,7 +814,7 @@ private struct DetailField: View {
                 .foregroundStyle(VaniScriptTheme.text1)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(10)
-                .background(Color.dynamic(light: Color.black.opacity(0.035), dark: Color.white.opacity(0.035)))
+                .background(VaniScriptTheme.surfaceSubtle)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
     }
@@ -1089,7 +1092,7 @@ private struct TextInputBlock: View {
             TextField("", text: $text)
                 .textFieldStyle(.plain)
                 .padding(10)
-                .background(Color.dynamic(light: Color.black.opacity(0.05), dark: Color.white.opacity(0.07)))
+                .background(VaniScriptTheme.surfaceSubtle)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             if let hint {
                 Text(hint)
@@ -1116,7 +1119,7 @@ private struct TextAreaBlock: View {
                 .scrollContentBackground(.hidden)
                 .frame(height: height)
                 .padding(8)
-                .background(Color.dynamic(light: Color.black.opacity(0.05), dark: Color.white.opacity(0.07)))
+                .background(VaniScriptTheme.surfaceSubtle)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
     }
@@ -1151,10 +1154,10 @@ private struct ExportPicker: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
                 .padding(.horizontal, 10)
-                .background(Color.dynamic(light: Color.black.opacity(0.035), dark: Color.black.opacity(0.18)))
+                .background(VaniScriptTheme.input)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1)
+                        .stroke(VaniScriptTheme.controlBorder, lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
@@ -1171,11 +1174,21 @@ private struct ExportActionButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text(title)
-                .frame(maxWidth: .infinity, minHeight: 36, alignment: .center)
+        Group {
+            if primary {
+                Button(action: action) {
+                    Text(title)
+                        .frame(maxWidth: .infinity, minHeight: 36, alignment: .center)
+                }
+                .buttonStyle(ExportPrimaryButtonStyle())
+            } else {
+                Button(action: action) {
+                    Text(title)
+                        .frame(maxWidth: .infinity, minHeight: 36, alignment: .center)
+                }
+                .buttonStyle(ExportSecondaryButtonStyle())
+            }
         }
-        .buttonStyle(primary ? AnyButtonStyle(ExportPrimaryButtonStyle()) : AnyButtonStyle(ExportSecondaryButtonStyle()))
         .disabled(disabled)
         .frame(maxWidth: .infinity)
     }
@@ -1203,80 +1216,116 @@ private struct ExportButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 7) {
-                Image(systemName: "arrow.down")
-                Text(title)
+        Group {
+            if primary {
+                Button(action: action) {
+                    HStack(spacing: 7) {
+                        Image(systemName: "arrow.down")
+                        Text(title)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(ExportPrimaryButtonStyle())
+            } else {
+                Button(action: action) {
+                    HStack(spacing: 7) {
+                        Image(systemName: "arrow.down")
+                        Text(title)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(ExportSecondaryButtonStyle())
             }
-            .frame(maxWidth: .infinity)
         }
-        .buttonStyle(primary ? AnyButtonStyle(ExportPrimaryButtonStyle()) : AnyButtonStyle(ExportSecondaryButtonStyle()))
     }
 }
 
 private struct ExportPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255))
+            .foregroundStyle(isEnabled ? VaniScriptTheme.onAccent : VaniScriptTheme.disabledText)
             .padding(.vertical, VaniScriptTheme.Density.space8)
             .padding(.horizontal, VaniScriptTheme.Density.space12)
-            .background(configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous)
+                    .stroke(isEnabled ? Color.clear : VaniScriptTheme.controlBorder, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
-            .opacity(configuration.isPressed ? 0.9 : 1)
+            .opacity(isEnabled && configuration.isPressed ? 0.9 : 1)
     }
 }
 
 private struct ExportSecondaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(VaniScriptTheme.text1)
+            .foregroundStyle(isEnabled ? VaniScriptTheme.text1 : VaniScriptTheme.disabledText)
             .padding(.vertical, VaniScriptTheme.Density.space8)
             .padding(.horizontal, VaniScriptTheme.Density.space12)
-            .background(Color.dynamic(light: Color.black.opacity(configuration.isPressed ? 0.08 : 0.02), dark: Color.white.opacity(configuration.isPressed ? 0.09 : 0.02)))
-            .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.2)), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
 private struct ReviewBackButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(VaniScriptTheme.text1)
+            .foregroundStyle(isEnabled ? VaniScriptTheme.text1 : VaniScriptTheme.disabledText)
             .padding(.horizontal, VaniScriptTheme.Density.space12)
             .frame(height: VaniScriptTheme.Density.controlHeightMD)
-            .background(Color.dynamic(light: Color.black.opacity(configuration.isPressed ? 0.12 : 0.07), dark: Color.white.opacity(configuration.isPressed ? 0.12 : 0.07)))
-            .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM).stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }
 }
 
 private struct TogglePillStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
     let active: Bool
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .heavy))
-            .foregroundStyle(active ? Color.black : VaniScriptTheme.text2)
+            .foregroundStyle(
+                isEnabled
+                    ? (active ? VaniScriptTheme.onAccent : VaniScriptTheme.text2)
+                    : VaniScriptTheme.disabledText
+            )
             .padding(.horizontal, VaniScriptTheme.Density.space12)
             .frame(height: VaniScriptTheme.Density.controlHeightMD)
-            .background(active ? VaniScriptTheme.accent : Color.clear)
+            .background(
+                isEnabled
+                    ? (active ? VaniScriptTheme.accent : Color.clear)
+                    : (active ? VaniScriptTheme.disabledSurface : Color.clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous)
+                    .stroke(isEnabled ? Color.clear : (active ? VaniScriptTheme.border : Color.clear), lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
-            .opacity(configuration.isPressed ? 0.85 : 1)
-    }
-}
-
-private struct AnyButtonStyle: ButtonStyle {
-    private let make: (Configuration) -> AnyView
-
-    init<S: ButtonStyle>(_ style: S) {
-        self.make = { AnyView(style.makeBody(configuration: $0)) }
-    }
-
-    func makeBody(configuration: Configuration) -> some View {
-        make(configuration)
+            .opacity(isEnabled && configuration.isPressed ? 0.85 : 1)
     }
 }
 
@@ -1288,7 +1337,7 @@ struct SpinningRingsView: View {
         ZStack {
             // Outer Ring Trace
             Circle()
-                .stroke(Color.dynamic(light: Color.black.opacity(0.08), dark: Color.white.opacity(0.08)), lineWidth: 4)
+                .stroke(VaniScriptTheme.border, lineWidth: 4)
                 .frame(width: 80, height: 80)
 
             // Outer Ring Arc
@@ -1303,7 +1352,7 @@ struct SpinningRingsView: View {
 
             // Inner Ring Trace
             Circle()
-                .stroke(Color.dynamic(light: Color.black.opacity(0.08), dark: Color.white.opacity(0.08)), lineWidth: 2)
+                .stroke(VaniScriptTheme.border, lineWidth: 2)
                 .frame(width: 62, height: 62)
 
             // Inner Ring Arc
@@ -1371,7 +1420,7 @@ struct ExportProgressModalView: View {
                 if let completionState = store.exportCompletionState, case .failure(let error) = completionState {
                     Text(error)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color.red.opacity(0.8))
+                        .foregroundStyle(VaniScriptTheme.errorText)
                 } else {
                     Text(store.exportStage)
                         .font(.system(size: 13))
@@ -1394,7 +1443,7 @@ struct ExportProgressModalView: View {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         Capsule()
-                            .fill(Color.dynamic(light: Color.black.opacity(0.08), dark: Color.white.opacity(0.08)))
+                            .fill(VaniScriptTheme.border)
                             .frame(height: 8)
 
                         Capsule()

@@ -267,12 +267,17 @@ public enum ProjectBundleImporter {
     }
 
     private static func updateAssetPaths(record: inout ProjectRecord, assetMap: [String: String]) {
-        record.session.sourceFile = assetMap["sourceFile"] ?? record.session.sourceFile
+        let docAssetKey = record.session.documentState?.originalAsset.key
+        let resolvedSource = assetMap["sourceFile"]
+            ?? assetMap["originalSource"]
+            ?? (docAssetKey.flatMap { assetMap[$0] })
+            ?? record.session.sourceFile
+        record.session.sourceFile = resolvedSource
         for index in record.session.chunks.indices {
             let key = "chunk:\(index)"
             if let chunkPath = assetMap[key] {
                 record.session.chunks[index].filePath = chunkPath
-            } else if let sourcePath = assetMap["sourceFile"] {
+            } else if let sourcePath = resolvedSource {
                 record.session.chunks[index].filePath = sourcePath
             }
         }

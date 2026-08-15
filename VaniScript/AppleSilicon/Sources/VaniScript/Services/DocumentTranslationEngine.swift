@@ -916,9 +916,16 @@ public actor DocumentTranslationEngine {
         memory: DocumentTranslationMemory? = nil
     ) -> DocumentTranslationRequest {
         let byID = Dictionary(uniqueKeysWithValues: documentState.blocks.map { ($0.id, $0) })
+        let slicesByBlockID: [String: DocumentBlockSlice]
+        if let slices = plan.blockSlices, !slices.isEmpty {
+            slicesByBlockID = Dictionary(slices.map { ($0.blockID, $0) }, uniquingKeysWith: { first, _ in first })
+        } else {
+            slicesByBlockID = [:]
+        }
         let requestedBlocks: [DocumentTranslationInputBlock] = plan.blockIDs.compactMap { id in
             guard let block = byID[id] else { return nil }
-            return DocumentTranslationInputBlock(block: block)
+            let slice = slicesByBlockID[id]
+            return DocumentTranslationInputBlock(block: block, slice: slice)
         }
         let before = plan.contextBeforeBlockIDs.compactMap { id -> DocumentTranslationContextBlock? in
             guard let block = byID[id] else { return nil }

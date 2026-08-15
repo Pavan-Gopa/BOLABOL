@@ -1,0 +1,22 @@
+VaniScript S7 static QA execution evidence
+UTC date: 2026-08-15
+Branch: orchestrator/s7-applesilicon-with-workflow
+WorkflowStore.swift blob: 65069c2702e2a4ef0721ff788d36f74b051c891f
+Guard: QA/scripts/s7_export_completeness_guard.py
+Execution host: Linux x86_64, Python 3.13.5
+
+Execution method:
+- Fetched the exact current body of WorkflowStore.exportDocument(format: DocumentOutputFormat) from the branch.
+- Executed the repository guard logic from s7_export_completeness_guard.py against that exact function body.
+
+OUTPUT:
+FAIL: PDF/TXT export reaches NSSavePanel without checking translation completeness.
+The current aggregate non-empty check can pass on source fallback from DocumentTranslationExportBuilder.
+
+EXIT_CODE=1
+
+Classification: PRODUCT BUG REPRODUCED BY EXECUTED STATIC QA GATE
+Bug ID: BUG-S7-T03
+Suspect: Sources/VaniScript/Stores/WorkflowStore.swift
+
+This is an actually executed static gate, not an inferred PASS/FAIL. It does not substitute for the full macOS Swift test run.

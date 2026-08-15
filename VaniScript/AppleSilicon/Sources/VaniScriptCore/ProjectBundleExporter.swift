@@ -131,6 +131,11 @@ public enum ProjectBundleExporter {
             )
         }
         try addAsset(key: "sourceFile", path: record.session.sourceFile, role: .originalSource)
+        if let docState = record.session.documentState {
+            if !docState.originalAsset.key.isEmpty, docState.originalAsset.key != "sourceFile" {
+                try addAsset(key: docState.originalAsset.key, path: record.session.sourceFile, role: .originalSource)
+            }
+        }
         for (index, chunk) in record.session.chunks.enumerated() {
             try addAsset(key: "chunk:\(index)", path: chunk.filePath, role: .mediaChunk)
         }

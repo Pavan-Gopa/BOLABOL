@@ -465,6 +465,9 @@ private extension McpReadToolService {
             "supportedLanguages": [
                 "Russian", "Czech", "French", "German", "Polish", "English",
                 "Hindi", "Spanish", "Swedish", "Italian", "Portuguese", "Dutch",
+                "Afrikaans", "Bengali", "Bulgarian", "Croatian", "Greek", "Gujarati",
+                "Hungarian", "Korean", "Norwegian", "Romanian", "Slovak", "Slovenian",
+                "Telugu", "Ukrainian", "Yoruba",
             ],
             "targetLanguage": session.targetLang,
             "translationProvider": session.translationProvider,

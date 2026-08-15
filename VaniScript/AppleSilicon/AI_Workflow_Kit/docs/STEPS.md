@@ -693,6 +693,8 @@ Main has built/opened the fresh app, and no Reviewer or Tester has run yet.
 - [ ] Text-layer PDF as reconstruction; scanned PDF/OCR stays an explicit later stage
 - [ ] Security limits, cancellation, and large-document tests
 - [ ] Full media regression: WhisperKit, cloud transcription, local MLX translation
+- [x] Preserve explicit source foreground colors through rich import, strict translation, attributed Review editing, persistence, and rich export; keep plain formats honestly plain
+- [x] Replace Light-mode-invisible chrome across Upload, Config, Processing, Review, Export, Settings, and sidebars with the existing semantic dynamic-color system
 
 **Out of scope:**
 - Vision OCR productization, `.docm`, pixel-identical page count
@@ -703,10 +705,15 @@ Main has built/opened the fresh app, and no Reviewer or Tester has run yet.
 
 - [ ] `swift build`, `swift test`, and applicable QA suite exit 0
 - [ ] unavailable OCR/real-manuscript cases are recorded honestly
+- [x] focused rich-color import/translation/edit/export tests pass
+- [x] focused dynamic Light/Dark contrast, disabled-state, and attributed-editor tests pass
+- [ ] fresh-app Light and Dark workflow smoke confirms readable text, icons, editors, errors, disabled controls, and action bars
 
 ### Judgment gates
 
 - [ ] no media-pipeline regression; no fabricated format support
+- [ ] provider output cannot invent trusted document formatting; old projects decode with automatic foreground color
+- [ ] every primary workflow surface remains readable and editable in both appearances
 
 **Ready for review when:** automated gates and available smokes are complete.
 

@@ -162,9 +162,9 @@ struct UsageStatisticsView: View {
             Spacer()
         }
         .padding(10)
-        .background(Color.white.opacity(0.025))
+        .background(VaniScriptTheme.surfaceSubtle)
         .cornerRadius(8)
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.06), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.border, lineWidth: 1))
     }
 
     /// A7: real balance section reuses CloudBalanceRow for openrouterCredits / ollamaPlan with a configured key.
@@ -270,7 +270,7 @@ struct UsageStatisticsView: View {
             }
         }
         .padding(10)
-        .background(Color.white.opacity(0.025))
+        .background(VaniScriptTheme.surfaceSubtle)
         .cornerRadius(8)
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.accent.opacity(0.3), lineWidth: 1))
     }
@@ -301,9 +301,9 @@ struct UsageStatisticsView: View {
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.025))
+                .background(VaniScriptTheme.surfaceSubtle)
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.06), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.border, lineWidth: 1))
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("OpenRouter Balance")
@@ -315,9 +315,9 @@ struct UsageStatisticsView: View {
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.025))
+                .background(VaniScriptTheme.surfaceSubtle)
                 .cornerRadius(8)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.06), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.border, lineWidth: 1))
             }
 
             // Box 2: Total Spent on Transcription
@@ -336,10 +336,9 @@ struct UsageStatisticsView: View {
             }
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(0.025))
+            .background(VaniScriptTheme.surfaceSubtle)
             .cornerRadius(8)
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.accent.opacity(0.25), lineWidth: 1))
-
             // Box 3: Total Spent on Translation
             HStack(spacing: 8) {
                 Image(systemName: "character.bubble")
@@ -356,7 +355,7 @@ struct UsageStatisticsView: View {
             }
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(0.025))
+            .background(VaniScriptTheme.surfaceSubtle)
             .cornerRadius(8)
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.blue.opacity(0.25), lineWidth: 1))
         }
@@ -423,9 +422,9 @@ struct UsageStatisticsView: View {
             }
         }
         .padding(9)
-        .background(Color.white.opacity(0.025))
+        .background(VaniScriptTheme.surfaceSubtle)
         .cornerRadius(8)
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.06), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.border, lineWidth: 1))
     }
 
     private func budgetLimit(forProviderID provider: String) -> Double {

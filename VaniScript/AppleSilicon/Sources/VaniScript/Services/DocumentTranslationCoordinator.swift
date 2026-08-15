@@ -442,20 +442,82 @@ public actor DocumentTranslationCoordinator {
             outputHash: outputHash
         )
         let translatedBlocks = result.response.blocks.map { output in
-            TranslatedBlock(
+            let sourceBlock = documentState.blocks.first(where: { $0.id == output.id })
+                ?? documentState.blocks.first(where: { block in plan.blockSlices?.contains(where: { $0.blockID == block.id }) == true })
+
+            let spans = output.spans.enumerated().map { spanIndex, outputSpan in
+                let matchedSourceSpan: RichTextSpan?
+                if let spanId = outputSpan.id, let match = sourceBlock?.spans.first(where: { $0.id == spanId }) {
+                    matchedSourceSpan = match
+                } else if let match = sourceBlock?.spans.first(where: { $0.styleKey == outputSpan.style || ($0.styleKey.isEmpty && outputSpan.style == "plain") }) {
+                    matchedSourceSpan = match
+                } else if let sourceSpans = sourceBlock?.spans, sourceSpans.indices.contains(spanIndex), sourceSpans.count == output.spans.count {
+                    matchedSourceSpan = sourceSpans[spanIndex]
+                } else {
+                    matchedSourceSpan = nil
+                }
+
+                let spanId = outputSpan.id ?? matchedSourceSpan?.id ?? UUID().uuidString
+                let styleKey = matchedSourceSpan?.styleKey ?? outputSpan.style
+                let traits = matchedSourceSpan?.traits ?? []
+                let policy = matchedSourceSpan?.translationPolicy ?? .translate
+                let colorHex = matchedSourceSpan?.foregroundColorHex
+
+                return RichTextSpan(
+                    id: spanId,
+                    text: outputSpan.text,
+                    styleKey: styleKey,
+                    traits: traits,
+                    translationPolicy: policy,
+                    foregroundColorHex: colorHex
+                )
+            }
+
+            return TranslatedBlock(
                 id: output.id,
                 sourceBlockID: output.id,
                 text: output.text,
-                spans: output.spans.map {
-                    RichTextSpan(id: $0.id ?? UUID().uuidString, text: $0.text, styleKey: $0.style)
-                },
+                spans: spans,
                 sourceHash: plan.sourceHash,
                 reviewDisposition: disposition,
                 qualityReport: report
             )
         }
         for block in translatedBlocks {
-            translations[block.sourceBlockID] = block
+            if let slice = plan.blockSlices?.first(where: { $0.blockID == block.sourceBlockID }) {
+                let allSlicesForBlock = documentState.chunks
+                    .compactMap(\.blockSlices)
+                    .flatMap { $0 }
+                    .filter { $0.blockID == block.sourceBlockID }
+                    .sorted { $0.startOffset < $1.startOffset }
+                let sliceIndex = allSlicesForBlock.firstIndex(where: {
+                    $0.startOffset == slice.startOffset && $0.endOffset == slice.endOffset
+                }) ?? 0
+                let compoundKey = TranslationArchive.sliceKey(blockID: block.sourceBlockID, sliceIndex: sliceIndex)
+                let offsetKey = TranslationArchive.sliceKey(blockID: block.sourceBlockID, startOffset: slice.startOffset, endOffset: slice.endOffset)
+                var sliceBlock = block
+                sliceBlock.id = compoundKey
+                sliceBlock.sourceBlockID = compoundKey
+                translations[compoundKey] = sliceBlock
+                translations[offsetKey] = sliceBlock
+
+                let availableSliceBlocks = allSlicesForBlock.enumerated().compactMap { i, s -> TranslatedBlock? in
+                    let keyI = TranslationArchive.sliceKey(blockID: block.sourceBlockID, sliceIndex: i)
+                    let keyO = TranslationArchive.sliceKey(blockID: block.sourceBlockID, startOffset: s.startOffset, endOffset: s.endOffset)
+                    return translations[keyI] ?? translations[keyO]
+                }
+                if !allSlicesForBlock.isEmpty && availableSliceBlocks.count == allSlicesForBlock.count {
+                    let mergedText = availableSliceBlocks.map(\.text).joined(separator: " ")
+                    var fullBlock = block
+                    fullBlock.id = block.sourceBlockID
+                    fullBlock.sourceBlockID = block.sourceBlockID
+                    fullBlock.text = mergedText
+                    fullBlock.spans = availableSliceBlocks.flatMap(\.spans)
+                    translations[block.sourceBlockID] = fullBlock
+                }
+            } else {
+                translations[block.sourceBlockID] = block
+            }
         }
         documentState.translationsByLanguage[language] = translations
         session.documentState = documentState
@@ -512,25 +574,61 @@ public actor DocumentTranslationCoordinator {
         let byID = Dictionary(uniqueKeysWithValues: documentState.blocks.map { ($0.id, $0) })
         let deterministicOnly = plan.blockIDs.allSatisfy { id in
             guard let block = byID[id] else { return false }
-            return DocumentTranslationRequest.isDeterministic(DocumentTranslationInputBlock(block: block))
+            let slice = plan.blockSlices?.first(where: { $0.blockID == id })
+            return DocumentTranslationRequest.isDeterministic(DocumentTranslationInputBlock(block: block, slice: slice))
         }
         let language = TranslationArchive.languageKey(session.targetLang)
         let stored = documentState.translationsByLanguage[language] ?? [:]
         if deterministicOnly {
             // Empty deterministic output is still a completed translation; it
             // is ready once every planned block has an archive entry.
-            return plan.blockIDs.allSatisfy { stored[$0] != nil }
+            return plan.blockIDs.allSatisfy { id in
+                if stored[id] != nil { return true }
+                if let slice = plan.blockSlices?.first(where: { $0.blockID == id }) {
+                    let allSlices = documentState.chunks.compactMap(\.blockSlices).flatMap { $0 }.filter { $0.blockID == id }.sorted { $0.startOffset < $1.startOffset }
+                    let idx = allSlices.firstIndex(where: { $0.startOffset == slice.startOffset && $0.endOffset == slice.endOffset }) ?? 0
+                    let keyIdx = TranslationArchive.sliceKey(blockID: id, sliceIndex: idx)
+                    let keyOff = TranslationArchive.sliceKey(blockID: id, startOffset: slice.startOffset, endOffset: slice.endOffset)
+                    if stored[keyIdx] != nil || stored[keyOff] != nil { return true }
+                }
+                return false
+            }
         }
 
         guard TranslationArchive.isUsableTranslationText(chunk.translated) else { return false }
         if stored.isEmpty { return true }
-        return plan.blockIDs.allSatisfy {
-            stored[$0].map { TranslationArchive.isUsableTranslationText($0.text) } ?? false
+        return plan.blockIDs.allSatisfy { id in
+            guard let block = byID[id] else { return false }
+            let slice = plan.blockSlices?.first(where: { $0.blockID == id })
+            let inputBlock = DocumentTranslationInputBlock(block: block, slice: slice)
+            if DocumentTranslationRequest.isDeterministic(inputBlock) {
+                return true
+            }
+            if let slice {
+                let allSlices = documentState.chunks.compactMap(\.blockSlices).flatMap { $0 }.filter { $0.blockID == id }.sorted { $0.startOffset < $1.startOffset }
+                let idx = allSlices.firstIndex(where: { $0.startOffset == slice.startOffset && $0.endOffset == slice.endOffset }) ?? 0
+                let keyIdx = TranslationArchive.sliceKey(blockID: id, sliceIndex: idx)
+                let keyOff = TranslationArchive.sliceKey(blockID: id, startOffset: slice.startOffset, endOffset: slice.endOffset)
+                if let entry = stored[keyIdx] ?? stored[keyOff], TranslationArchive.isUsableTranslationText(entry.text) {
+                    return true
+                }
+            }
+            return stored[id].map { TranslationArchive.isUsableTranslationText($0.text) } ?? false
         }
     }
 
     private func plan(for index: Int, in documentState: DocumentState?) -> DocumentChunkPlan? {
         guard let documentState else { return nil }
+        if documentState.chunks.indices.contains(index) {
+            let candidate = documentState.chunks[index]
+            if session.chunks.indices.contains(index), case let .document(range) = session.chunks[index].sourceAnchor {
+                if candidate.blockIDs.first == range.startBlockID && candidate.blockIDs.last == range.endBlockID {
+                    return candidate
+                }
+            } else {
+                return candidate
+            }
+        }
         if session.chunks.indices.contains(index), case let .document(range) = session.chunks[index].sourceAnchor {
             if let matched = documentState.chunks.first(where: {
                 $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID

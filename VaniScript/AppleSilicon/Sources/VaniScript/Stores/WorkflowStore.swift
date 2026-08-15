@@ -1,5 +1,6 @@
 import AppKit
 @preconcurrency import AVFoundation
+import CryptoKit
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
@@ -403,6 +404,60 @@ final class WorkflowStore: ObservableObject {
         return TranslationArchive.isUsableTranslationText(text) ? text : ""
     }
 
+    var currentDocumentSourceBlocks: [DocumentBlock] {
+        guard let session, let chunk = currentChunk, session.sourceKind == .document, let documentState = session.documentState else {
+            return []
+        }
+        let plan: DocumentChunkPlan?
+        if case let .document(range) = chunk.sourceAnchor {
+            plan = documentState.chunks.first {
+                $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID
+            }
+        } else {
+            plan = documentState.chunks.indices.contains(session.currentChunkIndex) ? documentState.chunks[session.currentChunkIndex] : nil
+        }
+        guard let plan else { return [] }
+        return plan.blockIDs.compactMap { id in documentState.blocks.first(where: { $0.id == id }) }
+    }
+
+    var currentDocumentTranslatedBlocks: [TranslatedBlock] {
+        guard let session, let chunk = currentChunk, session.sourceKind == .document, let documentState = session.documentState else {
+            return []
+        }
+        let language = session.selectedTranslationLanguage ?? session.targetLang
+        let langKey = TranslationArchive.languageKey(language)
+        let translations = documentState.translationsByLanguage[langKey] ?? [:]
+        let plan: DocumentChunkPlan?
+        if case let .document(range) = chunk.sourceAnchor {
+            plan = documentState.chunks.first {
+                $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID
+            }
+        } else {
+            plan = documentState.chunks.indices.contains(session.currentChunkIndex) ? documentState.chunks[session.currentChunkIndex] : nil
+        }
+        guard let plan else { return [] }
+        return plan.blockIDs.map { blockID in
+            if let existing = translations[blockID] {
+                return existing
+            }
+            let sourceBlock = documentState.blocks.first(where: { $0.id == blockID })
+            let text = sourceBlock?.spans.map(\.text).joined() ?? ""
+            return TranslatedBlock(id: blockID, sourceBlockID: blockID, text: text, spans: [], reviewDisposition: .pending)
+        }
+    }
+
+    var currentDocumentSourceSpans: [RichTextSpan] {
+        currentDocumentSourceBlocks.flatMap(\.spans)
+    }
+
+    var currentDocumentTranslatedSpans: [RichTextSpan] {
+        let blocks = currentDocumentTranslatedBlocks
+        let spans = blocks.flatMap(\.spans)
+        if spans.isEmpty, let session, let chunk = currentChunk, let transText = session.documentTranslationText(for: chunk) ?? (chunk.translated.isEmpty ? nil : chunk.translated) {
+            return [RichTextSpan(id: UUID().uuidString, text: transText)]
+        }
+        return spans
+    }
     var editingProviders: [ProviderOption] {
         ProviderRegistry.availableTranslationProviders(
             settings: workflow.settings,
@@ -1289,6 +1344,137 @@ final class WorkflowStore: ObservableObject {
             chunk.status = .done
         }
     }
+    func updateCurrentDocumentSource(blocks: [(blockID: String, spans: [RichTextSpan], text: String)], text: String? = nil) {
+        guard var session = workflow.session,
+              var documentState = session.documentState,
+              session.chunks.indices.contains(session.currentChunkIndex)
+        else { return }
+
+        let chunkIndex = session.currentChunkIndex
+        let chunk = session.chunks[chunkIndex]
+        let plan: DocumentChunkPlan?
+        if case let .document(range) = chunk.sourceAnchor {
+            plan = documentState.chunks.first {
+                $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID
+            }
+        } else {
+            plan = documentState.chunks.indices.contains(chunkIndex) ? documentState.chunks[chunkIndex] : nil
+        }
+
+        guard let plan else { return }
+
+        let editedByBlockID = Dictionary(uniqueKeysWithValues: blocks.map { ($0.blockID, $0) })
+        for blockID in plan.blockIDs {
+            if let edited = editedByBlockID[blockID] {
+                if let blockIndex = documentState.blocks.firstIndex(where: { $0.id == blockID }) {
+                    documentState.blocks[blockIndex].spans = edited.spans
+                    let bText = edited.text.isEmpty ? edited.spans.map(\.text).joined() : edited.text
+                    documentState.blocks[blockIndex].sourceHash = Self.stableDocumentHash(bText)
+                }
+            }
+        }
+
+        let planBlocks = plan.blockIDs.compactMap { id in documentState.blocks.first(where: { $0.id == id }) }
+        let aggregateText = text ?? planBlocks.map { $0.spans.map(\.text).joined() }.joined(separator: "\n\n")
+
+        session.documentState = documentState
+        session.chunks[chunkIndex].original = aggregateText
+        session.chunks[chunkIndex].originalCues = nil
+        session.chunks[chunkIndex].status = .done
+        workflow.session = session
+        saveCurrentProject()
+    }
+
+    func updateCurrentDocumentSource(blocks: [DocumentBlock]) {
+        updateCurrentDocumentSource(blocks: blocks.map { ($0.id, $0.spans, $0.spans.map(\.text).joined()) })
+    }
+
+    func updateCurrentDocumentSource(spans: [RichTextSpan], text: String) {
+        let blocks = currentDocumentSourceBlocks
+        if blocks.count <= 1, let first = blocks.first {
+            updateCurrentDocumentSource(blocks: [(blockID: first.id, spans: spans, text: text)], text: text)
+        } else if !blocks.isEmpty {
+            let blockID = blocks.first?.id ?? "b1"
+            updateCurrentDocumentSource(blocks: [(blockID: blockID, spans: spans, text: text)], text: text)
+        } else {
+            updateCurrentChunk { chunk in
+                chunk.original = text
+                chunk.originalCues = nil
+                chunk.status = .done
+            }
+        }
+    }
+
+    func updateCurrentDocumentTranslated(blocks: [(blockID: String, spans: [RichTextSpan], text: String)], text: String? = nil) {
+        guard let language = workflow.session?.selectedTranslationLanguage ?? workflow.session?.targetLang else { return }
+        guard var session = workflow.session,
+              var documentState = session.documentState,
+              session.chunks.indices.contains(session.currentChunkIndex)
+        else { return }
+
+        let chunkIndex = session.currentChunkIndex
+        let chunk = session.chunks[chunkIndex]
+        let plan: DocumentChunkPlan?
+        if case let .document(range) = chunk.sourceAnchor {
+            plan = documentState.chunks.first {
+                $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID
+            }
+        } else {
+            plan = documentState.chunks.indices.contains(chunkIndex) ? documentState.chunks[chunkIndex] : nil
+        }
+
+        guard let plan else { return }
+        let langKey = TranslationArchive.languageKey(language)
+        let editedByBlockID = Dictionary(uniqueKeysWithValues: blocks.map { ($0.blockID, $0) })
+
+        for blockID in plan.blockIDs {
+            if let edited = editedByBlockID[blockID] {
+                let bText = edited.text.isEmpty ? edited.spans.map(\.text).joined() : edited.text
+                let sourceBlock = documentState.blocks.first(where: { $0.id == blockID })
+                let sourceHash = sourceBlock?.sourceHash ?? Self.stableDocumentHash(sourceBlock?.spans.map(\.text).joined() ?? "")
+                var trans = documentState.translationsByLanguage[langKey]?[blockID]
+                    ?? TranslatedBlock(id: blockID, sourceBlockID: blockID, text: bText, spans: edited.spans, sourceHash: sourceHash, reviewDisposition: .pending)
+                trans.text = bText
+                trans.spans = edited.spans
+                trans.sourceHash = sourceHash
+                documentState.translationsByLanguage[langKey, default: [:]][blockID] = trans
+            }
+        }
+
+        let aggregateTranslatedText = text ?? plan.blockIDs.compactMap { documentState.translationsByLanguage[langKey]?[$0]?.text }.joined(separator: "\n\n")
+
+        session.documentState = documentState
+        session.chunks[chunkIndex].translated = aggregateTranslatedText
+        session.chunks[chunkIndex].setTranslation(aggregateTranslatedText, language: language, cues: nil)
+        session.chunks[chunkIndex].status = .done
+        workflow.session = session
+        saveCurrentProject()
+    }
+
+    func updateCurrentDocumentTranslated(blocks: [TranslatedBlock]) {
+        updateCurrentDocumentTranslated(blocks: blocks.map { ($0.sourceBlockID, $0.spans, $0.text) })
+    }
+
+    func updateCurrentDocumentTranslated(spans: [RichTextSpan], text: String) {
+        let blocks = currentDocumentTranslatedBlocks
+        if blocks.count <= 1, let first = blocks.first {
+            updateCurrentDocumentTranslated(blocks: [(blockID: first.sourceBlockID, spans: spans, text: text)], text: text)
+        } else if !blocks.isEmpty {
+            let blockID = blocks.first?.sourceBlockID ?? "b1"
+            updateCurrentDocumentTranslated(blocks: [(blockID: blockID, spans: spans, text: text)], text: text)
+        } else {
+            guard let language = workflow.session?.selectedTranslationLanguage ?? workflow.session?.targetLang else { return }
+            updateCurrentChunk { chunk in
+                chunk.translated = text
+                chunk.setTranslation(text, language: language, cues: nil)
+                chunk.status = .done
+            }
+        }
+    }
+
+    private static func stableDocumentHash(_ text: String) -> String {
+        SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
 
     func updateCurrentTranslated(_ text: String) {
         guard let language = workflow.session?.selectedTranslationLanguage else {
@@ -2155,8 +2341,30 @@ final class WorkflowStore: ObservableObject {
             statusMessage = "No document state available for export."
             return
         }
-
         let language = session.selectedTranslationLanguage ?? session.targetLang
+        let translations = DocumentTranslationExportBuilder.resolvedTranslationsDictionary(
+            documentState: documentState,
+            language: language
+        )
+        let translatableBlocks = documentState.blocks.filter {
+            $0.kind != .empty && !$0.spans.map(\.text).joined().trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        let untranslatedCount = translatableBlocks.filter { block in
+            guard let translation = DocumentTranslationExportBuilder.resolvedTranslation(
+                for: block.id,
+                in: translations,
+                chunks: documentState.chunks
+            ) else {
+                return true
+            }
+            return !TranslationArchive.isUsableTranslationText(translation)
+        }.count
+
+        if !translatableBlocks.isEmpty && untranslatedCount > 0 {
+            statusMessage = "Cannot export: \(untranslatedCount) block(s) are missing translations. Translate the full document before exporting."
+            return
+        }
+
         let text = DocumentTranslationExportBuilder.translatedDocumentText(
             documentState: documentState,
             language: language
@@ -2187,25 +2395,103 @@ final class WorkflowStore: ObservableObject {
             case .txt:
                 try DocumentExportWriters.writeTXT(text: text, to: destinationURL)
             case .pdf:
-                try DocumentExportWriters.writePDF(text: text, to: destinationURL)
+                try DocumentExportWriters.writePDF(documentState: documentState, language: language, to: destinationURL)
             case .docx:
                 let sourcePath = session.sourceFile ?? session.chunks.first?.filePath ?? workflow.sourceFile
                 guard !sourcePath.isEmpty, FileManager.default.fileExists(atPath: sourcePath) else {
                     statusMessage = "Original source DOCX file could not be found for export."
                     return
                 }
-                try DocumentExportWriters.writeDOCX(
+                let result = try DocumentExportWriters.writeDOCX(
                     sourceDocxURL: URL(fileURLWithPath: sourcePath),
                     documentState: documentState,
                     language: language,
                     to: destinationURL
                 )
+                if !result.warnings.isEmpty {
+                    AppLogger.shared.info("DOCX export warning: \(result.warnings.joined(separator: "; "))", settings: workflow.settings)
+                }
             case .markdown:
                 try DocumentExportWriters.writeTXT(text: text, to: destinationURL)
             }
             statusMessage = "Export saved: \(destinationURL.lastPathComponent)"
         } catch {
             statusMessage = "Export failed: \(error.localizedDescription)"
+        }
+    }
+
+    func exportDocumentTranslationPackage() {
+        guard let session = workflow.session, session.sourceKind == .document else { return }
+        guard let documentState = session.documentState else {
+            statusMessage = "No document state available for export."
+            return
+        }
+        let language = session.selectedTranslationLanguage ?? session.targetLang
+        let translations = DocumentTranslationExportBuilder.resolvedTranslationsDictionary(
+            documentState: documentState,
+            language: language
+        )
+        let translatableBlocks = documentState.blocks.filter {
+            $0.kind != .empty && !$0.spans.map(\.text).joined().trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        let untranslatedCount = translatableBlocks.filter { block in
+            guard let translation = DocumentTranslationExportBuilder.resolvedTranslation(
+                for: block.id,
+                in: translations,
+                chunks: documentState.chunks
+            ) else {
+                return true
+            }
+            return !TranslationArchive.isUsableTranslationText(translation)
+        }.count
+
+        if !translatableBlocks.isEmpty && untranslatedCount > 0 {
+            statusMessage = "Cannot export package: \(untranslatedCount) block(s) are missing translations. Translate the full document before exporting."
+            return
+        }
+
+        let sourcePath = session.sourceFile ?? session.chunks.first?.filePath ?? workflow.sourceFile
+        guard !sourcePath.isEmpty, FileManager.default.fileExists(atPath: sourcePath) else {
+            statusMessage = "Original source DOCX file could not be found for export."
+            return
+        }
+
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Export Package"
+        panel.message = "Choose a destination folder for the 3-file translation package (Original DOCX, Localized DOCX, and .vaniscript project)."
+
+        guard panel.runModal() == .OK, let destinationFolderURL = panel.url else {
+            statusMessage = "Export package cancelled."
+            return
+        }
+        let projectID = currentProjectID ?? UUID().uuidString
+        let record = projects.first(where: { $0.id == projectID }) ?? ProjectRecord(
+            id: projectID,
+            createdAt: isoString(clock()),
+            updatedAt: isoString(clock()),
+            session: session
+        )
+
+        do {
+            let result = try DocumentExportWriters.exportTranslationPackage(
+                sourceDocxURL: URL(fileURLWithPath: sourcePath),
+                documentState: documentState,
+                projectRecord: record,
+                language: language,
+                to: destinationFolderURL
+            )
+            if !result.warnings.isEmpty {
+                AppLogger.shared.info("Package export warnings: \(result.warnings.joined(separator: "; "))", settings: workflow.settings)
+                statusMessage = "Package exported to \(destinationFolderURL.lastPathComponent) (with \(result.warnings.count) font warning(s))"
+            } else {
+                statusMessage = "Translation package exported: \(destinationFolderURL.lastPathComponent)"
+            }
+        } catch {
+            statusMessage = "Package export failed: \(error.localizedDescription)"
         }
     }
     func formatDocumentWithLocalMLX(

@@ -465,4 +465,80 @@ struct DocumentCoordinatorTests {
         #expect(result.outcome == .providerFailure)
         #expect(!result.message.contains("retranslated"))
     }
+    @Test("mapping output spans preserves source foreground color and provider cannot invent colors")
+    func preservesSourceColorInTranslatedSpans() async throws {
+        let block = DocumentBlock(
+            id: "b1",
+            location: DocumentLocation(paragraphOrdinal: 0),
+            spans: [
+                RichTextSpan(id: "s1", text: "Normal text and ", foregroundColorHex: nil),
+                RichTextSpan(id: "s2", text: "red placeholder", foregroundColorHex: "FF0000")
+            ]
+        )
+        let plan = DocumentChunkPlan(id: "chunk-1", blockIDs: ["b1"], sourceHash: "h1")
+        let chunk = ChunkData(
+            index: 0,
+            filePath: "/tmp/doc.docx",
+            durationSec: 0,
+            startSec: 0,
+            endSec: 0,
+            original: "Normal text and red placeholder",
+            translated: "",
+            status: .pending,
+            approved: false,
+            sourceAnchor: .document(DocumentRange(startBlockID: "b1", endBlockID: "b1"))
+        )
+        let testSession = SessionState(
+            sourceFile: "/tmp/doc.docx",
+            sourceFileName: "doc.docx",
+            durationSec: 0,
+            metadata: .empty,
+            sourceLang: "English",
+            targetLang: "Russian",
+            transcriptionProvider: "",
+            translationProvider: "mock",
+            outputFormats: [.txt],
+            chunks: [chunk],
+            currentChunkIndex: 0,
+            sourceKind: .document,
+            documentState: DocumentState(
+                format: .docx,
+                originalAsset: ProjectAssetReference(key: "source"),
+                blocks: [block],
+                chunks: [plan]
+            ),
+            approvalMode: .manual
+        )
+
+        let adapter = DocumentTranslationProviderAdapter(id: "color-test") { prompt in
+            let outputs = [
+                DocumentTranslationOutputBlock(
+                    id: "b1",
+                    spans: [
+                        DocumentTranslationOutputSpan(id: "s1", style: "plain", text: "Обычный текст и "),
+                        DocumentTranslationOutputSpan(id: "s2", style: "plain", text: "красный заполнитель")
+                    ]
+                )
+            ]
+            return String(
+                decoding: try JSONEncoder().encode(
+                    DocumentTranslationResponse(chunkId: prompt.request.chunkId, blocks: outputs)
+                ),
+                as: UTF8.self
+            )
+        }
+
+        let result = try await DocumentTranslationCoordinator(
+            session: testSession,
+            engine: DocumentTranslationEngine(provider: adapter)
+        ).targetedCurrent()
+
+        let trans = result.session.documentState?.translationsByLanguage["russian"]?["b1"]
+        #expect(trans != nil)
+        #expect(trans?.spans.count == 2)
+        #expect(trans?.spans[0].text == "Обычный текст и ")
+        #expect(trans?.spans[0].foregroundColorHex == nil)
+        #expect(trans?.spans[1].text == "красный заполнитель")
+        #expect(trans?.spans[1].foregroundColorHex == "FF0000")
+    }
 }

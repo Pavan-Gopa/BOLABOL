@@ -62,7 +62,7 @@ struct ChatSidebarView: View {
 
     var body: some View {
         let micIcon = isRecordingDictation ? "stop.circle.fill" : "mic.fill"
-        let micColor = isRecordingDictation ? Color.red : Color.white.opacity(0.6)
+        let micColor = isRecordingDictation ? VaniScriptTheme.red : VaniScriptTheme.text2
 
         return VStack(spacing: 0) {
             Color.clear.frame(height: 38)
@@ -74,7 +74,7 @@ struct ChatSidebarView: View {
                     
                     Text("AI Assistant")
                         .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(VaniScriptTheme.text0)
 
                     Picker("Chat route", selection: $chatRouteRaw) {
                         Text("MCP").tag(ChatRoute.mcp.rawValue)
@@ -98,18 +98,18 @@ struct ChatSidebarView: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(VaniScriptTheme.text2)
                             .frame(width: 24, height: 24)
-                            .background(Color.white.opacity(0.08))
+                            .background(VaniScriptTheme.control)
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, VaniScriptTheme.Density.space12)
                 .padding(.vertical, VaniScriptTheme.Density.space8)
-                .background(Color.black.opacity(0.2))
+                .background(VaniScriptTheme.barSurface)
                 .overlay(
-                    Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1),
+                    Rectangle().fill(VaniScriptTheme.separator).frame(height: 1),
                     alignment: .bottom
                 )
 
@@ -117,30 +117,30 @@ struct ChatSidebarView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.yellow)
+                                .foregroundStyle(VaniScriptTheme.warningText)
                             Text("No Local ASR Model Connected")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(VaniScriptTheme.text0)
                             Spacer()
                             Button {
                                 showNoModelWarning = false
                             } label: {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 10))
-                                    .foregroundStyle(.white.opacity(0.6))
+                                    .foregroundStyle(VaniScriptTheme.text2)
                             }
                             .buttonStyle(.plain)
                         }
                         Text("To use voice dictation, select and locate a complete local ASR model in Settings -> ASR.")
                             .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.7))
+                            .foregroundStyle(VaniScriptTheme.text1)
                     }
                     .padding(VaniScriptTheme.Density.space8)
-                    .background(Color.yellow.opacity(0.15))
+                    .background(VaniScriptTheme.warningSurface)
                     .cornerRadius(VaniScriptTheme.Density.radiusSM)
                     .overlay(
                         RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM)
-                            .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                            .stroke(VaniScriptTheme.warningBorder, lineWidth: 1)
                     )
                     .padding(.horizontal, VaniScriptTheme.Density.space12)
                     .padding(.top, VaniScriptTheme.Density.space8)
@@ -162,9 +162,9 @@ struct ChatSidebarView: View {
                                             } label: {
                                                 Image(systemName: "doc.on.doc")
                                                     .font(.system(size: 11))
-                                                    .foregroundStyle(.white.opacity(0.4))
+                                                    .foregroundStyle(VaniScriptTheme.text2)
                                                     .frame(width: 22, height: 22)
-                                                    .background(Color.white.opacity(0.08))
+                                                    .background(VaniScriptTheme.control)
                                                     .clipShape(RoundedRectangle(cornerRadius: 6))
                                             }
                                             .buttonStyle(.plain)
@@ -181,15 +181,15 @@ struct ChatSidebarView: View {
                                                         endPoint: .bottomTrailing
                                                     )
                                                 )
-                                                .foregroundStyle(.white)
+                                                .foregroundStyle(VaniScriptTheme.onAccent)
                                                 .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
                                         }
                                     } else if msg.sender == "system" {
                                         Text(msg.text)
                                             .font(.system(size: 12))
-                                            .foregroundStyle(Color.red.opacity(0.8))
+                                            .foregroundStyle(VaniScriptTheme.errorText)
                                             .padding(VaniScriptTheme.Density.space8)
-                                            .background(Color.red.opacity(0.1))
+                                            .background(VaniScriptTheme.errorSurface)
                                             .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM))
                                             .frame(maxWidth: .infinity, alignment: .center)
                                     } else {
@@ -197,7 +197,7 @@ struct ChatSidebarView: View {
                                             HStack(alignment: .top, spacing: VaniScriptTheme.Density.space8) {
                                                 Text(msg.text)
                                                     .font(.system(size: 13.5))
-                                                    .foregroundStyle(.white.opacity(0.9))
+                                                    .foregroundStyle(VaniScriptTheme.text0)
                                                 
                                                 Spacer()
                                                 
@@ -207,9 +207,9 @@ struct ChatSidebarView: View {
                                                 } label: {
                                                     Image(systemName: "doc.on.doc")
                                                         .font(.system(size: 10))
-                                                        .foregroundStyle(.white.opacity(0.35))
+                                                        .foregroundStyle(VaniScriptTheme.text2)
                                                         .frame(width: 20, height: 20)
-                                                        .background(Color.white.opacity(0.06))
+                                                        .background(VaniScriptTheme.control)
                                                         .clipShape(RoundedRectangle(cornerRadius: 5))
                                                 }
                                                 .buttonStyle(.plain)
@@ -226,17 +226,17 @@ struct ChatSidebarView: View {
                                                 }
                                                 .padding(.horizontal, 8)
                                                 .padding(.vertical, 4)
-                                                .background(Color.white.opacity(0.05))
+                                                .background(VaniScriptTheme.surfaceSubtle)
                                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                                             }
                                         }
                                         .padding(.horizontal, VaniScriptTheme.Density.space12)
                                         .padding(.vertical, VaniScriptTheme.Density.space8)
-                                        .background(Color.white.opacity(0.06))
+                                        .background(VaniScriptTheme.control)
                                         .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD, style: .continuous)
-                                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                                .stroke(VaniScriptTheme.border, lineWidth: 1)
                                         )
                                         Spacer()
                                     }
@@ -247,13 +247,13 @@ struct ChatSidebarView: View {
                             if isLoading && activeToolName == nil {
                                 HStack {
                                     HStack(spacing: 4) {
-                                        Circle().fill(Color.white.opacity(0.5)).frame(width: 6, height: 6)
-                                        Circle().fill(Color.white.opacity(0.5)).frame(width: 6, height: 6)
-                                        Circle().fill(Color.white.opacity(0.5)).frame(width: 6, height: 6)
+                                        Circle().fill(VaniScriptTheme.text2.opacity(0.5)).frame(width: 6, height: 6)
+                                        Circle().fill(VaniScriptTheme.text2.opacity(0.5)).frame(width: 6, height: 6)
+                                        Circle().fill(VaniScriptTheme.text2.opacity(0.5)).frame(width: 6, height: 6)
                                     }
                                     .padding(.horizontal, VaniScriptTheme.Density.space12)
                                     .padding(.vertical, VaniScriptTheme.Density.space8)
-                                    .background(Color.white.opacity(0.06))
+                                    .background(VaniScriptTheme.control)
                                     .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusMD))
                                     Spacer()
                                 }
@@ -276,7 +276,7 @@ struct ChatSidebarView: View {
                         if workflowStore.chatInputText.isEmpty {
                             Text("Message AI...")
                                 .font(.system(size: 13))
-                                .foregroundStyle(.white.opacity(0.4))
+                                .foregroundStyle(VaniScriptTheme.text2)
                                 .padding(.horizontal, VaniScriptTheme.Density.space12)
                                 .padding(.vertical, VaniScriptTheme.Density.space8)
                         }
@@ -284,17 +284,17 @@ struct ChatSidebarView: View {
                         TextEditor(text: $workflowStore.chatInputText)
                             .font(.system(size: 13))
                             .tint(VaniScriptTheme.accent)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(VaniScriptTheme.text0)
                             .scrollContentBackground(.hidden)
                             .padding(.horizontal, VaniScriptTheme.Density.space8)
                             .padding(.vertical, 8)
                             .padding(.bottom, 36) // Leave space for buttons at the bottom
                             .frame(height: 100)
-                            .background(Color.white.opacity(0.04))
+                            .background(VaniScriptTheme.input)
                             .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM))
                             .overlay(
                                 RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM)
-                                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                    .stroke(VaniScriptTheme.controlBorder, lineWidth: 1)
                             )
                             .disabled(isLoading)
                     }
@@ -312,7 +312,7 @@ struct ChatSidebarView: View {
                                 .font(.system(size: 14))
                                 .foregroundStyle(micColor)
                                 .frame(width: 28, height: 28)
-                                .background(isRecordingDictation ? Color.red.opacity(0.15) : Color.clear)
+                                .background(isRecordingDictation ? VaniScriptTheme.errorSurface : Color.clear)
                                 .clipShape(Circle())
                         }
                         .buttonStyle(.plain)
@@ -321,7 +321,7 @@ struct ChatSidebarView: View {
                         Button(action: sendMessage) {
                             Image(systemName: "paperplane.fill")
                                 .font(.system(size: 13))
-                                .foregroundStyle(workflowStore.chatInputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.white.opacity(0.3) : VaniScriptTheme.accent)
+                                .foregroundStyle(workflowStore.chatInputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? VaniScriptTheme.disabledText : VaniScriptTheme.accent)
                                 .frame(width: 28, height: 28)
                         }
                         .buttonStyle(.plain)
@@ -331,16 +331,15 @@ struct ChatSidebarView: View {
                     .padding(.bottom, 8)
                 }
                 .padding(VaniScriptTheme.Density.space12)
-                .background(Color.black.opacity(0.15))
+                .background(VaniScriptTheme.barSurface)
             }
             .frame(width: 380)
             .background(
-                Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255)
-                    .opacity(0.85)
+                VaniScriptTheme.sidebarSurface
             )
             .background(.ultraThinMaterial)
             .overlay(
-                Rectangle().fill(Color.white.opacity(0.08)).frame(width: 1),
+                Rectangle().fill(VaniScriptTheme.separator).frame(width: 1),
                 alignment: .trailing
             )
             .transition(.move(edge: .leading))

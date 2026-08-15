@@ -66,7 +66,8 @@ struct DocumentTranslationExportTests {
 
         let exported = DocumentTranslationExportBuilder.translatedDocumentText(
             documentState: documentState,
-            language: "Russian"
+            language: "Russian",
+            includeUntranslatedAsOriginal: true
         )
 
         let expected = "Глава Первая\n\n\n\nПервый абзац текста.\n\nSecond body paragraph."

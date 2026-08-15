@@ -120,4 +120,39 @@ struct DocumentModelTests {
         #expect(workflow.session?.documentState == state)
         #expect(workflow.session?.chunks.isEmpty == true)
     }
+    @Test("legacy bundle without foregroundColorHex decodes nil and persists normalized color")
+    func decodesLegacyAndNormalizedColors() throws {
+        let legacyJSON = """
+        {
+            "id": "span-legacy",
+            "text": "Old text without color",
+            "styleKey": "k1",
+            "traits": ["bold"],
+            "translationPolicy": "translate"
+        }
+        """.data(using: .utf8)!
+
+        let decodedLegacy = try JSONDecoder().decode(RichTextSpan.self, from: legacyJSON)
+        #expect(decodedLegacy.foregroundColorHex == nil)
+        #expect(decodedLegacy.text == "Old text without color")
+        #expect(decodedLegacy.traits.contains(.bold))
+
+        let coloredSpan = RichTextSpan(
+            id: "span-color",
+            text: "Red placeholder",
+            styleKey: "k2",
+            foregroundColorHex: "#ff0000"
+        )
+        #expect(coloredSpan.foregroundColorHex == "FF0000")
+
+        let encoded = try JSONEncoder().encode(coloredSpan)
+        let decodedColored = try JSONDecoder().decode(RichTextSpan.self, from: encoded)
+        #expect(decodedColored.foregroundColorHex == "FF0000")
+
+        #expect(RichTextSpan.normalizeHexColor("#f00") == "FF0000")
+        #expect(RichTextSpan.normalizeHexColor("00FF00") == "00FF00")
+        #expect(RichTextSpan.normalizeHexColor("auto") == nil)
+        #expect(RichTextSpan.normalizeHexColor("invalid") == nil)
+        #expect(RichTextSpan.normalizeHexColor(nil) == nil)
+    }
 }

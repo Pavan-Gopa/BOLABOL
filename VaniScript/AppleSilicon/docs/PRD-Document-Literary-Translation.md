@@ -197,8 +197,15 @@ struct RichTextSpan: Codable, Equatable, Sendable {
     var text: String
     var styleKey: String
     var traits: Set<InlineTrait>
+    var foregroundColorHex: String?
     var translationPolicy: SpanTranslationPolicy
 }
+
+`foregroundColorHex` — optional uppercase sRGB `RRGGBB`. `nil` means that the
+source has no explicit foreground override and the source format/theme supplies
+the default. It is a render/edit/export mirror on the existing span, not a
+second formatting IR: DOCX `styleKey` remains the lossless trusted `w:rPr`
+template. Old projects decode the missing field as `nil`.
 
 struct DocumentLocation: Codable, Equatable, Sendable {
     var part: DocumentPart
@@ -255,6 +262,12 @@ ID нельзя строить только из порядкового номе
 8. Нормализовать рабочий текст в Unicode NFC без удаления диакритики.
 9. Создать `DocumentState`, статистику и предварительный план чанков.
 10. Сохранить SHA-256 исходного DOCX.
+
+Importers preserve an explicit foreground color whenever the source format
+represents one: direct `w:color` for DOCX, attributed foreground runs for RTF,
+and best-effort text-layer color runs for PDF. TXT and Markdown have no
+document-level foreground-color contract and therefore store `nil`; the UI and
+export labels must not imply rich-format fidelity for them.
 
 На macOS `NSAttributedString.DocumentType.officeOpenXML` можно использовать как дополнительный fallback и для предпросмотра, но не как основной round-trip writer: повторный экспорт attributed string не гарантирует сохранение всех исходных OOXML-частей.
 
@@ -550,6 +563,11 @@ Memory должна быть видимой и редактируемой в п�
 4. Сохраняет `w:pPr` и все нетекстовые дочерние элементы.
 5. Для однообразного абзаца создаёт переведённый `w:r` с копией исходного `w:rPr`.
 6. Для смешанного форматирования создаёт runs по возвращённым style IDs и копирует соответствующие исходные `w:rPr` templates.
+6a. Re-anchors every returned span style to a known source span/style template;
+provider-returned strings never become arbitrary OOXML or trusted colors.
+6b. Re-emits each translated run separately and preserves its explicit
+`foregroundColorHex`; it must not move all translated text into the first run
+and blank the remaining styled runs.
 7. Защищённые runs переносит без изменений.
 8. Сохраняет bookmarks, fields, tabs, breaks, drawings и relationships.
 9. Заменяет только изменённые XML parts и пересобирает ZIP атомарно.
@@ -560,6 +578,8 @@ Memory должна быть видимой и редактируемой в п�
 - число структурных абзацев и их порядок совпадают;
 - `w:pPr` каждого исходного абзаца сохранён;
 - style IDs сохранены;
+- explicit source foreground colors remain attached to the corresponding
+  translated runs;
 - `styles.xml`, `fontTable.xml`, theme, numbering, media и relationships не меняются без необходимости;
 - все protected blocks совпадают;
 - все переводимые block IDs имеют результат;
@@ -697,9 +717,25 @@ Voyage_to_Transcendence_Russian/
 - `Retranslate Block`, `Repair`, `Approve`, `Needs Review`;
 - поиск и замена работают по block translations;
 - ручная правка сразу обновляет output hash и помечает локализованный DOCX как требующий rebuild;
+- исходные и переведённые document spans отображаются и редактируются через
+  attributed editor; ввод наследует атрибуты текущего run, а сохранение
+  сериализует цветовые диапазоны обратно в `RichTextSpan`;
+- explicit foreground colors отображаются буквально; span без override
+  использует читаемый семантический цвет редактора;
 - список проблем позволяет переходить только по предупреждениям.
 
 Не следует помещать всю книгу в один SwiftUI `TextEditor`: использовать ленивый список блоков или текущий чанк, чтобы не ухудшить производительность.
+
+### 16.4.1. Light/Dark appearance
+
+Upload, Config, Processing, Review, Export, Settings, project/chat sidebars,
+toolbars, status/error panels, disabled states and text editors use the existing
+`Color.dynamic` semantic-token system. Fixed dark bars with
+`Color.white.opacity(...)` text are forbidden on adaptive workflow chrome.
+Both appearances must keep icons, labels, editable text, selection/caret,
+warnings and primary/secondary actions visibly distinguishable. Intentional
+media-preview dimming overlays are exempt because they are content treatment,
+not application chrome.
 
 ### 16.5. Export
 

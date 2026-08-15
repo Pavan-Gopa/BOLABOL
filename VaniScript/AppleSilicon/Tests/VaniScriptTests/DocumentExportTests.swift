@@ -84,6 +84,42 @@ struct DocumentExportTests {
         let header = String(decoding: data.prefix(4), as: UTF8.self)
         #expect(header == "%PDF")
     }
+    @Test("PDF writer exports colored translated spans from document state")
+    func pdfWriterExportsColoredTranslatedSpans() throws {
+        let block = DocumentBlock(
+            id: "b1",
+            location: DocumentLocation(paragraphOrdinal: 0),
+            spans: [
+                RichTextSpan(id: "s1", text: "Черный текст и ", foregroundColorHex: nil),
+                RichTextSpan(id: "s2", text: "красный плейсхолдер", foregroundColorHex: "FF0000")
+            ]
+        )
+        let transBlock = TranslatedBlock(
+            id: "b1",
+            sourceBlockID: "b1",
+            text: "Черный текст и красный плейсхолдер",
+            spans: [
+                RichTextSpan(id: "s1", text: "Черный текст и ", foregroundColorHex: nil),
+                RichTextSpan(id: "s2", text: "красный плейсхолдер", foregroundColorHex: "FF0000")
+            ]
+        )
+        let documentState = DocumentState(
+            format: .docx,
+            originalAsset: ProjectAssetReference(key: "src", format: "docx"),
+            blocks: [block],
+            translationsByLanguage: ["russian": ["b1": transBlock]]
+        )
+
+        let tempPDF = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-colored-\(UUID().uuidString).pdf")
+        defer { try? FileManager.default.removeItem(at: tempPDF) }
+
+        try DocumentExportWriters.writePDF(documentState: documentState, language: "russian", to: tempPDF)
+        let data = try Data(contentsOf: tempPDF)
+        #expect(data.count > 500)
+        let header = String(decoding: data.prefix(4), as: UTF8.self)
+        #expect(header == "%PDF")
+    }
 
     @Test("TXT writer writes UTF-8 text deterministically")
     func txtWriterWritesUTF8() throws {

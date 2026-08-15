@@ -3412,3 +3412,239 @@ Non-blocking:
   KICK_REVIEWER assignment, gate evidence, judgment gates, and Main's
   pre-review observations. Main stops here; dispatch happens only on
   Human instruction.
+
+### S7 candidate 18 — Main verification
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Candidate | S7ReviewerIssuesCandidate18 |
+| RESULT | waiting_human_acceptance |
+
+- Reviewer issues fixed:
+  1. Block-slice support: engine now carries sliced source text when
+     plan.blockSlices is present; archive stores slice translations under
+     compound keys and merges them for display/export. Long paragraphs no
+     longer skip the hard limit.
+  2. hasReadyTranslation: mixed chunks (translatable + empty structural
+     blocks) skip deterministic blocks in the allSatisfy check; empty
+     blocks no longer block recognition of a completed translation.
+  3. Export honesty: DocumentTranslationExportBuilder returns empty for
+     untranslated blocks (no original-text substitution); export guard
+     checks that all translatable blocks have translations.
+- Focused suites: 39/39 PASS. Full swift test: 561/561 PASS, 76 suites.
+- Fresh ./script/build_and_run.sh: exit 0; app pid 27010.
+
+### S7 Tester — QA result
+
+| Field | Value |
+|-------|-------|
+| Run | S7TesterCandidate18 |
+| Verdict | qa_green |
+
+- 564/564 tests, 0 failures, 76 suites.
+- 3 new coverage tests added in DocumentCoordinatorTests.swift and
+  DocumentTranslationExportTests.swift.
+
+### S7 stop-gate — CLOSED
+
+- Human ACCEPTED + Reviewer APPROVED + Tester qa_green.
+- Implementation complete. Next: S8 (Document IR depth and preflight).
+
+## S8 — Document IR depth and preflight
+
+### S8 candidate 1 — Main verification
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Candidate | S8DocumentIRDepth |
+| RESULT | waiting_human_acceptance |
+
+- DOCX IR deepened: tables (w:tbl), text boxes (w:txbxContent), headers,
+  footers, footnotes, endnotes all parsed with DocumentPart location.
+- Visually identical consecutive runs merged; italic/bold/small-caps/
+  hyperlink boundaries preserved.
+- NFC normalization without diacritic stripping; field instructions,
+  bookmarks, drawing data dropped from translatable text.
+- Preflight counts: pages, words, sections, blocks, protected groups,
+  font warnings exposed in document metadata.
+- Focused: 10/10 PASS. Full: 569/569 PASS, 76 suites.
+- Fresh build: app pid 14247.
+
+### S13 hardening candidate — Human changes requested
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Candidate | S13Hardening |
+| RESULT | changes_requested |
+
+- Human source screenshot contains red placeholder text; the translated output
+  renders every run black. Foreground color must remain an explicit source-span
+  property and survive translation, Review editing, persistence, and every rich
+  output format. Plain-text formats must remain honestly plain.
+- Human light-theme screenshot shows unreadable top-toolbar icons, status/action
+  text, and dark-mode chrome reused against light surfaces. The document editor
+  must remain visibly editable in Light mode; all app chrome and interaction
+  states require a semantic light/dark contrast audit.
+- Main source verification: `DOCXPackageReader` reads `w:color` into run
+  formatting/style XML and the coordinator persists provider output spans, but
+  `DocumentExportWriters.rewriteParagraph` writes the full translation into the
+  first run and clears every later run. `ReviewWorkspaceView` uses a plain
+  `TextEditor` plus fixed dark bars and `Color.white.opacity(...)`. RTF and PDF
+  reconstruction currently flatten attributed source text to unstyled spans.
+- This changed candidate requires a bounded Architect advisory because one
+  contract must cover cross-format color representation, styled translation
+  editing, export fidelity, and backward-compatible project decoding without
+  creating a second formatting convention.
+- Reviewer and Tester did not run. Human acceptance is rejected; the changed
+  candidate returns through Coder, Main verification/fresh app, and Human
+  acceptance before formal review.
+
+### S13 foreground-color and appearance advisory
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Run | S13ColorThemeArchitect19 |
+| RESULT | advice_ready |
+
+- Keep the existing `RichTextSpan`/`styleKey` convention. Add one optional
+  `foregroundColorHex` mirror on that same span; missing data decodes as `nil`,
+  so no bundle-schema or ProjectMigrator bump is required.
+- `styleKey` remains the lossless trusted DOCX run template. Explicit color is
+  populated by rich importers and re-anchored from known source span/style IDs;
+  provider output never becomes arbitrary OOXML or trusted color data.
+- Document Review needs an attributed AppKit editor so per-range color survives
+  rendering and manual edits. DOCX/PDF writers consume translated spans;
+  TXT/Markdown remain plain and make no rich-format claim.
+- Light/Dark fixes extend the existing `Color.dynamic` convention with semantic
+  chrome/editor/status tokens. Fixed dark bars and translucent-white text are
+  migrated on primary workflow surfaces; intentional media-preview dimming is
+  not application chrome and remains out of this sweep.
+- Main accepted the bounded advice and persisted it in the PRD and S13 card.
+  Implementation proceeds as two sequential Coder work items on one changed
+  candidate: foreground-color fidelity first, then the full appearance audit.
+
+### S13 foreground-color Coder 20 — Main changes requested
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Run | S13ForegroundColorCoder20 |
+| RESULT | changes_requested |
+
+- Focused suites reported green and import/coordinator/DOCX/PDF paths now carry
+  `foregroundColorHex`, but Main rejected the editor persistence boundary.
+- `DocumentAttributedTextView.serializeSpans` replaces every span ID with a
+  UUID, clears every `styleKey`, resets every policy to `.translate`, and derives
+  color from the rendered `.foregroundColor`. Therefore an unset theme-default
+  span becomes an explicit black/white export override and a manual edit destroys
+  the trusted `w:rPr` template needed by DOCX round-trip.
+- `WorkflowStore.currentDocumentSourceSpans` / translated equivalent flatten
+  every block in the current plan without boundary metadata. Both update methods
+  then assign the same full edited span array and full text to every block ID.
+  Editing one multi-block chunk corrupts block identity, hashes, and export.
+- Required repair: carry block/span identity, styleKey, policy, traits, and
+  explicit-color metadata as custom `NSTextStorage` attributes; treat semantic
+  display color separately from explicit document color; serialize edits per
+  original block and update each block independently. Add a real attributed
+  round-trip test with two blocks and nil+red spans. Theme work remains blocked
+  behind this repair.
+
+### S13 foreground-color Coder 21 — Main targeted fix
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Run | S13ForegroundColorFix21 |
+| RESULT | changes_requested |
+
+- The exact block/style/policy/default-color corruption is repaired and the new
+  two-block attributed-storage round-trip passes.
+- Main source verification found one remaining metadata loss:
+  `DocumentAttributedTextView` reconstructs traits only from bold/italic font
+  flags plus underline/strikethrough presentation attributes. Existing
+  `.smallCaps`, `.superscript`, and `.subscriptText` are dropped after any edit.
+- Required bounded fix: persist the canonical `InlineTrait.rawValue` set as a
+  custom text-storage attribute and serialize it directly; presentation
+  attributes may augment rendering but must not redefine document metadata.
+
+### S13 foreground-color work item — Main verified
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Candidate | S13ForegroundColorCandidate22 |
+| RESULT | waiting_next_work_item |
+
+- Main verified the source contract, direct DOCX/RTF/PDF color capture,
+  trusted translation-span mapping, block-aware attributed editing, additive
+  decoding, DOCX run reconstruction, PDF color output, and plain TXT behavior.
+- The editor now carries block/span identity, styleKey, translation policy,
+  canonical InlineTrait values, and explicit foreground override independently
+  of semantic display color. Multi-block edits update blocks separately.
+- Main focused gate: **42 tests in 7 suites passed** with zero failures.
+- S13 remains open for the second Human-rejected requirement: the complete
+  Light/Dark primary-workflow appearance audit. No Human acceptance, Reviewer,
+  or Tester runs before that changed candidate is complete.
+
+### S13 Light/Dark Coder 23 — Main changes requested
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Run | S13LightThemeCoder23 |
+| RESULT | changes_requested |
+
+- The dark-only Review bars and translucent-white primary chrome are migrated;
+  five focused dynamic-appearance tests and the six Review workflow tests pass.
+- Main source verification rejected the stated disabled-state acceptance:
+  `disabledText` is only 32% black/white, is not covered by contrast assertions,
+  and is consumed only by the chat send icon. Custom styles used by disabled
+  Review, Upload, Config, Export, and Settings controls ignore `isEnabled`, so
+  they continue to render as enabled instead of a readable distinct state.
+- Required bounded fix: make disabled text meet at least 3:1 against its actual
+  surfaces; test that resolved pair in Aqua/Dark Aqua; use
+  `@Environment(\\.isEnabled)` in the custom styles that are actually attached
+  to disabled controls and branch to `disabledText` / `disabledSurface`.
+
+### S13 foreground-color + Light/Dark candidate 24 — Main verification
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Candidate | S13ForegroundColorLightThemeCandidate24 |
+| RESULT | waiting_human_acceptance |
+
+- Source foreground color is explicit additive span metadata. DOCX, RTF and
+  text-layer PDF capture represented colors; provider output re-anchors only to
+  trusted source span/style data; attributed edits preserve block/span/style/
+  policy/trait/color identity; TXT/Markdown remain plain.
+- DOCX export writes translated runs separately with their trusted `w:rPr` and
+  direct color override; PDF uses attributed colored spans. The old
+  first-run-only/blank-later-runs path is removed.
+- Primary Upload, Config, Processing, Review, Export, Settings/Usage, project
+  sidebar, chat sidebar and root chrome consume the existing dynamic semantic
+  palette. Review toolbar/action/status controls and disabled custom button
+  styles have readable Aqua/Dark Aqua roles.
+- Main gates:
+  - rich-color focused gate: **42 tests in 7 suites passed**;
+  - final theme/editor gate: **12 tests in 2 suites passed**;
+  - full `swift test`: **674 tests in 90 suites passed**;
+  - fresh `./script/build_and_run.sh`: exit 0, signed app launched.
+- Fresh-app Light Review smoke visibly showed the source `[YEAR]`, `[NUMBER]`,
+  `[PRINTER, COUNTRY]`, and `[NAME]` spans in red and the translated Bengali
+  counterparts in the same red. Top toolbar icons, document editor text,
+  status/action bar, disabled Previous button, and Approve button were readable.
+  Processing and Settings surfaces were also readable in Light mode.
+- Aqua/Dark Aqua tests resolve the real dynamic NSColors and verify primary,
+  secondary, tertiary, editor, status/error, on-accent, control, border, and
+  disabled contrast. The temporary Dark smoke changed no project data; the
+  user's persisted theme was restored to `light` and the smoke app was stopped
+  so the Auto-approve queue would not continue unattended.
+- Remaining Human gate: open the fresh candidate, inspect Review in both themes,
+  edit one red translated span, export DOCX and PDF, and confirm the red run is
+  preserved in the actual files. Reviewer and Tester remain blocked until Human
+  acceptance.

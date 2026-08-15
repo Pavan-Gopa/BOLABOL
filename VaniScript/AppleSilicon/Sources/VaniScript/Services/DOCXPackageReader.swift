@@ -1,7 +1,8 @@
-import VaniScriptCore
+import AppKit
+import CoreText
 import CryptoKit
 import Foundation
-
+import VaniScriptCore
 /// A small, read-only OOXML reader for the first document-import slice.
 ///
 /// The app deliberately does not round-trip a DOCX through attributed strings:
@@ -19,6 +20,7 @@ struct DOCXPackageReader {
     struct ParsedDocument: Sendable, Equatable {
         let blocks: [DocumentBlock]
         let metadata: DocumentMetadata
+        let preflight: DocumentPreflight
         let sourceHash: String
         let entryNames: [String]
     }
@@ -83,18 +85,53 @@ struct DOCXPackageReader {
     }
 
     private struct ParagraphRecord {
+        var part: DocumentPart
         var styleID: String?
         var paragraphPropertiesXML: String
-        var hasNumbering = false
+        var hasNumbering: Bool
+        var tablePath: [Int]?
         var runs: [RunRecord]
         var text: String
+    }
+
+    private struct RunFormatting: Equatable {
+        var bold: Bool = false
+        var italic: Bool = false
+        var underline: String? = nil
+        var strike: Bool = false
+        var vertAlign: String? = nil
+        var smallCaps: Bool = false
+        var caps: Bool = false
+        var highlight: String? = nil
+        var color: String? = nil
+        var size: String? = nil
+        var font: String? = nil
+        var language: String? = nil
+        var styleID: String? = nil
+        var hyperlink: Bool = false
+        var isProtected: Bool = false
+
+        var traits: Set<InlineTrait> {
+            var result: Set<InlineTrait> = []
+            if bold { result.insert(.bold) }
+            if italic { result.insert(.italic) }
+            if underline != nil { result.insert(.underline) }
+            if strike { result.insert(.strikethrough) }
+            if vertAlign == "superscript" { result.insert(.superscript) }
+            if vertAlign == "subscript" { result.insert(.subscriptText) }
+            if smallCaps { result.insert(.smallCaps) }
+            return result
+        }
+
+        var key: String {
+            "b:\(bold)|i:\(italic)|u:\(underline ?? "")|str:\(strike)|va:\(vertAlign ?? "")|sc:\(smallCaps)|caps:\(caps)|hl:\(highlight ?? "")|c:\(color ?? "")|sz:\(size ?? "")|font:\(font ?? "")|lang:\(language ?? "")|sid:\(styleID ?? "")|link:\(hyperlink)|prot:\(isProtected)"
+        }
     }
 
     private struct RunRecord {
         var text: String
         var styleXML: String
-        var traits: Set<InlineTrait>
-        var hyperlink: Bool
+        var formatting: RunFormatting
     }
 
     private final class XMLFragmentBuilder {
@@ -128,8 +165,27 @@ struct DOCXPackageReader {
 
     private final class ParagraphXMLDelegate: NSObject, XMLParserDelegate {
         private(set) var paragraphs: [ParagraphRecord] = []
+        private(set) var sectionCount: Int = 0
+        private(set) var fontNames: Set<String> = []
+
+        private let defaultPart: DocumentPart
+
         private var currentParagraph: ParagraphRecord?
         private var currentRun: RunRecord?
+        private var currentFormatting = RunFormatting()
+        private var inRun = false
+
+        private var paragraphStack: [ParagraphRecord] = []
+        private var runStack: [RunRecord?] = []
+
+        private struct TableContext {
+            var tableIndex: Int
+            var rowIndex: Int
+            var cellIndex: Int
+        }
+        private var tableStack: [TableContext] = []
+        private var tableCountersByDepth: [Int: Int] = [:]
+
         private var pPrBuilder: XMLFragmentBuilder?
         private var pPrDepth = 0
         private var rPrBuilder: XMLFragmentBuilder?
@@ -137,6 +193,12 @@ struct DOCXPackageReader {
         private var textDepth = 0
         private var ignoredDepth = 0
         private var hyperlinkDepth = 0
+        private var textBoxDepth = 0
+
+        init(defaultPart: DocumentPart) {
+            self.defaultPart = defaultPart
+            super.init()
+        }
 
         func parser(
             _ parser: XMLParser,
@@ -156,9 +218,40 @@ struct DOCXPackageReader {
             }
 
             if name == "del" || name == "instrText" || name == "fldChar" || name == "bookmarkStart"
-                || name == "bookmarkEnd" || name == "proofErr" || name == "drawing" || name == "pict"
-                || name == "object" {
+                || name == "bookmarkEnd" || name == "proofErr" || name == "delText"
+                || name == "commentReference" || name == "commentRangeStart" || name == "commentRangeEnd" {
                 ignoredDepth = 1
+                return
+            }
+
+            if name == "sectPr" {
+                sectionCount += 1
+            }
+
+            if name == "txbxContent" {
+                textBoxDepth += 1
+            }
+
+            if name == "tbl" {
+                let depth = tableStack.count
+                let tableIndex = tableCountersByDepth[depth, default: 0]
+                tableCountersByDepth[depth] = tableIndex + 1
+                tableStack.append(TableContext(tableIndex: tableIndex, rowIndex: -1, cellIndex: -1))
+                return
+            }
+
+            if name == "tr" {
+                if !tableStack.isEmpty {
+                    tableStack[tableStack.count - 1].rowIndex += 1
+                    tableStack[tableStack.count - 1].cellIndex = -1
+                }
+                return
+            }
+
+            if name == "tc" {
+                if !tableStack.isEmpty {
+                    tableStack[tableStack.count - 1].cellIndex += 1
+                }
                 return
             }
 
@@ -177,19 +270,80 @@ struct DOCXPackageReader {
             if rPrDepth > 0 {
                 rPrBuilder?.start(name: name, attributes: attributes)
                 rPrDepth += 1
+
+                let val = attributes["val"]
+                let isOff = (val == "0" || val == "false" || val == "off")
+
+                switch name {
+                case "b", "bCs":
+                    currentFormatting.bold = !isOff
+                case "i", "iCs":
+                    currentFormatting.italic = !isOff
+                case "smallCaps":
+                    currentFormatting.smallCaps = !isOff
+                case "caps":
+                    currentFormatting.caps = !isOff
+                case "strike", "dstrike":
+                    currentFormatting.strike = !isOff
+                case "u":
+                    if val == "none" || isOff {
+                        currentFormatting.underline = nil
+                    } else {
+                        currentFormatting.underline = val ?? "single"
+                    }
+                case "vertAlign":
+                    if val == "superscript" || val == "subscript" {
+                        currentFormatting.vertAlign = val
+                    } else {
+                        currentFormatting.vertAlign = nil
+                    }
+                case "highlight":
+                    if val == "none" || isOff {
+                        currentFormatting.highlight = nil
+                    } else {
+                        currentFormatting.highlight = val
+                    }
+                case "color":
+                    if val == "auto" || val == nil {
+                        currentFormatting.color = nil
+                    } else {
+                        currentFormatting.color = val
+                    }
+                case "sz", "szCs":
+                    currentFormatting.size = val
+                case "rFonts":
+                    if let font = attributes["ascii"] ?? attributes["hAnsi"] ?? attributes["cs"] ?? attributes["val"] {
+                        currentFormatting.font = font
+                        fontNames.insert(font)
+                    }
+                case "lang":
+                    currentFormatting.language = attributes["val"] ?? attributes["bidi"] ?? attributes["eastAsia"]
+                case "rStyle":
+                    currentFormatting.styleID = val
+                case "vaniscriptProtect", "protect":
+                    currentFormatting.isProtected = !isOff
+                default:
+                    break
+                }
                 return
             }
 
             switch name {
             case "p":
-                if currentParagraph != nil {
+                if let active = currentParagraph {
                     finishRun()
-                    finishParagraph()
+                    paragraphStack.append(active)
+                    runStack.append(currentRun)
+                    currentRun = nil
                 }
+                let part: DocumentPart = textBoxDepth > 0 ? .textBox : defaultPart
+                let tablePath: [Int]? = tableStack.isEmpty ? nil : tableStack.flatMap { [$0.tableIndex, $0.rowIndex, $0.cellIndex] }
                 currentParagraph = ParagraphRecord(
+                    part: part,
                     styleID: nil,
                     paragraphPropertiesXML: "",
                     hasNumbering: false,
+                    tablePath: tablePath,
                     runs: [],
                     text: ""
                 )
@@ -206,24 +360,36 @@ struct DOCXPackageReader {
                 currentParagraph?.hasNumbering = true
             case "r":
                 finishRun()
-                currentRun = RunRecord(text: "", styleXML: "", traits: [], hyperlink: hyperlinkDepth > 0)
+                inRun = true
+                currentFormatting = RunFormatting(hyperlink: hyperlinkDepth > 0)
+                currentRun = RunRecord(
+                    text: "",
+                    styleXML: "",
+                    formatting: currentFormatting
+                )
             case "rPr":
-                guard currentRun != nil else { return }
+                guard inRun, currentRun != nil else { return }
                 rPrBuilder = XMLFragmentBuilder()
                 rPrBuilder?.start(name: name, attributes: attributes)
                 rPrDepth = 1
             case "hyperlink":
                 hyperlinkDepth += 1
-            case "t", "delText":
-                if name == "t", currentRun != nil {
+            case "t":
+                if inRun, currentRun != nil {
                     textDepth = 1
                 }
             case "tab":
-                currentRun?.text.append("\t")
+                if inRun {
+                    currentRun?.text.append("\t")
+                }
             case "br", "cr":
-                currentRun?.text.append("\n")
+                if inRun {
+                    currentRun?.text.append("\n")
+                }
             case "noBreakHyphen":
-                currentRun?.text.append("\u{2011}")
+                if inRun {
+                    currentRun?.text.append("\u{2011}")
+                }
             default:
                 break
             }
@@ -263,7 +429,8 @@ struct DOCXPackageReader {
                 if rPrDepth == 0 {
                     let styleXML = rPrBuilder?.value ?? ""
                     currentRun?.styleXML = styleXML
-                    currentRun?.traits = Self.traits(from: styleXML)
+                    currentFormatting.hyperlink = hyperlinkDepth > 0
+                    currentRun?.formatting = currentFormatting
                     rPrBuilder = nil
                 }
                 return
@@ -272,9 +439,16 @@ struct DOCXPackageReader {
             switch name {
             case "r":
                 finishRun()
+                inRun = false
             case "p":
                 finishRun()
                 finishParagraph()
+            case "tbl":
+                if !tableStack.isEmpty {
+                    tableStack.removeLast()
+                }
+            case "txbxContent":
+                textBoxDepth = max(0, textBoxDepth - 1)
             case "hyperlink":
                 hyperlinkDepth = max(0, hyperlinkDepth - 1)
             default:
@@ -287,9 +461,8 @@ struct DOCXPackageReader {
                 pPrBuilder?.characters(string)
             } else if rPrDepth > 0 {
                 rPrBuilder?.characters(string)
-            } else if textDepth > 0, ignoredDepth == 0 {
+            } else if textDepth > 0, ignoredDepth == 0, inRun {
                 currentRun?.text.append(string)
-                currentParagraph?.text.append(string)
             }
         }
 
@@ -302,14 +475,16 @@ struct DOCXPackageReader {
             run.text = run.text.precomposedStringWithCanonicalMapping
             guard !run.text.isEmpty else { return }
 
+            currentFormatting.hyperlink = hyperlinkDepth > 0
+            run.formatting = currentFormatting
+
             if let previous = paragraph.runs.last,
-               previous.styleXML == run.styleXML,
-               previous.traits == run.traits,
-               previous.hyperlink == run.hyperlink {
+               previous.formatting.key == run.formatting.key {
                 paragraph.runs[paragraph.runs.count - 1].text += run.text
             } else {
                 paragraph.runs.append(run)
             }
+            paragraph.text = paragraph.runs.map(\.text).joined()
             currentParagraph = paragraph
         }
 
@@ -324,26 +499,17 @@ struct DOCXPackageReader {
             rPrDepth = 0
             textDepth = 0
             ignoredDepth = 0
-            hyperlinkDepth = 0
+            inRun = false
+
+            if !paragraphStack.isEmpty {
+                currentParagraph = paragraphStack.removeLast()
+                currentRun = runStack.removeLast()
+                inRun = currentRun != nil
+            }
         }
 
         private static func localName(_ name: String) -> String {
             name.split(separator: ":").last.map(String.init) ?? name
-        }
-
-        private static func traits(from styleXML: String) -> Set<InlineTrait> {
-            let lowercased = styleXML.lowercased()
-            var result: Set<InlineTrait> = []
-            if lowercased.contains("<b") { result.insert(.bold) }
-            if lowercased.contains("<i") { result.insert(.italic) }
-            if lowercased.contains("<u") { result.insert(.underline) }
-            if lowercased.contains("<strike") || lowercased.contains("<dstrike") {
-                result.insert(.strikethrough)
-            }
-            if lowercased.contains("superscript") { result.insert(.superscript) }
-            if lowercased.contains("subscript") { result.insert(.subscriptText) }
-            if lowercased.contains("smallcaps") { result.insert(.smallCaps) }
-            return result
         }
     }
 
@@ -373,6 +539,85 @@ struct DOCXPackageReader {
             qualifiedName qName: String?
         ) {
             currentElement = nil
+        }
+
+        private static func localName(_ name: String) -> String {
+            name.split(separator: ":").last.map(String.init) ?? name
+        }
+    }
+
+    private final class AppPropertiesDelegate: NSObject, XMLParserDelegate {
+        var pages: Int = 0
+        var words: Int = 0
+        var characters: Int = 0
+        var lines: Int = 0
+        var paragraphs: Int = 0
+        private var currentElement: String?
+        private var currentText = ""
+
+        func parser(
+            _ parser: XMLParser,
+            didStartElement elementName: String,
+            namespaceURI: String?,
+            qualifiedName qName: String?,
+            attributes attributeDict: [String: String] = [:]
+        ) {
+            currentElement = Self.localName(qName ?? elementName)
+            currentText = ""
+        }
+
+        func parser(_ parser: XMLParser, foundCharacters string: String) {
+            currentText += string
+        }
+
+        func parser(
+            _ parser: XMLParser,
+            didEndElement elementName: String,
+            namespaceURI: String?,
+            qualifiedName qName: String?
+        ) {
+            let value = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
+            switch currentElement {
+            case "Pages":
+                pages = Int(value) ?? 0
+            case "Words":
+                words = Int(value) ?? 0
+            case "Characters":
+                characters = Int(value) ?? 0
+            case "Lines":
+                lines = Int(value) ?? 0
+            case "Paragraphs":
+                paragraphs = Int(value) ?? 0
+            default:
+                break
+            }
+            currentElement = nil
+        }
+
+        private static func localName(_ name: String) -> String {
+            name.split(separator: ":").last.map(String.init) ?? name
+        }
+    }
+
+    private final class FontTableDelegate: NSObject, XMLParserDelegate {
+        var fontNames: Set<String> = []
+
+        func parser(
+            _ parser: XMLParser,
+            didStartElement elementName: String,
+            namespaceURI: String?,
+            qualifiedName qName: String?,
+            attributes attributeDict: [String: String] = [:]
+        ) {
+            let name = Self.localName(qName ?? elementName)
+            if name == "font" {
+                if let fontName = attributeDict["w:name"] ?? attributeDict["name"] {
+                    let cleaned = fontName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !cleaned.isEmpty {
+                        fontNames.insert(cleaned)
+                    }
+                }
+            }
         }
 
         private static func localName(_ name: String) -> String {
@@ -457,66 +702,140 @@ struct DOCXPackageReader {
 
         var blocks: [DocumentBlock] = []
         var partOrdinals: [String: Int] = [:]
+        var totalSectionCount = 0
+        var allFonts: Set<String> = []
+
+        if let fontTableData = entryData["word/fontTable.xml"] {
+            let fontTableFonts = try parseFontTable(fontTableData)
+            allFonts.formUnion(fontTableFonts)
+        }
+
         let documentParts = entries
             .map(\.path)
             .filter(Self.isDocumentPart)
             .sorted { lhs, rhs in
-                if lhs == "word/document.xml" { return true }
-                if rhs == "word/document.xml" { return false }
+                let pL = Self.partSortPriority(for: lhs)
+                let pR = Self.partSortPriority(for: rhs)
+                if pL != pR { return pL < pR }
                 return lhs < rhs
             }
+
         for path in documentParts {
             guard let data = entryData[path] else { continue }
-            let part = Self.documentPart(for: path)
-            let partKey = part.rawValue
-            let parsedParagraphs = try parseParagraphs(data, entryName: path)
+            let defaultPart = Self.documentPart(for: path)
+            let (parsedParagraphs, sectionCount, fontNames) = try parseParagraphs(
+                data,
+                entryName: path,
+                defaultPart: defaultPart
+            )
+            totalSectionCount += sectionCount
+            allFonts.formUnion(fontNames)
+
             for paragraph in parsedParagraphs {
+                let part = paragraph.part
+                let partKey = part.rawValue
                 let ordinal = partOrdinals[partKey, default: 0]
                 partOrdinals[partKey] = ordinal + 1
+
                 let normalizedText = paragraph.text.precomposedStringWithCanonicalMapping
-                let blockID = stableID(seed: "\(path)#\(ordinal)#\(normalizedText)")
+                let tableTag = paragraph.tablePath?.map(String.init).joined(separator: "_") ?? "p"
+                let blockID = stableID(seed: "\(path)#\(tableTag)#\(ordinal)#\(normalizedText)")
+
                 let spans = paragraph.runs.enumerated().map { index, run in
                     RichTextSpan(
                         id: stableID(seed: "\(blockID)#span#\(index)"),
                         text: run.text.precomposedStringWithCanonicalMapping,
-                        styleKey: run.styleXML,
-                        traits: run.traits,
-                        translationPolicy: .translate
+                        styleKey: run.styleXML.isEmpty ? run.formatting.key : run.styleXML,
+                        traits: run.formatting.traits,
+                        translationPolicy: run.formatting.isProtected ? .protect : .translate,
+                        foregroundColorHex: run.formatting.color
                     )
                 }
+
                 let propertiesFingerprint = paragraph.paragraphPropertiesXML.isEmpty
                     ? ""
                     : stableID(seed: paragraph.paragraphPropertiesXML)
+
                 let kind = Self.blockKind(
                     styleID: paragraph.styleID,
                     hasNumbering: paragraph.hasNumbering,
                     text: normalizedText
                 )
+
                 let sourceHash = stableID(seed: "\(normalizedText)|\(propertiesFingerprint)|\(spans.map(\.text).joined())")
+
+                let xmlPath: String
+                if let tablePath = paragraph.tablePath, tablePath.count >= 3 {
+                    let t = tablePath[0] + 1
+                    let r = tablePath[1] + 1
+                    let c = tablePath[2] + 1
+                    xmlPath = "/\(path)/w:tbl[\(t)]/w:tr[\(r)]/w:tc[\(c)]/w:p[\(ordinal + 1)]"
+                } else if part == .textBox {
+                    xmlPath = "/\(path)/w:txbxContent/w:p[\(ordinal + 1)]"
+                } else {
+                    xmlPath = "/\(path)/w:p[\(ordinal + 1)]"
+                }
+
+                let isBlockProtected = kind == .verse || (!spans.isEmpty && spans.allSatisfy { $0.translationPolicy == .protect })
+
                 blocks.append(
                     DocumentBlock(
                         id: blockID,
                         location: DocumentLocation(
                             part: part,
                             paragraphOrdinal: ordinal,
-                            xmlPath: "/\(path)/w:p[\(ordinal + 1)]"
+                            tablePath: paragraph.tablePath,
+                            xmlPath: xmlPath
                         ),
                         kind: kind,
                         styleID: paragraph.styleID,
                         paragraphPropertiesFingerprint: propertiesFingerprint,
                         spans: spans,
                         sourceHash: sourceHash,
-                        translationPolicy: .translate
+                        translationPolicy: isBlockProtected ? .protect : .translate
                     )
                 )
             }
         }
 
-        let metadata = try parseMetadata(entryData["docProps/core.xml"])
+        let appProps = try parseAppProperties(entryData["docProps/app.xml"] ?? entryData["docProps/extended.xml"])
+        let fontWarnings = Self.checkFontAvailability(fontNames: allFonts)
+
+        let extractedWordCount = blocks.reduce(0) { count, block in
+            count + block.spans.reduce(0) { spanCount, span in
+                spanCount + span.text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
+            }
+        }
+        let effectiveWords = appProps.words > 0 ? appProps.words : extractedWordCount
+        let effectivePages = appProps.pages > 0 ? appProps.pages : max(1, (effectiveWords + 299) / 300)
+        let effectiveSections = max(1, totalSectionCount)
+        let blockCount = blocks.count
+        let protectedGroupCount = blocks.filter {
+            $0.translationPolicy == .protect || $0.spans.contains { $0.translationPolicy == .protect }
+        }.count
+
+        let preflight = DocumentPreflight(
+            pageCount: effectivePages,
+            wordCount: effectiveWords,
+            sectionCount: effectiveSections,
+            blockCount: blockCount,
+            protectedGroupCount: protectedGroupCount,
+            fontWarnings: fontWarnings
+        )
+
+        var metadata = try parseMetadata(entryData["docProps/core.xml"])
+        metadata.pageCount = preflight.pageCount
+        metadata.wordCount = preflight.wordCount
+        metadata.sectionCount = preflight.sectionCount
+        metadata.blockCount = preflight.blockCount
+        metadata.protectedGroupCount = preflight.protectedGroupCount
+        metadata.fontWarnings = preflight.fontWarnings
+
         let sourceHash = sha256(packageData)
         return ParsedDocument(
             blocks: blocks,
             metadata: metadata,
+            preflight: preflight,
             sourceHash: sourceHash,
             entryNames: entries.map(\.path)
         )
@@ -630,9 +949,6 @@ struct DOCXPackageReader {
             return data
         }
 
-        // Foundation does not expose a ZIP/deflate decoder. Use the system
-        // unzip reader in stream-to-stdout mode: no archive paths are written
-        // to disk, and every name was validated before reaching Process.
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
         process.arguments = ["-p", archiveURL.path, escapedUnzipPattern(entry.path)]
@@ -665,19 +981,87 @@ struct DOCXPackageReader {
         return start
     }
 
-    private func parseParagraphs(_ data: Data, entryName: String) throws -> [ParagraphRecord] {
+    private func parseParagraphs(
+        _ data: Data,
+        entryName: String,
+        defaultPart: DocumentPart
+    ) throws -> (paragraphs: [ParagraphRecord], sectionCount: Int, fontNames: Set<String>) {
         guard !containsForbiddenXML(data) else {
             throw DOCXPackageReaderError.externalEntity(entryName)
         }
         let parser = XMLParser(data: data)
         parser.shouldProcessNamespaces = false
         parser.shouldResolveExternalEntities = false
-        let delegate = ParagraphXMLDelegate()
+        let delegate = ParagraphXMLDelegate(defaultPart: defaultPart)
         parser.delegate = delegate
         guard parser.parse() else {
             throw DOCXPackageReaderError.invalidXML(entryName)
         }
-        return delegate.paragraphs
+        return (delegate.paragraphs, delegate.sectionCount, delegate.fontNames)
+    }
+
+    private func parseAppProperties(_ data: Data?) throws -> AppPropertiesDelegate {
+        let delegate = AppPropertiesDelegate()
+        guard let data else { return delegate }
+        guard !containsForbiddenXML(data) else {
+            throw DOCXPackageReaderError.externalEntity("docProps/app.xml")
+        }
+        let parser = XMLParser(data: data)
+        parser.shouldProcessNamespaces = false
+        parser.shouldResolveExternalEntities = false
+        parser.delegate = delegate
+        _ = parser.parse()
+        return delegate
+    }
+
+    private func parseFontTable(_ data: Data?) throws -> Set<String> {
+        guard let data else { return [] }
+        guard !containsForbiddenXML(data) else {
+            throw DOCXPackageReaderError.externalEntity("word/fontTable.xml")
+        }
+        let parser = XMLParser(data: data)
+        parser.shouldProcessNamespaces = false
+        parser.shouldResolveExternalEntities = false
+        let delegate = FontTableDelegate()
+        parser.delegate = delegate
+        guard parser.parse() else {
+            return []
+        }
+        return delegate.fontNames
+    }
+
+    private static func checkFontAvailability(fontNames: Set<String>) -> [String] {
+        var warnings: [String] = []
+        for font in fontNames.sorted() {
+            if !isFontAvailable(font) {
+                warnings.append("Font '\(font)' is referenced in the document but is not installed locally; fallback substitution may occur in external viewers.")
+            }
+        }
+        return warnings
+    }
+
+    private static func isFontAvailable(_ name: String) -> Bool {
+        let lower = name.lowercased()
+        if ["times new roman", "arial", "calibri", "cambria", "helvetica", "georgia", "courier new", "verdana", "tahoma", "system font", "courier", "menlo", "monaco"].contains(lower) {
+            return true
+        }
+        if NSFont(name: name, size: 12) != nil {
+            return true
+        }
+        let fontNameCF = name as CFString
+        let descriptor = CTFontDescriptorCreateWithNameAndSize(fontNameCF, 12.0)
+        let matching = CTFontDescriptorCreateMatchingFontDescriptors(descriptor, nil) as? [CTFontDescriptor]
+        return !(matching?.isEmpty ?? true)
+    }
+
+    private static func partSortPriority(for path: String) -> Int {
+        let lower = path.lowercased()
+        if lower == "word/document.xml" { return 0 }
+        if lower.contains("header") { return 1 }
+        if lower.contains("footer") { return 2 }
+        if lower.contains("footnote") { return 3 }
+        if lower.contains("endnote") { return 4 }
+        return 5
     }
 
     private func parseMetadata(_ data: Data?) throws -> DocumentMetadata {
@@ -709,8 +1093,8 @@ struct DOCXPackageReader {
         let lower = path.lowercased()
         guard lower.hasPrefix("word/"), lower.hasSuffix(".xml") else { return false }
         return lower == "word/document.xml"
-            || lower.contains("/header")
-            || lower.contains("/footer")
+            || lower.contains("header")
+            || lower.contains("footer")
             || lower.contains("footnotes")
             || lower.contains("endnotes")
     }
@@ -719,8 +1103,8 @@ struct DOCXPackageReader {
         let lower = path.lowercased()
         if lower.contains("header") { return .header }
         if lower.contains("footer") { return .footer }
-        if lower.contains("footnotes") { return .footnote }
-        if lower.contains("endnotes") { return .endnote }
+        if lower.contains("footnote") { return .footnote }
+        if lower.contains("endnote") { return .endnote }
         return .mainBody
     }
 
@@ -753,6 +1137,7 @@ struct DOCXPackageReader {
         return lower.contains("<!doctype") || lower.contains("<!entity") || lower.contains("system \"")
             || lower.contains("public \"")
     }
+
     private func containsExternalRelationship(_ xml: String) -> Bool {
         let lower = xml.lowercased()
         let compact = lower.replacingOccurrences(of: #"\s+"#, with: "", options: .regularExpression)

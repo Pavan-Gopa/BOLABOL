@@ -43,7 +43,7 @@ struct ProjectSidebarView: View {
             .frame(width: 380)
             .frame(maxHeight: .infinity)
             .padding(18)
-            .background(Color.dynamic(light: Color.white.opacity(0.97), dark: Color(red: 12 / 255, green: 17 / 255, blue: 34 / 255).opacity(0.97)))
+            .background(VaniScriptTheme.sidebarSurface)
             .overlay(Rectangle().fill(VaniScriptTheme.border).frame(width: 1), alignment: .leading)
             .shadow(color: .black.opacity(0.36), radius: 34, x: -18, y: 0)
         }
@@ -206,8 +206,8 @@ private struct ProjectSidebarRow: View {
             Button("Cancel", role: .cancel) { }
         }
         .padding(12)
-        .background(isActive ? VaniScriptTheme.accent.opacity(0.08) : Color.dynamic(light: Color.black.opacity(0.045), dark: Color.white.opacity(0.045)))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(isActive ? VaniScriptTheme.accent.opacity(0.38) : Color.dynamic(light: Color.black.opacity(0.08), dark: Color.white.opacity(0.08)), lineWidth: 1))
+        .background(isActive ? VaniScriptTheme.accent.opacity(0.08) : VaniScriptTheme.control)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(isActive ? VaniScriptTheme.accent.opacity(0.38) : VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
@@ -259,8 +259,8 @@ private struct ProjectSidebarRow: View {
             }
         }
         .padding(10)
-        .background(Color.dynamic(light: Color.black.opacity(0.035), dark: Color.white.opacity(0.04)))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.dynamic(light: Color.black.opacity(0.08), dark: Color.white.opacity(0.08)), lineWidth: 1))
+        .background(VaniScriptTheme.surfaceSubtle)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
@@ -319,40 +319,72 @@ private struct ProjectSidebarRow: View {
 }
 
 private struct ProjectSidebarTinyButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 10, weight: .bold))
-            .foregroundStyle(configuration.isPressed ? Color.black : VaniScriptTheme.text1)
+            .foregroundStyle(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.onAccent : VaniScriptTheme.text1)
+                    : VaniScriptTheme.disabledText
+            )
             .padding(.horizontal, 8)
             .frame(height: 26)
-            .background(configuration.isPressed ? VaniScriptTheme.accent : Color.dynamic(light: Color.black.opacity(0.045), dark: Color.white.opacity(0.07)))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(RoundedRectangle(cornerRadius: 7).stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
     }
 }
 
 private struct SidebarIconButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .frame(width: 30, height: 30)
-            .foregroundStyle(configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text1)
-            .background(Color.dynamic(light: Color.black.opacity(configuration.isPressed ? 0.08 : 0.03), dark: Color.white.opacity(configuration.isPressed ? 0.12 : 0.07)))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1))
+            .foregroundStyle(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text1)
+                    : VaniScriptTheme.disabledText
+            )
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
 private struct SidebarSmallButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
     let primary: Bool
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(primary ? Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255) : VaniScriptTheme.text1)
+            .foregroundStyle(
+                isEnabled
+                    ? (primary ? VaniScriptTheme.onAccent : VaniScriptTheme.text1)
+                    : VaniScriptTheme.disabledText
+            )
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .background(primary ? VaniScriptTheme.accent : Color.dynamic(light: Color.black.opacity(configuration.isPressed ? 0.08 : 0.03), dark: Color.white.opacity(configuration.isPressed ? 0.1 : 0.06)))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(primary ? Color.clear : Color.dynamic(light: Color.black.opacity(0.12), dark: Color.white.opacity(0.12)), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (primary ? VaniScriptTheme.accent : (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control))
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isEnabled ? (primary ? Color.clear : VaniScriptTheme.controlBorder) : VaniScriptTheme.border, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
@@ -364,25 +396,50 @@ private struct ProjectSidebarChunkButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(configuration.isPressed || active ? VaniScriptTheme.text0 : VaniScriptTheme.text1)
+            .foregroundStyle(
+                isEnabled
+                    ? (configuration.isPressed || active ? VaniScriptTheme.text0 : VaniScriptTheme.text1)
+                    : VaniScriptTheme.disabledText
+            )
             .padding(.horizontal, 9)
             .frame(height: 38)
-            .background(active ? VaniScriptTheme.accent.opacity(0.13) : Color.dynamic(light: Color.black.opacity(configuration.isPressed ? 0.08 : 0.035), dark: Color.white.opacity(configuration.isPressed ? 0.08 : 0.035)))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(active ? VaniScriptTheme.accent.opacity(0.44) : Color.dynamic(light: Color.black.opacity(0.08), dark: Color.white.opacity(0.08)), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (active ? VaniScriptTheme.controlSelected : (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control))
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(
+                        isEnabled
+                            ? (active ? VaniScriptTheme.controlSelectedBorder : VaniScriptTheme.border)
+                            : VaniScriptTheme.border,
+                        lineWidth: 1
+                    )
+            )
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .opacity(!isEnabled ? 0.48 : (configuration.isPressed ? 0.86 : 1))
+            .opacity(isEnabled && configuration.isPressed ? 0.86 : 1)
     }
 }
 
 private struct ProjectSidebarExportButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .heavy))
-            .foregroundStyle(VaniScriptTheme.accent)
+            .foregroundStyle(isEnabled ? VaniScriptTheme.accent : VaniScriptTheme.disabledText)
             .padding(.horizontal, 10)
             .frame(height: 42)
-            .background(VaniScriptTheme.accent.opacity(configuration.isPressed ? 0.26 : 0.18))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.accent.opacity(0.35), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? VaniScriptTheme.accent.opacity(configuration.isPressed ? 0.26 : 0.18)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isEnabled ? VaniScriptTheme.accent.opacity(0.35) : VaniScriptTheme.border, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }

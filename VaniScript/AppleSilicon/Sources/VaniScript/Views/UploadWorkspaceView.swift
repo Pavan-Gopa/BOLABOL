@@ -376,7 +376,7 @@ private struct LinkImportSheet: View {
                     .padding(.horizontal, 12)
                     .frame(height: 38)
                     .background(VaniScriptTheme.input)
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .disabled(store.isImportingLink || store.isLinkImportCompleted)
 
@@ -385,7 +385,7 @@ private struct LinkImportSheet: View {
                     Button(action: { store.linkImportAudioOnly = false }) {
                         Text("Video + audio")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(!store.linkImportAudioOnly ? Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255) : VaniScriptTheme.text2)
+                            .foregroundStyle(!store.linkImportAudioOnly ? VaniScriptTheme.onAccent : VaniScriptTheme.text2)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 6)
                             .background(!store.linkImportAudioOnly ? VaniScriptTheme.accent : Color.clear)
@@ -397,7 +397,7 @@ private struct LinkImportSheet: View {
                     Button(action: { store.linkImportAudioOnly = true }) {
                         Text("Audio only")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(store.linkImportAudioOnly ? Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255) : VaniScriptTheme.text2)
+                            .foregroundStyle(store.linkImportAudioOnly ? VaniScriptTheme.onAccent : VaniScriptTheme.text2)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 6)
                             .background(store.linkImportAudioOnly ? VaniScriptTheme.accent : Color.clear)
@@ -407,9 +407,8 @@ private struct LinkImportSheet: View {
                     .disabled(store.isImportingLink || store.isLinkImportCompleted)
                 }
                 .padding(3)
-                .background(Color.white.opacity(0.06))
+                .background(VaniScriptTheme.control)
                 .clipShape(Capsule())
-
                 // Progress Bar
                 if store.isImportingLink || store.isLinkImportCompleted {
                     VStack(spacing: 6) {
@@ -439,7 +438,7 @@ private struct LinkImportSheet: View {
                     VideoPlayer(player: AVPlayer(url: url))
                         .frame(height: 240)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(VaniScriptTheme.border, lineWidth: 1))
                         .padding(.vertical, 4)
                 }
 
@@ -568,63 +567,103 @@ private struct UploadOptionCard: View {
 }
 
 private struct RecordingPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255))
+            .foregroundStyle(isEnabled ? VaniScriptTheme.onAccent : VaniScriptTheme.disabledText)
             .padding(.horizontal, 12)
             .frame(height: 32)
             .frame(maxWidth: .infinity)
-            .background(configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .stroke(isEnabled ? Color.clear : VaniScriptTheme.controlBorder, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
     }
 }
 
 private struct RecordingSecondaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(VaniScriptTheme.text1)
+            .foregroundStyle(isEnabled ? VaniScriptTheme.text1 : VaniScriptTheme.disabledText)
             .padding(.horizontal, 12)
             .frame(height: 32)
-            .background(Color.white.opacity(configuration.isPressed ? 0.1 : 0.045))
-            .overlay(RoundedRectangle(cornerRadius: 9).stroke(Color.white.opacity(0.14), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(RoundedRectangle(cornerRadius: 9).stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
     }
 }
 
 private struct RecordingIconButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(VaniScriptTheme.text1)
+            .foregroundStyle(isEnabled ? VaniScriptTheme.text1 : VaniScriptTheme.disabledText)
             .frame(width: 30, height: 30)
-            .background(Color.white.opacity(configuration.isPressed ? 0.1 : 0.045))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.14), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
 private struct RecordingModeButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
     let active: Bool
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .heavy))
-            .foregroundStyle(active ? Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255) : VaniScriptTheme.text2)
+            .foregroundStyle(isEnabled ? (active ? VaniScriptTheme.onAccent : VaniScriptTheme.text2) : VaniScriptTheme.disabledText)
             .padding(.vertical, 9)
-            .background(active ? VaniScriptTheme.accent : Color.white.opacity(configuration.isPressed ? 0.08 : 0.035))
-            .overlay(RoundedRectangle(cornerRadius: 9).stroke(active ? VaniScriptTheme.accent.opacity(0.55) : Color.white.opacity(0.12), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (active ? VaniScriptTheme.accent : (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control))
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 9)
+                    .stroke(isEnabled ? (active ? VaniScriptTheme.accent.opacity(0.55) : VaniScriptTheme.controlBorder) : VaniScriptTheme.border, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
     }
 }
 
 private struct RecordingPlayButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 15, weight: .bold))
-            .foregroundStyle(Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255))
+            .foregroundStyle(isEnabled ? VaniScriptTheme.onAccent : VaniScriptTheme.disabledText)
             .frame(width: 38, height: 38)
-            .background(configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                Circle()
+                    .stroke(isEnabled ? Color.clear : VaniScriptTheme.controlBorder, lineWidth: 1)
+            )
             .clipShape(Circle())
     }
 }

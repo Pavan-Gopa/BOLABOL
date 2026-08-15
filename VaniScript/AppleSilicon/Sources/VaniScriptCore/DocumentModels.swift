@@ -186,6 +186,31 @@ public enum InlineTrait: String, Codable, CaseIterable, Hashable, Sendable {
     case smallCaps
 }
 
+public struct DocumentPreflight: Codable, Equatable, Sendable {
+    public var pageCount: Int
+    public var wordCount: Int
+    public var sectionCount: Int
+    public var blockCount: Int
+    public var protectedGroupCount: Int
+    public var fontWarnings: [String]
+
+    public init(
+        pageCount: Int = 0,
+        wordCount: Int = 0,
+        sectionCount: Int = 0,
+        blockCount: Int = 0,
+        protectedGroupCount: Int = 0,
+        fontWarnings: [String] = []
+    ) {
+        self.pageCount = pageCount
+        self.wordCount = wordCount
+        self.sectionCount = sectionCount
+        self.blockCount = blockCount
+        self.protectedGroupCount = protectedGroupCount
+        self.fontWarnings = fontWarnings
+    }
+}
+
 public struct DocumentMetadata: Codable, Equatable, Sendable {
     public var title: String?
     public var author: String?
@@ -194,6 +219,12 @@ public struct DocumentMetadata: Codable, Equatable, Sendable {
     public var createdAt: String?
     public var modifiedAt: String?
     public var customProperties: [String: String]
+    public var pageCount: Int?
+    public var wordCount: Int?
+    public var sectionCount: Int?
+    public var blockCount: Int?
+    public var protectedGroupCount: Int?
+    public var fontWarnings: [String]
 
     public init(
         title: String? = nil,
@@ -202,7 +233,13 @@ public struct DocumentMetadata: Codable, Equatable, Sendable {
         language: String? = nil,
         createdAt: String? = nil,
         modifiedAt: String? = nil,
-        customProperties: [String: String] = [:]
+        customProperties: [String: String] = [:],
+        pageCount: Int? = nil,
+        wordCount: Int? = nil,
+        sectionCount: Int? = nil,
+        blockCount: Int? = nil,
+        protectedGroupCount: Int? = nil,
+        fontWarnings: [String] = []
     ) {
         self.title = title
         self.author = author
@@ -211,6 +248,29 @@ public struct DocumentMetadata: Codable, Equatable, Sendable {
         self.createdAt = createdAt
         self.modifiedAt = modifiedAt
         self.customProperties = customProperties
+        self.pageCount = pageCount
+        self.wordCount = wordCount
+        self.sectionCount = sectionCount
+        self.blockCount = blockCount
+        self.protectedGroupCount = protectedGroupCount
+        self.fontWarnings = fontWarnings
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.title = try container.decodeIfPresent(String.self, forKey: .title)
+        self.author = try container.decodeIfPresent(String.self, forKey: .author)
+        self.subject = try container.decodeIfPresent(String.self, forKey: .subject)
+        self.language = try container.decodeIfPresent(String.self, forKey: .language)
+        self.createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt)
+        self.modifiedAt = try container.decodeIfPresent(String.self, forKey: .modifiedAt)
+        self.customProperties = try container.decodeIfPresent([String: String].self, forKey: .customProperties) ?? [:]
+        self.pageCount = try container.decodeIfPresent(Int.self, forKey: .pageCount)
+        self.wordCount = try container.decodeIfPresent(Int.self, forKey: .wordCount)
+        self.sectionCount = try container.decodeIfPresent(Int.self, forKey: .sectionCount)
+        self.blockCount = try container.decodeIfPresent(Int.self, forKey: .blockCount)
+        self.protectedGroupCount = try container.decodeIfPresent(Int.self, forKey: .protectedGroupCount)
+        self.fontWarnings = try container.decodeIfPresent([String].self, forKey: .fontWarnings) ?? []
     }
 }
 
@@ -245,19 +305,70 @@ public struct RichTextSpan: Codable, Equatable, Sendable {
     public var styleKey: String
     public var traits: Set<InlineTrait>
     public var translationPolicy: SpanTranslationPolicy
+    public var foregroundColorHex: String? {
+        didSet {
+            foregroundColorHex = Self.normalizeHexColor(foregroundColorHex)
+        }
+    }
 
     public init(
         id: String,
         text: String,
         styleKey: String = "",
         traits: Set<InlineTrait> = [],
-        translationPolicy: SpanTranslationPolicy = .translate
+        translationPolicy: SpanTranslationPolicy = .translate,
+        foregroundColorHex: String? = nil
     ) {
         self.id = id
         self.text = text
         self.styleKey = styleKey
         self.traits = traits
         self.translationPolicy = translationPolicy
+        self.foregroundColorHex = Self.normalizeHexColor(foregroundColorHex)
+    }
+
+    public static func normalizeHexColor(_ value: String?) -> String? {
+        guard let value else { return nil }
+        var cleaned = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasPrefix("#") {
+            cleaned.removeFirst()
+        }
+        if cleaned.count == 3 && cleaned.allSatisfy(\.isHexDigit) {
+            let c = Array(cleaned)
+            return "\(c[0])\(c[0])\(c[1])\(c[1])\(c[2])\(c[2])".uppercased()
+        }
+        if cleaned.count == 6 && cleaned.allSatisfy(\.isHexDigit) {
+            return cleaned.uppercased()
+        }
+        if cleaned.count == 8 && cleaned.allSatisfy(\.isHexDigit) {
+            return String(cleaned.prefix(6)).uppercased()
+        }
+        return nil
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, text, styleKey, traits, translationPolicy, foregroundColorHex
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.text = try container.decode(String.self, forKey: .text)
+        self.styleKey = try container.decodeIfPresent(String.self, forKey: .styleKey) ?? ""
+        self.traits = try container.decodeIfPresent(Set<InlineTrait>.self, forKey: .traits) ?? []
+        self.translationPolicy = try container.decodeIfPresent(SpanTranslationPolicy.self, forKey: .translationPolicy) ?? .translate
+        let rawColor = try container.decodeIfPresent(String.self, forKey: .foregroundColorHex)
+        self.foregroundColorHex = Self.normalizeHexColor(rawColor)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(text, forKey: .text)
+        try container.encode(styleKey, forKey: .styleKey)
+        try container.encode(traits, forKey: .traits)
+        try container.encode(translationPolicy, forKey: .translationPolicy)
+        try container.encodeIfPresent(foregroundColorHex, forKey: .foregroundColorHex)
     }
 }
 
@@ -439,6 +550,7 @@ public struct DocumentState: Codable, Equatable, Sendable {
     public var format: DocumentFormat
     public var originalAsset: ProjectAssetReference
     public var metadata: DocumentMetadata
+    public var preflight: DocumentPreflight
     public var blocks: [DocumentBlock]
     public var chunks: [DocumentChunkPlan]
     public var translationsByLanguage: [String: [String: TranslatedBlock]]
@@ -449,6 +561,7 @@ public struct DocumentState: Codable, Equatable, Sendable {
         format: DocumentFormat = .docx,
         originalAsset: ProjectAssetReference = ProjectAssetReference(key: "originalSource"),
         metadata: DocumentMetadata = DocumentMetadata(),
+        preflight: DocumentPreflight = DocumentPreflight(),
         blocks: [DocumentBlock] = [],
         chunks: [DocumentChunkPlan] = [],
         translationsByLanguage: [String: [String: TranslatedBlock]] = [:],
@@ -458,10 +571,24 @@ public struct DocumentState: Codable, Equatable, Sendable {
         self.format = format
         self.originalAsset = originalAsset
         self.metadata = metadata
+        self.preflight = preflight
         self.blocks = blocks
         self.chunks = chunks
         self.translationsByLanguage = translationsByLanguage
         self.outputs = outputs
         self.profile = profile
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.format = try container.decode(DocumentFormat.self, forKey: .format)
+        self.originalAsset = try container.decode(ProjectAssetReference.self, forKey: .originalAsset)
+        self.metadata = try container.decodeIfPresent(DocumentMetadata.self, forKey: .metadata) ?? DocumentMetadata()
+        self.preflight = try container.decodeIfPresent(DocumentPreflight.self, forKey: .preflight) ?? DocumentPreflight()
+        self.blocks = try container.decodeIfPresent([DocumentBlock].self, forKey: .blocks) ?? []
+        self.chunks = try container.decodeIfPresent([DocumentChunkPlan].self, forKey: .chunks) ?? []
+        self.translationsByLanguage = try container.decodeIfPresent([String: [String: TranslatedBlock]].self, forKey: .translationsByLanguage) ?? [:]
+        self.outputs = try container.decodeIfPresent([DocumentOutputAsset].self, forKey: .outputs) ?? []
+        self.profile = try container.decodeIfPresent(DocumentTranslationProfile.self, forKey: .profile) ?? .default
     }
 }

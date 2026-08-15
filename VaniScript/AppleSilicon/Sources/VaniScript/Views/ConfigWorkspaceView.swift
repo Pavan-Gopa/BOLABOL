@@ -63,9 +63,44 @@ struct ConfigWorkspaceView: View {
 
     private var documentConfigFields: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Document Metadata")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(VaniScriptTheme.text2)
+            HStack {
+                Text("Document Metadata")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                Spacer()
+                if let format = store.workflow.documentState?.format {
+                    Text(format.accuracyBadge)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(VaniScriptTheme.accent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(VaniScriptTheme.accent.opacity(0.12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .stroke(VaniScriptTheme.accent.opacity(0.25), lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .accessibilityIdentifier("document-accuracy-badge")
+                }
+            }
+
+            if let format = store.workflow.documentState?.format {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.text.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.accent)
+                    Text(format.accuracyBadge)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(VaniScriptTheme.text1)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(VaniScriptTheme.control)
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(VaniScriptTheme.border, lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .accessibilityIdentifier("document-accuracy-badge-banner")
+            }
 
             HStack(spacing: 12) {
                 ReadOnlyChip(title: "Title", value: documentTitle)
@@ -316,9 +351,9 @@ private struct FieldBox: View {
                 .foregroundStyle(VaniScriptTheme.text0)
                 .padding(.horizontal, 11)
                 .frame(height: 38)
-                .background(VaniScriptTheme.input)
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.1), lineWidth: 1))
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .background(VaniScriptTheme.input)
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .frame(maxWidth: .infinity)
     }
@@ -345,7 +380,7 @@ private struct PickerBox: View {
             .tint(VaniScriptTheme.text0)
             .frame(maxWidth: .infinity, minHeight: 38)
             .background(VaniScriptTheme.input)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.1), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .frame(maxWidth: .infinity)
@@ -368,33 +403,49 @@ private struct ReadOnlyChip: View {
         .font(.system(size: 12))
         .padding(.horizontal, 12)
         .frame(height: 36)
-        .background(Color.white.opacity(0.04))
+        .background(VaniScriptTheme.control)
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(VaniScriptTheme.border, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
 
 struct PrimaryActionButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 14, weight: .bold))
-            .foregroundStyle(Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255))
+            .foregroundStyle(isEnabled ? VaniScriptTheme.onAccent : VaniScriptTheme.disabledText)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(isEnabled ? Color.clear : VaniScriptTheme.controlBorder, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
 
 struct SecondaryActionButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(VaniScriptTheme.text1)
+            .foregroundStyle(isEnabled ? VaniScriptTheme.text1 : VaniScriptTheme.disabledText)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(Color.white.opacity(configuration.isPressed ? 0.09 : 0.02))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.15), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }

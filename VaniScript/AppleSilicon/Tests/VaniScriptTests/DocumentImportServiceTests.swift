@@ -1,3 +1,4 @@
+import AppKit
 import CryptoKit
 import Foundation
 import Testing
@@ -58,9 +59,29 @@ struct DocumentImportServiceTests {
 
         let pdf = root.appendingPathComponent("book.pdf")
         try Data("not a pdf".utf8).write(to: pdf)
-        #expect(throws: DocumentImportServiceError.unsupportedDocumentFormat("pdf")) {
+        #expect(throws: DocumentImportServiceError.pdfParsingFailed("Could not parse PDF format.")) {
             _ = try DocumentImportService.importDocument(from: pdf, to: root.appendingPathComponent("pdf-project"))
         }
+    }
+    @Test("imports RTF preserving explicit foreground color and default runs as nil")
+    func importsRTFWithColors() throws {
+        let root = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let rtfURL = root.appendingPathComponent("colored.rtf")
+
+        let attr = NSMutableAttributedString(string: "Default text and ")
+        attr.append(NSAttributedString(string: "red placeholder", attributes: [.foregroundColor: NSColor(srgbRed: 1, green: 0, blue: 0, alpha: 1)]))
+        attr.append(NSAttributedString(string: "."))
+        let rtfData = try attr.data(from: NSRange(location: 0, length: attr.length), documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf])
+        try rtfData.write(to: rtfURL)
+
+        let project = root.appendingPathComponent("project", isDirectory: true)
+        let result = try DocumentImportService.importDocument(from: rtfURL, to: project)
+        #expect(result.documentState.format == .rtf)
+        #expect(!result.documentState.blocks.isEmpty)
+        let block = result.documentState.blocks[0]
+        #expect(block.spans.contains { $0.text.contains("Default text and") && $0.foregroundColorHex == nil })
+        #expect(block.spans.contains { $0.text.contains("red placeholder") && $0.foregroundColorHex == "FF0000" })
     }
 
     private func temporaryDirectory() -> URL {

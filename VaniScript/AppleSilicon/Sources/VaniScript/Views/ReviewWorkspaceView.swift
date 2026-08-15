@@ -41,7 +41,7 @@ struct ReviewWorkspaceView: View {
                     actionBar(session: session, chunk: chunk, documentPresentation: documentPresentation)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black.opacity(0.08))
+                .background(VaniScriptTheme.barSurface)
 
                 if let draft = editDraft {
                     EditTextSnippetModal(
@@ -154,8 +154,8 @@ struct ReviewWorkspaceView: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(Color.white.opacity(0.06))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                    .background(VaniScriptTheme.control)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .onboardingTarget("review-editing-model")
                 }
@@ -232,8 +232,8 @@ struct ReviewWorkspaceView: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 44)
-        .background(Color(red: 10 / 255, green: 12 / 255, blue: 28 / 255).opacity(0.86))
-        .overlay(Rectangle().fill(Color.white.opacity(0.07)).frame(height: 1), alignment: .bottom)
+        .background(VaniScriptTheme.barSurface)
+        .overlay(Rectangle().fill(VaniScriptTheme.separator).frame(height: 1), alignment: .bottom)
     }
 
     private func audioBar(session: SessionState, chunk: ChunkData) -> some View {
@@ -250,7 +250,7 @@ struct ReviewWorkspaceView: View {
                         .font(.system(size: 11, weight: .bold))
                 }
                 .frame(width: 24, height: 24)
-                .foregroundStyle(Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255))
+                .foregroundStyle(VaniScriptTheme.onAccent)
                 .background(VaniScriptTheme.accent)
                 .clipShape(Circle())
                 .disabled(store.isProcessingSegment)
@@ -282,15 +282,15 @@ struct ReviewWorkspaceView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 6)
-        .background(Color.white.opacity(0.02))
-        .overlay(Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1), alignment: .bottom)
+        .background(VaniScriptTheme.surfaceSubtle)
+        .overlay(Rectangle().fill(VaniScriptTheme.separator).frame(height: 1), alignment: .bottom)
         .onboardingTarget("review-audio-bar")
     }
 
     private func thinProgress(session: SessionState) -> some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
-                Color.white.opacity(0.07)
+                VaniScriptTheme.control
                 VaniScriptTheme.accent
                     .frame(width: proxy.size.width * reviewProgress(session))
             }
@@ -311,6 +311,13 @@ struct ReviewWorkspaceView: View {
             if let presentation = documentPresentation {
                 HStack(spacing: 0) {
                     if store.viewMode == .source || store.viewMode == .dual || !hasTranslation {
+                        let sourceBlocks = store.currentDocumentSourceBlocks.map { block in
+                            DocumentEditorBlockItem(
+                                id: block.id,
+                                spans: block.spans,
+                                fallbackText: block.spans.map(\.text).joined()
+                            )
+                        }
                         ReviewTextPane(
                             title: "ORIGINAL DOCUMENT · \(presentation.displayLabel)",
                             metadata: session.metadata,
@@ -335,12 +342,23 @@ struct ReviewWorkspaceView: View {
                             beginGlossaryDraft: beginGlossaryDraft,
                             documentScrollCoordinator: documentScrollEnabled ? documentScrollCoordinator : nil,
                             documentScrollPane: documentScrollEnabled ? .source : nil,
-                            documentScrollScope: documentScrollScope
+                            documentScrollScope: documentScrollScope,
+                            documentBlocks: sourceBlocks,
+                            updateDocumentBlocks: { blocks, text in
+                                store.updateCurrentDocumentSource(blocks: blocks.map { ($0.id, $0.spans, $0.fallbackText) }, text: text)
+                            }
                         )
                         .onboardingTarget("review-pane-original")
                     }
 
                     if hasTranslation, store.viewMode == .translated || store.viewMode == .dual {
+                        let translatedBlocks = store.currentDocumentTranslatedBlocks.map { block in
+                            DocumentEditorBlockItem(
+                                id: block.sourceBlockID,
+                                spans: block.spans,
+                                fallbackText: block.text
+                            )
+                        }
                         ReviewTextPane(
                             title: "TRANSLATED DOCUMENT · \((activeLanguage ?? session.targetLang).uppercased())",
                             metadata: session.metadata,
@@ -360,9 +378,12 @@ struct ReviewWorkspaceView: View {
                             beginGlossaryDraft: beginGlossaryDraft,
                             documentScrollCoordinator: documentScrollEnabled ? documentScrollCoordinator : nil,
                             documentScrollPane: documentScrollEnabled ? .translated : nil,
-                            documentScrollScope: documentScrollScope
+                            documentScrollScope: documentScrollScope,
+                            documentBlocks: translatedBlocks,
+                            updateDocumentBlocks: { blocks, text in
+                                store.updateCurrentDocumentTranslated(blocks: blocks.map { ($0.id, $0.spans, $0.fallbackText) }, text: text)
+                            }
                         )
-                        .onboardingTarget("review-pane-translation")
                     }
                 }
             } else if store.viewMode == .dual,
@@ -451,7 +472,7 @@ struct ReviewWorkspaceView: View {
             HStack(spacing: 10) {
                 Text("Segment \(session.currentChunkIndex + 1) / \(session.chunks.count) · \(formatClock(chunk.startSec))-\(formatClock(chunk.endSec))")
                     .font(.system(size: 12))
-                    .foregroundStyle(Color.white.opacity(0.42))
+                    .foregroundStyle(VaniScriptTheme.text2)
 
                 ProgressView(value: reviewProgress(session))
                     .tint(VaniScriptTheme.accent)
@@ -459,9 +480,8 @@ struct ReviewWorkspaceView: View {
 
                 Text("\(store.approvedCount)/\(session.chunks.count) approved")
                     .font(.system(size: 11))
-                    .foregroundStyle(Color.white.opacity(0.32))
+                    .foregroundStyle(VaniScriptTheme.text2)
             }
-
             Spacer()
 
             HStack(spacing: 8) {
@@ -520,8 +540,7 @@ struct ReviewWorkspaceView: View {
 
                 Text("Add")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(Color.white.opacity(0.35))
-
+                    .foregroundStyle(VaniScriptTheme.text2)
                 Picker("New translation", selection: $store.archiveTargetLanguage) {
                     ForEach(store.supportedTranslationLanguages, id: \.self) { language in
                         Text(language).tag(language)
@@ -557,8 +576,8 @@ struct ReviewWorkspaceView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(Color(red: 10 / 255, green: 12 / 255, blue: 28 / 255).opacity(0.86))
-        .overlay(Rectangle().fill(Color.white.opacity(0.07)).frame(height: 1), alignment: .top)
+        .background(VaniScriptTheme.barSurface)
+        .overlay(Rectangle().fill(VaniScriptTheme.separator).frame(height: 1), alignment: .top)
     }
         }
 
@@ -570,7 +589,7 @@ struct ReviewWorkspaceView: View {
             HStack(spacing: 10) {
                 Text("\(presentation.displayLabel) · \(session.currentChunkIndex + 1) / \(session.chunks.count)")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.58))
+                    .foregroundStyle(VaniScriptTheme.text1)
 
                 ProgressView(value: reviewProgress(session))
                     .tint(VaniScriptTheme.accent)
@@ -578,9 +597,8 @@ struct ReviewWorkspaceView: View {
 
                 Text("\(store.approvedCount)/\(session.chunks.count) approved")
                     .font(.system(size: 11))
-                    .foregroundStyle(Color.white.opacity(0.32))
+                    .foregroundStyle(VaniScriptTheme.text2)
             }
-
             Spacer()
 
             Button {
@@ -610,8 +628,8 @@ struct ReviewWorkspaceView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(Color(red: 10 / 255, green: 12 / 255, blue: 28 / 255).opacity(0.86))
-        .overlay(Rectangle().fill(Color.white.opacity(0.07)).frame(height: 1), alignment: .top)
+        .background(VaniScriptTheme.barSurface)
+        .overlay(Rectangle().fill(VaniScriptTheme.separator).frame(height: 1), alignment: .top)
     }
 
     @ViewBuilder
@@ -621,16 +639,16 @@ struct ReviewWorkspaceView: View {
         if !errors.isEmpty || !warnings.isEmpty {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: errors.isEmpty ? "exclamationmark.circle" : "xmark.octagon.fill")
-                    .foregroundStyle(errors.isEmpty ? VaniScriptTheme.accent : Color.red)
+                    .foregroundStyle(errors.isEmpty ? VaniScriptTheme.warningText : VaniScriptTheme.errorText)
                     .padding(.top, 2)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(errors.isEmpty ? "Translation warning" : "Translation needs review")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(errors.isEmpty ? VaniScriptTheme.accent : Color.red)
+                        .foregroundStyle(errors.isEmpty ? VaniScriptTheme.warningText : VaniScriptTheme.errorText)
                     ForEach(Array((errors + warnings).enumerated()), id: \.offset) { _, issue in
                         Text(issue.message)
                             .font(.system(size: 11))
-                            .foregroundStyle(Color.white.opacity(0.72))
+                            .foregroundStyle(VaniScriptTheme.text1)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -646,8 +664,8 @@ struct ReviewWorkspaceView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
-            .background(Color.red.opacity(errors.isEmpty ? 0.06 : 0.12))
-            .overlay(Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1), alignment: .top)
+            .background(errors.isEmpty ? VaniScriptTheme.warningSurface : VaniScriptTheme.errorSurface)
+            .overlay(Rectangle().fill(errors.isEmpty ? VaniScriptTheme.warningBorder : VaniScriptTheme.errorBorder).frame(height: 1), alignment: .top)
         }
     }
 
@@ -866,7 +884,7 @@ private struct EditTextSnippetModal: View {
                     .scrollIndicators(.hidden)
                     .padding(16)
                     .frame(height: 210)
-                    .background(Color.black.opacity(0.28))
+                    .background(VaniScriptTheme.input)
                     .background(ThinScrollbarTuner())
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -887,13 +905,12 @@ private struct EditTextSnippetModal: View {
             }
             .padding(24)
             .frame(width: 680)
-            .background(Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255))
+            .background(VaniScriptTheme.modalSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                    .stroke(VaniScriptTheme.border, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .shadow(color: .black.opacity(0.45), radius: 34, y: 20)
         }
     }
 }
@@ -962,7 +979,7 @@ private struct GlossaryDraftModal: View {
                                 .font(.system(size: 12, weight: .bold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 8)
-                                .foregroundStyle(draft.mode == mode ? Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255) : VaniScriptTheme.text2)
+                                .foregroundStyle(draft.mode == mode ? VaniScriptTheme.onAccent : VaniScriptTheme.text2)
                                 .background(draft.mode == mode ? VaniScriptTheme.accent : Color.clear)
                                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
@@ -970,9 +987,8 @@ private struct GlossaryDraftModal: View {
                     }
                 }
                 .padding(4)
-                .background(Color.white.opacity(0.06))
+                .background(VaniScriptTheme.control)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-
                 if draft.mode == .existing {
                     existingTermSection
                 } else {
@@ -988,7 +1004,7 @@ private struct GlossaryDraftModal: View {
                         .scrollIndicators(.hidden)
                         .padding(10)
                         .frame(height: 86)
-                        .background(Color.black.opacity(0.24))
+                        .background(VaniScriptTheme.input)
                         .background(ThinScrollbarTuner())
                         .overlay(ReviewFieldBorder())
                 }
@@ -1017,13 +1033,12 @@ private struct GlossaryDraftModal: View {
             }
             .padding(22)
             .frame(width: 700)
-            .background(Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255))
+            .background(VaniScriptTheme.modalSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                    .stroke(VaniScriptTheme.border, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .shadow(color: .black.opacity(0.45), radius: 34, y: 20)
         }
     }
 
@@ -1048,7 +1063,7 @@ private struct GlossaryDraftModal: View {
                 }
                 .padding(.horizontal, 11)
                 .frame(height: 38)
-                .background(Color.black.opacity(0.24))
+                .background(VaniScriptTheme.input)
                 .overlay(ReviewFieldBorder())
             }
 
@@ -1100,10 +1115,10 @@ private struct GlossaryDraftModal: View {
             }
             .frame(height: 170)
             .scrollIndicators(.hidden)
-            .background(Color.black.opacity(0.14))
+            .background(VaniScriptTheme.surfaceSubtle)
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(VaniScriptTheme.border, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
@@ -1200,7 +1215,7 @@ private struct ReviewTextField: View {
             .foregroundStyle(VaniScriptTheme.text0)
             .padding(.horizontal, 11)
             .frame(height: 38)
-            .background(Color.black.opacity(0.24))
+            .background(VaniScriptTheme.input)
             .overlay(ReviewFieldBorder())
     }
 }
@@ -1208,7 +1223,7 @@ private struct ReviewTextField: View {
 private struct ReviewFieldBorder: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 9, style: .continuous)
-            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            .stroke(VaniScriptTheme.controlBorder, lineWidth: 1)
     }
 }
 
@@ -1267,7 +1282,7 @@ private struct DualTimedReviewPane: View {
                 .frame(maxWidth: .infinity)
                 .onboardingTarget("review-pane-translation")
             }
-            .overlay(Rectangle().fill(Color.white.opacity(0.05)).frame(height: 1), alignment: .bottom)
+            .overlay(Rectangle().fill(VaniScriptTheme.separator).frame(height: 1), alignment: .bottom)
 
             ScrollViewReader { proxy in
                 ScrollView {
@@ -1339,15 +1354,12 @@ private struct DualTimedReviewPane: View {
                     }
                 }
                 .scrollIndicators(.hidden)
-                .background(Color.dynamic(
-                    light: Color(red: 235 / 255, green: 237 / 255, blue: 243 / 255).opacity(0.85),
-                    dark: Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255).opacity(0.82)
-                ))
+                .background(VaniScriptTheme.editorSurface)
             }
         }
         .padding(.horizontal, 14)
         .padding(.bottom, 14)
-        .background(Color.black.opacity(0.02))
+        .background(Color.clear)
     }
 
     private func paneHeader(
@@ -1467,6 +1479,8 @@ private struct ReviewTextPane: View {
     let documentScrollCoordinator: DocumentDualScrollCoordinator?
     let documentScrollPane: DocumentScrollPane?
     let documentScrollScope: DocumentScrollScope?
+    let documentBlocks: [DocumentEditorBlockItem]
+    let updateDocumentBlocks: (([DocumentEditorBlockItem], String) -> Void)?
 
     init(
         title: String,
@@ -1484,7 +1498,11 @@ private struct ReviewTextPane: View {
         beginGlossaryDraft: @escaping (String, TranscriptSide) -> Void,
         documentScrollCoordinator: DocumentDualScrollCoordinator? = nil,
         documentScrollPane: DocumentScrollPane? = nil,
-        documentScrollScope: DocumentScrollScope? = nil
+        documentScrollScope: DocumentScrollScope? = nil,
+        documentBlocks: [DocumentEditorBlockItem] = [],
+        updateDocumentBlocks: (([DocumentEditorBlockItem], String) -> Void)? = nil,
+        documentSpans: [RichTextSpan] = [],
+        updateDocumentSpans: (([RichTextSpan], String) -> Void)? = nil
     ) {
         self.title = title
         self.metadata = metadata
@@ -1502,6 +1520,19 @@ private struct ReviewTextPane: View {
         self.documentScrollCoordinator = documentScrollCoordinator
         self.documentScrollPane = documentScrollPane
         self.documentScrollScope = documentScrollScope
+        if !documentBlocks.isEmpty || updateDocumentBlocks != nil {
+            self.documentBlocks = documentBlocks
+            self.updateDocumentBlocks = updateDocumentBlocks
+        } else {
+            self.documentBlocks = documentSpans.isEmpty ? [] : [DocumentEditorBlockItem(id: "block-0", spans: documentSpans, fallbackText: content.wrappedValue)]
+            if let updateDocumentSpans {
+                self.updateDocumentBlocks = { blocks, text in
+                    updateDocumentSpans(blocks.flatMap(\.spans), text)
+                }
+            } else {
+                self.updateDocumentBlocks = nil
+            }
+        }
     }
 
     @State private var isCopied = false
@@ -1549,7 +1580,7 @@ private struct ReviewTextPane: View {
 
                     Divider()
                         .frame(height: 10)
-                        .background(Color.white.opacity(0.15))
+                        .background(VaniScriptTheme.separator)
 
                     HStack(spacing: 4) {
                         Button(action: {
@@ -1584,7 +1615,7 @@ private struct ReviewTextPane: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(Color.white.opacity(0.05))
+                .background(VaniScriptTheme.control)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
                 Spacer().frame(width: 4)
@@ -1629,29 +1660,29 @@ private struct ReviewTextPane: View {
             .padding(.horizontal, 16)
             .padding(.top, 10)
             .padding(.bottom, 8)
-            .overlay(Rectangle().fill(Color.white.opacity(0.05)).frame(height: 1), alignment: .bottom)
+            .overlay(Rectangle().fill(VaniScriptTheme.separator).frame(height: 1), alignment: .bottom)
 
             if cues.isEmpty {
-                TextEditor(text: $content)
-                    .font(.customAppFont(family: store.settings.fontFamily, size: store.settings.fontSize, scale: store.settings.fontScale))
-                    .id("\(store.settings.fontFamily)-\(store.settings.fontSize)-\(store.settings.fontScale)")
-                    .foregroundStyle(VaniScriptTheme.text0)
-                    .scrollContentBackground(.hidden)
-                    .scrollIndicators(.hidden)
-                    .padding(12)
-                    .background(Color.dynamic(
-                        light: Color(red: 235 / 255, green: 237 / 255, blue: 243 / 255).opacity(0.85),
-                        dark: Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255).opacity(0.82)
-                    ))
-                    .background(ThinScrollbarTuner())
-                    .background(documentScrollBridge)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 14)
+                DocumentAttributedTextView(
+                    text: $content,
+                    blocks: documentBlocks,
+                    onBlocksChanged: updateDocumentBlocks,
+                    fontFamily: store.settings.fontFamily,
+                    fontSize: store.settings.fontSize,
+                    fontScale: store.settings.fontScale
+                )
+                .id("\(store.settings.fontFamily)-\(store.settings.fontSize)-\(store.settings.fontScale)")
+                .padding(12)
+                .background(VaniScriptTheme.editorSurface)
+                .background(ThinScrollbarTuner())
+                .background(documentScrollBridge)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(VaniScriptTheme.border, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .padding(.horizontal, 14)
+                .padding(.bottom, 14)
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -1694,13 +1725,10 @@ private struct ReviewTextPane: View {
                         }
                     }
                     .scrollIndicators(.hidden)
-                    .background(Color.dynamic(
-                        light: Color(red: 235 / 255, green: 237 / 255, blue: 243 / 255).opacity(0.85),
-                        dark: Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255).opacity(0.82)
-                    ))
+                    .background(VaniScriptTheme.editorSurface)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(VaniScriptTheme.border, lineWidth: 1)
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .padding(.horizontal, 14)
@@ -1709,7 +1737,7 @@ private struct ReviewTextPane: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(Rectangle().fill(Color.white.opacity(0.06)).frame(width: 1), alignment: .trailing)
+        .overlay(Rectangle().fill(VaniScriptTheme.separator).frame(width: 1), alignment: .trailing)
     }
 }
 
@@ -1894,22 +1922,7 @@ private struct SelectionAwareCueTextView: NSViewRepresentable {
     }
 
     private func nsFont(family: FontFamily, size: FontSize, scale: Double) -> NSFont {
-        let baseSize: CGFloat
-        switch size {
-        case .sm: baseSize = 11
-        case .md: baseSize = 13
-        case .lg: baseSize = 15
-        case .xl: baseSize = 18
-        }
-        let finalSize = baseSize * CGFloat(scale)
-        switch family {
-        case .mono:
-            return NSFont.monospacedSystemFont(ofSize: finalSize, weight: .regular)
-        case .sans:
-            return NSFont.systemFont(ofSize: finalSize, weight: .regular)
-        case .serif:
-            return NSFont(name: "Times New Roman", size: finalSize) ?? NSFont.systemFont(ofSize: finalSize, weight: .regular)
-        }
+        reviewNSFont(family: family, size: size, scale: scale)
     }
 
     @MainActor
@@ -2058,14 +2071,14 @@ private struct TimedCueEditor: View {
             LinearGradient(
                 colors: isActive
                     ? [VaniScriptTheme.accent.opacity(0.18), VaniScriptTheme.accent.opacity(0.10), VaniScriptTheme.accent.opacity(0.04)]
-                    : [Color.white.opacity(0.018), Color.white.opacity(0.018)],
+                    : [VaniScriptTheme.surfaceSubtle, VaniScriptTheme.surfaceSubtle],
                 startPoint: .leading,
                 endPoint: .trailing
             )
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(isActive ? VaniScriptTheme.accent.opacity(0.40) : Color.white.opacity(0.055), lineWidth: 1)
+                .stroke(isActive ? VaniScriptTheme.accent.opacity(0.40) : VaniScriptTheme.border, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
@@ -2095,37 +2108,63 @@ private struct TimedCueEditor: View {
 }
 
 private struct ReviewIconButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text1)
+            .foregroundStyle(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text1)
+                    : VaniScriptTheme.disabledText
+            )
             .frame(width: 30, height: 30)
-            .background(Color.white.opacity(configuration.isPressed ? 0.12 : 0.07))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.12), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
 private struct ReviewTextButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(VaniScriptTheme.text1)
+            .foregroundStyle(isEnabled ? VaniScriptTheme.text1 : VaniScriptTheme.disabledText)
             .padding(.horizontal, 12)
             .frame(height: 30)
-            .background(Color.white.opacity(configuration.isPressed ? 0.12 : 0.07))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.12), lineWidth: 1))
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(isEnabled ? VaniScriptTheme.controlBorder : VaniScriptTheme.border, lineWidth: 1))
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
 private struct ReviewApproveButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255))
+            .foregroundStyle(isEnabled ? VaniScriptTheme.onAccent : VaniScriptTheme.disabledText)
             .padding(.horizontal, 14)
             .frame(height: 32)
-            .background(configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+            .background(
+                isEnabled
+                    ? (configuration.isPressed ? VaniScriptTheme.accentHover : VaniScriptTheme.accent)
+                    : VaniScriptTheme.disabledSurface
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(isEnabled ? Color.clear : VaniScriptTheme.controlBorder, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
@@ -2172,10 +2211,10 @@ private struct SearchMatchRow: View {
             }
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.black.opacity(0.18))
+            .background(VaniScriptTheme.surfaceSubtle)
             .overlay(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(isSelected ? VaniScriptTheme.accent.opacity(0.42) : Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(isSelected ? VaniScriptTheme.accent.opacity(0.42) : VaniScriptTheme.border, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
@@ -2339,10 +2378,10 @@ private struct SearchReplaceModal: View {
                     .padding(4)
                 }
                 .frame(height: 220)
-                .background(Color.black.opacity(0.14))
+                .background(VaniScriptTheme.surfaceSubtle)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(VaniScriptTheme.border, lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
@@ -2359,10 +2398,10 @@ private struct SearchReplaceModal: View {
             }
             .padding(22)
             .frame(width: 700)
-            .background(Color(red: 17 / 255, green: 24 / 255, blue: 39 / 255))
+            .background(VaniScriptTheme.modalSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                    .stroke(VaniScriptTheme.border, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .shadow(color: .black.opacity(0.45), radius: 34, y: 20)
@@ -2407,7 +2446,369 @@ private struct HighlightTextView: View {
         if !suffix.isEmpty {
             result = result + Text(suffix)
         }
-
         return result
+    }
+}
+
+struct DocumentEditorBlockItem: Equatable, Sendable {
+    var id: String
+    var spans: [RichTextSpan]
+    var fallbackText: String
+
+    init(id: String, spans: [RichTextSpan], fallbackText: String = "") {
+        self.id = id
+        self.spans = spans
+        self.fallbackText = fallbackText
+    }
+}
+
+enum DocumentTextAttribute {
+    static let blockID = NSAttributedString.Key("VaniScript.BlockID")
+    static let spanID = NSAttributedString.Key("VaniScript.SpanID")
+    static let styleKey = NSAttributedString.Key("VaniScript.StyleKey")
+    static let translationPolicy = NSAttributedString.Key("VaniScript.TranslationPolicy")
+    static let explicitColorHex = NSAttributedString.Key("VaniScript.ExplicitColorHex")
+    static let isBlockSeparator = NSAttributedString.Key("VaniScript.IsBlockSeparator")
+    static let inlineTraits = NSAttributedString.Key("VaniScript.InlineTraits")
+}
+
+struct DocumentAttributedTextView: NSViewRepresentable {
+    @Binding var text: String
+    let blocks: [DocumentEditorBlockItem]
+    let onBlocksChanged: (([DocumentEditorBlockItem], String) -> Void)?
+    let fontFamily: FontFamily
+    let fontSize: FontSize
+    let fontScale: Double
+
+    init(
+        text: Binding<String>,
+        blocks: [DocumentEditorBlockItem],
+        onBlocksChanged: (([DocumentEditorBlockItem], String) -> Void)?,
+        fontFamily: FontFamily,
+        fontSize: FontSize,
+        fontScale: Double
+    ) {
+        self._text = text
+        self.blocks = blocks
+        self.onBlocksChanged = onBlocksChanged
+        self.fontFamily = fontFamily
+        self.fontSize = fontSize
+        self.fontScale = fontScale
+    }
+
+    init(
+        text: Binding<String>,
+        spans: [RichTextSpan],
+        onSpansChanged: (([RichTextSpan], String) -> Void)?,
+        fontFamily: FontFamily,
+        fontSize: FontSize,
+        fontScale: Double
+    ) {
+        self._text = text
+        self.blocks = [DocumentEditorBlockItem(id: "block-0", spans: spans, fallbackText: text.wrappedValue)]
+        if let onSpansChanged {
+            self.onBlocksChanged = { blocks, updatedText in
+                onSpansChanged(blocks.flatMap(\.spans), updatedText)
+            }
+        } else {
+            self.onBlocksChanged = nil
+        }
+        self.fontFamily = fontFamily
+        self.fontSize = fontSize
+        self.fontScale = fontScale
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.drawsBackground = false
+        scrollView.hasVerticalScroller = false
+        scrollView.hasHorizontalScroller = false
+        scrollView.borderType = .noBorder
+
+        let textView = DocumentNSTextView()
+        textView.delegate = context.coordinator
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.isRichText = true
+        textView.allowsUndo = true
+        textView.drawsBackground = false
+        textView.textColor = NSColor(VaniScriptTheme.text0)
+        textView.insertionPointColor = NSColor(VaniScriptTheme.text0)
+        textView.textContainerInset = NSSize(width: 4, height: 4)
+        textView.textContainer?.lineFragmentPadding = 0
+        textView.textContainer?.widthTracksTextView = true
+        textView.isHorizontallyResizable = false
+        textView.isVerticallyResizable = true
+        textView.autoresizingMask = [.width]
+
+        context.coordinator.textView = textView
+        context.coordinator.setAttributedString(from: blocks, fallbackText: text, textView: textView)
+        scrollView.documentView = textView
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        context.coordinator.parent = self
+        guard let textView = scrollView.documentView as? DocumentNSTextView else { return }
+        context.coordinator.textView = textView
+        if !context.coordinator.isUserEditing {
+            context.coordinator.setAttributedString(from: blocks, fallbackText: text, textView: textView)
+        }
+    }
+
+    @MainActor
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: DocumentAttributedTextView
+        weak var textView: DocumentNSTextView?
+        var isUserEditing = false
+        private var lastRenderedBlocks: [DocumentEditorBlockItem] = []
+        private var lastRenderedText: String = ""
+
+        init(_ parent: DocumentAttributedTextView) {
+            self.parent = parent
+        }
+
+        func setAttributedString(from blocks: [DocumentEditorBlockItem], fallbackText: String, textView: NSTextView) {
+            if lastRenderedBlocks == blocks && lastRenderedText == fallbackText && textView.string == fallbackText {
+                return
+            }
+            lastRenderedBlocks = blocks
+            lastRenderedText = fallbackText
+
+            let baseFont = reviewNSFont(family: parent.fontFamily, size: parent.fontSize, scale: parent.fontScale)
+            let defaultColor = NSColor(VaniScriptTheme.text0)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.lineSpacing = 3
+            paragraphStyle.paragraphSpacing = 6
+
+            let attrString = NSMutableAttributedString()
+            if !blocks.isEmpty {
+                for (bIdx, block) in blocks.enumerated() {
+                    if bIdx > 0 {
+                        let sepAttrs: [NSAttributedString.Key: Any] = [
+                            DocumentTextAttribute.isBlockSeparator: true,
+                            DocumentTextAttribute.blockID: block.id,
+                            .font: baseFont,
+                            .foregroundColor: defaultColor,
+                            .paragraphStyle: paragraphStyle
+                        ]
+                        attrString.append(NSAttributedString(string: "\n\n", attributes: sepAttrs))
+                    }
+                    if !block.spans.isEmpty {
+                        for span in block.spans {
+                            guard !span.text.isEmpty else { continue }
+                            var fontDescriptor = baseFont.fontDescriptor
+                            var symTraits: NSFontDescriptor.SymbolicTraits = []
+                            if span.traits.contains(.bold) { symTraits.insert(.bold) }
+                            if span.traits.contains(.italic) { symTraits.insert(.italic) }
+                            if !symTraits.isEmpty {
+                                fontDescriptor = fontDescriptor.withSymbolicTraits(symTraits)
+                            }
+                            let font = NSFont(descriptor: fontDescriptor, size: baseFont.pointSize) ?? baseFont
+                            let displayColor = span.foregroundColorHex.flatMap(NSColor.init(hex:)) ?? defaultColor
+
+                            var attrs: [NSAttributedString.Key: Any] = [
+                                .font: font,
+                                .foregroundColor: displayColor,
+                                .paragraphStyle: paragraphStyle,
+                                DocumentTextAttribute.blockID: block.id,
+                                DocumentTextAttribute.spanID: span.id,
+                                DocumentTextAttribute.styleKey: span.styleKey,
+                                DocumentTextAttribute.translationPolicy: span.translationPolicy.rawValue,
+                                DocumentTextAttribute.inlineTraits: span.traits.map(\.rawValue).sorted()
+                            ]
+                            if let hex = span.foregroundColorHex {
+                                attrs[DocumentTextAttribute.explicitColorHex] = hex
+                            }
+                            if span.traits.contains(.underline) {
+                                attrs[.underlineStyle] = NSUnderlineStyle.single.rawValue
+                            }
+                            if span.traits.contains(.strikethrough) {
+                                attrs[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
+                            }
+                            attrString.append(NSAttributedString(string: span.text, attributes: attrs))
+                        }
+                    } else if !block.fallbackText.isEmpty {
+                        let attrs: [NSAttributedString.Key: Any] = [
+                            .font: baseFont,
+                            .foregroundColor: defaultColor,
+                            .paragraphStyle: paragraphStyle,
+                            DocumentTextAttribute.blockID: block.id,
+                            DocumentTextAttribute.styleKey: "",
+                            DocumentTextAttribute.translationPolicy: SpanTranslationPolicy.translate.rawValue,
+                            DocumentTextAttribute.inlineTraits: [String]()
+                        ]
+                        attrString.append(NSAttributedString(string: block.fallbackText, attributes: attrs))
+                    }
+                }
+            } else if !fallbackText.isEmpty {
+                attrString.append(NSAttributedString(string: fallbackText, attributes: [
+                    .font: baseFont,
+                    .foregroundColor: defaultColor,
+                    .paragraphStyle: paragraphStyle,
+                    DocumentTextAttribute.styleKey: "",
+                    DocumentTextAttribute.translationPolicy: SpanTranslationPolicy.translate.rawValue,
+                    DocumentTextAttribute.inlineTraits: [String]()
+                ]))
+            }
+
+            let selectedRange = textView.selectedRange()
+            textView.textStorage?.setAttributedString(attrString)
+            if selectedRange.location + selectedRange.length <= (textView.string as NSString).length {
+                textView.setSelectedRange(selectedRange)
+            }
+        }
+
+        func textDidChange(_ notification: Notification) {
+            guard let textView else { return }
+            isUserEditing = true
+            let updatedText = textView.string
+            parent.text = updatedText
+
+            let serializedBlocks = serializeBlocks(from: textView.attributedString(), knownBlocks: parent.blocks)
+            lastRenderedBlocks = serializedBlocks
+            lastRenderedText = updatedText
+            parent.onBlocksChanged?(serializedBlocks, updatedText)
+            isUserEditing = false
+        }
+
+        private func serializeBlocks(from attrString: NSAttributedString, knownBlocks: [DocumentEditorBlockItem]) -> [DocumentEditorBlockItem] {
+            let nsString = attrString.string as NSString
+            let fullRange = NSRange(location: 0, length: nsString.length)
+            guard fullRange.length > 0 else {
+                return knownBlocks.map { DocumentEditorBlockItem(id: $0.id, spans: [], fallbackText: "") }
+            }
+
+            var spansByBlockID: [String: [RichTextSpan]] = [:]
+            var orderedBlockIDs: [String] = []
+            for b in knownBlocks {
+                orderedBlockIDs.append(b.id)
+                spansByBlockID[b.id] = []
+            }
+            var currentBlockID = knownBlocks.first?.id ?? "block-0"
+            if !orderedBlockIDs.contains(currentBlockID) {
+                orderedBlockIDs.append(currentBlockID)
+            }
+
+            attrString.enumerateAttributes(in: fullRange, options: []) { attrs, range, _ in
+                let isSeparator = attrs[DocumentTextAttribute.isBlockSeparator] as? Bool ?? false
+                let runText = nsString.substring(with: range).precomposedStringWithCanonicalMapping
+
+                if let blockIDAttr = attrs[DocumentTextAttribute.blockID] as? String, !blockIDAttr.isEmpty {
+                    currentBlockID = blockIDAttr
+                    if !orderedBlockIDs.contains(currentBlockID) {
+                        orderedBlockIDs.append(currentBlockID)
+                    }
+                }
+
+                if isSeparator {
+                    let trimmed = runText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if trimmed.isEmpty {
+                        return
+                    }
+                }
+
+                guard !runText.isEmpty else { return }
+
+                let traits: Set<InlineTrait>
+                if let traitStrings = attrs[DocumentTextAttribute.inlineTraits] as? [String] {
+                    traits = Set(traitStrings.compactMap(InlineTrait.init(rawValue:)))
+                } else if let traitArray = attrs[DocumentTextAttribute.inlineTraits] as? [Any] {
+                    traits = Set(traitArray.compactMap { ($0 as? String).flatMap(InlineTrait.init(rawValue:)) })
+                } else if let traitSet = attrs[DocumentTextAttribute.inlineTraits] as? Set<InlineTrait> {
+                    traits = traitSet
+                } else {
+                    var fallbackTraits: Set<InlineTrait> = []
+                    if let font = attrs[.font] as? NSFont {
+                        let symTraits = font.fontDescriptor.symbolicTraits
+                        if symTraits.contains(.bold) { fallbackTraits.insert(.bold) }
+                        if symTraits.contains(.italic) { fallbackTraits.insert(.italic) }
+                    }
+                    if let underline = attrs[.underlineStyle] as? Int, underline != 0 {
+                        fallbackTraits.insert(.underline)
+                    }
+                    if let strike = attrs[.strikethroughStyle] as? Int, strike != 0 {
+                        fallbackTraits.insert(.strikethrough)
+                    }
+                    traits = fallbackTraits
+                }
+
+                let styleKey = attrs[DocumentTextAttribute.styleKey] as? String ?? ""
+                let translationPolicy = (attrs[DocumentTextAttribute.translationPolicy] as? String).flatMap(SpanTranslationPolicy.init(rawValue:)) ?? .translate
+                let explicitColorHex = attrs[DocumentTextAttribute.explicitColorHex] as? String
+                let existingSpanID = attrs[DocumentTextAttribute.spanID] as? String
+
+                var blockSpans = spansByBlockID[currentBlockID] ?? []
+
+                if let lastIndex = blockSpans.indices.last,
+                   let existingID = existingSpanID,
+                   !existingID.isEmpty,
+                   blockSpans[lastIndex].id == existingID,
+                   blockSpans[lastIndex].styleKey == styleKey,
+                   blockSpans[lastIndex].traits == traits,
+                   blockSpans[lastIndex].translationPolicy == translationPolicy,
+                   blockSpans[lastIndex].foregroundColorHex == explicitColorHex {
+                    blockSpans[lastIndex].text += runText
+                } else if let lastIndex = blockSpans.indices.last,
+                          (existingSpanID == nil || existingSpanID!.isEmpty),
+                          blockSpans[lastIndex].styleKey == styleKey,
+                          blockSpans[lastIndex].traits == traits,
+                          blockSpans[lastIndex].translationPolicy == translationPolicy,
+                          blockSpans[lastIndex].foregroundColorHex == explicitColorHex {
+                    blockSpans[lastIndex].text += runText
+                } else {
+                    let spanID = (existingSpanID != nil && !existingSpanID!.isEmpty) ? existingSpanID! : UUID().uuidString
+                    let span = RichTextSpan(
+                        id: spanID,
+                        text: runText,
+                        styleKey: styleKey,
+                        traits: traits,
+                        translationPolicy: translationPolicy,
+                        foregroundColorHex: explicitColorHex
+                    )
+                    blockSpans.append(span)
+                }
+                spansByBlockID[currentBlockID] = blockSpans
+            }
+
+            return orderedBlockIDs.map { blockID in
+                let spans = spansByBlockID[blockID] ?? []
+                let blockText = spans.map(\.text).joined()
+                return DocumentEditorBlockItem(id: blockID, spans: spans, fallbackText: blockText)
+            }
+        }
+    }
+}
+
+private func reviewNSFont(family: FontFamily, size: FontSize, scale: Double) -> NSFont {
+    let baseSize: CGFloat
+    switch size {
+    case .sm: baseSize = 11
+    case .md: baseSize = 13
+    case .lg: baseSize = 15
+    case .xl: baseSize = 18
+    }
+    let finalSize = baseSize * CGFloat(scale)
+    switch family {
+    case .mono:
+        return NSFont.monospacedSystemFont(ofSize: finalSize, weight: .regular)
+    case .sans:
+        return NSFont.systemFont(ofSize: finalSize, weight: .regular)
+    case .serif:
+        return NSFont(name: "Times New Roman", size: finalSize) ?? NSFont.systemFont(ofSize: finalSize, weight: .regular)
+    }
+}
+final class DocumentNSTextView: NSTextView {
+    override var acceptsFirstResponder: Bool { true }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        textColor = NSColor(VaniScriptTheme.text0)
+        insertionPointColor = NSColor(VaniScriptTheme.text0)
+        needsDisplay = true
     }
 }

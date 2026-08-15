@@ -113,12 +113,12 @@ private struct CornerIconButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+            .foregroundStyle(configuration.isPressed ? VaniScriptTheme.accent : VaniScriptTheme.text1)
             .frame(width: VaniScriptTheme.Density.controlHeightLG, height: VaniScriptTheme.Density.controlHeightLG)
-            .background(Color.white.opacity(configuration.isPressed ? 0.12 : 0.07))
+            .background(configuration.isPressed ? VaniScriptTheme.controlPressed : VaniScriptTheme.control)
             .overlay(
                 RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    .stroke(VaniScriptTheme.controlBorder, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: VaniScriptTheme.Density.radiusSM, style: .continuous))
     }

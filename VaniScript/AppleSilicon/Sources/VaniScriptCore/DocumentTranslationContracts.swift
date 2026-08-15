@@ -72,6 +72,7 @@ public struct DocumentTranslationInputBlock: Codable, Equatable, Sendable, Ident
     public var sourceText: String
     public var spans: [DocumentTranslationInputSpan]
     public var translationPolicy: BlockTranslationPolicy
+    public var slice: DocumentBlockSlice?
 
     public var styleIDs: [String] {
         spans.map(\.style)
@@ -82,7 +83,8 @@ public struct DocumentTranslationInputBlock: Codable, Equatable, Sendable, Ident
         role: DocumentBlockKind = .paragraph,
         sourceText: String? = nil,
         spans: [DocumentTranslationInputSpan] = [],
-        translationPolicy: BlockTranslationPolicy = .translate
+        translationPolicy: BlockTranslationPolicy = .translate,
+        slice: DocumentBlockSlice? = nil
     ) {
         self.id = id
         self.role = role
@@ -92,23 +94,54 @@ public struct DocumentTranslationInputBlock: Codable, Equatable, Sendable, Ident
             : spans
         self.sourceText = resolvedText
         self.translationPolicy = translationPolicy
+        self.slice = slice
     }
 
-    public init(block: DocumentBlock) {
-        self.init(
-            id: block.id,
-            role: block.kind,
-            sourceText: block.spans.map(\.text).joined(),
-            spans: block.spans.map {
+    public init(block: DocumentBlock, slice: DocumentBlockSlice? = nil) {
+        let fullText = block.spans.map(\.text).joined()
+        let resolvedText: String
+        let resolvedSpans: [DocumentTranslationInputSpan]
+        if let slice {
+            let start = fullText.index(fullText.startIndex, offsetBy: min(max(0, slice.startOffset), fullText.count))
+            let end = fullText.index(fullText.startIndex, offsetBy: min(max(slice.startOffset, slice.endOffset), fullText.count))
+            resolvedText = String(fullText[start..<end])
+            let firstStyle = block.spans.first?.styleKey
+            let style = (firstStyle == nil || firstStyle!.isEmpty) ? "plain" : firstStyle!
+            resolvedSpans = [DocumentTranslationInputSpan(
+                id: block.spans.first?.id ?? UUID().uuidString,
+                style: style,
+                text: resolvedText,
+                translationPolicy: block.translationPolicy == .protect ? .protect : .translate
+            )]
+        } else {
+            resolvedText = fullText
+            resolvedSpans = block.spans.map {
                 DocumentTranslationInputSpan(
                     id: $0.id,
                     style: $0.styleKey.isEmpty ? "plain" : $0.styleKey,
                     text: $0.text,
                     translationPolicy: $0.translationPolicy
                 )
-            },
-            translationPolicy: block.translationPolicy
+            }
+        }
+        self.init(
+            id: block.id,
+            role: block.kind,
+            sourceText: resolvedText,
+            spans: resolvedSpans,
+            translationPolicy: block.translationPolicy,
+            slice: slice
         )
+    }
+}
+
+public extension TranslationArchive {
+    static func sliceKey(blockID: String, sliceIndex: Int) -> String {
+        "\(blockID)#slice_\(sliceIndex)"
+    }
+
+    static func sliceKey(blockID: String, startOffset: Int, endOffset: Int) -> String {
+        "\(blockID):slice:\(startOffset):\(endOffset)"
     }
 }
 

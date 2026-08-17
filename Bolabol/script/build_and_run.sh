@@ -27,6 +27,7 @@ DIST_DIR="$ROOT_DIR/dist"
 APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
 APP_CONTENTS="$APP_BUNDLE/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
+APP_FRAMEWORKS="$APP_CONTENTS/Frameworks"
 APP_RESOURCES="$APP_CONTENTS/Resources"
 APP_BINARY="$APP_MACOS/$APP_NAME"
 WORKER_NAME="NativeBolabolPolishWorker"
@@ -121,6 +122,33 @@ cp "$MLX_METALLIB_SOURCE" "$MLX_METALLIB_DESTINATION"
 chmod +x "$APP_BINARY"
 chmod +x "$WORKER_BINARY"
 
+
+embed_sparkle_framework() {
+  local sparkle_framework_src
+  sparkle_framework_src="$(find "$ROOT_DIR/.build" -name "Sparkle.framework" -type d | grep "macos-arm64_x86_64" | head -n 1 || true)"
+  if [[ -z "$sparkle_framework_src" ]]; then
+    sparkle_framework_src="$(find "$ROOT_DIR/.build" -name "Sparkle.framework" -type d | head -n 1 || true)"
+  fi
+
+  if [[ -z "$sparkle_framework_src" || ! -d "$sparkle_framework_src" ]]; then
+    echo "Error: Exact Sparkle.framework not found in build directory." >&2
+    exit 1
+  fi
+
+  mkdir -p "$APP_FRAMEWORKS"
+  rm -rf "$APP_FRAMEWORKS/Sparkle.framework"
+  /usr/bin/ditto "$sparkle_framework_src" "$APP_FRAMEWORKS/Sparkle.framework"
+
+  install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP_BINARY" 2>/dev/null || true
+
+  # Fail closed if binary is not linked against Sparkle
+  if ! otool -L "$APP_BINARY" 2>/dev/null | grep -q "Sparkle.framework"; then
+    echo "Error: NativeBolabol binary is not linked against Sparkle.framework." >&2
+    exit 1
+  fi
+}
+
+embed_sparkle_framework
 mkdir -p "$APP_RESOURCES"
 
 # Copy the native app icon and tray template assets into the bundle.

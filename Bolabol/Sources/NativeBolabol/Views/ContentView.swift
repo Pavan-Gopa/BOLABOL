@@ -35,6 +35,8 @@ struct ContentView: View {
     @State private var pendingHotkeyTarget: HotkeyTarget?
     @State private var pendingHotkeyOutputMode: HotkeyOutputMode?
     @State private var pendingHotkeySourcePID: pid_t?
+    @State private var relaunchGateRecordingCheckerID: UUID?
+    @State private var relaunchGateQuiescenceHandlerID: UUID?
     @State private var pendingHotkeyFocusedElement: AXUIElement?
     @State private var sessionWarningMessage: String?
     @State private var isTogglingHotkeyRecording = false
@@ -52,43 +54,38 @@ struct ContentView: View {
     private func dismissLanguagePickerPopover() {
         languagePickerController.dismiss()
     }
-
-    var body: some View {
-        GeometryReader { proxy in
-            NavigationSplitView {
-                SidebarView(noteStore: noteStore)
-                    .navigationSplitViewColumnWidth(
-                        min: Layout.minimumSidebarWidth,
-                        ideal: Layout.idealSidebarWidth,
-                        max: SidebarLayoutMetrics.maximumWidth(forWindowWidth: proxy.size.width)
-                    )
-            } detail: {
-                NoteDetailView(
-                    note: noteStore.selectedNote,
-                    selectedVariant: $selectedVariant,
-                    selectedText: $selectedNoteText,
-                    audioRecorder: audioRecorder,
-                    onRecordingCompleted: transcribeRecording,
-                    onPolishRequested: polishNote,
-                    onMarkdownRequested: generateMarkdown,
-                    onTextChanged: updateText,
-                    onAudioFileImportRequested: importAudioFile,
-                    onBlankNoteRequested: createBlankNote,
-                    onTranslateRequested: openTranslationModal
+    @ViewBuilder
+    private func mainSplitView(windowWidth: CGFloat) -> some View {
+        NavigationSplitView {
+            SidebarView(noteStore: noteStore)
+                .navigationSplitViewColumnWidth(
+                    min: Layout.minimumSidebarWidth,
+                    ideal: Layout.idealSidebarWidth,
+                    max: SidebarLayoutMetrics.maximumWidth(forWindowWidth: windowWidth)
                 )
-            }
-            .navigationSplitViewStyle(.balanced)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .modifier(UIScaleModifier())
-            .onDrop(
-                of: [
-                    UTType.fileURL.identifier,
-                    UTType.audio.identifier,
-                    UTType.movie.identifier
-                ],
-                isTargeted: nil,
-                perform: handleAudioFileDrop
+        } detail: {
+            NoteDetailView(
+                note: noteStore.selectedNote,
+                selectedVariant: $selectedVariant,
+                selectedText: $selectedNoteText,
+                audioRecorder: audioRecorder,
+                onRecordingCompleted: transcribeRecording,
+                onPolishRequested: polishNote,
+                onMarkdownRequested: generateMarkdown,
+                onTextChanged: updateText,
+                onAudioFileImportRequested: importAudioFile,
+                onBlankNoteRequested: createBlankNote,
+                onTranslateRequested: openTranslationModal
             )
+        }
+        .navigationSplitViewStyle(.balanced)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .modifier(UIScaleModifier())
+    }
+
+    @ViewBuilder
+    private func attachSheets<V: View>(_ content: V) -> some View {
+        content
             .sheet(isPresented: $isShowingTranslation) {
                 TranslationModalView(
                     audioRecorder: translationAudioRecorder,
@@ -108,25 +105,22 @@ struct ContentView: View {
                     accessibility: accessibilityPermissionStore,
                     audioRecorder: audioRecorder
                 )
-                    .environmentObject(generalSettingsStore)
-                    .environmentObject(glossaryStore)
-                    .environmentObject(transcriptionModelStore)
-                    .environmentObject(polishingEngineStore)
-                    .environmentObject(hotkeySettingsStore)
+                .environmentObject(generalSettingsStore)
+                .environmentObject(glossaryStore)
+                .environmentObject(transcriptionModelStore)
+                .environmentObject(polishingEngineStore)
+                .environmentObject(hotkeySettingsStore)
             }
+    }
+
+    @ViewBuilder
+    private func attachNotifications<V: View>(_ content: V) -> some View {
+        content
             .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
                 isShowingOnboarding = true
             }
             .onReceive(NotificationCenter.default.publisher(for: .nativeBolabolHotkeyTriggered)) { _ in
                 handleHotkeyTriggered()
-            }
-            .onAppear {
-                syncLocalizedServices()
-                isShowingOnboarding = !generalSettingsStore.settings.hasCompletedOnboarding
-                configureProviderQuickSwitcher()
-            }
-            .onChange(of: generalSettingsStore.settings.uiLanguage) { _, _ in
-                syncLocalizedServices()
             }
             .onReceive(NotificationCenter.default.publisher(for: .nativeBolabolHotkeyKeyDown)) { _ in
                 handleHotkeyKeyDown()
@@ -146,6 +140,33 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: .nativeBolabolDismissSheets)) { _ in
                 isShowingTranslation = false
                 isShowingOnboarding = false
+            }
+    }
+
+    @ViewBuilder
+    private func attachObservers<V: View>(_ content: V) -> some View {
+        content
+            .onAppear {
+                syncLocalizedServices()
+                isShowingOnboarding = !generalSettingsStore.settings.hasCompletedOnboarding
+                configureProviderQuickSwitcher()
+                relaunchGateRecordingCheckerID = UpdateRelaunchGate.shared.registerRecordingChecker {
+                    audioRecorder.isRecording || translationAudioRecorder.isRecording
+                }
+                relaunchGateQuiescenceHandlerID = UpdateRelaunchGate.shared.registerQuiescenceHandler {
+                    // Quiescence check passed: safe to restart
+                }
+            }
+            .onDisappear {
+                if let id = relaunchGateRecordingCheckerID {
+                    UpdateRelaunchGate.shared.unregisterRecordingChecker(id)
+                }
+                if let id = relaunchGateQuiescenceHandlerID {
+                    UpdateRelaunchGate.shared.unregisterQuiescenceHandler(id)
+                }
+            }
+            .onChange(of: generalSettingsStore.settings.uiLanguage) { _, _ in
+                syncLocalizedServices()
             }
             .onReceive(audioRecorder.$frequencyBands) { bands in
                 guard audioRecorder.isRecording else { return }
@@ -194,6 +215,26 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
                 dismissLanguagePickerPopover()
             }
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            attachObservers(
+                attachNotifications(
+                    attachSheets(
+                        mainSplitView(windowWidth: proxy.size.width)
+                            .onDrop(
+                                of: [
+                                    UTType.fileURL.identifier,
+                                    UTType.audio.identifier,
+                                    UTType.movie.identifier
+                                ],
+                                isTargeted: nil,
+                                perform: handleAudioFileDrop
+                            )
+                    )
+                )
+            )
         }
         .frame(minWidth: 820, minHeight: 580)
         .alert(
@@ -910,20 +951,12 @@ struct ContentView: View {
 
     private func handleHotkeyKeyDown() {
         let settings = hotkeySettingsStore.settings
-        guard settings.enabled else { return }
-
-        if settings.holdToRecord {
-            guard !audioRecorder.isRecording else { return }
-            startHotkeyRecording()
-        } else {
-            handleHotkeyTriggered()
-        }
+        guard settings.enabled, settings.holdToRecord else { return }
+        guard !audioRecorder.isRecording else { return }
+        startHotkeyRecording()
     }
 
     private func handleHotkeyKeyUp() {
-        let settings = hotkeySettingsStore.settings
-        guard settings.enabled, settings.holdToRecord else { return }
-
         if audioRecorder.isRecording {
             stopHotkeyRecording()
         }
@@ -2119,4 +2152,5 @@ struct ContentView: View {
         .environmentObject(HotkeySettingsStore.live())
         .environmentObject(GeneralSettingsStore.live())
         .environmentObject(UsageStatisticsStore.live())
+        .environmentObject(UpdateCoordinator(driver: FakeUpdateDriver()))
 }

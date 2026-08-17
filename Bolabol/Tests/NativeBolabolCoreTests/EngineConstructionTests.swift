@@ -279,20 +279,32 @@ struct ProductEngineChunkingTests {
 
     @Test
     func gigaAMChunkingProductCode() {
-        let maxChunkSamples = 480_000 // 30 seconds at 16 kHz
-
-        // Exact 30 seconds
-        let exactSamples = [Float](repeating: 0.4, count: 480_000)
-        let exactChunks = GigaAMCoreMLEngine.chunk(samples: exactSamples, maxSamples: maxChunkSamples)
+        // S2/ADR-023: the fixed-slice GigaAMCoreMLEngine.chunk seam was replaced by the
+        // speech-aware planner. This product assertion pins the new range semantics:
+        // exact 30 seconds is one chunk with owned == inference, and audio beyond 30
+        // seconds splits at the hard fallback with a 500 ms leading overlap on the
+        // second chunk. Full scenario coverage lives in GigaAMSpeechAwareChunkerTests.
+        let exactChunks = GigaAMSpeechAwareChunker.plan(
+            samples: [Float](repeating: 0.4, count: 480_000),
+            sampleRate: 16_000,
+            maxChunkSeconds: 30
+        )
         #expect(exactChunks.count == 1)
-        #expect(exactChunks[0].count == 480_000)
+        #expect(exactChunks[0].ownedRange == 0..<480_000)
+        #expect(exactChunks[0].inferenceRange == 0..<480_000)
+        #expect(exactChunks[0].endReason == .singleChunk)
 
-        // Audio exceeding 30 seconds (~40 seconds)
-        let longSamples = [Float](repeating: 0.4, count: 640_000)
-        let longChunks = GigaAMCoreMLEngine.chunk(samples: longSamples, maxSamples: maxChunkSamples)
+        let longChunks = GigaAMSpeechAwareChunker.plan(
+            samples: [Float](repeating: 0.4, count: 640_000),
+            sampleRate: 16_000,
+            maxChunkSeconds: 30
+        )
         #expect(longChunks.count == 2)
-        #expect(longChunks[0].count == 480_000)
-        #expect(longChunks[1].count == 160_000)
+        #expect(longChunks[0].ownedRange == 0..<480_000)
+        #expect(longChunks[0].endReason == .hardFallback)
+        #expect(longChunks[1].ownedRange == 480_000..<640_000)
+        #expect(longChunks[1].inferenceRange == 472_000..<640_000)
+        #expect(longChunks[1].hasLeadingOverlap)
     }
 }
 

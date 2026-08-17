@@ -9,6 +9,16 @@ struct HotkeySettingsView: View {
     @EnvironmentObject private var transcriptionModelStore: TranscriptionModelStore
     @EnvironmentObject private var transcriptionEngineStore: TranscriptionEngineStore
 
+    private enum ActiveHotkeyField: Hashable {
+        case primary
+        case secondary
+        case tertiary
+        case settings
+    }
+
+    @State private var captureOwner = UUID()
+    @State private var activeField: ActiveHotkeyField? = nil
+    @State private var rejectionReasons: [ActiveHotkeyField: HotkeyCaptureRejectionReason] = [:]
     var body: some View {
         Form {
             Section(header: Text(generalSettingsStore.text(.globalHotkey))) {
@@ -39,13 +49,17 @@ struct HotkeySettingsView: View {
 
                         Spacer()
 
-                        hotkeyGlyphBadge(for: hotkeySettingsStore.settings.hotkey)
-
-                        TextField("", text: hotkeyText)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 130)
-                            .multilineTextAlignment(.trailing)
-                            .help(generalSettingsStore.formattedText(.hotkeyOptionHint, "Option+S"))
+                        HotkeyRecorder(
+                            title: generalSettingsStore.text(.hotkeyPrimaryLabel),
+                            value: hotkeySettingsStore.settings.hotkey,
+                            isRecording: activeField == .primary,
+                            allowsRightModifierOnly: true,
+                            rejectionReason: rejectionReasons[.primary],
+                            onBegin: { beginCapture(for: .primary) },
+                            onCommit: { commitCapture(for: .primary, value: $0) },
+                            onCancel: { cancelCapture(for: .primary) },
+                            onReject: { handleRejection(for: .primary, reason: $0) }
+                        )
 
                         Button {
                             hotkeySettingsStore.settings.hotkey = HotkeySettings.defaultPrimaryHotkey
@@ -69,13 +83,17 @@ struct HotkeySettingsView: View {
 
                         Spacer()
 
-                        hotkeyGlyphBadge(for: hotkeySettingsStore.settings.secondaryHotkey)
-
-                        TextField("", text: secondaryHotkeyText)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 130)
-                            .multilineTextAlignment(.trailing)
-                            .help(generalSettingsStore.formattedText(.hotkeyOptionHint, "Option+1"))
+                        HotkeyRecorder(
+                            title: generalSettingsStore.text(.translationWindowLabel),
+                            value: hotkeySettingsStore.settings.secondaryHotkey,
+                            isRecording: activeField == .secondary,
+                            allowsRightModifierOnly: false,
+                            rejectionReason: rejectionReasons[.secondary],
+                            onBegin: { beginCapture(for: .secondary) },
+                            onCommit: { commitCapture(for: .secondary, value: $0) },
+                            onCancel: { cancelCapture(for: .secondary) },
+                            onReject: { handleRejection(for: .secondary, reason: $0) }
+                        )
 
                         Button {
                             hotkeySettingsStore.settings.secondaryHotkey = HotkeySettings.defaultSecondaryHotkey
@@ -86,7 +104,6 @@ struct HotkeySettingsView: View {
                         .help(generalSettingsStore.text(.reset))
                     }
                     .padding(.vertical, 0)
-
                     // Row for Quick Translation Hotkey (Option+2)
                     HStack(spacing: 8) {
                         VStack(alignment: .leading, spacing: 1) {
@@ -99,13 +116,17 @@ struct HotkeySettingsView: View {
 
                         Spacer()
 
-                        hotkeyGlyphBadge(for: hotkeySettingsStore.settings.tertiaryHotkey)
-
-                        TextField("", text: tertiaryHotkeyText)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 130)
-                            .multilineTextAlignment(.trailing)
-                            .help(generalSettingsStore.formattedText(.hotkeyOptionHint, "Option+2"))
+                        HotkeyRecorder(
+                            title: generalSettingsStore.text(.quickTranslationLabel),
+                            value: hotkeySettingsStore.settings.tertiaryHotkey,
+                            isRecording: activeField == .tertiary,
+                            allowsRightModifierOnly: false,
+                            rejectionReason: rejectionReasons[.tertiary],
+                            onBegin: { beginCapture(for: .tertiary) },
+                            onCommit: { commitCapture(for: .tertiary, value: $0) },
+                            onCancel: { cancelCapture(for: .tertiary) },
+                            onReject: { handleRejection(for: .tertiary, reason: $0) }
+                        )
 
                         Button {
                             hotkeySettingsStore.settings.tertiaryHotkey = HotkeySettings.defaultTertiaryHotkey
@@ -116,7 +137,6 @@ struct HotkeySettingsView: View {
                         .help(generalSettingsStore.text(.reset))
                     }
                     .padding(.vertical, 0)
-
                     Toggle(isOn: humorSliderEnabledBinding) {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(generalSettingsStore.text(.humorSlider))
@@ -150,13 +170,17 @@ struct HotkeySettingsView: View {
 
                     Spacer()
 
-                    hotkeyGlyphBadge(for: hotkeySettingsStore.settings.settingsHotkey)
-
-                    TextField("", text: settingsHotkeyText)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 130)
-                        .multilineTextAlignment(.trailing)
-                        .help(generalSettingsStore.formattedText(.hotkeyOptionHint, "Option+~"))
+                    HotkeyRecorder(
+                        title: generalSettingsStore.text(.openSettingsLabel),
+                        value: hotkeySettingsStore.settings.settingsHotkey,
+                        isRecording: activeField == .settings,
+                        allowsRightModifierOnly: false,
+                        rejectionReason: rejectionReasons[.settings],
+                        onBegin: { beginCapture(for: .settings) },
+                        onCommit: { commitCapture(for: .settings, value: $0) },
+                        onCancel: { cancelCapture(for: .settings) },
+                        onReject: { handleRejection(for: .settings, reason: $0) }
+                    )
 
                     Button {
                         hotkeySettingsStore.settings.settingsHotkey = HotkeySettings.defaultSettingsHotkey
@@ -359,6 +383,12 @@ struct HotkeySettingsView: View {
         .onAppear {
             accessibilityPermissionStore.refresh()
         }
+        .onDisappear {
+            if activeField != nil {
+                activeField = nil
+                hotkeySettingsStore.endShortcutCapture(owner: captureOwner)
+            }
+        }
     }
 
     private var settingsEnabled: Binding<Bool> {
@@ -374,35 +404,59 @@ struct HotkeySettingsView: View {
             set: { hotkeySettingsStore.settings.holdToRecord = $0 }
         )
     }
-
-    private var hotkeyText: Binding<String> {
-        Binding(
-            get: { HotkeySettings.normalizeMacModifiers(hotkeySettingsStore.settings.hotkey) },
-            set: { hotkeySettingsStore.settings.hotkey = HotkeySettings.normalizeMacModifiers($0) }
+    private func handleRejection(for field: ActiveHotkeyField, reason: HotkeyCaptureRejectionReason) {
+        rejectionReasons[field] = reason
+        let message: String
+        switch reason {
+        case .modifierRequired:
+            message = generalSettingsStore.text(.hotkeyRejectModifierRequired)
+        case .unsupportedKey:
+            message = generalSettingsStore.text(.hotkeyRejectUnsupportedKey)
+        case .modifierOnlyPrimary:
+            message = generalSettingsStore.text(.hotkeyRejectModifierOnlyPrimary)
+        }
+        NSAccessibility.post(
+            element: NSApplication.shared,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: message,
+                .priority: NSAccessibilityPriorityLevel.high.rawValue
+            ]
         )
     }
 
-    private var secondaryHotkeyText: Binding<String> {
-        Binding(
-            get: { HotkeySettings.normalizeMacModifiers(hotkeySettingsStore.settings.secondaryHotkey) },
-            set: { hotkeySettingsStore.settings.secondaryHotkey = HotkeySettings.normalizeMacModifiers($0) }
-        )
+    private func beginCapture(for field: ActiveHotkeyField) {
+        rejectionReasons[field] = nil
+        if hotkeySettingsStore.beginShortcutCapture(owner: captureOwner) {
+            activeField = field
+        }
     }
 
-    private var tertiaryHotkeyText: Binding<String> {
-        Binding(
-            get: { HotkeySettings.normalizeMacModifiers(hotkeySettingsStore.settings.tertiaryHotkey) },
-            set: { hotkeySettingsStore.settings.tertiaryHotkey = HotkeySettings.normalizeMacModifiers($0) }
-        )
+    private func commitCapture(for field: ActiveHotkeyField, value: String) {
+        guard activeField == field else { return }
+        activeField = nil
+        rejectionReasons[field] = nil
+
+        switch field {
+        case .primary:
+            hotkeySettingsStore.settings.hotkey = value
+        case .secondary:
+            hotkeySettingsStore.settings.secondaryHotkey = value
+        case .tertiary:
+            hotkeySettingsStore.settings.tertiaryHotkey = value
+        case .settings:
+            hotkeySettingsStore.settings.settingsHotkey = value
+        }
+
+        hotkeySettingsStore.endShortcutCapture(owner: captureOwner)
     }
 
-    private var settingsHotkeyText: Binding<String> {
-        Binding(
-            get: { HotkeySettings.normalizeMacModifiers(hotkeySettingsStore.settings.settingsHotkey) },
-            set: { hotkeySettingsStore.settings.settingsHotkey = HotkeySettings.normalizeMacModifiers($0) }
-        )
+    private func cancelCapture(for field: ActiveHotkeyField) {
+        guard activeField == field else { return }
+        activeField = nil
+        rejectionReasons[field] = nil
+        hotkeySettingsStore.endShortcutCapture(owner: captureOwner)
     }
-
     private var humorSliderEnabledBinding: Binding<Bool> {
         Binding(
             get: { hotkeySettingsStore.settings.humorSliderEnabled },
@@ -415,18 +469,6 @@ struct HotkeySettingsView: View {
             get: { hotkeySettingsStore.settings.humorPromptMode },
             set: { hotkeySettingsStore.settings.humorPromptMode = $0 }
         )
-    }
-
-    /// Compact macOS glyph preview (e.g. ⌥S) next to the editable Option+S field.
-    @ViewBuilder
-    private func hotkeyGlyphBadge(for hotkey: String) -> some View {
-        Text(HotkeySettings.displayString(for: hotkey))
-            .font(.system(size: 13, weight: .semibold, design: .rounded))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(Color.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-            .help(HotkeySettings.displayString(for: hotkey))
     }
 
     private var targetSelection: Binding<HotkeyTarget> {

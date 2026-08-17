@@ -27,7 +27,8 @@ let package = Package(
         .package(url: "https://github.com/argmaxinc/argmax-oss-swift.git", branch: "main"),
         .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.15.5"),
         .package(url: "https://github.com/huggingface/swift-huggingface", from: "0.9.0"),
-        .package(url: "https://github.com/huggingface/swift-transformers", from: "1.3.0")
+        .package(url: "https://github.com/huggingface/swift-transformers", from: "1.3.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.4")
     ],
     targets: [
         .executableTarget(
@@ -41,7 +42,8 @@ let package = Package(
                 .product(name: "WhisperKit", package: "argmax-oss-swift"),
                 .product(name: "FluidAudio", package: "FluidAudio"),
                 .product(name: "HuggingFace", package: "swift-huggingface"),
-                .product(name: "Tokenizers", package: "swift-transformers")
+                .product(name: "Tokenizers", package: "swift-transformers"),
+                .product(name: "Sparkle", package: "Sparkle")
             ],
             path: "Sources/NativeBolabol",
             exclude: [

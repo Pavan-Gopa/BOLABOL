@@ -35,6 +35,7 @@ struct NativeBolabolApp: App {
     @StateObject private var usageStatisticsStore = UsageStatisticsStore.live()
     @StateObject private var accessibilityPermissionStore = AccessibilityPermissionStore.live()
     @StateObject private var glossaryStore = GlossaryStore.live()
+    @StateObject private var updateCoordinator = UpdateCoordinator.live()
 
     init() {
         // Trigger swizzle once at the earliest possible moment
@@ -53,6 +54,7 @@ struct NativeBolabolApp: App {
                 .environmentObject(usageStatisticsStore)
                 .environmentObject(accessibilityPermissionStore)
                 .environmentObject(glossaryStore)
+                .environmentObject(updateCoordinator)
                 .environment(\.locale, Locale(identifier: generalSettingsStore.settings.uiLanguage.resolvedLocaleIdentifier()))
                 .environment(\.nativeBolabolUIScale, generalSettingsStore.settings.uiScale)
                 .preferredColorScheme(generalSettingsStore.preferredColorScheme)
@@ -64,9 +66,20 @@ struct NativeBolabolApp: App {
                     transcriptionModelStore.reconcileModelStates()
                     polishingEngineStore.reconcileModelStates()
                 }
+                .onAppear {
+                    appDelegate.configure(
+                        updateCoordinator: updateCoordinator,
+                        generalSettingsStore: generalSettingsStore
+                    )
+                }
         }
         .commands {
             SidebarCommands()
+            CommandGroup(after: .appInfo) {
+                Button(AppText.localized(.checkForUpdates, language: generalSettingsStore.settings.uiLanguage)) {
+                    updateCoordinator.checkForUpdates()
+                }
+            }
         }
 
         Settings {
@@ -80,6 +93,7 @@ struct NativeBolabolApp: App {
                 .environmentObject(usageStatisticsStore)
                 .environmentObject(accessibilityPermissionStore)
                 .environmentObject(glossaryStore)
+                .environmentObject(updateCoordinator)
                 .environment(\.locale, Locale(identifier: generalSettingsStore.settings.uiLanguage.resolvedLocaleIdentifier()))
                 .environment(\.nativeBolabolUIScale, generalSettingsStore.settings.uiScale)
                 .preferredColorScheme(generalSettingsStore.preferredColorScheme)
@@ -104,7 +118,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private weak var mainWindow: NSWindow?
     private var localEscMonitor: Any?
     private var lastSettingsToggleTime: Date = .distantPast
+    var updateCoordinator: UpdateCoordinator?
+    var generalSettingsStore: GeneralSettingsStore?
 
+    func configure(
+        updateCoordinator: UpdateCoordinator,
+        generalSettingsStore: GeneralSettingsStore
+    ) {
+        self.updateCoordinator = updateCoordinator
+        self.generalSettingsStore = generalSettingsStore
+        if let window = mainWindow {
+            configureUpdateTitlebarAccessory(for: window)
+        }
+    }
     override init() {
         super.init()
         Self.shared = self
@@ -190,6 +216,12 @@ extension AppDelegate {
         ).target = self
         statusMenu.addItem(.separator())
         statusMenu.addItem(
+            withTitle: "Check for Updates…",
+            action: #selector(checkForUpdatesFromStatusItem),
+            keyEquivalent: ""
+        ).target = self
+        statusMenu.addItem(.separator())
+        statusMenu.addItem(
             withTitle: "Quit Bolabol",
             action: #selector(quitFromStatusItem),
             keyEquivalent: "q"
@@ -228,6 +260,37 @@ extension AppDelegate {
         }
         window.minSize = NSSize(width: 820, height: 580)
         configureMainWindowTitle(window)
+        configureUpdateTitlebarAccessory(for: window)
+    }
+
+    func configureUpdateTitlebarAccessory(for window: NSWindow) {
+        let accessoryID = NSUserInterfaceItemIdentifier("bolabol.updateTitlebarAccessory")
+        if window.titlebarAccessoryViewControllers.contains(where: { $0.identifier == accessoryID }) {
+            return
+        }
+
+        guard let coordinator = updateCoordinator,
+              let settings = generalSettingsStore else {
+            return
+        }
+
+        let accessory = NSTitlebarAccessoryViewController()
+        accessory.identifier = accessoryID
+        accessory.layoutAttribute = .right
+
+        let hostingView = NSHostingView(
+            rootView: UpdateTitlebarButton()
+                .environmentObject(coordinator)
+                .environmentObject(settings)
+        )
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
+        accessory.view = hostingView
+        window.addTitlebarAccessoryViewController(accessory)
+    }
+
+    @objc func checkForUpdatesFromStatusItem() {
+        guard let coordinator = updateCoordinator else { return }
+        coordinator.checkForUpdates()
     }
 
     func isPrimaryBolabolWindow(_ window: NSWindow) -> Bool {

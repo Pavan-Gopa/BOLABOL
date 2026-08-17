@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone="yes"?><!-- sparkle-sign-warning:
+IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
+--><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Bolabol</title>
+        <item>
+            <title>1.0.5</title>
+            <pubDate>Mon, 17 Aug 2026 16:14:49 +0530</pubDate>
+            <sparkle:version>202608171613</sparkle:version>
+            <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/Pavan-Gopa/BOLABOL/releases/download/v1.0.5/BOLABOL.dmg" length="28000715" type="application/octet-stream" sparkle:edSignature="GkbiGH5o1D+WcG/BiMIhdWHgDIHCGhYC9iHXSF+nn7CEosNDCvgxeiGV7c9ymUCRDGXNBOeH6NzTi6aT997tDQ=="></enclosure>
+        </item>
+    </channel>
+</rss><!-- sparkle-signatures:
+edSignature: URCIOMfckaO+KKDuJk5T62JwJwopEzcccKmArlj3GRCJpWZyBieM2pYBoQkTSFjC11J5B/EG1Fsd2W/AmFHWBg==
+length: 1125
+-->

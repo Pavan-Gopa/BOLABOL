@@ -12,27 +12,357 @@ extension Notification.Name {
     static let nativeBolabolSettingsHotkeyTriggered = Notification.Name("nativeBolabolSettingsHotkeyTriggered")
     static let nativeBolabolDismissSheets = Notification.Name("nativeBolabolDismissSheets")
 }
+enum PrimaryHotkeySource: Equatable, Sendable {
+    case none
+    case carbonCombination
+    case rightOption
+    case rightCommand
+}
+
+enum PrimaryHotkeyDelivery: Equatable, Sendable {
+    case toggle
+    case hold
+}
+
+enum PrimaryHotkeyPhase: Equatable, Sendable {
+    case idle
+    case suppressedModifierDown
+    case acceptedToggle
+    case acceptedHold
+}
+
+struct PrimaryHotkeyConfiguration: Equatable, Sendable {
+    var generation: UInt64
+    var enabled: Bool
+    var source: PrimaryHotkeySource
+    var delivery: PrimaryHotkeyDelivery
+
+    init(
+        generation: UInt64 = 0,
+        enabled: Bool = false,
+        source: PrimaryHotkeySource = .none,
+        delivery: PrimaryHotkeyDelivery = .toggle
+    ) {
+        self.generation = generation
+        self.enabled = enabled
+        self.source = source
+        self.delivery = delivery
+    }
+
+    func isReconfigurationRelevant(comparedTo other: PrimaryHotkeyConfiguration) -> Bool {
+        enabled != other.enabled || source != other.source || delivery != other.delivery
+    }
+}
+
+enum PrimaryHotkeyInput: Equatable, Sendable {
+    case configure(PrimaryHotkeyConfiguration)
+    case flagsChanged(keyCode: UInt16, rawFlags: UInt, generation: UInt64)
+    case carbonPressed(generation: UInt64)
+    case carbonReleased(generation: UInt64)
+}
+
+enum PrimaryHotkeyOutput: Equatable, Sendable {
+    case triggered
+    case keyDown
+    case keyUp
+}
+
+struct PrimaryHotkeyStateMachine: Sendable {
+    private(set) var configuration: PrimaryHotkeyConfiguration
+    private(set) var phase: PrimaryHotkeyPhase
+
+    init(
+        configuration: PrimaryHotkeyConfiguration = PrimaryHotkeyConfiguration(),
+        phase: PrimaryHotkeyPhase = .idle
+    ) {
+        self.configuration = configuration
+        self.phase = phase
+    }
+
+    mutating func handle(_ input: PrimaryHotkeyInput) -> PrimaryHotkeyOutput? {
+        switch input {
+        case .configure(let newConfig):
+            if configuration.isReconfigurationRelevant(comparedTo: newConfig) {
+                let previousPhase = phase
+                configuration = newConfig
+                phase = .idle
+                if previousPhase == .acceptedHold {
+                    return .keyUp
+                }
+                return nil
+            } else {
+                configuration = newConfig
+                return nil
+            }
+
+        case .carbonPressed(let generation):
+            guard configuration.enabled, configuration.source == .carbonCombination else { return nil }
+            guard generation == configuration.generation else { return nil }
+
+            switch configuration.delivery {
+            case .toggle:
+                if phase == .idle {
+                    phase = .acceptedToggle
+                    return .triggered
+                }
+                return nil
+            case .hold:
+                if phase == .idle {
+                    phase = .acceptedHold
+                    return .keyDown
+                }
+                return nil
+            }
+
+        case .carbonReleased(let generation):
+            guard configuration.enabled, configuration.source == .carbonCombination else { return nil }
+            guard generation == configuration.generation else { return nil }
+
+            switch phase {
+            case .acceptedHold:
+                phase = .idle
+                return .keyUp
+            case .acceptedToggle:
+                phase = .idle
+                return nil
+            case .idle, .suppressedModifierDown:
+                return nil
+            }
+
+        case .flagsChanged(let keyCode, let rawFlags, let generation):
+            guard configuration.enabled else { return nil }
+            guard generation == configuration.generation else { return nil }
+
+            let targetKeyCode: UInt16
+            let targetMask: UInt
+            let targetIndependentMask: UInt
+
+            switch configuration.source {
+            case .rightOption:
+                targetKeyCode = UInt16(kVK_RightOption)
+                targetMask = UInt(0x0040)
+                targetIndependentMask = UInt(0x00080000)
+            case .rightCommand:
+                targetKeyCode = UInt16(kVK_RightCommand)
+                targetMask = UInt(0x0010)
+                targetIndependentMask = UInt(0x00100000)
+            case .carbonCombination, .none:
+                return nil
+            }
+
+            // Physical modifier bitmask (excluding CapsLock):
+            // Left Ctrl: 0x0001, Right Ctrl: 0x2000
+            // Left Shift: 0x0002, Right Shift: 0x0004
+            // Left Cmd: 0x0008, Right Cmd: 0x0010
+            // Left Alt: 0x0020, Right Alt: 0x0040
+            let allPhysicalModifiersMask: UInt = 0x207F
+            let heldPhysical = rawFlags & allPhysicalModifiersMask
+
+            // Device-independent modifier bitmask (excluding CapsLock 0x00010000 and NumericPad/Help):
+            // Shift: 0x00020000, Control: 0x00040000, Option: 0x00080000, Command: 0x00100000, Function: 0x00800000
+            let allIndependentMask: UInt = 0x009E0000
+            let heldIndependent = rawFlags & allIndependentMask
+
+            let isTargetPhysicalDown = (rawFlags & targetMask) != 0
+            let isTargetIndependentDown = (rawFlags & targetIndependentMask) != 0
+            let isTargetDown = isTargetPhysicalDown && isTargetIndependentDown
+
+            let isTargetSolePhysicalHeld = (heldPhysical == targetMask)
+            let isTargetSoleIndependentHeld = (heldIndependent == targetIndependentMask)
+            let isTargetSoleModifierHeld = isTargetSolePhysicalHeld && isTargetSoleIndependentHeld
+
+            let areAllModifiersReleased = (heldPhysical == 0 && heldIndependent == 0)
+
+            switch phase {
+            case .idle:
+                if keyCode == targetKeyCode && isTargetDown && isTargetSoleModifierHeld {
+                    switch configuration.delivery {
+                    case .toggle:
+                        phase = .acceptedToggle
+                        return .triggered
+                    case .hold:
+                        phase = .acceptedHold
+                        return .keyDown
+                    }
+                } else if heldPhysical != 0 || heldIndependent != 0 {
+                    phase = .suppressedModifierDown
+                    return nil
+                } else {
+                    return nil
+                }
+
+            case .suppressedModifierDown:
+                if areAllModifiersReleased {
+                    phase = .idle
+                }
+                return nil
+
+            case .acceptedToggle:
+                if !isTargetPhysicalDown {
+                    if areAllModifiersReleased {
+                        phase = .idle
+                    } else {
+                        phase = .suppressedModifierDown
+                    }
+                    return nil
+                } else if !isTargetSoleModifierHeld {
+                    phase = .suppressedModifierDown
+                    return nil
+                } else {
+                    return nil
+                }
+
+            case .acceptedHold:
+                if !isTargetPhysicalDown {
+                    if areAllModifiersReleased {
+                        phase = .idle
+                    } else {
+                        phase = .suppressedModifierDown
+                    }
+                    return .keyUp
+                } else {
+                    return nil
+                }
+            }
+        }
+    }
+}
 
 @MainActor
-final class GlobalHotkeyManager {
-    private var primaryHotKeyRef: EventHotKeyRef?
-    private var secondaryHotKeyRef: EventHotKeyRef?
-    private var tertiaryHotKeyRef: EventHotKeyRef?
-    private var settingsHotKeyRef: EventHotKeyRef?
-    private var settingsAltHotKeyRef: EventHotKeyRef?
+final class GlobalHotkeyManager: HotkeyManaging {
+    private enum CarbonAction: Equatable, Sendable {
+        case primary
+        case secondary
+        case tertiary
+        case settings
+    }
+
+    private var activeHotKeyRefs: [EventHotKeyRef] = []
+    private var currentCarbonActionMap: [UInt32: CarbonAction] = [:]
+    private var nextCarbonID: UInt32 = 100
+    private var isSuspended: Bool = false
+    private var isTornDown: Bool = false
+    private var latestSettings: HotkeySettings?
+
     private var eventHandlerRef: EventHandlerRef?
     private var localEventMonitor: Any?
+    private var primaryFlagsMonitorLocal: Any?
+    private var primaryFlagsMonitorGlobal: Any?
+    private var primaryStateMachine = PrimaryHotkeyStateMachine()
+    private var currentGeneration: UInt64 = 0
     private var currentSettingsHotkey: String = HotkeySettings.defaultSettingsHotkey
-
     init() {
         installEventHandler()
         installLocalMonitor()
     }
 
     func apply(settings: HotkeySettings) {
-        currentSettingsHotkey = settings.settingsHotkey
+        latestSettings = settings
+        guard !isSuspended else { return }
+        applyInternal(settings: settings)
+    }
+
+    func suspendForShortcutCapture() {
+        guard !isSuspended else { return }
+        isSuspended = true
+
+        currentGeneration &+= 1
+        currentCarbonActionMap.removeAll()
         unregister()
-        guard settings.enabled else { return }
+        removeFlagsMonitors()
+
+        let disabledConfig = PrimaryHotkeyConfiguration(
+            generation: currentGeneration,
+            enabled: false,
+            source: .none,
+            delivery: .toggle
+        )
+        if let output = primaryStateMachine.handle(.configure(disabledConfig)) {
+            dispatchOutput(output)
+        }
+    }
+
+    func resumeAfterShortcutCapture() {
+        guard isSuspended else { return }
+
+        if let settings = latestSettings {
+            applyInternal(settings: settings)
+        }
+        isSuspended = false
+    }
+
+    func teardown() {
+        guard !isTornDown else { return }
+        isTornDown = true
+        isSuspended = true
+
+        currentGeneration &+= 1
+        currentCarbonActionMap.removeAll()
+        unregister()
+        removeFlagsMonitors()
+        removeLocalMonitor()
+        removeEventHandler()
+
+        let disabledConfig = PrimaryHotkeyConfiguration(
+            generation: currentGeneration,
+            enabled: false,
+            source: .none,
+            delivery: .toggle
+        )
+        if let output = primaryStateMachine.handle(.configure(disabledConfig)) {
+            dispatchOutput(output)
+        }
+    }
+    deinit {
+        MainActor.assumeIsolated {
+            teardown()
+        }
+    }
+
+    private func applyInternal(settings: HotkeySettings) {
+        currentSettingsHotkey = settings.settingsHotkey
+
+        let primaryKind = HotkeySettings.classifyPrimaryHotkey(settings.hotkey)
+        let primarySource: PrimaryHotkeySource
+        if !settings.enabled {
+            primarySource = .none
+        } else {
+            switch primaryKind {
+            case .rightOption:
+                primarySource = .rightOption
+            case .rightCommand:
+                primarySource = .rightCommand
+            case .combination:
+                primarySource = .carbonCombination
+            }
+        }
+
+        let primaryDelivery: PrimaryHotkeyDelivery = settings.holdToRecord ? .hold : .toggle
+        let newConfigCandidate = PrimaryHotkeyConfiguration(
+            generation: currentGeneration,
+            enabled: settings.enabled,
+            source: primarySource,
+            delivery: primaryDelivery
+        )
+
+        let isRelevant = primaryStateMachine.configuration.isReconfigurationRelevant(comparedTo: newConfigCandidate)
+        if isRelevant {
+            currentGeneration &+= 1
+            var updatedConfig = newConfigCandidate
+            updatedConfig.generation = currentGeneration
+            if let output = primaryStateMachine.handle(.configure(updatedConfig)) {
+                dispatchOutput(output)
+            }
+        } else {
+            _ = primaryStateMachine.handle(.configure(newConfigCandidate))
+        }
+
+        currentCarbonActionMap.removeAll()
+        unregister()
+        guard settings.enabled else {
+            removeFlagsMonitors()
+            return
+        }
 
         register(
             primary: settings.hotkey,
@@ -40,206 +370,170 @@ final class GlobalHotkeyManager {
             tertiary: settings.tertiaryHotkey,
             settings: settings.settingsHotkey
         )
+
+        updateFlagsMonitors(for: primarySource)
+    }
+
+    private func updateFlagsMonitors(for source: PrimaryHotkeySource) {
+        switch source {
+        case .rightOption, .rightCommand:
+            removeFlagsMonitors()
+            let capturedGeneration = self.currentGeneration
+
+            primaryFlagsMonitorLocal = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+                guard let self else { return event }
+                let keyCode = event.keyCode
+                let rawFlags = event.modifierFlags.rawValue
+                self.handleFlagsChanged(keyCode: keyCode, rawFlags: rawFlags, generation: capturedGeneration)
+                return event
+            }
+
+            primaryFlagsMonitorGlobal = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+                guard let self else { return }
+                let keyCode = event.keyCode
+                let rawFlags = event.modifierFlags.rawValue
+                Task { @MainActor [weak self] in
+                    self?.handleFlagsChanged(keyCode: keyCode, rawFlags: rawFlags, generation: capturedGeneration)
+                }
+            }
+
+        case .carbonCombination, .none:
+            removeFlagsMonitors()
+        }
+    }
+
+    private func removeFlagsMonitors() {
+        if let primaryFlagsMonitorLocal {
+            NSEvent.removeMonitor(primaryFlagsMonitorLocal)
+            self.primaryFlagsMonitorLocal = nil
+        }
+        if let primaryFlagsMonitorGlobal {
+            NSEvent.removeMonitor(primaryFlagsMonitorGlobal)
+            self.primaryFlagsMonitorGlobal = nil
+        }
+    }
+
+    private func handleFlagsChanged(keyCode: UInt16, rawFlags: UInt, generation: UInt64) {
+        guard !isSuspended else { return }
+        guard generation == currentGeneration else { return }
+        guard let output = primaryStateMachine.handle(.flagsChanged(keyCode: keyCode, rawFlags: rawFlags, generation: generation)) else {
+            return
+        }
+        dispatchOutput(output)
+    }
+
+    private func handleCarbonPrimary(isPress: Bool, generation: UInt64) {
+        guard !isSuspended else { return }
+        guard generation == currentGeneration else { return }
+        let input: PrimaryHotkeyInput = isPress
+            ? .carbonPressed(generation: generation)
+            : .carbonReleased(generation: generation)
+        guard let output = primaryStateMachine.handle(input) else { return }
+        dispatchOutput(output)
+    }
+
+    private func dispatchOutput(_ output: PrimaryHotkeyOutput) {
+        switch output {
+        case .triggered:
+            NotificationCenter.default.post(name: .nativeBolabolHotkeyTriggered, object: nil)
+        case .keyDown:
+            NotificationCenter.default.post(name: .nativeBolabolHotkeyKeyDown, object: nil)
+        case .keyUp:
+            NotificationCenter.default.post(name: .nativeBolabolHotkeyKeyUp, object: nil)
+        }
     }
 
     private func register(primary: String, secondary: String, tertiary: String, settings: String) {
-        let primaryCombo = try? HotkeyCombination(primary)
-        let secondaryCombo = try? HotkeyCombination(secondary)
-
-        // Track registered combinations to prevent duplicate registrations
-        // (Carbon silently fails when the same key+modifier combo is registered twice).
         var registeredCombos: Set<HotkeyComboKey> = []
 
-        // Register primary hotkey (ID 1)
-        if let primaryCombo {
-            let primaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 1)
-            var primaryRef: EventHotKeyRef?
-            let primaryStatus = RegisterEventHotKey(
-                primaryCombo.keyCode,
-                primaryCombo.carbonModifiers,
-                primaryID,
-                GetApplicationEventTarget(),
-                0,
-                &primaryRef
-            )
-            if primaryStatus == noErr, let primaryRef {
-                self.primaryHotKeyRef = primaryRef
-                registeredCombos.insert(
-                    HotkeyComboKey(keyCode: primaryCombo.keyCode, modifiers: primaryCombo.carbonModifiers)
-                )
-                NativeBolabolLog.models.info(
-                    "Registered primary hotkey \(primary, privacy: .public) keyCode=\(primaryCombo.keyCode) modifiers=\(primaryCombo.carbonModifiers)"
-                )
+        if !HotkeySettings.isRightModifierOnlyPrimaryHotkey(primary) {
+            if let primaryCombo = try? HotkeyCombination(primary) {
+                registerCombination(primaryCombo, action: .primary, name: "primary (\(primary))", registeredCombos: &registeredCombos)
             } else {
-                NativeBolabolLog.models.warning(
-                    "Failed to register primary hotkey \(primary, privacy: .public): \(primaryStatus)"
-                )
+                NativeBolabolLog.models.warning("Failed to parse primary hotkey: \(primary, privacy: .public)")
             }
-        } else {
-            NativeBolabolLog.models.warning(
-                "Failed to parse primary hotkey: \(primary, privacy: .public)"
-            )
         }
 
-        // Register secondary hotkey (ID 2) — full translation modal
-        if let secondaryCombo {
-            let secondaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 2)
-            var secondaryRef: EventHotKeyRef?
-            let secondaryStatus = RegisterEventHotKey(
-                secondaryCombo.keyCode,
-                secondaryCombo.carbonModifiers,
-                secondaryID,
-                GetApplicationEventTarget(),
-                0,
-                &secondaryRef
-            )
-            if secondaryStatus == noErr, let secondaryRef {
-                self.secondaryHotKeyRef = secondaryRef
-                registeredCombos.insert(
-                    HotkeyComboKey(keyCode: secondaryCombo.keyCode, modifiers: secondaryCombo.carbonModifiers)
-                )
-                NativeBolabolLog.models.info(
-                    "Registered translation hotkey \(secondary, privacy: .public) keyCode=\(secondaryCombo.keyCode) modifiers=\(secondaryCombo.carbonModifiers)"
-                )
-            } else {
-                NativeBolabolLog.models.warning(
-                    "Failed to register secondary hotkey \(secondary, privacy: .public): \(secondaryStatus)"
-                )
-            }
+        if let secondaryCombo = try? HotkeyCombination(secondary) {
+            registerCombination(secondaryCombo, action: .secondary, name: "translation (\(secondary))", registeredCombos: &registeredCombos)
         } else {
-            NativeBolabolLog.models.warning(
-                "Failed to parse secondary hotkey: \(secondary, privacy: .public)"
-            )
+            NativeBolabolLog.models.warning("Failed to parse secondary hotkey: \(secondary, privacy: .public)")
         }
 
-        // Register tertiary hotkey (ID 3) — quick translation
         if let tertiaryCombo = try? HotkeyCombination(tertiary) {
-            let tertiaryKey = HotkeyComboKey(keyCode: tertiaryCombo.keyCode, modifiers: tertiaryCombo.carbonModifiers)
-            if registeredCombos.contains(tertiaryKey) {
-                NativeBolabolLog.models.warning(
-                    "Skipped tertiary hotkey \(tertiary, privacy: .public): duplicates an already-registered hotkey"
-                )
-            } else {
-                let tertiaryID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 3)
-                var tertiaryRef: EventHotKeyRef?
-                let tertiaryStatus = RegisterEventHotKey(
-                    tertiaryCombo.keyCode,
-                    tertiaryCombo.carbonModifiers,
-                    tertiaryID,
-                    GetApplicationEventTarget(),
-                    0,
-                    &tertiaryRef
-                )
-                if tertiaryStatus == noErr, let tertiaryRef {
-                    self.tertiaryHotKeyRef = tertiaryRef
-                    registeredCombos.insert(tertiaryKey)
-                    NativeBolabolLog.models.info(
-                        "Registered quick translation hotkey \(tertiary, privacy: .public) keyCode=\(tertiaryCombo.keyCode) modifiers=\(tertiaryCombo.carbonModifiers)"
-                    )
-                } else {
-                    NativeBolabolLog.models.warning(
-                        "Failed to register tertiary hotkey \(tertiary, privacy: .public): \(tertiaryStatus)"
-                    )
-                }
-            }
+            registerCombination(tertiaryCombo, action: .tertiary, name: "quick translation (\(tertiary))", registeredCombos: &registeredCombos)
         } else {
-            NativeBolabolLog.models.warning(
-                "Failed to parse tertiary hotkey: \(tertiary, privacy: .public)"
-            )
+            NativeBolabolLog.models.warning("Failed to parse tertiary hotkey: \(tertiary, privacy: .public)")
         }
 
-        // Register settings hotkey (ID 4)
         if let settingsCombo = try? HotkeyCombination(settings) {
-            let settingsKey = HotkeyComboKey(keyCode: settingsCombo.keyCode, modifiers: settingsCombo.carbonModifiers)
-            if registeredCombos.contains(settingsKey) {
-                NativeBolabolLog.models.warning(
-                    "Skipped settings hotkey \(settings, privacy: .public): duplicates an already-registered hotkey"
-                )
-            } else {
-                NativeBolabolLog.models.info(
-                    "Registering settings hotkey: \(settings, privacy: .public), keyCode: \(settingsCombo.keyCode), modifiers: \(settingsCombo.carbonModifiers)"
-                )
-                let settingsID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 4)
-                var settingsRef: EventHotKeyRef?
-                let settingsStatus = RegisterEventHotKey(
-                    settingsCombo.keyCode,
-                    settingsCombo.carbonModifiers,
-                    settingsID,
-                    GetApplicationEventTarget(),
-                    0,
-                    &settingsRef
-                )
-                if settingsStatus == noErr, let settingsRef {
-                    self.settingsHotKeyRef = settingsRef
-                    registeredCombos.insert(settingsKey)
-                    NativeBolabolLog.models.info("Settings hotkey registered successfully")
-                } else {
-                    NativeBolabolLog.models.warning(
-                        "Failed to register settings hotkey \(settings, privacy: .public): \(settingsStatus)"
-                    )
-                }
+            registerCombination(settingsCombo, action: .settings, name: "settings (\(settings))", registeredCombos: &registeredCombos)
 
-                // If key is Tilde (kVK_ANSI_Grave), also register alternate modifier variant (without/with Shift)
-                // so Option+` and Option+~ both trigger the Settings toggle when pressed.
-                if settingsCombo.keyCode == UInt32(kVK_ANSI_Grave) {
-                    let altModifiers = (settingsCombo.carbonModifiers & UInt32(shiftKey) != 0)
-                        ? (settingsCombo.carbonModifiers & ~UInt32(shiftKey))
-                        : (settingsCombo.carbonModifiers | UInt32(shiftKey))
-
-                    let altKey = HotkeyComboKey(keyCode: settingsCombo.keyCode, modifiers: altModifiers)
-                    if !registeredCombos.contains(altKey) {
-                        var altRef: EventHotKeyRef?
-                        let altID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: 4)
-                        let altStatus = RegisterEventHotKey(
-                            settingsCombo.keyCode,
-                            altModifiers,
-                            altID,
-                            GetApplicationEventTarget(),
-                            0,
-                            &altRef
-                        )
-                        if altStatus == noErr, let altRef {
-                            self.settingsAltHotKeyRef = altRef
-                            registeredCombos.insert(altKey)
-                        }
-                    }
-                }
+            // If key is Tilde (kVK_ANSI_Grave), also register alternate modifier variant (without/with Shift)
+            // so Option+` and Option+~ both trigger the Settings toggle when pressed.
+            if settingsCombo.keyCode == UInt32(kVK_ANSI_Grave) {
+                let altModifiers = (settingsCombo.carbonModifiers & UInt32(shiftKey) != 0)
+                    ? (settingsCombo.carbonModifiers & ~UInt32(shiftKey))
+                    : (settingsCombo.carbonModifiers | UInt32(shiftKey))
+                let altCombo = HotkeyCombination(keyCode: settingsCombo.keyCode, carbonModifiers: altModifiers)
+                registerCombination(altCombo, action: .settings, name: "settings alt", registeredCombos: &registeredCombos)
             }
         } else {
-            NativeBolabolLog.models.warning(
-                "Failed to parse settings hotkey: \(settings, privacy: .public)"
-            )
+            NativeBolabolLog.models.warning("Failed to parse settings hotkey: \(settings, privacy: .public)")
+        }
+    }
+
+    private func registerCombination(
+        _ combo: HotkeyCombination,
+        action: CarbonAction,
+        name: String,
+        registeredCombos: inout Set<HotkeyComboKey>
+    ) {
+        let comboKey = HotkeyComboKey(keyCode: combo.keyCode, modifiers: combo.carbonModifiers)
+        guard !registeredCombos.contains(comboKey) else {
+            NativeBolabolLog.models.warning("Skipped hotkey \(name, privacy: .public): duplicates an already-registered hotkey")
+            return
+        }
+
+        let hotKeyIDNumber = nextCarbonID
+        nextCarbonID &+= 1
+        currentCarbonActionMap[hotKeyIDNumber] = action
+
+        let hotKeyID = EventHotKeyID(signature: OSType("NSSK".fourCharCode), id: hotKeyIDNumber)
+        var hotKeyRef: EventHotKeyRef?
+        let status = RegisterEventHotKey(
+            combo.keyCode,
+            combo.carbonModifiers,
+            hotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &hotKeyRef
+        )
+
+        if status == noErr, let hotKeyRef {
+            activeHotKeyRefs.append(hotKeyRef)
+            registeredCombos.insert(comboKey)
+            NativeBolabolLog.models.info("Registered \(name, privacy: .public) keyCode=\(combo.keyCode) modifiers=\(combo.carbonModifiers) ID=\(hotKeyIDNumber)")
+        } else {
+            currentCarbonActionMap.removeValue(forKey: hotKeyIDNumber)
+            NativeBolabolLog.models.warning("Failed to register \(name, privacy: .public): \(status)")
         }
     }
 
     private func unregister() {
-        if let primaryHotKeyRef {
-            UnregisterEventHotKey(primaryHotKeyRef)
+        for ref in activeHotKeyRefs {
+            UnregisterEventHotKey(ref)
         }
-        if let secondaryHotKeyRef {
-            UnregisterEventHotKey(secondaryHotKeyRef)
-        }
-        if let tertiaryHotKeyRef {
-            UnregisterEventHotKey(tertiaryHotKeyRef)
-        }
-        if let settingsHotKeyRef {
-            UnregisterEventHotKey(settingsHotKeyRef)
-        }
-        if let settingsAltHotKeyRef {
-            UnregisterEventHotKey(settingsAltHotKeyRef)
-        }
-        primaryHotKeyRef = nil
-        secondaryHotKeyRef = nil
-        tertiaryHotKeyRef = nil
-        settingsHotKeyRef = nil
-        settingsAltHotKeyRef = nil
+        activeHotKeyRefs.removeAll()
     }
 
     private func installLocalMonitor() {
         localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self else { return event }
+            guard let self, !self.isSuspended else { return event }
             if self.isSettingsHotkeyEvent(event) {
-                Task { @MainActor in
+                let capturedGeneration = self.currentGeneration
+                Task { @MainActor [weak self] in
+                    guard let self, !self.isSuspended, self.currentGeneration == capturedGeneration else { return }
                     NotificationCenter.default.post(name: .nativeBolabolSettingsHotkeyTriggered, object: nil)
                 }
                 return nil
@@ -248,13 +542,28 @@ final class GlobalHotkeyManager {
         }
     }
 
+    private func removeLocalMonitor() {
+        if let localEventMonitor {
+            NSEvent.removeMonitor(localEventMonitor)
+            self.localEventMonitor = nil
+        }
+    }
+
+    private func removeEventHandler() {
+        if let eventHandlerRef {
+            RemoveEventHandler(eventHandlerRef)
+            self.eventHandlerRef = nil
+        }
+    }
+
     private func isSettingsHotkeyEvent(_ event: NSEvent) -> Bool {
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        guard !isSuspended else { return false }
 
         // Parse current settings hotkey configuration
         guard let combo = try? HotkeyCombination(currentSettingsHotkey) else {
             return false
         }
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
         // For Tilde/Grave key (keyCode 50), match Option modifier regardless of Shift across layout variants (US, Russian, ISO)
         if combo.keyCode == UInt32(kVK_ANSI_Grave) {
@@ -309,7 +618,7 @@ final class GlobalHotkeyManager {
         ]
         let status = InstallEventHandler(
             GetApplicationEventTarget(),
-            { _, eventRef, _ -> OSStatus in
+            { _, eventRef, userData -> OSStatus in
                 var hotKeyID = EventHotKeyID()
                 GetEventParameter(
                     eventRef,
@@ -323,30 +632,31 @@ final class GlobalHotkeyManager {
 
                 let eventKind = GetEventKind(eventRef)
 
-                if hotKeyID.signature == OSType("NSSK".fourCharCode) {
-                    if hotKeyID.id == 1 {
-                        Task { @MainActor in
-                            if eventKind == UInt32(kEventHotKeyPressed) {
-                                NotificationCenter.default.post(name: .nativeBolabolHotkeyKeyDown, object: nil)
-                                NotificationCenter.default.post(name: .nativeBolabolHotkeyTriggered, object: nil)
-                            } else if eventKind == UInt32(kEventHotKeyReleased) {
-                                NotificationCenter.default.post(name: .nativeBolabolHotkeyKeyUp, object: nil)
+                if hotKeyID.signature == OSType("NSSK".fourCharCode), let userData {
+                    let manager = Unmanaged<GlobalHotkeyManager>.fromOpaque(userData).takeUnretainedValue()
+                    let isPress = (eventKind == UInt32(kEventHotKeyPressed))
+                    let capturedGeneration = manager.currentGeneration
+                    Task { @MainActor [weak manager] in
+                        guard let manager, !manager.isSuspended, manager.currentGeneration == capturedGeneration else { return }
+                        guard let action = manager.currentCarbonActionMap[hotKeyID.id] else { return }
+                        switch action {
+                        case .primary:
+                            manager.handleCarbonPrimary(isPress: isPress, generation: capturedGeneration)
+                        case .secondary:
+                            if isPress {
+                                NativeBolabolLog.hotkey.info("Translation hotkey triggered")
+                                NotificationCenter.default.post(name: .nativeBolabolTargetHotkeyTriggered, object: nil)
                             }
-                        }
-                    } else if hotKeyID.id == 2 && eventKind == UInt32(kEventHotKeyPressed) {
-                        NativeBolabolLog.hotkey.info("Translation hotkey triggered (ID 2)")
-                        Task { @MainActor in
-                            NotificationCenter.default.post(name: .nativeBolabolTargetHotkeyTriggered, object: nil)
-                        }
-                    } else if hotKeyID.id == 3 && eventKind == UInt32(kEventHotKeyPressed) {
-                        NativeBolabolLog.hotkey.info("Quick translation hotkey triggered (ID 3)")
-                        Task { @MainActor in
-                            NotificationCenter.default.post(name: .nativeBolabolQuickTranslationHotkeyTriggered, object: nil)
-                        }
-                    } else if hotKeyID.id == 4 && eventKind == UInt32(kEventHotKeyPressed) {
-                        NativeBolabolLog.models.info("Settings hotkey triggered (ID 4)")
-                        Task { @MainActor in
-                            NotificationCenter.default.post(name: .nativeBolabolSettingsHotkeyTriggered, object: nil)
+                        case .tertiary:
+                            if isPress {
+                                NativeBolabolLog.hotkey.info("Quick translation hotkey triggered")
+                                NotificationCenter.default.post(name: .nativeBolabolQuickTranslationHotkeyTriggered, object: nil)
+                            }
+                        case .settings:
+                            if isPress {
+                                NativeBolabolLog.models.info("Settings hotkey triggered")
+                                NotificationCenter.default.post(name: .nativeBolabolSettingsHotkeyTriggered, object: nil)
+                            }
                         }
                     }
                 }
@@ -354,7 +664,7 @@ final class GlobalHotkeyManager {
             },
             2,
             &eventTypes,
-            nil,
+            Unmanaged.passUnretained(self).toOpaque(),
             &eventHandlerRef
         )
 
@@ -395,9 +705,7 @@ private struct HotkeyCombination {
             }
         }
 
-        let key = keyPart.uppercased()
-
-        guard let keyCode = Self.keyCodes[key] ?? Self.keyCodes[keyPart] else {
+        guard let keyCode = HotkeyKeyCatalog.keyCode(forToken: keyPart) else {
             throw GlobalHotkeyError.invalidHotkey(string)
         }
 
@@ -405,91 +713,7 @@ private struct HotkeyCombination {
         self.carbonModifiers = modifiers
     }
 
-    private static let keyCodes: [String: Int] = [
-        "A": kVK_ANSI_A,
-        "B": kVK_ANSI_B,
-        "C": kVK_ANSI_C,
-        "D": kVK_ANSI_D,
-        "E": kVK_ANSI_E,
-        "F": kVK_ANSI_F,
-        "G": kVK_ANSI_G,
-        "H": kVK_ANSI_H,
-        "I": kVK_ANSI_I,
-        "J": kVK_ANSI_J,
-        "K": kVK_ANSI_K,
-        "L": kVK_ANSI_L,
-        "M": kVK_ANSI_M,
-        "N": kVK_ANSI_N,
-        "O": kVK_ANSI_O,
-        "P": kVK_ANSI_P,
-        "Q": kVK_ANSI_Q,
-        "R": kVK_ANSI_R,
-        "S": kVK_ANSI_S,
-        "T": kVK_ANSI_T,
-        "U": kVK_ANSI_U,
-        "V": kVK_ANSI_V,
-        "W": kVK_ANSI_W,
-        "X": kVK_ANSI_X,
-        "Y": kVK_ANSI_Y,
-        "Z": kVK_ANSI_Z,
-        "0": kVK_ANSI_0,
-        "1": kVK_ANSI_1,
-        "2": kVK_ANSI_2,
-        "3": kVK_ANSI_3,
-        "4": kVK_ANSI_4,
-        "5": kVK_ANSI_5,
-        "6": kVK_ANSI_6,
-        "7": kVK_ANSI_7,
-        "8": kVK_ANSI_8,
-        "9": kVK_ANSI_9,
-        "F1": kVK_F1, "F2": kVK_F2, "F3": kVK_F3, "F4": kVK_F4,
-        "F5": kVK_F5, "F6": kVK_F6, "F7": kVK_F7, "F8": kVK_F8,
-        "F9": kVK_F9, "F10": kVK_F10, "F11": kVK_F11, "F12": kVK_F12,
-        "SPACE": kVK_Space,
-        "RETURN": kVK_Return,
-        "ESCAPE": kVK_Escape,
-        "TAB": kVK_Tab,
-        "DELETE": kVK_Delete,
-        "BACKSPACE": kVK_Delete,
-        "~": kVK_ANSI_Grave,
-        "`": kVK_ANSI_Grave,
-        "TILDE": kVK_ANSI_Grave,
-        "GRAVE": kVK_ANSI_Grave,
-        "BACKTICK": kVK_ANSI_Grave,
-        "Ё": kVK_ANSI_Grave, "ё": kVK_ANSI_Grave,
-        "Й": kVK_ANSI_Q, "й": kVK_ANSI_Q,
-        "Ц": kVK_ANSI_W, "ц": kVK_ANSI_W,
-        "У": kVK_ANSI_E, "у": kVK_ANSI_E,
-        "К": kVK_ANSI_R, "к": kVK_ANSI_R,
-        "Е": kVK_ANSI_T, "е": kVK_ANSI_T,
-        "Н": kVK_ANSI_Y, "н": kVK_ANSI_Y,
-        "Г": kVK_ANSI_U, "г": kVK_ANSI_U,
-        "Ш": kVK_ANSI_I, "ш": kVK_ANSI_I,
-        "Щ": kVK_ANSI_O, "щ": kVK_ANSI_O,
-        "З": kVK_ANSI_P, "з": kVK_ANSI_P,
-        "Х": kVK_ANSI_LeftBracket, "х": kVK_ANSI_LeftBracket,
-        "Ъ": kVK_ANSI_RightBracket, "ъ": kVK_ANSI_RightBracket,
-        "Ф": kVK_ANSI_A, "ф": kVK_ANSI_A,
-        "Ы": kVK_ANSI_S, "ы": kVK_ANSI_S,
-        "В": kVK_ANSI_D, "в": kVK_ANSI_D,
-        "А": kVK_ANSI_F, "а": kVK_ANSI_F,
-        "П": kVK_ANSI_G, "п": kVK_ANSI_G,
-        "Р": kVK_ANSI_H, "р": kVK_ANSI_H,
-        "О": kVK_ANSI_J, "о": kVK_ANSI_J,
-        "Л": kVK_ANSI_K, "л": kVK_ANSI_K,
-        "Д": kVK_ANSI_L, "д": kVK_ANSI_L,
-        "Ж": kVK_ANSI_Semicolon, "ж": kVK_ANSI_Semicolon,
-        "Э": kVK_ANSI_Quote, "э": kVK_ANSI_Quote,
-        "Я": kVK_ANSI_Z, "я": kVK_ANSI_Z,
-        "Ч": kVK_ANSI_X, "ч": kVK_ANSI_X,
-        "С": kVK_ANSI_C, "с": kVK_ANSI_C,
-        "М": kVK_ANSI_V, "м": kVK_ANSI_V,
-        "И": kVK_ANSI_B, "и": kVK_ANSI_B,
-        "Т": kVK_ANSI_N, "т": kVK_ANSI_N,
-        "Ь": kVK_ANSI_M, "ь": kVK_ANSI_M,
-        "Б": kVK_ANSI_Comma, "б": kVK_ANSI_Comma,
-        "Ю": kVK_ANSI_Period, "ю": kVK_ANSI_Period
-    ]
+    // Supported key codes and aliases are provided centrally by HotkeyKeyCatalog.
 }
 
 /// Lightweight hashable key for tracking which Carbon hotkey combos are already registered.

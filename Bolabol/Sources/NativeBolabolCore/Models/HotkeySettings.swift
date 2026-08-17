@@ -143,7 +143,14 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
     public static let defaultSecondaryHotkey = "Option+1"
     public static let defaultTertiaryHotkey = "Option+2"
     public static let defaultSettingsHotkey = "Option+~"
+    public static let rightOptionHotkey = "RightOption"
+    public static let rightCommandHotkey = "RightCommand"
 
+    public enum PrimaryHotkeyKind: Equatable, Sendable {
+        case combination(String)
+        case rightOption
+        case rightCommand
+    }
     /// Unicode Option key glyph used in macOS UI (⌥).
     public static let optionSymbol = "⌥"
 
@@ -165,6 +172,9 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         get { humorLevel }
         set { humorLevel = newValue }
     }
+    public var primaryHotkeyKind: PrimaryHotkeyKind {
+        Self.classifyPrimaryHotkey(hotkey)
+    }
 
     public init(
         enabled: Bool = false,
@@ -183,7 +193,7 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         self.target = target
         self.mode = mode
         self.holdToRecord = holdToRecord
-        self.hotkey = Self.normalizeMacModifiers(hotkey)
+        self.hotkey = Self.normalizePrimaryHotkey(hotkey)
         self.secondaryHotkey = Self.normalizeMacModifiers(secondaryHotkey)
         self.tertiaryHotkey = Self.normalizeMacModifiers(tertiaryHotkey)
         self.settingsHotkey = Self.normalizeMacModifiers(settingsHotkey)
@@ -214,7 +224,7 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         self.target = try container.decode(HotkeyTarget.self, forKey: .target)
         self.mode = try container.decode(HotkeyOutputMode.self, forKey: .mode)
         self.holdToRecord = try container.decodeIfPresent(Bool.self, forKey: .holdToRecord) ?? false
-        self.hotkey = Self.normalizeMacModifiers(try container.decode(String.self, forKey: .hotkey))
+        self.hotkey = Self.normalizePrimaryHotkey(try container.decode(String.self, forKey: .hotkey))
         self.secondaryHotkey = Self.normalizeMacModifiers(
             try container.decodeIfPresent(String.self, forKey: .secondaryHotkey) ?? Self.defaultSecondaryHotkey
         )
@@ -239,7 +249,7 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         try container.encode(target, forKey: .target)
         try container.encode(mode, forKey: .mode)
         try container.encode(holdToRecord, forKey: .holdToRecord)
-        try container.encode(Self.normalizeMacModifiers(hotkey), forKey: .hotkey)
+        try container.encode(Self.normalizePrimaryHotkey(hotkey), forKey: .hotkey)
         try container.encode(Self.normalizeMacModifiers(secondaryHotkey), forKey: .secondaryHotkey)
         try container.encode(Self.normalizeMacModifiers(tertiaryHotkey), forKey: .tertiaryHotkey)
         try container.encode(Self.normalizeMacModifiers(settingsHotkey), forKey: .settingsHotkey)
@@ -284,7 +294,47 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
         "Ю": ".", "ю": "."
     ]
 
-    /// Canonical Mac wording: `Alt` → `Option` (parser still accepts both) and layout conversion.
+    /// Primary-only normalization for right-modifier sentinels and combination strings.
+    public static func normalizePrimaryHotkey(_ hotkey: String) -> String {
+        let trimmed = hotkey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lower = trimmed.lowercased()
+            .replacingOccurrences(of: "-", with: " ")
+            .replacingOccurrences(of: "_", with: " ")
+        let tokens = lower.split(separator: " ").map(String.init)
+        let joined = tokens.joined()
+
+        if joined == "rightoption" || joined == "rightalt" || joined == "rightopt" {
+            return rightOptionHotkey
+        }
+        if joined == "rightcommand" || joined == "rightcmd" {
+            return rightCommandHotkey
+        }
+
+        return normalizeMacModifiers(hotkey)
+    }
+
+    /// Classifies the primary hotkey into combination or physical right modifier.
+    public static func classifyPrimaryHotkey(_ hotkey: String) -> PrimaryHotkeyKind {
+        let normalized = normalizePrimaryHotkey(hotkey)
+        if normalized == rightOptionHotkey {
+            return .rightOption
+        }
+        if normalized == rightCommandHotkey {
+            return .rightCommand
+        }
+        return .combination(normalized)
+    }
+
+    /// Returns true when the primary hotkey is configured as a single right-modifier key.
+    public static func isRightModifierOnlyPrimaryHotkey(_ hotkey: String) -> Bool {
+        switch classifyPrimaryHotkey(hotkey) {
+        case .rightOption, .rightCommand:
+            return true
+        case .combination:
+            return false
+        }
+    }
+
     public static func normalizeMacModifiers(_ hotkey: String) -> String {
         let parts = hotkey
             .split(separator: "+", omittingEmptySubsequences: false)
@@ -312,21 +362,28 @@ public struct HotkeySettings: Codable, Equatable, Sendable {
 
     /// Compact macOS-style display, e.g. `Option+S` → `⌥S`, `Command+Option+S` → `⌘⌥S`.
     public static func displayString(for hotkey: String) -> String {
-        let parts = normalizeMacModifiers(hotkey)
-            .split(separator: "+")
-            .map(String.init)
-        guard let key = parts.last, parts.count > 1 else {
-            return normalizeMacModifiers(hotkey)
-        }
-        let symbols = parts.dropLast().map { part -> String in
-            switch part {
-            case "Option": return optionSymbol
-            case "Command": return "⌘"
-            case "Control": return "⌃"
-            case "Shift": return "⇧"
-            default: return part
+        switch classifyPrimaryHotkey(hotkey) {
+        case .rightOption:
+            return "Right Option (⌥)"
+        case .rightCommand:
+            return "Right Command (⌘)"
+        case .combination(let normalized):
+            let parts = normalized
+                .split(separator: "+")
+                .map(String.init)
+            guard let key = parts.last, parts.count > 1 else {
+                return normalized
             }
-        }.joined()
-        return symbols + key
+            let symbols = parts.dropLast().map { part -> String in
+                switch part {
+                case "Option": return optionSymbol
+                case "Command": return "⌘"
+                case "Control": return "⌃"
+                case "Shift": return "⇧"
+                default: return part
+                }
+            }.joined()
+            return symbols + key
+        }
     }
 }

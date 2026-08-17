@@ -39,20 +39,34 @@ actor GigaAMCoreMLEngine: TranscriptionEngine {
 
         try await ensureLoaded()
 
-        let samples = try await loadAudioSamples(from: audioFileURL)
+        let (samples, sampleRate) = try await loadAudioSamples(from: audioFileURL)
         guard !samples.isEmpty else {
             throw GigaAMTranscriptionError.emptyAudio
         }
 
-        let maxChunkSamples = Int(model.capabilities.maxChunkSeconds * 16_000.0)
-        let chunks = Self.chunk(samples: samples, maxSamples: maxChunkSamples)
+        let rawMaxChunkSeconds = model.capabilities.maxChunkSeconds
+        let effectiveMaxChunkSeconds: Double = (rawMaxChunkSeconds.isFinite && rawMaxChunkSeconds > 0)
+            ? min(rawMaxChunkSeconds, 30.0)
+            : 30.0
+        let effectiveSampleRate: Double = sampleRate > 0 ? Double(sampleRate) : 16_000.0
+
+        let chunkerConfig = GigaAMSpeechAwareChunker.Configuration(
+            sampleRate: effectiveSampleRate,
+            maxChunkSeconds: effectiveMaxChunkSeconds
+        )
+        let chunks = GigaAMSpeechAwareChunker.plan(samples: samples, configuration: chunkerConfig)
 
         var allTokens: [Int] = []
         let startedAt = Date()
 
-        for chunkSamples in chunks {
-            let tokens = try await decodeChunk(chunkSamples)
-            allTokens.append(contentsOf: tokens)
+        for chunk in chunks {
+            let chunkSlice = samples[chunk.inferenceRange]
+            let tokens = try await decodeChunk(chunkSlice)
+            GigaAMTokenOverlapMerger.merge(
+                into: &allTokens,
+                incoming: tokens,
+                hasLeadingOverlap: chunk.hasLeadingOverlap
+            )
         }
 
         let elapsed = Date().timeIntervalSince(startedAt)
@@ -80,7 +94,7 @@ actor GigaAMCoreMLEngine: TranscriptionEngine {
 
     // MARK: - Audio Loading
 
-    private func loadAudioSamples(from url: URL) async throws -> [Float] {
+    private func loadAudioSamples(from url: URL) async throws -> (samples: [Float], sampleRate: Int) {
         let tempWAV = FileManager.default.temporaryDirectory
             .appendingPathComponent("bolabol-gigaam-\(UUID().uuidString).wav")
         defer { try? FileManager.default.removeItem(at: tempWAV) }
@@ -97,7 +111,7 @@ actor GigaAMCoreMLEngine: TranscriptionEngine {
         return try readFloat32WAV(at: tempWAV)
     }
 
-    private func readFloat32WAV(at url: URL) throws -> [Float] {
+    private func readFloat32WAV(at url: URL) throws -> (samples: [Float], sampleRate: Int) {
         let data = try Data(contentsOf: url)
         let bytes = [UInt8](data)
         guard bytes.count > 44,
@@ -154,7 +168,7 @@ actor GigaAMCoreMLEngine: TranscriptionEngine {
             samples[f] = Float(acc) / Float(channels) / 32768.0
         }
 
-        return samples
+        return (samples, sampleRate)
     }
 
     // MARK: - Language Resolution
@@ -179,24 +193,23 @@ actor GigaAMCoreMLEngine: TranscriptionEngine {
         return language
     }
 
-    // MARK: - Chunking
-
-    // Keep chunking as a pure seam so audio-window boundaries remain testable.
-    nonisolated internal static func chunk(samples: [Float], maxSamples: Int) -> [[Float]] {
-        guard samples.count > maxSamples else { return [samples] }
-        var chunks: [[Float]] = []
-        var start = 0
-        while start < samples.count {
-            let end = min(start + maxSamples, samples.count)
-            chunks.append(Array(samples[start..<end]))
-            start = end
-        }
-        return chunks
-    }
+    // MARK: - Speech-Aware Segmentation & Overlap Merge
+    //
+    // ADR-023: GigaAM operates with a strict 30-second window capacity (480,000 samples at 16 kHz).
+    // Mechanical slicing at arbitrary 30-second boundaries can bisect active speech mid-utterance,
+    // losing or corrupting Russian tokens across window seams.
+    //
+    // Audio segmentation uses a deterministic speech-activity hierarchy:
+    //   1. Non-speech pause (>= 240 ms silence) nearest the 27 s target.
+    //   2. Reliable 200 ms low-energy window.
+    //   3. Hard 30 s boundary fallback with 500 ms leading overlap on the subsequent chunk.
+    //
+    // Token deduplication (2-8 token suffix/prefix match) is applied only across hard-overlap boundaries,
+    // while pause and low-energy boundaries concatenate without token modification.
 
     // MARK: - RNNT Decode
 
-    private func decodeChunk(_ samples: [Float]) async throws -> [Int] {
+    private func decodeChunk(_ samples: ArraySlice<Float>) async throws -> [Int] {
         guard let state = state else {
             throw GigaAMTranscriptionError.modelNotLoaded
         }
@@ -420,7 +433,7 @@ private final class GigaAMMelFrontend {
         vDSP_DFT_DestroySetup(dftSetup)
     }
 
-    func extract(_ samples: [Float]) throws -> (features: MLMultiArray, validFrames: Int, processedSamples: Int) {
+    func extract(_ samples: ArraySlice<Float>) throws -> (features: MLMultiArray, validFrames: Int, processedSamples: Int) {
         guard !samples.isEmpty else { throw GigaAMTranscriptionError.emptyAudio }
 
         let processedSamples = min(samples.count, windowSamples)
@@ -430,8 +443,7 @@ private final class GigaAMMelFrontend {
 
         let featureSamples = (windowFrames - 1) * hopLength + nFFT
         var padded = [Float](repeating: 0, count: featureSamples)
-        padded.replaceSubrange(0..<processedSamples, with: samples[0..<processedSamples])
-
+        padded.replaceSubrange(0..<processedSamples, with: samples.prefix(processedSamples))
         let validFrames = min(windowFrames, ((processedSamples - nFFT) / hopLength) + 1)
         let features = try MLMultiArray(
             shape: [1, NSNumber(value: melBins), NSNumber(value: windowFrames)],

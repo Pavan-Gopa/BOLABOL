@@ -2,12 +2,22 @@ import Combine
 import Foundation
 import NativeBolabolCore
 
+/// Manager protocol seam for hotkey registration lifecycle and suspension.
+@MainActor
+protocol HotkeyManaging: AnyObject {
+    func apply(settings: HotkeySettings)
+    func suspendForShortcutCapture()
+    func resumeAfterShortcutCapture()
+    func teardown()
+}
+
 @MainActor
 final class HotkeySettingsStore: ObservableObject {
     private static let settingsDefaultsKey = "hotkey.settings"
 
     private let userDefaults: UserDefaults
-    private let hotkeyManager: GlobalHotkeyManager
+    private let hotkeyManager: any HotkeyManaging
+    private var currentCaptureOwner: UUID?
 
     @Published var settings: HotkeySettings {
         didSet {
@@ -18,7 +28,7 @@ final class HotkeySettingsStore: ObservableObject {
 
     init(
         userDefaults: UserDefaults = .standard,
-        hotkeyManager: GlobalHotkeyManager = GlobalHotkeyManager()
+        hotkeyManager: any HotkeyManaging = GlobalHotkeyManager()
     ) {
         self.userDefaults = userDefaults
         self.hotkeyManager = hotkeyManager
@@ -28,6 +38,26 @@ final class HotkeySettingsStore: ObservableObject {
 
     static func live() -> HotkeySettingsStore {
         HotkeySettingsStore()
+    }
+
+    /// Synchronously suspends app hotkey ingress before first-responder activation for the given owner.
+    /// Returns true only when capture is successfully acquired or already owned by the same owner.
+    /// Rejects any different/foreign capture owner while active.
+    func beginShortcutCapture(owner: UUID) -> Bool {
+        if let current = currentCaptureOwner {
+            return current == owner
+        }
+        currentCaptureOwner = owner
+        hotkeyManager.suspendForShortcutCapture()
+        return true
+    }
+
+    /// Resumes app hotkey registrations once after capture finishes or cancels for the current owner.
+    /// Foreign or stale owners cannot resume or overwrite.
+    func endShortcutCapture(owner: UUID) {
+        guard currentCaptureOwner == owner else { return }
+        currentCaptureOwner = nil
+        hotkeyManager.resumeAfterShortcutCapture()
     }
 
     /// Canonical speech-language pair (plan §3.3), read from the shared

@@ -479,18 +479,68 @@ private func inputLevel(for buffer: AVAudioPCMBuffer) -> Float {
     return min(1, sqrt(sum / Float(frameCount * channelCount)))
 }
 
-private func frequencyBands(for buffer: AVAudioPCMBuffer, bandCount: Int = 40) -> [Float] {
+/// Computes normalized, activity-gated frequency band magnitudes from an input audio buffer.
+///
+/// Visibility is module-internal to allow direct regression testing of spectrum invariants
+/// across supported and atypical microphone sample rates without exposing public API.
+///
+/// Invariants:
+/// - Returns deterministic safe fallbacks for degenerate parameters (`[]` when `bandCount <= 0`,
+///   baseline repeated `0.08` for unusable buffers).
+/// - Effective frequency analysis is bounded by the minimum frequency (60 Hz) and the minimum of
+///   10 kHz, Nyquist (`sampleRate / 2`), and the highest frequency represented by the DFT bin
+///   analysis cap (`Float(binCount) * binWidth`).
+/// - Every magnitude slice is strictly bounded: `1 <= startBin < endBin <= magnitudes.count`.
+/// - Output values are guaranteed finite and bounded in `[0.02, 1.0]`.
+internal func frequencyBands(for buffer: AVAudioPCMBuffer, bandCount: Int = 40) -> [Float] {
+    guard bandCount > 0 else {
+        return []
+    }
+
     guard let channelData = buffer.floatChannelData else {
         return Array(repeating: 0.08, count: bandCount)
     }
 
     let sampleRate = Float(buffer.format.sampleRate)
-    let frameCount = min(Int(buffer.frameLength), 768)
-    guard sampleRate > 0, frameCount >= 64 else {
+    guard sampleRate.isFinite, sampleRate > 0 else {
         return Array(repeating: 0.08, count: bandCount)
     }
 
     let channelCount = Int(buffer.format.channelCount)
+    guard channelCount > 0 else {
+        return Array(repeating: 0.08, count: bandCount)
+    }
+
+    let frameCount = min(Int(buffer.frameLength), 768)
+    guard frameCount >= 64 else {
+        return Array(repeating: 0.08, count: bandCount)
+    }
+
+    let binCount = min(frameCount / 2, 196)
+    guard binCount >= 2 else {
+        return Array(repeating: 0.08, count: bandCount)
+    }
+
+    let binWidth = sampleRate / Float(frameCount)
+    guard binWidth.isFinite, binWidth > 0 else {
+        return Array(repeating: 0.08, count: bandCount)
+    }
+
+    let nyquist = sampleRate / 2
+    let minFrequency: Float = 60
+    let maxRepresentableFrequency = Float(binCount) * binWidth
+    let maxFrequency = min(10_000, min(nyquist, maxRepresentableFrequency))
+
+    guard maxFrequency.isFinite, maxFrequency > minFrequency else {
+        return Array(repeating: 0.08, count: bandCount)
+    }
+
+    let logMin = log10(minFrequency)
+    let logMax = log10(maxFrequency)
+    guard logMin.isFinite, logMax.isFinite, logMax > logMin else {
+        return Array(repeating: 0.08, count: bandCount)
+    }
+
     var monoSamples = Array(repeating: Float(0), count: frameCount)
     for index in 0..<frameCount {
         var averagedSample: Float = 0
@@ -515,7 +565,6 @@ private func frequencyBands(for buffer: AVAudioPCMBuffer, bandCount: Int = 40) -
     }
     let rootMeanSquare = sqrt(squareSum / Float(frameCount))
 
-    let binCount = min(frameCount / 2, 196)
     var magnitudes = Array(repeating: Float(0), count: binCount)
     for index in 0..<binCount {
         let omega = 2 * Float.pi * Float(index) / Float(frameCount)
@@ -532,22 +581,20 @@ private func frequencyBands(for buffer: AVAudioPCMBuffer, bandCount: Int = 40) -
         magnitudes[index] = sqrt(real * real + imaginary * imaginary) / Float(frameCount)
     }
 
-    let nyquist = sampleRate / 2
-    let minFrequency: Float = 60
-    let maxFrequency = min(10_000, nyquist)
-    let logMin = log10(minFrequency)
-    let logMax = log10(maxFrequency)
-    let binWidth = sampleRate / Float(frameCount)
-
+    // Map logarithmic frequency intervals to half-open bin ranges `[startBin, endBin)`.
+    // Invariants:
+    // 1. `startBin` is clamped to `[1, binCount - 1]` to skip DC (bin 0) and leave room for `endBin`.
+    // 2. `endBin` is clamped to `[startBin + 1, binCount]` to guarantee a non-empty slice within `magnitudes.indices`.
     let rawBands: [Float] = (0..<bandCount).map { band in
         let startPosition = Float(band) / Float(bandCount)
         let endPosition = Float(band + 1) / Float(bandCount)
         let startFrequency = pow(10, logMin + (logMax - logMin) * startPosition)
         let endFrequency = pow(10, logMin + (logMax - logMin) * endPosition)
-        let startBin = max(1, Int(startFrequency / binWidth))
-        let endBin = min(binCount - 1, max(startBin + 1, Int(endFrequency / binWidth)))
+        let startBin = max(1, min(binCount - 1, Int(startFrequency / binWidth)))
+        let endBin = max(startBin + 1, min(binCount, Int(endFrequency / binWidth)))
         let slice = magnitudes[startBin..<endBin]
-        return slice.reduce(0, +) / Float(max(1, slice.count))
+        let averageMagnitude = slice.reduce(0, +) / Float(max(1, slice.count))
+        return averageMagnitude.isFinite ? averageMagnitude : 0
     }
 
     let activityInput = min(1, max(0, (rootMeanSquare - 0.0035) / 0.035))
@@ -555,7 +602,7 @@ private func frequencyBands(for buffer: AVAudioPCMBuffer, bandCount: Int = 40) -
     let activityGate = pow(activitySmooth, 0.70)
 
     return rawBands.enumerated().map { index, magnitude in
-        let progress = Float(index) / Float(max(1, bandCount - 1))
+        let progress = bandCount > 1 ? (Float(index) / Float(bandCount - 1)) : 0.0
         let highGain: Float = progress > 0.50 ? (1.0 + 1.35 * (progress - 0.50) / 0.50) : 1.0
         let absolute = min(1, log1p(magnitude * 150 * highGain) / log1p(18))
         
@@ -570,6 +617,7 @@ private func frequencyBands(for buffer: AVAudioPCMBuffer, bandCount: Int = 40) -
         }
 
         let emphasized = absolute * frequencyWeight * activityGate
+        guard emphasized.isFinite else { return 0.02 }
         return max(0.02, min(1, emphasized))
     }
 }

@@ -686,16 +686,21 @@ Main has built/opened the fresh app, and no Reviewer or Tester has run yet.
 **Source of truth:** PRD §7.1, §19–20 Slice 9, §22  
 **Target files (sketch):**
 - `Sources/VaniScript/Services/PDFDocumentImporter.swift`
+- `Sources/VaniScriptCore/ProjectArchive.swift`
+- `Sources/VaniScriptCore/ProjectBundleImporter.swift`
+- `Sources/VaniScript/Stores/WorkflowStore.swift`
+- `Sources/VaniScript/Views/ProjectSidebarView.swift`
 - applicable extra importers and `Tests/` / `QA/` paths
-
 **Do:**
-- [ ] TXT/Markdown/RTF as structural import with an honest accuracy badge
-- [ ] Text-layer PDF as reconstruction; scanned PDF/OCR stays an explicit later stage
-- [ ] Security limits, cancellation, and large-document tests
-- [ ] Full media regression: WhisperKit, cloud transcription, local MLX translation
-- [x] Preserve explicit source foreground colors through rich import, strict translation, attributed Review editing, persistence, and rich export; keep plain formats honestly plain
-- [x] Replace Light-mode-invisible chrome across Upload, Config, Processing, Review, Export, Settings, and sidebars with the existing semantic dynamic-color system
-
+- [x] TXT/Markdown/RTF as structural import with an honest accuracy badge
+- [x] Text-layer PDF as reconstruction; scanned PDF/OCR stays an explicit later stage
+- [x] Security limits, cancellation, and large-document tests
+- [x] Full media regression: WhisperKit, cloud transcription, local MLX translation
+- [x] Import one or more `.vaniscript` files from Finder into the sidebar; use each archive's current filename as its persisted project display name while retaining source metadata
+- [x] Preserve explicit source foreground colors through rich import, strict translation, attributed Review editing, persistence, rich export; keep plain formats honestly plain
+- [ ] Replace Light-mode-invisible chrome across Upload, Config, Processing, Review, Export, Settings, and sidebars with the existing semantic dynamic-color system
+- [x] Make proofreading highlights visually prominent and legible in both appearances without changing persisted/exported document formatting
+- [x] Make project deletion conditional: remove clean imported projects without warning, protect dirty imported projects with save/discard/export choices, and keep destructive confirmation for new local projects
 **Out of scope:**
 - Vision OCR productization, `.docm`, pixel-identical page count
 
@@ -703,18 +708,337 @@ Main has built/opened the fresh app, and no Reviewer or Tester has run yet.
 
 ### Objective gates
 
-- [ ] `swift build`, `swift test`, and applicable QA suite exit 0
-- [ ] unavailable OCR/real-manuscript cases are recorded honestly
+- [x] `swift build`, `swift test`, and applicable QA suite exit 0
+- [x] unavailable OCR/real-manuscript cases are recorded honestly
 - [x] focused rich-color import/translation/edit/export tests pass
 - [x] focused dynamic Light/Dark contrast, disabled-state, and attributed-editor tests pass
 - [ ] fresh-app Light and Dark workflow smoke confirms readable text, icons, editors, errors, disabled controls, and action bars
-
+- [x] focused project-bundle import and multi-file Finder-drop tests pass
+- [x] focused project-deletion policy and action tests pass
 ### Judgment gates
 
 - [ ] no media-pipeline regression; no fabricated format support
 - [ ] provider output cannot invent trusted document formatting; old projects decode with automatic foreground color
 - [ ] every primary workflow surface remains readable and editable in both appearances
+- [ ] renamed project display names stay distinct from original document/media metadata across import, reopen, and re-export
 
 **Ready for review when:** automated gates and available smokes are complete.
 
 **Stop-gate:** Reviewer APPROVED + Tester qa_green; unavailable external assets remain explicit blockers, not fabricated success.
+
+---
+
+## S14 — Editorial workspace: AI selection retranslation
+
+**Goal:** One context-menu command in the translated Document Review pane: retranslate only the selected phrase through the configured AI provider with trusted structural source context, applying the result through the canonical rich-text mutation path (PRD §10, slice E4; scope change ADR-003).
+**Depends on:** S13 base (parked; rich-text identity verified in candidate 24)
+**Source of truth:** `docs/PRD-Editorial-Review-Workspace.md` §6, §10, §20, §24, §26.5, ADR-E3/E4; `AI_Workflow_Kit/docs/DECISIONS.md` ADR-003
+**Target files (sketch):**
+- `Sources/VaniScriptCore/DocumentSelectionTranslationContracts.swift` (new)
+- `Sources/VaniScriptCore/DocumentSelectionTranslationValidator.swift` (new)
+- `Sources/VaniScript/Services/DocumentSelectionTranslationEngine.swift` (new)
+- `Sources/VaniScriptCore/DocumentRichTextMutation.swift`
+- `Sources/VaniScript/Views/ReviewWorkspaceView.swift`
+- new tests under `Tests/VaniScriptCoreTests/` and `Tests/VaniScriptTests/`
+
+**Do:**
+- [x] Remove the rejected candidate 02 custom formatting UI: Formatting submenu, ⌘B/⌘I/⌘U trait shortcuts, Clear Manual Formatting item, and their View-layer plumbing; standard macOS system formatting stays untouched
+- [x] Keep the selection bridge (`DocumentTextSelectionSnapshot`/`DocumentTextFragment`, UTF-16, deterministic SHA-256 block hashes), the pure `DocumentRichTextMutation` replace path, and paste sanitization (INV-7) as the canonical foundation
+- [x] Add one context-menu item `Retranslate Selection with AI…` in the translated pane only; enabled only for a non-empty selection inside one logical `DocumentBlock`; disabled for empty or cross-block selections
+- [x] Build the structural request from trusted attributes: selected target fragment, small target prefix/suffix, mapped source spans (or the whole source block marked as block-level context); never resolve the selection by string search; never send the whole chunk
+- [x] Route through the existing `editingProviderID` provider selection used by document retranslation; strict `vaniscript.document.selection.v1` response: `replacementText` plain text only; AI never supplies blockID/spanID/styleKey/color/policy (INV-4)
+- [x] Validate the response (schema, operationID match, non-empty, protected-term preservation); verify the affected block hash is still current before applying; a stale response surfaces a review suggestion instead of overwriting newer manual edits
+- [x] Apply the validated replacement atomically through `DocumentRichTextMutation` with trusted formatting inheritance; provider/validation failure preserves the original selection and shows an honest error
+- [x] AI selection tests per PRD §26.5: request shape, source mapping, provider-failure preservation, schema/operationID rejection, stale-response gate, cross-block disabled, trusted formatting inheritance
+
+**Out of scope:**
+- Custom formatting commands and trait toggles (standard macOS formatting is sufficient — ADR-003), Replace Everywhere, freshness policy, autosave redesign, export overlay, media paths, source-pane `Translate Selection` (later slice)
+
+## Verification
+
+### Objective gates
+
+- [x] `swift build` exits 0
+- [x] focused AI-selection and mutation tests pass
+- [x] `swift test` exits 0
+
+### Judgment gates
+
+- [x] one canonical mutation path; AI replacement updates `DocumentState`, not just the screen string
+- [x] AI response cannot overwrite newer manual edits
+- [x] media review behavior unchanged
+
+**Ready for review when:** implementation is complete in scope and required Objective gates are green.
+
+**Stop-gate:** Reviewer APPROVED + Tester qa_green.
+
+---
+
+## S15 — Editorial workspace: freshness and transactional mutations
+
+**Goal:** Source edits mark dependent translations stale without deleting them; every programmatic edit becomes one atomic transaction with a single Undo and debounced autosave (PRD slice E2).  
+**Depends on:** S14  
+**Source of truth:** `docs/PRD-Editorial-Review-Workspace.md` §9, §14, §15, §23, §26.4, ADR-E5  
+**Target files (sketch):**
+- `Sources/VaniScriptCore/DocumentTranslationFreshness.swift` (new)
+- `Sources/VaniScript/Services/DocumentEditingCoordinator.swift` (new)
+- `Sources/VaniScript/Stores/WorkflowStore.swift`
+- `Sources/VaniScript/Views/ReviewWorkspaceView.swift`
+- new tests under `Tests/`
+
+**Do:**
+- [x] `TranslationFreshness` (missing/fresh/stale) derived from existing `sourceHash` comparison; no new mandatory state
+- [x] Source text edit recomputes `DocumentBlock.sourceHash`, keeps the previous `TranslatedBlock` intact, and moves previously approved chunks to `needsReview`
+- [x] Formatting-only source edit keeps the text hash and does not stale translations
+- [x] `DocumentEditingCoordinator` applies `DocumentEditTransaction` (before/after block patches) and registers inverse operations with `UndoManager`; one mutation = one Undo step
+- [x] Programmatic undo/redo mutate the canonical model through the coordinator, never `NSTextStorage` alone
+- [x] Debounced disk autosave (~300–500 ms) with mandatory flush on chunk change, focus loss, before export, project switch, termination, and after every transaction; save failure keeps in-memory edits and surfaces a persistent retryable error
+- [x] Review UI shows `Source changed — translation needs review` for stale blocks
+- [x] Freshness, transaction, undo, and save/reopen tests per PRD §26.4
+
+**Out of scope:**
+- Replace Everywhere, AI selection, export overlay, media paths
+
+## Verification
+
+### Objective gates
+
+- [x] `swift build` exits 0
+- [x] focused freshness/transaction/reopen tests pass
+- [x] `swift test` exits 0
+
+### Judgment gates
+
+- [x] no translation is ever deleted by a source edit
+- [x] model, editor, and persisted project agree after undo and reopen
+- [x] typing path does not save the project per keystroke
+
+**Ready for review when:** implementation is complete in scope and required Objective gates are green.
+
+**Stop-gate:** Reviewer APPROVED + Tester qa_green.
+
+---
+
+## S16 — Editorial workspace: Replace Everywhere
+
+**Goal:** Document-wide terminology replacement directly through canonical `DocumentState` — rich-text safe, protected-span aware, one atomic transaction with one Undo and one save (PRD slice E3).  
+**Depends on:** S15  
+**Source of truth:** `docs/PRD-Editorial-Review-Workspace.md` §11, §12, §25, §26.6, ADR-E2/E6  
+**Target files (sketch):**
+- `Sources/VaniScriptCore/DocumentFindReplaceEngine.swift` (new)
+- `Sources/VaniScript/Stores/WorkflowStore.swift`
+- `Sources/VaniScript/Views/ReviewWorkspaceView.swift`
+- new tests under `Tests/`
+
+**Do:**
+- [x] `DocumentFindReplaceEngine` searches `DocumentState.blocks` / `translationsByLanguage` (never aggregate `ChunkData` strings) with `DocumentTextMatch` + `DocumentSearchScope` (current source document, current translation language)
+- [x] Unicode-aware whole-word matching reuses the `GlossaryTextRewriter` `(?<![\p{L}\p{N}_])…(?![\p{L}\p{N}_])` boundary; case-sensitivity toggle; regex compiled once per operation
+- [x] Preview sheet: find/replace fields, scope label, whole word / case sensitive / skip protected / save-as-glossary options, found + skipped counts
+- [x] Matches applied back-to-front inside each block; replacement inherits the host span style; mixed-style matches never silently flatten; protected spans skipped and counted
+- [x] Replace All = one multi-block transaction, one Undo, one project save; 0 matches is a no-op
+- [x] Source-side replace recomputes hashes and stales touched translations without deleting them; translation-side replace keeps `sourceHash`, marks touched approved blocks `manuallyApproved`, leaves pending blocks pending
+- [x] Optional glossary entry created only when the checkbox is set and the source term is unambiguous; otherwise offer `Open Glossary…`
+- [x] Replace Everywhere tests per PRD §26.6
+
+**Out of scope:**
+- cross-document or all-languages scopes, AI selection, media `globalSearchAndReplace` changes
+
+## Verification
+
+### Objective gates
+
+- [x] `swift build` exits 0
+- [x] focused document find/replace tests pass
+- [x] `swift test` exits 0
+
+### Judgment gates
+
+- [x] media search/replace path unchanged
+- [x] no partial-failure mode: plan fully, then apply atomically
+- [x] rich formatting and protected spans survive mass replacement
+
+**Ready for review when:** implementation is complete in scope and required Objective gates are green.
+
+**Stop-gate:** Reviewer APPROVED + Tester qa_green.
+
+---
+
+## S17 — Editorial workspace: AI selected retranslation — test hardening
+
+**Goal:** Harden the already-shipped slice E4 (Retranslate Selection with AI, delivered in S14 by ADR-003) with a new deterministic test battery covering the validator, strict wire-contract decoding, and engine edge gates. No product-code changes (PRD §10, §26.5).  
+**Depends on:** S16  
+**Scope note:** the Human confirmed on 2026-08-16 that E4 works and must not be rebuilt; S17 is re-scoped by ADR-006 from feature work to test hardening of the existing implementation.
+**Source of truth:** `docs/PRD-Editorial-Review-Workspace.md` §10, §26.5; ADR-003, ADR-006  
+**Target files:**
+- `Tests/VaniScriptCoreTests/DocumentSelectionTranslationValidatorTests.swift` (new)
+- `Tests/VaniScriptTests/DocumentSelectionTranslationEngineTests.swift` (extend)
+
+**Do:**
+- [x] Validator error paths: `emptyReplacement` (empty + whitespace-only), `unicodeNFC` (decomposed input), `markdownFence`, `modelExplanation` (EN + RU wrapper prefixes)
+- [x] Validator warning paths: `lengthRatio` (< 0.1 and > 4.0, in-range silent), `surroundingTarget`; protected-token normalization (case/diacritic-insensitive) passes, tokens absent from selection and source context are ignored
+- [x] `validateJSON`: malformed JSON and unexpected fields → `invalidJSON` error; valid strict JSON proceeds to field validation
+- [x] Request strict decoding: missing required field → `missingField`, unexpected field → `unexpectedField`; camelCase wire keys (`operationId`, `sourceBlockId`) round-trip
+- [x] Engine pre-provider gates: `missingTargetHash`, `selectionChanged` (snapshot ≠ live text) without invoking the provider
+- [x] Engine stale gates: formatting-only change while AI runs → `staleResponse`; `currentTargetBlock` nil after provider → `missingTargetBlock`
+- [x] Engine response gates: non-JSON provider output → `invalidResponse`; `CancellationError` propagates unwrapped; validation warnings surface in `outcome.warningCodes` without blocking application
+- [x] Outcome contract: `replacementUTF16Length` counts UTF-16 units (surrogate pairs)
+- [x] Request context bounds: `targetPrefix`/`targetSuffix` content, 120-unit cap, empty at block edges
+- [x] Request enrichment: glossary per-language lookup + 64-entry cap; protected tokens from protect-policy spans deduplicated; `sourceBlockHash` fallback for empty hash; spanless target block synthesizes a selection span
+- [x] Multi-fragment same-style selection across two spans applies one replacement through the full `execute` path; `isEligible` positive case
+- [x] Prompt rendering carries the schema constant, the operation ID, and the no-markdown instruction
+
+**Out of scope:**
+- product-code changes (any bug found is reported to Main, not fixed in this step)
+- source-pane `Translate Selection`, polish commands, new provider UI
+
+## Verification
+
+### Objective gates
+
+- [x] `swift build` exits 0
+- [x] new focused validator/contract/engine suites pass without network access
+- [x] `swift test` exits 0 (baseline 775 tests / 101 suites plus the new tests)
+
+### Judgment gates
+
+- [x] every new test defends observable contract behavior, not plumbing or source text
+- [x] no existing test is weakened, deleted, or duplicated
+- [x] all new tests are deterministic and isolated (injected providers, no disk, no network)
+
+**Ready for review when:** all new tests are green and the full suite is green.
+
+**Stop-gate:** Human ACCEPTED + Reviewer APPROVED + Tester qa_green.
+
+---
+
+## S18 — Editorial workspace: export fidelity
+
+**Goal:** DOCX and PDF export reflect editor formatting, including explicit removal of inherited traits; plain formats stay honestly plain (PRD slice E5).  
+**Depends on:** S17  
+**Source of truth:** `docs/PRD-Editorial-Review-Workspace.md` §16, §26.7, ADR-E8  
+**Target files (sketch):**
+- `Sources/VaniScript/Services/DocumentExportWriters.swift`
+- `Sources/VaniScriptCore/DocumentModels.swift`
+- new/extended tests under `Tests/`
+
+**Do:**
+- [x] `EditorRunPropertyOverlay` over trusted source `w:rPr`: bold, italic, underline, strikethrough, superscript/subscript `w:vertAlign`, small caps, `w:color`
+- [x] Explicit trait removal writes `w:… w:val="0"` so user-disabled inherited formatting survives export
+- [x] PDF writer renders superscript, subscript, small caps, and mixed runs after user edits
+- [x] TXT/Markdown export contracts unchanged
+- [x] OOXML overlay tests per PRD §26.7, including unchanged unrelated package entries
+
+**Out of scope:**
+- font family/size overrides, paragraph layout, semantic Markdown export
+
+## Verification
+
+### Objective gates
+
+- [x] `swift build` exits 0
+- [x] focused DOCX overlay and PDF trait tests pass
+- [x] `swift test` exits 0
+
+### Judgment gates
+
+- [x] round-trip preserves imported formatting plus editor overrides
+- [x] no formatting is visual-only: what the editor shows, export writes
+
+**Ready for review when:** implementation is complete in scope and required Objective gates are green.
+
+**Stop-gate:** Reviewer APPROVED + Tester qa_green. **CLOSED 2026-08-17** (Human ACCEPTED + Reviewer APPROVED + Tester qa_green 837/106).
+
+---
+
+## S19 — Editorial workspace: hardening and destructive QA
+
+**Goal:** Prove the editorial workspace under abusive workloads and confirm zero media regression (PRD slice E6).  
+**Depends on:** S18  
+**Source of truth:** `docs/PRD-Editorial-Review-Workspace.md` §25, §26.8, §29  
+**Target files (sketch):**
+- applicable `Tests/` and `QA/` paths
+- performance-sensitive sources identified by the run
+
+**Do:**
+- [ ] Long-manuscript (tens of thousands of words) Replace Everywhere stays cheap: one regex compile, one pass, back-to-front application, one normalization, one save
+- [ ] Typing path serializes only touched blocks, never all paragraphs per keystroke
+- [ ] Rapid typing during an in-flight AI request cannot be overwritten by the response
+- [ ] Repeated Undo/Redo, save/reopen, multi-language archives, protected Sanskrit spans, hundreds of replacements
+- [ ] End-to-end editor sequence per PRD §26.8 (open DOCX → edit → format → replace → AI → undo/redo → reopen → export → verify runs)
+- [ ] Old media projects open unchanged; full media regression (WhisperKit, cloud transcription, local MLX translation)
+- [ ] Full suite and QA green
+
+**Out of scope:**
+- new features beyond E1–E5
+
+## Verification
+
+### Objective gates
+
+- [ ] `swift build`, `swift test`, and applicable QA suite exit 0
+- [ ] end-to-end editor sequence passes on a real DOCX fixture
+- [ ] media regression suite passes
+
+### Judgment gates
+
+- [ ] Definition of Done §29 satisfied end to end
+- [ ] no performance cliff on book-scale documents
+
+**Ready for review when:** automated gates and available smokes are complete.
+
+**Stop-gate:** Reviewer APPROVED + Tester qa_green; unavailable external assets remain explicit blockers, not fabricated success.
+
+---
+
+## S20 — Refresh Source on existing document projects
+
+**Goal:** Let the user replace the source file of an existing document project (path/name may change), keep translations whose block text still matches, refresh source formatting/colors from the new file, and offer retranslation only for changed material (ADR-007).
+**Depends on:** S15 freshness contracts (PRD §9), document import pipeline
+**Source of truth:** `AI_Workflow_Kit/docs/DECISIONS.md` ADR-007; `docs/PRD-Editorial-Review-Workspace.md` §9 freshness; existing `DocumentImportService` / `TranslationFreshness`
+**Target files (sketch):**
+- `Sources/VaniScriptCore/DocumentSourceRefresh.swift` (new pure merge helper) or equivalent under Core
+- `Sources/VaniScript/Stores/WorkflowStore.swift` (picker + apply + summary + retranslate-changed entry)
+- `Sources/VaniScript/Views/ProjectSidebarView.swift` and/or Review document chrome (Refresh Source action)
+- `Sources/VaniScript/Services/DocumentImportService.swift` only if a project-directory refresh overload is required
+- new/extended tests under `Tests/`
+
+**Do:**
+- [x] `DocumentSourceRefresh.merge(old:new:)` pure function:
+  - text identity = SHA-256(NFC joined span text)
+  - matched blocks reuse old block IDs; source spans/colors/style/sourceHash come from new import
+  - kept translations (all languages) re-point `sourceHash` to the new block hash when text matched
+  - unmatched new blocks keep new IDs with no translation
+  - unmatched old translations dropped
+  - rebuild `DocumentChunkPlan`s and return counts: matched, added, removed, staleChunkIndices
+- [x] WorkflowStore: file picker → import into existing project source dir → merge → persist project → status/summary
+- [x] UI: **Refresh Source…** on document project row and/or open document session
+- [x] After success: summary sheet/banner with matched/added/removed + **Retranslate N changed chunks** (only stale/changed indices; uses existing document translation intents)
+- [x] Formatting-only source upgrade (same text, new colors) does **not** force retranslate
+- [x] Text change marks affected chunks `needsReview` and leaves prior translation only where text still matches
+- [x] Deterministic tests: identical text keeps translation + new colors; text edit stales/retranslate offer; path/name change OK; media project rejected; empty/cancelled picker no-ops
+
+**Out of scope:**
+- media source refresh
+- automatic full-book retranslate without user confirmation
+- fuzzy/semantic matching beyond exact text-hash identity
+- OCR / scanned PDF improvements
+
+## Verification
+
+### Objective gates
+
+- [x] `swift build` exits 0
+- [x] focused Refresh Source unit + store tests pass
+- [x] `swift test` exits 0
+- [x] fresh-app smoke: open old project → Refresh Source to colored DOCX → matching chunks keep translation and show new red placeholders; changed chunks offered for retranslate
+
+### Judgment gates
+
+- [ ] no silent data loss of still-matching translations
+- [ ] freshness derivation stays canonical (hash-based); no second parallel stale system
+- [ ] provider is never invoked during refresh itself
+
+**Ready for review when:** implementation is complete in scope and Objective gates are green.
+
+**Stop-gate:** Human ACCEPTED + Reviewer APPROVED + Tester qa_green.
+

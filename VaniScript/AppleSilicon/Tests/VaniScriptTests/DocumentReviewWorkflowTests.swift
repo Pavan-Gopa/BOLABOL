@@ -198,7 +198,13 @@ struct DocumentReviewWorkflowTests {
             ),
             approvalMode: .manual
         )
-        let store = WorkflowStore()
+        let store = WorkflowStore(
+            projects: [],
+            settingsPersistence: { _ in },
+            projectsPersistence: { _ in },
+            autosaveInterval: .seconds(600),
+            startInitialModelScan: false
+        )
         store.workflow.session = session
 
         let editedSourceSpans = [
@@ -300,7 +306,13 @@ struct DocumentReviewWorkflowTests {
             ),
             approvalMode: .manual
         )
-        let store = WorkflowStore()
+        let store = WorkflowStore(
+            projects: [],
+            settingsPersistence: { _ in },
+            projectsPersistence: { _ in },
+            autosaveInterval: .seconds(600),
+            startInitialModelScan: false
+        )
         store.workflow.session = session
 
         // 1. Verify initial store block projection

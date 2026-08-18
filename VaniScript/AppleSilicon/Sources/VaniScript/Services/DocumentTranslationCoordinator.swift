@@ -453,6 +453,16 @@ public actor DocumentTranslationCoordinator {
                     matchedSourceSpan = match
                 } else if let sourceSpans = sourceBlock?.spans, sourceSpans.indices.contains(spanIndex), sourceSpans.count == output.spans.count {
                     matchedSourceSpan = sourceSpans[spanIndex]
+                } else if let match = sourceBlock?.spans.first(where: { sourceSpan in
+                    let sourceText = sourceSpan.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let outputText = outputSpan.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    return !sourceText.isEmpty && sourceText == outputText
+                }) {
+                    // Preserved tokens (placeholders, numbers, names) keep their
+                    // source text verbatim through translation. Inherit the source
+                    // span's explicit color even when the provider does not echo
+                    // span IDs or style keys, so source colors always transfer.
+                    matchedSourceSpan = match
                 } else {
                     matchedSourceSpan = nil
                 }
@@ -473,12 +483,17 @@ public actor DocumentTranslationCoordinator {
                 )
             }
 
+            let coloredSpans = DocumentSourceColorTransfer.apply(
+                to: spans,
+                sourceSpans: sourceBlock?.spans ?? []
+            )
+
             return TranslatedBlock(
                 id: output.id,
                 sourceBlockID: output.id,
                 text: output.text,
-                spans: spans,
-                sourceHash: plan.sourceHash,
+                spans: coloredSpans,
+                sourceHash: sourceBlock?.sourceHash ?? plan.sourceHash,
                 reviewDisposition: disposition,
                 qualityReport: report
             )
@@ -542,9 +557,17 @@ public actor DocumentTranslationCoordinator {
         guard session.chunks.indices.contains(index) else { return }
         let chunk = session.chunks[index]
         let sourceHash = plan(for: index, in: session.documentState)?.sourceHash ?? ""
+        let userMessage = Self.userFacingFailureMessage(code: code, message: message, issues: issues)
         let report = ChunkQualityReport(
             validatorVersion: DocumentTranslationContract.validatorVersion,
-            errors: issues.isEmpty ? [QualityIssue(code: code, message: message)] : issues,
+            errors: [
+                QualityIssue(
+                    code: issues.first?.code ?? code,
+                    message: userMessage,
+                    severity: .error,
+                    blockID: issues.first?.blockID
+                )
+            ],
             warnings: [],
             attempts: max(1, chunk.qualityReport?.attempts ?? 1),
             sourceHash: sourceHash,
@@ -556,10 +579,63 @@ public actor DocumentTranslationCoordinator {
             session.chunks[index].reviewDisposition = .needsReview
             session.chunks[index].approved = false
         } else {
+            // Do not leave source-echo or half-baked text on the right pane.
+            clearChunkTranslation(at: index)
             session.chunks[index].status = .error
             session.chunks[index].reviewDisposition = needsReviewOnFailure ? .needsReview : .failed
             session.chunks[index].approved = false
         }
+    }
+
+    /// Drop any committed translation for this chunk so a failed attempt never
+    /// looks like an approved English passthrough on the right pane.
+    private func clearChunkTranslation(at index: Int) {
+        guard session.chunks.indices.contains(index) else { return }
+        session.chunks[index].translated = ""
+        let display = TranslationArchive.displayLanguage(session.targetLang)
+        if TranslationArchive.isRealLanguage(display) {
+            var archive = session.chunks[index].translationsByLanguage ?? [:]
+            archive.removeValue(forKey: TranslationArchive.languageKey(display))
+            session.chunks[index].translationsByLanguage = archive.isEmpty ? nil : archive
+        }
+        guard var documentState = session.documentState,
+              let plan = plan(for: index, in: documentState)
+        else { return }
+        let language = TranslationArchive.languageKey(session.targetLang)
+        var translations = documentState.translationsByLanguage[language] ?? [:]
+        for blockID in plan.blockIDs {
+            translations.removeValue(forKey: blockID)
+            // Also drop any slice keys for this block.
+            let prefix = "\(blockID)#"
+            for key in translations.keys where key.hasPrefix(prefix) {
+                translations.removeValue(forKey: key)
+            }
+        }
+        documentState.translationsByLanguage[language] = translations
+        session.documentState = documentState
+    }
+
+    private static func userFacingFailureMessage(
+        code: String,
+        message: String,
+        issues: [QualityIssue]
+    ) -> String {
+        let codes = Set(issues.map(\.code) + [code])
+        if codes.contains("languageResidue") {
+            return "Translation failed. Try again."
+        }
+        if codes.contains("provider") || codes.contains("translationFailed") {
+            return "Translation failed. Try again."
+        }
+        if codes.contains("targetedReplacementFailed") {
+            return "Update failed. Previous translation kept. Try again."
+        }
+        // Keep structural validator detail short enough for the thin banner.
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count <= 120 {
+            return trimmed.isEmpty ? "Translation failed. Try again." : trimmed
+        }
+        return "Translation failed. Try again."
     }
 
     private func hasReadyTranslation(at index: Int) -> Bool {
@@ -719,6 +795,109 @@ public actor DocumentTranslationCoordinator {
         SHA256.hash(data: Data(text.precomposedStringWithCanonicalMapping.utf8))
             .map { String(format: "%02x", $0) }
             .joined()
+    }
+}
+
+/// Transfers explicit source foreground colors onto translated spans.
+///
+/// Matching order inside each colorless span:
+/// 1. Keep spans that already carry a color.
+/// 2. Inherit by identical span `id` when the source span has a color.
+/// 3. Split around preserved source tokens (identical non-empty text with an
+///    explicit color) so collapsed provider output still keeps red placeholders.
+enum DocumentSourceColorTransfer {
+    static func apply(to spans: [RichTextSpan], sourceSpans: [RichTextSpan]) -> [RichTextSpan] {
+        let sourceByID = Dictionary(sourceSpans.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let coloredTokens: [(text: String, source: RichTextSpan)] = sourceSpans.compactMap { source in
+            guard source.foregroundColorHex != nil else { return nil }
+            let trimmed = source.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return nil }
+            return (trimmed, source)
+        }
+        // Longer tokens first so "[PRINTER, COUNTRY]" wins over shorter fragments.
+        let tokens = coloredTokens.sorted { $0.text.count > $1.text.count }
+
+        var result: [RichTextSpan] = []
+        result.reserveCapacity(spans.count)
+        for span in spans {
+            if span.foregroundColorHex != nil {
+                result.append(span)
+                continue
+            }
+            if let source = sourceByID[span.id], let color = source.foregroundColorHex {
+                var recolored = span
+                recolored.foregroundColorHex = color
+                if recolored.styleKey.isEmpty { recolored.styleKey = source.styleKey }
+                if recolored.traits.isEmpty { recolored.traits = source.traits }
+                result.append(recolored)
+                continue
+            }
+            result.append(contentsOf: splitPreservingColoredTokens(span, tokens: tokens))
+        }
+        return result
+    }
+
+    private static func splitPreservingColoredTokens(
+        _ span: RichTextSpan,
+        tokens: [(text: String, source: RichTextSpan)]
+    ) -> [RichTextSpan] {
+        guard !tokens.isEmpty, !span.text.isEmpty else { return [span] }
+
+        var remaining = span.text
+        var pieces: [RichTextSpan] = []
+
+        while !remaining.isEmpty {
+            var bestRange: Range<String.Index>?
+            var bestToken: (text: String, source: RichTextSpan)?
+
+            for token in tokens {
+                guard let range = remaining.range(of: token.text) else { continue }
+                if let current = bestRange {
+                    if range.lowerBound < current.lowerBound
+                        || (range.lowerBound == current.lowerBound && token.text.count > bestToken!.text.count)
+                    {
+                        bestRange = range
+                        bestToken = token
+                    }
+                } else {
+                    bestRange = range
+                    bestToken = token
+                }
+            }
+
+            guard let range = bestRange, let token = bestToken else {
+                var tail = span
+                tail.id = pieces.isEmpty ? span.id : UUID().uuidString
+                tail.text = remaining
+                pieces.append(tail)
+                break
+            }
+
+            let prefix = String(remaining[..<range.lowerBound])
+            if !prefix.isEmpty {
+                var head = span
+                head.id = pieces.isEmpty ? span.id : UUID().uuidString
+                head.text = prefix
+                pieces.append(head)
+            }
+
+            var colored = span
+            colored.id = token.source.id
+            colored.text = String(remaining[range])
+            colored.foregroundColorHex = token.source.foregroundColorHex
+            if !token.source.styleKey.isEmpty {
+                colored.styleKey = token.source.styleKey
+            }
+            if !token.source.traits.isEmpty {
+                colored.traits = token.source.traits
+            }
+            colored.translationPolicy = token.source.translationPolicy
+            pieces.append(colored)
+
+            remaining = String(remaining[range.upperBound...])
+        }
+
+        return pieces.isEmpty ? [span] : pieces
     }
 }
 

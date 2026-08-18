@@ -8,7 +8,12 @@ import VaniScriptCore
 struct WorkflowStoreDocumentTests {
     @Test("approveAndAdvanceDocument approves source-empty chunk without requiring usable translation")
     func approveAndAdvanceSourceEmptyChunk() throws {
-        let store = WorkflowStore()
+        let store = WorkflowStore(
+            projects: [],
+            settingsPersistence: { _ in },
+            projectsPersistence: { _ in },
+            startInitialModelScan: false
+        )
 
         let block1 = DocumentBlock(
             id: "b1",
@@ -99,7 +104,12 @@ struct WorkflowStoreDocumentTests {
 
     @Test("approveAndAdvanceDocument blocks non-empty untranslated chunk")
     func approveAndAdvanceBlocksUntranslatedNonEmptyChunk() throws {
-        let store = WorkflowStore()
+        let store = WorkflowStore(
+            projects: [],
+            settingsPersistence: { _ in },
+            projectsPersistence: { _ in },
+            startInitialModelScan: false
+        )
 
         let block1 = DocumentBlock(
             id: "b1",

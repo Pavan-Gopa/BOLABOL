@@ -14,6 +14,12 @@ output:
     verification_evidence:
       type: string
   optionalProperties:
+    work_item_ids:
+      elements:
+        type: string
+    objective_gate_ids:
+      elements:
+        type: string
     blockers:
       type: string
 ---
@@ -69,6 +75,12 @@ Return structured output only — no narrative prose, no Coder/Reviewer/Tester p
 ```
 status: waiting_review | blocked
 changed_files: [list of files actually modified]
+work_item_ids: [stable IDs like S3.D2 that this change implements; from the assignment]
+objective_gate_ids: [stable IDs like S3.O1 of Objective Gates you ran]
 verification_evidence: "<Objective Gate commands + stdout/stderr/results>"
 blockers: "<exact obstacle if blocked; omit when not blocked>"
 ```
+
+`work_item_ids` / `objective_gate_ids` are optional compatibility fields. When
+the assignment carries stable checklist IDs, report only the IDs supplied by
+Main; never invent IDs or edit `STEPS.md`.

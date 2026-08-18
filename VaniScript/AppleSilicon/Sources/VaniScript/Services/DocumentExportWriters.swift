@@ -120,34 +120,7 @@ public enum DocumentExportWriters {
 
             for span in spans {
                 guard !span.text.isEmpty else { continue }
-                var fontDescriptor = NSFont.systemFont(ofSize: 12).fontDescriptor
-                var traits: NSFontDescriptor.SymbolicTraits = []
-                if span.traits.contains(.bold) { traits.insert(.bold) }
-                if span.traits.contains(.italic) { traits.insert(.italic) }
-                if !traits.isEmpty {
-                    fontDescriptor = fontDescriptor.withSymbolicTraits(traits)
-                }
-                let font = NSFont(descriptor: fontDescriptor, size: 12) ?? NSFont.systemFont(ofSize: 12)
-
-                let color: NSColor
-                if let hex = span.foregroundColorHex, let nsColor = NSColor(hex: hex) {
-                    color = nsColor
-                } else {
-                    color = NSColor.black
-                }
-
-                var attrs: [NSAttributedString.Key: Any] = [
-                    .font: font,
-                    .foregroundColor: color,
-                    .paragraphStyle: paragraphStyle
-                ]
-                if span.traits.contains(.underline) {
-                    attrs[.underlineStyle] = NSUnderlineStyle.single.rawValue
-                }
-                if span.traits.contains(.strikethrough) {
-                    attrs[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
-                }
-
+                let attrs = pdfSpanAttributes(for: span, paragraphStyle: paragraphStyle)
                 attributedResult.append(NSAttributedString(string: span.text, attributes: attrs))
             }
 
@@ -255,17 +228,17 @@ public enum DocumentExportWriters {
             throw ExportError.missingSourceDocument
         }
 
-        // Validate source hash if specified in documentState.originalAsset.sha256
+        // Integrity check is advisory. A stale stored sha256 (path drift,
+        // Refresh Source race, older projects) must not block export of an
+        // otherwise readable source file the user is actively working with.
         if let expectedHash = documentState.originalAsset.sha256, !expectedHash.isEmpty {
-            let actualData: Data
-            do {
-                actualData = try Data(contentsOf: sourceDocxURL, options: [.mappedIfSafe])
-            } catch {
-                throw ExportError.missingSourceDocument
-            }
-            let actualHash = sha256(actualData)
-            guard actualHash.caseInsensitiveCompare(expectedHash) == .orderedSame else {
-                throw ExportError.sourceHashMismatch(expected: expectedHash, actual: actualHash)
+            if let actualData = try? Data(contentsOf: sourceDocxURL, options: [.mappedIfSafe]) {
+                let actualHash = sha256(actualData)
+                if actualHash.caseInsensitiveCompare(expectedHash) != .orderedSame {
+                    AppLogger.shared.warn(
+                        "DOCX export: source sha256 differs from archived asset (expected \(expectedHash.prefix(12))…, got \(actualHash.prefix(12))…). Continuing with the file on disk."
+                    )
+                }
             }
         }
 
@@ -413,17 +386,16 @@ public enum DocumentExportWriters {
             throw ExportError.missingSourceDocument
         }
 
-        // Validate source hash if known
+        // Same advisory policy as writeDOCX — do not block package export on a
+        // stale archived sha256 when the managed source file is present.
         if let expectedHash = documentState.originalAsset.sha256, !expectedHash.isEmpty {
-            let actualData: Data
-            do {
-                actualData = try Data(contentsOf: sourceDocxURL, options: [.mappedIfSafe])
-            } catch {
-                throw ExportError.missingSourceDocument
-            }
-            let actualHash = sha256(actualData)
-            guard actualHash.caseInsensitiveCompare(expectedHash) == .orderedSame else {
-                throw ExportError.sourceHashMismatch(expected: expectedHash, actual: actualHash)
+            if let actualData = try? Data(contentsOf: sourceDocxURL, options: [.mappedIfSafe]) {
+                let actualHash = sha256(actualData)
+                if actualHash.caseInsensitiveCompare(expectedHash) != .orderedSame {
+                    AppLogger.shared.warn(
+                        "Package export: source sha256 differs from archived asset (expected \(expectedHash.prefix(12))…, got \(actualHash.prefix(12))…). Continuing with the file on disk."
+                    )
+                }
             }
         }
 
@@ -578,25 +550,8 @@ public enum DocumentExportWriters {
                 rPrElem = XMLElement(name: "w:rPr")
             }
 
-            if let colorHex = span.foregroundColorHex {
-                let colorElem = rPrElem.elements(forName: "w:color").first ?? rPrElem.elements(forName: "color").first
-                if let colorElem {
-                    colorElem.removeAttribute(forName: "w:val")
-                    colorElem.removeAttribute(forName: "val")
-                    colorElem.addAttribute(XMLNode.attribute(withName: "w:val", stringValue: colorHex) as! XMLNode)
-                } else {
-                    let newColor = XMLElement(name: "w:color")
-                    newColor.addAttribute(XMLNode.attribute(withName: "w:val", stringValue: colorHex) as! XMLNode)
-                    rPrElem.addChild(newColor)
-                }
-            } else {
-                let sourceSpanForIndex = block.spans.indices.contains(sIdx) ? block.spans[sIdx] : block.spans.first(where: { $0.id == span.id })
-                if sourceSpanForIndex?.foregroundColorHex == nil {
-                    if let colorElem = rPrElem.elements(forName: "w:color").first ?? rPrElem.elements(forName: "color").first {
-                        colorElem.detach()
-                    }
-                }
-            }
+            let sourceSpanForIndex = block.spans.indices.contains(sIdx) ? block.spans[sIdx] : block.spans.first(where: { $0.id == span.id })
+            EditorRunPropertyOverlay.apply(to: rPrElem, span: span, sourceSpan: sourceSpanForIndex)
 
             if rPrElem.childCount > 0 || rPrElem.attributes?.isEmpty == false {
                 rElem.addChild(rPrElem)
@@ -638,6 +593,96 @@ public enum DocumentExportWriters {
         let dummyBlock = DocumentBlock(id: "dummy", location: DocumentLocation(paragraphOrdinal: 0))
         let dummyTranslated = TranslatedBlock(id: "dummy", sourceBlockID: "dummy", text: newText)
         rewriteParagraph(pElem: pElem, block: dummyBlock, translatedBlock: dummyTranslated)
+    }
+
+    /// The trait set the editor displays for a span: the span's own traits with
+    /// explicit editor overrides applied in both directions. Superscript and
+    /// subscript are mutually exclusive, so superscript wins if both appear.
+    private static func effectiveTraits(_ span: RichTextSpan) -> Set<InlineTrait> {
+        var traits = span.traits
+        for (trait, isOn) in span.editorOverrides?.traitOverrides ?? [:] {
+            if isOn {
+                traits.insert(trait)
+            } else {
+                traits.remove(trait)
+            }
+        }
+        if traits.contains(.superscript) {
+            traits.remove(.subscriptText)
+        }
+        return traits
+    }
+
+    /// Builds the CoreText attributes for one translated span in the PDF export.
+    ///
+    /// Bold/italic map to symbolic font traits, underline/strikethrough to line
+    /// styles, superscript/subscript to a smaller font shifted off the baseline,
+    /// and small caps to the font's small-caps letterform feature. Editor
+    /// overrides win over the span's own traits in both directions.
+    static func pdfSpanAttributes(for span: RichTextSpan, paragraphStyle: NSParagraphStyle) -> [NSAttributedString.Key: Any] {
+        let overrides = span.editorOverrides
+        let effectiveTraits = effectiveTraits(span)
+
+        var fontDescriptor = NSFont.systemFont(ofSize: 12).fontDescriptor
+        var traits: NSFontDescriptor.SymbolicTraits = []
+        if effectiveTraits.contains(.bold) { traits.insert(.bold) }
+        if effectiveTraits.contains(.italic) { traits.insert(.italic) }
+        if !traits.isEmpty {
+            fontDescriptor = fontDescriptor.withSymbolicTraits(traits)
+        }
+        var font = NSFont(descriptor: fontDescriptor, size: 12) ?? NSFont.systemFont(ofSize: 12)
+
+        if effectiveTraits.contains(.superscript) || effectiveTraits.contains(.subscriptText) {
+            font = NSFont(descriptor: fontDescriptor, size: 12 * 0.58) ?? font
+        }
+        if effectiveTraits.contains(.smallCaps) {
+            // AAT feature identifiers: Letter (3) → Small Caps (3) and
+            // Lower Case (37) → Lower Case Small Caps (1). The SDK does not
+            // export the kSFNT constants, so the values are literal.
+            let smallCapsSettings: [[NSFontDescriptor.FeatureKey: Int]] = [
+                [
+                    .typeIdentifier: 3,
+                    .selectorIdentifier: 3
+                ],
+                [
+                    .typeIdentifier: 37,
+                    .selectorIdentifier: 1
+                ]
+            ]
+            if let smallCapsDescriptor = font.fontDescriptor.addingAttributes(
+                [.featureSettings: smallCapsSettings]
+            ) as NSFontDescriptor? {
+                font = NSFont(descriptor: smallCapsDescriptor, size: font.pointSize) ?? font
+            }
+        }
+
+        let color: NSColor
+        if overrides?.clearsForegroundColor == true {
+            color = NSColor.black
+        } else if let hex = overrides?.foregroundColorOverride ?? span.foregroundColorHex,
+                  let nsColor = NSColor(hex: hex) {
+            color = nsColor
+        } else {
+            color = NSColor.black
+        }
+
+        var attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: color,
+            .paragraphStyle: paragraphStyle
+        ]
+        if effectiveTraits.contains(.underline) {
+            attrs[.underlineStyle] = NSUnderlineStyle.single.rawValue
+        }
+        if effectiveTraits.contains(.strikethrough) {
+            attrs[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
+        }
+        if effectiveTraits.contains(.superscript) {
+            attrs[.baselineOffset] = CGFloat(12 * 0.33)
+        } else if effectiveTraits.contains(.subscriptText) {
+            attrs[.baselineOffset] = CGFloat(-(12 * 0.15))
+        }
+        return attrs
     }
 
     private static func detectStylesFontWarnings(
@@ -706,6 +751,162 @@ public enum DocumentExportWriters {
         SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
 }
+
+/// Overlays the editor's effective formatting onto a DOCX run's `w:rPr`.
+///
+/// The copied source `w:rPr` stays the trusted base: traits the editor did not
+/// touch keep whatever the source run declares. Editor overrides win in both
+/// directions — an explicit `false` writes the OOXML "off" form (for example
+/// `w:b w:val="0"`) so a user-disabled inherited trait survives the export
+/// instead of silently re-enabling from the source formatting.
+enum EditorRunPropertyOverlay {
+    /// Applies effective traits and editor overrides onto an existing or fresh `w:rPr` element.
+    static func apply(to rPrElem: XMLElement, span: RichTextSpan, sourceSpan: RichTextSpan? = nil) {
+        let overrides = span.editorOverrides
+
+        for trait in InlineTrait.allCases {
+            switch desiredState(for: trait, span: span) {
+            case .on:
+                setOn(rPrElem, trait: trait)
+            case .off:
+                setOff(rPrElem, trait: trait)
+            case .inherit:
+                break
+            }
+        }
+
+        // Superscript and subscript share `w:vertAlign` and are mutually
+        // exclusive; force the element to the single effective value.
+        let superState = desiredState(for: .superscript, span: span)
+        let subState = desiredState(for: .subscriptText, span: span)
+        if superState == .on {
+            setVertAlign(rPrElem, value: "superscript")
+        } else if subState == .on {
+            setVertAlign(rPrElem, value: "subscript")
+        } else if superState == .off || subState == .off {
+            removeChildren(localName: "vertAlign", in: rPrElem)
+        }
+
+        if overrides?.clearsForegroundColor == true {
+            removeChildren(localName: "color", in: rPrElem)
+        } else if let colorHex = overrides?.foregroundColorOverride ?? span.foregroundColorHex {
+            setColor(rPrElem, hex: colorHex)
+        } else if sourceSpan?.foregroundColorHex == nil {
+            // The translated span carries no color and neither did its source
+            // span: drop any color the matched source run declared so the
+            // export matches the plain editor text.
+            removeChildren(localName: "color", in: rPrElem)
+        }
+    }
+
+    private enum DesiredState {
+        case on
+        case off
+        case inherit
+    }
+
+    private static func desiredState(for trait: InlineTrait, span: RichTextSpan) -> DesiredState {
+        if let override = span.editorOverrides?.traitOverrides[trait] {
+            return override ? .on : .off
+        }
+        return span.traits.contains(trait) ? .on : .inherit
+    }
+
+    private static func setOn(_ rPrElem: XMLElement, trait: InlineTrait) {
+        switch trait {
+        case .bold:
+            setToggle(rPrElem, localName: "b", on: true)
+        case .italic:
+            setToggle(rPrElem, localName: "i", on: true)
+        case .underline:
+            if let elem = firstChild(localName: "u", in: rPrElem) {
+                setValAttribute(elem, value: "single")
+            } else {
+                let elem = XMLElement(name: "w:u")
+                elem.addAttribute(XMLNode.attribute(withName: "w:val", stringValue: "single") as! XMLNode)
+                rPrElem.addChild(elem)
+            }
+        case .strikethrough:
+            setToggle(rPrElem, localName: "strike", on: true)
+        case .smallCaps:
+            setToggle(rPrElem, localName: "smallCaps", on: true)
+        case .superscript, .subscriptText:
+            break // handled through `w:vertAlign`
+        }
+    }
+
+    private static func setOff(_ rPrElem: XMLElement, trait: InlineTrait) {
+        switch trait {
+        case .bold:
+            setToggle(rPrElem, localName: "b", on: false)
+        case .italic:
+            setToggle(rPrElem, localName: "i", on: false)
+        case .underline:
+            if let elem = firstChild(localName: "u", in: rPrElem) {
+                setValAttribute(elem, value: "none")
+            } else {
+                let elem = XMLElement(name: "w:u")
+                elem.addAttribute(XMLNode.attribute(withName: "w:val", stringValue: "none") as! XMLNode)
+                rPrElem.addChild(elem)
+            }
+        case .strikethrough:
+            setToggle(rPrElem, localName: "strike", on: false)
+        case .smallCaps:
+            setToggle(rPrElem, localName: "smallCaps", on: false)
+        case .superscript, .subscriptText:
+            break // handled through `w:vertAlign`
+        }
+    }
+
+    /// Replaces any existing toggle element (matching `b` and `w:b`) with a
+    /// single canonical element carrying the on/off state.
+    private static func setToggle(_ rPrElem: XMLElement, localName: String, on: Bool) {
+        removeChildren(localName: localName, in: rPrElem)
+        let elem = XMLElement(name: "w:\(localName)")
+        if !on {
+            elem.addAttribute(XMLNode.attribute(withName: "w:val", stringValue: "0") as! XMLNode)
+        }
+        rPrElem.addChild(elem)
+    }
+
+    private static func setVertAlign(_ rPrElem: XMLElement, value: String) {
+        if let elem = firstChild(localName: "vertAlign", in: rPrElem) {
+            setValAttribute(elem, value: value)
+        } else {
+            let elem = XMLElement(name: "w:vertAlign")
+            elem.addAttribute(XMLNode.attribute(withName: "w:val", stringValue: value) as! XMLNode)
+            rPrElem.addChild(elem)
+        }
+    }
+
+    private static func setColor(_ rPrElem: XMLElement, hex: String) {
+        if let elem = firstChild(localName: "color", in: rPrElem) {
+            setValAttribute(elem, value: hex)
+        } else {
+            let elem = XMLElement(name: "w:color")
+            elem.addAttribute(XMLNode.attribute(withName: "w:val", stringValue: hex) as! XMLNode)
+            rPrElem.addChild(elem)
+        }
+    }
+
+    private static func setValAttribute(_ elem: XMLElement, value: String) {
+        elem.removeAttribute(forName: "w:val")
+        elem.removeAttribute(forName: "val")
+        elem.addAttribute(XMLNode.attribute(withName: "w:val", stringValue: value) as! XMLNode)
+    }
+
+    private static func firstChild(localName: String, in rPrElem: XMLElement) -> XMLElement? {
+        (rPrElem.children ?? []).compactMap { $0 as? XMLElement }
+            .first { $0.localName == localName }
+    }
+
+    private static func removeChildren(localName: String, in rPrElem: XMLElement) {
+        for child in (rPrElem.children ?? []).compactMap({ $0 as? XMLElement }) where child.localName == localName {
+            child.detach()
+        }
+    }
+}
+
 extension NSColor {
     convenience init?(hex: String) {
         guard let normalized = RichTextSpan.normalizeHexColor(hex), normalized.count == 6 else { return nil }

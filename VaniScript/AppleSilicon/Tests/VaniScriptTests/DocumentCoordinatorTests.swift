@@ -541,4 +541,87 @@ struct DocumentCoordinatorTests {
         #expect(trans?.spans[1].text == "красный заполнитель")
         #expect(trans?.spans[1].foregroundColorHex == "FF0000")
     }
+
+    @Test("collapsed provider spans still inherit source color on preserved tokens")
+    func collapsedProviderOutputSplitsPreservedColoredTokens() async throws {
+        let block = DocumentBlock(
+            id: "b1",
+            location: DocumentLocation(paragraphOrdinal: 0),
+            spans: [
+                RichTextSpan(id: "s1", text: "First edition published in ", foregroundColorHex: nil),
+                RichTextSpan(id: "s2", text: "[YEAR]", foregroundColorHex: "FF0000"),
+                RichTextSpan(id: "s3", text: " by Kadamba", foregroundColorHex: nil)
+            ]
+        )
+        let plan = DocumentChunkPlan(id: "chunk-1", blockIDs: ["b1"], sourceHash: "h1")
+        let chunk = ChunkData(
+            index: 0,
+            filePath: "/tmp/doc.docx",
+            durationSec: 0,
+            startSec: 0,
+            endSec: 0,
+            original: "First edition published in [YEAR] by Kadamba",
+            translated: "",
+            status: .pending,
+            approved: false,
+            sourceAnchor: .document(DocumentRange(startBlockID: "b1", endBlockID: "b1"))
+        )
+        let testSession = SessionState(
+            sourceFile: "/tmp/doc.docx",
+            sourceFileName: "doc.docx",
+            durationSec: 0,
+            metadata: .empty,
+            sourceLang: "English",
+            targetLang: "Ukrainian",
+            transcriptionProvider: "",
+            translationProvider: "mock",
+            outputFormats: [.txt],
+            chunks: [chunk],
+            currentChunkIndex: 0,
+            sourceKind: .document,
+            documentState: DocumentState(
+                format: .docx,
+                originalAsset: ProjectAssetReference(key: "source"),
+                blocks: [block],
+                chunks: [plan]
+            ),
+            approvalMode: .manual
+        )
+
+        // Provider collapses the whole block into ONE span and drops span ids.
+        // The preserved token text stays verbatim so color transfer can split it.
+        let adapter = DocumentTranslationProviderAdapter(id: "collapsed-color") { prompt in
+            let outputs = [
+                DocumentTranslationOutputBlock(
+                    id: "b1",
+                    spans: [
+                        DocumentTranslationOutputSpan(
+                            id: nil,
+                            style: "plain",
+                            text: "Перше видання опубліковано у [YEAR] by Kadamba"
+                        )
+                    ]
+                )
+            ]
+            return String(
+                decoding: try JSONEncoder().encode(
+                    DocumentTranslationResponse(chunkId: prompt.request.chunkId, blocks: outputs)
+                ),
+                as: UTF8.self
+            )
+        }
+
+        let result = try await DocumentTranslationCoordinator(
+            session: testSession,
+            engine: DocumentTranslationEngine(provider: adapter)
+        ).targetedCurrent()
+
+        let trans = result.session.documentState?.translationsByLanguage["ukrainian"]?["b1"]
+        #expect(trans != nil)
+        let colored = (trans?.spans ?? []).filter { $0.foregroundColorHex == "FF0000" }
+        #expect(colored.count == 1)
+        #expect(colored.first?.text == "[YEAR]")
+        #expect(colored.first?.id == "s2")
+        #expect((trans?.spans ?? []).contains(where: { $0.text.contains("Перше") && $0.foregroundColorHex == nil }))
+    }
 }

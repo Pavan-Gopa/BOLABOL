@@ -11,6 +11,8 @@ struct WorkflowStoreLocalModelTests {
 
     private static let isolatedSettingsPersistence: @Sendable (AppSettings) throws -> Void = { _ in }
 
+    private static let isolatedProjectsPersistence: @Sendable ([ProjectRecord]) throws -> Void = { _ in }
+
     @Test("the newest scan alone publishes results and clears scanning")
     @MainActor
     func olderScanCompletionCannotOverwriteNewerScan() async {
@@ -24,6 +26,7 @@ struct WorkflowStoreLocalModelTests {
             settings: settingsWithTranslationModel(id: modelID),
             projects: [],
             settingsPersistence: Self.isolatedSettingsPersistence,
+            projectsPersistence: Self.isolatedProjectsPersistence,
             localModelScanner: { generation in await scanGate.next(generation: generation) },
             localModelScanCompletion: { applied in
                 Task { await completionEvents.append(applied) }
@@ -68,6 +71,7 @@ struct WorkflowStoreLocalModelTests {
             settings: settingsWithTranslationModel(id: modelID),
             projects: [],
             settingsPersistence: Self.isolatedSettingsPersistence,
+            projectsPersistence: Self.isolatedProjectsPersistence,
             localModelScanner: { generation in await scanGate.next(generation: generation) },
             localModelPicker: { _, _, _ in picker.next() },
             localModelValidator: { _, _, path in
@@ -125,6 +129,7 @@ struct WorkflowStoreLocalModelTests {
             settings: settingsWithTranslationModel(id: modelID),
             projects: [],
             settingsPersistence: Self.isolatedSettingsPersistence,
+            projectsPersistence: Self.isolatedProjectsPersistence,
             localModelPicker: { _, _, _ in picker.next() },
             localModelValidator: { _, _, path in
                 await validationGate.wait(path: path)
@@ -172,6 +177,7 @@ struct WorkflowStoreLocalModelTests {
             settings: settingsWithTranslationModel(id: modelID),
             projects: [],
             settingsPersistence: Self.isolatedSettingsPersistence,
+            projectsPersistence: Self.isolatedProjectsPersistence,
             localModelPicker: { _, _, _ in URL(fileURLWithPath: selectedPath) },
             localModelValidator: { _, _, path in
                 await validationGate.wait(path: path)
@@ -248,6 +254,7 @@ struct WorkflowStoreLocalModelTests {
             settingsPersistence: { settings in
                 Task { await recorder.append(settings) }
             },
+            projectsPersistence: Self.isolatedProjectsPersistence,
             startInitialModelScan: false
         )
 
@@ -322,6 +329,7 @@ struct WorkflowStoreLocalModelTests {
             settings: settings,
             projects: [],
             settingsPersistence: Self.isolatedSettingsPersistence,
+            projectsPersistence: Self.isolatedProjectsPersistence,
             startInitialModelScan: false,
             processingPipeline: pipeline
         )
@@ -388,6 +396,7 @@ struct WorkflowStoreLocalModelTests {
             settings: settings,
             projects: [projectRecord],
             settingsPersistence: Self.isolatedSettingsPersistence,
+            projectsPersistence: Self.isolatedProjectsPersistence,
             startInitialModelScan: false
         )
 
@@ -442,6 +451,7 @@ struct WorkflowStoreLocalModelTests {
             settings: settings,
             projects: [projectRecord],
             settingsPersistence: Self.isolatedSettingsPersistence,
+            projectsPersistence: Self.isolatedProjectsPersistence,
             startInitialModelScan: false
         )
 
@@ -503,6 +513,7 @@ struct WorkflowStoreLocalModelTests {
             settings: settings,
             projects: [projectRecord],
             settingsPersistence: Self.isolatedSettingsPersistence,
+            projectsPersistence: Self.isolatedProjectsPersistence,
             startInitialModelScan: false
         )
 
@@ -619,6 +630,7 @@ struct WorkflowStoreLocalModelTests {
             settings: settings,
             projects: [],
             settingsPersistence: Self.isolatedSettingsPersistence,
+            projectsPersistence: Self.isolatedProjectsPersistence,
             startInitialModelScan: false,
             processingPipeline: pipeline,
             reviewMLXEngine: mlx,

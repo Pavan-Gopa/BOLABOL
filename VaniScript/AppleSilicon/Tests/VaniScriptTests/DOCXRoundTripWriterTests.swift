@@ -184,8 +184,8 @@ struct DOCXRoundTripWriterTests {
         #expect(outBlock.spans[1].foregroundColorHex == "FF0000")
     }
 
-    @Test("Wrong sourceHash rejects export with sourceHashMismatch error")
-    func hashMismatchRejectsExport() throws {
+    @Test("Stale archived sourceHash is advisory and does not block DOCX export")
+    func staleSourceHashDoesNotBlockExport() throws {
         let fixture = fixtureURL()
         let parsedSource = try DOCXPackageReader.read(from: fixture)
         let block0 = parsedSource.blocks[0]
@@ -219,19 +219,15 @@ struct DOCXRoundTripWriterTests {
             .appendingPathComponent("hash-mismatch-\(UUID().uuidString).docx")
         defer { try? FileManager.default.removeItem(at: tempDestination) }
 
-        #expect {
-            try DocumentExportWriters.writeDOCX(
-                sourceDocxURL: fixture,
-                documentState: documentState,
-                language: "Russian",
-                to: tempDestination
-            )
-        } throws: { error in
-            guard case let DocumentExportWriters.ExportError.sourceHashMismatch(expected, _) = error else {
-                return false
-            }
-            return expected == mismatchedHash
-        }
+        // S18 UX: a stale originalAsset.sha256 must not prevent export when the
+        // managed source file on disk is readable.
+        _ = try DocumentExportWriters.writeDOCX(
+            sourceDocxURL: fixture,
+            documentState: documentState,
+            language: "Russian",
+            to: tempDestination
+        )
+        #expect(FileManager.default.fileExists(atPath: tempDestination.path))
     }
 
     @Test("Matching sourceHash allows export to proceed")

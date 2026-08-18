@@ -6,156 +6,128 @@ onboarding:
   status: complete
   model_pairs_confirmed: true
   completed_at: 2026-08-11T05:55:29Z
-current_step: S13
 current_work_item: null
 step_description: >-
-  Harden document import/export, preserve trusted rich-text foreground colors
-  end to end, and make every primary workflow surface readable in Light/Dark.
+  S13 project-library hardening. Add multi-file Finder drop support, preserve
+  document/media bundle routing, make renamed archive filenames authoritative
+  for project display names without rewriting source metadata, and make project
+  deletion safe for imported versus new projects.
 target_files:
-  - Sources/VaniScriptCore/DocumentModels.swift
-  - Sources/VaniScriptCore/DocumentTranslationProfile.swift
-  - Sources/VaniScriptCore/ProjectAssetManifest.swift
-  - Sources/VaniScriptCore/ProjectMigrator.swift
-  - Sources/VaniScriptCore/WorkflowState.swift
-  - Sources/VaniScriptCore/SessionModels.swift
-  - Sources/VaniScriptCore/AppSettings.swift
-  - Sources/VaniScriptCore/ProjectArchive.swift
-  - Sources/VaniScriptCore/ProjectBundleExporter.swift
-  - Sources/VaniScriptCore/ProjectBundleImporter.swift
-  - Sources/VaniScriptCore/DocumentTranslationExportBuilder.swift
-  - Sources/VaniScript/Views/UploadWorkspaceView.swift
-  - Sources/VaniScript/Stores/WorkflowStore.swift
-  - Sources/VaniScript/Services/SourceClassifier.swift
-  - Sources/VaniScript/Services/DocumentImportService.swift
-  - Sources/VaniScript/Services/DOCXPackageReader.swift
-  - Sources/VaniScript/Services/DocumentExportWriters.swift
-  - Sources/VaniScript/Services/PDFDocumentImporter.swift
-  - Sources/VaniScript/Services/AppStoragePaths.swift
-  - Sources/VaniScript/Views/ConfigWorkspaceView.swift
   - Sources/VaniScript/Views/ReviewWorkspaceView.swift
   - Sources/VaniScript/Theme/VaniScriptTheme.swift
-  - Sources/VaniScript/Views/ContentView.swift
-  - Sources/VaniScript/Views/ChatSidebarView.swift
-  - Sources/VaniScript/Views/ProjectSidebarView.swift
-  - Sources/VaniScript/Views/SettingsView.swift
-  - Sources/VaniScript/Views/ExportWorkspaceView.swift
-  - Sources/VaniScriptCore/SemanticChunkPlanner.swift
-  - Sources/VaniScriptCore/TranslationBudgetPlanner.swift
-  - Sources/VaniScriptCore/DefaultPrompts.swift
-  - Sources/VaniScriptCore/DocumentTranslationContracts.swift
-  - Sources/VaniScriptCore/DocumentTranslationValidator.swift
-  - Sources/VaniScript/Services/DocumentTranslationEngine.swift
-  - Sources/VaniScript/Services/DocumentTranslationCoordinator.swift
-  - Sources/VaniScript/Services/CloudTextTranslationEngine.swift
-  - Sources/VaniScript/Services/MLXTextGenerationEngine.swift
-  - Sources/VaniScript/Views/ProcessingWorkspaceView.swift
-  - Tests/VaniScriptCoreTests/DocumentModelTests.swift
-  - Tests/VaniScriptCoreTests/ProjectMigrationTests.swift
-  - Tests/VaniScriptTests/SourceClassifierTests.swift
-  - Tests/VaniScriptTests/DocumentImportServiceTests.swift
-  - Tests/VaniScriptTests/DOCXPackageReaderTests.swift
-  - Tests/VaniScriptTests/DOCXRoundTripWriterTests.swift
-  - Tests/VaniScriptTests/PDFDocumentImporterTests.swift
-  - Tests/VaniScriptTests/DocumentConfigWorkflowTests.swift
-  - Tests/VaniScriptCoreTests/SemanticChunkPlannerTests.swift
-  - Tests/VaniScriptCoreTests/TranslationBudgetPlannerTests.swift
-  - Tests/VaniScriptTests/DocumentReviewWorkflowTests.swift
-  - Tests/VaniScriptCoreTests/DocumentTranslationContractTests.swift
-  - Tests/VaniScriptCoreTests/DocumentTranslationValidatorTests.swift
-  - Tests/VaniScriptTests/DocumentTranslationEngineTests.swift
-  - Tests/VaniScriptTests/DocumentCoordinatorTests.swift
-  - Tests/VaniScriptTests/DocumentCloudStructuredOutputTests.swift
-  - Tests/Fixtures/synthetic-document.docx
+  - Tests/VaniScriptTests/VaniScriptThemeTests.swift
+  - Tests/VaniScriptTests/DocumentReviewScrollSyncTests.swift
 completed_steps:
   - S0
   - S1
   - S2
   - S3
   - S4
+  - S14
+  - S15
+  - S16
+  - S17
+  - S18
+  - S20
 skipped_steps: []
 parked_steps:
   - S5
-  - S6
-absorbed_steps:
-  - S9
-  - S10
-  - S11
 implementation:
   # pending | running | waiting_review | changes_requested | blocked | complete
-  status: waiting_review
-  attempts: 6
-  # Increment only after evidence evaluates an implementation attempt.
-  # Runtime/provider interruption alone is not an implementation attempt.
+ status: pending
+ attempts: 4
+ # Increment only after evidence evaluates an implementation attempt.
+ note: >-
+   S13DarkThemeHighlightFix1 candidate gate is green: Human accepted, Reviewer
+   approved, and Tester returned qa_green. The proofreading-highlight work item
+   is complete; broader S13 Light-mode chrome, fresh Light/Dark smoke, and
+   remaining Judgment Gates stay open.
 retry_guard:
-  max_attempts_without_progress: 3
-  last_failure_signature: null
-  repeated_failure_count: 0
-
+ max_attempts_without_progress: 3
+ last_failure_signature: null
+ repeated_failure_count: 0
 omp:
-  last_result_artifact: agent://S13LightThemeFix24
-  active_agent: null
-  active_role: null
-  model_failure:
-    # none | awaiting_human | backup_authorized
-    status: none
-    role: null
-    primary_agent: null
-    failed_model: null
-    evidence: null
-    backup_agent: null
-    human_instruction: null
-    authorized_at: null
-  interruption:
-    # none | interrupted_no_changes | interrupted_partial | recovered_result | indeterminate
-    status: recovered_result
-    role: coder
-    run_id: S7DocumentLiveRuntimeRecovery07B
-    candidate_id: S7DocumentLiveTranslationRuntimeCandidate07
-    classification: interrupted_partial
-    recovered_artifact: agent://S7DocumentLiveRuntimeRecovery07B
-    recorded_at: 2026-08-14T15:44:00Z
+ last_result_artifact: history://S13DarkThemeHighlightTester1
+ active_agent: null
+ active_role: null
+model_failure:
+  # none | awaiting_human | backup_authorized
+  status: none
+  role: null
+  primary_agent: null
+  failed_model: null
+  evidence: null
+  backup_agent: null
+  human_instruction: null
+  authorized_at: null
+interruption:
+  # none | interrupted_no_changes | recovered_result | indeterminate
+  status: none
+  role: null
+  run_id: null
+  candidate_id: null
+  classification: null
+  recovered_artifact: null
+  recorded_at: null
 human_acceptance:
-  # pending | accepted | changes_requested
-  status: pending
-  candidate_id: S13ForegroundColorLightThemeCandidate24
-  evidence: Main verified focused color/theme gates, full 674/674 in 90 suites, fresh app build, Light Review red-span/chrome/editor smoke
+ # pending | accepted | changes_requested
+ status: accepted
+ candidate_id: S13DarkThemeHighlightFix1
+ evidence: >-
+   Human inspected the unchanged repaired signed app in the fresh Dark Aqua
+   workflow and selected Accept and route Reviewer at 2026-08-18T04:35:21Z.
 review:
-  status: pending
-  last_feedback_file: null
-  verdict: null
-  note: Foreground-color and Light/Dark candidate awaits Human acceptance
+ status: approved
+ last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
+ verdict: approved
+ note: >-
+   Reviewer approved the S13DarkThemeHighlightFix1 candidate. Its focused QA
+   gate is green; broader S13 hardening remains open.
 qa:
-  status: pending
-  last_report: null
-  suite: import tiers, PDF reconstruction, media regression
-  bugs_open: 0
-  note: null
-  enabled: true
-security:
-  next_run: none
-  note: Offer once near release when work is ready (optional).
+ status: qa_green
+ suite: S13 dark appearance and proofreading highlight
+ bugs_open: 0
+ note: >-
+   Focused QA is green with 29 tests and 0 failures, including Tester-added
+   coverage for highlight restoration after content rewrite. Residual S13
+   hardening gates remain open.
 next_actor: human
-
-
 plan_files:
   - PIPELINE.md
   - AI_Workflow_Kit/docs/DECISIONS.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
   - docs/PRD-Document-Literary-Translation.md
+  - docs/PRD-Editorial-Review-Workspace.md
+coder_brief: |
+  S13 Human-rejected Dark Aqua candidate. Fix the fresh-app failure where
+  imported document text is practically invisible in Dark Aqua and make the
+  proofreading highlight more visually prominent. Treat persisted/exported
+  RichTextSpan foreground colors as canonical data: any display-only contrast
+  adaptation must not mutate source/translation models, serialization, or
+  rich export. Re-check the full dark primary Review workflow, including
+  default and explicit-colored spans, dual panes, proof banner/controls,
+  editor caret/typing color, selection/editing, and error/disabled/action
+  surfaces. Add deterministic tests for the rendering contract and highlight
+  contrast in the approved test path. Run only focused tests/build checks
+  relevant to these files; skip formatters, linters, and project-wide suites.
 checkpoint:
   last_pre_tag: vaniscript-as/pre-S1
   last_post_tag: vaniscript-as/S1-done
   last_commit: 87bee27
   last_attempt: post-S2-refused-unrelated-worktree
   note: >-
-    Pre-S2 and post-S2 checkpoints were refused because unrelated workspace
-    changes were outside the authorized scope; no unrelated paths were staged.
 coder_brief: |
-  Candidate 24 preserves trusted source foreground colors through import,
-  translation, attributed editing, persistence, DOCX/PDF output, and keeps
-  plain formats honest. Primary workflow chrome now uses one semantic dynamic
-  palette with readable enabled/disabled interaction states. Await Human
-  Light/Dark Review and real exported DOCX/PDF acceptance.
+  S13 Human-rejected Dark Aqua candidate. Fix the fresh-app failure where
+  imported document text is practically invisible in Dark Aqua and make the
+  proofreading highlight more visually prominent. Treat persisted/exported
+  RichTextSpan foreground colors as canonical data: any display-only contrast
+  adaptation must not mutate source/translation models, serialization, or
+  rich export. Re-check the full dark primary Review workflow, including
+  default and explicit-colored spans, dual panes, proof banner/controls,
+  editor caret/typing color, selection/editing, and error/disabled/action
+  surfaces. Add deterministic tests for the rendering contract and highlight
+  contrast in the approved test path. Run only focused tests/build checks
+  relevant to these files; skip formatters, linters, and project-wide suites.
 notes: |
   Human requested all three BOLABOL Core ML engines. Existing LASR-01 catalog,
   LASR-02 download/presence, and completed S1 Parakeet work are preserved.
@@ -246,3 +218,60 @@ notes: |
   2026-08-14 and opened S7. Default literary profile until publisher answers:
   protected Sanskrit exact, translate existing English gloss, glossary names,
   free repagination.
+
+  2026-08-15: Human parked S13 and opened the editorial workspace train from
+  docs/PRD-Editorial-Review-Workspace.md (branch
+  agent/editorial-review-workspace-architecture, fetched via the
+  vaniscript-export remote). S13 candidate 24 remains Main-verified but
+  unaccepted; its import-tier/PDF/limits code already exists and will be
+  re-verified on resume; media regression is still outstanding. PRD claims
+  were verified against local source before adoption. S14–S19 map PRD
+  slices E1–E6 one-to-one.
+
+  2026-08-15 (resume): the session was interrupted after S14 Coder 02 yielded.
+  Main reconciled the parked agents, recovered the artifact, verified all four
+  Coder 01 rejection fixes in source, and re-ran every Objective Gate green
+  (build, 31 focused tests, 705 full tests, fresh app pid 49388). S14
+  candidate 02 now awaits Human acceptance. Human instructed Main to
+  communicate in Russian and to avoid screenshots because the current
+  orchestrator model cannot view images; visual verification is delegated to
+  the Human.
+  2026-08-15 (S14 rejection): Human rejected candidate 02 in the fresh app —
+  the custom Formatting submenu items are inactive and change nothing;
+  standard macOS right-click formatting already provides full formatting.
+  Human redefined S14 to a single feature: a `Retranslate Selection with AI…`
+  context-menu item that retranslates the selected translated phrase from its
+  source context through AI (PRD §10 / slice E4 pulled forward). ADR-003
+  records the scope change; the S14 card is rewritten accordingly.
+  2026-08-15 (S14 backup): after two primary 401 failures the Human authorized
+  the backup Coder. The backup completed the rescoped implementation and all
+  gates, then hit the subagent runtime limit before yielding; Main recovered
+  the result from the working tree and re-verified every gate green (build,
+  30 focused tests, 714 full tests, fresh app pid 65786). The model-failure
+  record is cleared after the verified backup result. Candidate 04 awaits
+  Human acceptance.
+  2026-08-15 (S14 closed): Reviewer APPROVED with no blockers (Main confirmed
+  the DocumentState update flows through the canonical
+  WorkflowStore.updateCurrentDocumentTranslated path before rendering).
+  Tester added five deterministic gap tests (same-phrase-two-blocks,
+  mixed-format safe failure, block-context fallback, protected-term request
+  tokens, span-ID preservation) and was aborted at the runtime limit; Main
+  reconciled the test diff, confirmed assertions were not weakened, and ran
+  the full suite green (719 tests / 96 suites). S14 stop-gate closed.
+  2026-08-15 (S15 open): S15FreshnessCoder01 failed before any work with a
+  provider 503 (cache-only admission rejected, 10 internal retries, 4m07s) —
+  a model/provider failure, not an implementation attempt. No code changes
+  were made. Main retried once on the primary alias as
+  S15FreshnessCoder02; a second identical provider failure pauses routing
+  for Human direction per the S14 precedent.
+  2026-08-15 (S15 attempts 02/03): Coder 02 spent its full 30-min runtime on
+  exploration and was aborted with zero code changes. Coder 03 (with the
+  pre-digested brief) was also aborted at the runtime limit after writing only
+  DocumentTranslationFreshness.swift, but it surfaced and Main verified a
+  load-bearing bug: DocumentTranslationCoordinator.commit stores the composite
+  plan.sourceHash into TranslatedBlock.sourceHash, which would mark every
+  AI-translated block permanently stale under the PRD §9.1 freshness contract.
+  ADR-004 accepted: commit must store the source block hash (one-line fix);
+  DocumentTranslationCoordinator.swift added to the S15 target list. Coder 04
+  must preserve the existing DocumentTranslationFreshness.swift and start
+  implementing immediately from the updated brief.

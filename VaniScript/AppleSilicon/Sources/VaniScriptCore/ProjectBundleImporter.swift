@@ -51,7 +51,11 @@ public enum ProjectBundleImporter {
         var bundles: [JSONLibraryBundleItem]
     }
 
-    public static func importBundle(fileURL: URL, destinationDirectoryURL: URL) throws -> [ProjectRecord] {
+    public static func importBundle(
+        fileURL: URL,
+        destinationDirectoryURL: URL,
+        displayNameOverride: String? = nil
+    ) throws -> [ProjectRecord] {
         let fileHandle = try FileHandle(forReadingFrom: fileURL)
         defer { try? fileHandle.close() }
 
@@ -62,16 +66,30 @@ public enum ProjectBundleImporter {
 
         try fileHandle.seek(toOffset: 0)
         if headerStr == "VANISCRIPT_BUNDLE_V2" {
-            return try importBundleV2(fileHandle: fileHandle, destinationDirectoryURL: destinationDirectoryURL)
+            return try importBundleV2(
+                fileHandle: fileHandle,
+                fileURL: fileURL,
+                destinationDirectoryURL: destinationDirectoryURL,
+                displayNameOverride: displayNameOverride
+            )
         }
         if headerStr == "VANISCRIPT_LIBRARY_V2" {
-            return try importLibraryV2(fileHandle: fileHandle, destinationDirectoryURL: destinationDirectoryURL)
+            return try importLibraryV2(
+                fileHandle: fileHandle,
+                fileURL: fileURL,
+                destinationDirectoryURL: destinationDirectoryURL
+            )
         }
 
         guard let rawData = try fileHandle.readToEnd() else {
             throw NSError(domain: "ProjectBundleImporter", code: 1, userInfo: [NSLocalizedDescriptionKey: "Empty file"])
         }
-        return try importJSON(data: rawData, destinationDirectoryURL: destinationDirectoryURL)
+        return try importJSON(
+            data: rawData,
+            fileURL: fileURL,
+            destinationDirectoryURL: destinationDirectoryURL,
+            displayNameOverride: displayNameOverride
+        )
     }
 
     private static func readLine(fileHandle: FileHandle, offset: inout UInt64) throws -> String {
@@ -103,7 +121,12 @@ public enum ProjectBundleImporter {
         return jsonBlock
     }
 
-    private static func importBundleV2(fileHandle: FileHandle, destinationDirectoryURL: URL) throws -> [ProjectRecord] {
+    private static func importBundleV2(
+        fileHandle: FileHandle,
+        fileURL: URL,
+        destinationDirectoryURL: URL,
+        displayNameOverride: String? = nil
+    ) throws -> [ProjectRecord] {
         var offset: UInt64 = 0
         _ = try readLine(fileHandle: fileHandle, offset: &offset)
         let jsonBlock = try readMetadata(fileHandle: fileHandle, offset: &offset)
@@ -126,14 +149,24 @@ public enum ProjectBundleImporter {
 
         var record = try ProjectMigrator.migrate(record: metadata.project, fromSchemaVersion: schemaVersion)
         record.id = newProjectId
+        if let override = displayNameOverride?.trimmingCharacters(in: .whitespacesAndNewlines), !override.isEmpty {
+            record.name = override
+        }
         record.createdAt = isoString(Date())
         record.updatedAt = isoString(Date())
         record.session.normalizeTranslationArchive()
         updateAssetPaths(record: &record, assetMap: assetMap)
+        record.originatingArchivePath = fileURL.standardizedFileURL.path
+        record.originatingArchiveIndex = 0
+        record.importBaselineFingerprint = record.computeWorkFingerprint()
         return [record]
     }
 
-    private static func importLibraryV2(fileHandle: FileHandle, destinationDirectoryURL: URL) throws -> [ProjectRecord] {
+    private static func importLibraryV2(
+        fileHandle: FileHandle,
+        fileURL: URL,
+        destinationDirectoryURL: URL
+    ) throws -> [ProjectRecord] {
         var offset: UInt64 = 0
         _ = try readLine(fileHandle: fileHandle, offset: &offset)
         let jsonBlock = try readMetadata(fileHandle: fileHandle, offset: &offset)
@@ -180,6 +213,9 @@ public enum ProjectBundleImporter {
             importedProjects[index].createdAt = isoString(Date())
             importedProjects[index].updatedAt = isoString(Date())
             updateAssetPaths(record: &importedProjects[index], assetMap: assetMaps[index])
+            importedProjects[index].originatingArchivePath = fileURL.standardizedFileURL.path
+            importedProjects[index].originatingArchiveIndex = index
+            importedProjects[index].importBaselineFingerprint = importedProjects[index].computeWorkFingerprint()
         }
         return importedProjects
     }
@@ -283,11 +319,25 @@ public enum ProjectBundleImporter {
         }
     }
 
-    private static func importJSON(data: Data, destinationDirectoryURL: URL) throws -> [ProjectRecord] {
+    private static func importJSON(
+        data: Data,
+        fileURL: URL,
+        destinationDirectoryURL: URL,
+        displayNameOverride: String? = nil
+    ) throws -> [ProjectRecord] {
         let decoder = JSONDecoder()
         guard let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let format = jsonObject["format"] as? String else {
-            return try ProjectArchive.decode(data)
+            var records = try ProjectArchive.decode(data)
+            if records.count == 1, let override = displayNameOverride?.trimmingCharacters(in: .whitespacesAndNewlines), !override.isEmpty {
+                records[0].name = override
+            }
+            for index in records.indices {
+                records[index].originatingArchivePath = fileURL.standardizedFileURL.path
+                records[index].originatingArchiveIndex = index
+                records[index].importBaselineFingerprint = records[index].computeWorkFingerprint()
+            }
+            return records
         }
         if let rawSchemaVersion = jsonObject["schemaVersion"] as? Int {
             try ProjectMigrator.validateSchemaVersion(rawSchemaVersion)
@@ -299,7 +349,16 @@ public enum ProjectBundleImporter {
                 bundle.schemaVersion,
                 legacyVersion: format == "vaniscript-project-v1" ? 1 : 2
             )
-            return [try importJSONProject(bundle, schemaVersion: schemaVersion, destinationDirectoryURL: destinationDirectoryURL)]
+            var record = try importJSONProject(
+                bundle,
+                schemaVersion: schemaVersion,
+                destinationDirectoryURL: destinationDirectoryURL,
+                displayNameOverride: displayNameOverride
+            )
+            record.originatingArchivePath = fileURL.standardizedFileURL.path
+            record.originatingArchiveIndex = 0
+            record.importBaselineFingerprint = record.computeWorkFingerprint()
+            return [record]
         }
         if format == "vaniscript-library-v1" || format == "vaniscript-library-v2" {
             let bundle = try decoder.decode(JSONLibraryBundle.self, from: data)
@@ -307,21 +366,36 @@ public enum ProjectBundleImporter {
                 bundle.schemaVersion,
                 legacyVersion: format == "vaniscript-library-v1" ? 1 : 2
             )
-            return try bundle.bundles.map {
-                try importJSONProject(
-                    JSONProjectBundle(format: format, schemaVersion: schemaVersion, project: $0.project, assets: $0.assets),
+            return try bundle.bundles.enumerated().map { index, item in
+                var record = try importJSONProject(
+                    JSONProjectBundle(format: format, schemaVersion: schemaVersion, project: item.project, assets: item.assets),
                     schemaVersion: schemaVersion,
-                    destinationDirectoryURL: destinationDirectoryURL
+                    destinationDirectoryURL: destinationDirectoryURL,
+                    displayNameOverride: nil
                 )
+                record.originatingArchivePath = fileURL.standardizedFileURL.path
+                record.originatingArchiveIndex = index
+                record.importBaselineFingerprint = record.computeWorkFingerprint()
+                return record
             }
         }
-        return try ProjectArchive.decode(data)
+        var records = try ProjectArchive.decode(data)
+        if records.count == 1, let override = displayNameOverride?.trimmingCharacters(in: .whitespacesAndNewlines), !override.isEmpty {
+            records[0].name = override
+        }
+        for index in records.indices {
+            records[index].originatingArchivePath = fileURL.standardizedFileURL.path
+            records[index].originatingArchiveIndex = index
+            records[index].importBaselineFingerprint = records[index].computeWorkFingerprint()
+        }
+        return records
     }
 
     private static func importJSONProject(
         _ bundle: JSONProjectBundle,
         schemaVersion: Int,
-        destinationDirectoryURL: URL
+        destinationDirectoryURL: URL,
+        displayNameOverride: String? = nil
     ) throws -> ProjectRecord {
         let newId = UUID().uuidString.lowercased()
         let projectDir = destinationDirectoryURL.appendingPathComponent(newId, isDirectory: true)
@@ -340,6 +414,9 @@ public enum ProjectBundleImporter {
 
         var record = try ProjectMigrator.migrate(record: bundle.project, fromSchemaVersion: schemaVersion)
         record.id = newId
+        if let override = displayNameOverride?.trimmingCharacters(in: .whitespacesAndNewlines), !override.isEmpty {
+            record.name = override
+        }
         record.createdAt = isoString(Date())
         record.updatedAt = isoString(Date())
         record.session.normalizeTranslationArchive()

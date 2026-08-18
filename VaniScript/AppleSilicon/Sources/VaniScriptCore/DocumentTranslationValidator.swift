@@ -173,10 +173,12 @@ public struct DocumentTranslationValidator: Sendable {
                 input: input,
                 request: request
             ) {
-                warnings.append(issue(
+                // Full source echo is a failed translation, not soft review.
+                // Committing it lets Approve & Next skip a blank right pane.
+                errors.append(issue(
                     "languageResidue",
-                    "Output contains substantial source-language residue; review is recommended.",
-                    severity: .warning,
+                    "Translation failed: the model returned the source text. Try again.",
+                    severity: .error,
                     blockID: output.id
                 ))
             }

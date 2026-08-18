@@ -94,6 +94,90 @@ struct DOCXPackageReaderTests {
         #expect(block.spans[1].foregroundColorHex == "FF0000")
     }
 
+    @Test("reads prefixed DOCX package with shifted central directory and local headers")
+    func readsPrefixedDOCXPackage() throws {
+        let fixture = fixtureURL()
+        let rawData = try Data(contentsOf: fixture)
+
+        // Prepend custom prefix (e.g. bundle header wrapper)
+        var prefix = Data("VANISCRIPT_BUNDLE_V2_CUSTOM_HEADER".utf8)
+        prefix.append(Data(repeating: 0x41, count: 512))
+        let prefixedData = prefix + rawData
+
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("docx-prefix-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let docxURL = tempDir.appendingPathComponent("prefixed.docx")
+        try prefixedData.write(to: docxURL)
+
+        let parsed = try DOCXPackageReader.read(from: docxURL)
+        #expect(parsed.blocks.count >= 10)
+        #expect(parsed.blocks.first?.kind == .heading)
+        #expect(parsed.blocks.first?.styleID == "ChapterTitle")
+        #expect(parsed.entryNames.contains("word/document.xml"))
+        #expect(!parsed.sourceHash.isEmpty)
+    }
+
+    @Test("reads DOCX package with archive comment containing false EOCD signature and trailing bytes")
+    func readsDOCXWithArchiveComment() throws {
+        let fixture = fixtureURL()
+        var rawData = try Data(contentsOf: fixture)
+
+        // Find the original EOCD (last 22 bytes if no comment)
+        guard rawData.count >= 22 else { throw DOCXPackageReader.DOCXPackageReaderError.invalidZip("too small") }
+        let eocdPos = rawData.count - 22
+        #expect(rawData[eocdPos] == 0x50 && rawData[eocdPos + 1] == 0x4b && rawData[eocdPos + 2] == 0x05 && rawData[eocdPos + 3] == 0x06)
+
+        // Add a comment that contains the EOCD signature 0x06054b50 (PK\x05\x06) to test false-positive avoidance
+        var comment = Data("Document export comment containing false signature: ".utf8)
+        comment.append(contentsOf: [0x50, 0x4b, 0x05, 0x06, 0x00, 0x00])
+        let commentLength = UInt16(comment.count)
+
+        // Update comment length in EOCD record
+        rawData[eocdPos + 20] = UInt8(commentLength & 0xff)
+        rawData[eocdPos + 21] = UInt8((commentLength >> 8) & 0xff)
+        rawData.append(comment)
+
+        // Also append trailing padding bytes
+        rawData.append(contentsOf: [0x00, 0x00, 0x00, 0x00])
+
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("docx-comment-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let docxURL = tempDir.appendingPathComponent("commented.docx")
+        try rawData.write(to: docxURL)
+
+        let parsed = try DOCXPackageReader.read(from: docxURL)
+        #expect(parsed.blocks.count >= 10)
+        #expect(parsed.blocks.first?.kind == .heading)
+        #expect(parsed.entryNames.contains("word/document.xml"))
+    }
+
+    @Test("fails closed on truly malformed central directory")
+    func failsClosedOnMalformedCentralDirectory() throws {
+        let fixture = fixtureURL()
+        var rawData = try Data(contentsOf: fixture)
+        // Corrupt first 4 bytes of EOCD
+        let eocdPos = rawData.count - 22
+        rawData[eocdPos] = 0x00
+
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("docx-corrupt-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let docxURL = tempDir.appendingPathComponent("corrupted.docx")
+        try rawData.write(to: docxURL)
+
+        #expect(throws: DOCXPackageReader.DOCXPackageReaderError.self) {
+            _ = try DOCXPackageReader.read(from: docxURL)
+        }
+    }
+
     private func fixtureURL() -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

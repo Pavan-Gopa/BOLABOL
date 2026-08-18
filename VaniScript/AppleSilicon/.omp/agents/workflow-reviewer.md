@@ -22,6 +22,9 @@ output:
             type: string
           required_change:
             type: string
+          affected_ids:
+            elements:
+              type: string
     blockers:
       type: string
 ---
@@ -82,5 +85,5 @@ Return structured output only — no narrative prose, no prompts for other roles
 ```
 verdict: approved | changes_requested
 summary: "<1-3 sentence Judgment Gate assessment and relevant evidence>"
-issues: [{file, location, issue, required_change}, ...]   # omit when approved
+issues: [{file, location, issue, required_change, affected_ids}, ...]   # omit when approved
 ```

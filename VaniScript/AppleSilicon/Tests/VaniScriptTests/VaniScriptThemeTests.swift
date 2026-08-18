@@ -282,10 +282,43 @@ struct VaniScriptThemeTests {
         let attrs2 = textStorage.attributes(at: span2Location, effectiveRange: nil)
         #expect(attrs2[DocumentTextAttribute.explicitColorHex] as? String == "FF0000", "Span 2 should preserve explicit hex")
 
-        // Simulate appearance change notification
+        // Appearance change must NOT wipe explicit red via textView.textColor.
         textView.viewDidChangeEffectiveAppearance()
-        #expect(textView.textColor != nil, "Text color should be re-applied on appearance change")
-        #expect(textView.insertionPointColor != nil, "Insertion point color should be re-applied on appearance change")
+        #expect(textView.insertionPointColor != nil, "Insertion point color should refresh on appearance change")
+
+        guard let storageAfter = textView.textStorage else {
+            Issue.record("Missing textStorage after appearance change")
+            return
+        }
+        let attrs2After = storageAfter.attributes(at: span2Location, effectiveRange: nil)
+        #expect(attrs2After[DocumentTextAttribute.explicitColorHex] as? String == "FF0000",
+                "Explicit hex must survive appearance change")
+        if let colorAfter = attrs2After[.foregroundColor] as? NSColor,
+           let rgb = colorAfter.usingColorSpace(.sRGB) {
+            #expect(abs(rgb.redComponent - 1.0) < 0.02)
+            #expect(rgb.greenComponent < 0.02)
+            #expect(rgb.blueComponent < 0.02)
+        } else {
+            Issue.record("Red foreground missing after appearance change")
+        }
+
+        // Setting the legacy whole-view textColor (old bug) must not permanently
+        // leave the storage black once we re-apply from blocks.
+        textView.textColor = NSColor.black
+        coordinator.reapplyLastRenderedAttributedString()
+        guard let storageRepaired = textView.textStorage else {
+            Issue.record("Missing textStorage after reapply")
+            return
+        }
+        let attrs2Repaired = storageRepaired.attributes(at: span2Location, effectiveRange: nil)
+        #expect(attrs2Repaired[DocumentTextAttribute.explicitColorHex] as? String == "FF0000")
+        if let colorRepaired = attrs2Repaired[.foregroundColor] as? NSColor,
+           let rgb = colorRepaired.usingColorSpace(.sRGB) {
+            #expect(abs(rgb.redComponent - 1.0) < 0.02)
+            #expect(rgb.greenComponent < 0.02)
+        } else {
+            Issue.record("Red foreground missing after reapply from blocks")
+        }
 
         coordinator.setAttributedString(from: [block], fallbackText: block.fallbackText, textView: textView)
         // Re-read storage blocks through the coordinator delegate
@@ -296,6 +329,265 @@ struct VaniScriptThemeTests {
         if let firstBlock = editedBlocks.first, firstBlock.spans.count >= 2 {
             #expect(firstBlock.spans[0].foregroundColorHex == nil, "Nil document foreground color must remain nil after round-trip")
             #expect(firstBlock.spans[1].foregroundColorHex == "FF0000", "Explicit color must remain preserved after round-trip")
+        }
+    }
+
+    @Test("Dark Aqua document text display-contrast adapts dark/default colors and preserves chromatic runs")
+    func darkAquaDocumentTextContrast() throws {
+        guard let darkAqua = NSAppearance(named: .darkAqua),
+              let aqua = NSAppearance(named: .aqua) else {
+            Issue.record("Failed to create NSAppearance instances")
+            return
+        }
+
+        let darkEditorBg = resolveNSColor(VaniScriptTheme.editorSurface, appearance: darkAqua)
+        let aquaEditorBg = resolveNSColor(VaniScriptTheme.editorSurface, appearance: aqua)
+
+        // 1. Default (nil) text in Dark Aqua meets >= 7:1 AAA contrast
+        let darkDefaultText = resolveNSColor(Color(nsColor: VaniScriptTheme.displayAdaptedTextColor(hex: nil)), appearance: darkAqua)
+        let darkDefaultContrast = contrastRatio(between: darkDefaultText, and: darkEditorBg)
+        #expect(darkDefaultContrast >= 7.0, "Dark Aqua default text contrast was \(darkDefaultContrast)")
+
+        // 2. Imported black text (#000000) in Dark Aqua adapts to high-contrast legible color (>= 7:1)
+        let darkBlackText = resolveNSColor(Color(nsColor: VaniScriptTheme.displayAdaptedTextColor(hex: "000000")), appearance: darkAqua)
+        let darkBlackContrast = contrastRatio(between: darkBlackText, and: darkEditorBg)
+        #expect(darkBlackContrast >= 7.0, "Dark Aqua imported black text contrast was \(darkBlackContrast)")
+
+        // 3. Imported dark slate (#111827) in Dark Aqua adapts to high-contrast legible color (>= 7:1)
+        let darkSlateText = resolveNSColor(Color(nsColor: VaniScriptTheme.displayAdaptedTextColor(hex: "111827")), appearance: darkAqua)
+        let darkSlateContrast = contrastRatio(between: darkSlateText, and: darkEditorBg)
+        #expect(darkSlateContrast >= 7.0, "Dark Aqua imported slate text contrast was \(darkSlateContrast)")
+
+        // 4. Explicit red text (#FF0000) in Dark Aqua meets >= 4:1 contrast and preserves red chromaticity
+        let darkRedText = resolveNSColor(Color(nsColor: VaniScriptTheme.displayAdaptedTextColor(hex: "FF0000")), appearance: darkAqua)
+        let darkRedContrast = contrastRatio(between: darkRedText, and: darkEditorBg)
+        #expect(darkRedContrast >= 4.0, "Dark Aqua red text contrast was \(darkRedContrast)")
+        if let rgb = darkRedText.usingColorSpace(.sRGB) {
+            #expect(rgb.redComponent > 0.85, "Red component should remain dominant")
+            #expect(rgb.greenComponent < 0.20, "Green component should remain low")
+            #expect(rgb.blueComponent < 0.20, "Blue component should remain low")
+        }
+
+        // 5. Explicit dark navy (#000080) in Dark Aqua adapts to legible contrast (>= 4.5:1) while preserving blue hue
+        let darkNavyText = resolveNSColor(Color(nsColor: VaniScriptTheme.displayAdaptedTextColor(hex: "000080")), appearance: darkAqua)
+        let darkNavyContrast = contrastRatio(between: darkNavyText, and: darkEditorBg)
+        #expect(darkNavyContrast >= 4.5, "Dark Aqua navy text contrast was \(darkNavyContrast)")
+        if let rgb = darkNavyText.usingColorSpace(.sRGB) {
+            #expect(rgb.blueComponent > rgb.redComponent, "Blue should remain dominant for navy text")
+        }
+
+        // 6. In Aqua (Light), default and black text have high contrast (>= 7:1)
+        let aquaDefaultText = resolveNSColor(Color(nsColor: VaniScriptTheme.displayAdaptedTextColor(hex: nil)), appearance: aqua)
+        let aquaDefaultContrast = contrastRatio(between: aquaDefaultText, and: aquaEditorBg)
+        #expect(aquaDefaultContrast >= 7.0, "Aqua default text contrast was \(aquaDefaultContrast)")
+
+        let aquaBlackText = resolveNSColor(Color(nsColor: VaniScriptTheme.displayAdaptedTextColor(hex: "000000")), appearance: aqua)
+        let aquaBlackContrast = contrastRatio(between: aquaBlackText, and: aquaEditorBg)
+        #expect(aquaBlackContrast >= 7.0, "Aqua black text contrast was \(aquaBlackContrast)")
+    }
+
+    @Test("Proofreading highlight background and foreground meet high-contrast visibility thresholds in Aqua and Dark Aqua")
+    func proofreadingHighlightContrastInBothAppearances() throws {
+        guard let darkAqua = NSAppearance(named: .darkAqua),
+              let aqua = NSAppearance(named: .aqua) else {
+            Issue.record("Failed to create NSAppearance instances")
+            return
+        }
+
+        // Dark Aqua verification
+        let darkEditorBg = resolveNSColor(VaniScriptTheme.editorSurface, appearance: darkAqua)
+        let darkHlBg = resolveNSColor(Color(nsColor: VaniScriptTheme.proofreadingHighlightNSBackground), appearance: darkAqua)
+        let darkHlFg = resolveNSColor(Color(nsColor: VaniScriptTheme.proofreadingHighlightNSForeground), appearance: darkAqua)
+
+        let darkCompositedHlBg = compositeColor(darkHlBg, over: darkEditorBg)
+        // Highlight background against dark editor surface: >= 4.5:1 (prominent, clearly noticeable mark)
+        let darkHlProminence = contrastRatio(between: darkCompositedHlBg, and: darkEditorBg)
+        #expect(darkHlProminence >= 4.5, "Dark Aqua highlight background prominence was \(darkHlProminence)")
+
+        // Text inside highlight against the highlight background: >= 6.0:1 (crisp, high-contrast reading)
+        let darkHlTextLegibility = contrastRatio(between: darkHlFg, and: darkCompositedHlBg)
+        #expect(darkHlTextLegibility >= 6.0, "Dark Aqua highlight text legibility was \(darkHlTextLegibility)")
+
+        // Aqua verification
+        let aquaEditorBg = resolveNSColor(VaniScriptTheme.editorSurface, appearance: aqua)
+        let aquaHlBg = resolveNSColor(Color(nsColor: VaniScriptTheme.proofreadingHighlightNSBackground), appearance: aqua)
+        let aquaHlFg = resolveNSColor(Color(nsColor: VaniScriptTheme.proofreadingHighlightNSForeground), appearance: aqua)
+
+        let aquaCompositedHlBg = compositeColor(aquaHlBg, over: aquaEditorBg)
+        let aquaHlTextLegibility = contrastRatio(between: aquaHlFg, and: aquaCompositedHlBg)
+        #expect(aquaHlTextLegibility >= 7.0, "Aqua highlight text legibility was \(aquaHlTextLegibility)")
+    }
+
+    @Test("Document editor preserves canonical hex and isolates temporary highlight attributes during serialization")
+    @MainActor
+    func documentEditorCanonicalHexAndTemporaryHighlightIsolation() throws {
+        let span1 = RichTextSpan(id: "s1", text: "Default text. ", styleKey: "p", traits: [], translationPolicy: .translate, foregroundColorHex: nil)
+        let span2 = RichTextSpan(id: "s2", text: "Imported black. ", styleKey: "p", traits: [], translationPolicy: .translate, foregroundColorHex: "000000")
+        let span3 = RichTextSpan(id: "s3", text: "Explicit red. ", styleKey: "p", traits: [.bold], translationPolicy: .translate, foregroundColorHex: "FF0000")
+        let span4 = RichTextSpan(id: "s4", text: "Navy annotation.", styleKey: "p", traits: [.italic], translationPolicy: .translate, foregroundColorHex: "000080")
+        let block = DocumentEditorBlockItem(id: "b1", spans: [span1, span2, span3, span4], fallbackText: "Default text. Imported black. Explicit red. Navy annotation.")
+
+        var editedBlocks: [DocumentEditorBlockItem] = []
+        let view = DocumentAttributedTextView(
+            text: .constant(block.fallbackText),
+            blocks: [block],
+            onBlocksChanged: { blocks, _ in
+                editedBlocks = blocks
+            },
+            fontFamily: .sans,
+            fontSize: .md,
+            fontScale: 1.0
+        )
+
+        let coordinator = view.makeCoordinator()
+        let textView = DocumentNSTextView()
+        coordinator.textView = textView
+        coordinator.setAttributedString(from: [block], fallbackText: block.fallbackText, textView: textView)
+
+        guard let textStorage = textView.textStorage,
+              let layoutManager = textView.layoutManager else {
+            Issue.record("Missing textStorage or layoutManager in textView")
+            return
+        }
+
+        // Apply a proofreading highlight over span2 (Imported black)
+        let span2Location = (span1.text as NSString).length
+        let span2Length = (span2.text as NSString).length
+        let highlightRange = NSRange(location: span2Location, length: span2Length)
+
+        coordinator.applyProofreadingHighlight(highlightRange, focusToken: 1, scroll: false)
+
+        // Verify temporary attributes exist in layoutManager
+        let tempBg = layoutManager.temporaryAttribute(.backgroundColor, atCharacterIndex: span2Location, effectiveRange: nil)
+        let tempFg = layoutManager.temporaryAttribute(.foregroundColor, atCharacterIndex: span2Location, effectiveRange: nil)
+        #expect(tempBg != nil, "Temporary background attribute should be present during highlight")
+        #expect(tempFg != nil, "Temporary foreground attribute should be present during highlight")
+
+        // Verify textStorage itself is NOT modified by layoutManager temporary attributes
+        let storageAttrs = textStorage.attributes(at: span2Location, effectiveRange: nil)
+        #expect(storageAttrs[DocumentTextAttribute.explicitColorHex] as? String == "000000", "Storage explicit hex must remain canonical 000000")
+
+        // Re-read storage blocks through the coordinator delegate
+        let notification = Notification(name: NSText.didChangeNotification, object: textView)
+        coordinator.textDidChange(notification)
+
+        #expect(!editedBlocks.isEmpty, "Edited blocks should serialize on textDidChange")
+        if let firstBlock = editedBlocks.first, firstBlock.spans.count == 4 {
+            #expect(firstBlock.spans[0].foregroundColorHex == nil, "Span 1 nil hex preserved")
+            #expect(firstBlock.spans[1].foregroundColorHex == "000000", "Span 2 explicit 000000 preserved")
+            #expect(firstBlock.spans[2].foregroundColorHex == "FF0000", "Span 3 explicit FF0000 preserved")
+            #expect(firstBlock.spans[3].foregroundColorHex == "000080", "Span 4 explicit 000080 preserved")
+        } else {
+            Issue.record("Expected 4 serialized spans, got \(editedBlocks.first?.spans.count ?? 0)")
+        }
+
+        // Clear highlight
+        coordinator.applyProofreadingHighlight(nil, focusToken: 2, scroll: false)
+        let clearedBg = layoutManager.temporaryAttribute(.backgroundColor, atCharacterIndex: span2Location, effectiveRange: nil)
+        let clearedFg = layoutManager.temporaryAttribute(.foregroundColor, atCharacterIndex: span2Location, effectiveRange: nil)
+        #expect(clearedBg == nil, "Temporary background should be cleared")
+        #expect(clearedFg == nil, "Temporary foreground should be cleared")
+    }
+
+    @Test("Proofreading highlight survives content rewrite via temporary-attribute restoration without touching canonical storage")
+    @MainActor
+    func proofreadingHighlightSurvivesContentRewrite() throws {
+        guard let darkAqua = NSAppearance(named: .darkAqua) else {
+            Issue.record("Failed to create Dark Aqua NSAppearance")
+            return
+        }
+
+        let span1 = RichTextSpan(id: "s1", text: "Default text. ", styleKey: "p", traits: [], translationPolicy: .translate, foregroundColorHex: nil)
+        let span2 = RichTextSpan(id: "s2", text: "Imported black. ", styleKey: "p", traits: [], translationPolicy: .translate, foregroundColorHex: "000000")
+        let span3 = RichTextSpan(id: "s3", text: "Explicit red.", styleKey: "p", traits: [.bold], translationPolicy: .translate, foregroundColorHex: "FF0000")
+        let block = DocumentEditorBlockItem(id: "b1", spans: [span1, span2, span3], fallbackText: "Default text. Imported black. Explicit red.")
+
+        var editedBlocks: [DocumentEditorBlockItem] = []
+        let view = DocumentAttributedTextView(
+            text: .constant(block.fallbackText),
+            blocks: [block],
+            onBlocksChanged: { blocks, _ in
+                editedBlocks = blocks
+            },
+            fontFamily: .sans,
+            fontSize: .md,
+            fontScale: 1.0,
+            proofreadingHighlightRange: nil,
+            proofreadingFocusToken: 1
+        )
+
+        let coordinator = view.makeCoordinator()
+        let textView = DocumentNSTextView()
+        coordinator.textView = textView
+        coordinator.setAttributedString(from: [block], fallbackText: block.fallbackText, textView: textView)
+
+        guard let textStorage = textView.textStorage,
+              let layoutManager = textView.layoutManager else {
+            Issue.record("Missing textStorage or layoutManager in textView")
+            return
+        }
+
+        let span2Location = (span1.text as NSString).length
+        let span2Length = (span2.text as NSString).length
+        let highlightRange = NSRange(location: span2Location, length: span2Length)
+
+        coordinator.applyProofreadingHighlight(highlightRange, focusToken: 1, scroll: false)
+        #expect(layoutManager.temporaryAttribute(.backgroundColor, atCharacterIndex: span2Location, effectiveRange: nil) != nil,
+                "Temporary background should be present after highlight apply")
+        #expect(layoutManager.temporaryAttribute(.foregroundColor, atCharacterIndex: span2Location, effectiveRange: nil) != nil,
+                "Temporary foreground should be present after highlight apply")
+
+        // A real content change forces a full storage rewrite, which wipes
+        // layoutManager temporary attributes. The coordinator must restore the
+        // proofreading mark (same unit + same focus token) display-only.
+        let grownSpan2 = RichTextSpan(id: "s2", text: "Imported black text. ", styleKey: "p", traits: [], translationPolicy: .translate, foregroundColorHex: "000000")
+        let grownBlock = DocumentEditorBlockItem(
+            id: "b1",
+            spans: [span1, grownSpan2, span3],
+            fallbackText: "Default text. Imported black text. Explicit red."
+        )
+        coordinator.setAttributedString(from: [grownBlock], fallbackText: grownBlock.fallbackText, textView: textView)
+
+        guard let rewrittenStorage = textView.textStorage else {
+            Issue.record("Missing textStorage after content rewrite")
+            return
+        }
+
+        // Restored temporary mark is present again at the highlighted unit.
+        let restoredBg = layoutManager.temporaryAttribute(.backgroundColor, atCharacterIndex: span2Location, effectiveRange: nil) as? NSColor
+        let restoredFg = layoutManager.temporaryAttribute(.foregroundColor, atCharacterIndex: span2Location, effectiveRange: nil) as? NSColor
+        #expect(restoredBg != nil, "Proofreading background must be restored after content rewrite")
+        #expect(restoredFg != nil, "Proofreading foreground must be restored after content rewrite")
+
+        // Restored mark resolves to the prominent Dark Aqua theme highlight.
+        if let restoredBg {
+            darkAqua.performAsCurrentDrawingAppearance {
+                if let rgb = restoredBg.usingColorSpace(.sRGB) {
+                    #expect(abs(rgb.redComponent - 245.0 / 255.0) < 0.02, "Restored highlight background red was \(rgb.redComponent)")
+                    #expect(abs(rgb.greenComponent - 166.0 / 255.0) < 0.02, "Restored highlight background green was \(rgb.greenComponent)")
+                    #expect(abs(rgb.blueComponent - 35.0 / 255.0) < 0.02, "Restored highlight background blue was \(rgb.blueComponent)")
+                    #expect(abs(rgb.alphaComponent - 0.80) < 0.02, "Restored highlight background alpha was \(rgb.alphaComponent)")
+                } else {
+                    Issue.record("Restored highlight background could not be resolved to sRGB")
+                }
+            }
+        }
+
+        // Canonical storage is untouched by the temporary mark.
+        let storageAttrs = rewrittenStorage.attributes(at: span2Location, effectiveRange: nil)
+        #expect(storageAttrs[DocumentTextAttribute.explicitColorHex] as? String == "000000",
+                "Storage explicit hex must remain canonical after rewrite and highlight restore")
+
+        // Serialization round-trip keeps canonical hex values.
+        let notification = Notification(name: NSText.didChangeNotification, object: textView)
+        coordinator.textDidChange(notification)
+        #expect(!editedBlocks.isEmpty, "Edited blocks should serialize on textDidChange")
+        if let firstBlock = editedBlocks.first, firstBlock.spans.count == 3 {
+            #expect(firstBlock.spans[0].foregroundColorHex == nil, "Span 1 nil hex preserved after rewrite")
+            #expect(firstBlock.spans[1].foregroundColorHex == "000000", "Span 2 canonical 000000 preserved after rewrite")
+            #expect(firstBlock.spans[2].foregroundColorHex == "FF0000", "Span 3 canonical FF0000 preserved after rewrite")
+        } else {
+            Issue.record("Expected 3 serialized spans, got \(editedBlocks.first?.spans.count ?? 0)")
         }
     }
 }

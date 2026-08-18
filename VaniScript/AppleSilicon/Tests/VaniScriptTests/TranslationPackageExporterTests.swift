@@ -134,8 +134,8 @@ struct TranslationPackageExporterTests {
         }
     }
 
-    @Test("Wrong sourceHash rejects package export with sourceHashMismatch error")
-    func hashMismatchRejectsPackageExport() throws {
+    @Test("Stale archived sourceHash is advisory and does not block package export")
+    func staleSourceHashDoesNotBlockPackageExport() throws {
         let fixture = fixtureURL()
         let parsedSource = try DOCXPackageReader.read(from: fixture)
         let block0 = parsedSource.blocks[0]
@@ -188,24 +188,19 @@ struct TranslationPackageExporterTests {
         )
 
         let destDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("pkg-fail-\(UUID().uuidString)")
+            .appendingPathComponent("pkg-stale-hash-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: destDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: destDir) }
 
-        #expect {
-            try DocumentExportWriters.exportTranslationPackage(
-                sourceDocxURL: fixture,
-                documentState: documentState,
-                projectRecord: record,
-                language: "ru",
-                to: destDir
-            )
-        } throws: { error in
-            guard case let DocumentExportWriters.ExportError.sourceHashMismatch(expected, _) = error else {
-                return false
-            }
-            return expected == wrongHash
-        }
+        _ = try DocumentExportWriters.exportTranslationPackage(
+            sourceDocxURL: fixture,
+            documentState: documentState,
+            projectRecord: record,
+            language: "ru",
+            to: destDir
+        )
+        let contents = try FileManager.default.contentsOfDirectory(atPath: destDir.path)
+        #expect(!contents.isEmpty)
     }
 
     @Test("Missing source file throws missingSourceDocument error")

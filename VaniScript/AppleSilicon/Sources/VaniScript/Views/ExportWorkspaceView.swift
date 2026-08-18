@@ -38,12 +38,8 @@ struct ExportWorkspaceView: View {
                                 .onboardingTarget("shorts-panel")
                             exportFooterActions()
                                 .onboardingTarget("export-footer-actions")
-
-                            if !store.statusMessage.isEmpty {
-                                Text(store.statusMessage)
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundStyle(VaniScriptTheme.accent)
-                            }
+                            // Status lives in ContentView's thin bottom strip —
+                            // do not re-render the full log string here.
                         }
                         .frame(maxWidth: 1120, alignment: .leading)
                         .padding(.horizontal, 28)
@@ -150,6 +146,12 @@ struct ExportWorkspaceView: View {
                     : "Download the reviewed transcript as text, subtitles, or a formatted Markdown document."
             )
             if session.sourceKind == .document {
+                let exportBlocked = store.hasStaleDocumentChunks
+                if exportBlocked {
+                    Text("Fix the highlighted chunks before exporting — their translations no longer match the source.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(VaniScriptTheme.errorText)
+                }
                 HStack(spacing: 8) {
                     ExportButton(title: "DOCX", primary: true) {
                         store.exportDocument(format: .docx)
@@ -164,6 +166,8 @@ struct ExportWorkspaceView: View {
                         store.exportDocument(format: .txt)
                     }
                 }
+                .disabled(exportBlocked)
+                .help(exportBlocked ? "Fix the stale chunks before exporting — their translations no longer match the source." : "")
             } else {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                     ForEach(OutputFormat.allCases, id: \.rawValue) { format in

@@ -32,6 +32,40 @@ struct RecordingInputDevice: Identifiable, Equatable {
     let name: String
 }
 
+/// User-facing summary after Refresh Source (ADR-007 / S20).
+struct DocumentSourceRefreshSummary: Equatable, Identifiable {
+    let id: UUID
+    var projectID: String
+    var matchedBlockCount: Int
+    var addedBlockCount: Int
+    var removedBlockCount: Int
+    var keptTranslationCount: Int
+    var changedChunkIndices: [Int]
+    var sourceFileName: String
+
+    init(
+        id: UUID = UUID(),
+        projectID: String,
+        matchedBlockCount: Int,
+        addedBlockCount: Int,
+        removedBlockCount: Int,
+        keptTranslationCount: Int,
+        changedChunkIndices: [Int],
+        sourceFileName: String
+    ) {
+        self.id = id
+        self.projectID = projectID
+        self.matchedBlockCount = matchedBlockCount
+        self.addedBlockCount = addedBlockCount
+        self.removedBlockCount = removedBlockCount
+        self.keptTranslationCount = keptTranslationCount
+        self.changedChunkIndices = changedChunkIndices
+        self.sourceFileName = sourceFileName
+    }
+
+    var changedChunkCount: Int { changedChunkIndices.count }
+}
+
 @MainActor
 final class WorkflowStore: ObservableObject {
     @Published var workflow: WorkflowState
@@ -95,6 +129,8 @@ final class WorkflowStore: ObservableObject {
     @Published var exportProgress: Double = 0.0
     @Published var exportStage = ""
     @Published private(set) var isDocumentTranslationActive = false
+    @Published var sourceRefreshSummary: DocumentSourceRefreshSummary?
+
     @Published private(set) var documentTranslationProgress: DocumentTranslationCoordinatorProgress?
     @Published var exportClipProgressText = ""
     @Published var exportPhaseTag = ""
@@ -136,6 +172,23 @@ final class WorkflowStore: ObservableObject {
     private var processingTask: Task<Void, Never>?
     private var settingsPersistenceTask: Task<Void, Never>?
     private let settingsPersistence: @Sendable (AppSettings) throws -> Void
+    private let projectsPersistence: @Sendable ([ProjectRecord]) throws -> Void
+    private let autosaveInterval: Duration
+    private var autosaveTask: Task<Void, Never>?
+    private var autosaveGeneration = 0
+    private var terminationObserver: TerminationObserverToken?
+    /// Persistent, retryable disk-save error (PRD §24). In-memory edits are never
+    /// rolled back when a save fails; the next flush retries automatically.
+    @Published private(set) var projectSaveFailure: String?
+
+    /// The window's UndoManager, injected by the review workspace so programmatic
+    /// document edits (Replace Everywhere) register exactly one Undo step.
+    weak var documentUndoManager: UndoManager?
+
+    /// Sendable wrapper so the nonisolated deinit can remove the observer.
+    private struct TerminationObserverToken: @unchecked Sendable {
+        let token: NSObjectProtocol
+    }
     private var localModelOperationGenerations: [String: Int] = [:]
     private var localModelScanGeneration = 0
     private let localModelScanner: @Sendable (Int) async -> [LocalModelScanner.ScannedModel]
@@ -202,6 +255,10 @@ final class WorkflowStore: ObservableObject {
         settingsPersistence: @escaping @Sendable (AppSettings) throws -> Void = {
             try SettingsDiskStore.save($0)
         },
+        projectsPersistence: @escaping @Sendable ([ProjectRecord]) throws -> Void = {
+            try ProjectDiskStore.save($0)
+        },
+        autosaveInterval: Duration = .milliseconds(400),
         clock: @escaping () -> Date = Date.init,
         buildIdentifier: String = AppBuildIdentity.current,
         localModelScanner: @escaping @Sendable (Int) async -> [LocalModelScanner.ScannedModel] = WorkflowStore.defaultLocalModelScanner,
@@ -221,6 +278,8 @@ final class WorkflowStore: ObservableObject {
         self.workflow = .initial(settings: loadedSettings)
         self.projects = ProjectArchive.sortedRecent(projects ?? ProjectDiskStore.load())
         self.settingsPersistence = settingsPersistence
+        self.projectsPersistence = projectsPersistence
+        self.autosaveInterval = autosaveInterval
         self.clock = clock
         self.buildIdentifier = buildIdentifier
         self.processingPipeline = processingPipeline
@@ -246,6 +305,28 @@ final class WorkflowStore: ObservableObject {
                 self?.scanForLocalModels(presentResult: false)
             }
         }
+
+        // PRD §15: flush any pending debounced autosave before the app quits so
+        // typed edits are never lost. The handler runs synchronously on the main
+        // thread during NSApplication termination.
+        terminationObserver = TerminationObserverToken(
+            token: NotificationCenter.default.addObserver(
+                forName: NSApplication.willTerminateNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.flushAutosave()
+                }
+            }
+        )
+    }
+
+    deinit {
+        if let terminationObserver {
+            NotificationCenter.default.removeObserver(terminationObserver.token)
+        }
+        autosaveTask?.cancel()
     }
 
     public func startTour(for screen: String = "upload") {
@@ -443,6 +524,44 @@ final class WorkflowStore: ObservableObject {
             let sourceBlock = documentState.blocks.first(where: { $0.id == blockID })
             let text = sourceBlock?.spans.map(\.text).joined() ?? ""
             return TranslatedBlock(id: blockID, sourceBlockID: blockID, text: text, spans: [], reviewDisposition: .pending)
+        }
+    }
+
+    /// Stale chunk indices for the currently open document session, in the
+    /// active translation language (PRD §9). Empty for media or missing state.
+    var staleDocumentChunkIndices: Set<Int> {
+        guard let session else { return [] }
+        let language = session.selectedTranslationLanguage ?? session.targetLang
+        return session.staleDocumentChunkIndices(languageKey: TranslationArchive.languageKey(language))
+    }
+
+    /// True when the open document project has at least one stale chunk.
+    var hasStaleDocumentChunks: Bool { !staleDocumentChunkIndices.isEmpty }
+
+    /// True when any translated block in the current document chunk no longer
+    /// matches its source block hash in the active translation language (PRD §9).
+    /// Derived purely from sourceHash comparison, so it self-corrects as soon as
+    /// the translation is retranslated or manually updated. False for media,
+    /// missing plan, or missing documentState.
+    var isCurrentDocumentChunkStale: Bool {
+        guard let session else { return false }
+        return staleDocumentChunkIndices.contains(session.currentChunkIndex)
+    }
+
+    /// True when any block in `plan` is provably stale in `languageKey`
+    /// (PRD §9): both hashes present and different. Empty-hash blocks cannot
+    /// prove staleness and never block approval.
+    private static func isDocumentPlanStale(
+        documentState: DocumentState,
+        plan: DocumentChunkPlan,
+        languageKey: String
+    ) -> Bool {
+        plan.blockIDs.contains { blockID in
+            TranslationFreshness.isProvablyStale(
+                documentState: documentState,
+                blockID: blockID,
+                languageKey: languageKey
+            )
         }
     }
 
@@ -1193,6 +1312,7 @@ final class WorkflowStore: ObservableObject {
 
     func moveChunk(delta: Int) {
         guard var session = workflow.session else { return }
+        flushAutosave()
         stopPlayback()
         let next = min(max(0, session.currentChunkIndex + delta), max(0, session.chunks.count - 1))
         session.currentChunkIndex = next
@@ -1206,6 +1326,7 @@ final class WorkflowStore: ObservableObject {
     func selectChunkIndex(_ index: Int) {
         guard var session = workflow.session else { return }
         guard session.chunks.indices.contains(index) else { return }
+        flushAutosave()
         stopPlayback()
         session.currentChunkIndex = index
         synchronizedReviewCueID = nil
@@ -1273,6 +1394,14 @@ final class WorkflowStore: ObservableObject {
         guard !isDocumentTranslationActive, var session = workflow.session,
               session.chunks.indices.contains(session.currentChunkIndex)
         else { return }
+        flushAutosave()
+        // PRD §9 / §23: defense in depth — never approve a chunk whose
+        // translation is stale relative to the edited source, even if the
+        // button were triggered programmatically.
+        if isCurrentDocumentChunkStale {
+            statusMessage = "The source changed — update the translation before approving this chunk."
+            return
+        }
         let currentIndex = session.currentChunkIndex
         let currentChunk = session.chunks[currentIndex]
 
@@ -1290,6 +1419,8 @@ final class WorkflowStore: ObservableObject {
         session.chunks[currentIndex].approved = true
         session.chunks[currentIndex].reviewDisposition = .manuallyApproved
         session.chunks[currentIndex].status = .done
+        // Human acceptance retires any leftover validator banner.
+        session.chunks[currentIndex].qualityReport = nil
         markDocumentBlocksApproved(&session, chunkIndex: currentIndex)
 
         if currentIndex < session.chunks.count - 1 {
@@ -1332,6 +1463,7 @@ final class WorkflowStore: ObservableObject {
         var translations = documentState.translationsByLanguage[language] ?? [:]
         for blockID in plan.blockIDs where translations[blockID] != nil {
             translations[blockID]?.reviewDisposition = .manuallyApproved
+            translations[blockID]?.qualityReport = nil
         }
         documentState.translationsByLanguage[language] = translations
         session.documentState = documentState
@@ -1364,12 +1496,25 @@ final class WorkflowStore: ObservableObject {
         guard let plan else { return }
 
         let editedByBlockID = Dictionary(uniqueKeysWithValues: blocks.map { ($0.blockID, $0) })
+        let activeLanguage = session.selectedTranslationLanguage ?? session.targetLang
+        let langKey = TranslationArchive.languageKey(activeLanguage)
+        var hasStaleTranslation = false
         for blockID in plan.blockIDs {
             if let edited = editedByBlockID[blockID] {
                 if let blockIndex = documentState.blocks.firstIndex(where: { $0.id == blockID }) {
+                    let previousHash = documentState.blocks[blockIndex].sourceHash
                     documentState.blocks[blockIndex].spans = edited.spans
                     let bText = edited.text.isEmpty ? edited.spans.map(\.text).joined() : edited.text
-                    documentState.blocks[blockIndex].sourceHash = Self.stableDocumentHash(bText)
+                    let newHash = Self.stableDocumentHash(bText)
+                    documentState.blocks[blockIndex].sourceHash = newHash
+                    // PRD §9: a text change invalidates the stored translation match.
+                    // The TranslatedBlock itself stays intact (never deleted or
+                    // mutated here); only the chunk review state moves to needsReview.
+                    // Formatting-only edits keep the same text hash and never stale.
+                    if newHash != previousHash,
+                       documentState.translationsByLanguage[langKey]?[blockID] != nil {
+                        hasStaleTranslation = true
+                    }
                 }
             }
         }
@@ -1381,8 +1526,19 @@ final class WorkflowStore: ObservableObject {
         session.chunks[chunkIndex].original = aggregateText
         session.chunks[chunkIndex].originalCues = nil
         session.chunks[chunkIndex].status = .done
+        if hasStaleTranslation {
+            session.chunks[chunkIndex].reviewDisposition = .needsReview
+        }
+        // PRD §9: needsReview mirrors derived staleness. If this edit restored
+        // every plan block to fresh (e.g. undoing back to the original text),
+        // clear the lingering needsReview so the approve gate re-enables.
+        if session.chunks[chunkIndex].reviewDisposition == .needsReview,
+           !Self.isDocumentPlanStale(documentState: documentState, plan: plan, languageKey: langKey) {
+            session.chunks[chunkIndex].reviewDisposition = .pending
+        }
         workflow.session = session
-        saveCurrentProject()
+        commitCurrentProjectToMemory()
+        scheduleAutosave()
     }
 
     func updateCurrentDocumentSource(blocks: [DocumentBlock]) {
@@ -1437,6 +1593,11 @@ final class WorkflowStore: ObservableObject {
                 trans.text = bText
                 trans.spans = edited.spans
                 trans.sourceHash = sourceHash
+                // PRD §23: a manual edit of an AI-approved block re-approves it as
+                // a human decision; pending/needsReview blocks keep their state.
+                if trans.reviewDisposition == .autoApproved {
+                    trans.reviewDisposition = .manuallyApproved
+                }
                 documentState.translationsByLanguage[langKey, default: [:]][blockID] = trans
             }
         }
@@ -1447,8 +1608,19 @@ final class WorkflowStore: ObservableObject {
         session.chunks[chunkIndex].translated = aggregateTranslatedText
         session.chunks[chunkIndex].setTranslation(aggregateTranslatedText, language: language, cues: nil)
         session.chunks[chunkIndex].status = .done
+        // Manual fix replaces the machine attempt — drop the sticky warning/error bar.
+        session.chunks[chunkIndex].qualityReport = nil
+        // PRD §9: a manual translation edit restores the matching sourceHash. If
+        // every plan block is fresh again, clear the lingering needsReview so the
+        // approve gate re-enables.
+        if (session.chunks[chunkIndex].reviewDisposition == .needsReview
+            || session.chunks[chunkIndex].reviewDisposition == .failed),
+           !Self.isDocumentPlanStale(documentState: documentState, plan: plan, languageKey: langKey) {
+            session.chunks[chunkIndex].reviewDisposition = .pending
+        }
         workflow.session = session
-        saveCurrentProject()
+        commitCurrentProjectToMemory()
+        scheduleAutosave()
     }
 
     func updateCurrentDocumentTranslated(blocks: [TranslatedBlock]) {
@@ -1474,6 +1646,274 @@ final class WorkflowStore: ObservableObject {
 
     private static func stableDocumentHash(_ text: String) -> String {
         SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Options for document-wide Replace Everywhere (PRD §11, §12).
+    struct DocumentReplaceEverywhereOptions: Equatable, Sendable {
+        var wholeWord: Bool = true
+        var caseSensitive: Bool = false
+        var skipProtected: Bool = true
+        var saveAsGlossary: Bool = false
+    }
+
+    /// Structured outcome of a document-wide Replace Everywhere (PRD §26.6).
+    struct DocumentReplaceEverywhereResult: Equatable {
+        var replacedCount: Int
+        var skippedProtectedCount: Int
+        var skippedMixedStyleCount: Int
+        var touchedBlockCount: Int
+        /// Entry created (source side) or glossary draft opened (translation side).
+        var glossarySaved: Bool
+    }
+
+    /// Applies a document-wide edit transaction to the canonical DocumentState
+    /// (PRD §11, ADR-E2): any blocks across the whole document, not just the
+    /// current chunk. Source side recomputes block hashes and stales dependent
+    /// translations without deleting them (PRD §9/§11.5); translation side keeps
+    /// sourceHash and re-approves approved blocks as manual edits (PRD §11.6).
+    /// Updates aggregate ChunkData strings for every affected chunk.
+    func applyDocumentEditTransaction(_ transaction: DocumentEditTransaction, languageKey: String?) {
+        guard var session = workflow.session,
+              var documentState = session.documentState,
+              session.sourceKind == .document
+        else { return }
+
+        let patches = transaction.after
+        guard !patches.isEmpty else { return }
+        let patchedByID = Dictionary(uniqueKeysWithValues: patches.map { ($0.blockID, $0) })
+
+        let activeLanguage = session.selectedTranslationLanguage ?? session.targetLang
+        let activeLangKey = TranslationArchive.languageKey(activeLanguage)
+        let langKey = languageKey ?? activeLangKey
+
+        var stalingBlockIDs: Set<String> = []
+        switch transaction.side {
+        case .source:
+            for blockIndex in documentState.blocks.indices {
+                let blockID = documentState.blocks[blockIndex].id
+                guard let patch = patchedByID[blockID] else { continue }
+                let previousHash = documentState.blocks[blockIndex].sourceHash
+                documentState.blocks[blockIndex].spans = patch.spans
+                let newText = patch.text.isEmpty ? patch.spans.map(\.text).joined() : patch.text
+                let newHash = Self.stableDocumentHash(newText)
+                documentState.blocks[blockIndex].sourceHash = newHash
+                // PRD §9/§11.5: a text change invalidates the stored translation
+                // match. The TranslatedBlock itself stays intact (never deleted
+                // or mutated here); staleness is derived from the hash mismatch.
+                if newHash != previousHash,
+                   documentState.translationsByLanguage.values.contains(where: { $0[blockID] != nil }) {
+                    stalingBlockIDs.insert(blockID)
+                }
+            }
+        case .translation:
+            for patch in patches {
+                let blockID = patch.blockID
+                let newText = patch.text.isEmpty ? patch.spans.map(\.text).joined() : patch.text
+                let sourceBlock = documentState.blocks.first(where: { $0.id == blockID })
+                var trans = documentState.translationsByLanguage[langKey]?[blockID]
+                    ?? TranslatedBlock(id: blockID, sourceBlockID: blockID, text: newText, spans: patch.spans, sourceHash: sourceBlock?.sourceHash ?? "", reviewDisposition: .pending)
+                trans.text = newText
+                trans.spans = patch.spans
+                // PRD §11.6: a translation-side replace never stales the source:
+                // keep the stored sourceHash (only fill in a missing one).
+                if trans.sourceHash.isEmpty {
+                    trans.sourceHash = sourceBlock?.sourceHash ?? Self.stableDocumentHash(sourceBlock?.spans.map(\.text).joined() ?? "")
+                }
+                // PRD §11.6.4: a manual edit of an AI-approved block re-approves
+                // it as a human decision; pending/needsReview keep their state.
+                // When the patch carries an explicit disposition (undo/redo of a
+                // document-wide transaction), restore it exactly instead.
+                if let disposition = patch.reviewDisposition {
+                    trans.reviewDisposition = disposition
+                } else if trans.reviewDisposition == .autoApproved {
+                    trans.reviewDisposition = .manuallyApproved
+                }
+                documentState.translationsByLanguage[langKey, default: [:]][blockID] = trans
+            }
+        }
+
+        // Refresh the aggregate ChunkData strings for every affected chunk so
+        // the chunk-level views keep mirroring the canonical DocumentState.
+        for chunkIndex in session.chunks.indices {
+            let chunk = session.chunks[chunkIndex]
+            let plan: DocumentChunkPlan?
+            if case let .document(range) = chunk.sourceAnchor {
+                plan = documentState.chunks.first {
+                    $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID
+                }
+            } else {
+                plan = documentState.chunks.indices.contains(chunkIndex) ? documentState.chunks[chunkIndex] : nil
+            }
+            guard let plan else { continue }
+            guard plan.blockIDs.contains(where: { patchedByID[$0] != nil }) else { continue }
+
+            let planBlocks = plan.blockIDs.compactMap { id in documentState.blocks.first(where: { $0.id == id }) }
+            session.chunks[chunkIndex].original = planBlocks.map { $0.spans.map(\.text).joined() }.joined(separator: "\n\n")
+            session.chunks[chunkIndex].originalCues = nil
+            session.chunks[chunkIndex].status = .done
+
+            if transaction.side == .translation {
+                let aggregateTranslatedText = plan.blockIDs.compactMap { documentState.translationsByLanguage[langKey]?[$0]?.text }.joined(separator: "\n\n")
+                session.chunks[chunkIndex].translated = aggregateTranslatedText
+                session.chunks[chunkIndex].setTranslation(aggregateTranslatedText, language: activeLanguage, cues: nil)
+                // Manual translation edit retires sticky failure/warning banners.
+                session.chunks[chunkIndex].qualityReport = nil
+                if session.chunks[chunkIndex].reviewDisposition == .failed {
+                    session.chunks[chunkIndex].reviewDisposition = .pending
+                }
+            } else if !stalingBlockIDs.isDisjoint(with: plan.blockIDs),
+                      documentState.translationsByLanguage[activeLangKey] != nil {
+                // PRD §9: a staling source replace marks the chunk needsReview.
+                session.chunks[chunkIndex].reviewDisposition = .needsReview
+            }
+            // PRD §9: needsReview mirrors derived staleness. If this transaction
+            // restored every plan block to fresh (e.g. undoing back to the
+            // original text), clear the lingering needsReview so the approve
+            // gate re-enables.
+            if session.chunks[chunkIndex].reviewDisposition == .needsReview,
+               !Self.isDocumentPlanStale(documentState: documentState, plan: plan, languageKey: activeLangKey) {
+                session.chunks[chunkIndex].reviewDisposition = .pending
+            }
+        }
+
+        session.documentState = documentState
+        workflow.session = session
+        commitCurrentProjectToMemory()
+        scheduleAutosave()
+    }
+
+    /// Document-wide Replace Everywhere (PRD §11, §12, ADR-E2/E6): one planned
+    /// transaction, one Undo, one save. Returns nil when no document is open.
+    func replaceEverywhereInDocument(
+        query: String,
+        replacement: String,
+        side: DocumentEditorSide,
+        options: DocumentReplaceEverywhereOptions
+    ) -> DocumentReplaceEverywhereResult? {
+        guard let session = workflow.session,
+              session.sourceKind == .document,
+              let documentState = session.documentState
+        else { return nil }
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedQuery.isEmpty else { return nil }
+
+        let activeLanguage = session.selectedTranslationLanguage ?? session.targetLang
+        let activeLangKey = TranslationArchive.languageKey(activeLanguage)
+        let scope: DocumentSearchScope
+        let transactionLanguageKey: String?
+        switch side {
+        case .source:
+            scope = .currentSourceDocument
+            transactionLanguageKey = nil
+        case .translation:
+            scope = .currentTranslation(languageKey: activeLangKey)
+            transactionLanguageKey = activeLangKey
+        }
+
+        let engineOptions = DocumentFindReplaceOptions(
+            wholeWord: options.wholeWord,
+            caseSensitive: options.caseSensitive,
+            skipProtected: options.skipProtected
+        )
+        // PRD §26.6: a 0-match operation is a no-op — no transaction, no save,
+        // no Undo.
+        guard let plan = DocumentFindReplaceEngine.plan(
+            in: documentState,
+            scope: scope,
+            query: trimmedQuery,
+            replacement: replacement,
+            options: engineOptions
+        ) else {
+            return DocumentReplaceEverywhereResult(
+                replacedCount: 0,
+                skippedProtectedCount: 0,
+                skippedMixedStyleCount: 0,
+                touchedBlockCount: 0,
+                glossarySaved: false
+            )
+        }
+
+        let before: [DocumentBlockPatch]
+        switch side {
+        case .source:
+            before = plan.patches.compactMap { patch in
+                documentState.blocks.first(where: { $0.id == patch.blockID }).map {
+                    DocumentBlockPatch(blockID: $0.id, spans: $0.spans, text: $0.spans.map(\.text).joined())
+                }
+            }
+        case .translation:
+            before = plan.patches.compactMap { patch in
+                documentState.translationsByLanguage[activeLangKey]?[patch.blockID].map {
+                    DocumentBlockPatch(
+                        blockID: $0.sourceBlockID,
+                        spans: $0.spans,
+                        text: $0.text,
+                        reviewDisposition: $0.reviewDisposition
+                    )
+                }
+            }
+        }
+        let after = plan.patches.map {
+            DocumentBlockPatch(blockID: $0.blockID, spans: $0.spans, text: $0.text)
+        }
+
+        let transaction = DocumentEditTransaction(
+            reason: .replaceEverywhere,
+            side: side,
+            before: before,
+            after: after,
+            documentWide: true,
+            languageKey: transactionLanguageKey
+        )
+        let coordinator = DocumentEditingCoordinator(store: self, undoManager: documentUndoManager)
+        coordinator.applyDocumentWide(transaction, languageKey: transactionLanguageKey)
+
+        // PRD §12: optionally remember the replacement as a glossary rule.
+        var glossarySaved = false
+        if options.saveAsGlossary, plan.report.foundCount > 0 {
+            switch side {
+            case .source:
+                // The source term is unambiguous: it is the query itself.
+                let now = isoString(clock())
+                let entry = GlossaryEntry(
+                    id: UUID().uuidString,
+                    variants: trimmedQuery.caseInsensitiveCompare(replacement) == .orderedSame ? [] : [trimmedQuery],
+                    source: replacement,
+                    translation: replacement,
+                    category: nil,
+                    translations: [activeLanguage: replacement],
+                    remember: true,
+                    createdAt: now,
+                    updatedAt: now
+                )
+                updateSettings { settings in
+                    settings.glossary.insert(entry, at: 0)
+                }
+                glossarySaved = true
+            case .translation:
+                // PRD §12.2: the source mapping is NOT unambiguous — never
+                // invent a source term. The sheet opens a glossary draft so
+                // the user can finish the rule.
+                glossarySaved = true
+            }
+        }
+
+        var message = "Replaced \(plan.report.foundCount) occurrence(s) in \(plan.report.blockCount) block(s)."
+        if plan.report.skippedProtectedCount > 0 {
+            message += " \(plan.report.skippedProtectedCount) protected skipped."
+        }
+        if plan.report.skippedMixedStyleCount > 0 {
+            message += " \(plan.report.skippedMixedStyleCount) mixed-style skipped."
+        }
+        statusMessage = message
+
+        return DocumentReplaceEverywhereResult(
+            replacedCount: plan.report.foundCount,
+            skippedProtectedCount: plan.report.skippedProtectedCount,
+            skippedMixedStyleCount: plan.report.skippedMixedStyleCount,
+            touchedBlockCount: plan.report.blockCount,
+            glossarySaved: glossarySaved
+        )
     }
 
     func updateCurrentTranslated(_ text: String) {
@@ -2337,6 +2777,11 @@ final class WorkflowStore: ObservableObject {
 
     func exportDocument(format: DocumentOutputFormat) {
         guard let session = workflow.session, session.sourceKind == .document else { return }
+        if hasStaleDocumentChunks {
+            statusMessage = "Fix the stale chunks (translation doesn't match the source) before exporting."
+            return
+        }
+        flushAutosave()
         guard let documentState = session.documentState else {
             statusMessage = "No document state available for export."
             return
@@ -2416,12 +2861,19 @@ final class WorkflowStore: ObservableObject {
             }
             statusMessage = "Export saved: \(destinationURL.lastPathComponent)"
         } catch {
-            statusMessage = "Export failed: \(error.localizedDescription)"
+            // Keep UI copy short — full detail goes to the log, not a red wall of text.
+            AppLogger.shared.error("Document export failed: \(error.localizedDescription)")
+            statusMessage = shortExportFailureMessage(error)
         }
     }
 
     func exportDocumentTranslationPackage() {
         guard let session = workflow.session, session.sourceKind == .document else { return }
+        if hasStaleDocumentChunks {
+            statusMessage = "Fix the stale chunks (translation doesn't match the source) before exporting."
+            return
+        }
+        flushAutosave()
         guard let documentState = session.documentState else {
             statusMessage = "No document state available for export."
             return
@@ -2491,7 +2943,8 @@ final class WorkflowStore: ObservableObject {
                 statusMessage = "Translation package exported: \(destinationFolderURL.lastPathComponent)"
             }
         } catch {
-            statusMessage = "Package export failed: \(error.localizedDescription)"
+            AppLogger.shared.error("Package export failed: \(error.localizedDescription)")
+            statusMessage = shortExportFailureMessage(error)
         }
     }
     func formatDocumentWithLocalMLX(
@@ -3011,7 +3464,7 @@ final class WorkflowStore: ObservableObject {
             try text.write(to: textURL, atomically: true, encoding: .utf8)
             statusMessage = "Shorts/Reels ideas exported: \(url.lastPathComponent), \(textURL.lastPathComponent)"
         } catch {
-            statusMessage = "Shorts/Reels ideas export failed: \(error.localizedDescription)"
+            statusMessage = shortExportFailureMessage(error)
         }
     }
 
@@ -3165,12 +3618,12 @@ final class WorkflowStore: ObservableObject {
             } catch {
                 await MainActor.run {
                     self.exportTimer?.invalidate()
-                    self.exportTimer = nil
                     self.exportStage = "Render failed"
                     self.exportPhaseTag = "failed"
-                    self.exportCompletionState = .failure(error.localizedDescription)
+                    let shortMessage = shortExportFailureMessage(error)
+                    self.exportCompletionState = .failure(shortMessage)
                     self.isExportingShorts = true
-                    self.statusMessage = "Shorts/Reels video export failed: \(error.localizedDescription)"
+                    self.statusMessage = shortMessage
                     self.exportTask = nil
                 }
             }
@@ -3233,6 +3686,8 @@ final class WorkflowStore: ObservableObject {
     }
 
     func openProject(id: String, chunkIndex: Int? = nil, openExport: Bool = false) {
+        // PRD §15: persist any pending debounced edits before switching projects.
+        flushAutosave()
         if id == currentProjectID, let chunkIndex, var session = workflow.session {
             let previousTranscriptionProvider = workflow.transcriptionProvider
             let maxIndex = max(0, session.chunks.count - 1)
@@ -3262,10 +3717,12 @@ final class WorkflowStore: ObservableObject {
 
         guard let record = projects.first(where: { $0.id == id }) else { return }
         let previousTranscriptionProvider = workflow.transcriptionProvider
-        AppLogger.shared.info("Opening project: \(record.session.sourceFileName) (ID: \(id))", settings: workflow.settings)
-        visualEditorDraft = nil
         var openedSession = record.session
         openedSession.normalizeTranslationArchive()
+        if openedSession != record.session,
+           let index = projects.firstIndex(where: { $0.id == record.id }) {
+            projects[index].session = openedSession
+        }
         if let chunkIndex {
             let maxIndex = max(0, openedSession.chunks.count - 1)
             openedSession.currentChunkIndex = min(max(0, chunkIndex), maxIndex)
@@ -3312,13 +3769,117 @@ final class WorkflowStore: ObservableObject {
         }
     }
 
+    func deletionPolicy(for id: String) -> ProjectDeletionPolicy? {
+        guard let record = projects.first(where: { $0.id == id }) else { return nil }
+        var latestRecord = record
+        if currentProjectID == id, let activeSession = workflow.session {
+            latestRecord.session = activeSession
+        }
+        return latestRecord.deletionPolicy
+    }
+
     func deleteProject(id: String) {
         AppLogger.shared.info("Deleting project ID: \(id)", settings: workflow.settings)
         projects.removeAll { $0.id == id }
+        let projectsDir = AppStoragePaths.projectsDirectory().standardizedFileURL
+        let destDir = AppStoragePaths.projectDirectory(id: id).standardizedFileURL
+        let trimmedID = id.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedID.isEmpty,
+           !id.contains("/"),
+           !id.contains("\\"),
+           !id.contains(".."),
+           destDir != projectsDir,
+           destDir.deletingLastPathComponent().standardizedFileURL == projectsDir {
+            try? FileManager.default.removeItem(at: destDir)
+        }
         if currentProjectID == id {
             newSession()
         }
         persistProjects()
+        statusMessage = "Project deleted."
+    }
+
+    func discardAndRemoveProject(id: String) {
+        AppLogger.shared.info("Discarding and removing project ID: \(id)", settings: workflow.settings)
+        deleteProject(id: id)
+    }
+
+    @discardableResult
+    func saveAndRemoveProject(id: String) -> Bool {
+        guard let index = projects.firstIndex(where: { $0.id == id }) else {
+            statusMessage = "Project not found."
+            return false
+        }
+        var recordToSave = projects[index]
+        if currentProjectID == id, let activeSession = workflow.session {
+            recordToSave.session = activeSession
+        }
+        guard let archivePath = recordToSave.originatingArchivePath, !archivePath.isEmpty else {
+            statusMessage = "Originating archive path not found."
+            return false
+        }
+        let archiveURL = URL(fileURLWithPath: archivePath)
+        do {
+            try ProjectArchive.overwriteArchive(
+                record: recordToSave,
+                at: archiveURL,
+                targetIndex: recordToSave.originatingArchiveIndex
+            )
+            deleteProject(id: id)
+            statusMessage = "Changes saved to \(archiveURL.lastPathComponent) and project removed."
+            return true
+        } catch {
+            statusMessage = "Failed to save changes to archive: \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    @discardableResult
+    func exportAsNewAndRemoveProject(id: String, to destinationURL: URL? = nil) -> Bool {
+        guard let index = projects.firstIndex(where: { $0.id == id }) else {
+            statusMessage = "Project not found."
+            return false
+        }
+        var recordToExport = projects[index]
+        if currentProjectID == id, let activeSession = workflow.session {
+            recordToExport.session = activeSession
+        }
+
+        if let destinationURL {
+            do {
+                try ProjectBundleExporter.exportBundle(record: recordToExport, to: destinationURL)
+                deleteProject(id: id)
+                statusMessage = "Project exported to \(destinationURL.lastPathComponent) and removed."
+                return true
+            } catch {
+                statusMessage = "Export failed: \(error.localizedDescription)"
+                return false
+            }
+        } else {
+            let panel = NSSavePanel()
+            let baseName = recordToExport.summary.name
+            panel.nameFieldStringValue = "\(baseName.isEmpty ? "VaniScript_Project" : baseName).vaniscript"
+            panel.allowedContentTypes = [
+                UTType(filenameExtension: "vaniscript") ?? .data
+            ]
+            panel.canCreateDirectories = true
+            panel.title = "Export Project as New Version"
+            panel.message = "Choose a location to save the project bundle before removing it from VaniScript."
+
+            guard panel.runModal() == .OK, let targetURL = panel.url else {
+                return false
+            }
+
+            do {
+                try ProjectBundleExporter.exportBundle(record: recordToExport, to: targetURL)
+                deleteProject(id: id)
+                statusMessage = "Project exported to \(targetURL.lastPathComponent) and removed."
+                return true
+            } catch {
+                statusMessage = "Export failed: \(error.localizedDescription)"
+                return false
+            }
+        }
     }
 
     func exportAllProjects() {
@@ -3330,16 +3891,14 @@ final class WorkflowStore: ObservableObject {
             try ProjectBundleExporter.exportLibrary(records: projects, to: url)
             statusMessage = "Library exported: \(url.lastPathComponent)"
         } catch {
-            statusMessage = "Library export failed: \(error.localizedDescription)"
+            statusMessage = shortExportFailureMessage(error)
         }
     }
 
     func exportProject(id: String) {
         guard let record = projects.first(where: { $0.id == id }) else { return }
         let panel = NSSavePanel()
-        let baseName = URL(fileURLWithPath: record.session.sourceFileName)
-            .deletingPathExtension()
-            .lastPathComponent
+        let baseName = record.summary.name
         panel.nameFieldStringValue = "\(baseName.isEmpty ? "VaniScript_Project" : baseName).vaniscript"
         panel.canCreateDirectories = true
         guard panel.runModal() == .OK, let url = panel.url else { return }
@@ -3347,9 +3906,189 @@ final class WorkflowStore: ObservableObject {
             try ProjectBundleExporter.exportBundle(record: record, to: url)
             statusMessage = "Project exported: \(url.lastPathComponent)"
         } catch {
-            statusMessage = "Project export failed: \(error.localizedDescription)"
+            statusMessage = shortExportFailureMessage(error)
         }
     }
+
+    /// Opens a document picker and refreshes the selected project's source file
+    /// (ADR-007). Path/name may differ; matching translations are kept by text hash.
+    func refreshProjectSource(id: String) {
+        guard let record = projects.first(where: { $0.id == id }) else { return }
+        guard record.session.sourceKind == .document else {
+            statusMessage = "Refresh Source is only available for document projects."
+            return
+        }
+
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        var types: [UTType] = [.text, .plainText, .rtf, .pdf]
+        for extensionName in SourceClassifier.documentExtensions {
+            if let type = UTType(filenameExtension: extensionName), !types.contains(type) {
+                types.append(type)
+            }
+        }
+        panel.allowedContentTypes = types
+        panel.message = "Choose a replacement source document for this project"
+        panel.prompt = "Refresh Source"
+
+        guard panel.runModal() == .OK, let url = panel.url else {
+            AppLogger.shared.info("User cancelled Refresh Source.", settings: workflow.settings)
+            return
+        }
+        applyRefreshedProjectSource(projectID: id, fileURL: url)
+    }
+
+    /// Imports `fileURL` into the existing project directory, merges by text
+    /// identity, persists, and publishes a retranslate offer for changed chunks.
+    func applyRefreshedProjectSource(projectID: String, fileURL: URL) {
+        flushAutosave()
+        guard let projectIndex = projects.firstIndex(where: { $0.id == projectID }) else { return }
+        var record = projects[projectIndex]
+        guard record.session.sourceKind == .document,
+              let oldDocumentState = record.session.documentState
+        else {
+            statusMessage = "Refresh Source is only available for document projects."
+            return
+        }
+
+        let securityScopeStarted = fileURL.startAccessingSecurityScopedResource()
+        defer {
+            if securityScopeStarted {
+                fileURL.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        statusMessage = "Refreshing source document…"
+        let projectDir = AppStoragePaths.projectDirectory(id: projectID)
+
+        do {
+            let imported = try DocumentImportService.importDocument(
+                from: fileURL,
+                projectDirectory: projectDir
+            )
+            let merged = DocumentSourceRefresh.merge(
+                old: oldDocumentState,
+                new: imported.documentState
+            )
+            let sourcePath = imported.importedFileURL.path(percentEncoded: false)
+            let preferredLanguage = TranslationArchive.languageKey(
+                record.session.selectedTranslationLanguage ?? record.session.targetLang
+            )
+            let rebuiltChunks = DocumentSourceRefresh.rebuildSessionChunks(
+                oldChunks: record.session.chunks,
+                documentState: merged.documentState,
+                sourceFilePath: sourcePath,
+                preferredLanguageKey: preferredLanguage,
+                changedChunkIndices: merged.changedChunkIndices
+            )
+
+            var session = record.session
+            session.documentState = merged.documentState
+            session.sourceFile = sourcePath
+            session.sourceFileName = imported.originalFileName
+            session.chunks = rebuiltChunks
+            if session.chunks.isEmpty {
+                session.currentChunkIndex = 0
+            } else {
+                session.currentChunkIndex = min(
+                    max(0, session.currentChunkIndex),
+                    session.chunks.count - 1
+                )
+            }
+            session.normalizeTranslationArchive()
+
+            let now = isoString(clock())
+            record.session = session
+            record.updatedAt = now
+            projects[projectIndex] = record
+            projects = ProjectArchive.sortedRecent(projects)
+            persistProjects()
+
+            if currentProjectID == projectID {
+                workflow.session = session
+                workflow.sourceFile = sourcePath
+                workflow.sourceFileName = imported.originalFileName
+                workflow.documentState = merged.documentState
+                workflow.sourceKind = .document
+                if workflow.screen == .processing {
+                    workflow.screen = .review
+                }
+            }
+
+            let summary = DocumentSourceRefreshSummary(
+                projectID: projectID,
+                matchedBlockCount: merged.matchedBlockCount,
+                addedBlockCount: merged.addedBlockCount,
+                removedBlockCount: merged.removedBlockCount,
+                keptTranslationCount: merged.keptTranslationCount,
+                changedChunkIndices: merged.changedChunkIndices,
+                sourceFileName: imported.originalFileName
+            )
+            sourceRefreshSummary = summary
+
+            let changed = summary.changedChunkCount
+            statusMessage = changed == 0
+                ? "Source refreshed: \(summary.matchedBlockCount) matched, \(summary.addedBlockCount) added, \(summary.removedBlockCount) removed. All translations still match."
+                : "Source refreshed: \(summary.matchedBlockCount) matched, \(summary.addedBlockCount) added, \(summary.removedBlockCount) removed. \(changed) chunk\(changed == 1 ? "" : "s") need translation."
+            AppLogger.shared.info(
+                "Refresh Source complete for \(projectID): matched=\(summary.matchedBlockCount) added=\(summary.addedBlockCount) removed=\(summary.removedBlockCount) changedChunks=\(changed)",
+                settings: workflow.settings
+            )
+        } catch {
+            statusMessage = "Refresh Source failed: \(error.localizedDescription)"
+            AppLogger.shared.error("Refresh Source failed: \(error.localizedDescription)")
+        }
+    }
+
+    func dismissSourceRefreshSummary() {
+        sourceRefreshSummary = nil
+    }
+
+    /// Translates only chunks flagged by the latest Refresh Source summary.
+    /// Uses automaticBatch, which already skips chunks that still have a ready
+    /// translation — matched/fresh chunks are not retranslated.
+    func retranslateChangedChunksAfterSourceRefresh() {
+        guard let summary = sourceRefreshSummary else {
+            statusMessage = "No source-refresh summary is available."
+            return
+        }
+        guard !summary.changedChunkIndices.isEmpty else {
+            statusMessage = "No changed chunks need translation."
+            sourceRefreshSummary = nil
+            return
+        }
+
+        if currentProjectID != summary.projectID {
+            openProject(id: summary.projectID)
+        }
+        guard var session = workflow.session, session.sourceKind == .document else {
+            statusMessage = "Open the refreshed document project before retranslating."
+            return
+        }
+
+        // Ensure changed indices are pending so automaticBatch picks them up
+        // and ready matched chunks remain skipped by hasReadyTranslation.
+        for index in summary.changedChunkIndices where session.chunks.indices.contains(index) {
+            if session.chunks[index].status != .pending {
+                session.chunks[index].status = .pending
+            }
+            if session.chunks[index].reviewDisposition.isApproved {
+                session.chunks[index].reviewDisposition = .needsReview
+                session.chunks[index].approved = false
+            }
+        }
+        if let first = summary.changedChunkIndices.first,
+           session.chunks.indices.contains(first) {
+            session.currentChunkIndex = first
+        }
+        workflow.session = session
+        saveCurrentProject()
+        sourceRefreshSummary = nil
+        startDocumentTranslation(intent: .automaticBatch)
+    }
+
 
     func openProjectSourceFile(id: String) {
         guard let mediaInfo = sourceMediaInfo(for: id) else {
@@ -3450,41 +4189,108 @@ final class WorkflowStore: ObservableObject {
             try logContents.write(to: url, atomically: true, encoding: .utf8)
             statusMessage = "Logs exported: \(url.lastPathComponent)"
         } catch {
-            statusMessage = "Logs export failed: \(error.localizedDescription)"
+            statusMessage = shortExportFailureMessage(error)
+        }
+    }
+
+    // MARK: - Project Import and Drops
+
+    public nonisolated static func isSupportedProjectURL(_ url: URL) -> Bool {
+        let ext = url.pathExtension.lowercased()
+        return ext == "vaniscript" || ext == "vaniscript-library" || ext == "json"
+    }
+
+    public nonisolated static func archiveDisplayName(from url: URL) -> String? {
+        let last = url.lastPathComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !last.isEmpty else { return nil }
+        if last.hasPrefix(".") { return nil }
+        let stem = url.deletingPathExtension().lastPathComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (stem.isEmpty || stem.hasPrefix(".")) ? nil : stem
+    }
+    @discardableResult
+    func handleProjectDrop(urls: [URL]) -> Bool {
+        let validURLs = urls.filter { Self.isSupportedProjectURL($0) }
+        guard !validURLs.isEmpty else {
+            statusMessage = "Project import failed: Unsupported file type. Please drop .vaniscript, .vaniscript-library, or .json files."
+            return false
+        }
+        return importProjectURLs(urls)
+    }
+
+    @discardableResult
+    func importProjectURLs(_ urls: [URL]) -> Bool {
+        guard !urls.isEmpty else { return false }
+
+        let destDir = AppStoragePaths.projectsDirectory()
+        var allImported: [ProjectRecord] = []
+        var failures: [(url: URL, reason: String)] = []
+
+        for url in urls {
+            guard Self.isSupportedProjectURL(url) else {
+                failures.append((url, "Unsupported file format (.\(url.pathExtension))"))
+                continue
+            }
+            do {
+                let override = Self.archiveDisplayName(from: url)
+                let imported = try ProjectBundleImporter.importBundle(
+                    fileURL: url,
+                    destinationDirectoryURL: destDir,
+                    displayNameOverride: override
+                )
+                if imported.isEmpty {
+                    failures.append((url, "No project records found in archive"))
+                } else {
+                    allImported.append(contentsOf: imported)
+                }
+            } catch let error as DecodingError {
+                let reason: String
+                switch error {
+                case .keyNotFound(let key, let context):
+                    reason = "key '\(key.stringValue)' not found at path: \(context.codingPath.map(\.stringValue).joined(separator: "."))"
+                case .valueNotFound(let type, let context):
+                    reason = "value of type '\(type)' not found at path: \(context.codingPath.map(\.stringValue).joined(separator: "."))"
+                case .typeMismatch(let type, let context):
+                    reason = "type mismatch for '\(type)' at path: \(context.codingPath.map(\.stringValue).joined(separator: "."))"
+                case .dataCorrupted(let context):
+                    reason = "data corrupted at path: \(context.codingPath.map(\.stringValue).joined(separator: ".")) (\(context.debugDescription))"
+                @unknown default:
+                    reason = error.localizedDescription
+                }
+                failures.append((url, reason))
+            } catch {
+                failures.append((url, error.localizedDescription))
+            }
+        }
+
+        if !allImported.isEmpty {
+            mergeProjects(allImported)
+        }
+
+        if failures.isEmpty {
+            statusMessage = "Imported \(allImported.count) project\(allImported.count == 1 ? "" : "s")."
+            return true
+        } else if !allImported.isEmpty {
+            let failedDetails = failures.map { "\($0.url.lastPathComponent) (\($0.reason))" }.joined(separator: "; ")
+            statusMessage = "Imported \(allImported.count) project\(allImported.count == 1 ? "" : "s") with \(failures.count) failure\(failures.count == 1 ? "" : "s"): \(failedDetails)"
+            return true
+        } else {
+            let failedDetails = failures.map { "\($0.url.lastPathComponent): \($0.reason)" }.joined(separator: "; ")
+            statusMessage = "Project import failed: \(failedDetails)"
+            return false
         }
     }
 
     func importProjects() {
         let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = false
+        panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
 
         let vaniscriptType = UTType(filenameExtension: "vaniscript", conformingTo: .data) ?? .data
         let vaniscriptLibraryType = UTType(filenameExtension: "vaniscript-library", conformingTo: .data) ?? .data
         panel.allowedContentTypes = [.json, vaniscriptType, vaniscriptLibraryType]
 
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        do {
-            let destDir = AppStoragePaths.applicationSupportDirectory().appendingPathComponent("Projects", isDirectory: true)
-            let imported = try ProjectBundleImporter.importBundle(fileURL: url, destinationDirectoryURL: destDir)
-            mergeProjects(imported)
-            statusMessage = "Imported \(imported.count) project\(imported.count == 1 ? "" : "s")."
-        } catch let error as DecodingError {
-            switch error {
-            case .keyNotFound(let key, let context):
-                statusMessage = "Project import failed: key '\(key.stringValue)' not found at path: \(context.codingPath.map(\.stringValue).joined(separator: "."))"
-            case .valueNotFound(let type, let context):
-                statusMessage = "Project import failed: value of type '\(type)' not found at path: \(context.codingPath.map(\.stringValue).joined(separator: "."))"
-            case .typeMismatch(let type, let context):
-                statusMessage = "Project import failed: type mismatch for '\(type)' at path: \(context.codingPath.map(\.stringValue).joined(separator: "."))"
-            case .dataCorrupted(let context):
-                statusMessage = "Project import failed: data corrupted at path: \(context.codingPath.map(\.stringValue).joined(separator: ".")) (\(context.debugDescription))"
-            @unknown default:
-                statusMessage = "Project import failed: \(error.localizedDescription)"
-            }
-        } catch {
-            statusMessage = "Project import failed: \(error.localizedDescription)"
-        }
+        guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
+        _ = importProjectURLs(panel.urls)
     }
 
     // MARK: - API usage recording (A2, §8.3)
@@ -4102,6 +4908,14 @@ final class WorkflowStore: ObservableObject {
     }
 
     private func saveCurrentProject() {
+        commitCurrentProjectToMemory()
+        persistProjects()
+    }
+
+    /// Updates the in-memory project archive with the current session without
+    /// touching disk. The document typing paths pair this with `scheduleAutosave()`
+    /// (PRD §15) so per-keystroke edits do not rewrite the project file.
+    private func commitCurrentProjectToMemory() {
         guard let currentProjectID, let session else { return }
         var normalizedSession = session
         normalizedSession.normalizeTranslationArchive()
@@ -4114,7 +4928,47 @@ final class WorkflowStore: ObservableObject {
             projects.append(ProjectRecord(id: currentProjectID, createdAt: now, updatedAt: now, session: normalizedSession))
         }
         projects = ProjectArchive.sortedRecent(projects)
-        persistProjects()
+    }
+
+    /// Debounced disk autosave for the document typing paths. Each call cancels
+    /// the pending save and schedules a new one after `autosaveInterval`, so a
+    /// burst of keystrokes produces a single disk write.
+    private func scheduleAutosave() {
+        autosaveTask?.cancel()
+        autosaveGeneration &+= 1
+        let generation = autosaveGeneration
+        let interval = autosaveInterval
+        autosaveTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: interval)
+            guard let self, !Task.isCancelled, self.autosaveGeneration == generation else { return }
+            self.performDiskSave()
+        }
+    }
+
+    /// Persists any pending debounced autosave immediately. Mandatory before
+    /// chunk changes, focus loss, export, project switch, termination, and after
+    /// every programmatic edit transaction (PRD §15).
+    func flushAutosave() {
+        let hadPendingAutosave = autosaveTask != nil
+        autosaveTask?.cancel()
+        autosaveTask = nil
+        // A failed save stays retryable: any flush re-attempts the disk write.
+        guard hadPendingAutosave || projectSaveFailure != nil else { return }
+        performDiskSave()
+    }
+
+    /// Synchronous disk write through the injected persistence closure. On
+    /// failure the in-memory edits are kept and a persistent, retryable error is
+    /// surfaced; the next flush retries automatically (PRD §24).
+    private func performDiskSave() {
+        do {
+            try projectsPersistence(projects)
+            projectSaveFailure = nil
+        } catch {
+            projectSaveFailure = error.localizedDescription
+            statusMessage = "Project save failed: \(error.localizedDescription). Your edits are kept in memory and will be retried automatically."
+            AppLogger.shared.error("Project save failed: \(error.localizedDescription)")
+        }
     }
 
     private func mergeProjects(_ imported: [ProjectRecord]) {
@@ -4128,6 +4982,9 @@ final class WorkflowStore: ObservableObject {
                     for entry in glossary {
                         _ = applyGlossaryEntry(&updatedProjects[i].session.chunks[chunkIndex], entry: entry)
                     }
+                }
+                if updatedProjects[i].isImported {
+                    updatedProjects[i].importBaselineFingerprint = updatedProjects[i].computeWorkFingerprint()
                 }
             }
         }
@@ -4144,12 +5001,17 @@ final class WorkflowStore: ObservableObject {
 
     private func persistProjects() {
         let projectsToSave = projects
+        let save = projectsPersistence
         Task.detached(priority: .background) { [weak self] in
             do {
-                try ProjectDiskStore.save(projectsToSave)
+                try save(projectsToSave)
+                await MainActor.run {
+                    self?.projectSaveFailure = nil
+                }
             } catch {
                 await MainActor.run {
-                    self?.statusMessage = "Project save failed: \(error.localizedDescription)"
+                    self?.projectSaveFailure = error.localizedDescription
+                    self?.statusMessage = "Project save failed: \(error.localizedDescription). Your edits are kept in memory and will be retried automatically."
                 }
             }
         }
@@ -4279,6 +5141,30 @@ final class WorkflowStore: ObservableObject {
 
     private func isoString(_ date: Date) -> String {
         ISO8601DateFormatter().string(from: date)
+    }
+
+    /// Short, user-facing export failure copy. Full diagnostics stay in AppLogger.
+    private func shortExportFailureMessage(_ error: Error) -> String {
+        if let exportError = error as? DocumentExportWriters.ExportError {
+            switch exportError {
+            case .missingSourceDocument:
+                return "Export failed: original DOCX not found."
+            case .missingTranslation:
+                return "Export failed: no translation available."
+            case .sourceHashMismatch:
+                // No longer thrown for normal export, but keep a calm fallback.
+                return "Export failed: source file check failed."
+            case .invalidPackage:
+                return "Export failed: could not read the DOCX package."
+            case .writeFailed:
+                return "Export failed: could not write the file."
+            }
+        }
+        let detail = error.localizedDescription
+        if detail.count <= 90 {
+            return "Export failed: \(detail)"
+        }
+        return "Export failed. See logs for details."
     }
 
     @discardableResult
@@ -5485,9 +6371,13 @@ final class WorkflowStore: ObservableObject {
         guard panel.runModal() == .OK, let url = panel.url else {
             throw mcpError(-9, "USER_CANCELLED: Project bundle selection was cancelled")
         }
-        let destination = AppStoragePaths.applicationSupportDirectory()
-            .appendingPathComponent("Projects", isDirectory: true)
-        let imported = try ProjectBundleImporter.importBundle(fileURL: url, destinationDirectoryURL: destination)
+        let destination = AppStoragePaths.projectsDirectory()
+        let override = Self.archiveDisplayName(from: url)
+        let imported = try ProjectBundleImporter.importBundle(
+            fileURL: url,
+            destinationDirectoryURL: destination,
+            displayNameOverride: override
+        )
         mergeProjects(imported)
         return ["success": true, "importedCount": imported.count, "projectIds": imported.map(\.id)]
     }
@@ -5498,9 +6388,11 @@ final class WorkflowStore: ObservableObject {
             throw mcpError(-3, "ENTITY_NOT_FOUND: Unknown projectId and no active project")
         }
         let export = try mcpExportStore.makeDirectory(label: "project")
-        let stem = URL(fileURLWithPath: record.session.sourceFileName).deletingPathExtension().lastPathComponent
+        let stem = record.summary.name
             .replacingOccurrences(of: #"[^A-Za-z0-9А-Яа-я_-]+"#, with: "-", options: .regularExpression)
-        let file = export.url.appendingPathComponent(stem.isEmpty ? "VaniScript-Project" : stem).appendingPathExtension("vaniscript")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+        let finalStem = stem.isEmpty ? "VaniScript-Project" : stem
+        let file = export.url.appendingPathComponent(finalStem).appendingPathExtension("vaniscript")
         try ProjectBundleExporter.exportBundle(record: record, to: file)
         return mcpExportStore.register(exportID: export.id, files: [file])
     }

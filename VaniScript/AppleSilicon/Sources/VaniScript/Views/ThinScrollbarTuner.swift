@@ -296,6 +296,15 @@ final class DocumentDualScrollCoordinator {
         pane: DocumentScrollPane,
         scope newScope: DocumentScrollScope
     ) {
+        // Idempotent: same scroll view + scope already bound → no re-observe,
+        // no scheduleReapply. updateNSView calls attach every SwiftUI tick.
+        if state.scope == newScope,
+           currentScrollView(for: pane) === scrollView,
+           state.attachedPanes.contains(pane),
+           observers[pane] != nil {
+            return
+        }
+
         if state.scope != newScope {
             setScope(newScope)
         }
@@ -304,13 +313,15 @@ final class DocumentDualScrollCoordinator {
             disconnect(pane: pane)
             assign(scrollView, to: pane)
             observe(scrollView: scrollView, pane: pane)
-        } else {
-            removeObservers(for: pane)
+        } else if observers[pane] == nil {
             observe(scrollView: scrollView, pane: pane)
         }
 
         state.bind(pane, scope: newScope)
-        scheduleReapply()
+        // Only pin once both panes exist; avoid yanking a single pane to 0.
+        if state.attachedPanes.count == 2 {
+            scheduleReapply()
+        }
     }
 
     func detach(pane: DocumentScrollPane, scrollView: NSScrollView? = nil) {
@@ -329,6 +340,28 @@ final class DocumentDualScrollCoordinator {
     func detach() {
         disconnectScrollViews()
         state.detachAll()
+    }
+
+    /// Pin both panes to the top after a chunk change / Approve & Next / Previous.
+    func resetToTop() {
+        state.preserveProgress(0)
+        state.resetLeader()
+        if sourceScrollView != nil {
+            apply(0, to: .source)
+        }
+        if translatedScrollView != nil {
+            apply(0, to: .translated)
+        }
+    }
+
+    /// After a programmatic jump (proof unit / chunk top), publish this pane's
+    /// progress and pull the opposite pane so linked scroll stays coherent.
+    func syncFromProgrammaticScroll(pane: DocumentScrollPane) {
+        guard let scrollView = currentScrollView(for: pane),
+              let geometry = geometry(for: scrollView)
+        else { return }
+        state.recordUserProgress(pane, progress: geometry.progress)
+        applyFollower(from: pane)
     }
 
     private func assign(_ scrollView: NSScrollView, to pane: DocumentScrollPane) {
@@ -429,28 +462,21 @@ final class DocumentDualScrollCoordinator {
 
         case .didEndLiveScroll:
             livePanes.remove(pane)
-            scheduleReapply()
+            // Do not scheduleReapply here — that yanks both panes after every
+            // gesture and feels like blink/jump on long dual documents.
 
         case .clipBoundsDidChange:
-            let observation = state.observe(
-                pane,
-                progress: geometry.progress,
-                isLiveScroll: livePanes.contains(pane)
-            )
-            switch observation {
-            case .ignored, .followerSuppressed:
-                return
-            case .user:
-                applyFollower(from: pane)
-            case .relayout:
-                scheduleReapply()
-            }
+            // Follow only during live user scroll (trackpad/wheel/knob drag).
+            guard livePanes.contains(pane) else { return }
+            state.recordUserProgress(pane, progress: geometry.progress)
+            applyFollower(from: pane)
 
         case .documentBoundsDidChange:
-            state.preserveProgress()
-            scheduleReapply()
+            // Ignore layout-only bounds noise (highlight temp attrs, font, etc.).
+            break
         }
     }
+
     private func geometry(for scrollView: NSScrollView) -> DocumentScrollGeometry? {
         guard let documentView = scrollView.documentView else { return nil }
         let contentView = scrollView.contentView

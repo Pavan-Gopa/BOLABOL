@@ -254,10 +254,11 @@ struct S7AdversarialValidatorTests {
             request: request
         )
         #expect(!result.warnings.contains { $0.code == "languageResidue" })
+        #expect(!result.errors.contains { $0.code == "languageResidue" })
     }
 
-    @Test("ordinary copied prose still produces source-language residue warning")
-    func ordinaryCopiedProseWarns() {
+    @Test("ordinary copied prose is a blocking source-language residue failure")
+    func ordinaryCopiedProseFails() {
         let source = "This ordinary paragraph should have been translated into another language."
         let request = oneBlockRequest(source: source)
         let result = validator.validate(
@@ -267,8 +268,8 @@ struct S7AdversarialValidatorTests {
             ),
             request: request
         )
-        #expect(result.isValid)
-        #expect(result.warnings.contains { $0.code == "languageResidue" })
+        #expect(!result.isValid)
+        #expect(result.errors.contains { $0.code == "languageResidue" })
     }
 
     @Test("strict JSON helper converts unknown fields and malformed JSON into invalidJSON")

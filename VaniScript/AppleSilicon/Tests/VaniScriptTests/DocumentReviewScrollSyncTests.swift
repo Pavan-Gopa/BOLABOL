@@ -329,6 +329,238 @@ struct DocumentReviewScrollSyncTests {
         #expect(translated.contentView.bounds.origin.y == 0)
     }
 
+    @Test("attach is idempotent and never yanks progress for the same view and scope")
+    @MainActor
+    func attachIdempotency() {
+        let coordinator = DocumentDualScrollCoordinator()
+        let source = makeScrollView(documentHeight: 1_000)
+        let translated = makeScrollView(documentHeight: 500)
+        coordinator.attach(source, pane: .source, scope: scope)
+        coordinator.attach(translated, pane: .translated, scope: scope)
+
+        coordinator.setScope(scope) // no-op guard must also be idempotent
+
+        // Establish a real user scroll position.
+        source.contentView.scroll(to: NSPoint(x: 0, y: 450))
+        source.reflectScrolledClipView(source.contentView)
+        NotificationCenter.default.post(
+            name: NSScrollView.didLiveScrollNotification,
+            object: source
+        )
+        #expect(coordinator.progress == 0.5)
+
+        // SwiftUI ticks re-attach the same views/scope every pass; none of this
+        // may re-observe, re-pin, or otherwise touch progress.
+        for _ in 0..<5 {
+            coordinator.attach(source, pane: .source, scope: scope)
+            coordinator.attach(translated, pane: .translated, scope: scope)
+            #expect(coordinator.progress == 0.5)
+            #expect(coordinator.attachedPanes == [.source, .translated])
+            #expect(coordinator.state.leader == .source)
+            #expect(abs(translated.contentView.bounds.origin.y - 200) < 0.5)
+            #expect(abs(source.contentView.bounds.origin.y - 450) < 0.5)
+        }
+        coordinator.detach()
+        #expect(coordinator.attachedPanes.isEmpty)
+    }
+
+    @Test("resetToTop zeroes progress, clears leadership, and moves both panes")
+    @MainActor
+    func resetToTopMovesBothPanes() {
+        let coordinator = DocumentDualScrollCoordinator()
+        let source = makeScrollView(documentHeight: 1_000)
+        let translated = makeScrollView(documentHeight: 500)
+        coordinator.attach(source, pane: .source, scope: scope)
+        coordinator.attach(translated, pane: .translated, scope: scope)
+
+        source.contentView.scroll(to: NSPoint(x: 0, y: 450))
+        source.reflectScrolledClipView(source.contentView)
+        NotificationCenter.default.post(
+            name: NSScrollView.didLiveScrollNotification,
+            object: source
+        )
+        NotificationCenter.default.post(
+            name: NSScrollView.didEndLiveScrollNotification,
+            object: source
+        )
+        #expect(coordinator.progress == 0.5)
+        #expect(coordinator.state.leader == .source)
+
+        coordinator.resetToTop()
+        #expect(coordinator.progress == 0)
+        #expect(coordinator.state.leader == nil)
+        #expect(source.contentView.bounds.origin.y == 0)
+        #expect(translated.contentView.bounds.origin.y == 0)
+
+        // Both panes remain attached and stay synced after the reset.
+        #expect(coordinator.attachedPanes == [.source, .translated])
+
+        // A fresh attach pass after the reset returns early for already-bound
+        // views: leadership and progress survive untouched. Attach while the
+        // remaining pane is still marked live, then close the gesture before
+        // asserting — this is exactly the chunk-change sequencing the live app's
+        // didEndLiveScroll path exercises before SwiftUI re-attaches.
+        source.contentView.scroll(to: NSPoint(x: 0, y: 225))
+        source.reflectScrolledClipView(source.contentView)
+        NotificationCenter.default.post(
+            name: NSScrollView.didLiveScrollNotification,
+            object: source
+        )
+        #expect(coordinator.progress == 0.25)
+        #expect(abs(translated.contentView.bounds.origin.y - 100) < 0.5)
+    }
+
+    @Test("resetToTop clamps out-of-range progress preserved before the reset")
+    @MainActor
+    func resetToTopClampsPreservedProgress() {
+        let coordinator = DocumentDualScrollCoordinator()
+        let source = makeScrollView(documentHeight: 1_000)
+        coordinator.attach(source, pane: .source, scope: scope)
+        coordinator.setScope(scope) // idempotent attach guard must not detach
+
+        coordinator.resetToTop()
+        // Only source attached: apply skips missing translated pane safely.
+        #expect(coordinator.progress == 0)
+        #expect(source.contentView.bounds.origin.y == 0)
+        coordinator.detach()
+    }
+
+    @Test("programmatic highlight jump propagates from source to translated follower")
+    @MainActor
+    func programmaticScrollSyncsFollower() {
+        let coordinator = DocumentDualScrollCoordinator()
+        let source = makeScrollView(documentHeight: 1_000)
+        let translated = makeScrollView(documentHeight: 500)
+        coordinator.attach(source, pane: .source, scope: scope)
+        coordinator.attach(translated, pane: .translated, scope: scope)
+
+        // Simulate a proofreading-highlight jump in the source pane (50%).
+        source.contentView.scroll(to: NSPoint(x: 0, y: 450))
+        source.reflectScrolledClipView(source.contentView)
+        coordinator.syncFromProgrammaticScroll(pane: .source)
+
+        #expect(coordinator.progress == 0.5)
+        #expect(coordinator.state.leader == .source)
+        #expect(abs(translated.contentView.bounds.origin.y - 200) < 0.5)
+    }
+
+    @Test("programmatic highlight jump propagates from translated pane to source follower")
+    @MainActor
+    func programmaticScrollFromTranslatedLeadership() {
+        let coordinator = DocumentDualScrollCoordinator()
+        let source = makeScrollView(documentHeight: 1_000)
+        let translated = makeScrollView(documentHeight: 500)
+        coordinator.attach(source, pane: .source, scope: scope)
+        coordinator.attach(translated, pane: .translated, scope: scope)
+
+        translated.contentView.scroll(to: NSPoint(x: 0, y: 200))
+        translated.reflectScrolledClipView(translated.contentView)
+        coordinator.syncFromProgrammaticScroll(pane: .translated)
+
+        #expect(coordinator.progress == 0.5)
+        #expect(coordinator.state.leader == .translated)
+        #expect(abs(source.contentView.bounds.origin.y - 450) < 0.5)
+    }
+
+    @Test("programmatic scroll call before attachment is a safe no-op")
+    @MainActor
+    func programmaticScrollWithNothingAttachedIsIgnored() {
+        let coordinator = DocumentDualScrollCoordinator()
+        coordinator.syncFromProgrammaticScroll(pane: .source)
+        coordinator.syncFromProgrammaticScroll(pane: .translated)
+        #expect(coordinator.progress == 0)
+        #expect(coordinator.attachedPanes.isEmpty)
+        #expect(coordinator.state.leader == nil)
+    }
+
+    @Test("non-live bounds-only notification does not thrash the follower")
+    @MainActor
+    func nonLiveClipBoundsDoesNotThrashFollower() {
+        let coordinator = DocumentDualScrollCoordinator()
+        let source = makeScrollView(documentHeight: 1_000)
+        let translated = makeScrollView(documentHeight: 500)
+        coordinator.attach(source, pane: .source, scope: scope)
+        coordinator.attach(translated, pane: .translated, scope: scope)
+
+        // A programmatic (non-live) source jump drives the follower once.
+        source.contentView.scroll(to: NSPoint(x: 0, y: 450))
+        source.reflectScrolledClipView(source.contentView)
+        coordinator.syncFromProgrammaticScroll(pane: .source)
+        #expect(coordinator.progress == 0.5)
+        #expect(abs(translated.contentView.bounds.origin.y - 200) < 0.5)
+
+        // Stale clip-bounds notifications (no live-scroll gesture active) arriving
+        // afterwards must be ignored by both panes; no ping-pong, no drift.
+        NotificationCenter.default.post(
+            name: NSView.boundsDidChangeNotification,
+            object: source.contentView
+        )
+        #expect(coordinator.progress == 0.5)
+        #expect(abs(translated.contentView.bounds.origin.y - 200) < 0.5)
+        #expect(abs(source.contentView.bounds.origin.y - 450) < 0.5)
+
+        // Simulate an asymmetric noise notification: source bounds change locally
+        // without any scroll sync participation (applying history, etc.).
+        source.contentView.bounds = NSRect(x: 0, y: 0, width: 240, height: 100)
+        NotificationCenter.default.post(
+            name: NSView.boundsDidChangeNotification,
+            object: source.contentView
+        )
+        #expect(coordinator.progress == 0.5)
+        // The drifted pane is not yanked by the non-live noise; synced state wins.
+        #expect(abs(translated.contentView.bounds.origin.y - 200) < 0.5)
+        coordinator.detach()
+    }
+
+    @Test("detaching one pane leaves the other attached")
+    @MainActor
+    func detachSinglePaneKeepsRest() {
+        let coordinator = DocumentDualScrollCoordinator()
+        let source = makeScrollView(documentHeight: 1_000)
+        let translated = makeScrollView(documentHeight: 500)
+        coordinator.attach(source, pane: .source, scope: scope)
+        coordinator.attach(translated, pane: .translated, scope: scope)
+        #expect(coordinator.attachedPanes == [.source, .translated])
+
+        coordinator.detach(pane: .translated)
+        #expect(coordinator.attachedPanes == [.source])
+        #expect(coordinator.scope == scope)
+
+        coordinator.detach(pane: .source)
+        #expect(coordinator.attachedPanes.isEmpty)
+        #expect(coordinator.scope == nil)
+    }
+
+    @Test("proofreading focus navigation coordinates programmatic dual scroll without state drift")
+    @MainActor
+    func proofreadingFocusCoordinatesDualScroll() {
+        let coordinator = DocumentDualScrollCoordinator()
+        let source = makeScrollView(documentHeight: 1_200)
+        let translated = makeScrollView(documentHeight: 600)
+        coordinator.attach(source, pane: .source, scope: scope)
+        coordinator.attach(translated, pane: .translated, scope: scope)
+
+        // Focus navigation on source scrolls source pane and pulls translated follower
+        source.contentView.scroll(to: NSPoint(x: 0, y: 550))
+        source.reflectScrolledClipView(source.contentView)
+        coordinator.syncFromProgrammaticScroll(pane: .source)
+
+        #expect(coordinator.progress == 0.5)
+        #expect(coordinator.state.leader == .source)
+        #expect(abs(translated.contentView.bounds.origin.y - 250) < 0.5)
+
+        // Reverse jump from translated side updates progress cleanly
+        translated.contentView.scroll(to: NSPoint(x: 0, y: 100))
+        translated.reflectScrolledClipView(translated.contentView)
+        coordinator.syncFromProgrammaticScroll(pane: .translated)
+
+        #expect(coordinator.progress == 0.2)
+        #expect(coordinator.state.leader == .translated)
+        #expect(abs(source.contentView.bounds.origin.y - 220) < 0.5)
+
+        coordinator.detach()
+    }
+
     @MainActor
     private func makeScrollView(documentHeight: CGFloat) -> NSScrollView {
         let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 240, height: 100))

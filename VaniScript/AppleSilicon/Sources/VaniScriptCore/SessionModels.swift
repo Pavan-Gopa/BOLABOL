@@ -835,6 +835,9 @@ public struct ProjectSummary: Codable, Equatable, Identifiable, Sendable {
     public var approvedChunks: Int
     public var completedChunks: Int
     public var targetLang: String
+    /// Derived, not persisted: document chunk indices whose translation no
+    /// longer matches the source (PRD §9). Empty for media projects.
+    public var staleChunkIndices: Set<Int>
 
     enum CodingKeys: String, CodingKey {
         case id, name, sourceFileName, sourceMediaInfo, updatedAt, createdAt
@@ -852,7 +855,8 @@ public struct ProjectSummary: Codable, Equatable, Identifiable, Sendable {
         totalChunks: Int,
         approvedChunks: Int,
         completedChunks: Int,
-        targetLang: String
+        targetLang: String,
+        staleChunkIndices: Set<Int> = []
     ) {
         self.id = id
         self.name = name
@@ -865,6 +869,7 @@ public struct ProjectSummary: Codable, Equatable, Identifiable, Sendable {
         self.approvedChunks = approvedChunks
         self.completedChunks = completedChunks
         self.targetLang = targetLang
+        self.staleChunkIndices = staleChunkIndices
     }
 
     public init(from decoder: Decoder) throws {
@@ -880,6 +885,7 @@ public struct ProjectSummary: Codable, Equatable, Identifiable, Sendable {
         self.approvedChunks = try container.decode(Int.self, forKey: .approvedChunks)
         self.completedChunks = try container.decodeIfPresent(Int.self, forKey: .completedChunks) ?? self.approvedChunks
         self.targetLang = try container.decode(String.self, forKey: .targetLang)
+        self.staleChunkIndices = []
     }
 
     public func canOpenChunk(at index: Int) -> Bool {
@@ -912,6 +918,10 @@ public struct ProjectSummary: Codable, Equatable, Identifiable, Sendable {
 
     public func shouldShowLastBadge(at index: Int) -> Bool {
         lastWorkInProgressChunkIndex == index
+    }
+
+    public func isStaleChunk(at index: Int) -> Bool {
+        staleChunkIndices.contains(index)
     }
 }
 
@@ -1273,6 +1283,8 @@ public extension SessionState {
             registerTranslationLanguage(legacyLanguage)
         }
 
+        migrateLegacyDocumentSourceHashes()
+
         if sourceKind == .document, let documentState {
             let documentLanguage = TranslationArchive.languageKey(targetLang)
             let translations = documentState.translationsByLanguage[documentLanguage] ?? [:]
@@ -1370,6 +1382,73 @@ public extension SessionState {
         if let activeTranslationLanguage {
             setActiveTranslationLanguage(activeTranslationLanguage)
         }
+    }
+
+    /// ADR-005: rewrite pre-ADR-004 translations whose stored sourceHash equals
+    /// the composite plan hash (the legacy convention) to the current block text
+    /// hash. The marker is exact — a SHA-256 block hash can never equal a
+    /// composite plan hash — so this only touches legacy-convention entries.
+    private mutating func migrateLegacyDocumentSourceHashes() {
+        guard sourceKind == .document, var documentState else { return }
+        // Map base blockID -> plan.sourceHash for every plan.
+        var planHashByBlockID: [String: String] = [:]
+        for plan in documentState.chunks {
+            for blockID in plan.blockIDs { planHashByBlockID[blockID] = plan.sourceHash }
+        }
+        guard !planHashByBlockID.isEmpty else { return }
+        let blocksByID = Dictionary(uniqueKeysWithValues: documentState.blocks.map { ($0.id, $0) })
+        var anyChanged = false
+        for (languageKey, translations) in documentState.translationsByLanguage {
+            var updated = translations
+            var languageChanged = false
+            for (key, translated) in translations {
+                // Resolve slice/fragment keys ("id#slice_N", "id:slice:a:b") to the base block id.
+                let afterHash = key.split(separator: "#").first.map(String.init) ?? key
+                let baseID = afterHash.split(separator: ":").first.map(String.init) ?? afterHash
+                guard let legacyPlanHash = planHashByBlockID[baseID],
+                      translated.sourceHash == legacyPlanHash,
+                      let block = blocksByID[baseID],
+                      !block.sourceHash.isEmpty
+                else { continue }
+                updated[key]?.sourceHash = block.sourceHash
+                languageChanged = true
+            }
+            if languageChanged {
+                documentState.translationsByLanguage[languageKey] = updated
+                anyChanged = true
+            }
+        }
+        if anyChanged { self.documentState = documentState }
+    }
+
+    /// Indices of document chunks whose translation no longer matches the
+    /// source in the given language (PRD §9). A chunk is stale when any of
+    /// its plan blocks is provably stale (both hashes present and different);
+    /// empty-hash blocks cannot prove staleness. Empty for media or missing
+    /// document state.
+    func staleDocumentChunkIndices(languageKey: String) -> Set<Int> {
+        guard sourceKind == .document, let documentState else { return [] }
+        var staleIndices: Set<Int> = []
+        for index in chunks.indices {
+            let plan: DocumentChunkPlan?
+            if case let .document(range) = chunks[index].sourceAnchor {
+                plan = documentState.chunks.first {
+                    $0.blockIDs.first == range.startBlockID && $0.blockIDs.last == range.endBlockID
+                }
+            } else {
+                plan = documentState.chunks.indices.contains(index) ? documentState.chunks[index] : nil
+            }
+            guard let plan else { continue }
+            let isStale = plan.blockIDs.contains { blockID in
+                TranslationFreshness.isProvablyStale(
+                    documentState: documentState,
+                    blockID: blockID,
+                    languageKey: languageKey
+                )
+            }
+            if isStale { staleIndices.insert(index) }
+        }
+        return staleIndices
     }
 
     private func documentPlan(for chunk: ChunkData, in state: DocumentState) -> DocumentChunkPlan? {

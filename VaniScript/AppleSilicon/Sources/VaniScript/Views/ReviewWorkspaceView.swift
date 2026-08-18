@@ -1,22 +1,34 @@
 import AppKit
+import CryptoKit
 import SwiftUI
 import VaniScriptCore
 
 struct ReviewWorkspaceView: View {
     @EnvironmentObject private var store: WorkflowStore
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.undoManager) private var undoManager
     @State private var keyMonitor: Any?
     @State private var documentScrollCoordinator = DocumentDualScrollCoordinator()
     @State private var editDraft: ReviewEditDraft?
     @State private var glossaryDraft: ReviewGlossaryDraft?
     @State private var searchReplaceDraft: SearchReplaceDraft?
+    @State private var replaceEverywhereDraft: ReplaceEverywhereDraft?
+    @StateObject private var proofreading = ProofreadingHighlightController()
+    /// Bumps on every chunk open (Previous / Approve & Next / jump) so both
+    /// panes force-scroll to the top of the new chunk content.
+    @State private var chunkOpenToken: Int = 0
 
     var body: some View {
         if let session = store.session, let chunk = store.currentChunk {
             let documentPresentation = DocumentReviewPresentationPolicy.make(session: session, chunk: chunk)
             let isDocument = documentPresentation != nil
             let activeLanguage = session.selectedTranslationLanguage
-            let documentScrollEnabled = isDocument && store.viewMode == .dual && activeLanguage != nil
+            // Linked dual-scroll stays on in Dual View, including Proof Mode.
+            // Unit jumps scroll both panes to their own ranges; wheel scroll
+            // keeps them linked via direct same-tree attach.
+            let documentScrollEnabled = isDocument
+                && store.viewMode == .dual
+                && activeLanguage != nil
             let documentScrollScope = documentPresentation.map { _ in
                 DocumentScrollScope(
                     documentID: documentScrollIdentity(session),
@@ -26,7 +38,10 @@ struct ReviewWorkspaceView: View {
             }
             ZStack {
                 VStack(spacing: 0) {
-                    topBar(session: session, chunk: chunk)
+                    topBar(session: session, chunk: chunk, documentPresentation: documentPresentation)
+                    if proofreading.isEnabled, documentPresentation != nil {
+                        proofreadingModeBanner
+                    }
                     if !isDocument {
                         audioBar(session: session, chunk: chunk)
                     }
@@ -87,10 +102,40 @@ struct ReviewWorkspaceView: View {
                         }
                     )
                 }
+
+                if let draft = replaceEverywhereDraft {
+                    ReplaceEverywhereSheet(
+                        draft: Binding(
+                            get: { replaceEverywhereDraft ?? draft },
+                            set: { replaceEverywhereDraft = $0 }
+                        ),
+                        onCancel: { replaceEverywhereDraft = nil },
+                        onReplaceAll: { draft in
+                            _ = store.replaceEverywhereInDocument(
+                                query: draft.findText,
+                                replacement: draft.replacementText,
+                                side: draft.side,
+                                options: .init(
+                                    wholeWord: draft.wholeWord,
+                                    caseSensitive: draft.caseSensitive,
+                                    skipProtected: draft.skipProtected,
+                                    saveAsGlossary: draft.saveAsGlossary
+                                )
+                            )
+                            if draft.saveAsGlossary, draft.side == .translation {
+                                // PRD §12.2: source term ambiguous — let the user
+                                // finish the rule in the glossary draft.
+                                beginGlossaryDraft(selectedText: draft.replacementText, side: .translated)
+                            }
+                            replaceEverywhereDraft = nil
+                        }
+                    )
+                }
             }
-            .onAppear(perform: installSpacebarMonitor)
-            .onDisappear(perform: removeSpacebarMonitor)
+            .onAppear(perform: installKeyMonitor)
+            .onDisappear(perform: removeKeyMonitor)
             .onDisappear { documentScrollCoordinator.detach() }
+            .onAppear { store.documentUndoManager = undoManager }
             .onChange(of: documentScrollEnabled) { _, enabled in
                 if !enabled {
                     documentScrollCoordinator.detach()
@@ -99,12 +144,42 @@ struct ReviewWorkspaceView: View {
             .onChange(of: documentScrollScope) { _, scope in
                 documentScrollCoordinator.setScope(scope)
             }
+            .onChange(of: chunk.id) { _, _ in
+                // Previous / Approve & Next / jump: open the new chunk from the top.
+                chunkOpenToken &+= 1
+                documentScrollCoordinator.resetToTop()
+                // Proof mode: always restart highlight at the first unit.
+                rebuildProofreadingUnits(session: session, chunk: chunk, startAtFirst: true)
+            }
+            .onChange(of: store.currentTranslationText) { _, _ in
+                if proofreading.isEnabled {
+                    // In-chunk edit: try to keep the current unit by id.
+                    rebuildProofreadingUnits(session: session, chunk: chunk, startAtFirst: false)
+                }
+            }
+            .onChange(of: store.viewMode) { _, mode in
+                if mode != .dual, proofreading.isEnabled {
+                    proofreading.disable()
+                }
+            }
+            .onChange(of: proofreading.isEnabled) { _, enabled in
+                if enabled {
+                    // Entering proof mode: stay linked; pin both panes to the
+                    // first unit via focusToken, not by tearing dual-scroll down.
+                    documentScrollCoordinator.resetToTop()
+                }
+            }
+            .onAppear {
+                if proofreading.isEnabled {
+                    rebuildProofreadingUnits(session: session, chunk: chunk, startAtFirst: true)
+                }
+            }
         } else {
             UploadWorkspaceView()
         }
     }
 
-    private func topBar(session: SessionState, chunk: ChunkData) -> some View {
+    private func topBar(session: SessionState, chunk: ChunkData, documentPresentation: DocumentReviewPresentation?) -> some View {
         HStack(spacing: 12) {
             HStack(spacing: 8) {
                 VaniScriptLogoMark(size: 28)
@@ -170,17 +245,67 @@ struct ReviewWorkspaceView: View {
                 .onboardingTarget("review-view-group")
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
             HStack(spacing: 8) {
+                if documentPresentation != nil {
+                    Button {
+                        toggleProofreadingHighlightMode(session: session, chunk: chunk)
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "text.magnifyingglass")
+                                .font(.system(size: 11, weight: .bold))
+                            Text(proofreading.isEnabled ? "Proof Mode" : "Highlight")
+                                .font(.system(size: 11, weight: .heavy))
+                        }
+                        .padding(.horizontal, 10)
+                        .frame(height: 28)
+                        .foregroundStyle(
+                            proofreading.isEnabled
+                            ? VaniScriptTheme.onAccent
+                            : VaniScriptTheme.text1
+                        )
+                        .background(
+                            proofreading.isEnabled
+                            ? VaniScriptTheme.accent
+                            : VaniScriptTheme.control
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(
+                                    proofreading.isEnabled
+                                    ? VaniScriptTheme.accent
+                                    : VaniScriptTheme.controlBorder,
+                                    lineWidth: 1
+                                )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .help(proofreading.isEnabled
+                          ? "Exit proofreading highlight mode"
+                          : "Proofreading highlight: sync source and translation units; navigate with arrow keys")
+                    .disabled(store.viewMode != .dual || session.selectedTranslationLanguage == nil)
+                    .opacity(store.viewMode == .dual && session.selectedTranslationLanguage != nil ? 1 : 0.45)
+                }
+
                 Button {
-                    searchReplaceDraft = SearchReplaceDraft(
-                        searchQuery: "",
-                        replacementText: "",
-                        targetSide: store.viewMode == .translated ? .translated : .original,
-                        caseSensitive: false,
-                        wholeWord: false
-                    )
+                    if session.sourceKind == .document {
+                        // PRD §11: document sessions use Replace Everywhere, which
+                        // operates on the canonical DocumentState. Media sessions
+                        // keep the existing chunk-level Search & Replace modal.
+                        replaceEverywhereDraft = ReplaceEverywhereDraft(
+                            side: store.viewMode == .translated ? .translation : .source
+                        )
+                    } else {
+                        searchReplaceDraft = SearchReplaceDraft(
+                            searchQuery: "",
+                            replacementText: "",
+                            targetSide: store.viewMode == .translated ? .translated : .original,
+                            caseSensitive: false,
+                            wholeWord: false
+                        )
+                    }
                 } label: {
                     Image(systemName: "magnifyingglass")
                 }
@@ -346,44 +471,73 @@ struct ReviewWorkspaceView: View {
                             documentBlocks: sourceBlocks,
                             updateDocumentBlocks: { blocks, text in
                                 store.updateCurrentDocumentSource(blocks: blocks.map { ($0.id, $0.spans, $0.fallbackText) }, text: text)
-                            }
+                            },
+                            onReplaceEverywhere: { text, side in
+                                replaceEverywhereDraft = ReplaceEverywhereDraft(findText: text, side: side)
+                            },
+                            proofreadingHighlightRange: proofreading.currentSourceRange,
+                            proofreadingFocusToken: proofreading.focusToken,
+                            chunkOpenToken: chunkOpenToken
                         )
                         .onboardingTarget("review-pane-original")
                     }
 
                     if hasTranslation, store.viewMode == .translated || store.viewMode == .dual {
-                        let translatedBlocks = store.currentDocumentTranslatedBlocks.map { block in
-                            DocumentEditorBlockItem(
-                                id: block.sourceBlockID,
-                                spans: block.spans,
-                                fallbackText: block.text
+                        let translatedBlocks = DocumentEditorBlockItem.translatedDisplayBlocks(
+                            translated: store.currentDocumentTranslatedBlocks,
+                            sourceBlocks: store.currentDocumentSourceBlocks
+                        )
+                        // PRD §9: show a review banner when any translated block in
+                        // the current chunk no longer matches its source hash. The
+                        // banner and the approve gate share one derivation.
+                        let hasStaleTranslation = store.isCurrentDocumentChunkStale
+                        VStack(spacing: 0) {
+                            if hasStaleTranslation {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .font(.system(size: 12, weight: .semibold))
+                                    Text("Source changed — translation needs review")
+                                        .font(.system(size: 12, weight: .semibold))
+                                    Spacer()
+                                }
+                                .foregroundStyle(VaniScriptTheme.warningText)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(VaniScriptTheme.warningSurface)
+                                .overlay(Rectangle().fill(VaniScriptTheme.warningBorder).frame(height: 1), alignment: .bottom)
+                            }
+                            ReviewTextPane(
+                                title: "TRANSLATED DOCUMENT · \((activeLanguage ?? session.targetLang).uppercased())",
+                                metadata: session.metadata,
+                                translationLanguage: activeLanguage ?? session.targetLang,
+                                content: Binding(
+                                    get: { store.currentTranslationText },
+                                    set: { store.updateCurrentTranslated($0) }
+                                ),
+                                cues: [],
+                                playbackTime: 0,
+                                updateCue: { _, _ in },
+                                side: .translated,
+                                accent: true,
+                                exportAction: { store.export(side: .translated, format: store.outputFormat) },
+                                polishAction: nil,
+                                beginInlineEdit: beginInlineEdit,
+                                beginGlossaryDraft: beginGlossaryDraft,
+                                documentScrollCoordinator: documentScrollEnabled ? documentScrollCoordinator : nil,
+                                documentScrollPane: documentScrollEnabled ? .translated : nil,
+                                documentScrollScope: documentScrollScope,
+                                documentBlocks: translatedBlocks,
+                                updateDocumentBlocks: { blocks, text in
+                                    store.updateCurrentDocumentTranslated(blocks: blocks.map { ($0.id, $0.spans, $0.fallbackText) }, text: text)
+                                },
+                                onReplaceEverywhere: { text, side in
+                                    replaceEverywhereDraft = ReplaceEverywhereDraft(findText: text, side: side)
+                                },
+                                proofreadingHighlightRange: proofreading.currentTranslatedRange,
+                                proofreadingFocusToken: proofreading.focusToken,
+                                chunkOpenToken: chunkOpenToken
                             )
                         }
-                        ReviewTextPane(
-                            title: "TRANSLATED DOCUMENT · \((activeLanguage ?? session.targetLang).uppercased())",
-                            metadata: session.metadata,
-                            translationLanguage: activeLanguage ?? session.targetLang,
-                            content: Binding(
-                                get: { store.currentTranslationText },
-                                set: { store.updateCurrentTranslated($0) }
-                            ),
-                            cues: [],
-                            playbackTime: 0,
-                            updateCue: { _, _ in },
-                            side: .translated,
-                            accent: true,
-                            exportAction: { store.export(side: .translated, format: store.outputFormat) },
-                            polishAction: nil,
-                            beginInlineEdit: beginInlineEdit,
-                            beginGlossaryDraft: beginGlossaryDraft,
-                            documentScrollCoordinator: documentScrollEnabled ? documentScrollCoordinator : nil,
-                            documentScrollPane: documentScrollEnabled ? .translated : nil,
-                            documentScrollScope: documentScrollScope,
-                            documentBlocks: translatedBlocks,
-                            updateDocumentBlocks: { blocks, text in
-                                store.updateCurrentDocumentTranslated(blocks: blocks.map { ($0.id, $0.spans, $0.fallbackText) }, text: text)
-                            }
-                        )
                     }
                 }
             } else if store.viewMode == .dual,
@@ -624,6 +778,10 @@ struct ReviewWorkspaceView: View {
                 store.approveAndAdvance()
             }
             .buttonStyle(ReviewApproveButtonStyle())
+            .disabled(store.isCurrentDocumentChunkStale)
+            .help(store.isCurrentDocumentChunkStale
+                ? "The source changed — update the translation before approving this chunk."
+                : "Approve this chunk and move to the next one.")
             .onboardingTarget("approve-next-btn")
         }
         .padding(.horizontal, 16)
@@ -636,36 +794,67 @@ struct ReviewWorkspaceView: View {
     private func documentQualityPanel(chunk: ChunkData) -> some View {
         let errors = chunk.qualityReport?.errors ?? []
         let warnings = chunk.qualityReport?.warnings ?? []
-        if !errors.isEmpty || !warnings.isEmpty {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: errors.isEmpty ? "exclamationmark.circle" : "xmark.octagon.fill")
-                    .foregroundStyle(errors.isEmpty ? VaniScriptTheme.warningText : VaniScriptTheme.errorText)
-                    .padding(.top, 2)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(errors.isEmpty ? "Translation warning" : "Translation needs review")
+        // Soft length-ratio noise alone is not worth a sticky bar.
+        let actionableWarnings = warnings.filter { $0.code != "lengthRatio" }
+
+        // Stale residue banners after a successful manual fix must disappear
+        // even if an older qualityReport is still on disk.
+        let translation = store.currentTranslationText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let source = chunk.original.trimmingCharacters(in: .whitespacesAndNewlines)
+        let translationLooksReal = TranslationArchive.isUsableTranslationText(translation)
+            && (source.isEmpty || translation.caseInsensitiveCompare(source) != .orderedSame)
+        let onlyResidue = !errors.isEmpty
+            && errors.allSatisfy { $0.code == "languageResidue" }
+            && actionableWarnings.isEmpty
+
+        if onlyResidue && translationLooksReal {
+            EmptyView()
+        } else if !errors.isEmpty || !actionableWarnings.isEmpty {
+            let isHardFailure = !errors.isEmpty
+            let title = isHardFailure ? "Translation failed" : "Translation warning"
+            let detail: String = {
+                if errors.contains(where: {
+                    $0.code == "languageResidue"
+                        || $0.code == "translationFailed"
+                        || $0.code == "provider"
+                }) {
+                    return "Try again — nothing was kept on the right."
+                }
+                return (errors + actionableWarnings).first?.message ?? "Try again."
+            }()
+
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: isHardFailure ? "xmark.octagon.fill" : "exclamationmark.circle")
+                    .foregroundStyle(isHardFailure ? VaniScriptTheme.errorText : VaniScriptTheme.warningText)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(errors.isEmpty ? VaniScriptTheme.warningText : VaniScriptTheme.errorText)
-                    ForEach(Array((errors + warnings).enumerated()), id: \.offset) { _, issue in
-                        Text(issue.message)
-                            .font(.system(size: 11))
-                            .foregroundStyle(VaniScriptTheme.text1)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                        .foregroundStyle(isHardFailure ? VaniScriptTheme.errorText : VaniScriptTheme.warningText)
+                    Text(detail)
+                        .font(.system(size: 11))
+                        .foregroundStyle(VaniScriptTheme.text1)
+                        .lineLimit(2)
                 }
                 Spacer(minLength: 8)
                 Button {
                     store.retranslateCurrentDocumentChunk()
                 } label: {
-                    Label("Retry Current", systemImage: "arrow.clockwise")
+                    Label("Retry", systemImage: "arrow.clockwise")
                 }
                 .buttonStyle(ReviewTextButtonStyle())
                 .disabled(store.isDocumentTranslationActive)
-                .help("Retry translation for this document chunk without advancing.")
+                .help("Retry translation for this document chunk.")
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 9)
-            .background(errors.isEmpty ? VaniScriptTheme.warningSurface : VaniScriptTheme.errorSurface)
-            .overlay(Rectangle().fill(errors.isEmpty ? VaniScriptTheme.warningBorder : VaniScriptTheme.errorBorder).frame(height: 1), alignment: .top)
+            .padding(.vertical, 8)
+            .background(isHardFailure ? VaniScriptTheme.errorSurface : VaniScriptTheme.warningSurface)
+            .overlay(
+                Rectangle()
+                    .fill(isHardFailure ? VaniScriptTheme.errorBorder : VaniScriptTheme.warningBorder)
+                    .frame(height: 1),
+                alignment: .top
+            )
         }
     }
 
@@ -698,44 +887,156 @@ struct ReviewWorkspaceView: View {
     }
 
     private func shouldShowRetryTranslation(chunk: ChunkData) -> Bool {
-        let hasOriginal = !chunk.original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        return hasOriginal && TranslationArchive.isRealLanguage(store.activeTranslationLanguage)
+        guard store.session?.sourceKind == .media else { return false }
+        return !chunk.original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private func shouldShowRegenerateTimings(chunk: ChunkData) -> Bool {
-        let hasOriginal = !chunk.original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        guard hasOriginal else { return false }
-        let cues = chunk.originalCues ?? []
-        return cues.isEmpty || cues.allSatisfy { ($0.words ?? []).isEmpty }
+        guard store.session?.sourceKind == .media else { return false }
+        return !(chunk.originalCues ?? []).isEmpty
     }
 
-    private func formatClock(_ seconds: Double) -> String {
-        let total = max(0, Int(seconds.rounded(.down)))
-        let hours = total / 3600
-        let minutes = (total % 3600) / 60
-        let secs = total % 60
-        return String(format: "%02d:%02d:%02d", hours, minutes, secs)
+    private var proofreadingModeBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "text.magnifyingglass")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(VaniScriptTheme.accent)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Proofreading highlight")
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(VaniScriptTheme.text0)
+                Text(proofreading.statusLine)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(VaniScriptTheme.text2)
+            }
+            Spacer(minLength: 8)
+            HStack(spacing: 6) {
+                Button {
+                    proofreading.move(delta: -1)
+                } label: {
+                    Image(systemName: "chevron.up")
+                        .font(.system(size: 11, weight: .bold))
+                        .frame(width: 28, height: 24)
+                }
+                .buttonStyle(ReviewIconButtonStyle())
+                .disabled(proofreading.units.isEmpty)
+                .help("Previous unit (↑ / ←)")
+
+                Button {
+                    proofreading.move(delta: 1)
+                } label: {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 11, weight: .bold))
+                        .frame(width: 28, height: 24)
+                }
+                .buttonStyle(ReviewIconButtonStyle())
+                .disabled(proofreading.units.isEmpty)
+                .help("Next unit (↓ / →)")
+
+                Button("Exit") {
+                    proofreading.disable()
+                }
+                .buttonStyle(ReviewTextButtonStyle())
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(VaniScriptTheme.proofreadingBannerBackground)
+        .overlay(Rectangle().fill(VaniScriptTheme.proofreadingBannerBorder).frame(height: 1), alignment: .bottom)
     }
 
-    private func formatPlayerClock(_ seconds: Double) -> String {
-        let total = max(0, Int(seconds.rounded(.down)))
-        let minutes = total / 60
-        let secs = total % 60
-        return String(format: "%02d:%02d", minutes, secs)
-    }
 
-    private func installSpacebarMonitor() {
-        guard keyMonitor == nil else { return }
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            guard event.keyCode == 49 else { return event }
-            guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty else { return event }
-            guard shouldHandlePlaybackSpacebar(event) else { return event }
-            store.toggleCurrentChunkPlayback()
-            return nil
+    private func toggleProofreadingHighlightMode(session: SessionState, chunk: ChunkData) {
+        let sourceBlocks = store.currentDocumentSourceBlocks.map {
+            DocumentProofreadingAlignment.BlockText(
+                id: $0.id,
+                text: $0.spans.map(\.text).joined()
+            )
+        }
+        let translatedBlocks = DocumentEditorBlockItem.translatedDisplayBlocks(
+            translated: store.currentDocumentTranslatedBlocks,
+            sourceBlocks: store.currentDocumentSourceBlocks
+        ).map {
+            DocumentProofreadingAlignment.BlockText(
+                id: $0.id,
+                text: $0.spans.isEmpty ? $0.fallbackText : $0.spans.map(\.text).joined()
+            )
+        }
+        let scope = "\(documentScrollIdentity(session))|\(chunk.id)|\(session.selectedTranslationLanguage ?? session.targetLang)"
+        if let message = proofreading.toggle(
+            canEnable: store.viewMode == .dual && session.selectedTranslationLanguage != nil,
+            sourceBlocks: sourceBlocks,
+            translatedBlocks: translatedBlocks,
+            scopeKey: scope
+        ) {
+            store.statusMessage = message
         }
     }
 
-    private func removeSpacebarMonitor() {
+    private func rebuildProofreadingUnits(
+        session: SessionState,
+        chunk: ChunkData,
+        startAtFirst: Bool
+    ) {
+        guard proofreading.isEnabled else { return }
+        let sourceBlocks = store.currentDocumentSourceBlocks.map {
+            DocumentProofreadingAlignment.BlockText(
+                id: $0.id,
+                text: $0.spans.map(\.text).joined()
+            )
+        }
+        let translatedBlocks = DocumentEditorBlockItem.translatedDisplayBlocks(
+            translated: store.currentDocumentTranslatedBlocks,
+            sourceBlocks: store.currentDocumentSourceBlocks
+        ).map {
+            DocumentProofreadingAlignment.BlockText(
+                id: $0.id,
+                text: $0.spans.isEmpty ? $0.fallbackText : $0.spans.map(\.text).joined()
+            )
+        }
+        let scope = "\(documentScrollIdentity(session))|\(chunk.id)|\(session.selectedTranslationLanguage ?? session.targetLang)"
+        proofreading.rebuild(
+            sourceBlocks: sourceBlocks,
+            translatedBlocks: translatedBlocks,
+            scopeKey: scope,
+            startAtFirst: startAtFirst
+        )
+    }
+
+
+    private func installKeyMonitor() {
+        guard keyMonitor == nil else { return }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // Spacebar still toggles media playback when not editing text.
+            if event.keyCode == 49,
+               event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
+               shouldHandlePlaybackSpacebar(event) {
+                store.toggleCurrentChunkPlayback()
+                return nil
+            }
+
+            guard proofreading.isEnabled,
+                  event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty
+            else { return event }
+
+            // Arrow keys navigate proofreading units even while a text view has focus.
+            switch event.keyCode {
+            case 125, 124: // down, right
+                proofreading.move(delta: 1)
+                return nil
+            case 126, 123: // up, left
+                proofreading.move(delta: -1)
+                return nil
+            case 53: // escape
+                proofreading.disable()
+                return nil
+            default:
+                return event
+            }
+        }
+    }
+
+    private func removeKeyMonitor() {
         if let keyMonitor {
             NSEvent.removeMonitor(keyMonitor)
             self.keyMonitor = nil
@@ -749,6 +1050,17 @@ struct ReviewWorkspaceView: View {
             return false
         }
         return true
+    }
+
+    private func formatPlayerClock(_ seconds: Double) -> String {
+        let total = max(0, Int(seconds.rounded(.down)))
+        let minutes = total / 60
+        let secs = total % 60
+        return String(format: "%02d:%02d", minutes, secs)
+    }
+
+    private func formatClock(_ seconds: Double) -> String {
+        formatPlayerClock(seconds)
     }
 
     private var glossaryCategories: [String] {
@@ -1481,7 +1793,10 @@ private struct ReviewTextPane: View {
     let documentScrollScope: DocumentScrollScope?
     let documentBlocks: [DocumentEditorBlockItem]
     let updateDocumentBlocks: (([DocumentEditorBlockItem], String) -> Void)?
-
+    let onReplaceEverywhere: ((String, DocumentEditorSide) -> Void)?
+    let proofreadingHighlightRange: NSRange?
+    let proofreadingFocusToken: Int
+    let chunkOpenToken: Int
     init(
         title: String,
         metadata: AudioMetadata,
@@ -1502,7 +1817,11 @@ private struct ReviewTextPane: View {
         documentBlocks: [DocumentEditorBlockItem] = [],
         updateDocumentBlocks: (([DocumentEditorBlockItem], String) -> Void)? = nil,
         documentSpans: [RichTextSpan] = [],
-        updateDocumentSpans: (([RichTextSpan], String) -> Void)? = nil
+        updateDocumentSpans: (([RichTextSpan], String) -> Void)? = nil,
+        onReplaceEverywhere: ((String, DocumentEditorSide) -> Void)? = nil,
+        proofreadingHighlightRange: NSRange? = nil,
+        proofreadingFocusToken: Int = 0,
+        chunkOpenToken: Int = 0
     ) {
         self.title = title
         self.metadata = metadata
@@ -1520,6 +1839,10 @@ private struct ReviewTextPane: View {
         self.documentScrollCoordinator = documentScrollCoordinator
         self.documentScrollPane = documentScrollPane
         self.documentScrollScope = documentScrollScope
+        self.onReplaceEverywhere = onReplaceEverywhere
+        self.proofreadingHighlightRange = proofreadingHighlightRange
+        self.proofreadingFocusToken = proofreadingFocusToken
+        self.chunkOpenToken = chunkOpenToken
         if !documentBlocks.isEmpty || updateDocumentBlocks != nil {
             self.documentBlocks = documentBlocks
             self.updateDocumentBlocks = updateDocumentBlocks
@@ -1537,19 +1860,108 @@ private struct ReviewTextPane: View {
 
     @State private var isCopied = false
 
+    /// Dual-scroll now binds directly from DocumentAttributedTextView.
+    /// Keep a no-op placeholder so call sites compile without the old bridge.
     @ViewBuilder
     private var documentScrollBridge: some View {
-        if let documentScrollCoordinator,
-           let documentScrollPane,
-           let documentScrollScope {
-            DocumentScrollSyncBridge(
-                coordinator: documentScrollCoordinator,
-                pane: documentScrollPane,
-                scope: documentScrollScope
-            )
-            .frame(width: 0, height: 0)
-            .allowsHitTesting(false)
+        EmptyView()
+    }
+    private func requestSelectionTranslation(
+        _ snapshot: DocumentTextSelectionSnapshot,
+        coordinator: DocumentAttributedTextView.Coordinator
+    ) {
+        guard side == .translated else { return }
+        guard let session = store.session,
+              let documentState = session.documentState
+        else {
+            coordinator.setSelectionTranslationBusy(false)
+            store.statusMessage = "AI selection retranslation is unavailable until the document state is loaded."
+            return
         }
+
+        let targetLanguage = session.selectedTranslationLanguage ?? session.targetLang
+        let sourceBlocks = documentState.blocks
+        let targetBlocks = store.currentDocumentTranslatedBlocks
+        let profile = documentState.profile
+        let providerID = store.editingProviderID
+        let previousBlocks = coordinator.currentEditorBlocks()
+        let previousText = coordinator.currentEditorText
+
+        coordinator.setSelectionTranslationBusy(true, status: "Retranslating selection with AI…")
+        store.statusMessage = "Retranslating selection with AI…"
+
+        Task { @MainActor in
+            do {
+                let engine = try DocumentSelectionTranslationEngine.live(
+                    settings: store.settings,
+                    providerID: providerID
+                )
+                let outcome = try await engine.execute(
+                    snapshot: snapshot,
+                    sourceBlocks: sourceBlocks,
+                    targetBlocks: targetBlocks,
+                    profile: profile,
+                    targetLanguage: targetLanguage,
+                    currentTargetBlock: { blockID in
+                        store.currentDocumentTranslatedBlocks.first {
+                            $0.sourceBlockID == blockID || $0.id == blockID
+                        }
+                    },
+                    apply: { updatedBlock in
+                        store.updateCurrentDocumentTranslated(blocks: [
+                            (
+                                blockID: updatedBlock.sourceBlockID,
+                                spans: updatedBlock.spans,
+                                text: updatedBlock.text
+                            )
+                        ])
+                        coordinator.renderExternalSelectionMutation(
+                            updatedBlock,
+                            previousBlocks: previousBlocks,
+                            previousText: previousText
+                        )
+                    }
+                )
+                coordinator.setSelectionTranslationBusy(false, status: "Selection retranslated.")
+                let warningSuffix = outcome.warningCodes.isEmpty
+                    ? ""
+                    : " Review warnings: \(outcome.warningCodes.joined(separator: ", "))."
+                store.statusMessage = "Selection retranslated with \(outcome.providerID).\(warningSuffix)"
+            } catch is CancellationError {
+                coordinator.setSelectionTranslationBusy(false, status: "Selection retranslation cancelled.")
+                store.statusMessage = "Selection retranslation cancelled."
+            } catch let error as DocumentSelectionTranslationEngineError {
+                coordinator.setSelectionTranslationBusy(false, status: error.localizedDescription)
+                store.statusMessage = error.localizedDescription
+                presentSelectionTranslationAlert(
+                    title: "AI Selection Retranslation",
+                    message: error.localizedDescription,
+                    coordinator: coordinator
+                )
+            } catch {
+                coordinator.setSelectionTranslationBusy(false, status: "Selection retranslation failed.")
+                store.statusMessage = "Selection retranslation failed."
+                presentSelectionTranslationAlert(
+                    title: "AI Selection Retranslation",
+                    message: "The selected editing provider failed. The original selection was preserved.",
+                    coordinator: coordinator
+                )
+            }
+        }
+    }
+
+    private func presentSelectionTranslationAlert(
+        title: String,
+        message: String,
+        coordinator: DocumentAttributedTextView.Coordinator
+    ) {
+        guard let window = coordinator.textView?.window else { return }
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.beginSheetModal(for: window)
     }
 
     var body: some View {
@@ -1667,9 +2079,23 @@ private struct ReviewTextPane: View {
                     text: $content,
                     blocks: documentBlocks,
                     onBlocksChanged: updateDocumentBlocks,
+                    onSelectionTranslation: side == .translated
+                        ? { snapshot, coordinator in
+                            requestSelectionTranslation(snapshot, coordinator: coordinator)
+                        }
+                        : nil,
                     fontFamily: store.settings.fontFamily,
                     fontSize: store.settings.fontSize,
-                    fontScale: store.settings.fontScale
+                    fontScale: store.settings.fontScale,
+                    side: side == .original ? .source : .translation,
+                    onFocusLost: { store.flushAutosave() },
+                    onReplaceEverywhere: onReplaceEverywhere,
+                    proofreadingHighlightRange: proofreadingHighlightRange,
+                    proofreadingFocusToken: proofreadingFocusToken,
+                    chunkOpenToken: chunkOpenToken,
+                    dualScrollCoordinator: documentScrollCoordinator,
+                    dualScrollPane: documentScrollPane,
+                    dualScrollScope: documentScrollScope
                 )
                 .id("\(store.settings.fontFamily)-\(store.settings.fontSize)-\(store.settings.fontScale)")
                 .padding(12)
@@ -2178,6 +2604,163 @@ private struct SearchReplaceDraft: Identifiable, Equatable {
     var wholeWord: Bool = false
 }
 
+/// Draft state for the document-wide Replace Everywhere sheet (PRD §11.1).
+private struct ReplaceEverywhereDraft: Identifiable, Equatable {
+    let id = UUID()
+    var findText: String = ""
+    var replacementText: String = ""
+    var side: DocumentEditorSide = .source
+    var wholeWord: Bool = true
+    var caseSensitive: Bool = false
+    var skipProtected: Bool = true
+    var saveAsGlossary: Bool = false
+}
+
+/// Document-wide Replace Everywhere sheet (PRD §11.1): live match counts over
+/// the canonical DocumentState and a Replace button that is disabled for a
+/// 0-match no-op (PRD §26.6).
+private struct ReplaceEverywhereSheet: View {
+    @Binding var draft: ReplaceEverywhereDraft
+    @EnvironmentObject private var store: WorkflowStore
+    let onCancel: () -> Void
+    let onReplaceAll: (ReplaceEverywhereDraft) -> Void
+
+    private var scope: DocumentSearchScope {
+        switch draft.side {
+        case .source:
+            return .currentSourceDocument
+        case .translation:
+            let language = store.session?.selectedTranslationLanguage ?? store.session?.targetLang ?? ""
+            return .currentTranslation(languageKey: TranslationArchive.languageKey(language))
+        }
+    }
+
+    private var scopeLabel: String {
+        switch draft.side {
+        case .source:
+            return "Scope: Current document — Source"
+        case .translation:
+            let language = store.session?.selectedTranslationLanguage ?? store.session?.targetLang ?? ""
+            return "Scope: Current translation — \(language)"
+        }
+    }
+
+    /// Live counts recomputed on every draft change; the engine compiles one
+    /// regex per call (PRD §25).
+    private var report: DocumentFindReplaceReport {
+        guard let documentState = store.session?.documentState else {
+            return DocumentFindReplaceReport()
+        }
+        return DocumentFindReplaceEngine.matches(
+            in: documentState,
+            scope: scope,
+            query: draft.findText,
+            options: DocumentFindReplaceOptions(
+                wholeWord: draft.wholeWord,
+                caseSensitive: draft.caseSensitive,
+                skipProtected: draft.skipProtected
+            )
+        )
+    }
+
+    var body: some View {
+        let report = report
+        ReviewModalBackdrop {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 18, weight: .semibold))
+                    Text("Replace Everywhere")
+                        .font(.system(size: 18, weight: .bold))
+                    Spacer()
+                }
+                .foregroundStyle(VaniScriptTheme.text0)
+
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ReviewFieldLabel(text: "Find")
+                        ReviewTextField(text: $draft.findText, placeholder: "Search for word or phrase...")
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        ReviewFieldLabel(text: "Replace")
+                        ReviewTextField(text: $draft.replacementText, placeholder: "Replacement text...")
+                    }
+                }
+
+                Text(scopeLabel)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(VaniScriptTheme.text2)
+
+                HStack(spacing: 16) {
+                    Toggle(isOn: $draft.wholeWord) {
+                        Text("Whole word")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(VaniScriptTheme.text1)
+                    }
+                    .toggleStyle(.checkbox)
+
+                    Toggle(isOn: $draft.caseSensitive) {
+                        Text("Case sensitive")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(VaniScriptTheme.text1)
+                    }
+                    .toggleStyle(.checkbox)
+
+                    Toggle(isOn: $draft.skipProtected) {
+                        Text("Skip protected text")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(VaniScriptTheme.text1)
+                    }
+                    .toggleStyle(.checkbox)
+
+                    Toggle(isOn: $draft.saveAsGlossary) {
+                        Text("Save as glossary rule")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(VaniScriptTheme.text1)
+                    }
+                    .toggleStyle(.checkbox)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Found: \(report.foundCount) occurrences in \(report.blockCount) blocks")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(VaniScriptTheme.text2)
+                    if report.skippedProtectedCount > 0 {
+                        Text("Skipped: \(report.skippedProtectedCount) protected")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.warningText)
+                    }
+                    if report.skippedMixedStyleCount > 0 {
+                        Text("Skipped: \(report.skippedMixedStyleCount) mixed-style")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(VaniScriptTheme.warningText)
+                    }
+                }
+
+                HStack(spacing: 12) {
+                    Spacer()
+                    Button("Cancel", action: onCancel)
+                        .buttonStyle(ReviewTextButtonStyle())
+                    Button("Replace All \(report.foundCount)") {
+                        onReplaceAll(draft)
+                    }
+                    .buttonStyle(ReviewApproveButtonStyle())
+                    .disabled(report.foundCount == 0)
+                }
+            }
+            .padding(22)
+            .frame(width: 640)
+            .background(VaniScriptTheme.modalSurface)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(VaniScriptTheme.border, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .shadow(color: .black.opacity(0.45), radius: 34, y: 20)
+        }
+    }
+}
+
 private struct SearchMatch: Identifiable, Equatable {
     let id = UUID()
     let chunkIndex: Int
@@ -2462,6 +3045,40 @@ struct DocumentEditorBlockItem: Equatable, Sendable {
     }
 }
 
+extension DocumentEditorBlockItem {
+    /// Builds the translation-pane block list.
+    /// - Empty translated spans → show source spans (export-compatible fallback).
+    /// - Non-empty spans → keep translated text, but inherit explicit source
+    ///   foreground colors by span id / preserved token text so retranslate
+    ///   and Review always show source red/markers on the right.
+    static func translatedDisplayBlocks(
+        translated: [TranslatedBlock],
+        sourceBlocks: [DocumentBlock]
+    ) -> [DocumentEditorBlockItem] {
+        let sourceSpansByBlockID = Dictionary(
+            sourceBlocks.map { ($0.id, $0.spans) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        return translated.map { block in
+            let sourceSpans = sourceSpansByBlockID[block.sourceBlockID] ?? []
+            let spans: [RichTextSpan]
+            if block.spans.isEmpty {
+                spans = sourceSpans
+            } else {
+                spans = DocumentSourceColorTransfer.apply(
+                    to: block.spans,
+                    sourceSpans: sourceSpans
+                )
+            }
+            return DocumentEditorBlockItem(
+                id: block.sourceBlockID,
+                spans: spans,
+                fallbackText: block.text
+            )
+        }
+    }
+}
+
 enum DocumentTextAttribute {
     static let blockID = NSAttributedString.Key("VaniScript.BlockID")
     static let spanID = NSAttributedString.Key("VaniScript.SpanID")
@@ -2472,37 +3089,190 @@ enum DocumentTextAttribute {
     static let inlineTraits = NSAttributedString.Key("VaniScript.InlineTraits")
 }
 
+public enum DocumentSelectionBridge {
+    private static func sha256Hex(_ text: String) -> String {
+        SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Builds a structural selection snapshot from an attributed string and target selection range.
+    public static func buildSnapshot(
+        from attrString: NSAttributedString,
+        selectedRange: NSRange,
+        side: DocumentEditorSide,
+        languageKey: String? = nil,
+        chunkPlanID: String = "",
+        targetRevisionHash: String = ""
+    ) -> DocumentTextSelectionSnapshot {
+        let nsString = attrString.string as NSString
+        let fullLen = nsString.length
+        let safeRange = NSRange(
+            location: max(0, min(selectedRange.location, fullLen)),
+            length: max(0, min(selectedRange.length, fullLen - max(0, min(selectedRange.location, fullLen))))
+        )
+
+        guard safeRange.length > 0 else {
+            return DocumentTextSelectionSnapshot(
+                side: side,
+                languageKey: languageKey,
+                chunkPlanID: chunkPlanID,
+                fragments: [],
+                selectedText: "",
+                blockHashes: [:],
+                targetRevisionHash: targetRevisionHash
+            )
+        }
+
+        var spanStartOffsets: [String: Int] = [:]
+        var blockTexts: [String: String] = [:]
+
+        attrString.enumerateAttributes(in: NSRange(location: 0, length: fullLen), options: []) { attrs, range, _ in
+            let isSeparator = attrs[DocumentTextAttribute.isBlockSeparator] as? Bool ?? false
+            let blockID = attrs[DocumentTextAttribute.blockID] as? String ?? ""
+            let spanID = attrs[DocumentTextAttribute.spanID] as? String
+
+            if let spanID, !spanID.isEmpty, spanStartOffsets[spanID] == nil {
+                spanStartOffsets[spanID] = range.location
+            }
+
+            if !isSeparator && !blockID.isEmpty {
+                let piece = nsString.substring(with: range)
+                blockTexts[blockID, default: ""] += piece
+            }
+        }
+
+        var fragments: [DocumentTextFragment] = []
+        var blockHashes: [String: String] = [:]
+
+        attrString.enumerateAttributes(in: safeRange, options: []) { attrs, range, _ in
+            let isSeparator = attrs[DocumentTextAttribute.isBlockSeparator] as? Bool ?? false
+            guard !isSeparator else { return }
+
+            let blockID = attrs[DocumentTextAttribute.blockID] as? String ?? ""
+            let spanID = attrs[DocumentTextAttribute.spanID] as? String
+            let styleKey = attrs[DocumentTextAttribute.styleKey] as? String ?? ""
+            let translationPolicy = (attrs[DocumentTextAttribute.translationPolicy] as? String).flatMap(SpanTranslationPolicy.init(rawValue:)) ?? .translate
+            let explicitColorHex = attrs[DocumentTextAttribute.explicitColorHex] as? String
+
+            let traits: Set<InlineTrait>
+            if let traitStrings = attrs[DocumentTextAttribute.inlineTraits] as? [String] {
+                traits = Set(traitStrings.compactMap(InlineTrait.init(rawValue:)))
+            } else if let traitArray = attrs[DocumentTextAttribute.inlineTraits] as? [Any] {
+                traits = Set(traitArray.compactMap { ($0 as? String).flatMap(InlineTrait.init(rawValue:)) })
+            } else if let traitSet = attrs[DocumentTextAttribute.inlineTraits] as? Set<InlineTrait> {
+                traits = traitSet
+            } else {
+                traits = []
+            }
+
+            let runText = nsString.substring(with: range)
+            guard !runText.isEmpty else { return }
+
+            let spanStart = (spanID != nil) ? (spanStartOffsets[spanID!] ?? range.location) : range.location
+            let offsetInSpan = max(0, range.location - spanStart)
+
+            let fragment = DocumentTextFragment(
+                blockID: blockID,
+                spanID: spanID,
+                utf16RangeInSpan: NSRange(location: offsetInSpan, length: range.length),
+                text: runText,
+                styleKey: styleKey,
+                traits: traits,
+                translationPolicy: translationPolicy,
+                foregroundColorHex: explicitColorHex
+            )
+            fragments.append(fragment)
+
+            if !blockID.isEmpty && blockHashes[blockID] == nil {
+                let text = blockTexts[blockID] ?? ""
+                blockHashes[blockID] = sha256Hex(text)
+            }
+        }
+
+        let selectedText = fragments.map(\.text).joined()
+
+        return DocumentTextSelectionSnapshot(
+            side: side,
+            languageKey: languageKey,
+            chunkPlanID: chunkPlanID,
+            fragments: fragments,
+            selectedText: selectedText,
+            blockHashes: blockHashes,
+            targetRevisionHash: targetRevisionHash
+        )
+    }
+}
+
 struct DocumentAttributedTextView: NSViewRepresentable {
     @Binding var text: String
     let blocks: [DocumentEditorBlockItem]
     let onBlocksChanged: (([DocumentEditorBlockItem], String) -> Void)?
+    let onSelectionTranslation: ((DocumentTextSelectionSnapshot, Coordinator) -> Void)?
     let fontFamily: FontFamily
     let fontSize: FontSize
     let fontScale: Double
+    let side: DocumentEditorSide
+    let onFocusLost: (() -> Void)?
+    let onReplaceEverywhere: ((String, DocumentEditorSide) -> Void)?
+    let proofreadingHighlightRange: NSRange?
+    let proofreadingFocusToken: Int
+    let chunkOpenToken: Int
+    let dualScrollCoordinator: DocumentDualScrollCoordinator?
+    let dualScrollPane: DocumentScrollPane?
+    let dualScrollScope: DocumentScrollScope?
 
     init(
         text: Binding<String>,
         blocks: [DocumentEditorBlockItem],
         onBlocksChanged: (([DocumentEditorBlockItem], String) -> Void)?,
+        onSelectionTranslation: ((DocumentTextSelectionSnapshot, Coordinator) -> Void)? = nil,
         fontFamily: FontFamily,
         fontSize: FontSize,
-        fontScale: Double
+        fontScale: Double,
+        side: DocumentEditorSide = .source,
+        onFocusLost: (() -> Void)? = nil,
+        onReplaceEverywhere: ((String, DocumentEditorSide) -> Void)? = nil,
+        proofreadingHighlightRange: NSRange? = nil,
+        proofreadingFocusToken: Int = 0,
+        chunkOpenToken: Int = 0,
+        dualScrollCoordinator: DocumentDualScrollCoordinator? = nil,
+        dualScrollPane: DocumentScrollPane? = nil,
+        dualScrollScope: DocumentScrollScope? = nil
     ) {
         self._text = text
         self.blocks = blocks
         self.onBlocksChanged = onBlocksChanged
+        self.onSelectionTranslation = onSelectionTranslation
         self.fontFamily = fontFamily
         self.fontSize = fontSize
         self.fontScale = fontScale
+        self.side = side
+        self.onFocusLost = onFocusLost
+        self.onReplaceEverywhere = onReplaceEverywhere
+        self.proofreadingHighlightRange = proofreadingHighlightRange
+        self.proofreadingFocusToken = proofreadingFocusToken
+        self.chunkOpenToken = chunkOpenToken
+        self.dualScrollCoordinator = dualScrollCoordinator
+        self.dualScrollPane = dualScrollPane
+        self.dualScrollScope = dualScrollScope
     }
 
     init(
         text: Binding<String>,
         spans: [RichTextSpan],
         onSpansChanged: (([RichTextSpan], String) -> Void)?,
+        onSelectionTranslation: ((DocumentTextSelectionSnapshot, Coordinator) -> Void)? = nil,
         fontFamily: FontFamily,
         fontSize: FontSize,
-        fontScale: Double
+        fontScale: Double,
+        side: DocumentEditorSide = .source,
+        onFocusLost: (() -> Void)? = nil,
+        onReplaceEverywhere: ((String, DocumentEditorSide) -> Void)? = nil,
+        proofreadingHighlightRange: NSRange? = nil,
+        proofreadingFocusToken: Int = 0,
+        chunkOpenToken: Int = 0,
+        dualScrollCoordinator: DocumentDualScrollCoordinator? = nil,
+        dualScrollPane: DocumentScrollPane? = nil,
+        dualScrollScope: DocumentScrollScope? = nil
     ) {
         self._text = text
         self.blocks = [DocumentEditorBlockItem(id: "block-0", spans: spans, fallbackText: text.wrappedValue)]
@@ -2513,9 +3283,19 @@ struct DocumentAttributedTextView: NSViewRepresentable {
         } else {
             self.onBlocksChanged = nil
         }
+        self.onSelectionTranslation = onSelectionTranslation
         self.fontFamily = fontFamily
         self.fontSize = fontSize
         self.fontScale = fontScale
+        self.side = side
+        self.onFocusLost = onFocusLost
+        self.onReplaceEverywhere = onReplaceEverywhere
+        self.proofreadingHighlightRange = proofreadingHighlightRange
+        self.proofreadingFocusToken = proofreadingFocusToken
+        self.chunkOpenToken = chunkOpenToken
+        self.dualScrollCoordinator = dualScrollCoordinator
+        self.dualScrollPane = dualScrollPane
+        self.dualScrollScope = dualScrollScope
     }
 
     func makeCoordinator() -> Coordinator {
@@ -2525,29 +3305,42 @@ struct DocumentAttributedTextView: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
         scrollView.drawsBackground = false
-        scrollView.hasVerticalScroller = false
+        scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
+        scrollView.scrollerStyle = .overlay
 
         let textView = DocumentNSTextView()
         textView.delegate = context.coordinator
+        textView.coordinator = context.coordinator
         textView.isEditable = true
         textView.isSelectable = true
         textView.isRichText = true
         textView.allowsUndo = true
         textView.drawsBackground = false
-        textView.textColor = NSColor(VaniScriptTheme.text0)
+        // Default typing color only. Never assign `textColor` after content is
+        // loaded: NSTextView.textColor rewrites the entire textStorage and
+        // destroys per-span explicit colors (red placeholders, etc.).
+        textView.typingAttributes[.foregroundColor] = NSColor(VaniScriptTheme.text0)
         textView.insertionPointColor = NSColor(VaniScriptTheme.text0)
         textView.textContainerInset = NSSize(width: 4, height: 4)
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.heightTracksTextView = false
         textView.isHorizontallyResizable = false
         textView.isVerticallyResizable = true
         textView.autoresizingMask = [.width]
+        // Critical for long documents: without these the text view can collapse
+        // to viewport height and refuse to scroll (or thrash on layout).
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.editorSide = side
 
         context.coordinator.textView = textView
         context.coordinator.setAttributedString(from: blocks, fallbackText: text, textView: textView)
         scrollView.documentView = textView
+        context.coordinator.bindDualScroll(scrollView)
         return scrollView
     }
 
@@ -2555,9 +3348,25 @@ struct DocumentAttributedTextView: NSViewRepresentable {
         context.coordinator.parent = self
         guard let textView = scrollView.documentView as? DocumentNSTextView else { return }
         context.coordinator.textView = textView
+        textView.coordinator = context.coordinator
+        textView.editorSide = side
         if !context.coordinator.isUserEditing {
             context.coordinator.setAttributedString(from: blocks, fallbackText: text, textView: textView)
         }
+        context.coordinator.bindDualScroll(scrollView)
+        // Chunk open (Previous / Approve & Next): always land at the top.
+        context.coordinator.handleChunkOpenIfNeeded(chunkOpenToken)
+
+        let next = proofreadingHighlightRange
+        let token = proofreadingFocusToken
+        let focusChanged = token != context.coordinator.lastProofreadingFocusToken
+        // Scroll when the controller intentionally changed focus (enable,
+        // chunk change / Approve & Next, arrow move) — not on every SwiftUI tick.
+        context.coordinator.applyProofreadingHighlight(
+            next,
+            focusToken: token,
+            scroll: focusChanged
+        )
     }
 
     @MainActor
@@ -2567,20 +3376,189 @@ struct DocumentAttributedTextView: NSViewRepresentable {
         var isUserEditing = false
         private var lastRenderedBlocks: [DocumentEditorBlockItem] = []
         private var lastRenderedText: String = ""
-
+        private var lastContentFingerprint: String = ""
+        private weak var boundDualScrollView: NSScrollView?
+        private var lastBoundDualScrollPane: DocumentScrollPane?
+        private var lastChunkOpenToken: Int = -1
         init(_ parent: DocumentAttributedTextView) {
             self.parent = parent
         }
 
-        func setAttributedString(from blocks: [DocumentEditorBlockItem], fallbackText: String, textView: NSTextView) {
-            if lastRenderedBlocks == blocks && lastRenderedText == fallbackText && textView.string == fallbackText {
+        /// Force the pane to the top of the new chunk. Independent of dual-scroll
+        /// and of proofreading ranges (both chunks can share NSRange(0, n)).
+        func handleChunkOpenIfNeeded(_ token: Int) {
+            guard token != lastChunkOpenToken else { return }
+            lastChunkOpenToken = token
+            guard let textView else { return }
+            guard let scrollView = textView.enclosingScrollView else {
+                // Fallback: select start so caret/visible range is at top.
+                textView.scrollRangeToVisible(NSRange(location: 0, length: 0))
                 return
             }
+            let doc = scrollView.documentView
+            let topY: CGFloat
+            if let doc, !doc.isFlipped {
+                // Unflipped NSTextView: top is the maximum origin.
+                let viewport = scrollView.contentView.bounds.height
+                let height = max(doc.bounds.height, doc.frame.height)
+                topY = max(0, height - viewport)
+            } else {
+                topY = 0
+            }
+            let origin = NSPoint(x: 0, y: topY)
+            scrollView.contentView.scroll(to: origin)
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+        }
+
+        /// Direct same-tree attach: this pane's NSScrollView only. Never search
+        /// siblings (that cross-bound left/right and blanked panes).
+        func bindDualScroll(_ scrollView: NSScrollView) {
+            guard let coordinator = parent.dualScrollCoordinator,
+                  let pane = parent.dualScrollPane,
+                  let scope = parent.dualScrollScope
+            else {
+                if let pane = lastBoundDualScrollPane {
+                    // Dual-scroll turned off (proof mode / single pane).
+                    // Global detach also runs from ReviewWorkspaceView onChange.
+                    parent.dualScrollCoordinator?.detach(pane: pane, scrollView: boundDualScrollView)
+                    lastBoundDualScrollPane = nil
+                }
+                boundDualScrollView = nil
+                return
+            }
+            boundDualScrollView = scrollView
+            lastBoundDualScrollPane = pane
+            coordinator.attach(scrollView, pane: pane, scope: scope)
+        }
+
+        /// PRD §15: editor focus loss is a mandatory autosave flush point.
+        func textDidEndEditing(_ notification: Notification) {
+            parent.onFocusLost?()
+        }
+
+        private(set) var selectionTranslationBusy = false
+        private(set) var selectionTranslationStatus = ""
+
+        func currentEditorBlocks() -> [DocumentEditorBlockItem] {
+            lastRenderedBlocks.isEmpty ? parent.blocks : lastRenderedBlocks
+        }
+
+        /// Re-render the last known blocks so theme defaults refresh without
+        /// losing explicit per-span colors after appearance changes.
+        func reapplyLastRenderedAttributedString() {
+            guard let textView else { return }
+            let blocks = currentEditorBlocks()
+            let fallback = lastRenderedText.isEmpty ? parent.text : lastRenderedText
+            // Force a real rebuild even when content is unchanged.
+            lastRenderedBlocks = []
+            lastRenderedText = ""
+            lastContentFingerprint = ""
+            setAttributedString(from: blocks, fallbackText: fallback, textView: textView)
+        }
+
+        var currentEditorText: String {
+            textView?.string ?? lastRenderedText
+        }
+
+        func selectionSnapshot() -> DocumentTextSelectionSnapshot? {
+            guard let textView, let storage = textView.textStorage else { return nil }
+            return DocumentSelectionBridge.buildSnapshot(
+                from: storage,
+                selectedRange: textView.selectedRange(),
+                side: parent.side,
+                languageKey: nil,
+                chunkPlanID: ""
+            )
+        }
+
+        func performSelectionTranslation() {
+            guard let snapshot = selectionSnapshot(),
+                  DocumentSelectionTranslationEngine.isEligible(snapshot)
+            else { return }
+            parent.onSelectionTranslation?(snapshot, self)
+        }
+
+        func setSelectionTranslationBusy(_ busy: Bool, status: String = "") {
+            selectionTranslationBusy = busy
+            selectionTranslationStatus = status
+            textView?.toolTip = status.isEmpty ? nil : status
+        }
+
+        func renderExternalSelectionMutation(
+            _ updatedBlock: TranslatedBlock,
+            previousBlocks: [DocumentEditorBlockItem],
+            previousText: String
+        ) {
+            guard let textView else { return }
+            var updatedBlocks = currentEditorBlocks()
+            let item = DocumentEditorBlockItem(
+                id: updatedBlock.sourceBlockID,
+                spans: updatedBlock.spans,
+                fallbackText: updatedBlock.text
+            )
+            if let index = updatedBlocks.firstIndex(where: { $0.id == item.id }) {
+                updatedBlocks[index] = item
+            } else {
+                updatedBlocks.append(item)
+            }
+            let updatedText = updatedBlocks.map(\.fallbackText).joined(separator: "\n\n")
+            registerUndo(previousBlocks: previousBlocks, previousText: previousText)
+            setAttributedString(from: updatedBlocks, fallbackText: updatedText, textView: textView)
+            parent.text = updatedText
+            lastMutationError = nil
+        }
+
+        private func registerUndo(previousBlocks: [DocumentEditorBlockItem], previousText: String) {
+            guard let undoManager = textView?.undoManager else { return }
+            undoManager.registerUndo(withTarget: self) { target in
+                guard let textView = target.textView else { return }
+                target.setAttributedString(from: previousBlocks, fallbackText: previousText, textView: textView)
+                target.parent.text = previousText
+                target.parent.onBlocksChanged?(previousBlocks, previousText)
+            }
+            undoManager.setActionName("Retranslate Selection with AI")
+        }
+
+        var lastMutationError: (any Error)?
+
+        func applyMutation(transform: ([DocumentEditorBlockItem]) throws -> [DocumentEditorBlockItem]) {
+            guard let textView else { return }
+            let selectedRange = textView.selectedRange()
+            do {
+                let updatedBlocks = try transform(currentEditorBlocks())
+                lastRenderedBlocks = updatedBlocks
+                setAttributedString(from: updatedBlocks, fallbackText: parent.text, textView: textView)
+                if selectedRange.location + selectedRange.length <= (textView.string as NSString).length {
+                    textView.setSelectedRange(selectedRange)
+                }
+                let fullText = textView.string
+                lastRenderedText = fullText
+                parent.text = fullText
+                lastMutationError = nil
+                parent.onBlocksChanged?(updatedBlocks, fullText)
+            } catch {
+                // Mutation failure is safely caught without claiming success;
+                // leave the model unchanged and record operation metadata only.
+                lastMutationError = error
+                AppLogger.shared.error("Document mutation failed: \(type(of: error))")
+            }
+        }
+        func setAttributedString(from blocks: [DocumentEditorBlockItem], fallbackText: String, textView: NSTextView) {
+            // Fingerprint model content. Do NOT compare textView.string to
+            // fallbackText: the view string includes "\n\n" block separators and
+            // would force a full rewrite every SwiftUI tick (blink + scroll reset).
+            let fingerprint = contentFingerprint(blocks: blocks, fallbackText: fallbackText)
+            if fingerprint == lastContentFingerprint {
+                return
+            }
+            lastContentFingerprint = fingerprint
             lastRenderedBlocks = blocks
             lastRenderedText = fallbackText
 
+            // Preserve scroll origin across rare real content changes.
+            let savedOrigin = textView.enclosingScrollView?.contentView.bounds.origin
             let baseFont = reviewNSFont(family: parent.fontFamily, size: parent.fontSize, scale: parent.fontScale)
-            let defaultColor = NSColor(VaniScriptTheme.text0)
+            let defaultColor = VaniScriptTheme.displayAdaptedTextColor(hex: nil)
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.lineSpacing = 3
             paragraphStyle.paragraphSpacing = 6
@@ -2609,7 +3587,7 @@ struct DocumentAttributedTextView: NSViewRepresentable {
                                 fontDescriptor = fontDescriptor.withSymbolicTraits(symTraits)
                             }
                             let font = NSFont(descriptor: fontDescriptor, size: baseFont.pointSize) ?? baseFont
-                            let displayColor = span.foregroundColorHex.flatMap(NSColor.init(hex:)) ?? defaultColor
+                            let displayColor = VaniScriptTheme.displayAdaptedTextColor(hex: span.foregroundColorHex)
 
                             var attrs: [NSAttributedString.Key: Any] = [
                                 .font: font,
@@ -2658,8 +3636,133 @@ struct DocumentAttributedTextView: NSViewRepresentable {
 
             let selectedRange = textView.selectedRange()
             textView.textStorage?.setAttributedString(attrString)
+            // Grow the text view to the laid-out content height so long chunks
+            // actually scroll instead of clipping/thrashing inside the viewport.
+            if let container = textView.textContainer,
+               let layoutManager = textView.layoutManager {
+                layoutManager.ensureLayout(for: container)
+                let used = layoutManager.usedRect(for: container)
+                let width = textView.enclosingScrollView?.contentSize.width
+                    ?? textView.bounds.width
+                let height = max(
+                    ceil(used.height + textView.textContainerInset.height * 2),
+                    textView.enclosingScrollView?.contentSize.height ?? 0
+                )
+                if width > 0 {
+                    textView.setFrameSize(NSSize(width: width, height: height))
+                }
+            }
             if selectedRange.location + selectedRange.length <= (textView.string as NSString).length {
                 textView.setSelectedRange(selectedRange)
+            }
+            if let savedOrigin, let scrollView = textView.enclosingScrollView {
+                scrollView.contentView.scroll(to: savedOrigin)
+                scrollView.reflectScrolledClipView(scrollView.contentView)
+            }
+            // Content rewrite clears temporary attributes — restore mark without
+            // scrolling (unit navigation scrolls explicitly).
+            applyProofreadingHighlight(
+                parent.proofreadingHighlightRange ?? lastProofreadingHighlight,
+                focusToken: parent.proofreadingFocusToken,
+                scroll: false
+            )
+        }
+
+        private func contentFingerprint(blocks: [DocumentEditorBlockItem], fallbackText: String) -> String {
+            if blocks.isEmpty {
+                return "fallback|\(fallbackText.utf16.count)|\(fallbackText.hashValue)"
+            }
+            var parts: [String] = []
+            parts.reserveCapacity(blocks.count)
+            for block in blocks {
+                var spanParts: [String] = []
+                spanParts.reserveCapacity(block.spans.count)
+                for span in block.spans {
+                    spanParts.append(
+                        "\(span.id)|\(span.text.utf16.count)|\(span.text.hashValue)|\(span.foregroundColorHex ?? "")|\(span.traits.map(\.rawValue).sorted().joined(separator: ","))"
+                    )
+                }
+                parts.append("\(block.id)#\(spanParts.joined(separator: ";"))#\(block.fallbackText.hashValue)")
+            }
+            return parts.joined(separator: "\n")
+        }
+
+        private(set) var lastProofreadingHighlight: NSRange?
+        private(set) var lastProofreadingFocusToken: Int = -1
+
+        func applyProofreadingHighlight(_ range: NSRange?, focusToken: Int = 0, scroll: Bool = true) {
+            guard let textView, let layoutManager = textView.layoutManager else { return }
+            let fullLen = (textView.string as NSString).length
+            let full = NSRange(location: 0, length: fullLen)
+
+            let normalized: NSRange? = {
+                guard let range, range.length > 0, range.location >= 0,
+                      fullLen > 0,
+                      range.location + range.length <= fullLen
+                else { return nil }
+                return range
+            }()
+
+            // Same unit + same focus token already painted → skip. Re-painting
+            // every SwiftUI tick made long dual panes blink / refuse to scroll.
+            // A new focusToken (enable / chunk change / arrow) always re-applies
+            // and may scroll even when the NSRange looks identical.
+            if !scroll,
+               focusToken == lastProofreadingFocusToken,
+               rangesEqual(normalized, lastProofreadingHighlight) {
+                if let normalized {
+                    let existingBg = layoutManager.temporaryAttribute(
+                        .backgroundColor,
+                        atCharacterIndex: normalized.location,
+                        effectiveRange: nil
+                    )
+                    let existingFg = layoutManager.temporaryAttribute(
+                        .foregroundColor,
+                        atCharacterIndex: normalized.location,
+                        effectiveRange: nil
+                    )
+                    if existingBg != nil && existingFg != nil {
+                        return
+                    }
+                } else {
+                    return
+                }
+            }
+
+            if fullLen > 0 {
+                layoutManager.removeTemporaryAttribute(.backgroundColor, forCharacterRange: full)
+                layoutManager.removeTemporaryAttribute(.foregroundColor, forCharacterRange: full)
+            }
+            lastProofreadingHighlight = normalized
+            lastProofreadingFocusToken = focusToken
+            guard let normalized else { return }
+
+            layoutManager.addTemporaryAttribute(
+                .backgroundColor,
+                value: VaniScriptTheme.proofreadingHighlightNSBackground,
+                forCharacterRange: normalized
+            )
+            layoutManager.addTemporaryAttribute(
+                .foregroundColor,
+                value: VaniScriptTheme.proofreadingHighlightNSForeground,
+                forCharacterRange: normalized
+            )
+            if scroll {
+                textView.scrollRangeToVisible(normalized)
+                // Keep dual-scroll coherent after a unit jump: publish this
+                // pane's progress and pull the opposite pane.
+                if let dual = parent.dualScrollCoordinator,
+                   let pane = parent.dualScrollPane {
+                    dual.syncFromProgrammaticScroll(pane: pane)
+                }
+            }
+        }
+
+        private func rangesEqual(_ a: NSRange?, _ b: NSRange?) -> Bool {
+            switch (a, b) {
+            case (nil, nil): return true
+            case (nil, _?), (_?, nil): return false
+            case let (lhs?, rhs?): return NSEqualRanges(lhs, rhs)
             }
         }
 
@@ -2803,12 +3906,170 @@ private func reviewNSFont(family: FontFamily, size: FontSize, scale: Double) -> 
     }
 }
 final class DocumentNSTextView: NSTextView {
+    weak var coordinator: DocumentAttributedTextView.Coordinator?
+    var editorSide: DocumentEditorSide = .source
     override var acceptsFirstResponder: Bool { true }
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
-        textColor = NSColor(VaniScriptTheme.text0)
+        // Only refresh caret / typing defaults. Assigning `textColor` here used
+        // to repaint the whole storage with theme text0 and permanently strip
+        // explicit span colors until the next unequal content update — which is
+        // exactly the "left stays red, right goes black" dual-pane failure
+        // after import / appearance resolution.
+        typingAttributes[.foregroundColor] = NSColor(VaniScriptTheme.text0)
         insertionPointColor = NSColor(VaniScriptTheme.text0)
+        coordinator?.reapplyLastRenderedAttributedString()
         needsDisplay = true
+    }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = super.menu(for: event) ?? NSMenu()
+        augmentMenu(menu)
+        return menu
+    }
+
+    private func augmentMenu(_ menu: NSMenu) {
+        var addedAnyItem = false
+
+        // PRD §11.1: Replace Everywhere is available on BOTH editor sides when
+        // the selection is non-empty.
+        let selectedText = replaceEverywhereSelectedText
+        if !selectedText.isEmpty {
+            if menu.numberOfItems > 0 {
+                menu.addItem(NSMenuItem.separator())
+            }
+            let label = selectedText.count > 40 ? String(selectedText.prefix(40)) + "…" : selectedText
+            let item = NSMenuItem(
+                title: "Replace \"\(label)\" Everywhere…",
+                action: #selector(replaceEverywhereSelection(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            menu.addItem(item)
+            addedAnyItem = true
+        }
+
+        // The AI retranslate item stays translation-only.
+        if editorSide == .translation {
+            if menu.numberOfItems > 0, !addedAnyItem {
+                menu.addItem(NSMenuItem.separator())
+            }
+            let item = NSMenuItem(
+                title: coordinator?.selectionTranslationBusy == true
+                    ? "Retranslating Selection with AI…"
+                    : "Retranslate Selection with AI…",
+                action: #selector(retranslateSelectionWithAI(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.isEnabled = canRetranslateSelectionWithAI
+            menu.addItem(item)
+        }
+    }
+
+    /// The trimmed selected text used by the Replace Everywhere context-menu
+    /// entry (PRD §11.1). Empty when nothing is selected.
+    private var replaceEverywhereSelectedText: String {
+        guard let storage = textStorage else { return "" }
+        let range = selectedRange()
+        guard range.length > 0, range.location + range.length <= storage.length else { return "" }
+        return (storage.string as NSString)
+            .substring(with: range)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    @objc private func replaceEverywhereSelection(_ sender: Any?) {
+        let selectedText = replaceEverywhereSelectedText
+        guard !selectedText.isEmpty else { return }
+        coordinator?.parent.onReplaceEverywhere?(selectedText, editorSide)
+    }
+
+    override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(retranslateSelectionWithAI(_:)) {
+            return canRetranslateSelectionWithAI
+        }
+        return super.validateMenuItem(menuItem)
+    }
+
+    var canRetranslateSelectionWithAI: Bool {
+        guard isEditable, let snapshot = selectionSnapshotForCommand() else { return false }
+        return DocumentSelectionTranslationEngine.isEligible(snapshot)
+    }
+
+    private func selectionSnapshotForCommand() -> DocumentTextSelectionSnapshot? {
+        guard let storage = textStorage else { return nil }
+        return DocumentSelectionBridge.buildSnapshot(
+            from: storage,
+            selectedRange: selectedRange(),
+            side: editorSide
+        )
+    }
+
+    @objc private func retranslateSelectionWithAI(_ sender: Any?) {
+        guard canRetranslateSelectionWithAI else { return }
+        coordinator?.performSelectionTranslation()
+    }
+
+    func selectionContainsNonSeparatorText(range: NSRange) -> Bool {
+        guard let attrString = textStorage, range.location + range.length <= attrString.length else { return false }
+        var found = false
+        attrString.enumerateAttributes(in: range, options: []) { attrs, _, stop in
+            let isSeparator = attrs[DocumentTextAttribute.isBlockSeparator] as? Bool ?? false
+            if !isSeparator {
+                found = true
+                stop.pointee = true
+            }
+        }
+        return found
+    }
+    override func readSelection(from pboard: NSPasteboard, type: NSPasteboard.PasteboardType) -> Bool {
+        if let attrData = pboard.data(forType: .rtf) ?? pboard.data(forType: .rtfd),
+           let attrString = try? NSAttributedString(data: attrData, options: [:], documentAttributes: nil) {
+            let sanitized = sanitizePastedAttributedString(attrString)
+            self.insertText(sanitized, replacementRange: selectedRange())
+            return true
+        } else if let plainText = pboard.string(forType: .string) {
+            let cleanText = plainText.precomposedStringWithCanonicalMapping
+            self.insertText(cleanText, replacementRange: selectedRange())
+            return true
+        }
+        return super.readSelection(from: pboard, type: type)
+    }
+
+    func sanitizePastedAttributedString(_ attrString: NSAttributedString) -> NSAttributedString {
+        let result = NSMutableAttributedString(string: attrString.string.precomposedStringWithCanonicalMapping)
+        let fullRange = NSRange(location: 0, length: attrString.length)
+
+        attrString.enumerateAttributes(in: fullRange, options: []) { attrs, range, _ in
+            var allowedAttrs: [NSAttributedString.Key: Any] = [:]
+
+            var traits: Set<InlineTrait> = []
+            if let font = attrs[.font] as? NSFont {
+                let sym = font.fontDescriptor.symbolicTraits
+                if sym.contains(.bold) { traits.insert(.bold) }
+                if sym.contains(.italic) { traits.insert(.italic) }
+                allowedAttrs[.font] = font
+            }
+            if let underline = attrs[.underlineStyle] as? Int, underline != 0 {
+                traits.insert(.underline)
+                allowedAttrs[.underlineStyle] = underline
+            }
+            if let strike = attrs[.strikethroughStyle] as? Int, strike != 0 {
+                traits.insert(.strikethrough)
+                allowedAttrs[.strikethroughStyle] = strike
+            }
+            if let color = attrs[.foregroundColor] as? NSColor {
+                allowedAttrs[.foregroundColor] = color
+            }
+
+            if !traits.isEmpty {
+                allowedAttrs[DocumentTextAttribute.inlineTraits] = traits.map(\.rawValue).sorted()
+            }
+
+            result.setAttributes(allowedAttrs, range: range)
+        }
+
+        return result
     }
 }

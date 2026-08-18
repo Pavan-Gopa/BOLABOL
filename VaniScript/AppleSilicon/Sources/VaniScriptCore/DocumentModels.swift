@@ -310,6 +310,7 @@ public struct RichTextSpan: Codable, Equatable, Sendable {
             foregroundColorHex = Self.normalizeHexColor(foregroundColorHex)
         }
     }
+    public var editorOverrides: EditorInlineOverrides?
 
     public init(
         id: String,
@@ -317,7 +318,8 @@ public struct RichTextSpan: Codable, Equatable, Sendable {
         styleKey: String = "",
         traits: Set<InlineTrait> = [],
         translationPolicy: SpanTranslationPolicy = .translate,
-        foregroundColorHex: String? = nil
+        foregroundColorHex: String? = nil,
+        editorOverrides: EditorInlineOverrides? = nil
     ) {
         self.id = id
         self.text = text
@@ -325,6 +327,7 @@ public struct RichTextSpan: Codable, Equatable, Sendable {
         self.traits = traits
         self.translationPolicy = translationPolicy
         self.foregroundColorHex = Self.normalizeHexColor(foregroundColorHex)
+        self.editorOverrides = editorOverrides
     }
 
     public static func normalizeHexColor(_ value: String?) -> String? {
@@ -347,7 +350,7 @@ public struct RichTextSpan: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, text, styleKey, traits, translationPolicy, foregroundColorHex
+        case id, text, styleKey, traits, translationPolicy, foregroundColorHex, editorOverrides
     }
 
     public init(from decoder: Decoder) throws {
@@ -359,6 +362,7 @@ public struct RichTextSpan: Codable, Equatable, Sendable {
         self.translationPolicy = try container.decodeIfPresent(SpanTranslationPolicy.self, forKey: .translationPolicy) ?? .translate
         let rawColor = try container.decodeIfPresent(String.self, forKey: .foregroundColorHex)
         self.foregroundColorHex = Self.normalizeHexColor(rawColor)
+        self.editorOverrides = try container.decodeIfPresent(EditorInlineOverrides.self, forKey: .editorOverrides)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -369,6 +373,7 @@ public struct RichTextSpan: Codable, Equatable, Sendable {
         try container.encode(traits, forKey: .traits)
         try container.encode(translationPolicy, forKey: .translationPolicy)
         try container.encodeIfPresent(foregroundColorHex, forKey: .foregroundColorHex)
+        try container.encodeIfPresent(editorOverrides, forKey: .editorOverrides)
     }
 }
 

@@ -852,40 +852,127 @@ struct DOCXPackageReader {
     private func parseEntries(_ data: Data) throws -> [ZIPEntry] {
         guard data.count >= 22 else { throw DOCXPackageReaderError.invalidZip("archive is truncated") }
         let minimumOffset = max(0, data.count - 65_557)
-        var endOfCentralDirectory = -1
-        if data.count >= 22 {
-            for offset in stride(from: data.count - 22, through: minimumOffset, by: -1) {
-                if readUInt32(data, offset) == 0x06054b50 {
-                    endOfCentralDirectory = offset
-                    break
+
+        struct ValidatedEOCD {
+            let offset: Int
+            let totalEntries: Int
+            let centralSize: Int64
+            let rawCentralOffset: Int64
+            let archiveOffset: Int
+            let actualCentralOffset: Int
+            let exactCommentMatch: Bool
+        }
+
+        var candidates: [ValidatedEOCD] = []
+
+        for offset in stride(from: data.count - 22, through: minimumOffset, by: -1) {
+            guard readUInt32(data, offset) == 0x06054b50 else { continue }
+
+            let diskNumber = readUInt16(data, offset + 4)
+            let centralDisk = readUInt16(data, offset + 6)
+            let entriesOnDisk = readUInt16(data, offset + 8)
+            let totalEntries = readUInt16(data, offset + 10)
+            let centralSize = Int64(readUInt32(data, offset + 12))
+            let rawCentralOffset = Int64(readUInt32(data, offset + 16))
+            let commentLength = Int(readUInt16(data, offset + 20))
+
+            guard diskNumber == 0, centralDisk == 0, entriesOnDisk == totalEntries else {
+                continue
+            }
+            guard centralSize >= 0, rawCentralOffset >= 0 else {
+                continue
+            }
+            guard offset + 22 + commentLength <= data.count else {
+                continue
+            }
+            if totalEntries == .max || centralSize == Int64(UInt32.max) || rawCentralOffset == Int64(UInt32.max) {
+                throw DOCXPackageReaderError.invalidZip("ZIP64 archives are not supported by this importer")
+            }
+
+            let exactMatch = (offset + 22 + commentLength == data.count)
+
+            var resolvedArchiveOffset: Int?
+            var resolvedCentralOffset: Int?
+
+            // 1. Standard (no prefix / absolute 0-based offset)
+            if rawCentralOffset + centralSize <= Int64(offset) {
+                let cdOffset = Int(rawCentralOffset)
+                if totalEntries == 0 && centralSize == 0 {
+                    resolvedArchiveOffset = 0
+                    resolvedCentralOffset = cdOffset
+                } else if totalEntries > 0 && cdOffset + 46 <= offset && readUInt32(data, cdOffset) == 0x02014b50 {
+                    resolvedArchiveOffset = 0
+                    resolvedCentralOffset = cdOffset
                 }
             }
+
+            // 2. Prefixed archive (offset relative to start of embedded zip stream)
+            if resolvedCentralOffset == nil {
+                let computedCDOffset = offset - Int(centralSize)
+                let computedArchiveOffset = computedCDOffset - Int(rawCentralOffset)
+                if computedArchiveOffset > 0 && computedCDOffset >= 0 {
+                    if totalEntries == 0 && centralSize == 0 {
+                        resolvedArchiveOffset = computedArchiveOffset
+                        resolvedCentralOffset = computedCDOffset
+                    } else if totalEntries > 0 && computedCDOffset + 46 <= offset && readUInt32(data, computedCDOffset) == 0x02014b50 {
+                        resolvedArchiveOffset = computedArchiveOffset
+                        resolvedCentralOffset = computedCDOffset
+                    }
+                }
+            }
+
+            guard let archiveOffset = resolvedArchiveOffset,
+                  let actualCentralOffset = resolvedCentralOffset else {
+                continue
+            }
+
+            // Verify central directory entry chain
+            var cursor = actualCentralOffset
+            var chainValid = true
+            for _ in 0..<Int(totalEntries) {
+                guard cursor + 46 <= data.count, readUInt32(data, cursor) == 0x02014b50 else {
+                    chainValid = false
+                    break
+                }
+                let nameLength = Int(readUInt16(data, cursor + 28))
+                let extraLength = Int(readUInt16(data, cursor + 30))
+                let commentLen = Int(readUInt16(data, cursor + 32))
+                let recordLength = 46 + nameLength + extraLength + commentLen
+                guard cursor + recordLength <= data.count else {
+                    chainValid = false
+                    break
+                }
+                cursor += recordLength
+            }
+
+            guard chainValid else { continue }
+
+            let candidate = ValidatedEOCD(
+                offset: offset,
+                totalEntries: Int(totalEntries),
+                centralSize: centralSize,
+                rawCentralOffset: rawCentralOffset,
+                archiveOffset: archiveOffset,
+                actualCentralOffset: actualCentralOffset,
+                exactCommentMatch: exactMatch
+            )
+
+            if exactMatch {
+                candidates = [candidate]
+                break
+            } else {
+                candidates.append(candidate)
+            }
         }
-        guard endOfCentralDirectory >= 0 else {
+
+        guard let selectedEOCD = candidates.first else {
             throw DOCXPackageReaderError.invalidZip("end-of-central-directory record is missing")
         }
 
-        let diskNumber = readUInt16(data, endOfCentralDirectory + 4)
-        let centralDisk = readUInt16(data, endOfCentralDirectory + 6)
-        let entriesOnDisk = readUInt16(data, endOfCentralDirectory + 8)
-        let totalEntries = readUInt16(data, endOfCentralDirectory + 10)
-        let centralSize = Int64(readUInt32(data, endOfCentralDirectory + 12))
-        let centralOffset = Int64(readUInt32(data, endOfCentralDirectory + 16))
-        guard diskNumber == 0, centralDisk == 0, entriesOnDisk == totalEntries else {
-            throw DOCXPackageReaderError.invalidZip("multi-disk ZIP archives are not supported")
-        }
-        guard centralSize >= 0, centralOffset >= 0,
-              centralOffset + centralSize <= Int64(data.count) else {
-            throw DOCXPackageReaderError.invalidZip("central directory is outside the archive")
-        }
-        if totalEntries == .max || centralSize == Int64(UInt32.max) || centralOffset == Int64(UInt32.max) {
-            throw DOCXPackageReaderError.invalidZip("ZIP64 archives are not supported by this importer")
-        }
-
         var entries: [ZIPEntry] = []
-        entries.reserveCapacity(Int(totalEntries))
-        var cursor = Int(centralOffset)
-        for _ in 0..<Int(totalEntries) {
+        entries.reserveCapacity(selectedEOCD.totalEntries)
+        var cursor = selectedEOCD.actualCentralOffset
+        for _ in 0..<selectedEOCD.totalEntries {
             guard cursor + 46 <= data.count, readUInt32(data, cursor) == 0x02014b50 else {
                 throw DOCXPackageReaderError.invalidZip("central directory entry is malformed")
             }
@@ -896,7 +983,7 @@ struct DOCXPackageReader {
             let nameLength = Int(readUInt16(data, cursor + 28))
             let extraLength = Int(readUInt16(data, cursor + 30))
             let commentLength = Int(readUInt16(data, cursor + 32))
-            let localHeaderOffset = Int64(readUInt32(data, cursor + 42))
+            let rawLocalHeaderOffset = Int64(readUInt32(data, cursor + 42))
             let recordLength = 46 + nameLength + extraLength + commentLength
             guard cursor + recordLength <= data.count else {
                 throw DOCXPackageReaderError.invalidZip("central directory entry is truncated")
@@ -904,11 +991,13 @@ struct DOCXPackageReader {
             guard compressedSize >= 0, uncompressedSize >= 0,
                   compressedSize <= limits.maxEntryBytes,
                   uncompressedSize <= limits.maxEntryBytes else {
-                let nameData = data.subdata(in: (cursor + 46)..<(cursor + 46 + nameLength))
+                let nameStart = data.startIndex + cursor + 46
+                let nameData = data.subdata(in: nameStart..<(nameStart + nameLength))
                 let name = String(data: nameData, encoding: .utf8) ?? "<invalid name>"
                 throw DOCXPackageReaderError.entryTooLarge(name, uncompressedSize)
             }
-            let nameData = data.subdata(in: (cursor + 46)..<(cursor + 46 + nameLength))
+            let nameStart = data.startIndex + cursor + 46
+            let nameData = data.subdata(in: nameStart..<(nameStart + nameLength))
             guard let name = String(data: nameData, encoding: .utf8), !name.isEmpty else {
                 throw DOCXPackageReaderError.invalidZip("entry has an invalid UTF-8 name")
             }
@@ -917,7 +1006,8 @@ struct DOCXPackageReader {
             guard compressionMethod == 0 || compressionMethod == 8 else {
                 throw DOCXPackageReaderError.unsupportedCompression(name)
             }
-            guard localHeaderOffset + 30 <= Int64(data.count) else {
+            let localHeaderOffset = rawLocalHeaderOffset + Int64(selectedEOCD.archiveOffset)
+            guard localHeaderOffset >= 0, localHeaderOffset + 30 <= Int64(data.count) else {
                 throw DOCXPackageReaderError.invalidZip("local header is outside the archive")
             }
             entries.append(
@@ -963,7 +1053,8 @@ struct DOCXPackageReader {
         }
         let data = output.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
-        guard process.terminationStatus == 0, Int64(data.count) == entry.uncompressedSize else {
+        guard (process.terminationStatus == 0 || process.terminationStatus == 1),
+              Int64(data.count) == entry.uncompressedSize else {
             throw DOCXPackageReaderError.cannotReadEntry(entry.path)
         }
         return data
@@ -1184,13 +1275,15 @@ struct DOCXPackageReader {
     }
 
     private func readUInt16(_ data: Data, _ offset: Int) -> UInt16 {
-        UInt16(data[offset]) | (UInt16(data[offset + 1]) << 8)
+        let base = data.startIndex + offset
+        return UInt16(data[base]) | (UInt16(data[base + 1]) << 8)
     }
 
     private func readUInt32(_ data: Data, _ offset: Int) -> UInt32 {
-        UInt32(data[offset])
-            | (UInt32(data[offset + 1]) << 8)
-            | (UInt32(data[offset + 2]) << 16)
-            | (UInt32(data[offset + 3]) << 24)
+        let base = data.startIndex + offset
+        return UInt32(data[base])
+            | (UInt32(data[base + 1]) << 8)
+            | (UInt32(data[base + 2]) << 16)
+            | (UInt32(data[base + 3]) << 24)
     }
 }

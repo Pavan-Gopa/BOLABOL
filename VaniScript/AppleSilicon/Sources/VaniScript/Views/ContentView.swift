@@ -24,6 +24,16 @@ struct ContentView: View {
 
                     DetailRouterView()
                         .environmentObject(workflowStore)
+
+                    // Thin status strip only — never a multi-line log wall.
+                    if !workflowStore.statusMessage.isEmpty {
+                        GlobalStatusStrip(
+                            message: workflowStore.statusMessage,
+                            isError: Self.isFailureStatus(workflowStore.statusMessage)
+                        ) {
+                            workflowStore.statusMessage = ""
+                        }
+                    }
                 }
 
                 if workflowStore.workflow.screen != .review && workflowStore.workflow.screen != .visualEditor {
@@ -106,6 +116,53 @@ struct ContentView: View {
         } message: {
             Text(workflowStore.scanResultMessage)
         }
+    }
+
+    private static func isFailureStatus(_ message: String) -> Bool {
+        let lower = message.lowercased()
+        return lower.contains("fail")
+            || lower.contains("error")
+            || lower.contains("could not")
+            || lower.contains("unavailable")
+            || lower.contains("mismatch")
+    }
+}
+
+/// Single-line bottom status. Failures use a calm error surface — never a solid red log dump.
+private struct GlobalStatusStrip: View {
+    let message: String
+    let isError: Bool
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: isError ? "exclamationmark.triangle.fill" : "info.circle.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(isError ? VaniScriptTheme.errorText : VaniScriptTheme.accent)
+
+            Text(message)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(isError ? VaniScriptTheme.errorText : VaniScriptTheme.text1)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .frame(width: 18, height: 18)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Dismiss")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 7)
+        .background(isError ? VaniScriptTheme.errorSurface : VaniScriptTheme.barSurface)
+        .overlay(Rectangle().fill(isError ? VaniScriptTheme.errorBorder : VaniScriptTheme.separator).frame(height: 1), alignment: .top)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(message)
     }
 }
 

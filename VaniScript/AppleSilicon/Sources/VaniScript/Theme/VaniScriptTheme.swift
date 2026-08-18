@@ -1,6 +1,6 @@
+import AppKit
 import SwiftUI
 import VaniScriptCore
-
 enum VaniScriptTheme {
     // MARK: - Core Palette
     static let accent = Color(red: 245 / 255, green: 166 / 255, blue: 35 / 255)
@@ -55,6 +55,21 @@ enum VaniScriptTheme {
         dark: Color.white.opacity(0.04)
     )
     static let onAccent = Color(red: 10 / 255, green: 10 / 255, blue: 18 / 255)
+
+    // MARK: - Proofreading Highlight
+    static let proofreadingHighlightBackground = Color.dynamic(
+        light: Color(red: 250 / 255, green: 185 / 255, blue: 50 / 255).opacity(0.55),
+        dark: Color(red: 245 / 255, green: 166 / 255, blue: 35 / 255).opacity(0.80)
+    )
+    static let proofreadingHighlightForeground = onAccent
+    static let proofreadingBannerBackground = Color.dynamic(
+        light: accent.opacity(0.14),
+        dark: accent.opacity(0.22)
+    )
+    static let proofreadingBannerBorder = Color.dynamic(
+        light: accent.opacity(0.35),
+        dark: accent.opacity(0.50)
+    )
 }
 extension VaniScriptTheme {
     /// Density tokens for visual compaction (U0). Tokens only — no screen restyle yet.
@@ -87,6 +102,109 @@ extension VaniScriptTheme {
             light: Color.black.opacity(0.06),
             dark: Color.white.opacity(0.08)
         )
+    }
+}
+
+extension VaniScriptTheme {
+    /// Dynamic NSColor for proofreading highlight background in layoutManager.
+    /// Provides a prominent, warm amber/gold mark in both Aqua and Dark Aqua.
+    static var proofreadingHighlightNSBackground: NSColor {
+        NSColor(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            if isDark {
+                return NSColor(srgbRed: 245 / 255, green: 166 / 255, blue: 35 / 255, alpha: 0.80)
+            } else {
+                return NSColor(srgbRed: 250 / 255, green: 185 / 255, blue: 50 / 255, alpha: 0.55)
+            }
+        }
+    }
+
+    /// Dynamic NSColor for proofreading highlight text in layoutManager.
+    /// Uses onAccent (near black) to guarantee high-contrast legibility over the highlight background.
+    static var proofreadingHighlightNSForeground: NSColor {
+        NSColor(name: nil) { _ in
+            NSColor(srgbRed: 10 / 255, green: 10 / 255, blue: 18 / 255, alpha: 1.0)
+        }
+    }
+
+    /// Returns a display-only dynamic NSColor for rendering document text in the editor.
+    /// Explicit dark colors (such as black "#000000" or dark slate from Word/PDF imports)
+    /// adapt in Dark Aqua to high-contrast legible colors, while preserving intentional
+    /// chromatic highlights (e.g. red diff markers) and keeping persisted/exported hex canonical.
+    static func displayAdaptedTextColor(hex: String?) -> NSColor {
+        guard let hex = hex,
+              let normalized = RichTextSpan.normalizeHexColor(hex),
+              let explicitColor = NSColor(hex: normalized)
+        else {
+            return NSColor(text0)
+        }
+
+        return NSColor(name: nil) { appearance in
+            let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            guard let rgb = explicitColor.usingColorSpace(.sRGB) else {
+                return explicitColor
+            }
+
+            let r = rgb.redComponent
+            let g = rgb.greenComponent
+            let b = rgb.blueComponent
+
+            func sRGBtoLinear(_ c: CGFloat) -> CGFloat {
+                c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
+            }
+            let lum = 0.2126 * sRGBtoLinear(r) + 0.7152 * sRGBtoLinear(g) + 0.0722 * sRGBtoLinear(b)
+            let maxC = max(r, max(g, b))
+            let minC = min(r, min(g, b))
+            let delta = maxC - minC // chroma / saturation proxy
+            if isDark {
+                // Dark mode: editor surface luminance is ~0.011.
+                // Contrast threshold: require >= 4.0:1 for comfortable legibility.
+                let darkContrast = (lum + 0.05) / (0.011 + 0.05)
+                if darkContrast >= 4.0 {
+                    return explicitColor
+                }
+
+                // Neutral / low-saturation dark colors (black, charcoal, slate):
+                if delta < 0.18 {
+                    return NSColor.white
+                }
+
+                // Chromatic colors (e.g. dark navy, dark green, dark maroon):
+                // Blend with white until luminance guarantees >= 4.5:1 contrast while preserving hue
+                var curR = r, curG = g, curB = b
+                var curLum = lum
+                while curLum < 0.23 && (curR < 0.99 || curG < 0.99 || curB < 0.99) {
+                    curR = curR + (1.0 - curR) * 0.25
+                    curG = curG + (1.0 - curG) * 0.25
+                    curB = curB + (1.0 - curB) * 0.25
+                    curLum = 0.2126 * sRGBtoLinear(curR) + 0.7152 * sRGBtoLinear(curG) + 0.0722 * sRGBtoLinear(curB)
+                }
+                return NSColor(srgbRed: curR, green: curG, blue: curB, alpha: rgb.alphaComponent)
+            } else {
+                // Light mode: editor surface luminance is ~0.83.
+                let lightContrast = (0.83 + 0.05) / (lum + 0.05)
+                if lightContrast >= 4.0 {
+                    return explicitColor
+                }
+
+                // Neutral / low-saturation light colors (white, near-white):
+                if delta < 0.18 {
+                    return NSColor(srgbRed: 17 / 255, green: 24 / 255, blue: 39 / 255, alpha: 1.0)
+                }
+
+                // Chromatic colors with low contrast in light mode:
+                // Blend with black until luminance guarantees >= 4.5:1 contrast while preserving hue
+                var curR = r, curG = g, curB = b
+                var curLum = lum
+                while curLum > 0.14 && (curR > 0.01 || curG > 0.01 || curB > 0.01) {
+                    curR = curR * 0.75
+                    curG = curG * 0.75
+                    curB = curB * 0.75
+                    curLum = 0.2126 * sRGBtoLinear(curR) + 0.7152 * sRGBtoLinear(curG) + 0.0722 * sRGBtoLinear(curB)
+                }
+                return NSColor(srgbRed: curR, green: curG, blue: curB, alpha: rgb.alphaComponent)
+            }
+        }
     }
 }
 

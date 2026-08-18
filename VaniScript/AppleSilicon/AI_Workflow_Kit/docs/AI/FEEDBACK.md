@@ -3648,3 +3648,1481 @@ Non-blocking:
   edit one red translated span, export DOCX and PDF, and confirm the red run is
   preserved in the actual files. Reviewer and Tester remain blocked until Human
   acceptance.
+### S14 Coder 01 — Main changes requested
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Run | S14EditorialFoundationCoder01 |
+| RESULT | changes_requested |
+
+- Scope matched target files exactly (7 files). `swift build` exit 0 confirmed
+  by Main. Core engine quality is good: `replace`/`toggleTrait`/`normalize`
+  follow INV-3 identity policy (left fragment keeps ID, new fragments get IDs
+  once, merge keeps first), super/subscript mutual exclusion, UTF-16 surrogate
+  safety, additive `editorOverrides` with decode-if-present.
+- Main source verification rejected the handoff with one product-breaking
+  regression and two contract defects:
+  1. `DocumentAttributedTextView.makeNSView` no longer assigns
+     `scrollView.documentView = textView` (the line was deleted in the diff).
+     The returned `NSScrollView` has no content view, so both Document Review
+     panes render empty and `updateNSView`'s `guard scrollView.documentView
+     as? DocumentNSTextView` exits immediately. Unit tests do not cover
+     `NSViewRepresentable` wiring, so the green suite does not catch this.
+  2. `DocumentSelectionBridge.buildSnapshot` fills `blockHashes` with
+     `String(text.hashValue)`. Swift `hashValue` is per-process randomized
+     (SipHash with random seed) and non-deterministic across launches. The
+     snapshot hash contract exists for the S17 stale-response gate and must be
+     stable; the codebase already has SHA-256 helpers (e.g.
+     `DocumentImportService.sha256String`).
+  3. `Coordinator.toggleTrait`/`clearManualFormatting` hardcode
+     `side: .source` in the snapshot regardless of which pane is being edited.
+     PRD §18.1 requires one component parameterized by side; the snapshot side
+     is consumed by later AI routing.
+- Minor: `applyMutation`'s `catch` swallows mutation failures silently;
+  bounded fix — keep the safe catch but surface the failure honestly (no
+  silent no-op claim), consistent with product honesty rules.
+- Required bounded fixes for Coder 02: restore the documentView assignment,
+  deterministic block hashes, side parameterization, honest failure surface.
+  No architecture changes needed.
+
+### S14 Coder 02 — Main verified, awaiting Human acceptance
+
+| Field | Value |
+|-------|-------|
+| Step | S14 |
+| Actor | coder |
+| Timestamp | 2026-08-15T13:52:18Z |
+| RESULT | waiting_human_acceptance |
+
+#### Summary
+
+- Coder 02 delivered the four bounded fixes from the Coder 01 rejection; Main verified each in source:
+  1. `scrollView.documentView = textView` restored in `DocumentAttributedTextView.makeNSView`.
+  2. `DocumentSelectionBridge.blockHashes` now uses deterministic SHA-256 hex (`sha256Hex`), not per-process randomized `hashValue`.
+  3. `toggleTrait`/`clearManualFormatting` build snapshots with `side: parent.side`, parameterized per pane.
+  4. `applyMutation`'s catch records `lastMutationError` and logs the failure type — no silent success claim.
+- Scope matches the target files exactly (7 files).
+- Main source spot-checks confirmed the E1 contract: UTF-16 structural selection bridge, Formatting/AI/Terminology context-menu sections (AI disabled until S17, Terminology until S16), ⌘B/I/U + strikethrough/superscript/subscript/small-caps/clear routed through the single `DocumentRichTextMutation` engine, additive `EditorInlineOverrides` with decode-if-present, paste sanitization in `readSelection(from:)`.
+
+#### Verification (Main)
+
+| Command | Result |
+|---------|--------|
+| `swift build` | PASS — exit 0 |
+| `swift test --filter DocumentRichTextMutationTests` | PASS — 13 tests / 1 suite |
+| `swift test --filter DocumentEditorFormattingTests` | PASS — 12 tests / 1 suite |
+| `swift test --filter DocumentEditorClipboardTests` | PASS — 6 tests / 1 suite |
+| `swift test` | PASS — 705 tests / 93 suites |
+| `./script/build_and_run.sh` | PASS — signed app launched, pid 49388 |
+
+#### Runtime reconciliation
+
+- Classification: `recovered_result`
+- Runtime evidence: the session was interrupted after Coder 02 yielded `waiting_review`; `hub jobs` was empty and both coder agents were parked with recoverable artifacts.
+- Repository evidence: the working-tree diff matches the artifact's changed_files exactly (the 7 target files).
+- Recovered changed files: `DocumentEditingModels.swift`, `DocumentRichTextMutation.swift`, `DocumentModels.swift`, `ReviewWorkspaceView.swift`, `DocumentRichTextMutationTests.swift`, `DocumentEditorFormattingTests.swift`, `DocumentEditorClipboardTests.swift`.
+- Unverified remainder: Human acceptance, Reviewer Judgment Gates, Tester QA.
+
+#### Blocking / remaining
+
+- Human acceptance gate: open the fresh app, confirm both Document Review panes render, select text, and exercise the formatting commands and context menu.
+- Reviewer dispatch requires `human_acceptance.status: accepted`.
+
+### S14 candidate 02 — Human rejected; scope redefined
+
+| Field | Value |
+|-------|-------|
+| Step | S14 |
+| Actor | main |
+| Timestamp | 2026-08-15T14:05:43Z |
+| RESULT | changes_requested |
+
+#### Summary
+
+- Human tested the fresh candidate 02 app: the custom Formatting submenu items are inactive; pressing them changes nothing.
+- Human observed that standard macOS right-click formatting already provides full formatting in the Document Review editor, so the custom formatting command layer is unnecessary.
+- Human redefined S14: the only required context-menu feature is `Retranslate Selection with AI…` — retranslate the selected translated phrase through AI using the corresponding source context (PRD §10, slice E4 pulled forward into S14).
+- Main stopped the candidate app (pid 49388). Reviewer and Tester did not run; Human acceptance is rejected.
+- Recorded as ADR-003. The S14 card is rewritten: the selection bridge, the pure mutation `replace` path, and paste sanitization remain as the canonical foundation; the custom formatting UI is removed; AI selection retranslation becomes the step's feature.
+
+#### Blocking / remaining
+
+- New S14 candidate: remove the custom formatting UI, deliver a working end-to-end `Retranslate Selection with AI…` command, keep the canonical mutation foundation.
+
+### S14 Coder 03 — primary launch failure
+
+| Field | Value |
+|-------|-------|
+| Step | S14 |
+| Actor | coder |
+| Timestamp | 2026-08-15T14:11:14Z |
+| RESULT | runtime_interrupted |
+
+#### Runtime reconciliation
+
+- Classification: `interrupted_no_changes`
+- Runtime evidence: `S14AISelectionCoder03` exited after 328ms with `401 Invalid token` (request id 202608151411143918118701NSpcATE) before reading any source.
+- Repository evidence: no files changed; the rescoped S14 working tree is untouched.
+- Recovered changed files: none.
+- Unverified remainder: the entire rescoped S14 implementation.
+- A single primary retry (`S14AISelectionCoder03B`) was launched; no implementation attempt was counted and no model-failure pause was recorded for one transient 401.
+
+### S14 Coder 03B — persistent primary model failure; routing paused
+
+| Field | Value |
+|-------|-------|
+| Step | S14 |
+| Actor | coder |
+| Timestamp | 2026-08-15T14:12:35Z |
+| RESULT | runtime_interrupted |
+
+#### Runtime reconciliation
+
+- Classification: `interrupted_no_changes`
+- Runtime evidence: `S14AISelectionCoder03B` exited after 257ms with `401 Invalid token` (request id 20260815141235462667480DyRK3Xme) before reading any source — the second identical primary failure after `S14AISelectionCoder03`.
+- Repository evidence: no files changed.
+- Recovered changed files: none.
+- Unverified remainder: the entire rescoped S14 implementation.
+- Persistent model/provider failure recorded under `omp.model_failure` (status `awaiting_human`). Routing is paused; no implementation attempt counted. The configured `workflow-coder-backup` will be dispatched only after explicit Human authorization; alternatively the Human may switch the `workflow_coder` model via Alt+M and resume.
+
+### S14 Coder backup 04B — Main verified, awaiting Human acceptance
+
+| Field | Value |
+|-------|-------|
+| Step | S14 |
+| Actor | coder |
+| Timestamp | 2026-08-15T14:48:03Z |
+| RESULT | waiting_human_acceptance |
+
+#### Summary
+
+- Human-authorized `workflow-coder-backup` implemented the rescoped S14 (ADR-003): removed the rejected custom formatting UI and delivered `Retranslate Selection with AI…` end-to-end in the translated Document Review pane.
+- New core contracts (`vaniscript.document.selection.v1`) and validator; new app engine with injected-provider tests and live `editingProviderID` routing through the existing `ActiveCloudTranslationProvider.resolve` — no second provider list.
+- Stale-response protection: the affected block's SHA-256 hash is checked before the provider call and again after the response, plus selected-text and formatting re-verification; a stale response surfaces "Text changed while AI was working — review suggestion" instead of overwriting.
+- Application goes through `DocumentRichTextMutation.replace` with `.inheritExisting` trusted formatting and a named Undo action; provider/validation failure preserves the original selection with honest errors.
+- Menu item enables only for a non-empty translation-side selection inside one logical block (`DocumentSelectionTranslationEngine.isEligible`).
+
+#### Verification (Main)
+
+| Command | Result |
+|---------|--------|
+| `swift build` | PASS — exit 0 |
+| `swift test --filter 'DocumentSelectionTranslation\|DocumentRichTextMutation\|DocumentEditorClipboard'` | PASS — 30 tests / 5 suites |
+| `swift test` | PASS — 714 tests / 96 suites |
+| `./script/build_and_run.sh` | PASS — signed app launched, pid 65786 |
+| Source check: formatting UI removal | PASS — no `formatBold`/`toggleTrait`/`clearManualFormatting`/⌘B plumbing remains |
+| Source check: AI command wiring + stale gate + provider routing | PASS — verified in `ReviewWorkspaceView.swift` and `DocumentSelectionTranslationEngine.swift` |
+
+#### Runtime reconciliation
+
+- Classification: `recovered_result`
+- Runtime evidence: the backup agent completed all implementation and ran every gate, then was aborted at the 30-minute subagent runtime limit before yielding its structured result; its IRC progress messages reported the full evidence.
+- Repository evidence: the working tree contains exactly the nine files the agent reported; Main independently re-ran build, focused, and full-suite gates green.
+- Recovered changed files: `DocumentSelectionTranslationContracts.swift`, `DocumentSelectionTranslationValidator.swift`, `DocumentSelectionTranslationEngine.swift`, `DocumentRichTextMutation.swift`, `ReviewWorkspaceView.swift`, `DocumentSelectionTranslationTests.swift`, `DocumentSelectionTranslationEngineTests.swift`, `DocumentSelectionTranslationUITests.swift`, `DocumentEditorFormattingTests.swift`.
+- Unverified remainder: Human acceptance, Reviewer Judgment Gates, Tester QA.
+
+#### Blocking / remaining
+
+- Human acceptance gate: in the fresh app, select a phrase in the translated pane, right-click, choose `Retranslate Selection with AI…`, and confirm the phrase is retranslated from its source context.
+- Reviewer dispatch requires `human_acceptance.status: accepted`.
+
+### S14 candidate 04 — Human accepted
+
+| Field | Value |
+|-------|-------|
+| Step | S14 |
+| Actor | main |
+| Timestamp | 2026-08-15T14:52:10Z |
+| RESULT | accepted |
+
+#### Summary
+
+- Human tested the fresh candidate 04 app (pid 65786) and accepted it: the `Retranslate Selection with AI…` command works as required; the removed custom formatting UI is no longer expected.
+- Per the gate order, the unchanged candidate now receives its one Reviewer verdict, then one Tester verdict.
+
+### S14 Reviewer 01 — APPROVED
+
+| Field | Value |
+|-------|-------|
+| Step | S14 |
+| Actor | reviewer |
+| Timestamp | 2026-08-15T14:59:00Z |
+| RESULT | approved |
+
+#### Summary
+
+- Verdict: `APPROVED`. The candidate implements the rescoped AI selection retranslation through `DocumentSelectionTranslationEngine` → `DocumentRichTextMutation.replace`, satisfies INV-4 (no trusted metadata from the provider), respects ADR-003 (custom formatting UI removed), and passes all Objective gates.
+- Main independently confirmed Judgment Gate #1: the engine's `apply` callback first updates `DocumentState` through the canonical `WorkflowStore.updateCurrentDocumentTranslated` path (the same path the document coordinator uses), then renders the editor via `renderExternalSelectionMutation`.
+- Judgment Gate #2 (stale-response protection): block hash checked before the provider call and after the response, plus selected-text and formatting re-verification; the race window where a user edit rejects the AI result is the intended PRD §10.6 behavior.
+- Judgment Gate #3: media cue editor paths untouched by the diff.
+
+#### Review section
+
+Verdict: `APPROVED`
+
+Blocking:
+
+1. None.
+
+Non-blocking:
+
+1. `renderExternalSelectionMutation` renders without invoking `applyMutation`/`onBlocksChanged`; operationally correct because the DocumentState update already happened through the store before rendering, but the two render paths could be unified for consistency in a later slice.
+2. The post-response stale-check race window is intentional and documented; no fix required.
+
+### S14 Tester 01 — qa_green
+
+| Field | Value |
+|-------|-------|
+| Step | S14 |
+| Actor | tester |
+| Timestamp | 2026-08-15T15:31:42Z |
+| RESULT | qa_green |
+
+#### Summary
+
+- The Tester mapped PRD §26.5 against existing coverage, found five real observable-behavior gaps, and added five deterministic tests to `DocumentSelectionTranslationEngineTests`: same-phrase-in-two-blocks modifies only the selected block (string-search regression pin), mixed-format selection fails safely instead of flattening, unmapped source spans fall back to block-level context, profile protected terms reach the request, and AI replacement preserves unchanged span IDs through the full engine path.
+- No product sources were modified; no product bugs found.
+- The Tester was aborted at the subagent runtime limit after its focused gates were green but before the full suite finished; Main reconciled the test diff (assertions strong, none weakened) and completed the remaining gate.
+
+#### Verification
+
+| Command | Result |
+|---------|--------|
+| `swift test --filter` focused AI-selection suites (Tester) | PASS — 45 tests / 6 suites |
+| `swift test` (Main, post-reconciliation) | PASS — 719 tests / 96 suites |
+
+#### Blocking / remaining
+
+- None for S14.
+
+### S14 stop-gate — CLOSED
+
+- Human ACCEPTED + Reviewer APPROVED + Tester qa_green.
+- S14 (rescoped by ADR-003 to `Retranslate Selection with AI…`) is complete. Next: S15 (freshness and transactional mutations) pending Human direction.
+
+## S15 — Editorial workspace: freshness and transactional mutations
+
+### S15 candidate 01 — Main verification
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Candidate | S15FreshnessCandidate01 |
+| Run | S15FreshnessCoder04 |
+| RESULT | waiting_human_acceptance |
+
+- Attempt history: Coder 01 failed pre-work (provider 503, no code); Coder 02
+  aborted at the 30-min runtime limit with zero changes; Coder 03 aborted at
+  the limit after writing only DocumentTranslationFreshness.swift and
+  surfacing the plan-hash bug; Coder 04 (pre-digested brief v2) completed the
+  implementation in 27m59s.
+- ADR-004 accepted and applied: DocumentTranslationCoordinator.commit now
+  stores `sourceBlock?.sourceHash ?? plan.sourceHash` into
+  TranslatedBlock.sourceHash (verified one-line diff at :481). Without this,
+  every AI-translated block would render permanently stale under the PRD §9.1
+  contract because the plan hash is a composite that never equals a block
+  text hash. plan.sourceHash remains in ChunkQualityReport.
+- Freshness: TranslationFreshness (missing/fresh/stale) is a pure derivation
+  from existing sourceHash values; no new persisted state, no schema bump.
+- Staleness: updateCurrentDocumentSource recomputes the block hash, keeps the
+  TranslatedBlock intact, and sets the chunk reviewDisposition to
+  needsReview only when the text hash changed AND a translation exists in
+  the active language. Formatting-only edits keep the hash and never stale.
+- Transactions: DocumentEditingCoordinator applies DocumentEditTransaction
+  (before/after DocumentBlockPatch arrays) through the canonical
+  updateCurrentDocumentSource/updateCurrentDocumentTranslated paths and
+  registers exactly one inverse operation with UndoManager; undo/redo
+  re-apply patches through the store, never NSTextStorage alone.
+- Autosave: saveCurrentProject split into commitCurrentProjectToMemory +
+  persistProjects; the two document typing paths now schedule a debounced
+  autosave (default 400 ms, injectable). Flush points verified in diff:
+  moveChunk, selectChunkIndex, approve-and-advance, editor focus loss
+  (textDidEndEditing → onFocusLost), exportDocument,
+  exportDocumentTranslationPackage, openProject,
+  NSApplication.willTerminateNotification observer, and after every
+  coordinator transaction. Save failure keeps in-memory edits, surfaces a
+  persistent retryable projectSaveFailure, and retries on the next flush.
+- UI: translated pane shows a warning banner "Source changed — translation
+  needs review" when any block in the current chunk derives stale or the
+  chunk is needsReview.
+- Main independently re-ran every Objective Gate:
+  - `swift build` exit 0.
+  - `swift test --filter DocumentTranslationFreshness` — 6 tests / 1 suite PASS.
+  - `swift test --filter DocumentEditingCoordinator` — 16 tests / 1 suite PASS.
+  - `swift test` — 742 tests / 98 suites PASS (baseline 719/96; +23 tests).
+- Fresh app built via ./script/build_and_run.sh and launched, pid 56392.
+- Judgment gates (no-translation-deletion, model/editor/persistence agreement
+  after undo+reopen, no per-keystroke saves) remain Reviewer-owned.
+
+### S15 candidate 01 — Human changes requested
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Candidate | S15FreshnessCandidate01 |
+| RESULT | changes_requested |
+
+- Human rejection (translated intent): the "Source changed — translation
+  needs review" banner alone is clearly insufficient. "Approve and next"
+  must not be clickable at all while the current translation has not been
+  rebuilt/updated to match the changed source. Currently the button fires
+  freely, the user can approve and advance anywhere while the "Source
+  changed" banner keeps burning unnoticed — approving a stale translation
+  is illogical. Blocking the button until the page is rebuilt to match the
+  source makes the state obvious; the button must come back to life only
+  after the translation is updated.
+- Main analysis: candidate 01's banner is advisory-only; the approve path
+  (approveAndAdvanceDocument) has no staleness guard. Additional subtlety
+  found in source: updateCurrentDocumentTranslated restores block
+  sourceHash (block becomes fresh) but never clears chunk
+  reviewDisposition == .needsReview, so a gate keyed on needsReview alone
+  would lock the button forever after a retranslation. The fix must gate on
+  DERIVED freshness (self-correcting hash comparison) and clear needsReview
+  when all blocks are fresh again.
+- Routed directly to a fresh Coder (S15FreshnessCoder05) per the
+  Human-rejection contract; no Reviewer or Tester runs before re-acceptance.
+
+### S15 candidate 01 — Human extension: red stale-chunk mark + export block
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Candidate | S15FreshnessCandidate01 |
+| RESULT | changes_requested |
+
+- Human rejection (translated intent): even with "Approve & Next" blocked,
+  the user can bypass the block via the sidebar — New Session, reopening the
+  project, or picking another chunk. Therefore any chunk whose translation no
+  longer matches its source must be visibly marked RED in the chunk list, and
+  a project carrying such a red mark must NOT be exportable — even if every
+  other chunk is ready, the export button(s) stay disabled until the
+  defective chunk is brought back in line.
+- Main analysis: requires per-chunk staleness derivation generalized from
+  candidate 02's current-chunk-only check, a derived non-Codable
+  `ProjectSummary.staleChunkIndices` (computed on the fly, kept out of
+  CodingKeys for backward-compatible decoding), a red indicator in
+  `ProjectSidebarView.chunkButton`, and export gating in
+  `ExportWorkspaceView.documentExportSection` plus defense-in-depth guards in
+  `exportDocument`/`exportDocumentTranslationPackage`. Media paths untouched.
+- Queued as Coder 06 (brief: local://s15-coder06-brief.md); cannot start until
+  Coder 05 finishes (one worker at a time).
+
+### S15 candidate 01 — Human bug 3: banner stuck across projects (root cause found)
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Candidate | S15FreshnessCandidate01 |
+| RESULT | changes_requested |
+
+- Human report (translated intent): the "Source changed — translation needs
+  review" banner is stuck permanently. Closing the defective project and
+  opening the 2nd, 3rd projects still shows the banner from the defective
+  project. Clearly wrong; must not happen.
+- Main root-cause investigation (read-only, privacy-safe script over the real
+  `~/Library/Application Support/VaniScript/projects.json`): the banner is
+  data-driven, not a view-identity leak — `openProject` swaps
+  `workflow.session` and the view re-renders from the fresh session. The
+  KF_Voyage document project has 872 AI-translated blocks; 872/872 carry the
+  LEGACY plan-hash convention (`TranslatedBlock.sourceHash ==
+  DocumentChunkPlan.sourceHash`), 0 carry the block hash. The ADR-004
+  freshness derivation compares against the block text hash, so every
+  AI-translated block is falsely flagged `.stale` → the banner burns in every
+  chunk of every pre-existing project and can never clear without
+  retranslating the whole book.
+- Decision: ADR-005 accepted (DECISIONS.md) — migrate legacy plan-hash
+  translations to the block hash on load, inside
+  `SessionState.normalizeTranslationArchive()` (runs on every `openProject`
+  and save). The legacy marker is exact (a SHA-256 block hash can never equal
+  a composite plan hash), so only legacy-convention entries are rewritten;
+  genuinely-stale blocks are left untouched. ADR-004's consequence "legacy
+  blocks report stale until refreshed" is superseded — that reading made the
+  feature unusable on all existing projects.
+- Folded into the Coder 06 brief as Part 0 (the migration), alongside the red
+  sidebar mark and export block.
+
+### S15 Coder 05 — runtime-limit interruption with partial work preserved
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-15 |
+| Actor | coder |
+| Run | S15FreshnessCoder05 |
+| RESULT | runtime_interrupted |
+
+- Aborted at the 30-min subagent runtime limit (task.maxRuntimeMs=1800000).
+  Runtime interruption alone increments no implementation attempt.
+- Main verified the actual tree (git status + build + test): Coder 05's
+  functional edits ALL landed — `isCurrentDocumentChunkStale` +
+  `isDocumentPlanStale` (WorkflowStore:495/516), the
+  `approveAndAdvanceDocument` defense-in-depth guard (:1363), needsReview
+  clearing in both `updateCurrentDocumentSource` (:1495) and
+  `updateCurrentDocumentTranslated` (:1574), and the ReviewWorkspaceView
+  banner refactor + `.disabled(store.isCurrentDocumentChunkStale)` on the
+  document approve button (:648). `swift build` green.
+- One pre-existing test now FAILS: `approveAndAdvanceSourceEmptyChunk`
+  (WorkflowStoreDocumentTests:9, 6 expectation failures). Root cause:
+  `isDocumentPlanStale` uses `derive == .stale`, and `derive` returns
+  `.stale` for EMPTY hashes by design; the fixture builds blocks with no
+  `sourceHash`, so the gate blocks approval forever. Same false-positive
+  class as Human bug 3. Coder 05 identified this edge case in its final
+  message before the abort but did not fix it.
+- Coder 05's five new tests were NOT added (aborted before writing them).
+- Resolution: folded the empty-hash fix (new `TranslationFreshness.
+  isProvablyStale` — both hashes non-empty AND different) plus the ADR-005
+  migration, sidebar red mark, and export block into the Coder 06 brief
+  (local://s15-coder06-brief.md, Parts 0.5/0/1/2/3/4). Partial work preserved;
+  Coder 06 builds on it.
+
+### S15 — DATA-LOSS INCIDENT: test suite wiped the user's real projects.json
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~01:05 (discovered during Main verification of Coder 06) |
+| Actor | main |
+| RESULT | findings_open |
+
+- Symptom: `~/Library/Application Support/VaniScript/projects.json` — the
+  user's real project archive (1 document project, 872 AI-translated blocks)
+  — is now 4 bytes: `[]`. It held the full record at ~00:45 when Main ran the
+  privacy-safe root-cause script for Human bug 3.
+- Root cause (grounded): `projects.json` mtime is 2026-08-16 01:03:27,
+  matching Main's final verification `swift test` run (app.log shows test
+  activity — test.wav, VaniScriptASRMLXFail, Gemini key rotation — at that
+  exact second). `WorkflowStoreLocalModelTests` constructs
+  `WorkflowStore(projects: [], settingsPersistence: Self.isolatedSettingsPersistence)`
+  WITHOUT injecting `projectsPersistence`, so the default
+  `ProjectDiskStore.save` closure writes its empty project list over the
+  user's real file. This is a PRE-EXISTING test-isolation bug (the suite has
+  been wiping real data on every full run since the store gained default disk
+  persistence); the same hazard exists in the bare `WorkflowStore()` tests in
+  WorkflowStoreDocumentTests, DocumentReviewWorkflowTests, and one test in the
+  new DocumentStalenessGatingTests (emptyHashBlocksNeverStaleAndApproveSucceeds).
+  The new DocumentStalenessGatingTests makeStore helper correctly injects
+  no-op persistence; the single bare-store test does not.
+- Recovery: the running app (pid 56392, launched ~00:00, BEFORE the wipe)
+  still holds the user's data in memory. Its `willTerminate` observer calls
+  `flushAutosave()` → synchronous `performDiskSave()`. A GRACEFUL quit (Cmd+Q)
+  writes the in-memory projects back to disk and recovers the file. No Time
+  Machine snapshots or backup copies exist; `Projects/<id>/` dirs hold only
+  source .docx assets, not translations.
+- Immediate actions by Main: STOPPED running `swift test` (any further run
+  re-wipes). Escalated to Human for the graceful-quit recovery step.
+- Required fix (next Coder, test-only): inject no-op `projectsPersistence`
+  (and explicit `projects:`) into every test that constructs a WorkflowStore,
+  so the suite can never touch the user's real storage again. Affects
+  WorkflowStoreLocalModelTests, WorkflowStoreDocumentTests,
+  DocumentReviewWorkflowTests, DocumentStalenessGatingTests.
+
+### S15 Coder 07 — test-isolation fix verified (suite can no longer touch real storage)
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~01:28 |
+| Actor | coder |
+| Run | S15FreshnessCoder07 |
+| RESULT | waiting_review |
+
+- All 15 leaking `WorkflowStore` constructions now inject explicit
+  `projectsPersistence` (no-op) and explicit `projects:`. Main verified
+  independently: grep for bare `WorkflowStore()` in Tests/ → 0 matches;
+  `projectsPersistence:` counts → LocalModel 10, DocumentTests 2,
+  ReviewWorkflow 2, StalenessGating 2, EditingCoordinator 1 (pre-existing) =
+  17/17 sites isolated.
+- Verification: `swift build` exit 0; `swift build --build-tests` exit 0
+  (compile-only, no test execution during the recovery window).
+- Post-fix proof: full `swift test` re-run → 750 tests / 99 suites PASS, and
+  `projects.json` mtime/size UNCHANGED (still the wiped 4-byte file from
+  01:03:27) — the suite no longer writes real storage.
+- No assertions or test behavior changed; edits confined to the four allowed
+  test files; no git operations.
+- Remaining blocker: Human recovery of the wiped projects.json (one-character
+  edit in the running app pid 56392 to arm the 400ms autosave flush).
+
+### S15 — DATA-LOSS INCIDENT RESOLVED + candidate 02 presented for re-acceptance
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~07:45 |
+| Actor | main |
+| RESULT | recovered_result |
+
+- Recovery confirmed: Human's one-character edit armed the 400ms autosave;
+  `projects.json` restored at 07:40:26 to 4,989,476 bytes — 1 project
+  (KF_Voyage, ID 087369ab), 872 blocks, 872 translations. Full archive intact.
+- All 872 translations still carry the legacy plan-hash convention (expected:
+  the running app was the old build). Migration simulation on the real
+  restored data: 872/872 migrate to fresh, 0 stale, 0 empty-block-hash.
+- Fresh app built via `script/build_and_run.sh run` and launched (pid 48239);
+  old app (pid 56392) terminated by the script. `projects.json` untouched by
+  the rebuild (mtime unchanged).
+- Coder 07 test-isolation fix verified: 17/17 WorkflowStore test sites inject
+  no-op projectsPersistence; post-fix full `swift test` (750/99) left the file
+  untouched. The suite can no longer write real storage.
+- Candidate 02 (combined: Approve block + red sidebar mark + export block +
+  ADR-005 migration + provably-stale gating) presented to Human for
+  re-acceptance. human_acceptance.status: pending, candidate_id:
+  S15FreshnessCandidate02.
+
+### S15 STOP-GATE CLOSED — Human ACCEPTED + Reviewer APPROVED + Tester qa_green
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~08:10 |
+| Actor | main |
+| RESULT | step_complete |
+
+- Human ACCEPTED candidate 02 on 2026-08-16 ("Принято, продолжай").
+- Reviewer (S15FreshnessReviewer01) APPROVED in 2m8s: all 6 Judgment Gates
+  pass — scope confined to S15, `derive` contract preserved, ADR-004/005
+  correct, single unified staleness derivation, transactional edits + 400ms
+  autosave flush points, 30 deterministic isolated tests.
+- Tester (S15FreshnessTester01) qa_green in 4m4s: 754 tests / 99 suites, +4
+  new tests (isProvablyStale predicate, approve gating end-to-end,
+  ProjectSummary backward-compatible decode, media isolation). Main inspected
+  the test diff: all defend observable contracts, no weakened assertions.
+- Main final verification: full `swift test` 754/99 green; projects.json
+  intact (4,991,000 bytes); ADR-005 migration confirmed END-TO-END on live
+  data — the fresh app migrated all 872 translations and wrote the archive
+  itself (872/872 fresh, 0 stale).
+- STEPS.md S15 card: all Do items and Objective/Judgment gates marked [x].
+- STATE.yaml: current_step advanced to S16 (Replace Everywhere, PRD slice E3);
+  S15 added to completed_steps; implementation/review/qa/human_acceptance
+  blocks reset for S16.
+- DATA-LOSS INCIDENT fully resolved: test-isolation fix (Coder 07) verified —
+  the suite can no longer touch real storage.
+
+### S16 Coder 01 — Replace Everywhere candidate 01 complete, Main-verified
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~09:00 |
+| Actor | main |
+| RESULT | waiting_review |
+
+- S16ReplaceCoder01 completed in 26m37s from the pre-digested brief
+  (local://s16-coder-brief.md).
+- Implemented: `DocumentFindReplaceEngine` (search over canonical
+  DocumentState IR, Unicode whole-word boundary, regex compiled once,
+  protected + mixed-style skip-and-count, plan-then-apply back-to-front via
+  global UTF-16 offsets); `DocumentEditTransaction.documentWide/languageKey`
+  + coordinator `applyDocumentWide` with undo/redo branching; store
+  `applyDocumentEditTransaction` (source recomputes hashes + stales
+  translations without deleting; translation keeps sourceHash,
+  autoApproved→manuallyApproved, exact disposition restore on undo) +
+  `replaceEverywhereInDocument` (one transaction / one Undo / one save,
+  0-match no-op, glossary option per PRD §12); UI: context-menu entry on
+  both editor sides, `ReplaceEverywhereSheet` with live counts and disabled
+  Replace button at 0 matches, toolbar button document branch, undo-manager
+  injection.
+- Main verification: scope confined to the 6 target files; media
+  `globalSearchAndReplace` (WorkflowStore.swift:2026) and `SearchReplaceModal`
+  untouched; `swift build` green; focused suites 11+9 pass; full `swift test`
+  774 tests / 101 suites green (baseline 754/99, +20 tests / +2 suites);
+  projects.json untouched (mtime unchanged).
+- Five documented deviations, all sound: (1) undo closure captures the
+  coordinator strongly (local-scope coordinator would deallocate before
+  undo() — crash reproduced and fixed); (2) `DocumentBlockPatch` gains
+  optional `reviewDisposition` so translation-side undo restores exactly;
+  (3) Devanagari whole-word fixture uses a consonant neighbour because the
+  mandated boundary does not reject vowel signs (\p{M}); (4) glossary test
+  compares counts (starter glossary ships with AppSettings.defaults);
+  (5) back-to-front ordering uses global UTF-16 offsets (span-relative
+  offsets are not comparable across spans).
+- Candidate S16ReplaceCandidate01 presented to Human for acceptance.
+
+### S16 STOP-GATE CLOSED — Human ACCEPTED + Reviewer APPROVED + Tester qa_green
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~09:55 |
+| Actor | main |
+| RESULT | step_complete |
+
+- Human ACCEPTED candidate 01 on 2026-08-16 ("Да, все отлично, все работает").
+- Reviewer (S16ReplaceReviewer01) APPROVED in 2m13s: all 7 Judgment Gates
+  pass — scope + media untouched, ADR-E2 canonical IR search, ADR-E6 one
+  transaction/Undo/save + 0-match no-op, rich-text safety, source/translation
+  semantics + exact undo restore, PRD §12 glossary, 20 deterministic isolated
+  tests.
+- Tester (S16ReplaceTester01) qa_green in 1m57s: 775 tests / 101 suites, +1
+  new test (store-level skip-count propagation from the engine plan report).
+  Main inspected the test: defends an observable contract, no weakened
+  assertions.
+- Main final verification: full `swift test` 775/101 green; projects.json
+  intact — now holds 2 real projects (872 blocks each, afrikaans + russian
+  translations), grown by the user's own app autosave, not by tests.
+- STEPS.md S16 card: all Do items and Objective/Judgment gates marked [x].
+- STATE.yaml: S16 added to completed_steps; implementation complete;
+  review approved; qa qa_green. Next step S17 requires re-scoping (slice E4
+  was pulled into S14 by ADR-003) before dispatch.
+
+### S17 RE-SCOPED — E4 test hardening (ADR-006)
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 |
+| Actor | main |
+| RESULT | step_rescoped |
+
+- Human confirmed on 2026-08-16 that slice E4 (Retranslate Selection with AI,
+  shipped in S14 by ADR-003) works and must not be rebuilt: "ретранслейшн у нас
+  работает... не вижу смысла его переделывать. Может быть, его надо как-то
+  дополнительно проверить." Then explicitly asked for more tests on it: "Нужно
+  больше новых тестов на эту функцию."
+- ADR-006 accepted: S17 re-scoped from feature work to a test-only hardening
+  step over the existing E4 implementation. Zero product-code changes; any bug
+  found is reported to Main, not fixed here.
+- Existing E4 coverage audited: 16 tests / 3 suites
+  (DocumentSelectionTranslationTests core ×3, DocumentSelectionTranslationEngineTests
+  ×11, DocumentSelectionTranslationUITests ×2). Gaps identified: validator
+  warning paths, strict-decode field errors, engine pre-provider gates,
+  stale-formatting gate, cancellation propagation, outcome metrics, request
+  context bounds, glossary/protected-token enrichment.
+- STEPS.md S17 card rewritten (test battery Do list + test-only target files).
+- STATE.yaml: current_step S17, implementation pending, target files set to the
+  two test paths, baseline 775 tests / 101 suites. Next actor: coder.
+
+### S17 Coder 01 — E4 test hardening candidate 01 complete, Main-verified
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~10:25 |
+| Actor | main |
+| RESULT | waiting_review |
+
+- S17TestCoder01 completed candidate 01 in 7m20s from the pre-digested brief
+  (local://s17-coder-brief.md). 28 new deterministic tests added.
+- File 1 (NEW) Tests/VaniScriptCoreTests/DocumentSelectionTranslationValidatorTests.swift,
+  12 tests: emptyReplacement, unicodeNFC (pinned product bug), markdownFence,
+  modelExplanation (EN+RU), lengthRatio extremes + in-range, surroundingTarget,
+  protected-token case-insensitive preservation / absent-ignored / drop-rejected,
+  validateJSON bad bodies, request strict decoding, request wire round-trip.
+- File 2 (EXTENDED) Tests/VaniScriptTests/DocumentSelectionTranslationEngineTests.swift,
+  16 tests: isEligible positive, missingTargetHash pre-provider gate,
+  selectionChanged, formatting-drift stale gate, missing currentTargetBlock,
+  non-JSON invalidResponse, CancellationError propagation, warnings surface
+  without blocking, replacementUTF16Length surrogate pairs, prefix/suffix 120-unit
+  bounds, glossary per-language + 64 cap, protected-token dedup, sourceBlockHash
+  fallback, spanless target synthetic span, multi-fragment two-span selection,
+  prompt contract rendering.
+- Main verification: scope confined to the 2 target test files (date-aware mtime
+  check); all 11 pre-existing engine tests intact by name; swift build green;
+  focused suites 12 + 27 green; full suite 803 tests / 102 suites green
+  (baseline 775/101, +28 tests / +1 suite); test isolation holds — a focused
+  test run left projects.json mtime/size unchanged (the running app pid 78015
+  autosave is the only writer).
+- PRODUCT BUG found and pinned (not fixed, per ADR-006 test-only scope): the
+  validator's unicodeNFC check (DocumentSelectionTranslationValidator.swift:43)
+  is unreachable dead code — Swift String == is canonical-equivalence based, so
+  a decomposed string always compares equal to its NFC form and the error can
+  never fire. Main verified independently with a runtime probe (scalars differ,
+  String == says equal). Fix would require scalar-level comparison. Candidate
+  S17TestCandidate01 presented to Human for acceptance.
+
+### S17 Reviewer 01 — APPROVED
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~10:40 |
+| Actor | main |
+| RESULT | review_approved |
+
+- S17TestReviewer01 APPROVED candidate 01 in 1m25s. All 7 assessment gates pass
+  with concrete source evidence:
+  1. Observable contract behavior — all 28 tests defend public/internal
+     contracts (error/warning codes, strict decoding, pre-provider aborts,
+     stale formatting guards, cancellation unwrapping, UTF-16 surrogate
+     lengths, 120-unit bounds, 64-entry glossary cap, dedup, span synthesis,
+     prompt rendering).
+  2. Existing test integrity — all 11 pre-existing engine tests intact and
+     unweakened; no duplicate coverage with the core or UI suites.
+  3. Determinism/isolation — injected closure providers, zero network/disk/
+     sleep/model weights; validator suite 0.003s, engine suite 0.019s.
+  4. Scope discipline — zero product-code changes; strictly the 2 declared
+     test files.
+  5. Pinned unicodeNFC bug test — honest, clearly marked PRODUCT BUG, asserts
+     actual behavior per ADR-006.
+  6. Assertion quality — exact error codes, throw contracts, UTF-16 counts,
+     clamping bounds, identity preservation; no tautologies.
+  7. Concurrency — the single nonisolated(unsafe) var is safe and justified
+     under Swift 6 strict concurrency for sequential MainActor execution.
+- STATE.yaml: review.status approved, verdict approved. Next actor: tester.
+
+### S17 STOP-GATE CLOSED — Human ACCEPTED + Reviewer APPROVED + Tester qa_green
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~10:50 |
+| Actor | main |
+| RESULT | step_complete |
+
+- Human ACCEPTED candidate 01 on 2026-08-16 ("Принято").
+- Reviewer (S17TestReviewer01) APPROVED in 1m25s: all 7 assessment gates pass
+  — observable contract behavior, existing test integrity, determinism/
+  isolation, scope discipline, honest pinned unicodeNFC bug test, assertion
+  quality, Swift 6 concurrency safety.
+- Tester (S17TestTester01) qa_green in 3m22s: 806 tests / 102 suites, +3 gap
+  tests (schema/operationID mismatch errors, unchangedSelection warning incl.
+  case-flip normalization, languageResidue warning incl. diacritic
+  normalization and the 12-unit minimum). Main inspected the test diff: all
+  three defend observable contracts with boundary cases, no weakened
+  assertions, no existing test touched.
+- Main final verification: full `swift test` 806/102 green; scope confined to
+  the 2 target test files; test isolation proven by a no-test control window —
+  projects.json writes came only from the running app autosave, zero bytes
+  written during focused test runs.
+- STEPS.md S17 card: all Do items and Objective/Judgment gates marked [x].
+- STATE.yaml: S17 added to completed_steps; implementation complete; review
+  approved; qa qa_green (806/102). current_step advanced to S18 (export
+  fidelity, PRD slice E5); implementation/review/qa blocks reset for S18.
+- Open item for a future step: the pinned unicodeNFC dead-code bug
+  (DocumentSelectionTranslationValidator.swift:43) needs a scalar-level
+  comparison fix; Human has not yet opened that step.
+
+### S13 resumed — color bug diagnosis + Coder 01 runtime abort (no changes)
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~11:40 |
+| Actor | main |
+| RESULT | diagnosis_complete; coder_runtime_abort_no_changes |
+
+- Human reported: after exporting a project bundle, closing the app, and
+  re-importing, red span text becomes black. Human asked to finish S13 first.
+- Main diagnosis (definitive): the bundle export->import->persist round-trip
+  is CLEAN. A temporary real-data probe loaded the live projects.json, ran
+  ProjectArchive.decode -> exportBundle -> importBundle -> encode/decode, and
+  all 12 red (FF0000) source spans survived every step. Probe deleted after.
+  Every persistence path (RichTextSpan Codable, ProjectMigrator.migrate,
+  normalizeTranslationArchive, migrateLegacyDocumentSourceHashes,
+  updateAssetPaths, mergeProjects), the render path
+  (ReviewWorkspaceView.swift:3184), and the editor write-back
+  (serializeBlocks) provably preserve foregroundColorHex.
+- Root cause: the 12 red spans are untranslated placeholder tokens in the
+  SOURCE. On the translation side, currentDocumentTranslatedBlocks
+  (WorkflowStore.swift:484-491) returns TranslatedBlock(spans: []) for
+  untranslated blocks, and the view renders empty-span blocks via the
+  fallback branch (ReviewWorkspaceView.swift:3207-3217) in defaultColor
+  (near-black in Light). This is a display fallback, not data loss, and is
+  independent of the round-trip.
+- Human chose the fix: show source spans (with colors) for untranslated
+  blocks in the translation pane. This matches existing export behavior
+  (DocumentExportTests.swift:57-60, DOCXRoundTripWriterTests.swift:81-84).
+- STATE.yaml: S18 parked, current_step S13, work item set to the color
+  preservation Do item.
+- S13ColorCoder01 was dispatched with a pre-digested brief but spent its full
+  30-min runtime exploring and was aborted with ZERO code changes (working
+  tree verified untouched). Runtime interruption with no changes is not an
+  implementation attempt; attempts stays 0. Retry with a fully prescriptive
+  brief (exact code included) so the next Coder edits immediately.
+
+### S13 color fix — Coder 02 implemented, Main verified, awaiting Human acceptance
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16 ~12:22 |
+| Actor | main |
+| RESULT | waiting_human_acceptance |
+
+- S13ColorCoder02 (fresh session, fully prescriptive brief with verbatim
+  code) completed in 5m2s. Changes confined to the 2 authorized files:
+  - Sources/VaniScript/Views/ReviewWorkspaceView.swift: added
+    `DocumentEditorBlockItem.translatedDisplayBlocks(translated:sourceBlocks:)`
+    (lines 2799-2820) — untranslated blocks (empty spans) display the
+    matching source block's spans so explicit foreground colors survive,
+    mirroring the export fallback; translated blocks keep their own spans.
+    View wiring at lines 400-403 now calls the helper.
+  - Tests/VaniScriptTests/TranslatedDisplayBlocksTests.swift (new): 4
+    deterministic tests — untranslated shows source red spans; translated
+    keeps own spans; mixed chunk order/spans; store-level write-back hazard
+    guard (editing b1 leaves untranslated b2's persisted entry nil, chunk
+    reviewDisposition unchanged, isCurrentDocumentChunkStale false).
+- Approve/freshness/export interaction: NONE adverse. Approve gate
+  (WorkflowStore.swift:1374-1378) and export gates (2750-2763) read
+  persisted translation text, never the display block list; freshness is
+  derived from persisted entries only. The pre-existing write-back
+  materialization is unchanged in semantics — it now materializes rich
+  source spans instead of plain fallback text when a user edits an
+  untranslated block.
+- Main verification: swift build exit 0; focused suite 4/4; adjacent
+  DocumentReviewWorkflowTests 6/6, DocumentEditingCoordinatorTests 16/16,
+  WorkflowStoreDocumentTests 2/2; full `swift test` 810 tests / 103 suites
+  green (baseline 806/102 + 4 new). Fresh app built via
+  script/build_and_run.sh and running (pid 63695, binary 12:21:28).
+- STATE.yaml: implementation.status waiting_review, attempts 1. Next:
+  Human acceptance, then Reviewer, then Tester.
+
+### S13 color fidelity — Human accepted after export/import + retranslate proof
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16T09:23:37Z |
+| Actor | main |
+| RESULT | human_accepted |
+| Candidate | S13ColorFidelityLive |
+
+- Human confirmed in the fresh app: source→translation color transfer works,
+  and color survives project export → delete → import.
+- Root cause beyond the earlier display fallback: `DocumentNSTextView`
+  `viewDidChangeEffectiveAppearance` assigned `textView.textColor`, which
+  rewrites the entire `textStorage` and stripped per-span red; dual-pane
+  then early-returned without restoring colors. Fixed by using typing
+  attributes only + reapply last rendered blocks on appearance change.
+- Supporting transfer hardening kept: `DocumentSourceColorTransfer` splits
+  collapsed provider spans around preserved colored tokens; commit + display
+  both use it.
+- Verification before acceptance: focused suites 29/29 green (theme,
+  display, coordinator, bundle); fresh app relaunched pid 11493.
+- Remaining S13 card items (TXT/MD/RTF tiers, PDF reconstruction honesty,
+  security/large-doc tests, full media regression, Light/Dark smoke) are
+  still open. Human next request is a **new feature**: Refresh Source on
+  existing document projects (replace source file, keep matching
+  translations, mark/retranslate only changed chunks).
+
+### S20 opened — Refresh Source (ADR-007)
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16T09:23:37Z |
+| Actor | main |
+| RESULT | step_opened |
+
+- Human accepted S13 color fidelity live, then requested a new product
+  capability: refresh/replace source on existing document projects so old
+  colorless projects can pick up colored manuscripts and publisher revisions
+  without losing still-valid translations.
+- Scope decisions (Human):
+  1. Open the step immediately (do not wait on remaining S13 tiers).
+  2. Match old↔new blocks by **text-only hash**.
+  3. After refresh, **offer** retranslate of changed chunks only (no silent
+     full-book auto-retranslate).
+- ADR-007 accepted and recorded. STEPS card **S20** added. STATE:
+  `current_step: S20`, S13 moved to `parked_steps` (color accepted; other
+  S13 items remain for later resume), S18 still parked.
+- Important implementation note for Coder: DOCX import `sourceHash` includes
+  formatting fingerprint; matching must use a separate text-only identity so
+  formatting/color upgrades do not look like text changes. On text match,
+  update kept translation `sourceHash` to the new block hash so freshness
+  stays clean.
+- Next: dispatch `workflow-coder` with a pre-digested S20 brief.
+
+
+### S20 Refresh Source — Main implemented after Coder runtime abort
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16T10:14:00Z |
+| Actor | main |
+| RESULT | waiting_human_acceptance |
+| Candidate | S20RefreshSourceMain01 |
+
+- S20RefreshSourceCoder01 aborted at 30m with **zero product files** (research
+  only). Human had explicitly requested the feature; Main implemented per
+  ADR-007.
+- Added:
+  - `Sources/VaniScriptCore/DocumentSourceRefresh.swift` — text-hash merge +
+    `rebuildSessionChunks`
+  - `Tests/VaniScriptCoreTests/DocumentSourceRefreshTests.swift` — **7/7 green**
+  - `WorkflowStore`: `refreshProjectSource`, `applyRefreshedProjectSource`,
+    summary + `retranslateChangedChunksAfterSourceRefresh` (automaticBatch,
+    skips ready matched chunks)
+  - `ProjectSidebarView`: **Refresh Source…** (`doc.badge.arrow.up`) + dialog
+    offering retranslate of changed chunks
+- Match rule: SHA-256(NFC joined span text). Formatting-only upgrades keep
+  translations and realign `translation.sourceHash` to the new block hash.
+- Verification: `swift build --product VaniScript` OK; focused S20 tests 7/7;
+  fresh app packaged via `build_and_run.sh`.
+- Awaiting Human acceptance on live Refresh Source flow.
+
+
+### S20 Refresh Source — Human accepted live
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16T10:44:07Z |
+| Actor | main |
+| RESULT | human_accepted |
+| Candidate | S20RefreshSourceMain01 |
+
+- Human confirmed live: "Да, все отлично, работает." and asked to continue
+  with remaining backlog.
+- Pre-review re-check: DocumentSourceRefreshTests **7/7** green; symbols
+  present in Core/store/sidebar.
+- Next: Reviewer on S20 judgment gates, then Tester. After S20 stop-gate,
+  backlog is parked S18 (export fidelity), residual S13 import-tier/media,
+  then S19.
+
+
+### S20 Refresh Source — Reviewer APPROVED
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16T10:50:00Z |
+| Actor | main |
+| Run | S20RefreshReviewer01 |
+| RESULT | approved |
+| Candidate | S20RefreshSourceMain01 |
+
+- Verdict: **APPROVED**, blockers none.
+- Judgment gates: text-hash match keeps translations; formatting-only stays
+  `.fresh` via sourceHash realign; no provider during refresh; media rejected;
+  retranslate bounded to `changedChunkIndices`.
+- Full suite baseline before Tester: **819 tests / 104 suites** green.
+- Next: Tester.
+
+
+### S20 Refresh Source — Tester qa_green; STOP-GATE CLOSED
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16T10:57:00Z |
+| Actor | main |
+| Run | S20RefreshTester01 |
+| RESULT | qa_green |
+| Candidate | S20RefreshSourceMain01 |
+
+- Tester added store-level + rebuild edge tests; assertions not weakened.
+  - `Tests/VaniScriptTests/WorkflowStoreRefreshSourceTests.swift` (3): media
+    reject; failure leaves project untouched; apply merges TXT + summary
+  - `DocumentSourceRefreshTests` +2 rebuild edge cases
+- Main re-ran: focused **12/12**; full suite **824 tests / 105 suites** green
+  (baseline 819/104 + 5).
+- Stop-gate: Human ACCEPTED + Reviewer APPROVED + Tester qa_green → **S20 CLOSED**.
+- Next backlog: **S18** export fidelity (parked editorial train); residual S13
+  import tiers/media remain parked after that; S19 depends on S18.
+
+
+### S18 export fidelity — Main completed after Coder runtime abort; awaiting Human
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-16T11:32:00Z |
+| Actor | main |
+| RESULT | waiting_human_acceptance |
+| Candidate | S18ExportFidelityMain01 |
+
+- S18ExportFidelityCoder01 aborted at 30m after landing product code without
+  tests. Main verified and finished:
+  - `EditorRunPropertyOverlay` on DOCX `rewriteParagraph` (traits + explicit
+    OFF `w:val="0"`, color clear/override, vertAlign super/sub, smallCaps)
+  - PDF `pdfSpanAttributes` for super/sub/smallCaps + editor overrides
+  - `Tests/VaniScriptTests/DocumentExportFidelityTests.swift` — **11/11**
+- Adjacent export suites **26/26**; full suite **835 tests / 106 suites**
+  green (824/105 + 11). Fresh app pid 82265.
+- Human acceptance: export a document with bold-off override and
+  super/sub/smallCaps (or colored) runs; confirm DOCX/PDF match the editor.
+
+
+### S18 export fidelity — Human accepted
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-17T13:10:17Z |
+| Actor | main |
+| RESULT | human_accepted |
+| Candidate | S18ExportFidelityMain01 |
+
+- Human: finish S18 — send to Reviewer then Tester; after that one more
+  Human task, then return to S13.
+- Pre-review re-check: DocumentExportFidelityTests **11/11** green.
+- Scope for Reviewer Judgment Gates (STEPS S18):
+  1. round-trip preserves imported formatting plus editor overrides
+  2. no formatting is visual-only: what the editor shows, export writes
+- Target files: `DocumentExportWriters.swift`, `DocumentModels.swift`,
+  `Tests/VaniScriptTests/DocumentExportFidelityTests.swift`.
+- Related non-S18 session fixes (hash advisory, source-echo failure UX,
+  status strip) are out of S18 Judgment Gates unless they break export
+  contracts.
+
+
+
+### S18 export fidelity — Reviewer APPROVED
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-17T13:12:00Z |
+| Actor | main |
+| Run | S18ExportFidelityReviewer01 |
+| RESULT | approved |
+| Candidate | S18ExportFidelityMain01 |
+
+- Verdict: **APPROVED**, blockers none (1m36s).
+- Judgment gates:
+  1. DOCX `EditorRunPropertyOverlay` preserves source `w:rPr` and applies
+     ON traits + explicit OFF (`w:val="0"` / `w:u=none` / vertAlign detach /
+     color clear) so editor overrides survive inheritance.
+  2. PDF `pdfSpanAttributes` maps effective traits + overrides to CoreText
+     (super/sub scale+baseline, AAT small-caps, underline/strike, hex color)
+     — not visual-only.
+- Scope disciplined: DocumentExportWriters + DocumentModels + fidelity tests.
+- Main confirmed anchors: overlay ~762, rewriteParagraph apply ~554,
+  pdfSpanAttributes ~622; DocumentExportFidelityTests 11/11 still green.
+- Next: Tester on S18 Objective Gates / gap-hunt.
+
+
+### S18 export fidelity — Tester qa_green; STOP-GATE CLOSED
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-17T13:16:00Z |
+| Actor | main |
+| Run | S18ExportFidelityTester01 |
+| RESULT | qa_green |
+| Candidate | S18ExportFidelityMain01 |
+
+- Tester gap-hunt added 2 strong tests in
+  `Tests/VaniScriptTests/DocumentExportFidelityTests.swift` (11 → 13):
+  - explicit italic/underline/strikethrough OFF → `w:val="0"` / `w:u=none`
+  - PDF smallCaps embeds AAT feature type 37 / selector 1
+- Main inspected assertions: not weakened; real OOXML/PDF contracts.
+- Main full suite re-run: **837 tests / 106 suites** green (0 fail).
+- Stop-gate: Human ACCEPTED + Reviewer APPROVED + Tester qa_green →
+  **S18 CLOSED**.
+- Next: Human has one more task; then resume parked **S13**. S19 remains
+  next editorial hardening step when Human wants the train continued.
+
+
+
+### Proofreading highlight + dual-scroll — Human accepted; Reviewer then Tester
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-17T14:31:33Z |
+| Actor | main |
+| RESULT | human_accepted |
+| Candidate | S19ProofHighlightDualScrollMain01 |
+
+- Human accepted the shipped dual-pane proofreading highlight + linked scroll
+  work (Main implemented under direct Human instruction after S18 close).
+- Human requested: (1) independent Reviewer for breakage risk; (2) Tester with
+  maximum automated coverage of scroll sync, highlight, chunk-top reset, and
+  proof-mode interactions. Then later return to S13.
+- Scope files:
+  - `Sources/VaniScriptCore/DocumentProofreadingAlignment.swift`
+  - `Sources/VaniScript/Views/ProofreadingHighlightController.swift`
+  - `Sources/VaniScript/Views/ReviewWorkspaceView.swift` (proof UI + DATV bind)
+  - `Sources/VaniScript/Views/ThinScrollbarTuner.swift` (dual-scroll attach)
+  - existing `Tests/VaniScriptCoreTests/DocumentProofreadingAlignmentTests.swift`
+  - existing `Tests/VaniScriptTests/DocumentReviewScrollSyncTests.swift`
+- Intended contracts for Reviewer Judgment Gates:
+  1. Dual-scroll attaches each pane to its own NSScrollView only (no sibling
+     cross-bind); wheel/trackpad keeps left+right linked in Dual View.
+  2. Proof Mode does not disable linked scroll; unit jumps keep both panes
+     coherent via programmatic sync.
+  3. Enabling Proof Mode starts at unit 0 (first sentence/word) and scrolls
+     both panes to that unit.
+  4. Chunk change (Previous / Approve & Next) opens both panes at top and
+     restarts proof highlight at unit 0 when enabled.
+  5. Content rebuild is fingerprint-gated (no full storage rewrite every
+     SwiftUI tick); long panes must scroll without blink.
+  6. Highlight paint is temporary attributes only (no model mutation).
+- Out of scope: S13 import tiers, S19 full destructive QA, media dual-cue path.
+
+
+### Proofreading highlight + dual-scroll — Reviewer APPROVED
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-17T14:35:00Z |
+| Actor | main |
+| Run | S19ProofHighlightReviewer01 |
+| RESULT | approved |
+| Candidate | S19ProofHighlightDualScrollMain01 |
+
+- Verdict: **APPROVED**, blockers none (2m3s).
+- All 6 Judgment Gates passed with source evidence: own-pane attach, linked
+  scroll with Proof Mode on, unit-0 enable, chunk-top + unit-0 reset,
+  fingerprint/idempotent thrash guards, temporary-attribute highlight only.
+- Next: Tester max-coverage gap-hunt on alignment, dual-scroll, proof controller,
+  chunk-open, and focus-token contracts.
+
+
+### Proofreading highlight + dual-scroll — Tester qa_green; STOP-GATE CLOSED
+
+| Field | Value |
+|-------|-------|
+| Timestamp | 2026-08-17T14:51:00Z |
+| Actor | main |
+| Run | S19ProofHighlightTester01 |
+| RESULT | qa_green |
+| Candidate | S19ProofHighlightDualScrollMain01 |
+
+- Tester max-coverage (15m3s):
+  - `Tests/VaniScriptCoreTests/DocumentProofreadingAlignmentEdgeTests.swift` (12)
+  - `Tests/VaniScriptTests/ProofreadingHighlightControllerTests.swift` (14)
+  - `Tests/VaniScriptTests/DocumentReviewScrollSyncTests.swift` +8 coordinator
+    contracts (idempotent attach, resetToTop, programmatic sync both ways,
+    non-live thrash guard, detach)
+- Main inspected new tests: real range/controller/coordinator contracts; not
+  weakened.
+- Main full suite re-run: **875 tests / 109 suites** green (0 fail).
+- Stop-gate: Human ACCEPTED + Reviewer APPROVED + Tester qa_green →
+  **S19ProofHighlightDualScrollMain01 CLOSED**.
+- Full S19 card (destructive QA / media regression) is **not** closed — only
+  this ad-hoc Human feature train.
+- Next per Human: resume parked **S13**.
+
+
+
+### S13 project-library import — Coder candidate 1
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17T21:27:09Z |
+| Actor | Main |
+| Candidate | S13ProjectImportCoder1 |
+| Result | waiting_review |
+
+- Implemented in `ProjectArchive.swift`, `ProjectBundleImporter.swift`,
+  `WorkflowStore.swift`, and `ProjectSidebarView.swift`.
+- Added backward-compatible persisted project display naming. A renamed
+  archive's current filename stem becomes the project summary/export name;
+  original media/document `sourceFileName`, source path, and document metadata
+  remain unchanged.
+- Added multi-file `.dropDestination(for: URL.self)` handling with supported
+  extension validation and honest partial/all-failure status reporting.
+- Existing button and MCP project imports use the same single-project filename
+  override; library bundle items retain their internal names.
+- Added focused archive, importer, and store/drop tests.
+- Main re-ran focused commands: `ProjectArchiveTests` 17/17,
+  `ProjectBundleImporterTests` 9/9, and `WorkflowStoreProjectImportTests`
+  6/6; **32 tests / 0 failures**.
+- Fresh-app Human acceptance is required before Reviewer dispatch.
+
+### S13 conditional project deletion — Coder candidate 1
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17 (prior verification; exact time not retained) |
+| Actor | Main |
+| Candidate | S13ProjectDeletionCoder1 |
+| Result | changes_requested |
+
+- Added imported-project provenance and dirty-state fingerprints, policy-driven
+  sidebar deletion actions, archive save/export/remove flows, and focused
+  deletion tests.
+- Main verification found two preservation issues before review: raw
+  multi-record JSON overwrite could collapse sibling records, and cleanup of
+  persisted IDs lacked an explicit managed-directory containment guard.
+- Fresh corrective Coder pass required; no Reviewer or Tester dispatch.
+
+### S13 conditional project deletion — Coder candidate 2
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17T16:55:13Z |
+| Actor | Main |
+| Candidate | S13ProjectDeletionCoder2 |
+| Result | waiting_review |
+
+- Corrected raw multi-record JSON overwrite to replace only the selected record
+  while retaining siblings; added a regression test through `WorkflowStore`.
+- Added containment-safe project-directory cleanup for persisted IDs, with
+  traversal-like and valid-ID regression coverage.
+- Main re-ran focused suites: `ProjectArchiveTests` **22/22**,
+  `WorkflowStoreProjectImportTests` **14/14**, `ProjectBundleImporterTests`
+  **9/9**, `ProjectMigrationTests` **3/3**, and `McpProjectVersioningTests`
+  **2/2**; **50 tests / 0 failures**. `swift build` passed.
+- Main fresh-app smoke: `bash script/build_and_run.sh --verify` passed; the
+  signed native app launched with one window, and accessibility inspection
+  exposed the three visible project rows with `Delete project`, `Share project`,
+  and `Refresh Source…` actions. No destructive row action was invoked.
+- Fresh-app Human acceptance is required before Reviewer dispatch.
+
+### S13 conditional project deletion — Human accepted
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17T17:13:09Z |
+| Actor | Main |
+| RESULT | human_accepted |
+| Candidate | S13ProjectDeletionCoder2 |
+
+- Human selected **Accept and route Reviewer** after the fresh-app acceptance
+  prompt. The candidate remains unchanged; Reviewer is now required.
+
+### S13 conditional project deletion — Reviewer APPROVED
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17T17:26:46Z |
+| Actor | Main |
+| Run | S13ProjectDeletionReviewer1 |
+| RESULT | approved |
+| Candidate | S13ProjectDeletionCoder2 |
+
+- Reviewer approved all six assigned Judgment Gates: clean imported removal,
+  dirty save/discard/export ordering, local destructive confirmation,
+  provenance/index/sibling preservation, failed-action retention, containment
+  safety, and scope discipline.
+- Main re-ran the five focused suites (**50/50**) and `swift build`; all passed
+  after review. Next: Tester.
+### S13 conditional project deletion — Tester QA_GREEN
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17T23:13:09Z |
+| Actor | Main |
+| Run | S13ProjectDeletionTester1 |
+| RESULT | qa_green |
+| Candidate | S13ProjectDeletionCoder2 |
+
+- Tester returned `qa_green`: **54 tests / 0 failures**, with
+  `Tests/VaniScriptTests/WorkflowStoreProjectImportTests.swift` as the only
+  Tester-authored file.
+- Main inspected the complete Tester-authored test file. Assertions cover
+  multi-file import status, renamed archive display names, clean/dirty/local
+  deletion policy, live-session edits, save/discard/export failure retention,
+  raw multi-record sibling preservation, archive byte preservation, and
+  managed-directory containment. No weakened assertions or product edits were
+  introduced.
+- Main re-ran the five focused suites: `ProjectArchiveTests` **22/22**,
+  `WorkflowStoreProjectImportTests` **14/14**, `ProjectBundleImporterTests`
+  **9/9**, `ProjectMigrationTests` **3/3**, and
+  `McpProjectVersioningTests` **2/2**; **50 tests / 0 failures**.
+- Main ran `swift build` and the full native suite: **904 tests / 110 suites /
+  0 failures**. The focused S13 contract gate
+  `QA/scripts/s13_import_hardening.sh` also passed.
+- Main rebuilt and launched the signed app with
+  `bash script/build_and_run.sh --verify`; one native window opened and the
+  fresh accessibility surface was readable. No destructive action was invoked.
+- The aggregate `QA/run_all.sh` remains red on **24 historical, unrelated
+  gates** (Q7/A2–A7/CPS/LASR-01 acceptance/state contracts). Its S13-specific
+  hardening gate and all S13 product tests pass; those stale cross-track gates
+  are not attributed to this candidate.
+- Conditional deletion is complete and verified. The remaining S13 import-tier
+  candidate (TXT/Markdown/RTF/PDF limits and accuracy badges) still requires
+  fresh-app Human acceptance before its separate review gate.
+### S13 import-tier acceptance — Human rejected
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17 (fresh-app evidence; exact interaction time not retained) |
+| Actor | Human |
+| Candidate | S13ProjectImportCoder1 |
+| RESULT | changes_requested |
+
+- Human supplied fresh-app evidence showing `Refresh Source failed`.
+- Exact visible error: `The document package is not a valid ZIP archive:
+  central directory entry is malformed`.
+- The screenshot shows an open document project with the Sessions panel and
+  the Refresh Source failure banner. This is a real import-path rejection, not
+  an unavailable external asset.
+- Fresh Coder must reproduce the malformed-central-directory path, preserve
+  safe package limits and path validation, and add a deterministic regression
+  test. Do not weaken existing DOCX/package assertions or bypass validation.
+### S13 import-tier DOCX refresh — Coder waiting_review
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17T23:45:29Z |
+| Actor | Main |
+| Run | S13DocxRefreshFix1 |
+| RESULT | waiting_review |
+| Candidate | S13DocxRefreshFix1 |
+
+- Fresh Coder updated `Sources/VaniScript/Services/DOCXPackageReader.swift` to
+  validate EOCD candidates, resolve central-directory/local-header offsets for
+  prefixed ZIP streams, and preserve fail-closed structure/path/size checks.
+- Added deterministic coverage in
+  `Tests/VaniScriptTests/DOCXPackageReaderTests.swift` for a prefixed DOCX,
+  EOCD false signatures in comments/trailing bytes, and malformed central
+  directories.
+- Main re-ran the focused contract:
+  `swift test --filter 'DOCXPackageReaderTests|WorkflowStoreRefreshSourceTests|DocumentSourceRefreshTests'`;
+  **18 tests / 0 failures**.
+- Main ran `bash script/build_and_run.sh --verify`; the product built, signed,
+  launched, and exposed one readable native window. The fresh app smoke did not
+  invoke a destructive project action.
+- Coder evidence and Main verification are green. Fresh-app Human acceptance
+  is required before the separate S13 import-tier Reviewer gate.
+
+### S13 import-tier DOCX refresh — Human accepted
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17T18:30:17Z |
+| Actor | Human |
+| Candidate | S13DocxRefreshFix1 |
+| RESULT | accepted |
+
+- Human selected **Accept and route Reviewer** after the fresh signed app was
+  built and launched with the repaired DOCX reader.
+- The unchanged candidate is now eligible for the required separate S13
+  Reviewer Judgment Gates pass.
+### S13 import-tier DOCX refresh — Reviewer APPROVED
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-17T18:49:29Z |
+| Actor | Main |
+| Run | S13DocxRefreshReviewer1 |
+| RESULT | approved |
+| Candidate | S13DocxRefreshFix1 |
+
+- Reviewer evaluated all five assigned Judgment Gates and returned
+  `approved` with no issues.
+- The review confirmed standard and prefixed ZIP offset resolution, EOCD
+  comment/false-signature handling, additive central-directory validation,
+  fail-closed limits/path/encryption/compression/XML checks, and DOCX-only
+  scope without media/provider changes.
+- Reviewer specifically verified that `/usr/bin/unzip -p` returns status 1
+  for the prefixed archive's benign extra-bytes warning while output size
+  remains checked; standard-package behavior is unchanged.
+- Main re-ran the focused contract after review:
+  `swift test --filter 'DOCXPackageReaderTests|WorkflowStoreRefreshSourceTests|DocumentSourceRefreshTests'`;
+  **18 tests / 0 failures**. The diff still contains only the two declared
+  product/test files.
+### S13 import-tier DOCX refresh — Tester QA_GREEN
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-18T00:40:40Z |
+| Actor | Main |
+| Run | S13DocxRefreshTester1 |
+| RESULT | qa_green |
+| Candidate | S13DocxRefreshFix1 |
+
+- Tester gap-hunt found one real missing observable contract: the complete
+  WorkflowStore refresh chain had no prefixed-DOCX coverage. It added
+  `Tests/VaniScriptTests/WorkflowStoreRefreshSourceTests.swift` with a
+  throwaway managed project ID and deterministic cleanup.
+- Main inspected the test assertions; they verify prefixed DOCX import, block
+  identity, kept translation/source-hash alignment, chunk rebuild, and the
+  targeted retranslate summary. No product source was changed by Tester.
+- Main reran the focused contract: **19 tests / 0 failures**.
+- Main ran `bash QA/scripts/s13_import_hardening.sh`: **PASS**.
+- Main ran the full native suite: **908 tests / 110 suites / 0 failures**.
+- Main ran `bash script/build_and_run.sh --verify`: signed app built and
+  launched; accessibility exposed one native 1920×1050 window. Refresh Source
+  was not clicked live during this QA run; no UI-path claim is fabricated.
+- The DOCX import-tier candidate stop-gate is green. Residual S13 card gates
+  (the broader Light/Dark acceptance and other parked hardening semantics)
+  remain separate from this repaired candidate.
+### S13 dark appearance + proofreading highlight — Human changes requested
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-18T03:28:54Z |
+| Actor | Human |
+| RESULT | changes_requested |
+| Candidate | S13DocxRefreshFix1 |
+
+- Fresh-app Dark Aqua evidence:
+  `/Users/pavan/Library/Application Support/CleanShot/media/media_hxGm5C3FRB/CleanShot 2026-08-18 at 08.53.54.png`.
+- Human reports that document text is practically invisible in the dark
+  appearance and requests a full re-check of the dark workflow.
+- Human also requests a more prominent proofreading highlight.
+- The existing palette tests cover semantic theme tokens, but they do not
+  prove that imported explicit dark/default foreground colors remain legible
+  when rendered on the dark document editor surface, nor that the temporary
+  proofreading mark has sufficient visual contrast.
+- Route directly to a fresh Coder. Do not run Reviewer or Tester on this
+  rejected candidate. Preserve rich-format/export color identity while fixing
+  display contrast and highlight visibility.
+### S13 dark appearance + proofreading highlight — Coder waiting_review
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-18T09:14:22Z |
+| Actor | Coder + Main |
+| RESULT | waiting_review |
+| Candidate | S13DarkThemeHighlightFix1 |
+
+- Fresh Coder changed only the assigned review/theme test files:
+  `Sources/VaniScript/Views/ReviewWorkspaceView.swift`,
+  `Sources/VaniScript/Theme/VaniScriptTheme.swift`,
+  `Tests/VaniScriptTests/VaniScriptThemeTests.swift`, and
+  `Tests/VaniScriptTests/DocumentReviewScrollSyncTests.swift`.
+- Display-only `RichTextSpan` color adaptation now keeps imported black/dark
+  colors legible in Dark Aqua while preserving canonical rich-format/export
+  color attributes. Proofreading marks use explicit dynamic amber background
+  and dark foreground temporary attributes without entering serialization.
+- Main reran `swift test --filter
+  'VaniScriptThemeTests|DocumentReviewScrollSyncTests'`: **28 tests / 0
+  failures**.
+- Main ran `swift build`: **PASS**.
+- Main ran `bash script/build_and_run.sh --verify`: **PASS**; the signed native
+  app bundle was built and launched and the process check succeeded.
+- Fresh-app Human acceptance remains required before the separate S13
+  Reviewer judgment gate. Tester remains downstream of Reviewer approval.
+### S13 dark appearance + proofreading highlight — Human accepted
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-18T04:35:21Z |
+| Actor | Human |
+| RESULT | accepted |
+| Candidate | S13DarkThemeHighlightFix1 |
+
+- Human accepted the unchanged repaired candidate after fresh-app review and
+  selected **Accept and route Reviewer**.
+- Route exactly one separate S13 Reviewer judgment pass now. Tester remains
+  downstream of that Reviewer verdict.
+### S13 dark appearance + proofreading highlight — Reviewer APPROVED
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-18T04:41:51Z |
+| Actor | Reviewer |
+| RESULT | approved |
+| Candidate | S13DarkThemeHighlightFix1 |
+
+- Reviewer `S13DarkThemeHighlightReviewer1` approved all five assigned
+  Judgment Gates.
+- The display contrast adapter is display-only: canonical foreground hex stays
+  in `DocumentTextAttribute.explicitColorHex`; serialization and rich export
+  do not read the adapted display color.
+- Proofreading marks use `layoutManager` temporary attributes, and the
+  deterministic isolation/contrast tests prove they do not enter persistence
+  or export.
+- Dynamic semantic colors cover the changed Review surfaces; neutral and
+  chromatic document colors and proofreading highlights meet the assigned
+  Aqua/Dark Aqua contrast thresholds.
+- Reviewer confirmed the candidate scope is the four declared target files,
+  assertions are strengthened, no secrets are present, and focused tests pass.
+- Route to Tester for the enabled S13 QA gate. No second Reviewer pass is
+  required unless Tester changes product code or a later changed candidate is
+  created.
+### S13 dark appearance + proofreading highlight — Tester QA_GREEN
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-18T04:52:14Z |
+| Actor | Tester + Main |
+| RESULT | qa_green |
+| Candidate | S13DarkThemeHighlightFix1 |
+
+- Tester ran the approved focused path and initially confirmed **28 tests / 0
+  failures**.
+- Gap-hunt found one genuine missing observable contract: restoration of the
+  temporary proofreading mark after a real content rewrite. Tester added
+  `proofreadingHighlightSurvivesContentRewrite` to
+  `Tests/VaniScriptTests/VaniScriptThemeTests.swift`, covering restoration of
+  temporary background/foreground attributes and canonical hex preservation.
+- Main inspected the added test; it strengthens coverage and does not modify
+  product code or weaken assertions.
+- Main reran `swift test --filter
+  'VaniScriptThemeTests|DocumentReviewScrollSyncTests'`: **29 tests / 0
+  failures**.
+- S13 dark appearance/proofreading-highlight QA is green. Tester completion
+  does not trigger a second Reviewer pass.
+### S13 dark appearance + proofreading highlight — Candidate gate green
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-08-18T04:54:31Z |
+| Actor | Main |
+| RESULT | candidate_gate_green |
+| Candidate | S13DarkThemeHighlightFix1 |
+
+- Human acceptance, Reviewer approval, and focused Tester QA are all green for
+  the proofreading-highlight/display-contrast work item.
+- The S13 Do item is now checked in `AI_Workflow_Kit/docs/STEPS.md`.
+- This does **not** close the whole S13 step: Light-mode chrome replacement,
+  fresh Light/Dark workflow smoke, and the remaining broader S13 Judgment Gates
+  are still explicitly unchecked and remain separate work.
+- No further worker is dispatched until the Human selects whether to open the
+  next residual S13 hardening item or park the step.

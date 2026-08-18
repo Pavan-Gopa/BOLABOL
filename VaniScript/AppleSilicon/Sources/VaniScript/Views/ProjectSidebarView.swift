@@ -4,6 +4,7 @@ import VaniScriptCore
 struct ProjectSidebarView: View {
     @EnvironmentObject private var store: WorkflowStore
     @State private var expandedProjectID: String?
+    @State private var isDropTargeted = false
 
     var body: some View {
         ZStack(alignment: .trailing) {
@@ -45,7 +46,21 @@ struct ProjectSidebarView: View {
             .padding(18)
             .background(VaniScriptTheme.sidebarSurface)
             .overlay(Rectangle().fill(VaniScriptTheme.border).frame(width: 1), alignment: .leading)
+            .overlay {
+                if isDropTargeted {
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(VaniScriptTheme.accent, lineWidth: 2)
+                        .padding(8)
+                }
+            }
             .shadow(color: .black.opacity(0.36), radius: 34, x: -18, y: 0)
+            .dropDestination(for: URL.self) { urls, _ in
+                store.handleProjectDrop(urls: urls)
+            } isTargeted: { targeted in
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    isDropTargeted = targeted
+                }
+            }
         }
         .transition(.opacity.combined(with: .move(edge: .trailing)))
     }
@@ -113,8 +128,9 @@ private struct ProjectSidebarRow: View {
     let isExpanded: Bool
     let isActive: Bool
     let toggleExpanded: () -> Void
-    @State private var isShowingDeleteConfirmation = false
-
+    @State private var isShowingLocalDeleteConfirmation = false
+    @State private var isShowingDirtyDeleteConfirmation = false
+    @State private var dirtyDeletionArchivePath: String = ""
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
         HStack(alignment: isExpanded ? .top : .center, spacing: 0) {
@@ -155,6 +171,14 @@ private struct ProjectSidebarRow: View {
             // Action Buttons
             VStack(spacing: 6) {
                 Button {
+                    store.refreshProjectSource(id: summary.id)
+                } label: {
+                    Image(systemName: "doc.badge.arrow.up")
+                }
+                .buttonStyle(SidebarIconButtonStyle())
+                .help("Refresh Source…")
+
+                Button {
                     store.exportProject(id: summary.id)
                 } label: {
                     Image(systemName: "square.and.arrow.up")
@@ -163,7 +187,16 @@ private struct ProjectSidebarRow: View {
                 .help("Share project")
 
                 Button(role: .destructive) {
-                    isShowingDeleteConfirmation = true
+                    let policy = store.deletionPolicy(for: summary.id) ?? .localCreated
+                    switch policy {
+                    case .cleanImported:
+                        store.discardAndRemoveProject(id: summary.id)
+                    case .dirtyImported(let archivePath):
+                        dirtyDeletionArchivePath = archivePath
+                        isShowingDirtyDeleteConfirmation = true
+                    case .localCreated:
+                        isShowingLocalDeleteConfirmation = true
+                    }
                 } label: {
                     Image(systemName: "trash")
                 }
@@ -196,14 +229,53 @@ private struct ProjectSidebarRow: View {
             }
         }
         .confirmationDialog(
-            "Are you sure you want to delete this project? It will be permanently removed from your computer and cannot be recovered.",
-            isPresented: $isShowingDeleteConfirmation,
+            "Delete Local Project?",
+            isPresented: $isShowingLocalDeleteConfirmation,
             titleVisibility: .visible
         ) {
             Button("Delete Project", role: .destructive) {
                 store.deleteProject(id: summary.id)
             }
             Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This project was created in VaniScript. Removing it will delete its local project data and session state.")
+        }
+        .confirmationDialog(
+            "Unsaved Changes to Imported Project",
+            isPresented: $isShowingDirtyDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Save to Archive & Remove") {
+                store.saveAndRemoveProject(id: summary.id)
+            }
+            Button("Export as New Version & Remove…") {
+                store.exportAsNewAndRemoveProject(id: summary.id)
+            }
+            Button("Discard Changes & Remove", role: .destructive) {
+                store.discardAndRemoveProject(id: summary.id)
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            let fileName = URL(fileURLWithPath: dirtyDeletionArchivePath).lastPathComponent
+            Text("You have unsaved changes to this imported project (originating from \(fileName)). Choose how to proceed before removing it from VaniScript.")
+        }
+        .confirmationDialog(
+            refreshDialogTitle,
+            isPresented: refreshDialogPresented,
+            titleVisibility: .visible
+        ) {
+            if let summary = store.sourceRefreshSummary, summary.changedChunkCount > 0 {
+                Button("Retranslate \(summary.changedChunkCount) changed chunk\(summary.changedChunkCount == 1 ? "" : "s")") {
+                    store.retranslateChangedChunksAfterSourceRefresh()
+                }
+            }
+            Button("Later", role: .cancel) {
+                store.dismissSourceRefreshSummary()
+            }
+        } message: {
+            if let summary = store.sourceRefreshSummary {
+                Text(refreshDialogMessage(summary))
+            }
         }
         .padding(12)
         .background(isActive ? VaniScriptTheme.accent.opacity(0.08) : VaniScriptTheme.control)
@@ -273,6 +345,11 @@ private struct ProjectSidebarRow: View {
             HStack {
                 Text("Chunk \(index + 1)")
                     .lineLimit(1)
+                if summary.isStaleChunk(at: index) {
+                    Circle()
+                        .fill(VaniScriptTheme.red)
+                        .frame(width: 7, height: 7)
+                }
                 Spacer()
                 if summary.shouldShowLastBadge(at: index) {
                     Text("LAST")
@@ -286,10 +363,46 @@ private struct ProjectSidebarRow: View {
         }
         .buttonStyle(ProjectSidebarChunkButtonStyle(active: isCurrent))
         .disabled(!canOpen)
+        .help(summary.isStaleChunk(at: index) ? "Source changed — translation needs review" : "")
     }
 
     private func canOpenChunk(_ index: Int) -> Bool {
         summary.canOpenChunk(at: index)
+    }
+
+    private var refreshDialogPresented: Binding<Bool> {
+        Binding(
+            get: { store.sourceRefreshSummary?.projectID == summary.id },
+            set: { presented in
+                if !presented {
+                    store.dismissSourceRefreshSummary()
+                }
+            }
+        )
+    }
+
+    private var refreshDialogTitle: String {
+        guard let summary = store.sourceRefreshSummary, summary.projectID == self.summary.id else {
+            return "Source refreshed"
+        }
+        return summary.changedChunkCount == 0
+            ? "Source refreshed"
+            : "Source refreshed — translation needed"
+    }
+
+    private func refreshDialogMessage(_ summary: DocumentSourceRefreshSummary) -> String {
+        var lines = [
+            "File: \(summary.sourceFileName)",
+            "Matched blocks: \(summary.matchedBlockCount)",
+            "Added: \(summary.addedBlockCount) · Removed: \(summary.removedBlockCount)",
+            "Translations kept: \(summary.keptTranslationCount)"
+        ]
+        if summary.changedChunkCount > 0 {
+            lines.append("\(summary.changedChunkCount) chunk(s) need translation for new or changed text.")
+        } else {
+            lines.append("All existing translations still match the refreshed source text.")
+        }
+        return lines.joined(separator: "\n")
     }
 
     private func mediaSummary(_ info: SourceMediaInfo) -> String {

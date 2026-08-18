@@ -368,4 +368,269 @@ struct ProjectBundleImporterTests {
         #expect(FileManager.default.fileExists(atPath: importedChunk))
         #expect(try String(contentsOfFile: importedChunk) == chunkContent)
     }
+
+    @Test("document foreground color survives project bundle export and import")
+    func documentColorRoundTrip() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let sourceFile = tempDir.appendingPathComponent("book.txt")
+        try Data("Red placeholder text".utf8).write(to: sourceFile)
+
+        let sourceBlock = DocumentBlock(
+            id: "b1",
+            location: DocumentLocation(paragraphOrdinal: 0),
+            spans: [
+                RichTextSpan(id: "s1", text: "Red placeholder ", styleKey: "body", foregroundColorHex: "#ff0000"),
+                RichTextSpan(id: "s2", text: "text", styleKey: "body")
+            ],
+            sourceHash: "hash-b1"
+        )
+        let translatedBlock = TranslatedBlock(
+            id: "b1",
+            sourceBlockID: "b1",
+            text: "Красный заполнитель текст",
+            spans: [
+                RichTextSpan(id: "t1", text: "Красный заполнитель ", styleKey: "body", foregroundColorHex: "#ff0000"),
+                RichTextSpan(id: "t2", text: "текст", styleKey: "body")
+            ],
+            sourceHash: "hash-b1"
+        )
+        let documentState = DocumentState(
+            format: .txt,
+            originalAsset: ProjectAssetReference(key: "sourceFile", originalFileName: "book.txt", format: "txt"),
+            blocks: [sourceBlock],
+            chunks: [DocumentChunkPlan(id: "plan-1", blockIDs: ["b1"], sourceHash: "hash-b1")],
+            translationsByLanguage: ["russian": ["b1": translatedBlock]]
+        )
+
+        let projectRecord = ProjectRecord(
+            id: "color-roundtrip-proj",
+            createdAt: "2026-08-15T10:00:00Z",
+            updatedAt: "2026-08-15T10:05:00Z",
+            session: SessionState(
+                sourceFile: sourceFile.path,
+                sourceFileName: "book.txt",
+                durationSec: 0,
+                metadata: .empty,
+                sourceLang: "English",
+                targetLang: "Russian",
+                transcriptionProvider: "",
+                translationProvider: "mock",
+                outputFormats: [.txt],
+                chunks: [
+                    ChunkData(
+                        index: 0,
+                        filePath: sourceFile.path,
+                        durationSec: 0,
+                        startSec: 0,
+                        endSec: 0,
+                        original: "Red placeholder text",
+                        translated: "Красный заполнитель текст",
+                        status: .done,
+                        approved: true,
+                        sourceAnchor: .document(DocumentRange(startBlockID: "b1", endBlockID: "b1"))
+                    )
+                ],
+                currentChunkIndex: 0,
+                sourceKind: .document,
+                documentState: documentState
+            )
+        )
+
+        let exportURL = tempDir.appendingPathComponent("color.vaniscript")
+        try ProjectBundleExporter.exportBundle(record: projectRecord, to: exportURL)
+
+        let destDir = tempDir.appendingPathComponent("Projects", isDirectory: true)
+        let imported = try ProjectBundleImporter.importBundle(fileURL: exportURL, destinationDirectoryURL: destDir)
+
+        #expect(imported.count == 1)
+        let record = imported[0]
+        let importedState = record.session.documentState
+        #expect(importedState != nil)
+
+        let importedSourceSpans = importedState?.blocks.first?.spans ?? []
+        #expect(importedSourceSpans.count == 2)
+        #expect(importedSourceSpans.first?.foregroundColorHex == "FF0000")
+        #expect(importedSourceSpans.last?.foregroundColorHex == nil)
+
+        let importedTranslated = importedState?.translationsByLanguage["russian"]?["b1"]
+        #expect(importedTranslated != nil)
+        #expect(importedTranslated?.spans.count == 2)
+        #expect(importedTranslated?.spans.first?.foregroundColorHex == "FF0000")
+        #expect(importedTranslated?.spans.last?.foregroundColorHex == nil)
+    }
+
+    @Test("applies displayNameOverride to single V2 project bundle without modifying sourceFileName")
+    func appliesDisplayNameOverrideToV2Bundle() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let sourceURL = tempDir.appendingPathComponent("raw_lecture.mp3")
+        try Data("audio-payload".utf8).write(to: sourceURL)
+
+        let originalRecord = ProjectRecord(
+            id: "orig-v2-proj",
+            name: "Original Project Name",
+            createdAt: "2026-05-25T10:00:00Z",
+            updatedAt: "2026-05-25T10:05:00Z",
+            session: SessionState(
+                sourceFile: sourceURL.path,
+                sourceFileName: "raw_lecture.mp3",
+                durationSec: 30,
+                metadata: AudioMetadata(date: "2026-05-25", location: "Mumbai", lecturer: "Lecturer", participants: ""),
+                sourceLang: "auto",
+                targetLang: "Russian",
+                transcriptionProvider: "mlx",
+                translationProvider: "mlx",
+                outputFormats: [.txt],
+                chunks: [
+                    ChunkData(index: 0, filePath: sourceURL.path, durationSec: 30, startSec: 0, endSec: 30, original: "Hello", translated: "Привет", originalFormats: nil, translatedFormats: nil, unrecognizedFragments: [], status: .done, approved: true)
+                ],
+                currentChunkIndex: 0
+            )
+        )
+
+        let bundleURL = tempDir.appendingPathComponent("Renamed-Lecture-2026.vaniscript")
+        try ProjectBundleExporter.exportBundle(record: originalRecord, to: bundleURL)
+
+        let destDir = tempDir.appendingPathComponent("Projects", isDirectory: true)
+        let imported = try ProjectBundleImporter.importBundle(
+            fileURL: bundleURL,
+            destinationDirectoryURL: destDir,
+            displayNameOverride: "Renamed-Lecture-2026"
+        )
+
+        #expect(imported.count == 1)
+        let record = imported[0]
+        #expect(record.name == "Renamed-Lecture-2026")
+        #expect(record.summary.name == "Renamed-Lecture-2026")
+        #expect(record.session.sourceFileName == "raw_lecture.mp3")
+        #expect(record.summary.sourceFileName == "raw_lecture.mp3")
+        #expect(record.session.sourceFile != nil)
+        #expect(record.session.sourceFile != sourceURL.path) // Extracted to new project dir
+    }
+
+    @Test("applies displayNameOverride to document project bundle while preserving document assets and source metadata")
+    func appliesDisplayNameOverrideToDocumentBundle() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+        let sourceDocURL = tempDir.appendingPathComponent("Philosophy_Manuscript.docx")
+        try Data("fake-docx-content".utf8).write(to: sourceDocURL)
+
+        let sourceBlock = DocumentBlock(
+            id: "b1",
+            location: DocumentLocation(paragraphOrdinal: 0),
+            spans: [RichTextSpan(id: "s1", text: "Introduction chapter.", styleKey: "body")],
+            sourceHash: "hash-b1"
+        )
+        let translatedBlock = TranslatedBlock(
+            id: "b1",
+            sourceBlockID: "b1",
+            text: "Вводная глава.",
+            spans: [RichTextSpan(id: "t1", text: "Вводная глава.", styleKey: "body")],
+            sourceHash: "hash-b1"
+        )
+        let docState = DocumentState(
+            format: .docx,
+            originalAsset: ProjectAssetReference(key: "sourceDocx", originalFileName: "Philosophy_Manuscript.docx", format: "docx"),
+            blocks: [sourceBlock],
+            chunks: [DocumentChunkPlan(id: "plan-1", blockIDs: ["b1"], sourceHash: "hash-b1")],
+            translationsByLanguage: [
+                "russian": ["b1": translatedBlock]
+            ]
+        )
+
+        let projectRecord = ProjectRecord(
+            id: "doc-project-id",
+            name: "Old Doc Name",
+            createdAt: "2026-08-15T10:00:00Z",
+            updatedAt: "2026-08-15T10:05:00Z",
+            session: SessionState(
+                sourceFile: sourceDocURL.path,
+                sourceFileName: "Philosophy_Manuscript.docx",
+                durationSec: 0,
+                metadata: .empty,
+                sourceLang: "English",
+                targetLang: "Russian",
+                transcriptionProvider: "",
+                translationProvider: "mlx",
+                outputFormats: [.txt],
+                chunks: [
+                    ChunkData(index: 0, filePath: sourceDocURL.path, durationSec: 0, startSec: 0, endSec: 0, original: "Introduction chapter.", translated: "Вводная глава.", status: .done, approved: true, sourceAnchor: .document(DocumentRange(startBlockID: "b1", endBlockID: "b1")))
+                ],
+                currentChunkIndex: 0,
+                sourceKind: .document,
+                documentState: docState
+            )
+        )
+
+        let exportURL = tempDir.appendingPathComponent("Renamed-Philosophy-Draft.vaniscript")
+        try ProjectBundleExporter.exportBundle(record: projectRecord, to: exportURL)
+
+        let destDir = tempDir.appendingPathComponent("Projects", isDirectory: true)
+        let imported = try ProjectBundleImporter.importBundle(
+            fileURL: exportURL,
+            destinationDirectoryURL: destDir,
+            displayNameOverride: "Renamed-Philosophy-Draft"
+        )
+
+        #expect(imported.count == 1)
+        let record = imported[0]
+        #expect(record.name == "Renamed-Philosophy-Draft")
+        #expect(record.summary.name == "Renamed-Philosophy-Draft")
+        #expect(record.session.sourceFileName == "Philosophy_Manuscript.docx")
+        #expect(record.summary.sourceFileName == "Philosophy_Manuscript.docx")
+        #expect(record.session.documentState?.originalAsset.originalFileName == "Philosophy_Manuscript.docx")
+        #expect(record.session.documentState?.blocks.first?.spans.first?.text == "Introduction chapter.")
+    }
+
+    @Test("does not apply single displayNameOverride across library bundle items")
+    func leavesLibraryBundleNamesUntouched() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let file1 = tempDir.appendingPathComponent("file1.mp3")
+        let file2 = tempDir.appendingPathComponent("file2.mp3")
+        try Data("audio1".utf8).write(to: file1)
+        try Data("audio2".utf8).write(to: file2)
+
+        let proj1 = ProjectRecord(
+            id: "lib-proj-1",
+            name: "Project Alpha",
+            createdAt: "2026-08-10T10:00:00Z",
+            updatedAt: "2026-08-10T10:05:00Z",
+            session: SessionState(sourceFile: file1.path, sourceFileName: "file1.mp3", durationSec: 10, metadata: AudioMetadata(date: "", location: "", lecturer: "", participants: ""), sourceLang: "auto", targetLang: "ru", transcriptionProvider: "mlx", translationProvider: "mlx", outputFormats: [.txt], chunks: [], currentChunkIndex: 0)
+        )
+        let proj2 = ProjectRecord(
+            id: "lib-proj-2",
+            name: "Project Beta",
+            createdAt: "2026-08-10T10:00:00Z",
+            updatedAt: "2026-08-10T10:05:00Z",
+            session: SessionState(sourceFile: file2.path, sourceFileName: "file2.mp3", durationSec: 10, metadata: AudioMetadata(date: "", location: "", lecturer: "", participants: ""), sourceLang: "auto", targetLang: "ru", transcriptionProvider: "mlx", translationProvider: "mlx", outputFormats: [.txt], chunks: [], currentChunkIndex: 0)
+        )
+
+        let libraryURL = tempDir.appendingPathComponent("EntireLibraryExport.vaniscript-library")
+        try ProjectBundleExporter.exportLibrary(records: [proj1, proj2], to: libraryURL)
+
+        let destDir = tempDir.appendingPathComponent("Projects", isDirectory: true)
+        let imported = try ProjectBundleImporter.importBundle(
+            fileURL: libraryURL,
+            destinationDirectoryURL: destDir,
+            displayNameOverride: "EntireLibraryExport"
+        )
+
+        #expect(imported.count == 2)
+        #expect(imported.contains(where: { $0.summary.name == "Project Alpha" }))
+        #expect(imported.contains(where: { $0.summary.name == "Project Beta" }))
+        #expect(!imported.contains(where: { $0.summary.name == "EntireLibraryExport" }))
+    }
 }

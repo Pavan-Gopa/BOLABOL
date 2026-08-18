@@ -57,15 +57,16 @@ struct DocumentTranslationValidatorTests {
         #expect(result.errors.contains { $0.code == "modelExplanation" })
     }
 
-    @Test("soft length and language residue signals remain warnings")
-    func warningsDoNotInvalidate() {
+    @Test("full source-language echo is a blocking translation failure")
+    func languageResidueBlocksCommit() {
         let simple = DocumentTranslationRequest(chunkId: "c", targetLanguage: "Russian", blocks: [DocumentTranslationInputBlock(id: "b", sourceText: "A source paragraph.")])
         let result = DocumentTranslationValidator().validate(
             response: DocumentTranslationResponse(chunkId: "c", blocks: [DocumentTranslationOutputBlock(id: "b", text: "A source paragraph.")]),
             request: simple
         )
-        #expect(result.isValid)
-        #expect(result.warnings.contains { $0.code == "languageResidue" })
+        #expect(!result.isValid)
+        #expect(result.errors.contains { $0.code == "languageResidue" })
+        #expect(!result.warnings.contains { $0.code == "languageResidue" })
     }
     @Test("source-aware front matter accepts deterministic literals and repeated sources")
     func sourceAwareFrontMatter() {

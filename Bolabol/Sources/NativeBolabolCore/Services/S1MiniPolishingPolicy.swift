@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 
 public enum S1MiniRequestEligibility: Equatable, Sendable {
     case supported
@@ -27,15 +28,21 @@ public enum S1MiniRequestEligibility: Equatable, Sendable {
         case .supported:
             "S1-mini can process this request."
         case .nonEnglishText:
-            "S1-mini by Superwhisper supports English transcript cleanup only."
+            "S1-mini by Superwhisper supports English transcript cleanup only. Bolabol used its built-in local cleanup instead."
         case .unsupportedVariant:
-            "S1-mini by Superwhisper supports the standard Variant 1 cleanup route only."
+            "S1-mini by Superwhisper supports the standard Variant 1 cleanup route only. Bolabol used its built-in local cleanup instead."
         case .customPrompt:
-            "S1-mini by Superwhisper is a fixed transcript normalizer and does not support custom polishing prompts."
+            "S1-mini by Superwhisper is a fixed transcript normalizer and does not support custom polishing prompts. Choose Qwen, another local MLX model, or a cloud provider."
         case .translation:
             "S1-mini by Superwhisper cannot translate text. Choose Qwen, another local MLX model, or a cloud provider."
         }
     }
+}
+
+public enum S1MiniExecutionRoute: Equatable, Sendable {
+    case s1Mini
+    case localFallback(S1MiniRequestEligibility)
+    case reject(S1MiniRequestEligibility)
 }
 
 public enum S1MiniPolishingPolicy {
@@ -52,6 +59,20 @@ public enum S1MiniPolishingPolicy {
             || model.repositoryID.caseInsensitiveCompare(repositoryID) == .orderedSame
     }
 
+    public static func route(
+        for request: PolishingRequest
+    ) -> S1MiniExecutionRoute {
+        let eligibility = eligibility(for: request)
+        switch eligibility {
+        case .supported:
+            return .s1Mini
+        case .nonEnglishText, .unsupportedVariant:
+            return .localFallback(eligibility)
+        case .customPrompt, .translation:
+            return .reject(eligibility)
+        }
+    }
+
     public static func eligibility(
         for request: PolishingRequest
     ) -> S1MiniRequestEligibility {
@@ -59,7 +80,7 @@ public enum S1MiniPolishingPolicy {
             return .translation
         }
 
-        if containsNonLatinLetters(request.rawText) {
+        if !isProbablyEnglish(request.rawText) {
             return .nonEnglishText
         }
 
@@ -93,6 +114,20 @@ public enum S1MiniPolishingPolicy {
             }
         }
         return false
+    }
+
+    private static func isProbablyEnglish(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return true }
+        guard !containsNonLatinLetters(trimmed) else { return false }
+
+        guard let detectedLanguage = NLLanguageRecognizer.dominantLanguage(for: trimmed) else {
+            // Code, model names, paths, and very short ASCII fragments often have
+            // no language result. They are safe to pass to the English normalizer.
+            return true
+        }
+
+        return detectedLanguage == .english
     }
 
     private static func isTranslationRequest(_ request: PolishingRequest) -> Bool {

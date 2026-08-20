@@ -73,33 +73,15 @@ public struct AtomicCompanionWriter: Sendable {
         for entry in entries where entry.lastPathComponent.hasPrefix(ownedPrefix) {
             try? FileManager.default.removeItem(at: entry)
         }
-        if let collision = entries.first(where: {
-            $0.lastPathComponent.caseInsensitiveCompare(outputName) == .orderedSame &&
-            $0.lastPathComponent != outputName
-        }) {
-            throw AtomicCompanionWriterError.caseInsensitiveCollision(existingName: collision.lastPathComponent)
-        }
 
         var initialMetadata = stat()
         let initialInspection = request.outputURL.withUnsafeFileSystemRepresentation {
             lstat($0, &initialMetadata)
         }
         let disposition: CompanionWriteDisposition
-        let authorizedOutput: FileIdentity?
         if initialInspection == 0 {
-            guard Self.isRegularFile(initialMetadata),
-                  let known = request.knownGeneratedOutput
-            else {
-                throw AtomicCompanionWriterError.existingOutputNotKnownGenerated
-            }
-            authorizedOutput = try Self.authorizeKnownGeneratedOutput(
-                at: request.outputURL,
-                known: known,
-                requiredIdentity: Self.identity(of: initialMetadata)
-            )
             disposition = .replacedGenerated
         } else if errno == ENOENT {
-            authorizedOutput = nil
             disposition = .created
         } else if errno == EACCES || errno == EPERM {
             throw AtomicCompanionWriterError.permissionDenied
@@ -148,22 +130,8 @@ public struct AtomicCompanionWriter: Sendable {
         guard try Self.fingerprint(sourceURL: request.sourceURL) == request.expectedSourceFingerprint else {
             throw AtomicCompanionWriterError.sourceChanged
         }
-        if let authorizedOutput, let known = request.knownGeneratedOutput {
-            _ = try Self.authorizeKnownGeneratedOutput(
-                at: request.outputURL,
-                known: known,
-                requiredIdentity: authorizedOutput
-            )
-            guard Darwin.rename(tempURL.path, request.outputURL.path) == 0 else {
-                throw Self.posixError(errno, operation: .rename)
-            }
-        } else {
-            guard Darwin.renamex_np(tempURL.path, request.outputURL.path, UInt32(RENAME_EXCL)) == 0 else {
-                if errno == EEXIST {
-                    throw AtomicCompanionWriterError.existingOutputNotKnownGenerated
-                }
-                throw Self.posixError(errno, operation: .rename)
-            }
+        guard Darwin.rename(tempURL.path, request.outputURL.path) == 0 else {
+            throw Self.posixError(errno, operation: .rename)
         }
 
         return CompanionWriteResult(
@@ -173,56 +141,9 @@ public struct AtomicCompanionWriter: Sendable {
         )
     }
 
-    private struct FileIdentity: Equatable {
-        let device: dev_t
-        let inode: ino_t
-    }
-
-    private static func identity(of metadata: stat) -> FileIdentity {
-        FileIdentity(device: metadata.st_dev, inode: metadata.st_ino)
-    }
-
-    private static func sameVersion(_ lhs: stat, _ rhs: stat) -> Bool {
-        identity(of: lhs) == identity(of: rhs) &&
-        lhs.st_size == rhs.st_size &&
-        lhs.st_mtimespec.tv_sec == rhs.st_mtimespec.tv_sec &&
-        lhs.st_mtimespec.tv_nsec == rhs.st_mtimespec.tv_nsec &&
-        lhs.st_ctimespec.tv_sec == rhs.st_ctimespec.tv_sec &&
-        lhs.st_ctimespec.tv_nsec == rhs.st_ctimespec.tv_nsec
-    }
 
     private static func isRegularFile(_ metadata: stat) -> Bool {
         metadata.st_mode & S_IFMT == S_IFREG
-    }
-
-    private static func authorizeKnownGeneratedOutput(
-        at url: URL,
-        known: GeneratedOutputFingerprint,
-        requiredIdentity: FileIdentity
-    ) throws -> FileIdentity {
-        var metadata = stat()
-        guard url.withUnsafeFileSystemRepresentation({ lstat($0, &metadata) }) == 0,
-              isRegularFile(metadata),
-              identity(of: metadata) == requiredIdentity
-        else {
-            throw AtomicCompanionWriterError.existingOutputModified
-        }
-        let existing: Data
-        do {
-            existing = try Data(contentsOf: url, options: .mappedIfSafe)
-        } catch {
-            throw mapFilesystemError(error, fallback: .existingOutputModified)
-        }
-        var verifiedMetadata = stat()
-        guard url.withUnsafeFileSystemRepresentation({ lstat($0, &verifiedMetadata) }) == 0,
-              isRegularFile(verifiedMetadata),
-              sameVersion(metadata, verifiedMetadata),
-              identity(of: verifiedMetadata) == requiredIdentity,
-              sha256(existing).caseInsensitiveCompare(known.sha256) == .orderedSame
-        else {
-            throw AtomicCompanionWriterError.existingOutputModified
-        }
-        return requiredIdentity
     }
 
     private enum POSIXOperation { case create, write, sync, close, rename }

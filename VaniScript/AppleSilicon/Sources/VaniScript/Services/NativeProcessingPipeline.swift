@@ -242,6 +242,17 @@ actor NativeProcessingPipeline {
                     let pendingOrdinal = try Self.pendingOrdinal(for: chunk.index, pendingOrdinalByIndex: pendingOrdinalByIndex)
                     let completedBeforeCurrent = resumedCheckpoints.count + pendingOrdinal
                     let chunkDuration = max(0, chunk.endSec - chunk.startSec)
+                    try await progress(
+                        BatchTranscriptionProgress(
+                            fraction: Double(completedBeforeCurrent) / Double(max(totalCount, 1)),
+                            totalChunks: totalCount,
+                            detail: BatchProgressDetail(
+                                phase: .transcribing,
+                                currentChunkAudioPositionSec: 0.0,
+                                currentChunkDurationSec: chunkDuration
+                            )
+                        )
+                    )
                     let result = try await localASRRouter.transcribe(
                         settings: settings,
                         providerID: providerID,

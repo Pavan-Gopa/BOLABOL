@@ -518,8 +518,14 @@ final class BatchTranscriptionStore: ObservableObject {
                 } else if let processing = self.jobs.first(where: { $0.state == .processing }) {
                     self.statusMessage = self.processingStatus(for: processing)
                 } else if self.isRunning {
-                    let activeCount = self.profiles.filter(\.enabled).count
-                    self.statusMessage = activeCount == 0 ? "No enabled folder is available." : "Watching \(activeCount) folder\(activeCount == 1 ? "" : "s")."
+                    let hasIncompleteJobs = self.jobs.contains(where: { $0.state == .pending || $0.state == .processing })
+                    if !hasIncompleteJobs && !self.isReconciling {
+                        Task { [weak self] in await self?.stop() }
+                        self.statusMessage = "Batch transcription is stopped."
+                    } else {
+                        let activeCount = self.profiles.filter(\.enabled).count
+                        self.statusMessage = activeCount == 0 ? "No enabled folder is available." : "Watching \(activeCount) folder\(activeCount == 1 ? "" : "s")."
+                    }
                 } else {
                     self.statusMessage = "Batch transcription is stopped."
                 }
@@ -578,19 +584,31 @@ final class BatchTranscriptionStore: ObservableObject {
     }
 
     private func requestProcessing() {
-        guard isRunning, let coordinator else { return }
+        guard isRunning, let coordinator, let repository else { return }
         processingRequested = true
         guard processingTask == nil else { return }
 
         let lifecycleToken = lifecycleGeneration
         let runToken = UUID()
         processingRunToken = runToken
-        processingTask = Task { [weak self, coordinator] in
+        processingTask = Task { [weak self, coordinator, repository] in
+            var shouldAutoStop = false
             while !Task.isCancelled {
                 guard let self else { return }
                 self.processingRequested = false
                 await coordinator.processPending()
                 self.refreshJobs()
+
+                if !self.isReconciling,
+                   let activeJobs = try? await repository.list(states: [.pending, .processing]) {
+                    let activeProfileIDs = Set(self.profiles.map(\.id))
+                    shouldAutoStop = !activeJobs.contains {
+                        activeProfileIDs.contains($0.profileID)
+                            && $0.configuration.identifier == self.configuration.identifier
+                    }
+                    if shouldAutoStop { break }
+                }
+
                 guard !Task.isCancelled,
                       self.lifecycleGeneration == lifecycleToken,
                       self.isRunning,
@@ -601,7 +619,9 @@ final class BatchTranscriptionStore: ObservableObject {
             guard let self, self.processingRunToken == runToken else { return }
             self.processingTask = nil
             self.processingRunToken = nil
-            if self.isRunning, self.processingRequested {
+            if shouldAutoStop, self.isRunning {
+                await self.stop()
+            } else if self.isRunning, self.processingRequested {
                 self.requestProcessing()
             }
         }

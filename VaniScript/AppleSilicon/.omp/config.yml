@@ -16,7 +16,7 @@ modelRoles:
   workflow_security_backup: openai-codex/gpt-5.6-sol:max
   workflow_design_advisor_backup: "@workflow_reviewer_backup"
   workflow_designer_backup: "@workflow_architect_backup"
-  default: google-antigravity/gemini-3.1-pro:high
+  default: b-ai/deepseek-v4-flash:max
   task: google-antigravity/gemini-3.7-flash:high
 retry: 
   enabled: true

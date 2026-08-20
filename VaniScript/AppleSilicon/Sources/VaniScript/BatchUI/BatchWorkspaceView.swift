@@ -124,7 +124,13 @@ struct BatchWorkspaceView: View {
             }
             .buttonStyle(.borderedProminent)
             .accessibilityLabel(store.isRunning ? "Stop batch transcription" : "Start batch transcription")
-            .disabled(!store.isAvailable || (!store.isRunning && store.startBlockMessage != nil))
+            .disabled(
+                !store.isAvailable
+                    || (!store.isRunning && (
+                        store.startBlockMessage != nil
+                            || !store.jobs.contains(where: { $0.state == .pending })
+                    ))
+            )
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

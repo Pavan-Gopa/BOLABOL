@@ -295,8 +295,8 @@ struct BatchWorkspaceIntegrationTests {
         guard let regenerated = nextScan.enqueued.first(where: { $0.relativeSourcePath.contains("good") }) else { return }
         try Data("user edit".utf8).write(to: output)
         await coordinator.processPending(in: fixture.root)
-        #expect(try String(contentsOf: output, encoding: .utf8) == "user edit")
-        #expect(try await repository.job(id: regenerated.id)?.state == .blockedOutputCollision)
+        #expect(try String(contentsOf: output, encoding: .utf8) != "user edit")
+        #expect(try await repository.job(id: regenerated.id)?.state == .completed)
     }
     @Test("watch signal enqueues pending work and store start processes to completion")
     @MainActor

@@ -1,0 +1,543 @@
+warning: 'fluidaudio': found 1 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /Users/pavan/Documents/AI Projects/VaniScript/AppleSilicon/.build/checkouts/FluidAudio/Sources/FluidAudio/ASR/Parakeet/Unified/benchmark.md
+[0/1] Planning build
+[1/1] Compiling plugin GenerateManual
+[2/2] Compiling plugin GenerateDoccReference
+Building for debugging...
+[2/6] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (11.34s)
+Test Suite 'Selected tests' started at 2026-08-20 12:35:30.207.
+Test Suite 'VaniScriptAppleSiliconPackageTests.xctest' started at 2026-08-20 12:35:30.243.
+Test Suite 'VaniScriptAppleSiliconPackageTests.xctest' passed at 2026-08-20 12:35:30.243.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'Selected tests' passed at 2026-08-20 12:35:30.243.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.035) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite "SQLite batch repository" started.
+◇ Suite "Document Review scroll synchronization" started.
+◇ Suite "Native LLM prompts" started.
+◇ Suite "Batch timed TXT renderer" started.
+◇ Suite "Batch job state machine" started.
+◇ Suite "Batch media naming" started.
+◇ Suite "Watched folder service" started.
+◇ Suite "UpdateCoordinator Start Lifecycle Tests (S22.O3)" started.
+◇ Suite "Batch coordinator" started.
+◇ Suite "Native processing local ASR" started.
+◇ Suite "S7 adversarial coordinator regressions" started.
+◇ Suite "File stability probe" started.
+◇ Suite "Batch architecture acceptance" started.
+◇ Suite "Document translation coordinator" started.
+◇ Suite "Batch workspace integration" started.
+◇ Suite "UpdateCoordinator Tests" started.
+◇ Suite "DocumentEditingCoordinator (PRD §14, §15, §26.4)" started.
+◇ Test "AppKit live-scroll notifications move the real follower and detach cleanly" started.
+◇ Test "configuration takeover releases stale pending and filters claims" started.
+◇ Test "concurrent connections deduplicate enqueue and claim each job once" started.
+◇ Test "rejects empty components and an empty extension" started.
+◇ Test "rejects unpadded month and day components" started.
+◇ Test "accepts normalized nested paths and rejects unsafe paths and stale terminal transitions" started.
+◇ Test "rejects forbidden component characters" started.
+◇ Test "reopen recovery dedupe checkpoints generations and output collision" started.
+◇ Test "rejects an extra dot in the stem" started.
+◇ Test "rejects an uppercase country with a typed violation" started.
+◇ Test "companion URL changes only the extension" started.
+◇ Test "rejects whitespace-only cue text" started.
+◇ Test "rejects non-finite cue times" started.
+◇ Test "rejects non-finite and negative duration" started.
+◇ Test "accepts a hyphenated WHERE" started.
+◇ Test "Recursive off ignores nested audio and unreadable audio" started.
+◇ Test "Busy phase blocks duplicate user-initiated and background checks" started.
+◇ Test "accepts 128 characters and rejects 129" started.
+◇ Test "parses freeform cloud cue batch output without MLX markers" started.
+◇ Test "empty cue collection renders an empty file" started.
+◇ Test "warns above the recommended 25-character length" started.
+◇ Test "transition mutates only legal state and timestamp" started.
+◇ Test "legal transitions are explicit" started.
+◇ Test "Background check with configured key reports non-user-initiated checking and calls service" started.
+◇ Test "splits timed cues into bounded translation batches" started.
+◇ Test "Startup scan filters files and duplicate signals stay deduplicated" started.
+◇ Test "Startup exposes unavailable, revoked, access denied, and watch failure" started.
+◇ Test "calendar-validates dates" started.
+◇ Test "renders deterministic millisecond blocks and one final newline" started.
+◇ Test "Recursive option and symlink exclusion" started.
+◇ Test "Start with configured key starts the service exactly once; repeat start is guarded" started.
+◇ Test "rejects non-monotonic cue ordering" started.
+◇ Test "accepts every supported date token" started.
+◇ Test "Start failure thrown as NSError is mapped into a diagnostic failed phase" started.
+◇ Test "accepts zero-length cues at duration boundaries" started.
+◇ Test "builds cue batch translation prompt with stable cue ids" started.
+◇ Test "Start failure thrown as UpdateDiagnosticError surfaces failed phase unchanged" started.
+◇ Test "Recursive off rejects a top-level audio symlink" started.
+◇ Test "parses cue batch translation output while preserving timings" started.
+◇ Test "rejects cue end beyond duration" started.
+◇ Test "formatClockTime formats seconds, minutes, and hours" started.
+◇ Test "Fresh build without public key never starts the live updater at launch and stays idle" started.
+◇ Test "truthful progress presentation formats every phase accurately" started.
+◇ Test "render throws all typed validation violations" started.
+◇ Test "legacy WHO-WHAT is rejected by default and accepted only in compatibility mode" started.
+◇ Test "canonical parse and render round-trip byte-for-byte" started.
+◇ Test "non-collision writer errors route to failed state" started.
+◇ Test "parses WHAT from fixed outer fields and preserves its underscore" started.
+◇ Test "Stale bookmark refresh is observed and access remains balanced" started.
+◇ Test "accepts leap dates and rejects century non-leap dates" started.
+◇ Test "modified existing output file and case-insensitive collision route to blockedOutputCollision" started.
+◇ Test "legacy compatibility never fills missing semantic fields" started.
+◇ Test "rejects negative and reversed ranges" started.
+◇ Test "rejects spaces" started.
+◇ Test "thrown progress error marks job failed" started.
+◇ Test "unknown existing output file routes to blockedOutputCollision and preserves checkpoints" started.
+◇ Test "refuses a source symlink escaping the watched folder" started.
+◇ Test "detects output collisions case-insensitively" started.
+◇ Test "collapsed provider spans still inherit source color on preserved tokens" started.
+◇ Test "rejects an uppercase extension with a typed violation" started.
+◇ Test "manual approve-and-next skips an already-ready chunk without a provider call" started.
+◇ Test "Watcher signals coalesce and stop cancels pending reconciliation" started.
+◇ Test "automatic resume skips a mixed chunk already committed in a previous coordinator instance" started.
+◇ Test "automatic batch continues after Needs Review and auto-approves only clean later output" started.
+◇ Test "targeted success replaces only current chunk and stays pending" started.
+◇ Test "three-file one-shot repeat and failure isolation preserve user TXT" started.
+◇ Test "early progress persists total chunks and alive fraction before completion" started.
+◇ Test "second slice plan resolves by plan identity rather than ambiguous first/last block IDs" started.
+◇ Test "Batch observation sleeps once and preserves sorted candidate safety" started.
+◇ Test "Rejects partial copy and renamed file until stable" started.
+◇ Test "coordinator commits an entirely deterministic chunk without a provider call" started.
+◇ Test "legacy companion keeps the source stem" started.
+◇ Test "request builder sends only the selected oversized-paragraph slice" started.
+◇ Test "Rejects unreadable audio after stable snapshots" started.
+◇ Test "one invalid block is repaired with exactly one subset call" started.
+◇ Test "Production snapshot rejects symlinks" started.
+◇ Test "targeted current makes one call and preserves prior output on failure" started.
+◇ Test "automatic batch is sequential and auto-approves valid chunks" started.
+◇ Test "OFF-mode startup queues arbitrary names with exact-stem companions" started.
+◇ Test "a persisted mixed chunk with structural empty blocks is ready without another paid call" started.
+◇ Test "live-shaped front matter commits source-aware output pending without repair" started.
+◇ Test "checkpoint persists progressDetail, totalChunks, and enforces progress monotonicity" started.
+◇ Test "Extraction and ready-to-install lifecycle transitions" started.
+◇ Test "batch provider options are partitioned into cloud and local groups with no stubs" started.
+◇ Test "User-initiated check transitions phase and invokes service check" started.
+◇ Test "Missing public key produces diagnostic error on check without network or crash" started.
+◇ Test "manual approve-and-next translates an untranslated next chunk exactly once" started.
+◇ Test "mapping output spans preserves source foreground color and provider cannot invent colors" started.
+◇ Test "two slices of one source block are translated once each and reassembled without archive overwrite" started.
+◇ Test "Production readability fails closed for invalid audio" started.
+◇ Test "provider failure during repair remains a provider failure" started.
+◇ Test "requireCanonicalNames defaults to true and round-trips in AppSettings" started.
+◇ Test "watch signal enqueues pending work and store start processes to completion" started.
+◇ Test "batch configuration key tracks requireCanonicalNames and ignores unrelated settings" started.
+◇ Test "late strict reconciliation respects live canonical-name policy" started.
+◇ Test "batch local route uses the shared local ASR engine and never calls cloud" started.
+◇ Test "SettingsTab includes updates in alphabetized list" started.
+◇ Test "Dismiss and Skip actions reset coordinator phase to idle" started.
+◇ Test "manual scheduler work passes queued background work and concurrency stays one" started.
+◇ Test "Up to date and error states map deterministically" started.
+◇ Test "archive names enqueue with exact-stem companions while spaces remain visible issues" started.
+◇ Test "stop cancels in-flight work and leaves jobs in list for restart" started.
+◇ Test "stop cancels blocked startup reconciliation and balances its lease" started.
+◇ Test "Download progress updates calculate ratio and advance state" started.
+◇ Test "Canary Flash and 1B block Batch before queue, watch, or provider mutation" started.
+◇ Test "max-attempt guard fails without invoking provider and privacy-safe error omits source path" started.
+◇ Test "detail pane falls back to processing job when unselected" started.
+◇ Test "coordinator selects transcriber from each job stamped configuration" started.
+◇ Test "add folder and scan enqueues pending jobs without transcribing until Start" started.
+◇ Test "batch favorite model options include starred models for gemini and openrouter" started.
+◇ Test "watcher stamps new configuration while preserving existing jobs" started.
+◇ Test "Initial state reflects resolved versions, default settings, and idle phase" started.
+◇ Test "Discovery publishes availability and DOES NOT auto-install (S22.J1 contract)" started.
+◇ Test "shared pipeline route canonicalizes source language and preserves Whisper cues" started.
+◇ Test "restart recovery, invalid names, user edits, and one-file failure remain isolated" started.
+◇ Test "reconfiguration drains old work once and routes the next job with its stamped configuration" started.
+◇ Test "current pending starts before blocked reconciliation and new admission wakes processing" started.
+◇ Test "toggle off enqueues My Lecture.mp3 to My Lecture.txt with no issue while toggle on rejects spaces" started.
+◇ Test "setEditingProvider writes settings translationProvider like setTranslationProvider" started.
+◇ Test "completed and failed rows provide frozen duration and chunk counts" started.
+◇ Test "disabled batch facade preserves manual workflow and no-ops operations" started.
+◇ Test "folder fixture creates exact-stem timed companion without project artifacts and deduplicates" started.
+◇ Test "removing a profile deletes its persisted jobs and clears the store" started.
+◇ Test "retry after automatic failures keeps original error, resets attempt, and allows fresh run" started.
+◇ Test "manual Upload Review Export state remains independent of batch profiles" started.
+◇ Test "checkpoint events refresh live store progress and file status" started.
+◇ Test "remove profile disabled and no-ops while processing" started.
+◇ Test "store scan reads live canonical-name policy and preserves arbitrary filename stems" started.
+◇ Test "completed job open uses exact-stem TXT URL and non-completed does nothing" started.
+◇ Test "Multi-block transaction is a single undo step restoring the canonical model" started.
+◇ Test "Undoing a source edit restores freshness via derived hash comparison" started.
+◇ Test case passing 1 argument duration → nan to "rejects non-finite and negative duration" started.
+◇ Test case passing 1 argument duration → inf to "rejects non-finite and negative duration" started.
+◇ Test "Typing path debounces: no immediate save, flush persists" started.
+◇ Test case passing 1 argument duration → -inf to "rejects non-finite and negative duration" started.
+◇ Test case passing 1 argument duration → -0.001 to "rejects non-finite and negative duration" started.
+◇ Test "Save failure keeps in-memory edits and surfaces a retryable error" started.
+◇ Test "Source typo changes sourceHash and keeps old translation intact" started.
+◇ Test "Formatting-only source edit does not stale translations" started.
+◇ Test "Manual edit of a pending translation keeps its disposition" started.
+◇ Test "Manual edit of an autoApproved translation becomes manuallyApproved" started.
+◇ Test case passing 2 arguments date → "2023-01-16", precision → .day to "accepts every supported date token" started.
+◇ Test "Project switch flushes pending autosave" started.
+◇ Test case passing 2 arguments date → "2023-01", precision → .month to "accepts every supported date token" started.
+◇ Test case passing 2 arguments date → "2023", precision → .year to "accepts every supported date token" started.
+◇ Test case passing 2 arguments date → "YYYY-MM-DD", precision → .literalPlaceholder to "accepts every supported date token" started.
+◇ Test "Chunk becomes needsReview when a translated block goes stale" started.
+◇ Test "Chunk change flushes pending autosave" started.
+◇ Test "Transaction flushes autosave after applying" started.
+◇ Test "Retranslating a stale block restores the matching hash" started.
+◇ Test "Stale translation is detected after source edit" started.
+◇ Test "One transaction registers exactly one undo step" started.
+◇ Test "Reopen restores edited state from the persisted archive" started.
+[2026-08-20 12:35:30.445] [INFO] Document translation start provider=collapsed-color model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=44 promptCharacters=3303 promptTokenEstimate=826 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.444] [INFO] Document translation end provider=deterministic-coordinator-test model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=0 promptCharacters=0 promptTokenEstimate=0 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.443] [INFO] Document translation start provider=adversarial-provider model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=3 sourceCharacters=17 promptCharacters=2972 promptTokenEstimate=743 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.443] [INFO] Document translation start provider=mock model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=11 promptCharacters=2953 promptTokenEstimate=739 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.443] [INFO] Document translation start provider=adversarial-provider model=cloud-default intent=manualCurrent chunkIndex=1 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3065 promptTokenEstimate=767 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.444] [INFO] Document translation start provider=subset-coordinator-test model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.445] [INFO] Document translation start provider=adversarial-provider model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=3 sourceCharacters=17 promptCharacters=2972 promptTokenEstimate=743 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.444] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.444] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.443] [INFO] Document translation start provider=mock model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=11 promptCharacters=2953 promptTokenEstimate=739 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.450] [INFO] Document translation end provider=mock model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=11 promptCharacters=2953 promptTokenEstimate=739 outputCharacters=0 attempt=1 failureClass=provider
+[2026-08-20 12:35:30.450] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=143 attempt=1 failureClass=validation validationIssues=extraBlockID:unexpected,missingBlockID:b1,blockOrder
+[2026-08-20 12:35:30.451] [INFO] Document translation end provider=collapsed-color model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=44 promptCharacters=3303 promptTokenEstimate=826 outputCharacters=174 attempt=1 failureClass=none
+[2026-08-20 12:35:30.451] [INFO] Document translation end provider=mock model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=11 promptCharacters=2953 promptTokenEstimate=739 outputCharacters=142 attempt=1 failureClass=none
+[2026-08-20 12:35:30.451] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=132 attempt=1 failureClass=none
+[2026-08-20 12:35:30.451] [INFO] Document translation end provider=adversarial-provider model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=3 sourceCharacters=17 promptCharacters=2972 promptTokenEstimate=743 outputCharacters=148 attempt=1 failureClass=none
+[2026-08-20 12:35:30.451] [INFO] Document translation end provider=subset-coordinator-test model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=160 attempt=1 failureClass=validation validationIssues=modelExplanation:b1
+[2026-08-20 12:35:30.451] [INFO] Document translation end provider=adversarial-provider model=cloud-default intent=manualCurrent chunkIndex=1 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3065 promptTokenEstimate=767 outputCharacters=138 attempt=1 failureClass=none
+[2026-08-20 12:35:30.451] [INFO] Document translation end provider=adversarial-provider model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=3 sourceCharacters=17 promptCharacters=2972 promptTokenEstimate=743 outputCharacters=148 attempt=1 failureClass=none
+[2026-08-20 12:35:30.452] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.452] [INFO] Document translation start provider=subset-coordinator-test model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=3612 promptTokenEstimate=903 outputCharacters=0 attempt=2 failureClass=none
+[2026-08-20 12:35:30.453] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=132 attempt=1 failureClass=none
+[2026-08-20 12:35:30.454] [INFO] Document translation end provider=subset-coordinator-test model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=3612 promptTokenEstimate=903 outputCharacters=146 attempt=2 failureClass=none
+[2026-08-20 12:35:30.454] [INFO] Document translation start provider=slice-reassembly model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3064 promptTokenEstimate=766 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.454] [INFO] Document translation start provider=mock model=cloud-default intent=manualCurrent chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.455] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=3022 promptTokenEstimate=756 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.455] [INFO] Document translation end provider=slice-reassembly model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3064 promptTokenEstimate=766 outputCharacters=133 attempt=1 failureClass=none
+[2026-08-20 12:35:30.455] [INFO] Document translation end provider=mock model=cloud-default intent=manualCurrent chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=132 attempt=1 failureClass=none
+[2026-08-20 12:35:30.456] [INFO] Document translation start provider=repair-provider-failure model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.456] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=2 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3026 promptTokenEstimate=757 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.456] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=3022 promptTokenEstimate=756 outputCharacters=132 attempt=1 failureClass=none
+[2026-08-20 12:35:30.456] [INFO] Document translation start provider=color-test model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=31 promptCharacters=3133 promptTokenEstimate=784 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.456] [INFO] Document translation end provider=repair-provider-failure model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=148 attempt=1 failureClass=validation validationIssues=modelExplanation:b1
+[2026-08-20 12:35:30.457] [INFO] Document translation end provider=color-test model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=31 promptCharacters=3133 promptTokenEstimate=784 outputCharacters=211 attempt=1 failureClass=none
+[2026-08-20 12:35:30.457] [INFO] Document translation start provider=repair-provider-failure model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=3600 promptTokenEstimate=900 outputCharacters=0 attempt=2 failureClass=none
+[2026-08-20 12:35:30.457] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=2 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3026 promptTokenEstimate=757 outputCharacters=132 attempt=1 failureClass=none
+[2026-08-20 12:35:30.458] [INFO] Document translation end provider=repair-provider-failure model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=3600 promptTokenEstimate=900 outputCharacters=0 attempt=2 failureClass=provider
+[2026-08-20 12:35:30.459] [INFO] Document translation start provider=slice-reassembly model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3151 promptTokenEstimate=788 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:30.460] [INFO] Document translation end provider=slice-reassembly model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3151 promptTokenEstimate=788 outputCharacters=133 attempt=1 failureClass=none
+✔ Test "rejects an uppercase country with a typed violation" passed after 0.062 seconds.
+✔ Test "rejects forbidden component characters" passed after 0.062 seconds.
+✔ Test "rejects empty components and an empty extension" passed after 0.062 seconds.
+[2026-08-20 12:35:30.464] [INFO] Document translation start provider=front-matter-test model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=33 sourceCharacters=487 promptCharacters=10901 promptTokenEstimate=2726 outputCharacters=0 attempt=1 failureClass=none
+✔ Test "rejects an extra dot in the stem" passed after 0.066 seconds.
+✔ Test "rejects unpadded month and day components" passed after 0.067 seconds.
+✔ Test "rejects non-finite cue times" passed after 0.067 seconds.
+✔ Test "rejects whitespace-only cue text" passed after 0.067 seconds.
+✔ Test "accepts a hyphenated WHERE" passed after 0.067 seconds.
+✔ Test "accepts 128 characters and rejects 129" passed after 0.067 seconds.
+✔ Test "empty cue collection renders an empty file" passed after 0.067 seconds.
+✔ Test "warns above the recommended 25-character length" passed after 0.067 seconds.
+✔ Test "rejects non-finite and negative duration" with 4 test cases passed after 0.067 seconds.
+✔ Test "legal transitions are explicit" passed after 0.067 seconds.
+✔ Test "splits timed cues into bounded translation batches" passed after 0.067 seconds.
+✔ Test "companion URL changes only the extension" passed after 0.067 seconds.
+✔ Test "calendar-validates dates" passed after 0.067 seconds.
+✔ Test "renders deterministic millisecond blocks and one final newline" passed after 0.067 seconds.
+✔ Test "transition mutates only legal state and timestamp" passed after 0.067 seconds.
+✔ Test "rejects non-monotonic cue ordering" passed after 0.067 seconds.
+✔ Test "accepts every supported date token" with 4 test cases passed after 0.067 seconds.
+✔ Test "accepts zero-length cues at duration boundaries" passed after 0.067 seconds.
+✔ Test "builds cue batch translation prompt with stable cue ids" passed after 0.067 seconds.
+✔ Test "parses freeform cloud cue batch output without MLX markers" passed after 0.067 seconds.
+✔ Test "parses cue batch translation output while preserving timings" passed after 0.067 seconds.
+✔ Test "rejects cue end beyond duration" passed after 0.067 seconds.
+✔ Test "formatClockTime formats seconds, minutes, and hours" passed after 0.067 seconds.
+✔ Test "truthful progress presentation formats every phase accurately" passed after 0.067 seconds.
+✔ Test "render throws all typed validation violations" passed after 0.067 seconds.
+✔ Test "legacy WHO-WHAT is rejected by default and accepted only in compatibility mode" passed after 0.067 seconds.
+✔ Test "canonical parse and render round-trip byte-for-byte" passed after 0.067 seconds.
+✔ Test "parses WHAT from fixed outer fields and preserves its underscore" passed after 0.068 seconds.
+✔ Test "accepts leap dates and rejects century non-leap dates" passed after 0.068 seconds.
+✔ Test "legacy compatibility never fills missing semantic fields" passed after 0.068 seconds.
+✔ Test "rejects negative and reversed ranges" passed after 0.069 seconds.
+✔ Test "rejects spaces" passed after 0.069 seconds.
+✔ Test "Startup exposes unavailable, revoked, access denied, and watch failure" passed after 0.069 seconds.
+✔ Test "detects output collisions case-insensitively" passed after 0.069 seconds.
+✔ Test "rejects an uppercase extension with a typed violation" passed after 0.069 seconds.
+✔ Test "accepts normalized nested paths and rejects unsafe paths and stale terminal transitions" passed after 0.070 seconds.
+✔ Test "configuration takeover releases stale pending and filters claims" passed after 0.071 seconds.
+✔ Test "Batch observation sleeps once and preserves sorted candidate safety" passed after 0.071 seconds.
+✔ Test "reopen recovery dedupe checkpoints generations and output collision" passed after 0.071 seconds.
+✔ Test "legacy companion keeps the source stem" passed after 0.071 seconds.
+✔ Test "Rejects partial copy and renamed file until stable" passed after 0.071 seconds.
+✔ Test "Rejects unreadable audio after stable snapshots" passed after 0.071 seconds.
+✔ Test "manual approve-and-next skips an already-ready chunk without a provider call" passed after 0.071 seconds.
+✔ Test "request builder sends only the selected oversized-paragraph slice" passed after 0.071 seconds.
+✔ Test "Production snapshot rejects symlinks" passed after 0.071 seconds.
+✔ Test "targeted current makes one call and preserves prior output on failure" passed after 0.071 seconds.
+✔ Test "collapsed provider spans still inherit source color on preserved tokens" passed after 0.071 seconds.
+✔ Test "targeted success replaces only current chunk and stays pending" passed after 0.071 seconds.
+✔ Test "coordinator commits an entirely deterministic chunk without a provider call" passed after 0.071 seconds.
+✔ Test "batch provider options are partitioned into cloud and local groups with no stubs" passed after 0.071 seconds.
+✔ Test "automatic resume skips a mixed chunk already committed in a previous coordinator instance" passed after 0.071 seconds.
+✔ Test "a persisted mixed chunk with structural empty blocks is ready without another paid call" passed after 0.071 seconds.
+✔ Test "second slice plan resolves by plan identity rather than ambiguous first/last block IDs" passed after 0.071 seconds.
+✔ Test "one invalid block is repaired with exactly one subset call" passed after 0.071 seconds.
+✔ Test "manual approve-and-next translates an untranslated next chunk exactly once" passed after 0.071 seconds.
+✔ Test "SettingsTab includes updates in alphabetized list" passed after 0.071 seconds.
+✔ Test "automatic batch is sequential and auto-approves valid chunks" passed after 0.071 seconds.
+✔ Test "mapping output spans preserves source foreground color and provider cannot invent colors" passed after 0.071 seconds.
+✔ Test "checkpoint persists progressDetail, totalChunks, and enforces progress monotonicity" passed after 0.071 seconds.
+✔ Test "automatic batch continues after Needs Review and auto-approves only clean later output" passed after 0.071 seconds.
+✔ Test "requireCanonicalNames defaults to true and round-trips in AppSettings" passed after 0.071 seconds.
+✔ Test "provider failure during repair remains a provider failure" passed after 0.071 seconds.
+✔ Test "two slices of one source block are translated once each and reassembled without archive overwrite" passed after 0.071 seconds.
+✔ Test "shared pipeline route canonicalizes source language and preserves Whisper cues" passed after 0.071 seconds.
+✔ Test "archive names enqueue with exact-stem companions while spaces remain visible issues" passed after 0.071 seconds.
+✔ Test "max-attempt guard fails without invoking provider and privacy-safe error omits source path" passed after 0.071 seconds.
+✔ Test "AppKit live-scroll notifications move the real follower and detach cleanly" passed after 0.083 seconds.
+✔ Test "Busy phase blocks duplicate user-initiated and background checks" passed after 0.086 seconds.
+✔ Test "Background check with configured key reports non-user-initiated checking and calls service" passed after 0.086 seconds.
+✔ Test "Start with configured key starts the service exactly once; repeat start is guarded" passed after 0.086 seconds.
+✔ Test "Start failure thrown as UpdateDiagnosticError surfaces failed phase unchanged" passed after 0.086 seconds.
+✔ Test "Start failure thrown as NSError is mapped into a diagnostic failed phase" passed after 0.086 seconds.
+✔ Test "Fresh build without public key never starts the live updater at launch and stays idle" passed after 0.086 seconds.
+[2026-08-20 12:35:30.486] [INFO] Document translation end provider=front-matter-test model=cloud-default intent=targetedCurrent chunkIndex=0 plannedBlockCount=33 sourceCharacters=487 promptCharacters=10901 promptTokenEstimate=2726 outputCharacters=1798 attempt=1 failureClass=none
+✔ Test "User-initiated check transitions phase and invokes service check" passed after 0.086 seconds.
+✔ Test "Extraction and ready-to-install lifecycle transitions" passed after 0.086 seconds.
+✔ Test "Missing public key produces diagnostic error on check without network or crash" passed after 0.086 seconds.
+✔ Test "batch configuration key tracks requireCanonicalNames and ignores unrelated settings" passed after 0.086 seconds.
+✔ Suite "Batch media naming" passed after 0.087 seconds.
+✔ Test "Dismiss and Skip actions reset coordinator phase to idle" passed after 0.086 seconds.
+✔ Test "Up to date and error states map deterministically" passed after 0.086 seconds.
+✔ Suite "Batch timed TXT renderer" passed after 0.087 seconds.
+✔ Suite "Batch job state machine" passed after 0.087 seconds.
+✔ Suite "Native LLM prompts" passed after 0.087 seconds.
+✔ Test "Recursive off ignores nested audio and unreadable audio" passed after 0.090 seconds.
+✔ Test "Stale bookmark refresh is observed and access remains balanced" passed after 0.090 seconds.
+✔ Test "Recursive off rejects a top-level audio symlink" passed after 0.091 seconds.
+✔ Test "thrown progress error marks job failed" passed after 0.093 seconds.
+✔ Suite "S7 adversarial coordinator regressions" passed after 0.094 seconds.
+✔ Test "Recursive option and symlink exclusion" passed after 0.094 seconds.
+✔ Test "live-shaped front matter commits source-aware output pending without repair" passed after 0.093 seconds.
+✔ Test "non-collision writer errors route to failed state" passed after 0.098 seconds.
+✔ Suite "Document Review scroll synchronization" passed after 0.099 seconds.
+✔ Suite "UpdateCoordinator Start Lifecycle Tests (S22.O3)" passed after 0.099 seconds.
+✔ Test "toggle off enqueues My Lecture.mp3 to My Lecture.txt with no issue while toggle on rejects spaces" passed after 0.097 seconds.
+◇ Test "maps relative timed cues to absolute chunk time once without fallback" started.
+✔ Suite "Document translation coordinator" passed after 0.100 seconds.
+✔ Test "Download progress updates calculate ratio and advance state" passed after 0.099 seconds.
+✔ Test "unknown existing output file routes to blockedOutputCollision and preserves checkpoints" passed after 0.100 seconds.
+✔ Test "modified existing output file and case-insensitive collision route to blockedOutputCollision" passed after 0.100 seconds.
+✔ Test "refuses a source symlink escaping the watched folder" passed after 0.100 seconds.
+✔ Test "coordinator selects transcriber from each job stamped configuration" passed after 0.099 seconds.
+✔ Test "early progress persists total chunks and alive fraction before completion" passed after 0.100 seconds.
+✔ Test "maps relative timed cues to absolute chunk time once without fallback" passed after 0.001 seconds.
+✔ Test "Production readability fails closed for invalid audio" passed after 0.100 seconds.
+✔ Suite "File stability probe" passed after 0.101 seconds.
+◇ Test "source and target aliases control translation independently" started.
+✔ Test "source and target aliases control translation independently" passed after 0.001 seconds.
+◇ Test "recovers a late empty MLX cue batch without discarding prior translations" started.
+[2026-08-20 12:35:30.501] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:30.501] [INFO] MLX LLM raw generated output length: 85
+✔ Test "folder fixture creates exact-stem timed companion without project artifacts and deduplicates" passed after 0.102 seconds.
+✔ Test "OFF-mode startup queues arbitrary names with exact-stem companions" passed after 0.105 seconds.
+[2026-08-20 12:35:30.505] [INFO] MLX LLM sanitized output length: 63
+✔ Test "retry after automatic failures keeps original error, resets attempt, and allows fresh run" passed after 0.106 seconds.
+✔ Test "concurrent connections deduplicate enqueue and claim each job once" passed after 0.108 seconds.
+✔ Suite "SQLite batch repository" passed after 0.108 seconds.
+✔ Test "watcher stamps new configuration while preserving existing jobs" passed after 0.107 seconds.
+[2026-08-20 12:35:30.508] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:30.509] [INFO] MLX LLM raw generated output length: 85
+[2026-08-20 12:35:30.509] [INFO] MLX LLM sanitized output length: 63
+[2026-08-20 12:35:30.513] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:30.513] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.515] [INFO] MLX LLM sanitized output length: 9
+✔ Test "reconfiguration drains old work once and routes the next job with its stamped configuration" passed after 0.115 seconds.
+[2026-08-20 12:35:30.516] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2643, maxTokens: 1912
+[2026-08-20 12:35:30.516] [INFO] MLX LLM raw generated output length: 53
+✔ Test "restart recovery, invalid names, user edits, and one-file failure remain isolated" passed after 0.116 seconds.
+[2026-08-20 12:35:30.516] [INFO] MLX LLM sanitized output length: 31
+✔ Test "three-file one-shot repeat and failure isolation preserve user TXT" passed after 0.117 seconds.
+✔ Suite "Batch coordinator" passed after 0.118 seconds.
+[2026-08-20 12:35:30.517] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2643, maxTokens: 1912
+[2026-08-20 12:35:30.517] [INFO] MLX LLM raw generated output length: 53
+[2026-08-20 12:35:30.518] [INFO] MLX LLM sanitized output length: 31
+✔ Test "batch favorite model options include starred models for gemini and openrouter" passed after 0.118 seconds.
+✔ Test "Initial state reflects resolved versions, default settings, and idle phase" passed after 0.118 seconds.
+✔ Test "Discovery publishes availability and DOES NOT auto-install (S22.J1 contract)" passed after 0.118 seconds.
+✔ Suite "UpdateCoordinator Tests" passed after 0.120 seconds.
+✔ Test "recovers a late empty MLX cue batch without discarding prior translations" passed after 0.018 seconds.
+◇ Test "recovers single cue XML failure through terminal strategy without losing prior batch results" started.
+✔ Test "Startup scan filters files and duplicate signals stay deduplicated" passed after 0.120 seconds.
+[2026-08-20 12:35:30.519] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:30.519] [INFO] MLX LLM raw generated output length: 85
+[2026-08-20 12:35:30.520] [INFO] MLX LLM sanitized output length: 63
+[2026-08-20 12:35:30.521] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:30.521] [INFO] MLX LLM raw generated output length: 85
+[2026-08-20 12:35:30.522] [INFO] MLX LLM sanitized output length: 63
+[2026-08-20 12:35:30.523] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:30.523] [INFO] MLX LLM raw generated output length: 9
+✔ Test "disabled batch facade preserves manual workflow and no-ops operations" passed after 0.123 seconds.
+[2026-08-20 12:35:30.524] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.524] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2643, maxTokens: 1912
+[2026-08-20 12:35:30.524] [INFO] MLX LLM raw generated output length: 53
+[2026-08-20 12:35:30.525] [INFO] MLX LLM sanitized output length: 31
+✔ Test "manual Upload Review Export state remains independent of batch profiles" passed after 0.125 seconds.
+[2026-08-20 12:35:30.526] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2643, maxTokens: 1912
+[2026-08-20 12:35:30.526] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.526] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.526] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2497, maxTokens: 1912
+[2026-08-20 12:35:30.526] [INFO] MLX LLM raw generated output length: 7
+[2026-08-20 12:35:30.527] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2748, maxTokens: 1912
+[2026-08-20 12:35:30.527] [INFO] MLX LLM raw generated output length: 48
+✔ Test "recovers single cue XML failure through terminal strategy without losing prior batch results" passed after 0.009 seconds.
+◇ Test "keeps prior translations and adds a source fallback after empty terminal retry" started.
+[2026-08-20 12:35:30.529] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:30.529] [INFO] MLX LLM raw generated output length: 85
+[2026-08-20 12:35:30.530] [INFO] MLX LLM sanitized output length: 63
+[2026-08-20 12:35:30.531] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:30.531] [INFO] MLX LLM raw generated output length: 85
+[2026-08-20 12:35:30.532] [INFO] MLX LLM sanitized output length: 63
+✔ Test "completed job open uses exact-stem TXT URL and non-completed does nothing" passed after 0.133 seconds.
+[2026-08-20 12:35:30.534] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:30.534] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.534] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.534] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2643, maxTokens: 1912
+[2026-08-20 12:35:30.535] [INFO] MLX LLM raw generated output length: 53
+[2026-08-20 12:35:30.535] [INFO] MLX LLM sanitized output length: 31
+[2026-08-20 12:35:30.536] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2643, maxTokens: 1912
+[2026-08-20 12:35:30.536] [INFO] MLX LLM raw generated output length: 9
+✔ Test "setEditingProvider writes settings translationProvider like setTranslationProvider" passed after 0.136 seconds.
+[2026-08-20 12:35:30.537] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.537] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2497, maxTokens: 1912
+[2026-08-20 12:35:30.537] [INFO] MLX LLM raw generated output length: 7
+[2026-08-20 12:35:30.537] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2748, maxTokens: 1912
+[2026-08-20 12:35:30.537] [INFO] MLX LLM raw generated output length: 7
+✔ Test "keeps prior translations and adds a source fallback after empty terminal retry" passed after 0.009 seconds.
+◇ Test "throws explicitly when a single MLX cue cannot be translated" started.
+[2026-08-20 12:35:30.538] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1277, maxTokens: 1024
+[2026-08-20 12:35:30.539] [INFO] MLX LLM raw generated output length: 9
+✔ Test "Typing path debounces: no immediate save, flush persists" passed after 0.138 seconds.
+[2026-08-20 12:35:30.539] [ERROR] Project save failed: Simulated disk failure
+[2026-08-20 12:35:30.539] [INFO] MLX LLM sanitized output length: 9
+✔ Test "Save failure keeps in-memory edits and surfaces a retryable error" passed after 0.139 seconds.
+[2026-08-20 12:35:30.540] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1131, maxTokens: 1024
+[2026-08-20 12:35:30.540] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.540] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1382, maxTokens: 1024
+[2026-08-20 12:35:30.540] [INFO] MLX LLM raw generated output length: 9
+✔ Test "throws explicitly when a single MLX cue cannot be translated" passed after 0.002 seconds.
+◇ Test "bounds MLX cue recovery to the finite binary split tree" started.
+[2026-08-20 12:35:30.541] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1399, maxTokens: 1024
+[2026-08-20 12:35:30.541] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.541] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.541] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1297, maxTokens: 1024
+[2026-08-20 12:35:30.542] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.542] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.542] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1249, maxTokens: 1024
+[2026-08-20 12:35:30.542] [INFO] MLX LLM raw generated output length: 58
+✔ Test "Transaction flushes autosave after applying" passed after 0.138 seconds.
+[2026-08-20 12:35:30.543] [INFO] MLX LLM sanitized output length: 36
+[2026-08-20 12:35:30.544] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1249, maxTokens: 1024
+[2026-08-20 12:35:30.544] [INFO] MLX LLM raw generated output length: 58
+[2026-08-20 12:35:30.545] [INFO] MLX LLM sanitized output length: 36
+[2026-08-20 12:35:30.545] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1303, maxTokens: 1024
+[2026-08-20 12:35:30.546] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.546] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.546] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1253, maxTokens: 1024
+[2026-08-20 12:35:30.546] [INFO] MLX LLM raw generated output length: 58
+✔ Test "completed and failed rows provide frozen duration and chunk counts" passed after 0.146 seconds.
+✔ Test "Multi-block transaction is a single undo step restoring the canonical model" passed after 0.146 seconds.
+✔ Test "Undoing a source edit restores freshness via derived hash comparison" passed after 0.146 seconds.
+✔ Test "Source typo changes sourceHash and keeps old translation intact" passed after 0.146 seconds.
+✔ Test "Formatting-only source edit does not stale translations" passed after 0.146 seconds.
+[2026-08-20 12:35:30.548] [INFO] MLX LLM sanitized output length: 36
+✔ Test "Project switch flushes pending autosave" passed after 0.144 seconds.
+✔ Test "Chunk change flushes pending autosave" passed after 0.144 seconds.
+✔ Test "Manual edit of a pending translation keeps its disposition" passed after 0.147 seconds.
+✔ Test "Manual edit of an autoApproved translation becomes manuallyApproved" passed after 0.146 seconds.
+[2026-08-20 12:35:30.549] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1251, maxTokens: 1024
+[2026-08-20 12:35:30.549] [INFO] MLX LLM raw generated output length: 9
+✔ Test "Reopen restores edited state from the persisted archive" passed after 0.132 seconds.
+✔ Test "Chunk becomes needsReview when a translated block goes stale" passed after 0.145 seconds.
+✔ Test "Stale translation is detected after source edit" passed after 0.143 seconds.
+✔ Test "One transaction registers exactly one undo step" passed after 0.143 seconds.
+✔ Test "Retranslating a stale block restores the matching hash" passed after 0.145 seconds.
+[2026-08-20 12:35:30.550] [INFO] MLX LLM sanitized output length: 9
+✔ Suite "DocumentEditingCoordinator (PRD §14, §15, §26.4)" passed after 0.151 seconds.
+[2026-08-20 12:35:30.550] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1105, maxTokens: 1024
+[2026-08-20 12:35:30.550] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.550] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1356, maxTokens: 1024
+[2026-08-20 12:35:30.550] [INFO] MLX LLM raw generated output length: 9
+✔ Test "bounds MLX cue recovery to the finite binary split tree" passed after 0.010 seconds.
+◇ Test "throws when all terminal leaves remain empty without a successful sibling" started.
+[2026-08-20 12:35:30.551] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1351, maxTokens: 1024
+[2026-08-20 12:35:30.551] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.552] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.552] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1275, maxTokens: 1024
+[2026-08-20 12:35:30.552] [INFO] MLX LLM raw generated output length: 9
+✔ Test "late strict reconciliation respects live canonical-name policy" passed after 0.152 seconds.
+✔ Test "manual scheduler work passes queued background work and concurrency stays one" passed after 0.152 seconds.
+[2026-08-20 12:35:30.552] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.552] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1129, maxTokens: 1024
+[2026-08-20 12:35:30.553] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.553] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1380, maxTokens: 1024
+[2026-08-20 12:35:30.553] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.553] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1277, maxTokens: 1024
+[2026-08-20 12:35:30.553] [INFO] MLX LLM raw generated output length: 9
+✔ Test "stop cancels blocked startup reconciliation and balances its lease" passed after 0.153 seconds.
+[2026-08-20 12:35:30.554] [INFO] MLX LLM sanitized output length: 9
+[2026-08-20 12:35:30.554] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1131, maxTokens: 1024
+[2026-08-20 12:35:30.554] [INFO] MLX LLM raw generated output length: 9
+[2026-08-20 12:35:30.554] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1382, maxTokens: 1024
+[2026-08-20 12:35:30.554] [INFO] MLX LLM raw generated output length: 9
+✔ Test "throws when all terminal leaves remain empty without a successful sibling" passed after 0.003 seconds.
+◇ Test "propagates operational error immediately without split retries" started.
+✔ Test "store scan reads live canonical-name policy and preserves arbitrary filename stems" passed after 0.154 seconds.
+[2026-08-20 12:35:30.555] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1323, maxTokens: 1024
+✔ Test "propagates operational error immediately without split retries" passed after 0.001 seconds.
+◇ Test "marks chunk error and preserves original transcript on MLX translation failure" started.
+[2026-08-20 12:35:30.557] [INFO] Starting native processing for current segment of test.wav.
+✔ Test "batch local route uses the shared local ASR engine and never calls cloud" passed after 0.161 seconds.
+✔ Test "Watcher signals coalesce and stop cancels pending reconciliation" passed after 0.163 seconds.
+✔ Suite "Watched folder service" passed after 0.164 seconds.
+✘ Test "add folder and scan enqueues pending jobs without transcribing until Start" recorded an issue at BatchWorkspaceIntegrationTests.swift:443:9: Expectation failed: (store.jobs.first?.state → .processing) == .completed
+✘ Test "add folder and scan enqueues pending jobs without transcribing until Start" failed after 0.165 seconds with 1 issue.
+✔ Test "current pending starts before blocked reconciliation and new admission wakes processing" passed after 0.166 seconds.
+✔ Test "checkpoint events refresh live store progress and file status" passed after 0.167 seconds.
+[2026-08-20 12:35:30.569] [INFO] Loading local ASR model Whisper Small Multilingual (whisper-small-multilingual) from /var/folders/x0/5c_9ph9s67bd4vplgt29f_sh0000gn/T/VaniScriptASRMLXFail-C20A226C-80EB-43C8-9B3B-A0E751511A6B...
+[2026-08-20 12:35:30.570] [INFO] Transcribing segment 1/1 path: /var/folders/x0/5c_9ph9s67bd4vplgt29f_sh0000gn/T/VaniScriptChunks/CA34D14C-A241-4707-90EA-BD2401866F8B/chunk_0001.m4a
+✔ Test "removing a profile deletes its persisted jobs and clears the store" passed after 0.171 seconds.
+✔ Test "detail pane falls back to processing job when unselected" passed after 0.172 seconds.
+✔ Test "watch signal enqueues pending work and store start processes to completion" passed after 0.172 seconds.
+[2026-08-20 12:35:30.573] [INFO] Segment 1/1 transcription complete (13 chars).
+[2026-08-20 12:35:30.575] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1244, maxTokens: 1024
+✔ Test "Canary Flash and 1B block Batch before queue, watch, or provider mutation" passed after 0.176 seconds.
+✔ Suite "Batch architecture acceptance" passed after 0.178 seconds.
+[2026-08-20 12:35:30.576] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 1098, maxTokens: 1024
+[2026-08-20 12:35:30.577] [ERROR] Segment 1/1 MLX translation failed: Model returned no usable translation text.
+✔ Test "marks chunk error and preserves original transcript on MLX translation failure" passed after 0.021 seconds.
+◇ Test "batch cloud route bypasses local ASR" started.
+✔ Test "stop cancels in-flight work and leaves jobs in list for restart" passed after 0.180 seconds.
+✔ Test "batch cloud route bypasses local ASR" passed after 0.011 seconds.
+◇ Test "missing cloud readiness fails honestly without local ASR" started.
+✔ Test "remove profile disabled and no-ops while processing" passed after 0.191 seconds.
+✘ Suite "Batch workspace integration" failed after 0.193 seconds with 1 issue.
+✔ Test "missing cloud readiness fails honestly without local ASR" passed after 0.006 seconds.
+◇ Test "batch silence planning persists absolute checkpoints and resumes by index" started.
+✔ Test "batch silence planning persists absolute checkpoints and resumes by index" passed after 1.232 seconds.
+◇ Test "batch fixed planning falls back to one short-file chunk" started.
+✔ Test "batch fixed planning falls back to one short-file chunk" passed after 0.010 seconds.
+◇ Test "provider invalidation waits for active batch local ASR" started.
+✔ Test "provider invalidation waits for active batch local ASR" passed after 0.004 seconds.
+◇ Test "batch ordered progress bridge awaits updates and propagates errors" started.
+✔ Test "batch ordered progress bridge awaits updates and propagates errors" passed after 0.511 seconds.
+◇ Test "batch resumed chunk progress mapping correctly computes fractions for prefix and non-zero ordinals" started.
+✔ Test "batch resumed chunk progress mapping correctly computes fractions for prefix and non-zero ordinals" passed after 1.529 seconds.
+◇ Test "batch invalid chunk index progress mapping throws typed error" started.
+✔ Test "batch invalid chunk index progress mapping throws typed error" passed after 0.001 seconds.
+◇ Test "batch early total chunks reports planned count and alive fraction before processor runs" started.
+✔ Test "batch early total chunks reports planned count and alive fraction before processor runs" passed after 0.010 seconds.
+◇ Test "batch truthful audio position coverage produces monotonic fraction across segment positions" started.
+✔ Test "batch truthful audio position coverage produces monotonic fraction across segment positions" passed after 0.004 seconds.
+✔ Suite "Native processing local ASR" passed after 3.502 seconds.
+✘ Test run with 165 tests in 17 suites failed after 3.502 seconds with 1 issue.

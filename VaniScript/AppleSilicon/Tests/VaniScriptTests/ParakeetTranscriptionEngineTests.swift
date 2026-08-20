@@ -25,16 +25,20 @@ struct ParakeetTranscriptionEngineTests {
         )
 
         let first = try await engine.transcribe(
-            LocalASRRequest(audioFileURL: source, languageHint: " EN ")
+            LocalASRRequest(audioFileURL: source, languageHint: " EN "),
+            progress: { _ in }
         )
         let second = try await engine.transcribe(
-            LocalASRRequest(audioFileURL: source, languageHint: "auto")
+            LocalASRRequest(audioFileURL: source, languageHint: "auto"),
+            progress: { _ in }
         )
         let third = try await engine.transcribe(
-            LocalASRRequest(audioFileURL: source, languageHint: "   ")
+            LocalASRRequest(audioFileURL: source, languageHint: "   "),
+            progress: { _ in }
         )
         let fourth = try await engine.transcribe(
-            LocalASRRequest(audioFileURL: source, languageHint: "unsupported_lang")
+            LocalASRRequest(audioFileURL: source, languageHint: "unsupported_lang"),
+            progress: { _ in }
         )
         let snapshot = await session.snapshot()
 
@@ -75,7 +79,10 @@ struct ParakeetTranscriptionEngineTests {
             sessionLoader: { _ in session }
         )
 
-        let result = try await engine.transcribe(LocalASRRequest(audioFileURL: source))
+        let result = try await engine.transcribe(
+            LocalASRRequest(audioFileURL: source),
+            progress: { _ in }
+        )
         let cues = try #require(result.cues)
 
         #expect(result.text == "hello world again")
@@ -110,7 +117,10 @@ struct ParakeetTranscriptionEngineTests {
             sessionLoader: { _ in session }
         )
 
-        let result = try await engine.transcribe(LocalASRRequest(audioFileURL: source))
+        let result = try await engine.transcribe(
+            LocalASRRequest(audioFileURL: source),
+            progress: { _ in }
+        )
         let cues = try #require(result.cues)
 
         #expect(result.text == longText)
@@ -179,7 +189,10 @@ struct ParakeetTranscriptionEngineTests {
         )
 
         do {
-            _ = try await engine.transcribe(LocalASRRequest(audioFileURL: source))
+            _ = try await engine.transcribe(
+                LocalASRRequest(audioFileURL: source),
+                progress: { _ in }
+            )
             Issue.record("Expected invalid duration to fail")
         } catch let error as LocalASREngineError {
             guard case .inferenceFailed(let detail) = error else {
@@ -215,7 +228,8 @@ struct ParakeetTranscriptionEngineTests {
                     audioFileURL: source,
                     languageHint: "en",
                     translateToEnglish: true
-                )
+                ),
+                progress: { _ in }
             )
             Issue.record("Expected translation to be rejected")
         } catch let error as LocalASREngineError {
@@ -245,7 +259,10 @@ struct ParakeetTranscriptionEngineTests {
             sessionLoader: { _ in emptySession }
         )
         do {
-            _ = try await emptyEngine.transcribe(LocalASRRequest(audioFileURL: source))
+            _ = try await emptyEngine.transcribe(
+                LocalASRRequest(audioFileURL: source),
+                progress: { _ in }
+            )
             Issue.record("Expected empty output to fail")
         } catch let error as LocalASREngineError {
             #expect(error == .emptyResult)
@@ -261,7 +278,10 @@ struct ParakeetTranscriptionEngineTests {
             sessionLoader: { _ in failingSession }
         )
         do {
-            _ = try await failingEngine.transcribe(LocalASRRequest(audioFileURL: source))
+            _ = try await failingEngine.transcribe(
+                LocalASRRequest(audioFileURL: source),
+                progress: { _ in }
+            )
             Issue.record("Expected inference failure")
         } catch let error as LocalASREngineError {
             guard case .inferenceFailed(let detail) = error else {
@@ -292,14 +312,23 @@ struct ParakeetTranscriptionEngineTests {
             }
         )
 
-        _ = try await engine.transcribe(LocalASRRequest(audioFileURL: source))
-        _ = try await engine.transcribe(LocalASRRequest(audioFileURL: source))
+        _ = try await engine.transcribe(
+            LocalASRRequest(audioFileURL: source),
+            progress: { _ in }
+        )
+        _ = try await engine.transcribe(
+            LocalASRRequest(audioFileURL: source),
+            progress: { _ in }
+        )
         #expect(await loadCount.value == 1)
 
         await engine.unload()
         #expect(await session.wasUnloaded())
 
-        _ = try await engine.transcribe(LocalASRRequest(audioFileURL: source))
+        _ = try await engine.transcribe(
+            LocalASRRequest(audioFileURL: source),
+            progress: { _ in }
+        )
         #expect(await loadCount.value == 2)
     }
 
@@ -318,7 +347,10 @@ struct ParakeetTranscriptionEngineTests {
         )
 
         do {
-            _ = try await engine.transcribe(LocalASRRequest(audioFileURL: nil))
+            _ = try await engine.transcribe(
+                LocalASRRequest(audioFileURL: nil),
+                progress: { _ in }
+            )
             Issue.record("Expected missing audio file request to fail")
         } catch let error as LocalASREngineError {
             #expect(error == .missingAudioFile)
@@ -333,7 +365,10 @@ struct ParakeetTranscriptionEngineTests {
         )
 
         do {
-            _ = try await unavailableEngine.transcribe(LocalASRRequest(audioFileURL: source))
+            _ = try await unavailableEngine.transcribe(
+                LocalASRRequest(audioFileURL: source),
+                progress: { _ in }
+            )
             Issue.record("Expected missing model directory to fail")
         } catch let error as LocalASREngineError {
             #expect(error == .modelUnavailable(missingModelURL))

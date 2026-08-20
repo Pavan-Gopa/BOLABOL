@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 import VaniScriptCore
+import VaniScriptRuntime
 
 enum AudioChunkExporter {
     static func exportChunks(sourceURL: URL, chunks: [ChunkData], projectId: String? = nil) async throws -> [Int: URL] {
@@ -38,6 +39,27 @@ enum AudioChunkExporter {
 
         return outputs
     }
+    static func exportChunk(
+        sourceURL: URL,
+        chunk: FileTranscriptionChunk,
+        workspaceURL: URL
+    ) async throws -> URL {
+        let asset = AVURLAsset(url: sourceURL)
+        let audioTracks = try await asset.loadTracks(withMediaType: .audio)
+        guard let audioTrack = audioTracks.first else { throw AudioChunkExportError.noAudioTrack }
+        try FileManager.default.createDirectory(at: workspaceURL, withIntermediateDirectories: true)
+        let outputURL = workspaceURL
+            .appendingPathComponent(String(format: "chunk_%04d", chunk.index + 1))
+            .appendingPathExtension("m4a")
+        try await exportAudioChunk(
+            audioTrack: audioTrack,
+            startSec: chunk.startSec,
+            durationSec: chunk.endSec - chunk.startSec,
+            outputURL: outputURL
+        )
+        return outputURL
+    }
+
 
     private static func makeOutputDirectory(projectId: String?) throws -> URL {
         if let projectId, !projectId.isEmpty {

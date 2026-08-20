@@ -140,10 +140,12 @@ struct CanaryCoreMLEngineTests {
         )
 
         let first = try await engine.transcribe(
-            LocalASRRequest(audioFileURL: source, languageHint: " EN ")
+            LocalASRRequest(audioFileURL: source, languageHint: " EN "),
+            progress: { _ in }
         )
         let second = try await engine.transcribe(
-            LocalASRRequest(audioFileURL: source, languageHint: "en")
+            LocalASRRequest(audioFileURL: source, languageHint: "en"),
+            progress: { _ in }
         )
         #expect(first.text == "hello canary")
         #expect(second.text == "hello canary")
@@ -156,7 +158,8 @@ struct CanaryCoreMLEngineTests {
         await engine.unload()
         #expect(await session.wasUnloaded())
         _ = try await engine.transcribe(
-            LocalASRRequest(audioFileURL: source, languageHint: "en")
+            LocalASRRequest(audioFileURL: source, languageHint: "en"),
+            progress: { _ in }
         )
         #expect(await loadCount.value == 2)
         #expect(temporaryFiles(in: temporaryDirectory).isEmpty)
@@ -180,7 +183,8 @@ struct CanaryCoreMLEngineTests {
         )
 
         let result = try await engine.transcribe(
-            LocalASRRequest(audioFileURL: source, languageHint: "en")
+            LocalASRRequest(audioFileURL: source, languageHint: "en"),
+            progress: { _ in }
         )
         let cues = try #require(result.cues)
 
@@ -225,14 +229,13 @@ struct CanaryCoreMLEngineTests {
         let request = LocalASRRequest(audioFileURL: source, languageHint: "en")
 
         let first = Task {
-            try await engine.transcribe(request)
+            try await engine.transcribe(request, progress: { _ in })
         }
         await loader.waitUntilFirstLoadStarted()
 
         let second = Task {
-            try await engine.transcribe(request)
+            try await engine.transcribe(request, progress: { _ in })
         }
-        await secondWaiterRegistered.wait()
 
         await loader.releaseFirstLoad()
         let firstResult = try await first.value
@@ -270,7 +273,7 @@ struct CanaryCoreMLEngineTests {
         )
         let request = LocalASRRequest(audioFileURL: source, languageHint: "en")
         let transcription = Task {
-            try await engine.transcribe(request)
+            try await engine.transcribe(request, progress: { _ in })
         }
         await loader.waitUntilFirstLoadStarted()
 
@@ -315,7 +318,8 @@ struct CanaryCoreMLEngineTests {
                     audioFileURL: source,
                     languageHint: "en",
                     translateToEnglish: true
-                )
+                ),
+                progress: { _ in }
             )
             Issue.record("Expected Canary translation request to fail")
         } catch let error as LocalASREngineError {
@@ -336,7 +340,8 @@ struct CanaryCoreMLEngineTests {
         let currentMajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
         do {
             _ = try await gatedEngine.transcribe(
-                LocalASRRequest(audioFileURL: source, languageHint: "en")
+                LocalASRRequest(audioFileURL: source, languageHint: "en"),
+                progress: { _ in }
             )
             Issue.record("Expected the macOS gate to fail")
         } catch let error as LocalASREngineError {
@@ -366,7 +371,8 @@ struct CanaryCoreMLEngineTests {
 
         let task = Task {
             try await engine.transcribe(
-                LocalASRRequest(audioFileURL: source, languageHint: "en")
+                LocalASRRequest(audioFileURL: source, languageHint: "en"),
+                progress: { _ in }
             )
         }
         task.cancel()

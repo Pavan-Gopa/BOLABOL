@@ -1,22 +1,36 @@
 # Live orchestration state — Orchestrator owns this file.
 # Keep it simple. Project-agnostic template.
 
+schema_version: 2
 project_prefix: vaniscript-as
 onboarding:
   status: complete
   model_pairs_confirmed: true
   completed_at: 2026-08-11T05:55:29Z
-current_work_item: null
+current_work_item_id: S31.J1
+current_work_item: >-
+  D16 implementation is complete, compiled, verified, and approved. A fresh
+  `dist/VaniScript.app` candidate is prepared. Human must visually and
+  operationally test the staged Batch UI.
 step_description: >-
-  S13 project-library hardening. Add multi-file Finder drop support, preserve
-  document/media bundle routing, make renamed archive filenames authoritative
-  for project display names without rewriting source metadata, and make project
-  deletion safe for imported versus new projects.
-target_files:
-  - Sources/VaniScript/Views/ReviewWorkspaceView.swift
-  - Sources/VaniScript/Theme/VaniScriptTheme.swift
-  - Tests/VaniScriptTests/VaniScriptThemeTests.swift
-  - Tests/VaniScriptTests/DocumentReviewScrollSyncTests.swift
+  S31.J1 — Human test the unchanged D16 Batch candidate: start a long local-ASR
+  job, observe stage updates, audio-position movement, Start/Stop, and explicit
+  output-collision routing without duplicate inference.
+  - Sources/VaniScriptRuntime/Batch/WatchedFolderService.swift
+  - Sources/VaniScriptRuntime/Batch/FileStabilityProbe.swift
+  - Sources/VaniScriptRuntime/Batch/FolderReconciler.swift
+  - Sources/VaniScriptRuntime/Batch/SQLiteBatchJobRepository.swift
+  - Sources/VaniScript/Services/NativeProcessingPipeline.swift
+  - Tests/VaniScriptTests/BatchWorkspaceIntegrationTests.swift
+  - Tests/VaniScriptTests/WatchedFolderServiceTests.swift
+  - Tests/VaniScriptTests/FileStabilityProbeTests.swift
+  - Tests/VaniScriptTests/SQLiteBatchJobRepositoryTests.swift
+  - Tests/VaniScriptTests/NativeProcessingPipelineASRTests.swift
+  - Sources/VaniScriptRuntime/Batch/BatchTranscriptionCoordinator.swift
+  - Sources/VaniScript/App/VaniScriptApp.swift
+  - Tests/VaniScriptTests/BatchTranscriptionCoordinatorTests.swift
+  - Tests/VaniScriptTests/BatchArchitectureAcceptanceTests.swift
+  - Tests/VaniScriptCoreTests/NativeProcessingReadinessTests.swift
 completed_steps:
   - S0
   - S1
@@ -29,31 +43,38 @@ completed_steps:
   - S17
   - S18
   - S20
+  - S21
+  - S22
+  - S23
+  - S24
+  - S25
+  - S26
+  - S27
+  - S28
+  - S29
+  - S30
 skipped_steps: []
 parked_steps:
   - S5
+  - S6
+
 implementation:
-  # pending | running | waiting_review | changes_requested | blocked | complete
- status: pending
- attempts: 4
- # Increment only after evidence evaluates an implementation attempt.
- note: >-
-   S13DarkThemeHighlightFix1 candidate gate is green: Human accepted, Reviewer
-   approved, and Tester returned qa_green. The proofreading-highlight work item
-   is complete; broader S13 Light-mode chrome, fresh Light/Dark smoke, and
-   remaining Judgment Gates stay open.
+  status: complete
+  attempts: 23
+  # Increment only after evidence evaluates an implementation attempt.
+  note: >-
+    S31.J1 rejected by Human. 1) Folder addition requires manual toggle to show files. 2) Processing hangs at 0% with no visual progress. 3) Massive `batch-id-v2` string breaks the layout.
 retry_guard:
- max_attempts_without_progress: 3
- last_failure_signature: null
- repeated_failure_count: 0
+  max_attempts_without_progress: 3
+  last_failure_signature: null
+  repeated_failure_count: 0
+  blocker: null
 omp:
- last_result_artifact: history://S13DarkThemeHighlightTester1
- active_agent: null
- active_role: null
-model_failure:
-  # none | awaiting_human | backup_authorized
-  status: none
-  role: null
+  last_result_artifact: agent://TesterD16QA
+  active_agent: null
+  active_role: coder
+  status: pending
+  role: workflow-coder
   primary_agent: null
   failed_model: null
   evidence: null
@@ -61,7 +82,6 @@ model_failure:
   human_instruction: null
   authorized_at: null
 interruption:
-  # none | interrupted_no_changes | recovered_result | indeterminate
   status: none
   role: null
   run_id: null
@@ -70,71 +90,46 @@ interruption:
   recovered_artifact: null
   recorded_at: null
 human_acceptance:
- # pending | accepted | changes_requested
- status: accepted
- candidate_id: S13DarkThemeHighlightFix1
- evidence: >-
-   Human inspected the unchanged repaired signed app in the fresh Dark Aqua
-   workflow and selected Accept and route Reviewer at 2026-08-18T04:35:21Z.
+  status: rejected
+  candidate_id: S31D16TruthfulProgress1
+  evidence: >-
+    Human visually rejected the build. Folders don't auto-refresh, processing is frozen, and a massive ID string ruins the UI layout.
 review:
- status: approved
- last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
- verdict: approved
- note: >-
-   Reviewer approved the S13DarkThemeHighlightFix1 candidate. Its focused QA
-   gate is green; broader S13 hardening remains open.
+  status: approved
+  last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  verdict: approved
+  note: Reviewer approved S31.D16 and S31.J2; no issues remain.
 qa:
- status: qa_green
- suite: S13 dark appearance and proofreading highlight
- bugs_open: 0
- note: >-
-   Focused QA is green with 29 tests and 0 failures, including Tester-added
-   coverage for highlight restoration after content rewrite. Residual S13
-   hardening gates remain open.
-next_actor: human
+  status: qa_green
+  suite: >-
+    LocalASREngineRouterTests; NativeProcessingPipelineASRTests;
+    SQLiteBatchJobRepositoryTests; BatchTranscriptionCoordinatorTests;
+    BatchJobStateMachineTests; FileTranscriptionServiceTests;
+    ParakeetTranscriptionEngineTests; CanaryCoreMLEngineTests;
+    BatchWorkspaceIntegrationTests; WatchedFolderServiceTests;
+    BatchArchitectureAcceptanceTests
+  bugs_open: 0
+  note: Tester returned qa_green with 114 passing tests.
+next_actor: agent
 plan_files:
   - PIPELINE.md
   - AI_Workflow_Kit/docs/DECISIONS.md
   - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
   - docs/PRD-Document-Literary-Translation.md
   - docs/PRD-Editorial-Review-Workspace.md
+  - docs/BATCH_TRANSCRIPTION_ARCHITECTURE_PLAN.md
 coder_brief: |
-  S13 Human-rejected Dark Aqua candidate. Fix the fresh-app failure where
-  imported document text is practically invisible in Dark Aqua and make the
-  proofreading highlight more visually prominent. Treat persisted/exported
-  RichTextSpan foreground colors as canonical data: any display-only contrast
-  adaptation must not mutate source/translation models, serialization, or
-  rich export. Re-check the full dark primary Review workflow, including
-  default and explicit-colored spans, dual panes, proof banner/controls,
-  editor caret/typing color, selection/editing, and error/disabled/action
-  surfaces. Add deterministic tests for the rendering contract and highlight
-  contrast in the approved test path. Run only focused tests/build checks
-  relevant to these files; skip formatters, linters, and project-wide suites.
+  Human rejected S31.J1 candidate 22. Fix 3 bugs:
+  1. WatchedFolderService/BatchTranscriptionStore: Files must appear immediately upon adding a folder, without requiring a toggle.
+  2. BatchTranscriptionCoordinator/Pipeline: Processing must actually start and update progress instead of hanging indefinitely at 0%.
+  3. BatchJobDetailsView: Remove or truncate the massive `batch-id-v2-000...` string in Provider configuration so it doesn't cause the window to jump or clutter the UI.
 checkpoint:
   last_pre_tag: vaniscript-as/pre-S1
   last_post_tag: vaniscript-as/S1-done
   last_commit: 87bee27
   last_attempt: post-S2-refused-unrelated-worktree
   note: >-
-coder_brief: |
-  S13 Human-rejected Dark Aqua candidate. Fix the fresh-app failure where
-  imported document text is practically invisible in Dark Aqua and make the
-  proofreading highlight more visually prominent. Treat persisted/exported
-  RichTextSpan foreground colors as canonical data: any display-only contrast
-  adaptation must not mutate source/translation models, serialization, or
-  rich export. Re-check the full dark primary Review workflow, including
-  default and explicit-colored spans, dual panes, proof banner/controls,
-  editor caret/typing color, selection/editing, and error/disabled/action
-  surfaces. Add deterministic tests for the rendering contract and highlight
-  contrast in the approved test path. Run only focused tests/build checks
-  relevant to these files; skip formatters, linters, and project-wide suites.
 notes: |
-  Human requested all three BOLABOL Core ML engines. Existing LASR-01 catalog,
-  LASR-02 download/presence, and completed S1 Parakeet work are preserved.
-  Canary 1B cloud metadata remains intentionally deferred; S2 assumes a
-  verified local package and must not fabricate a download source.
-  No Git remote is configured for the workspace repository, so checkpoints are
-  local only.
   Human explicitly resumed the workflow after the S1 pause and framework update.
   Human set the default to one completed Reviewer verdict and one completed
   Tester verdict per unchanged Coder candidate. Failed launches do not count;
@@ -275,3 +270,9 @@ notes: |
   DocumentTranslationCoordinator.swift added to the S15 target list. Coder 04
   must preserve the existing DocumentTranslationFreshness.swift and start
   implementing immediately from the updated brief.
+  2026-08-19 (S31 open): Human supplied two annotated Batch Workspace
+  screenshots and explicitly requested direct Designer implementation. Exact
+  complaints: Scan Now duplicates Start and should be removed; disabling
+  Require canonical names still shows 14 naming issues/rejected files; loaded
+  controls are crowded; the empty state looks unfinished. Human requires the
+  Designer to implement, not merely recommend, a coherent native macOS layout.

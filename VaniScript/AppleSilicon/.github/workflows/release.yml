@@ -1,0 +1,199 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Semantic version (without v)
+        required: true
+        type: string
+      build_number:
+        description: Strictly increasing numeric build number
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve and validate release identity
+        id: identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_BUILD: ${{ inputs.build_number }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            build="$GITHUB_RUN_NUMBER"
+          else
+            version="$INPUT_VERSION"
+            build="$INPUT_BUILD"
+          fi
+          [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]] || { echo "invalid semantic version: $version" >&2; exit 1; }
+          [[ "$build" =~ ^[0-9]+$ ]] || { echo "invalid build number: $build" >&2; exit 1; }
+          if [[ "$version" == *-* ]]; then
+            IFS='.' read -r -a prerelease_identifiers <<< "${version#*-}"
+            for identifier in "${prerelease_identifiers[@]}"; do
+              [[ ! "$identifier" =~ ^0[0-9]+$ ]] || { echo "invalid numeric prerelease identifier: $identifier" >&2; exit 1; }
+            done
+          fi
+          tag="v$version"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF_NAME" != "$tag" ]]; then
+            echo "tag/version mismatch" >&2
+            exit 1
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            git rev-parse "refs/tags/$tag" >/dev/null 2>&1 || { echo "protected release tag does not exist: $tag" >&2; exit 1; }
+          fi
+          rm -rf previous-release && mkdir previous-release
+          latest_tag="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --json tagName --jq '.[0].tagName // empty')"
+          if [[ -n "$latest_tag" ]]; then
+            gh release download "$latest_tag" --repo "$GITHUB_REPOSITORY" --pattern '*.manifest.json' --dir previous-release
+            shopt -s nullglob
+            manifests=(previous-release/*.manifest.json)
+            shopt -u nullglob
+            (( ${#manifests[@]} == 1 )) || { echo "latest release $latest_tag must contain exactly one manifest; found ${#manifests[@]}" >&2; exit 1; }
+            previous_manifest="${manifests[0]}"
+            [[ -r "$previous_manifest" && -s "$previous_manifest" ]] || { echo "latest release manifest is unreadable or empty: $previous_manifest" >&2; exit 1; }
+            previous_version="$(plutil -extract version raw -o - "$previous_manifest")"
+            previous_build="$(plutil -extract buildNumber raw -o - "$previous_manifest")"
+            [[ "$previous_build" =~ ^[0-9]+$ ]] || { echo "latest release manifest has invalid build number: $previous_build" >&2; exit 1; }
+            VERSION="$version" PREVIOUS_VERSION="$previous_version" python3 - <<'PY'
+          # BEGIN SEMVER_COMPARATOR
+          import os
+          import re
+
+          SEMVER = re.compile(r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$')
+
+          def parse(value):
+              match = SEMVER.fullmatch(value)
+              if not match:
+                  raise SystemExit(f"invalid semantic version in release comparison: {value}")
+              prerelease = match.group(4)
+              identifiers = [] if prerelease is None else prerelease.split('.')
+              if any(identifier.isdigit() and len(identifier) > 1 and identifier[0] == '0' for identifier in identifiers):
+                  raise SystemExit(f"invalid numeric prerelease identifier in release comparison: {value}")
+              return tuple(map(int, match.group(1, 2, 3))), identifiers
+
+          def compare(left, right):
+              left_core, left_pre = parse(left)
+              right_core, right_pre = parse(right)
+              if left_core != right_core:
+                  return (left_core > right_core) - (left_core < right_core)
+              if not left_pre or not right_pre:
+                  return (not left_pre) - (not right_pre)
+              for left_id, right_id in zip(left_pre, right_pre):
+                  if left_id == right_id:
+                      continue
+                  left_numeric, right_numeric = left_id.isdigit(), right_id.isdigit()
+                  if left_numeric and right_numeric:
+                      return (int(left_id) > int(right_id)) - (int(left_id) < int(right_id))
+                  if left_numeric != right_numeric:
+                      return -1 if left_numeric else 1
+                  return (left_id > right_id) - (left_id < right_id)
+              return (len(left_pre) > len(right_pre)) - (len(left_pre) < len(right_pre))
+          # END SEMVER_COMPARATOR
+
+          current = os.environ['VERSION']
+          previous = os.environ['PREVIOUS_VERSION']
+          if compare(current, previous) <= 0:
+              raise SystemExit(f"release version must increase: {current} <= {previous}")
+          PY
+            (( 10#$build > 10#$previous_build )) || { echo "build number must increase: $build <= $previous_build" >&2; exit 1; }
+          else
+            echo "No prior release found; allowing first release without a baseline manifest."
+          fi
+          printf 'version=%s\nbuild_number=%s\ntag=%s\n' "$version" "$build" "$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Focused qualification tests
+        run: swift test --filter UpdateQualificationTests
+
+      - name: Import Developer ID certificate
+        env:
+          DEVELOPER_ID_P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.RELEASE_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          : "${DEVELOPER_ID_P12_BASE64:?missing Developer ID certificate}"
+          : "${DEVELOPER_ID_P12_PASSWORD:?missing certificate password}"
+          : "${KEYCHAIN_PASSWORD:?missing release keychain password}"
+          keychain="$RUNNER_TEMP/release.keychain-db"
+          printf '%s' "$DEVELOPER_ID_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/developer-id.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security import "$RUNNER_TEMP/developer-id.p12" -k "$keychain" -P "$DEVELOPER_ID_P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$keychain"
+          security list-keychains -d user -s "$keychain" login.keychain-db
+          rm -f "$RUNNER_TEMP/developer-id.p12"
+
+      - name: Build, sign, notarize, and staple
+        env:
+          VANISCRIPT_VERSION: ${{ steps.identity.outputs.version }}
+          VANISCRIPT_BUILD_NUMBER: ${{ steps.identity.outputs.build_number }}
+          VANISCRIPT_NOTARIZE: "1"
+          CODESIGN_IDENTITY: "Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)"
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: "438UQRF7JV"
+          VANISCRIPT_SPARKLE_PUBLIC_ED_KEY: ${{ secrets.SPARKLE_PUBLIC_ED_KEY }}
+        run: |
+          set -euo pipefail
+          : "${VANISCRIPT_SPARKLE_PUBLIC_ED_KEY:?missing Sparkle public key}"
+          ./script/build_release_dmg.sh
+
+      - name: Verify signed release artifacts
+        run: ./script/verify_release_artifacts.sh "${{ steps.identity.outputs.version }}" "${{ steps.identity.outputs.build_number }}"
+
+      - name: Generate signed appcast and release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SPARKLE_PRIVATE_ED_KEY: ${{ secrets.SPARKLE_PRIVATE_ED_KEY }}
+        run: |
+          set -euo pipefail
+          : "${SPARKLE_PRIVATE_ED_KEY:?missing Sparkle private key}"
+          version="${{ steps.identity.outputs.version }}"
+          tag="${{ steps.identity.outputs.tag }}"
+          mkdir -p dist/appcast-input
+          cp "dist/VaniScript-$version.zip" dist/appcast-input/
+          gh api --method POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" --jq .body > "dist/VaniScript-$version.md"
+          cp "dist/VaniScript-$version.md" dist/appcast-input/
+          printf '%s' "$SPARKLE_PRIVATE_ED_KEY" | .build/artifacts/sparkle/Sparkle/bin/generate_appcast --ed-key-file - --download-url-prefix "https://github.com/Pavan-Gopa/VaniScript/releases/download/$tag/" -o appcast.xml dist/appcast-input
+          mv dist/appcast-input/appcast.xml dist/appcast.xml
+          test -s dist/appcast.xml
+
+      - name: Create draft and upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.identity.outputs.version }}"
+          tag="${{ steps.identity.outputs.tag }}"
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "VaniScript $version" --notes-file "dist/VaniScript-$version.md"
+          gh release upload "$tag" --repo "$GITHUB_REPOSITORY" \
+            "dist/VaniScript-$version.zip" \
+            "dist/VaniScript-$version.dmg" \
+            "dist/VaniScript-$version.md" \
+            "dist/checksums.txt" \
+            "dist/VaniScript-$version.manifest.json"
+          # The update feed is deliberately uploaded last, after every referenced artifact.
+          gh release upload "$tag" --repo "$GITHUB_REPOSITORY" dist/appcast.xml
+          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false --latest

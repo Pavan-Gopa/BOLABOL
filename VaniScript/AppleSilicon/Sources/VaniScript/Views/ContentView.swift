@@ -3,9 +3,11 @@ import VaniScriptCore
 
 struct ContentView: View {
     @EnvironmentObject private var workflowStore: WorkflowStore
+    @EnvironmentObject private var batchStore: BatchTranscriptionStore
     @Environment(\.openSettings) private var openSettings
 
     @State private var onboardingFrames: [String: CGRect] = [:]
+    @State private var isBatchWorkspacePresented = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -41,6 +43,8 @@ struct ContentView: View {
                         HStack(spacing: 8) {
                             Spacer()
 
+                            UpdateAvailableButton()
+
                             Button {
                                 workflowStore.showChatSidebar.toggle()
                             } label: {
@@ -58,6 +62,14 @@ struct ContentView: View {
                             .buttonStyle(CornerIconButtonStyle())
                             .help("Help Tour")
 
+                            Button {
+                                isBatchWorkspacePresented = true
+                            } label: {
+                                Image(systemName: "waveform.badge.plus")
+                            }
+                            .buttonStyle(CornerIconButtonStyle())
+                            .help("Batch Transcription")
+                            .accessibilityLabel("Open Batch Transcription")
                             Button {
                                 workflowStore.presentProjectSidebar()
                             } label: {
@@ -115,6 +127,11 @@ struct ContentView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text(workflowStore.scanResultMessage)
+        }
+        .sheet(isPresented: $isBatchWorkspacePresented) {
+            BatchWorkspaceView()
+                .environmentObject(batchStore)
+                .frame(minWidth: 900, minHeight: 620)
         }
     }
 

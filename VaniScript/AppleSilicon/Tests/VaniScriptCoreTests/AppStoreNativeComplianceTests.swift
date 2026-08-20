@@ -1119,7 +1119,7 @@ struct AppStoreNativeComplianceTests {
         #expect(!releaseScriptSource.contains("VaniScript-AS.dmg"))
     }
 
-    @Test("native release DMG embeds Swift compatibility runtime for Macs without Xcode")
+    @Test("native release DMG embeds Swift compatibility runtime and Sparkle framework")
     func nativeReleaseDmgEmbedsSwiftCompatibilityRuntime() throws {
         let releaseScriptSource = try String(
             contentsOfFile: "script/build_release_dmg.sh",
@@ -1132,6 +1132,31 @@ struct AppStoreNativeComplianceTests {
         #expect(releaseScriptSource.contains("@executable_path/../Frameworks/libswiftCompatibilitySpan.dylib"))
         #expect(releaseScriptSource.contains("install_name_tool -delete_rpath \"$xcode_swift62_rpath\""))
         #expect(releaseScriptSource.contains("codesign_release \"$dylib\""))
+        #expect(releaseScriptSource.contains("Sparkle.framework"))
+        #expect(releaseScriptSource.contains("ditto \"$SPARKLE_FRAMEWORK_SRC\" \"$APP_FRAMEWORKS/Sparkle.framework\""))
+        #expect(releaseScriptSource.contains("install_name_tool -add_rpath \"@executable_path/../Frameworks\""))
+    }
+
+    @Test("release packaging rejects hardcoded user paths and enforces production signing")
+    func releasePackagingRejectsHardcodedUserPathsAndEnforcesProductionSigning() throws {
+        let releaseScriptSource = try String(
+            contentsOfFile: "script/build_release_dmg.sh",
+            encoding: .utf8
+        )
+        let packageSource = try String(
+            contentsOfFile: "Package.swift",
+            encoding: .utf8
+        )
+
+        #expect(!releaseScriptSource.contains("/Users/pavan"))
+        #expect(!releaseScriptSource.contains("~/.cache"))
+        #expect(releaseScriptSource.contains("error: production release packaging requires a valid Developer ID Application"))
+        #expect(releaseScriptSource.contains("VANISCRIPT_VERSION"))
+        #expect(releaseScriptSource.contains("VANISCRIPT_BUILD_NUMBER"))
+        #expect(releaseScriptSource.contains("VaniScript-$VERSION.zip"))
+        #expect(releaseScriptSource.contains("VaniScript-$VERSION.manifest.json"))
+        #expect(packageSource.contains("https://github.com/sparkle-project/Sparkle"))
+        #expect(packageSource.contains("2.9.4"))
     }
 
     @Test("web media resolver remains hidden fallback only")

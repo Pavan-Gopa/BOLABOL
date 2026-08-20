@@ -207,3 +207,132 @@ import-tier/media items; S18 stays parked. Color-fidelity work is
 Human-accepted and continues separately through Reviewer/Tester if still
 required for the S13 card stop-gate.
 
+
+---
+
+## ADR-008 — Sparkle-backed explicit in-app updates
+
+**Status:** Accepted  
+**Date:** 2026-08-18  
+**Decision:** Implement direct-distribution updates with a pinned Sparkle 2
+integration. Sparkle owns appcast/download/signature/code-signing validation,
+atomic replacement, authorization, and relaunch. VaniScript owns explicit
+update intent, update UX, dirty-state/save preflight, active-operation gating,
+asynchronous termination, metadata backup, and post-relaunch health receipt.
+Automatic checks are enabled, but automatic installation is disabled; an
+update is installed only after the user activates the in-app action. Release
+artifacts are published through a public artifact-only channel and the app
+contains no GitHub credential.
+**Rationale:** The user-provided update architecture explicitly forbids a
+custom curl/unzip/sudo installer because it cannot safely replace a running
+bundle or preserve the macOS trust chain. Sparkle is the reviewed component
+for the executable-code boundary, while the existing atomic project/settings
+persistence remains the source of truth for user data.
+**Consequences:** Steps S21–S24 cover release identity/packaging, Sparkle
+service/UI, readiness/termination safety, and protected release qualification.
+Production signing, notarization, EdDSA material, and artifact-repository
+credentials remain external protected release prerequisites and are never
+checked into this repository.
+
+---
+
+## ADR-009 — Canonical archive naming for batch transcription
+
+**Status:** Accepted  
+**Date:** 2026-08-18  
+**Decision:** Batch audio uses the canonical filename
+`<DATE>_<WHO>_<WHAT>_<WHERE>_<COUNTRY>.<extension>`. `_` separates WHO from
+WHAT; `_` may also occur inside WHAT and is resolved by parsing DATE/WHO from
+the left and COUNTRY/WHERE from the right. DATE accepts a valid `YYYY-MM-DD`,
+`YYYY-MM`, `YYYY`, or the literal `YYYY-MM-DD`. Components use ASCII
+alphanumerics plus internal `-`; country is exactly two lowercase letters;
+extensions are lowercase; spaces and dots inside the stem are forbidden; the
+maximum filename length is 128 characters. `strictReject` is the default.
+Legacy `WHO-WHAT` input is compatibility-only in the parser default, never
+silently invents missing fields, and is accepted by batch reconciliation via
+`safeNormalize`. Companion TXT keeps the original source stem. Stem comparison
+and collision detection are case-insensitive. Existing output policy is
+`replaceGeneratedOnly`: unknown or user-modified TXT is never overwritten.
+**Rationale:** Watchers, durable jobs, retries, and atomic output need one
+round-trippable archive identity. The existing `MetadataExtractor` is
+heuristic and destroys delimiters; manual `TranscriptExportBuilder` adds
+suffixes that violate exact-stem batch output.  
+**Consequences:** S25 establishes the pure naming domain before any watcher or
+queue. S26 owns rendering/writing. The physical `VaniScriptRuntime` target is
+deferred until S27, when ASR runtime code actually moves across target
+boundaries.
+
+## ADR-010 — Optional canonical names and shared provider pickers
+
+**Status:** Accepted
+**Date:** 2026-08-19
+**Decision:** Batch has a `requireCanonicalNames` toggle, default on. On:
+existing ADR-009 / `safeNormalize` archive rules. Off: any supported audio
+extension is queued and the companion TXT keeps the original source stem.
+The Batch window exposes the live transcription provider and, when the
+provider has a selectable model, that model. Changing it writes
+`AppSettings` and the workflow provider; Settings changes update Batch.
+Review's editing-model picker writes `settings.translationProvider` the
+same way `setTranslationProvider` does.
+**Rationale:** Human rejected a Settings-only hop for batch provider/model
+and a Review picker that does not update app settings. Real folders mix
+canonical lectures with arbitrarily named audio.
+**Consequences:** FolderReconciler takes an explicit naming mode. Batch UI
+owns the toggle and provider picker. Review `setEditingProvider` must not
+remain session-only.
+
+---
+
+## ADR-011 — Batch execution identity, provider takeover, shared chunking, and Auto Detect
+
+**Status:** Accepted
+**Date:** 2026-08-19
+**Decision:** Batch uses a versioned non-secret execution identity containing
+the selected provider/effective model, source language `auto`, chunk and silence
+planning inputs, and canonical-name policy. Start may claim only pending rows
+whose `config_id` exactly matches the active transcriber. On a configuration
+change, obsolete pending rows become existing-state `cancelled` history;
+failed rows remain unchanged; stable files are reconciled into a fresh current
+generation. Same-config failures are never automatically retried, completed or
+user-cancelled work is not replayed, and there is no default-transcriber
+fallback. File admission takes two snapshots around one shared observation
+interval per reconciliation, then performs bounded sequential readability and
+post-hash verification. Batch calls the existing manual
+`NativeProcessingPipeline.planChunks`, including `SmartAudioAnalyzer` silence
+planning and fixed fallback. Batch always uses Auto Detect; explicit-language
+models including Canary Flash/1B are blocked before reconciliation or queue
+mutation with an actionable Whisper Large v3 / Parakeet / cloud warning.
+**Rationale:** Human runtime testing found roughly two seconds of sequential
+admission delay per file, stale cloud jobs remaining ahead of a newly selected
+local provider, all Batch files reporting one fixed chunk, and a false forced
+English assumption. Existing durable fields (`config`, `config_id`,
+`generation`, state, timestamps, checkpoints) already represent the required
+history and resume boundaries.
+**Consequences:** No SQLite schema or new state is needed. Old execution IDs
+naturally become stale. Processing rows finish under their exact old binding
+during automatic reconfiguration; manual Stop remains cancellation. ASR
+concurrency stays one, output/user-file protections remain fail-closed, Batch
+does not translate, and no provider/language fallback is introduced.
+
+---
+
+## ADR-012 — ASR invalidation is scheduler-serialized
+
+**Status:** Accepted
+**Date:** 2026-08-19
+**Decision:** `NativeProcessingPipeline.invalidateASRBinding()` must acquire the
+same `TranscriptionScheduler` used by manual and Batch ASR before unloading the
+resident `LocalASREngineRouter`. Provider changes may update settings
+immediately, but model teardown waits until the active transcription operation
+exits. Queued manual invalidation retains manual priority over queued background
+work. No dependency patch, provider fallback, or error suppression is used.
+**Rationale:** Crash C9A9ACC0 shows a provider-change reconfiguration in
+`BatchTranscriptionStore.drainAfterCurrent` while WhisperKit decoded a Batch
+chunk. Concurrent router invalidation left `TextDecoderMLMultiArrayOutputType`
+with nil logits; upstream WhisperKit force-unwraps `decoderOutput.logits` at
+TextDecoder.swift:640, producing an uncatchable SIGTRAP.
+**Consequences:** Current inference completes under its exact old binding,
+then unload runs, then new queued transcription may start/load its binding.
+ASR concurrency remains one. Other direct unload paths are unchanged unless
+separate evidence proves they can overlap active scheduler work.
+

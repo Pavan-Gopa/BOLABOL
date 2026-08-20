@@ -85,7 +85,10 @@ actor ParakeetTranscriptionEngine: LocalASREngine {
         self.sessionLoader = sessionLoader
     }
 
-    func transcribe(_ request: LocalASRRequest) async throws -> LocalASRResult {
+    func transcribe(
+        _ request: LocalASRRequest,
+        progress: @escaping LocalASRProgressObserver
+    ) async throws -> LocalASRResult {
         try Task.checkCancellation()
         guard let sourceURL = request.audioFileURL else {
             throw LocalASREngineError.missingAudioFile

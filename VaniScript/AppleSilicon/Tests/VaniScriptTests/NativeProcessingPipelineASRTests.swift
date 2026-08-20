@@ -2,6 +2,7 @@ import AVFoundation
 import Foundation
 import Testing
 import VaniScriptCore
+import VaniScriptRuntime
 @testable import VaniScript
 
 @Suite("Native processing local ASR", .serialized)
@@ -54,7 +55,8 @@ struct NativeProcessingPipelineASRTests {
             audioURL: audioURL,
             sourceLang: "English",
             settings: settings,
-            providerID: descriptor.id
+            providerID: descriptor.id,
+            progress: { _ in }
         )
 
         #expect(result.text == "hello")
@@ -570,8 +572,705 @@ struct NativeProcessingPipelineASRTests {
         #expect(!progressMessages.contains(where: { $0.lowercased().contains("ready for review") }))
     }
 
-}
+    @Test("batch cloud route bypasses local ASR")
+    func batchCloudBypassesLocalASR() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let audioURL = root.appendingPathComponent("cloud.wav")
+        try writeValidTestWAV(to: audioURL)
+        var settings = AppSettings.defaults
+        settings.geminiKey = "test-key"
+        settings.geminiKeys = ["test-key"]
+        let localLog = PipelineASRRequestLog()
+        let cloud = PipelineSpyCloudTranscriber()
+        let factories = LocalASREngineRouterFactories(
+            whisperKit: { descriptor in PipelineSpyLocalASREngine(descriptor: descriptor.descriptor, result: .init(text: "local", cues: []), log: localLog) },
+            parakeet: { _ in throw LocalASREngineError.unsupportedModel("unexpected local route") },
+            canary: { _ in throw LocalASREngineError.unsupportedModel("unexpected local route") }
+        )
+        let pipeline = NativeProcessingPipeline(localASRRouter: LocalASREngineRouter(factories: factories), cloudTranscriptionEngine: cloud)
+        let transcriber = pipeline.makeBatchAudioTranscriber(workspaceRoot: root.appendingPathComponent("work"), sourceLang: "en", settings: settings, providerID: "gemini-cloud")
+        let result = try await transcriber.transcribe(sourceURL: audioURL, resumedCheckpoints: [], progress: { _ in }, checkpoint: { _ in })
 
+        #expect(result.checkpoints.first?.text == "cloud")
+        #expect(await cloud.callCount == 1)
+        #expect(await cloud.sourceLanguages == [NativeLanguagePolicy.autoCode])
+        #expect(await localLog.requests.isEmpty)
+    }
+
+    @Test("missing cloud readiness fails honestly without local ASR")
+    func missingCloudReadinessFailsHonestly() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let audioURL = root.appendingPathComponent("missing.wav")
+        try writeValidTestWAV(to: audioURL)
+        let localLog = PipelineASRRequestLog()
+        let factories = LocalASREngineRouterFactories(
+            whisperKit: { descriptor in PipelineSpyLocalASREngine(descriptor: descriptor.descriptor, result: .init(text: "local", cues: []), log: localLog) },
+            parakeet: { _ in throw LocalASREngineError.unsupportedModel("unexpected local route") },
+            canary: { _ in throw LocalASREngineError.unsupportedModel("unexpected local route") }
+        )
+        let settings = AppSettings.defaults
+        let pipeline = NativeProcessingPipeline(localASRRouter: LocalASREngineRouter(factories: factories))
+        let transcriber = pipeline.makeBatchAudioTranscriber(workspaceRoot: root.appendingPathComponent("work"), sourceLang: "en", settings: settings, providerID: "gemini-cloud")
+        let expected = NativeProcessingReadiness.evaluate(settings: settings, sourceLang: "en", targetLang: "en", transcriptionProvider: "gemini-cloud", translationProvider: settings.translationProvider).transcriptionMessage
+
+        do {
+            _ = try await transcriber.transcribe(sourceURL: audioURL, resumedCheckpoints: [], progress: { _ in }, checkpoint: { _ in })
+            Issue.record("Expected missing cloud readiness to fail")
+        } catch {
+            #expect(error.localizedDescription == expected)
+        }
+        #expect(await localLog.requests.isEmpty)
+    }
+
+    @Test("batch silence planning persists absolute checkpoints and resumes by index")
+    func batchSilencePlanningAndResume() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptBatchSilence-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let audioURL = root.appendingPathComponent("silence.wav")
+        try writeSilenceSplitWAV(to: audioURL)
+
+        let descriptor = try #require(NativeModelCatalog.descriptor(for: "whisper-small-multilingual"))
+        var settings = AppSettings.defaults
+        settings.sliceMode = .silence
+        settings.chunkDurationMin = 1
+        settings.silenceThreshDb = -40
+        settings.minSilenceMs = 1_000
+        settings.localAsrModels[descriptor.id] = LocalModelState(
+            status: .downloaded,
+            label: descriptor.displayName,
+            path: root.path,
+            runtime: descriptor.settingsRuntime
+        )
+        let requests = PipelineASRRequestLog()
+        let factories = LocalASREngineRouterFactories(
+            whisperKit: { model in
+                PipelineSpyLocalASREngine(
+                    descriptor: model.descriptor,
+                    result: LocalASRResult(
+                        text: "chunk",
+                        cues: [
+                            TranscriptCue(
+                                startSec: 1,
+                                endSec: 2,
+                                text: "chunk",
+                                words: [TranscriptWord(startSec: 1.25, endSec: 1.75, text: "chunk")]
+                            )
+                        ]
+                    ),
+                    log: requests
+                )
+            },
+            parakeet: { _ in
+                throw LocalASREngineError.unsupportedModel("unexpected Parakeet factory call")
+            },
+            canary: { _ in
+                throw LocalASREngineError.unsupportedModel("unexpected Canary factory call")
+            }
+        )
+        let pipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(factories: factories)
+        )
+        let transcriber = pipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("work"),
+            sourceLang: "English",
+            settings: settings,
+            providerID: descriptor.id
+        )
+        let firstProgress = PipelineBatchProgressLog()
+        let firstCheckpointLog = PipelineBatchCheckpointLog()
+        let first = try await transcriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: [],
+            progress: { value in await firstProgress.record(value) },
+            checkpoint: { value in await firstCheckpointLog.record(value) }
+        )
+
+        let firstIndexes = first.checkpoints.map(\.index)
+        guard first.checkpoints.count >= 2 else {
+            Issue.record("silence fixture must produce multiple chunks")
+            return
+        }
+        #expect(firstIndexes == Array(firstIndexes.indices))
+        #expect(await firstCheckpointLog.values.last == first.checkpoints)
+        #expect(await requests.requests.count == first.checkpoints.count)
+        #expect(first.checkpoints[0].cues.first?.startSec == 1)
+        #expect(abs((first.checkpoints[1].cues.first?.startSec ?? 0) - 61.5) < 0.05)
+        #expect(abs((first.checkpoints[1].cues.first?.words?.first?.startSec ?? 0) - 61.75) < 0.05)
+        let firstProgressValues = await firstProgress.values
+        #expect(!firstProgressValues.isEmpty)
+        #expect(firstProgressValues.first?.detail.phase == .planning)
+        #expect(firstProgressValues.first?.totalChunks == nil)
+        #expect(firstProgressValues.first?.fraction == 0)
+        #expect(firstProgressValues.last?.fraction == 1)
+        let firstKnownTotal = firstProgressValues.first(where: { $0.totalChunks != nil })
+        #expect(firstKnownTotal?.totalChunks == first.checkpoints.count)
+        #expect(firstKnownTotal?.fraction == 0)
+        #expect(firstProgressValues.allSatisfy { $0.totalChunks == nil || $0.totalChunks == first.checkpoints.count })
+        #expect(!firstProgressValues.contains { $0.totalChunks == 0 || ($0.totalChunks == 1 && first.checkpoints.count > 1) })
+
+        let resumed = try await transcriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: [first.checkpoints[0]],
+            progress: { _ in },
+            checkpoint: { _ in }
+        )
+        #expect(resumed.checkpoints == first.checkpoints)
+        #expect(await requests.requests.count == first.checkpoints.count + first.checkpoints.count - 1)
+
+        var fixedSettings = settings
+        fixedSettings.sliceMode = .fixed
+        let fixedRequests = PipelineASRRequestLog()
+        let fixedFactories = LocalASREngineRouterFactories(
+            whisperKit: { model in
+                PipelineSpyLocalASREngine(
+                    descriptor: model.descriptor,
+                    result: LocalASRResult(text: "fixed", cues: []),
+                    log: fixedRequests
+                )
+            },
+            parakeet: { _ in
+                throw LocalASREngineError.unsupportedModel("unexpected Parakeet factory call")
+            },
+            canary: { _ in
+                throw LocalASREngineError.unsupportedModel("unexpected Canary factory call")
+            }
+        )
+        let fixedPipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(factories: fixedFactories)
+        )
+        let fixedTranscriber = fixedPipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("fixed-work"),
+            sourceLang: "auto",
+            settings: fixedSettings,
+            providerID: descriptor.id
+        )
+        let fixed = try await fixedTranscriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: [],
+            progress: { _ in },
+            checkpoint: { _ in }
+        )
+        #expect(fixed.checkpoints.map(\.index) == [0, 1, 2])
+        #expect(await fixedRequests.requests.count == 3)
+    }
+
+    @Test("batch fixed planning falls back to one short-file chunk")
+    func batchFixedPlanningUsesFallbackForShortFile() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptBatchFixed-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let audioURL = root.appendingPathComponent("short.wav")
+        try writeValidTestWAV(to: audioURL)
+
+        let descriptor = try #require(NativeModelCatalog.descriptor(for: "whisper-small-multilingual"))
+        var settings = AppSettings.defaults
+        settings.sliceMode = .silence
+        settings.chunkDurationMin = 1
+        settings.localAsrModels[descriptor.id] = LocalModelState(
+            status: .downloaded,
+            label: descriptor.displayName,
+            path: root.path,
+            runtime: descriptor.settingsRuntime
+        )
+        let requests = PipelineASRRequestLog()
+        let factories = LocalASREngineRouterFactories(
+            whisperKit: { model in
+                PipelineSpyLocalASREngine(
+                    descriptor: model.descriptor,
+                    result: LocalASRResult(text: "fallback", cues: []),
+                    log: requests
+                )
+            },
+            parakeet: { _ in
+                throw LocalASREngineError.unsupportedModel("unexpected Parakeet factory call")
+            },
+            canary: { _ in
+                throw LocalASREngineError.unsupportedModel("unexpected Canary factory call")
+            }
+        )
+        let pipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(factories: factories)
+        )
+        let transcriber = pipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("work"),
+            sourceLang: "auto",
+            settings: settings,
+            providerID: descriptor.id
+        )
+        let result = try await transcriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: [],
+            progress: { _ in },
+            checkpoint: { _ in }
+        )
+
+        #expect(result.checkpoints.map(\.index) == [0])
+        #expect(await requests.requests.count == 1)
+    }
+    @Test("provider invalidation waits for active batch local ASR")
+    func providerInvalidationWaitsForActiveBatchLocalASR() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptASRInvalidation-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+
+        let audioURL = root.appendingPathComponent("blocked.wav")
+        try writeValidTestWAV(to: audioURL)
+        let descriptor = try #require(NativeModelCatalog.descriptor(for: "whisper-small-multilingual"))
+        var settings = AppSettings.defaults
+        settings.sliceMode = .fixed
+        settings.chunkDurationMin = 1
+        settings.localAsrModels[descriptor.id] = LocalModelState(
+            status: .downloaded,
+            label: descriptor.displayName,
+            path: root.path,
+            runtime: descriptor.settingsRuntime
+        )
+
+        let lifecycle = PipelineASRLifecycleLog()
+        let engine = PipelineBlockingLocalASREngine(
+            descriptor: descriptor,
+            result: LocalASRResult(text: "blocked", cues: []),
+            lifecycle: lifecycle
+        )
+        let factories = LocalASREngineRouterFactories(
+            whisperKit: { _ in engine },
+            parakeet: { _ in
+                throw LocalASREngineError.unsupportedModel("unexpected Parakeet factory call")
+            },
+            canary: { _ in
+                throw LocalASREngineError.unsupportedModel("unexpected Canary factory call")
+            }
+        )
+        let scheduler = TranscriptionScheduler()
+        let pipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(factories: factories),
+            transcriptionScheduler: scheduler
+        )
+        let transcriber = pipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("work"),
+            sourceLang: "en",
+            settings: settings,
+            providerID: descriptor.id
+        )
+
+        let batch = Task {
+            try await transcriber.transcribe(
+                sourceURL: audioURL,
+                resumedCheckpoints: [],
+                progress: { _ in },
+                checkpoint: { _ in }
+            )
+        }
+        await engine.waitUntilTranscriptionStarts()
+
+        let invalidation = Task {
+            await pipeline.invalidateASRBinding()
+        }
+        await Task.yield()
+        #expect(await engine.unloadCount == 0)
+        #expect(await engine.maximumOperationOverlap == 1)
+        #expect(await lifecycle.events == [.transcribeStarted])
+
+        await engine.releaseTranscription()
+        let result = try await batch.value
+        await invalidation.value
+
+        #expect(result.checkpoints.map(\.index) == [0])
+        #expect(await engine.unloadCount == 1)
+        #expect(await engine.maximumOperationOverlap == 1)
+        #expect(await lifecycle.events == [
+            .transcribeStarted,
+            .transcribeFinished,
+            .unloadStarted,
+            .unloadFinished
+        ])
+    }
+
+    @Test("batch ordered progress bridge awaits updates and propagates errors")
+    func batchOrderedProgressBridgeAndErrorPropagation() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptASROrder-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let audioURL = root.appendingPathComponent("split.wav")
+        try writeSilenceSplitWAV(to: audioURL)
+
+        let descriptor = try #require(NativeModelCatalog.descriptor(for: "whisper-small-multilingual"))
+        var settings = AppSettings.defaults
+        settings.sliceMode = .silence
+        settings.chunkDurationMin = 1
+        settings.localAsrModels[descriptor.id] = LocalModelState(
+            status: .downloaded,
+            label: descriptor.displayName,
+            path: root.path,
+            runtime: descriptor.settingsRuntime
+        )
+        let requests = PipelineASRRequestLog()
+        let factories = LocalASREngineRouterFactories(
+            whisperKit: { model in
+                PipelineSpyLocalASREngine(
+                    descriptor: model.descriptor,
+                    result: LocalASRResult(text: "ordered", cues: []),
+                    log: requests
+                )
+            },
+            parakeet: { _ in throw LocalASREngineError.unsupportedModel("unexpected") },
+            canary: { _ in throw LocalASREngineError.unsupportedModel("unexpected") }
+        )
+        let pipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(factories: factories)
+        )
+        let transcriber = pipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("work"),
+            sourceLang: "English",
+            settings: settings,
+            providerID: descriptor.id
+        )
+
+        struct ProgressFault: Error, LocalizedError {
+            var errorDescription: String? { "Progress persistence write failed" }
+        }
+
+        let progressCount = LockedValue<Int>(0)
+
+        await #expect(throws: ProgressFault.self) {
+            _ = try await transcriber.transcribe(
+                sourceURL: audioURL,
+                resumedCheckpoints: [],
+                progress: { update in
+                    let current = progressCount.get() + 1
+                    progressCount.set(current)
+                    if current == 2 {
+                        throw ProgressFault()
+                    }
+                },
+                checkpoint: { _ in }
+            )
+        }
+
+        #expect(await requests.requests.count <= 1)
+    }
+
+    @Test("batch resumed chunk progress mapping correctly computes fractions for prefix and non-zero ordinals")
+    func batchResumedChunkProgressMapping() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptASRResumedProgress-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let audioURL = root.appendingPathComponent("split.wav")
+        try writeSilenceSplitWAV(to: audioURL)
+
+        let descriptor = try #require(NativeModelCatalog.descriptor(for: "whisper-small-multilingual"))
+        var settings = AppSettings.defaults
+        settings.sliceMode = .silence
+        settings.chunkDurationMin = 1
+        settings.localAsrModels[descriptor.id] = LocalModelState(
+            status: .downloaded,
+            label: descriptor.displayName,
+            path: root.path,
+            runtime: descriptor.settingsRuntime
+        )
+        let requests = PipelineASRRequestLog()
+        let factories = LocalASREngineRouterFactories(
+            whisperKit: { model in
+                PipelineSpyLocalASREngine(
+                    descriptor: model.descriptor,
+                    result: LocalASRResult(text: "chunk", cues: []),
+                    log: requests
+                )
+            },
+            parakeet: { _ in throw LocalASREngineError.unsupportedModel("unexpected") },
+            canary: { _ in throw LocalASREngineError.unsupportedModel("unexpected") }
+        )
+        let pipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(factories: factories)
+        )
+        let transcriber = pipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("work"),
+            sourceLang: "English",
+            settings: settings,
+            providerID: descriptor.id
+        )
+
+        // First pass: get planned chunks
+        let firstProgress = PipelineBatchProgressLog()
+        let initialResult = try await transcriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: [],
+            progress: { await firstProgress.record($0) },
+            checkpoint: { _ in }
+        )
+        let totalCount = initialResult.checkpoints.count
+        guard totalCount >= 3 else {
+            Issue.record("Expected at least 3 chunks for prefix and non-prefix testing")
+            return
+        }
+
+        let checkpoint0 = try #require(initialResult.checkpoints.first(where: { $0.index == 0 }))
+        let checkpoint1 = try #require(initialResult.checkpoints.first(where: { $0.index == 1 }))
+
+        // Case 1: Prefix case — resumed semantic index 0, pending ordinals 0 (index 1) and 1 (index 2)
+        let prefixEventLog = PipelineBatchEventLog()
+        let prefixRequests = PipelineASRRequestLog()
+        let prefixFactories = LocalASREngineRouterFactories(
+            whisperKit: { model in
+                PipelineSpyLocalASREngine(
+                    descriptor: model.descriptor,
+                    result: LocalASRResult(text: "chunk", cues: []),
+                    log: prefixRequests,
+                    onTranscribe: { request in
+                        await prefixEventLog.recordASR(request)
+                    }
+                )
+            },
+            parakeet: { _ in throw LocalASREngineError.unsupportedModel("unexpected") },
+            canary: { _ in throw LocalASREngineError.unsupportedModel("unexpected") }
+        )
+        let prefixPipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(factories: prefixFactories)
+        )
+        let prefixTranscriber = prefixPipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("work-prefix"),
+            sourceLang: "English",
+            settings: settings,
+            providerID: descriptor.id
+        )
+
+        let prefixResumed = [checkpoint0]
+        _ = try await prefixTranscriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: prefixResumed,
+            progress: { await prefixEventLog.recordProgress($0) },
+            checkpoint: { _ in }
+        )
+
+        let prefixUpdates = await prefixEventLog.progressValues
+        #expect(!prefixUpdates.isEmpty)
+        #expect(prefixUpdates.first?.detail.phase == .planning)
+        #expect(prefixUpdates.first?.totalChunks == nil)
+        #expect(prefixUpdates.first?.fraction == 0.0)
+        #expect(prefixUpdates.allSatisfy { $0.totalChunks == nil || $0.totalChunks == totalCount })
+        #expect(!prefixUpdates.contains { $0.totalChunks == 0 || ($0.totalChunks == 1 && totalCount > 1) })
+        let expectedPrefixInitial = Double(prefixResumed.count) / Double(totalCount) // 1 / total
+        let expectedPrefixSecondPending = Double(prefixResumed.count + 1) / Double(totalCount) // 2 / total
+        let prefixFirstKnownTotal = prefixUpdates.first(where: { $0.totalChunks != nil })
+        #expect(prefixFirstKnownTotal?.totalChunks == totalCount)
+        #expect(abs((prefixFirstKnownTotal?.fraction ?? 0) - expectedPrefixInitial) < 0.001)
+        #expect(prefixUpdates.last?.fraction == 1.0)
+
+        let prefixPreASR0 = await prefixEventLog.latestProgressBeforeASRRequest(atOrdinal: 0)
+        let prefixPreASR1 = await prefixEventLog.latestProgressBeforeASRRequest(atOrdinal: 1)
+        let preASR0Fraction = try #require(prefixPreASR0?.fraction)
+        let preASR1Fraction = try #require(prefixPreASR1?.fraction)
+        #expect(abs(preASR0Fraction - expectedPrefixInitial) < 0.001)
+        #expect(abs(preASR1Fraction - expectedPrefixSecondPending) < 0.001)
+
+        // Case 2: Non-prefix case — resumed semantic index 1, pending ordinals 0 (index 0) and 1 (index 2)
+        let nonPrefixEventLog = PipelineBatchEventLog()
+        let nonPrefixRequests = PipelineASRRequestLog()
+        let nonPrefixFactories = LocalASREngineRouterFactories(
+            whisperKit: { model in
+                PipelineSpyLocalASREngine(
+                    descriptor: model.descriptor,
+                    result: LocalASRResult(text: "chunk", cues: []),
+                    log: nonPrefixRequests,
+                    onTranscribe: { request in
+                        await nonPrefixEventLog.recordASR(request)
+                    }
+                )
+            },
+            parakeet: { _ in throw LocalASREngineError.unsupportedModel("unexpected") },
+            canary: { _ in throw LocalASREngineError.unsupportedModel("unexpected") }
+        )
+        let nonPrefixPipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(factories: nonPrefixFactories)
+        )
+        let nonPrefixTranscriber = nonPrefixPipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("work-nonprefix"),
+            sourceLang: "English",
+            settings: settings,
+            providerID: descriptor.id
+        )
+
+        let nonPrefixResumed = [checkpoint1]
+        _ = try await nonPrefixTranscriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: nonPrefixResumed,
+            progress: { await nonPrefixEventLog.recordProgress($0) },
+            checkpoint: { _ in }
+        )
+
+        let nonPrefixUpdates = await nonPrefixEventLog.progressValues
+        #expect(!nonPrefixUpdates.isEmpty)
+        #expect(nonPrefixUpdates.first?.detail.phase == .planning)
+        #expect(nonPrefixUpdates.first?.totalChunks == nil)
+        #expect(nonPrefixUpdates.first?.fraction == 0.0)
+        #expect(nonPrefixUpdates.allSatisfy { $0.totalChunks == nil || $0.totalChunks == totalCount })
+        #expect(!nonPrefixUpdates.contains { $0.totalChunks == 0 || ($0.totalChunks == 1 && totalCount > 1) })
+        let expectedNonPrefixInitial = Double(nonPrefixResumed.count) / Double(totalCount) // 1 / total
+        let expectedNonPrefixSecondPending = Double(nonPrefixResumed.count + 1) / Double(totalCount) // 2 / total
+        let nonPrefixFirstKnownTotal = nonPrefixUpdates.first(where: { $0.totalChunks != nil })
+        #expect(nonPrefixFirstKnownTotal?.totalChunks == totalCount)
+        #expect(abs((nonPrefixFirstKnownTotal?.fraction ?? 0) - expectedNonPrefixInitial) < 0.001)
+        #expect(nonPrefixUpdates.last?.fraction == 1.0)
+
+        let nonPrefixPreASR0 = await nonPrefixEventLog.latestProgressBeforeASRRequest(atOrdinal: 0)
+        let nonPrefixPreASR1 = await nonPrefixEventLog.latestProgressBeforeASRRequest(atOrdinal: 1)
+        let nonPrefixPreASR0Fraction = try #require(nonPrefixPreASR0?.fraction)
+        let nonPrefixPreASR1Fraction = try #require(nonPrefixPreASR1?.fraction)
+        #expect(abs(nonPrefixPreASR0Fraction - expectedNonPrefixInitial) < 0.001)
+        #expect(abs(nonPrefixPreASR1Fraction - expectedNonPrefixSecondPending) < 0.001)
+    }
+    @Test("batch invalid chunk index progress mapping throws typed error")
+    func batchInvalidChunkIndexProgressMappingThrows() {
+        let pendingOrdinalByIndex = [0: 0, 2: 1]
+        #expect(throws: InvalidProgressIndexError(index: 1)) {
+            _ = try NativeProcessingPipeline.pendingOrdinal(for: 1, pendingOrdinalByIndex: pendingOrdinalByIndex)
+        }
+    }
+    @Test("batch early total chunks reports planned count and alive fraction before processor runs")
+    func batchEarlyTotalChunksReporting() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptASREarlyTotal-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let audioURL = root.appendingPathComponent("short.wav")
+        try writeValidTestWAV(to: audioURL)
+
+        let descriptor = try #require(NativeModelCatalog.descriptor(for: "whisper-small-multilingual"))
+        var settings = AppSettings.defaults
+        settings.sliceMode = .silence
+        settings.chunkDurationMin = 1
+        settings.localAsrModels[descriptor.id] = LocalModelState(
+            status: .downloaded,
+            label: descriptor.displayName,
+            path: root.path,
+            runtime: descriptor.settingsRuntime
+        )
+        let pipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(
+                factories: LocalASREngineRouterFactories(
+                    whisperKit: { model in
+                        PipelineSpyLocalASREngine(
+                            descriptor: model.descriptor,
+                            result: LocalASRResult(text: "short", cues: []),
+                            log: PipelineASRRequestLog()
+                        )
+                    },
+                    parakeet: { _ in throw LocalASREngineError.unsupportedModel("unexpected") },
+                    canary: { _ in throw LocalASREngineError.unsupportedModel("unexpected") }
+                )
+            )
+        )
+        let transcriber = pipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("work"),
+            sourceLang: "auto",
+            settings: settings,
+            providerID: descriptor.id
+        )
+
+        let progressLog = PipelineBatchProgressLog()
+        _ = try await transcriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: [],
+            progress: { await progressLog.record($0) },
+            checkpoint: { _ in }
+        )
+
+        let updates = await progressLog.values
+        #expect(!updates.isEmpty)
+        #expect(updates.first?.detail.phase == .planning)
+        #expect(updates.first?.totalChunks == nil)
+        #expect(updates.contains { $0.totalChunks == 1 && $0.detail.phase == .transcribing })
+        #expect(updates.last?.fraction == 1.0)
+    }
+
+    @Test("batch truthful audio position coverage produces monotonic fraction across segment positions")
+    func batchTruthfulAudioPositionCoverageAndMonotonicity() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptASRTruthful-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let audioURL = root.appendingPathComponent("test.wav")
+        try writeValidTestWAV(to: audioURL)
+
+        let descriptor = try #require(NativeModelCatalog.descriptor(for: "whisper-small-multilingual"))
+        var settings = AppSettings.defaults
+        settings.sliceMode = .fixed
+        settings.chunkDurationMin = 5
+        settings.localAsrModels[descriptor.id] = LocalModelState(
+            status: .downloaded,
+            label: descriptor.displayName,
+            path: root.path,
+            runtime: descriptor.settingsRuntime
+        )
+
+        actor ProgressScriptedEngine: LocalASREngine {
+            nonisolated let descriptor: LocalASRModelDescriptor
+            init(descriptor: LocalASRModelDescriptor) { self.descriptor = descriptor }
+            func transcribe(_ request: LocalASRRequest, progress: @escaping LocalASRProgressObserver) async throws -> LocalASRResult {
+                try await progress(.loadingModel)
+                try await progress(.convertingAudio)
+                try await progress(.transcribing(audioPositionSec: 0.0))
+                try await progress(.transcribing(audioPositionSec: 1.0))
+                try await progress(.transcribing(audioPositionSec: 2.0))
+                return LocalASRResult(text: "truthful audio coverage", cues: [])
+            }
+            func unload() async {}
+        }
+
+        let pipeline = NativeProcessingPipeline(
+            localASRRouter: LocalASREngineRouter(
+                factories: LocalASREngineRouterFactories(
+                    whisperKit: { model in ProgressScriptedEngine(descriptor: model.descriptor) },
+                    parakeet: { _ in throw LocalASREngineError.unsupportedModel("unexpected") },
+                    canary: { _ in throw LocalASREngineError.unsupportedModel("unexpected") }
+                )
+            )
+        )
+        let transcriber = pipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root.appendingPathComponent("work"),
+            sourceLang: "auto",
+            settings: settings,
+            providerID: descriptor.id
+        )
+
+        let progressLog = PipelineBatchProgressLog()
+        _ = try await transcriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: [],
+            progress: { await progressLog.record($0) },
+            checkpoint: { _ in }
+        )
+
+        let updates = await progressLog.values
+        #expect(!updates.isEmpty)
+        #expect(updates.first?.detail.phase == .planning)
+        #expect(updates.first?.totalChunks == nil)
+
+        let phases = updates.map(\.detail.phase)
+        #expect(phases.contains(.planning))
+        #expect(phases.contains(.loadingModel))
+        #expect(phases.contains(.convertingAudio))
+        #expect(phases.contains(.transcribing))
+
+        // Verify monotonic progress
+        var previousFraction: Double = 0.0
+        for update in updates {
+            #expect(update.fraction >= previousFraction)
+            previousFraction = update.fraction
+        }
+        #expect(updates.last?.fraction == 1.0)
+    }
+}
 private struct MLXRequestRecord: Sendable {
     let prompt: String
     let sourceLength: Int
@@ -601,6 +1300,106 @@ private actor PipelineProgressLog {
         messages.append(message)
     }
 }
+private actor PipelineBatchProgressLog {
+    private(set) var values: [BatchTranscriptionProgress] = []
+
+    func record(_ value: BatchTranscriptionProgress) {
+        values.append(value)
+    }
+}
+
+private enum PipelineBatchTestEvent: Equatable, Sendable {
+    case progress(BatchTranscriptionProgress)
+    case asrRequest(LocalASRRequest)
+}
+
+private actor PipelineBatchEventLog {
+    private(set) var events: [PipelineBatchTestEvent] = []
+
+    func recordProgress(_ progress: BatchTranscriptionProgress) {
+        events.append(.progress(progress))
+    }
+
+    func recordASR(_ request: LocalASRRequest) {
+        events.append(.asrRequest(request))
+    }
+
+    var progressValues: [BatchTranscriptionProgress] {
+        events.compactMap {
+            if case .progress(let p) = $0 { return p }
+            return nil
+        }
+    }
+
+    func latestProgressBeforeASRRequest(atOrdinal ordinal: Int) -> BatchTranscriptionProgress? {
+        var asrCount = 0
+        for (index, event) in events.enumerated() {
+            if case .asrRequest = event {
+                if asrCount == ordinal {
+                    return events[..<index].reversed().compactMap {
+                        if case .progress(let p) = $0 { return p }
+                        return nil
+                    }.first
+                }
+                asrCount += 1
+            }
+        }
+        return nil
+    }
+}
+
+private final class LockedValue<T: Sendable>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: T
+    init(_ value: T) { self.value = value }
+    func get() -> T { lock.withLock { value } }
+    func set(_ newValue: T) { lock.withLock { value = newValue } }
+}
+private actor PipelineBatchCheckpointLog {
+    private(set) var values: [[BatchChunkCheckpoint]] = []
+
+    func record(_ checkpoints: [BatchChunkCheckpoint]) {
+        values.append(checkpoints)
+    }
+}
+
+private func writeSilenceSplitWAV(to url: URL) throws {
+    let sampleRate = 16_000.0
+    let totalFrames = Int(sampleRate * 125)
+    let settings: [String: Any] = [
+        AVFormatIDKey: Int(kAudioFormatLinearPCM),
+        AVSampleRateKey: sampleRate,
+        AVNumberOfChannelsKey: 1,
+        AVLinearPCMBitDepthKey: 32,
+        AVLinearPCMIsFloatKey: true,
+        AVLinearPCMIsBigEndianKey: false,
+        AVLinearPCMIsNonInterleaved: true
+    ]
+    guard let format = AVAudioFormat(
+        commonFormat: .pcmFormatFloat32,
+        sampleRate: sampleRate,
+        channels: 1,
+        interleaved: false
+    ),
+    let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(totalFrames)) else {
+        throw TestAudioCreationError.cannotCreateFormatOrBuffer
+    }
+    buffer.frameLength = AVAudioFrameCount(totalFrames)
+    if let samples = buffer.floatChannelData?[0] {
+        for frame in 0..<totalFrames {
+            let second = Double(frame) / sampleRate
+            let silent = (58..<63).contains(Int(second)) || (118..<123).contains(Int(second))
+            samples[frame] = silent ? 0 : 0.2
+        }
+    }
+    let file = try AVAudioFile(
+        forWriting: url,
+        settings: settings,
+        commonFormat: .pcmFormatFloat32,
+        interleaved: false
+    )
+    try file.write(from: buffer)
+}
 
 private func mlxCueBatchOutput(_ texts: [String]) -> String {
     let cues = texts.enumerated()
@@ -627,27 +1426,129 @@ private actor PipelineASRRequestLog {
     }
 }
 
+private actor PipelineSpyCloudTranscriber: NativeCloudAudioTranscribing {
+    private(set) var callCount = 0
+    private(set) var sourceLanguages: [String] = []
+
+    func transcribe(audioURL: URL, sourceLang: String, metadata: AudioMetadata, glossary: [GlossaryEntry], provider: ActiveCloudTranscriptionProvider, promptPresets: [String: PromptPresetSettings], chunkStartSec: Double, chunkEndSec: Double) async throws -> CloudAudioTranscriptionResult {
+        callCount += 1
+        sourceLanguages.append(sourceLang)
+        return CloudAudioTranscriptionResult(text: "cloud", cues: [TranscriptCue(startSec: chunkStartSec, endSec: chunkEndSec, text: "cloud")])
+    }
+}
+
 private actor PipelineSpyLocalASREngine: LocalASREngine {
     nonisolated let descriptor: LocalASRModelDescriptor
     private let result: LocalASRResult
     private let log: PipelineASRRequestLog
+    private let onTranscribe: (@Sendable (LocalASRRequest) async -> Void)?
 
     init(
         descriptor: LocalASRModelDescriptor,
         result: LocalASRResult,
-        log: PipelineASRRequestLog
+        log: PipelineASRRequestLog,
+        onTranscribe: (@Sendable (LocalASRRequest) async -> Void)? = nil
     ) {
         self.descriptor = descriptor
         self.result = result
         self.log = log
+        self.onTranscribe = onTranscribe
     }
 
-    func transcribe(_ request: LocalASRRequest) async throws -> LocalASRResult {
+    func transcribe(
+        _ request: LocalASRRequest,
+        progress: @escaping LocalASRProgressObserver
+    ) async throws -> LocalASRResult {
         await log.record(request)
+        if let onTranscribe {
+            await onTranscribe(request)
+        }
         return result
     }
 
     func unload() async {}
+}
+
+private enum PipelineASREvent: Equatable, Sendable {
+    case transcribeStarted
+    case transcribeFinished
+    case unloadStarted
+    case unloadFinished
+}
+
+private actor PipelineASRLifecycleLog {
+    private(set) var events: [PipelineASREvent] = []
+
+    func record(_ event: PipelineASREvent) {
+        events.append(event)
+    }
+}
+
+private actor PipelineBlockingLocalASREngine: LocalASREngine {
+    nonisolated let descriptor: LocalASRModelDescriptor
+    private let result: LocalASRResult
+    private let lifecycle: PipelineASRLifecycleLog
+    private var transcriptionContinuation: CheckedContinuation<Void, Never>?
+    private var transcriptionStarted = false
+    private var startWaiters: [CheckedContinuation<Void, Never>] = []
+    private var activeOperations = 0
+    private(set) var maximumOperationOverlap = 0
+    private(set) var unloadCount = 0
+
+    init(
+        descriptor: LocalASRModelDescriptor,
+        result: LocalASRResult,
+        lifecycle: PipelineASRLifecycleLog
+    ) {
+        self.descriptor = descriptor
+        self.result = result
+        self.lifecycle = lifecycle
+    }
+
+    func transcribe(
+        _ request: LocalASRRequest,
+        progress: @escaping LocalASRProgressObserver
+    ) async throws -> LocalASRResult {
+        activeOperations += 1
+        maximumOperationOverlap = max(maximumOperationOverlap, activeOperations)
+        await lifecycle.record(.transcribeStarted)
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            transcriptionContinuation = continuation
+            transcriptionStarted = true
+            let waiters = startWaiters
+            startWaiters.removeAll()
+            waiters.forEach { $0.resume() }
+        }
+        activeOperations -= 1
+        await lifecycle.record(.transcribeFinished)
+        return result
+    }
+
+    func unload() async {
+        activeOperations += 1
+        maximumOperationOverlap = max(maximumOperationOverlap, activeOperations)
+        unloadCount += 1
+        await lifecycle.record(.unloadStarted)
+        activeOperations -= 1
+        await lifecycle.record(.unloadFinished)
+    }
+
+    func waitUntilTranscriptionStarts() async {
+        if transcriptionStarted {
+            return
+        }
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            startWaiters.append(continuation)
+        }
+    }
+
+    func releaseTranscription() {
+        guard let transcriptionContinuation else {
+            return
+        }
+        self.transcriptionContinuation = nil
+        transcriptionContinuation.resume()
+    }
 }
 
 private enum TestAudioCreationError: Error {

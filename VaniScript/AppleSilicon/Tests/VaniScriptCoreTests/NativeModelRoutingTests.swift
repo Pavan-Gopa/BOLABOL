@@ -157,5 +157,82 @@ struct NativeModelRoutingTests {
         #expect(settings.localAsrModels[id]?.status == .failed)
         #expect(!settings.isDownloadedLocalASRModelActive(id: id))
     }
+    @Test("favoriteCloudModelIDs persist, toggle, and sort favorites first")
+    func favoritesPersistToggleAndSort() throws {
+        var settings = AppSettings.defaults
+        #expect(settings.favoriteCloudModelIDs.isEmpty)
+        #expect(!settings.isFavoriteModel("gemini-2.5-pro"))
+
+        settings.toggleFavoriteModel("gemini-2.5-pro")
+        #expect(settings.isFavoriteModel("gemini-2.5-pro"))
+        #expect(settings.favoriteCloudModelIDs == ["gemini-2.5-pro"])
+
+        settings.toggleFavoriteModel("google/gemini-2.5-flash")
+        #expect(settings.isFavoriteModel("google/gemini-2.5-flash"))
+        #expect(settings.favoriteCloudModelIDs == ["gemini-2.5-pro", "google/gemini-2.5-flash"])
+
+        // Round-trip encoding and decoding
+        let encoded = try JSONEncoder().encode(settings)
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: encoded)
+        #expect(decoded.favoriteCloudModelIDs == ["gemini-2.5-pro", "google/gemini-2.5-flash"])
+        #expect(decoded.isFavoriteModel("gemini-2.5-pro"))
+        #expect(decoded.isFavoriteModel("google/gemini-2.5-flash"))
+
+        // Untoggle
+        settings.toggleFavoriteModel("gemini-2.5-pro")
+        #expect(!settings.isFavoriteModel("gemini-2.5-pro"))
+        #expect(settings.favoriteCloudModelIDs == ["google/gemini-2.5-flash"])
+
+        // Sorting: favorites appear first, then alphabetical
+        let rawList = ["zebra-model", "google/gemini-2.5-flash", "alpha-model", "beta-model"]
+        let sorted = settings.sortedWithFavorites(rawList)
+        #expect(sorted == ["google/gemini-2.5-flash", "alpha-model", "beta-model", "zebra-model"])
+    }
+
+    @Test("available transcription providers list has no coreml-whisperkit synthetic stub")
+    func availableTranscriptionProvidersHasNoCoreMLWhisperKitStub() {
+        let providers = ProviderRegistry.availableTranscriptionProviders(settings: .defaults)
+        #expect(!providers.map(\.id).contains("coreml-whisperkit"))
+        #expect(!providers.map(\.label).contains("WhisperKit Core ML"))
+    }
+
+    @Test("available translation providers list has no mlx-native synthetic stub")
+    func availableTranslationProvidersHasNoMLXNativeStub() {
+        let availability = ProviderRegistry.availableTranslationProviders(settings: .defaults, targetLang: "Russian")
+        #expect(!availability.providers.map(\.id).contains("mlx-native"))
+        #expect(!availability.providers.map(\.label).contains("MLX Swift Local"))
+    }
+
+    @Test("Settings catalog id maps from gemini-cloud, gpt-cloud, openrouter, qwen, and ollama-cloud")
+    func settingsCatalogIDMapping() {
+        #expect(ProviderRegistry.cloudProviderCatalogID(for: "gemini-cloud") == CloudProviderCatalog.geminiID)
+        #expect(ProviderRegistry.cloudProviderCatalogID(for: "gemini") == CloudProviderCatalog.geminiID)
+        #expect(ProviderRegistry.cloudProviderCatalogID(for: "gpt-cloud") == CloudProviderCatalog.openaiID)
+        #expect(ProviderRegistry.cloudProviderCatalogID(for: "openai") == CloudProviderCatalog.openaiID)
+        #expect(ProviderRegistry.cloudProviderCatalogID(for: "openrouter") == CloudProviderCatalog.openrouterID)
+        #expect(ProviderRegistry.cloudProviderCatalogID(for: "qwen") == CloudProviderCatalog.qwenID)
+        #expect(ProviderRegistry.cloudProviderCatalogID(for: "ollama-cloud") == CloudProviderCatalog.ollamaCloudID)
+        #expect(ProviderRegistry.cloudProviderCatalogID(for: "custom") == CloudProviderCatalog.customID)
+        #expect(ProviderRegistry.cloudProviderCatalogID(for: "unknown-local-model") == nil)
+    }
+
+    @Test("batch favorite models include starred ids and current selection")
+    func batchFavoriteModelsIncludesStarredAndCurrent() {
+        var settings = AppSettings.defaults
+        settings.geminiTextModel = "gemini-custom-active"
+        settings.favoriteCloudModelIDs = ["gemini-2.5-pro", "gemini-1.5-flash", "openai/whisper-large-v3"]
+
+        let geminiModels = settings.favoriteModels(for: "gemini-cloud")
+        #expect(geminiModels.contains("gemini-2.5-pro"))
+        #expect(geminiModels.contains("gemini-1.5-flash"))
+        #expect(geminiModels.contains("gemini-custom-active"))
+        #expect(!geminiModels.contains("openai/whisper-large-v3"))
+
+        settings.openrouterTranscriptionModel = "meta-llama/llama-3.3-70b-instruct"
+        let openrouterModels = settings.favoriteModels(for: "openrouter")
+        #expect(openrouterModels.contains("openai/whisper-large-v3"))
+        #expect(openrouterModels.contains("meta-llama/llama-3.3-70b-instruct"))
+        #expect(!openrouterModels.contains("gemini-2.5-pro"))
+    }
 
 }

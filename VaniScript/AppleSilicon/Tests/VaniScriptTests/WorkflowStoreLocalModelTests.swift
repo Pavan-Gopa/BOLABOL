@@ -586,7 +586,8 @@ struct WorkflowStoreLocalModelTests {
             audioURL: audioURL,
             sourceLang: "en",
             settings: settings,
-            providerID: asrID
+            providerID: asrID,
+            progress: { _ in }
         )
 
         let cue = TranscriptCue(startSec: 0, endSec: 1, text: "hello")
@@ -649,7 +650,8 @@ struct WorkflowStoreLocalModelTests {
             audioURL: audioURL,
             sourceLang: "en",
             settings: store.settings,
-            providerID: asrID
+            providerID: asrID,
+            progress: { _ in }
         )
         let mlxModel = try #require(NativeModelCatalog.activeMLXModel(settings: store.settings, providerID: mlxID))
         _ = try await store.formatDocumentWithLocalMLX(
@@ -665,7 +667,8 @@ struct WorkflowStoreLocalModelTests {
             audioURL: audioURL,
             sourceLang: "en",
             settings: store.settings,
-            providerID: asrID
+            providerID: asrID,
+            progress: { _ in }
         )
         store.generateShortsPlan(count: 1, minDurationSec: 1, maxDurationSec: 2, mode: .source)
         await events.waitFor("shorts-plan")
@@ -675,7 +678,8 @@ struct WorkflowStoreLocalModelTests {
             audioURL: audioURL,
             sourceLang: "en",
             settings: store.settings,
-            providerID: asrID
+            providerID: asrID,
+            progress: { _ in }
         )
         let unloadsBeforeMutation = await events.count("asr-unload")
         store.updateSettings { settings in
@@ -875,7 +879,10 @@ private struct LifecycleASREngine: LocalASREngine {
     let descriptor: LocalASRModelDescriptor
     let events: LifecycleEventLog
 
-    func transcribe(_ request: LocalASRRequest) async throws -> LocalASRResult {
+    func transcribe(
+        _ request: LocalASRRequest,
+        progress: @escaping LocalASRProgressObserver
+    ) async throws -> LocalASRResult {
         await events.append("asr-transcribe")
         return LocalASRResult(text: "hello")
     }

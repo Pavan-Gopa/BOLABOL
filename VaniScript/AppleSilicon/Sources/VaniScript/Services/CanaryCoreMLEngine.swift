@@ -134,7 +134,10 @@ actor CanaryCoreMLEngine: LocalASREngine {
         )
     }
 
-    func transcribe(_ request: LocalASRRequest) async throws -> LocalASRResult {
+    func transcribe(
+        _ request: LocalASRRequest,
+        progress: @escaping LocalASRProgressObserver
+    ) async throws -> LocalASRResult {
         try Task.checkCancellation()
         try validateASROnlyRequest(request)
         try Self.validateModelBinding(

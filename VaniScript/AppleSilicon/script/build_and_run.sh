@@ -16,6 +16,7 @@ APP_BUNDLE="$DIST_DIR/$APP_BUNDLE_NAME.app"
 APP_CONTENTS="$APP_BUNDLE/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
 APP_RESOURCES="$APP_CONTENTS/Resources"
+APP_FRAMEWORKS="$APP_CONTENTS/Frameworks"
 APP_MEDIA_BIN="$APP_BUNDLE/Contents/Resources/bin"
 APP_BINARY="$APP_MACOS/$APP_EXECUTABLE_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
@@ -32,7 +33,7 @@ swift build --arch arm64 --product "$SWIFT_PRODUCT_NAME"
 BUILD_BINARY="$(swift build --arch arm64 --show-bin-path)/$SWIFT_PRODUCT_NAME"
 
 rm -rf "$APP_BUNDLE"
-mkdir -p "$APP_MACOS" "$APP_RESOURCES"
+mkdir -p "$APP_MACOS" "$APP_RESOURCES" "$APP_FRAMEWORKS"
 cp "$BUILD_BINARY" "$APP_BINARY"
 chmod +x "$APP_BINARY"
 
@@ -60,9 +61,7 @@ copy_optional_asset() {
 
 copy_required_asset "$APPLE_SILICON_ASSETS_DIR/AppIconAS.icns" "$APP_RESOURCES/AppIcon.icns"
 copy_required_asset "$APPLE_SILICON_ASSETS_DIR/AppIconAS.png" "$APP_RESOURCES/AppIcon.png"
-copy_required_asset "$WORKSPACE_DIR/Shared/VaniScript_Logo.svg" "$APP_RESOURCES/VaniScript_Logo.svg"
-copy_optional_asset "$WORKSPACE_DIR/Shared/VaniScript_Logo.png" "$APP_RESOURCES/VaniScript_Logo.png"
-copy_optional_asset "$WORKSPACE_DIR/Shared/New_Logo.svg" "$APP_RESOURCES/New_Logo.svg"
+copy_required_asset "$APPLE_SILICON_ASSETS_DIR/VaniScript_Logo.svg" "$APP_RESOURCES/VaniScript_Logo.svg"
 
 if [[ -d "$ROOT_DIR/Sources/VaniScript/Resources/Fonts" ]]; then
   mkdir -p "$APP_RESOURCES/Fonts"
@@ -216,6 +215,19 @@ cat >"$INFO_PLIST" <<PLIST
 </dict>
 </plist>
 PLIST
+
+SPARKLE_FRAMEWORK_SRC="$ROOT_DIR/.build/arm64-apple-macosx/debug/Sparkle.framework"
+if [[ ! -d "$SPARKLE_FRAMEWORK_SRC" ]]; then
+  SPARKLE_FRAMEWORK_SRC="$ROOT_DIR/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
+fi
+if [[ ! -d "$SPARKLE_FRAMEWORK_SRC" ]]; then
+  echo "error: Sparkle.framework was not found in debug build artifacts." >&2
+  exit 1
+fi
+/usr/bin/ditto "$SPARKLE_FRAMEWORK_SRC" "$APP_FRAMEWORKS/Sparkle.framework"
+if ! /usr/bin/otool -l "$APP_BINARY" | /usr/bin/grep -Fq '@executable_path/../Frameworks'; then
+  /usr/bin/install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP_BINARY"
+fi
 
 FORBIDDEN_PATTERN='python|node|node_modules|electron|chromium|llama|llamacpp'
 if (cd "$APP_BUNDLE" && /usr/bin/find . -print | /usr/bin/grep -Eiq "$FORBIDDEN_PATTERN"); then

@@ -9,6 +9,7 @@ public enum SettingsTab: String, CaseIterable, Codable, Equatable, Sendable {
     case models
     case prompts
     case transcription
+    case updates
 
     public static let alphabetized: [SettingsTab] = [
         .agents,
@@ -19,5 +20,6 @@ public enum SettingsTab: String, CaseIterable, Codable, Equatable, Sendable {
         .models,
         .prompts,
         .transcription,
+        .updates,
     ]
 }

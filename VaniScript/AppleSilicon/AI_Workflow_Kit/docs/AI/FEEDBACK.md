@@ -1,8 +1,9 @@
 ## Human Feedback (2026-08-20)
-**Candidate S31.J1 Rejected**
+**Candidate S31D16TruthfulProgress2 Rejected**
 
-1. **Folder addition visibility bug:** When a new folder is added in the UI, the files inside it are not visible in the middle column right away. The user has to toggle the "Watch this folder" switch off and then back on for the files to appear. They should populate immediately upon adding the folder.
-2. **Processing freeze (hang at 0%):** When clicking "Start", the first file enters the "Processing" state but hangs indefinitely. There is zero visual progress (the progress bar doesn't move, and the status bar remains stuck). 
-3. **Layout jump due to massive ID string:** Clicking "Start" causes the window to jump in height. This happens because the right column ("BatchJobDetailsView" -> "Configuration" -> "Provider") displays a massive, multi-line hex string (`batch-id-v2-000000...`), which is useless to the user and drastically breaks the layout.
+1. **Progress bar missing (Stuck on "Starting..."):** Processing successfully finishes in ~5 minutes, but the UI shows an indeterminate spinner ("Starting...") for the entire duration. The UI must transition to a real determinate progress bar (showing chunks/percentage) during inference.
+2. **Output Collision -> Overwrite:** The user explicitly requested to OVERWRITE existing companion text files instead of failing with an "Output conflict" error. The user shouldn't have to manually delete old files when retrying with a different model.
+3. **Empty State "Start" Button:** The "Start" button can be clicked even when there are no folders added or no pending jobs. It must be disabled when there is no work to do.
+4. **Auto-Stop on Completion:** When all jobs finish processing, the button stays on "Stop" and the green pulsing icon remains active. The system should automatically revert to the "Start" state (stop running) once the queue is complete.
 
-Please fix these logic and UI issues so the folder populates immediately, processing actually runs and updates progress, and the massive ID is removed/hidden.
+Please fix these UI and logic issues so the batch processing feels polished and intuitive.

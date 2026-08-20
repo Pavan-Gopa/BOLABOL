@@ -59,11 +59,11 @@ parked_steps:
   - S6
 
 implementation:
-  status: complete
-  attempts: 23
+  status: incomplete
+  attempts: 24
   # Increment only after evidence evaluates an implementation attempt.
   note: >-
-    S31.J1 rejected by Human. 1) Folder addition requires manual toggle to show files. 2) Processing hangs at 0% with no visual progress. 3) Massive `batch-id-v2` string breaks the layout.
+    S31.J1 rejected again by Human. 1) UI stuck on "Starting..." spinner instead of progress bar. 2) User wants to overwrite existing files instead of output conflict. 3) Start button clickable when empty. 4) Doesn't auto-stop when finished.
 retry_guard:
   max_attempts_without_progress: 3
   last_failure_signature: null
@@ -91,9 +91,9 @@ interruption:
   recorded_at: null
 human_acceptance:
   status: rejected
-  candidate_id: S31D16TruthfulProgress1
+  candidate_id: S31D16TruthfulProgress2
   evidence: >-
-    Human visually rejected the build. Folders don't auto-refresh, processing is frozen, and a massive ID string ruins the UI layout.
+    Human visually rejected the build due to progress bar stuck on spinner, output conflict instead of overwrite, empty start button, and missing auto-stop.
 review:
   status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
@@ -119,10 +119,11 @@ plan_files:
   - docs/PRD-Editorial-Review-Workspace.md
   - docs/BATCH_TRANSCRIPTION_ARCHITECTURE_PLAN.md
 coder_brief: |
-  Human rejected S31.J1 candidate 22. Fix 3 bugs:
-  1. WatchedFolderService/BatchTranscriptionStore: Files must appear immediately upon adding a folder, without requiring a toggle.
-  2. BatchTranscriptionCoordinator/Pipeline: Processing must actually start and update progress instead of hanging indefinitely at 0%.
-  3. BatchJobDetailsView: Remove or truncate the massive `batch-id-v2-000...` string in Provider configuration so it doesn't cause the window to jump or clutter the UI.
+  Human rejected S31.J1 candidate 23. Fix 4 bugs:
+  1. UI stuck on "Starting..." spinner: The backend processing works (finishes in 5 mins), but the UI never transitions to a determinate progress bar. Fix the progress relay (`LocalASREngineRouter` / `NativeProcessingPipeline`) so `BatchJobDetailsView` / `BatchWorkspaceView` shows real progress.
+  2. Overwrite Output: Remove the output collision safety block. Silently overwrite existing companion `.txt` files when processing.
+  3. Disable Empty Start: The "Start" button must be disabled when there are no jobs/folders.
+  4. Auto-Stop: When all jobs are completed (queue is empty), automatically toggle `isRunning` back to false so the "Stop" button reverts to "Start".
 checkpoint:
   last_pre_tag: vaniscript-as/pre-S1
   last_post_tag: vaniscript-as/S1-done

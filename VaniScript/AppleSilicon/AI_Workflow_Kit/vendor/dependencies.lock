@@ -1,0 +1,16 @@
+schema_version: 1
+workflow_version: 3.1.3
+ponytail:
+  source: https://github.com/DietrichGebert/ponytail
+  version: 4.9.0
+  ref: 2ed6c52c9d7e5e56942508591085fd45dea277d3
+  license: MIT
+graphify:
+  source: https://github.com/Graphify-Labs/graphify
+  package: graphifyy
+  version: 0.9.46
+  license: Apache-2.0
+ui_designer:
+  source: project-local
+  version: 1
+  license: MIT

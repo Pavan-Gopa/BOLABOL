@@ -346,7 +346,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var grokChatReasoningEffort: String
     public var qwenChatModelID: String // Q2: no reasoning-effort — Qwen CLI has no such flag
     public var logLevel: LogLevel
-
+    public var requireCanonicalNames: Bool
+    public var favoriteCloudModelIDs: [String]
     private enum CodingKeys: String, CodingKey {
         case geminiKey, geminiKeys, openaiKey, anthropicKey
         case geminiBudgetUsd, openaiBudgetUsd
@@ -369,6 +370,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         case grokChatModelID, grokChatReasoningEffort
         case qwenChatModelID
         case logLevel
+        case requireCanonicalNames
+        case favoriteCloudModelIDs
     }
 
     public init(
@@ -428,7 +431,9 @@ public struct AppSettings: Codable, Equatable, Sendable {
         grokChatModelID: String = GrokChatModelCatalog.defaultModelID,
         grokChatReasoningEffort: String = "medium",
         qwenChatModelID: String = QwenChatModelCatalog.defaultModelID,
-        logLevel: LogLevel = .info
+        logLevel: LogLevel = .info,
+        requireCanonicalNames: Bool = true,
+        favoriteCloudModelIDs: [String] = []
     ) {
         let bank: GeminiAPIKeyBank
         if !geminiKeys.isEmpty {
@@ -493,6 +498,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.grokChatReasoningEffort = grokChatReasoningEffort
         self.qwenChatModelID = qwenChatModelID
         self.logLevel = logLevel
+        self.requireCanonicalNames = requireCanonicalNames
+        self.favoriteCloudModelIDs = favoriteCloudModelIDs
     }
 
     public init(from decoder: Decoder) throws {
@@ -567,6 +574,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         self.openrouterTranscriptionModel = try container.decodeIfPresent(String.self, forKey: .openrouterTranscriptionModel) ?? ""
         self.openrouterTranslationModel = try container.decodeIfPresent(String.self, forKey: .openrouterTranslationModel) ?? ""
         self.logLevel = try container.decodeIfPresent(LogLevel.self, forKey: .logLevel) ?? .info
+        self.requireCanonicalNames = try container.decodeIfPresent(Bool.self, forKey: .requireCanonicalNames) ?? true
+        self.favoriteCloudModelIDs = try container.decodeIfPresent([String].self, forKey: .favoriteCloudModelIDs) ?? []
     }
 
     public func transcriptionModel(for providerID: String) -> String {
@@ -620,6 +629,60 @@ public struct AppSettings: Codable, Equatable, Sendable {
             return m.isEmpty ? "gpt-4o-mini" : m
         }
         return ""
+    }
+    public func isFavoriteModel(_ modelID: String) -> Bool {
+        let trimmed = modelID.trimmingCharacters(in: .whitespacesAndNewlines)
+        return favoriteCloudModelIDs.contains(trimmed)
+    }
+
+    @discardableResult
+    public mutating func toggleFavoriteModel(_ modelID: String) -> Set<String> {
+        let trimmed = modelID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return Set(favoriteCloudModelIDs) }
+        if let index = favoriteCloudModelIDs.firstIndex(of: trimmed) {
+            favoriteCloudModelIDs.remove(at: index)
+        } else {
+            favoriteCloudModelIDs.append(trimmed)
+        }
+        return Set(favoriteCloudModelIDs)
+    }
+
+    public func sortedWithFavorites(_ models: [String]) -> [String] {
+        let favs = Set(favoriteCloudModelIDs)
+        return models.sorted { a, b in
+            let aFav = favs.contains(a)
+            let bFav = favs.contains(b)
+            if aFav != bFav { return aFav }
+            return a.localizedCaseInsensitiveCompare(b) == .orderedAscending
+        }
+    }
+
+    public func favoriteModels(for providerID: String) -> [String] {
+        let trimmed = providerID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if trimmed == "openrouter" || trimmed == CloudProviderCatalog.openrouterID {
+            let current = transcriptionModel(for: "openrouter")
+            let currentEffective = current.isEmpty ? "google/gemini-2.5-flash" : current
+            var matching = favoriteCloudModelIDs.filter { $0.contains("/") }
+            if matching.isEmpty {
+                matching = ["google/gemini-2.5-flash", "openai/whisper-large-v3", "meta-llama/llama-3.3-70b-instruct"]
+            }
+            if !matching.contains(currentEffective) {
+                matching.insert(currentEffective, at: 0)
+            }
+            return matching
+        } else if trimmed == "gemini-cloud" || trimmed == CloudProviderCatalog.geminiID {
+            let current = geminiTextModel.trimmingCharacters(in: .whitespacesAndNewlines)
+            let currentEffective = current.isEmpty ? "gemini-2.5-flash" : current
+            var matching = favoriteCloudModelIDs.filter { $0.lowercased().contains("gemini") }
+            if matching.isEmpty {
+                matching = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"]
+            }
+            if !matching.contains(currentEffective) {
+                matching.insert(currentEffective, at: 0)
+            }
+            return matching
+        }
+        return []
     }
 
     public func resolvedQwenBaseUrl(apiKey: String? = nil) -> String {
@@ -764,7 +827,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         codexChatReasoningEffort: "medium",
         grokChatModelID: GrokChatModelCatalog.defaultModelID,
         grokChatReasoningEffort: "medium",
-        qwenChatModelID: QwenChatModelCatalog.defaultModelID
+        qwenChatModelID: QwenChatModelCatalog.defaultModelID,
+        favoriteCloudModelIDs: []
     )
 
     private static func mergeLocalASRDefaults(

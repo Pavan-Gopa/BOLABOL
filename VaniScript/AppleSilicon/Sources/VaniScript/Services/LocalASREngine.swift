@@ -73,9 +73,21 @@ enum LocalASREngineError: LocalizedError, Equatable, Sendable {
     }
 }
 
+/// Granular progress events emitted during local ASR processing.
+enum LocalASRProgress: Sendable, Equatable {
+    case loadingModel
+    case convertingAudio
+    case transcribing(audioPositionSec: Double?)
+}
+
+typealias LocalASRProgressObserver = @Sendable (LocalASRProgress) async throws -> Void
+
 /// ASR-only contract implemented by local transcription engines.
 protocol LocalASREngine: Sendable {
     var descriptor: LocalASRModelDescriptor { get }
-    func transcribe(_ request: LocalASRRequest) async throws -> LocalASRResult
+    func transcribe(
+        _ request: LocalASRRequest,
+        progress: @escaping LocalASRProgressObserver
+    ) async throws -> LocalASRResult
     func unload() async
 }

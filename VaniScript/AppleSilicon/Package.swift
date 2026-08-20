@@ -8,51 +8,43 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        .executable(
-            name: "VaniScript",
-            targets: ["VaniScript"]
-        ),
-        .library(
-            name: "VaniScriptCore",
-            targets: ["VaniScriptCore"]
-        )
+        .executable(name: "VaniScript", targets: ["VaniScript"]),
+        .library(name: "VaniScriptCore", targets: ["VaniScriptCore"]),
+        .library(name: "VaniScriptRuntime", targets: ["VaniScriptRuntime"])
     ],
     dependencies: [
         .package(url: "https://github.com/ml-explore/mlx-swift-lm", .upToNextMajor(from: "3.31.3")),
         .package(url: "https://github.com/argmaxinc/argmax-oss-swift.git", branch: "main"),
         .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.15.5"),
         .package(url: "https://github.com/huggingface/swift-huggingface", from: "0.9.0"),
-        .package(url: "https://github.com/huggingface/swift-transformers", from: "1.3.0")
+        .package(url: "https://github.com/huggingface/swift-transformers", from: "1.3.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.4")
     ],
     targets: [
+        .target(
+            name: "VaniScriptRuntime",
+            dependencies: ["VaniScriptCore"],
+            path: "Sources/VaniScriptRuntime",
+            linkerSettings: [.linkedLibrary("sqlite3"), .linkedFramework("AVFoundation")]
+        ),
         .executableTarget(
             name: "VaniScript",
             dependencies: [
-                "VaniScriptCore",
+                "VaniScriptCore", "VaniScriptRuntime",
                 .product(name: "MLXLLM", package: "mlx-swift-lm"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
                 .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
                 .product(name: "WhisperKit", package: "argmax-oss-swift"),
                 .product(name: "FluidAudio", package: "FluidAudio"),
                 .product(name: "HuggingFace", package: "swift-huggingface"),
-                .product(name: "Tokenizers", package: "swift-transformers")
+                .product(name: "Tokenizers", package: "swift-transformers"),
+                .product(name: "Sparkle", package: "Sparkle")
             ],
             path: "Sources/VaniScript",
             resources: [.copy("Resources/Fonts")]
         ),
-        .target(
-            name: "VaniScriptCore",
-            path: "Sources/VaniScriptCore"
-        ),
-        .testTarget(
-            name: "VaniScriptCoreTests",
-            dependencies: ["VaniScriptCore"],
-            path: "Tests/VaniScriptCoreTests"
-        ),
-        .testTarget(
-            name: "VaniScriptTests",
-            dependencies: ["VaniScript", "VaniScriptCore"],
-            path: "Tests/VaniScriptTests"
-        )
+        .target(name: "VaniScriptCore", path: "Sources/VaniScriptCore"),
+        .testTarget(name: "VaniScriptCoreTests", dependencies: ["VaniScriptCore"], path: "Tests/VaniScriptCoreTests"),
+        .testTarget(name: "VaniScriptTests", dependencies: ["VaniScript", "VaniScriptCore", "VaniScriptRuntime"], path: "Tests/VaniScriptTests")
     ]
 )

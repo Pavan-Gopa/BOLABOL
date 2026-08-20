@@ -1,0 +1,244 @@
+warning: 'fluidaudio': found 1 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /Users/pavan/Documents/AI Projects/VaniScript/AppleSilicon/.build/checkouts/FluidAudio/Sources/FluidAudio/ASR/Parakeet/Unified/benchmark.md
+[0/1] Planning build
+[1/1] Compiling plugin GenerateManual
+[2/2] Compiling plugin GenerateDoccReference
+Building for debugging...
+[2/6] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (2.41s)
+Test Suite 'Selected tests' started at 2026-08-20 12:35:42.470.
+Test Suite 'VaniScriptAppleSiliconPackageTests.xctest' started at 2026-08-20 12:35:42.506.
+Test Suite 'VaniScriptAppleSiliconPackageTests.xctest' passed at 2026-08-20 12:35:42.506.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'Selected tests' passed at 2026-08-20 12:35:42.506.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.036) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite "Batch media naming" started.
+◇ Suite "Batch workspace integration" started.
+◇ Suite "Batch timed TXT renderer" started.
+◇ Suite "SQLite batch repository" started.
+◇ Suite "Batch job state machine" started.
+◇ Test "restart recovery, invalid names, user edits, and one-file failure remain isolated" started.
+◇ Suite "Native processing local ASR" started.
+◇ Suite "Batch architecture acceptance" started.
+◇ Test "detail pane falls back to processing job when unselected" started.
+◇ Suite "Native LLM prompts" started.
+◇ Test "stop cancels in-flight work and leaves jobs in list for restart" started.
+◇ Suite "Document translation coordinator" started.
+◇ Test "removing a profile deletes its persisted jobs and clears the store" started.
+◇ Test "checkpoint events refresh live store progress and file status" started.
+◇ Test "stop cancels blocked startup reconciliation and balances its lease" started.
+◇ Test "store scan reads live canonical-name policy and preserves arbitrary filename stems" started.
+◇ Test "folder fixture creates exact-stem timed companion without project artifacts and deduplicates" started.
+◇ Suite "Batch coordinator" started.
+◇ Test "current pending starts before blocked reconciliation and new admission wakes processing" started.
+◇ Test "late strict reconciliation respects live canonical-name policy" started.
+◇ Test "add folder and scan enqueues pending jobs without transcribing until Start" started.
+◇ Test "toggle off enqueues My Lecture.mp3 to My Lecture.txt with no issue while toggle on rejects spaces" started.
+◇ Test "rejects non-finite cue times" started.
+◇ Test "rejects negative and reversed ranges" started.
+◇ Test "rejects cue end beyond duration" started.
+◇ Test "completed and failed rows provide frozen duration and chunk counts" started.
+◇ Test "empty cue collection renders an empty file" started.
+◇ Test "archive names enqueue with exact-stem companions while spaces remain visible issues" started.
+◇ Test "watch signal enqueues pending work and store start processes to completion" started.
+◇ Test "renders deterministic millisecond blocks and one final newline" started.
+◇ Test "render throws all typed validation violations" started.
+◇ Test "accepts zero-length cues at duration boundaries" started.
+◇ Test "remove profile disabled and no-ops while processing" started.
+◇ Test "rejects whitespace-only cue text" started.
+◇ Test "rejects non-monotonic cue ordering" started.
+◇ Test "completed job open uses exact-stem TXT URL and non-completed does nothing" started.
+◇ Test "concurrent connections deduplicate enqueue and claim each job once" started.
+◇ Test "accepts normalized nested paths and rejects unsafe paths and stale terminal transitions" started.
+◇ Test "rejects non-finite and negative duration" started.
+◇ Test "reopen recovery dedupe checkpoints generations and output collision" started.
+◇ Test "checkpoint persists progressDetail, totalChunks, and enforces progress monotonicity" started.
+◇ Test "configuration takeover releases stale pending and filters claims" started.
+◇ Test "truthful progress presentation formats every phase accurately" started.
+◇ Test "formatClockTime formats seconds, minutes, and hours" started.
+◇ Test "calendar-validates dates" started.
+◇ Test "transition mutates only legal state and timestamp" started.
+◇ Test "legal transitions are explicit" started.
+◇ Test "accepts 128 characters and rejects 129" started.
+◇ Test "legacy WHO-WHAT is rejected by default and accepted only in compatibility mode" started.
+◇ Test "accepts leap dates and rejects century non-leap dates" started.
+◇ Test "rejects unpadded month and day components" started.
+◇ Test "rejects empty components and an empty extension" started.
+◇ Test "accepts a hyphenated WHERE" started.
+◇ Test "parses WHAT from fixed outer fields and preserves its underscore" started.
+◇ Test "legacy companion keeps the source stem" started.
+◇ Test "canonical parse and render round-trip byte-for-byte" started.
+◇ Test "rejects spaces" started.
+◇ Test "rejects an uppercase country with a typed violation" started.
+◇ Test "rejects an uppercase extension with a typed violation" started.
+◇ Test "accepts every supported date token" started.
+◇ Test "warns above the recommended 25-character length" started.
+◇ Test "rejects an extra dot in the stem" started.
+◇ Test "legacy compatibility never fills missing semantic fields" started.
+◇ Test "detects output collisions case-insensitively" started.
+◇ Test "disabled batch facade preserves manual workflow and no-ops operations" started.
+◇ Test "rejects forbidden component characters" started.
+◇ Test "companion URL changes only the extension" started.
+◇ Test "manual scheduler work passes queued background work and concurrency stays one" started.
+◇ Test "batch favorite model options include starred models for gemini and openrouter" started.
+◇ Test "coordinator selects transcriber from each job stamped configuration" started.
+◇ Test "manual Upload Review Export state remains independent of batch profiles" started.
+◇ Test "setEditingProvider writes settings translationProvider like setTranslationProvider" started.
+◇ Test "watcher stamps new configuration while preserving existing jobs" started.
+◇ Test "batch provider options are partitioned into cloud and local groups with no stubs" started.
+◇ Test "requireCanonicalNames defaults to true and round-trips in AppSettings" started.
+◇ Test "retry after automatic failures keeps original error, resets attempt, and allows fresh run" started.
+◇ Test "max-attempt guard fails without invoking provider and privacy-safe error omits source path" started.
+◇ Test "Canary Flash and 1B block Batch before queue, watch, or provider mutation" started.
+◇ Test "batch configuration key tracks requireCanonicalNames and ignores unrelated settings" started.
+◇ Test "reconfiguration drains old work once and routes the next job with its stamped configuration" started.
+◇ Test "batch local route uses the shared local ASR engine and never calls cloud" started.
+◇ Test "parses cue batch translation output while preserving timings" started.
+◇ Test "builds cue batch translation prompt with stable cue ids" started.
+◇ Test "automatic batch is sequential and auto-approves valid chunks" started.
+◇ Test "automatic batch continues after Needs Review and auto-approves only clean later output" started.
+◇ Test "parses freeform cloud cue batch output without MLX markers" started.
+◇ Test "recovers a late empty MLX cue batch without discarding prior translations" started.
+◇ Test "splits timed cues into bounded translation batches" started.
+◇ Test "unknown existing output file routes to blockedOutputCollision and preserves checkpoints" started.
+◇ Test "modified existing output file and case-insensitive collision route to blockedOutputCollision" started.
+◇ Test case passing 1 argument duration → nan to "rejects non-finite and negative duration" started.
+◇ Test case passing 1 argument duration → inf to "rejects non-finite and negative duration" started.
+◇ Test "non-collision writer errors route to failed state" started.
+◇ Test case passing 1 argument duration → -inf to "rejects non-finite and negative duration" started.
+◇ Test "three-file one-shot repeat and failure isolation preserve user TXT" started.
+◇ Test "refuses a source symlink escaping the watched folder" started.
+◇ Test case passing 1 argument duration → -0.001 to "rejects non-finite and negative duration" started.
+◇ Test "early progress persists total chunks and alive fraction before completion" started.
+◇ Test "thrown progress error marks job failed" started.
+✔ Test "rejects cue end beyond duration" passed after 0.004 seconds.
+✔ Test "rejects negative and reversed ranges" passed after 0.004 seconds.
+✔ Test "rejects non-finite cue times" passed after 0.004 seconds.
+✔ Test "empty cue collection renders an empty file" passed after 0.004 seconds.
+◇ Test case passing 2 arguments date → "2023-01-16", precision → .day to "accepts every supported date token" started.
+✔ Test "renders deterministic millisecond blocks and one final newline" passed after 0.004 seconds.
+◇ Test case passing 2 arguments date → "2023-01", precision → .month to "accepts every supported date token" started.
+◇ Test case passing 2 arguments date → "2023", precision → .year to "accepts every supported date token" started.
+◇ Test case passing 2 arguments date → "YYYY-MM-DD", precision → .literalPlaceholder to "accepts every supported date token" started.
+✔ Test "accepts zero-length cues at duration boundaries" passed after 0.024 seconds.
+✔ Test "rejects whitespace-only cue text" passed after 0.035 seconds.
+✔ Test "rejects non-monotonic cue ordering" passed after 0.042 seconds.
+✔ Test "rejects non-finite and negative duration" with 4 test cases passed after 0.042 seconds.
+✔ Test "render throws all typed validation violations" passed after 0.046 seconds.
+✔ Test "formatClockTime formats seconds, minutes, and hours" passed after 0.048 seconds.
+✔ Test "truthful progress presentation formats every phase accurately" passed after 0.048 seconds.
+✔ Test "calendar-validates dates" passed after 0.048 seconds.
+✔ Test "transition mutates only legal state and timestamp" passed after 0.048 seconds.
+✔ Test "accepts 128 characters and rejects 129" passed after 0.048 seconds.
+✔ Test "legal transitions are explicit" passed after 0.048 seconds.
+✔ Test "legacy WHO-WHAT is rejected by default and accepted only in compatibility mode" passed after 0.048 seconds.
+✔ Test "accepts leap dates and rejects century non-leap dates" passed after 0.048 seconds.
+✔ Test "rejects unpadded month and day components" passed after 0.048 seconds.
+✔ Test "rejects empty components and an empty extension" passed after 0.048 seconds.
+✔ Test "accepts a hyphenated WHERE" passed after 0.048 seconds.
+✔ Test "parses WHAT from fixed outer fields and preserves its underscore" passed after 0.048 seconds.
+✔ Test "legacy companion keeps the source stem" passed after 0.048 seconds.
+✔ Test "canonical parse and render round-trip byte-for-byte" passed after 0.048 seconds.
+✔ Test "rejects spaces" passed after 0.048 seconds.
+✔ Test "rejects an uppercase country with a typed violation" passed after 0.048 seconds.
+✔ Test "rejects an uppercase extension with a typed violation" passed after 0.048 seconds.
+✔ Test "accepts every supported date token" with 4 test cases passed after 0.048 seconds.
+✔ Test "warns above the recommended 25-character length" passed after 0.048 seconds.
+✔ Test "rejects an extra dot in the stem" passed after 0.048 seconds.
+✔ Test "legacy compatibility never fills missing semantic fields" passed after 0.048 seconds.
+✔ Test "detects output collisions case-insensitively" passed after 0.048 seconds.
+✔ Test "rejects forbidden component characters" passed after 0.048 seconds.
+✔ Test "companion URL changes only the extension" passed after 0.048 seconds.
+✔ Test "configuration takeover releases stale pending and filters claims" passed after 0.052 seconds.
+✔ Test "accepts normalized nested paths and rejects unsafe paths and stale terminal transitions" passed after 0.052 seconds.
+✔ Test "checkpoint persists progressDetail, totalChunks, and enforces progress monotonicity" passed after 0.052 seconds.
+✔ Test "builds cue batch translation prompt with stable cue ids" passed after 0.051 seconds.
+✔ Test "parses cue batch translation output while preserving timings" passed after 0.051 seconds.
+✔ Test "archive names enqueue with exact-stem companions while spaces remain visible issues" passed after 0.052 seconds.
+✔ Test "parses freeform cloud cue batch output without MLX markers" passed after 0.051 seconds.
+✔ Test "reopen recovery dedupe checkpoints generations and output collision" passed after 0.052 seconds.
+✔ Test "splits timed cues into bounded translation batches" passed after 0.051 seconds.
+✔ Test "toggle off enqueues My Lecture.mp3 to My Lecture.txt with no issue while toggle on rejects spaces" passed after 0.052 seconds.
+✔ Test "max-attempt guard fails without invoking provider and privacy-safe error omits source path" passed after 0.051 seconds.
+✔ Test "batch provider options are partitioned into cloud and local groups with no stubs" passed after 0.051 seconds.
+✔ Suite "Batch timed TXT renderer" passed after 0.053 seconds.
+✔ Test "requireCanonicalNames defaults to true and round-trips in AppSettings" passed after 0.052 seconds.
+✔ Suite "Batch job state machine" passed after 0.055 seconds.
+✔ Suite "Batch media naming" passed after 0.055 seconds.
+✔ Suite "Native LLM prompts" passed after 0.058 seconds.
+[2026-08-20 12:35:42.689] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:42.692] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:42.692] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:42.701] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=143 attempt=1 failureClass=validation validationIssues=extraBlockID:unexpected,missingBlockID:b1,blockOrder
+[2026-08-20 12:35:42.701] [INFO] MLX LLM raw generated output length: 85
+[2026-08-20 12:35:42.702] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=0 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=132 attempt=1 failureClass=none
+[2026-08-20 12:35:42.704] [INFO] MLX LLM sanitized output length: 63
+[2026-08-20 12:35:42.706] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:42.706] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:42.707] [INFO] MLX LLM raw generated output length: 85
+[2026-08-20 12:35:42.707] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=3022 promptTokenEstimate=756 outputCharacters=0 attempt=1 failureClass=none
+[2026-08-20 12:35:42.707] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=2937 promptTokenEstimate=735 outputCharacters=132 attempt=1 failureClass=none
+[2026-08-20 12:35:42.709] [INFO] MLX LLM sanitized output length: 63
+✔ Test "folder fixture creates exact-stem timed companion without project artifacts and deduplicates" passed after 0.068 seconds.
+[2026-08-20 12:35:42.710] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=1 plannedBlockCount=1 sourceCharacters=3 promptCharacters=3022 promptTokenEstimate=756 outputCharacters=132 attempt=1 failureClass=none
+✔ Test "coordinator selects transcriber from each job stamped configuration" passed after 0.069 seconds.
+[2026-08-20 12:35:42.711] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 4085, maxTokens: 2048
+[2026-08-20 12:35:42.711] [INFO] MLX LLM raw generated output length: 9
+✔ Test "unknown existing output file routes to blockedOutputCollision and preserves checkpoints" passed after 0.070 seconds.
+✔ Test "refuses a source symlink escaping the watched folder" passed after 0.068 seconds.
+✔ Test "modified existing output file and case-insensitive collision route to blockedOutputCollision" passed after 0.070 seconds.
+[2026-08-20 12:35:42.712] [INFO] Document translation start provider=mock model=cloud-default intent=automaticBatch chunkIndex=2 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3026 promptTokenEstimate=757 outputCharacters=0 attempt=1 failureClass=none
+✔ Test "non-collision writer errors route to failed state" passed after 0.070 seconds.
+✔ Test "automatic batch is sequential and auto-approves valid chunks" passed after 0.070 seconds.
+[2026-08-20 12:35:42.713] [INFO] MLX LLM sanitized output length: 9
+✔ Test "early progress persists total chunks and alive fraction before completion" passed after 0.069 seconds.
+✔ Test "thrown progress error marks job failed" passed after 0.069 seconds.
+[2026-08-20 12:35:42.714] [INFO] Document translation end provider=mock model=cloud-default intent=automaticBatch chunkIndex=2 plannedBlockCount=1 sourceCharacters=5 promptCharacters=3026 promptTokenEstimate=757 outputCharacters=132 attempt=1 failureClass=none
+[2026-08-20 12:35:42.714] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2643, maxTokens: 1912
+✔ Test "automatic batch continues after Needs Review and auto-approves only clean later output" passed after 0.072 seconds.
+✔ Suite "Document translation coordinator" passed after 0.073 seconds.
+[2026-08-20 12:35:42.714] [INFO] MLX LLM raw generated output length: 53
+[2026-08-20 12:35:42.716] [INFO] MLX LLM sanitized output length: 31
+✔ Test "watcher stamps new configuration while preserving existing jobs" passed after 0.075 seconds.
+✔ Test "retry after automatic failures keeps original error, resets attempt, and allows fresh run" passed after 0.076 seconds.
+[2026-08-20 12:35:42.718] [INFO] MLX LLM generating with model qwen35-4b-4bit, prompt length: 2643, maxTokens: 1912
+[2026-08-20 12:35:42.718] [INFO] MLX LLM raw generated output length: 53
+✔ Test "concurrent connections deduplicate enqueue and claim each job once" passed after 0.077 seconds.
+✔ Suite "SQLite batch repository" passed after 0.078 seconds.
+[2026-08-20 12:35:42.720] [INFO] MLX LLM sanitized output length: 31
+✔ Test "recovers a late empty MLX cue batch without discarding prior translations" passed after 0.079 seconds.
+◇ Test "provider invalidation waits for active batch local ASR" started.
+✔ Test "reconfiguration drains old work once and routes the next job with its stamped configuration" passed after 0.080 seconds.
+✔ Test "restart recovery, invalid names, user edits, and one-file failure remain isolated" passed after 0.082 seconds.
+✔ Test "three-file one-shot repeat and failure isolation preserve user TXT" passed after 0.081 seconds.
+✔ Suite "Batch coordinator" passed after 0.082 seconds.
+✔ Test "completed job open uses exact-stem TXT URL and non-completed does nothing" passed after 0.089 seconds.
+✔ Test "disabled batch facade preserves manual workflow and no-ops operations" passed after 0.089 seconds.
+✔ Test "batch favorite model options include starred models for gemini and openrouter" passed after 0.089 seconds.
+✔ Test "manual Upload Review Export state remains independent of batch profiles" passed after 0.089 seconds.
+✔ Test "batch configuration key tracks requireCanonicalNames and ignores unrelated settings" passed after 0.089 seconds.
+✔ Test "completed and failed rows provide frozen duration and chunk counts" passed after 0.094 seconds.
+✔ Test "setEditingProvider writes settings translationProvider like setTranslationProvider" passed after 0.095 seconds.
+✔ Test "late strict reconciliation respects live canonical-name policy" passed after 0.096 seconds.
+✔ Test "stop cancels blocked startup reconciliation and balances its lease" passed after 0.097 seconds.
+✔ Test "store scan reads live canonical-name policy and preserves arbitrary filename stems" passed after 0.099 seconds.
+✘ Test "add folder and scan enqueues pending jobs without transcribing until Start" recorded an issue at BatchWorkspaceIntegrationTests.swift:443:9: Expectation failed: (store.jobs.first?.state → .processing) == .completed
+✔ Test "current pending starts before blocked reconciliation and new admission wakes processing" passed after 0.108 seconds.
+✘ Test "add folder and scan enqueues pending jobs without transcribing until Start" failed after 0.108 seconds with 1 issue.
+✔ Test "checkpoint events refresh live store progress and file status" passed after 0.108 seconds.
+✔ Test "removing a profile deletes its persisted jobs and clears the store" passed after 0.113 seconds.
+✔ Test "watch signal enqueues pending work and store start processes to completion" passed after 0.114 seconds.
+✔ Test "detail pane falls back to processing job when unselected" passed after 0.114 seconds.
+✔ Test "stop cancels in-flight work and leaves jobs in list for restart" passed after 0.116 seconds.
+✔ Test "Canary Flash and 1B block Batch before queue, watch, or provider mutation" passed after 0.118 seconds.
+✔ Test "manual scheduler work passes queued background work and concurrency stays one" passed after 0.128 seconds.
+✔ Test "remove profile disabled and no-ops while processing" passed after 0.135 seconds.
+✘ Suite "Batch workspace integration" failed after 0.135 seconds with 1 issue.
+✔ Test "batch local route uses the shared local ASR engine and never calls cloud" passed after 0.140 seconds.
+✔ Test "provider invalidation waits for active batch local ASR" passed after 0.061 seconds.
+✔ Suite "Native processing local ASR" passed after 0.142 seconds.
+✔ Suite "Batch architecture acceptance" passed after 0.142 seconds.
+✘ Test run with 86 tests in 10 suites failed after 0.142 seconds with 1 issue.

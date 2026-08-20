@@ -85,7 +85,8 @@ actor LocalASREngineRouter {
     func transcribe(
         settings: AppSettings,
         providerID: String,
-        request: LocalASRRequest
+        request: LocalASRRequest,
+        progress: @escaping LocalASRProgressObserver
     ) async throws -> LocalASRResult {
         guard let activeModel = NativeModelCatalog.activeLocalASRModel(
             settings: settings,
@@ -98,7 +99,7 @@ actor LocalASREngineRouter {
 
         let boundModel = Self.canonicalized(activeModel)
         let engine = try await resolve(boundModel)
-        return try await engine.transcribe(request)
+        return try await engine.transcribe(request, progress: progress)
     }
 
     /// Resolve a binding without performing inference. Tests and lifecycle callers
@@ -172,6 +173,11 @@ actor LocalASREngineRouter {
     }
 }
 
+private enum WhisperKitRelayEvent: Sendable {
+    case phase(LocalASRProgress)
+    case segmentPosition(Double)
+}
+
 /// WhisperKit/Core ML adapted to the common ASR-only engine contract.
 actor WhisperKitLocalASREngine: LocalASREngine {
     nonisolated let descriptor: LocalASRModelDescriptor
@@ -192,7 +198,10 @@ actor WhisperKitLocalASREngine: LocalASREngine {
         self.loader = loader
     }
 
-    func transcribe(_ request: LocalASRRequest) async throws -> LocalASRResult {
+    func transcribe(
+        _ request: LocalASRRequest,
+        progress: @escaping LocalASRProgressObserver
+    ) async throws -> LocalASRResult {
         try Task.checkCancellation()
         guard descriptor.backend == .whisperKitCoreML,
               NativeModelCatalog.whisperKitVariant(for: model.id) == variant
@@ -208,19 +217,86 @@ actor WhisperKitLocalASREngine: LocalASREngine {
             throw LocalASREngineError.translationUnsupported
         }
 
-        let pipeline = try await loadedPipeline()
-        let results: [TranscriptionResult]
+        let pipeline = try await loadedPipeline(progress: progress)
+
+        var relayContinuation: AsyncThrowingStream<WhisperKitRelayEvent, Error>.Continuation?
+        let relayStream = AsyncThrowingStream<WhisperKitRelayEvent, Error> { continuation in
+            relayContinuation = continuation
+        }
+        guard let continuation = relayContinuation else {
+            throw LocalASREngineError.inferenceFailed("Could not initialize progress relay")
+        }
+
+        // WhisperKit invokes its callbacks while the actor is awaiting inference.
+        // Consume the relay off the engine actor so a long native call cannot
+        // starve progress persistence and leave the batch UI at zero.
+        let consumerTask = Task.detached(priority: .userInitiated) { () throws -> Void in
+            var lastEmittedPosition: Double = -1.0
+            for try await event in relayStream {
+                try Task.checkCancellation()
+                switch event {
+                case .phase(let phaseProgress):
+                    try await progress(phaseProgress)
+                case .segmentPosition(let pos):
+                    if pos > lastEmittedPosition {
+                        lastEmittedPosition = pos
+                        try await progress(.transcribing(audioPositionSec: pos))
+                    }
+                }
+            }
+        }
+
+        pipeline.transcriptionStateCallback = { state in
+            switch state {
+            case .convertingAudio:
+                continuation.yield(.phase(.convertingAudio))
+            case .transcribing:
+                continuation.yield(.phase(.transcribing(audioPositionSec: nil)))
+            case .finished:
+                break
+            }
+        }
+
+        pipeline.segmentDiscoveryCallback = { segments in
+            let finitePositiveEnds = segments
+                .map { Double($0.end) }
+                .filter { $0.isFinite && $0 >= 0 }
+            if let maxEnd = finitePositiveEnds.max() {
+                continuation.yield(.segmentPosition(maxEnd))
+            }
+        }
+
+        var results: [TranscriptionResult] = []
+        var inferenceError: Error?
         do {
             results = try await pipeline.transcribe(
                 audioPath: request.audioFileURL!.path,
                 decodeOptions: decodeOptions(for: request)
             )
-        } catch is CancellationError {
-            throw CancellationError()
-        } catch let error as LocalASREngineError {
-            throw error
         } catch {
-            throw LocalASREngineError.inferenceFailed(error.localizedDescription)
+            inferenceError = error
+        }
+
+        pipeline.transcriptionStateCallback = nil
+        pipeline.segmentDiscoveryCallback = nil
+        continuation.finish(throwing: inferenceError)
+
+        do {
+            try await consumerTask.value
+        } catch {
+            if inferenceError == nil {
+                inferenceError = error
+            }
+        }
+
+        if let inferenceError {
+            if inferenceError is CancellationError {
+                throw CancellationError()
+            } else if let error = inferenceError as? LocalASREngineError {
+                throw error
+            } else {
+                throw LocalASREngineError.inferenceFailed(inferenceError.localizedDescription)
+            }
         }
 
         try Task.checkCancellation()
@@ -241,12 +317,15 @@ actor WhisperKitLocalASREngine: LocalASREngine {
         await pipeline.unloadModels()
     }
 
-    private func loadedPipeline() async throws -> WhisperKit {
+    private func loadedPipeline(progress: @escaping LocalASRProgressObserver) async throws -> WhisperKit {
         if let pipeline {
             return pipeline
         }
         do {
+            try await progress(.loadingModel)
             let loaded = try await loader(model)
+            try await loaded.prewarmModels()
+            try await loaded.loadModels()
             pipeline = loaded
             return loaded
         } catch is CancellationError {
@@ -317,8 +396,8 @@ actor WhisperKitLocalASREngine: LocalASREngine {
             model: variant,
             modelFolder: model.path,
             verbose: false,
-            prewarm: true,
-            load: true,
+            prewarm: false,
+            load: false,
             download: false
         )
         return try await WhisperKit(config)

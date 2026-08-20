@@ -32,17 +32,34 @@ public struct TranslationProviderAvailability: Codable, Equatable, Sendable {
     public var providers: [ProviderOption]
 }
 
+
 public enum ProviderRegistry {
+    public static func cloudProviderCatalogID(for providerID: String) -> String? {
+        let trimmed = providerID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        switch trimmed {
+        case "gemini-cloud", "gemini":
+            return CloudProviderCatalog.geminiID
+        case "gpt-cloud", "openai", "gpt":
+            return CloudProviderCatalog.openaiID
+        case "anthropic", "claude":
+            return CloudProviderCatalog.anthropicID
+        case "qwen":
+            return CloudProviderCatalog.qwenID
+        case "openrouter":
+            return CloudProviderCatalog.openrouterID
+        case "ollama-cloud", "ollama":
+            return CloudProviderCatalog.ollamaCloudID
+        case "custom":
+            return CloudProviderCatalog.customID
+        default:
+            if CloudProviderCatalog.providers.contains(where: { $0.id == trimmed }) {
+                return trimmed
+            }
+            return nil
+        }
+    }
     public static func availableTranscriptionProviders(settings: AppSettings) -> [ProviderOption] {
-        var providers: [ProviderOption] = [
-            ProviderOption(
-                id: "coreml-whisperkit",
-                label: "WhisperKit Core ML",
-                group: .local,
-                kind: .transcription,
-                requiresKey: nil
-            )
-        ]
+        var providers: [ProviderOption] = []
         if settings.geminiKeyBank.hasEnabledKey {
             providers.append(
                 ProviderOption(
@@ -138,15 +155,7 @@ public enum ProviderRegistry {
                 )
             )
         }
-        providers.append(
-            ProviderOption(
-                id: "mlx-native",
-                label: "MLX Swift Local",
-                group: .local,
-                kind: .translation,
-                requiresKey: nil
-            )
-        )
+
         providers += downloadedLocalProviders(models: settings.localTranslationModels, kind: .translation)
         return TranslationProviderAvailability(enabled: !isSame, providers: providers)
     }

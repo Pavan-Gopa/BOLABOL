@@ -67,7 +67,7 @@ struct DocumentSourceRefreshSummary: Equatable, Identifiable {
 }
 
 @MainActor
-final class WorkflowStore: ObservableObject {
+public final class WorkflowStore: ObservableObject {
     @Published var workflow: WorkflowState
 
     // Onboarding Tour State
@@ -130,6 +130,7 @@ final class WorkflowStore: ObservableObject {
     @Published var exportStage = ""
     @Published private(set) var isDocumentTranslationActive = false
     @Published var sourceRefreshSummary: DocumentSourceRefreshSummary?
+    @Published public private(set) var isEditingFrozenForUpdate: Bool = false
 
     @Published private(set) var documentTranslationProgress: DocumentTranslationCoordinatorProgress?
     @Published var exportClipProgressText = ""
@@ -328,6 +329,8 @@ final class WorkflowStore: ObservableObject {
         }
         autosaveTask?.cancel()
     }
+
+    var sharedProcessingPipeline: NativeProcessingPipeline { processingPipeline }
 
     public func startTour(for screen: String = "upload") {
         activeTourScreen = screen
@@ -641,6 +644,7 @@ final class WorkflowStore: ObservableObject {
     func setEditingProvider(_ providerID: String) {
         guard !providerID.isEmpty else { return }
         workflow.translationProvider = providerID
+        updateSettings { $0.translationProvider = providerID }
         if var session = workflow.session {
             session.translationProvider = providerID
             workflow.session = session
@@ -4956,6 +4960,34 @@ final class WorkflowStore: ObservableObject {
         guard hadPendingAutosave || projectSaveFailure != nil else { return }
         performDiskSave()
     }
+    /// Flushes debounced autosave and executes a synchronous write of pending project and settings state.
+    /// Returns true if disk save succeeds without projectSaveFailure.
+    @discardableResult
+    public func saveAllPendingStateSync() -> Bool {
+        flushAutosave()
+        commitCurrentProjectToMemory()
+        do {
+            try projectsPersistence(projects)
+            projectSaveFailure = nil
+        } catch {
+            projectSaveFailure = error.localizedDescription
+            statusMessage = "Project save failed before update: \(error.localizedDescription)"
+            return false
+        }
+
+        do {
+            try settingsPersistence(workflow.settings)
+        } catch {
+            statusMessage = "Settings save failed before update: \(error.localizedDescription)"
+            return false
+        }
+
+        return projectSaveFailure == nil
+    }
+
+    public func freezeEditingForUpdate() {
+        isEditingFrozenForUpdate = true
+    }
 
     /// Synchronous disk write through the injected persistence closure. On
     /// failure the in-memory edits are kept and a persistent, retryable error is
@@ -5071,7 +5103,7 @@ final class WorkflowStore: ObservableObject {
 
             var selectedSettingsTranslation = workflowSnapshot.settings.translationProvider
             if !translationIDs.contains(selectedSettingsTranslation) {
-                selectedSettingsTranslation = translationIDs.first ?? "mlx-native"
+                selectedSettingsTranslation = translationIDs.first ?? workflowSnapshot.settings.translationProvider
             }
             var selectedWorkflowTranslation = workflowSnapshot.translationProvider
             if forceTranslationProvider
@@ -8940,7 +8972,8 @@ final class WorkflowStore: ObservableObject {
                 audioURL: url,
                 sourceLang: sourceLang,
                 settings: workflow.settings,
-                providerID: workflow.settings.transcriptionProvider
+                providerID: workflow.settings.transcriptionProvider,
+                progress: { _ in }
             )
             return result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         } catch let error as LocalASREngineError {

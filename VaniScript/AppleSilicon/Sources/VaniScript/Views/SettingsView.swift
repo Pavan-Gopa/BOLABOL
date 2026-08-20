@@ -3,6 +3,8 @@ import VaniScriptCore
 
 struct SettingsView: View {
     @EnvironmentObject private var store: WorkflowStore
+    @EnvironmentObject private var batchStore: BatchTranscriptionStore
+    @EnvironmentObject private var updateCoordinator: UpdateCoordinator
     @State private var onboardingFrames: [String: CGRect] = [:]
     @State private var glossarySource = ""
     @State private var glossaryTranslation = ""
@@ -74,6 +76,10 @@ struct SettingsView: View {
                         .onboardingTarget("settings-tab-7")
                         .tabItem { Label("Transcription", systemImage: "waveform.badge.mic") }
                         .tag(SettingsTab.transcription)
+                    updatesTab
+                        .onboardingTarget("settings-tab-8")
+                        .tabItem { Label("Updates", systemImage: "arrow.triangle.2.circlepath.circle") }
+                        .tag(SettingsTab.updates)
                 }
                 .tint(VaniScriptTheme.accent)
             }
@@ -94,6 +100,16 @@ struct SettingsView: View {
             onboardingFrames = dict
         }
         .preferredColorScheme(store.settings.theme == .dark ? .dark : .light)
+        .onAppear {
+            if let catalogID = ProviderRegistry.cloudProviderCatalogID(for: store.settings.translationProvider) {
+                selectedProviderId = catalogID
+            }
+        }
+        .onChange(of: store.settings.translationProvider) { _, newProvider in
+            if let catalogID = ProviderRegistry.cloudProviderCatalogID(for: newProvider) {
+                selectedProviderId = catalogID
+            }
+        }
         .onChange(of: store.selectedSettingsTab) { _, newTab in
             if store.isTourActive && store.activeTourScreen == "settings" {
                 if let stepIndex = SettingsTab.alphabetized.firstIndex(of: newTab),
@@ -131,6 +147,10 @@ struct SettingsView: View {
                 Text("Universal workflow settings for the native Apple Silicon app")
                     .font(.system(size: 11))
                     .foregroundStyle(VaniScriptTheme.text2)
+                Text("Batch: \(batchStore.isRunning ? "watching" : "stopped") · \(batchStore.profiles.count) folder\(batchStore.profiles.count == 1 ? "" : "s") · \(batchStore.jobs.count) job\(batchStore.jobs.count == 1 ? "" : "s")")
+                    .font(.system(size: 10))
+                    .foregroundStyle(VaniScriptTheme.text2)
+                    .accessibilityLabel("Batch transcription \(batchStore.isRunning ? "watching" : "stopped"), \(batchStore.profiles.count) folders, \(batchStore.jobs.count) jobs")
             }
             Spacer()
 
@@ -944,9 +964,24 @@ struct SettingsView: View {
                         .font(.system(size: 13))
                         .frame(width: 220, alignment: .leading)
 
+                    let transcriptionOptions = ProviderRegistry.availableTranscriptionProviders(settings: store.settings)
+                    let cloudTranscription = transcriptionOptions.filter { $0.group == .cloud }
+                    let localTranscription = transcriptionOptions.filter { $0.group == .local }
+
                     Picker("", selection: binding(\.transcriptionProvider)) {
-                        ForEach(ProviderRegistry.availableTranscriptionProviders(settings: store.settings), id: \.id) { provider in
-                            Text(provider.label).tag(provider.id)
+                        if !cloudTranscription.isEmpty {
+                            Section("Cloud") {
+                                ForEach(cloudTranscription, id: \.id) { provider in
+                                    Text(provider.label).tag(provider.id)
+                                }
+                            }
+                        }
+                        if !localTranscription.isEmpty {
+                            Section("Local") {
+                                ForEach(localTranscription, id: \.id) { provider in
+                                    Text(provider.label).tag(provider.id)
+                                }
+                            }
                         }
                     }
                     .labelsHidden()
@@ -959,9 +994,24 @@ struct SettingsView: View {
                         .font(.system(size: 13))
                         .frame(width: 220, alignment: .leading)
 
+                    let translationOptions = ProviderRegistry.availableTranslationProviders(settings: store.settings, targetLang: store.settings.defaultTargetLang).providers
+                    let cloudTranslation = translationOptions.filter { $0.group == .cloud }
+                    let localTranslation = translationOptions.filter { $0.group == .local }
+
                     Picker("", selection: binding(\.translationProvider)) {
-                        ForEach(ProviderRegistry.availableTranslationProviders(settings: store.settings, targetLang: store.settings.defaultTargetLang).providers, id: \.id) { provider in
-                            Text(provider.label).tag(provider.id)
+                        if !cloudTranslation.isEmpty {
+                            Section("Cloud") {
+                                ForEach(cloudTranslation, id: \.id) { provider in
+                                    Text(provider.label).tag(provider.id)
+                                }
+                            }
+                        }
+                        if !localTranslation.isEmpty {
+                            Section("Local") {
+                                ForEach(localTranslation, id: \.id) { provider in
+                                    Text(provider.label).tag(provider.id)
+                                }
+                            }
                         }
                     }
                     .labelsHidden()
@@ -981,6 +1031,229 @@ struct SettingsView: View {
             promptEditor
         }
         .padding(.vertical, 8)
+    }
+
+    private var updatesTab: some View {
+        SettingsScroll {
+            SettingsSection(title: "Version & Status") {
+                SettingsRow(title: "Installed Version", value: "v\(updateCoordinator.currentVersion) (Build \(updateCoordinator.currentBuildNumber))")
+                SettingsRow(title: "Architecture", value: "Apple Silicon (arm64)")
+                if let lastCheck = updateCoordinator.lastCheckDate {
+                    SettingsRow(title: "Last Checked", value: lastCheck.formatted(date: .abbreviated, time: .shortened))
+                } else {
+                    SettingsRow(title: "Last Checked", value: "Never")
+                }
+                SettingsRow(title: "Update Channel", value: "Official Release (HTTPS Feed)")
+            }
+
+            SettingsSection(title: "Automatic Updates") {
+                SettingsToggleRow(
+                    title: "Check for Updates Automatically",
+                    systemImage: "arrow.triangle.2.circlepath",
+                    isOn: Binding(
+                        get: { updateCoordinator.automaticallyChecksForUpdates },
+                        set: { updateCoordinator.automaticallyChecksForUpdates = $0 }
+                    )
+                )
+            }
+
+            SettingsSection(title: "Check for Updates") {
+                VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space12) {
+                    HStack {
+                        Button {
+                            updateCoordinator.checkForUpdates()
+                        } label: {
+                            HStack(spacing: 6) {
+                                if updateCoordinator.phase.isBusy {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                }
+                                Text("Check for Updates Now")
+                            }
+                        }
+                        .buttonStyle(SettingsPrimaryButtonStyle())
+                        .disabled(updateCoordinator.phase.isBusy)
+
+                        Spacer()
+                    }
+
+                    switch updateCoordinator.phase {
+                    case .idle:
+                        EmptyView()
+                    case .checking:
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Checking for updates…")
+                                .font(.caption)
+                                .foregroundStyle(VaniScriptTheme.text2)
+                        }
+                    case .upToDate:
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(VaniScriptTheme.green)
+                            Text("VaniScript is up to date (v\(updateCoordinator.currentVersion)).")
+                                .font(.body)
+                                .foregroundStyle(VaniScriptTheme.text1)
+                        }
+                    case .available(let descriptor):
+                        VStack(alignment: .leading, spacing: VaniScriptTheme.Density.space8) {
+                            HStack {
+                                Image(systemName: "sparkles")
+                                    .foregroundStyle(VaniScriptTheme.accent)
+                                Text("Update Available: v\(descriptor.displayVersion)")
+                                    .font(.headline)
+                                    .foregroundStyle(VaniScriptTheme.text0)
+                                if !descriptor.humanReadableSize.isEmpty {
+                                    Text("(\(descriptor.humanReadableSize))")
+                                        .font(.caption)
+                                        .foregroundStyle(VaniScriptTheme.text2)
+                                }
+                            }
+                            if let notes = descriptor.releaseNotesDescription, !notes.isEmpty {
+                                Text(notes)
+                                    .font(.body)
+                                    .foregroundStyle(VaniScriptTheme.text1)
+                                    .lineLimit(4)
+                            }
+                            HStack(spacing: 8) {
+                                Button("Install Update") {
+                                    updateCoordinator.installUpdate()
+                                }
+                                .buttonStyle(SettingsPrimaryButtonStyle())
+
+                                Button("Dismiss") {
+                                    updateCoordinator.dismissUpdate()
+                                }
+                                .buttonStyle(SettingsSmallButtonStyle(primary: false))
+
+                                Button("Skip This Version") {
+                                    updateCoordinator.skipUpdate()
+                                }
+                                .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                            }
+                        }
+                        .padding(VaniScriptTheme.Density.space12)
+                        .background(VaniScriptTheme.control)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    case .downloading(let descriptor, let progress, let received, let total):
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Downloading v\(descriptor.displayVersion)…")
+                                .font(.headline)
+                                .foregroundStyle(VaniScriptTheme.text0)
+                            ProgressView(value: progress)
+                            HStack {
+                                Text("\(Int(progress * 100))%")
+                                    .font(.caption)
+                                    .foregroundStyle(VaniScriptTheme.text2)
+                                Spacer()
+                                if total > 0 {
+                                    Text("\(ByteCountFormatter.string(fromByteCount: Int64(received), countStyle: .file)) / \(ByteCountFormatter.string(fromByteCount: Int64(total), countStyle: .file))")
+                                        .font(.caption)
+                                        .foregroundStyle(VaniScriptTheme.text2)
+                                }
+                                Button("Cancel") {
+                                    updateCoordinator.cancelActiveOperation()
+                                }
+                                .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                            }
+                        }
+                    case .extracting(let descriptor, let progress):
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Extracting update v\(descriptor.displayVersion)…")
+                                .font(.headline)
+                                .foregroundStyle(VaniScriptTheme.text0)
+                            ProgressView(value: progress > 0 ? progress : nil)
+                        }
+                    case .readyToInstall(let descriptor):
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .foregroundStyle(VaniScriptTheme.green)
+                                Text("Ready to Install: v\(descriptor.displayVersion)")
+                                    .font(.headline)
+                                    .foregroundStyle(VaniScriptTheme.text0)
+                            }
+                            Text("The update package has been verified and extracted. Click Restart & Install to apply.")
+                                .font(.caption)
+                                .foregroundStyle(VaniScriptTheme.text2)
+                            Button("Restart & Install Update") {
+                                updateCoordinator.installUpdate()
+                            }
+                            .buttonStyle(SettingsPrimaryButtonStyle())
+                        }
+                    case .installing:
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Installing update and preparing relaunch…")
+                                .font(.body)
+                                .foregroundStyle(VaniScriptTheme.text1)
+                        }
+                    case .failed(let error):
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(VaniScriptTheme.red)
+                                Text(error.message)
+                                    .font(.headline)
+                                    .foregroundStyle(VaniScriptTheme.red)
+                            }
+                            if !error.recoverySuggestion.isEmpty {
+                                Text(error.recoverySuggestion)
+                                    .font(.caption)
+                                    .foregroundStyle(VaniScriptTheme.text2)
+                            }
+                            HStack(spacing: 8) {
+                                Button("Retry") {
+                                    updateCoordinator.retryLastAction()
+                                }
+                                .buttonStyle(SettingsSmallButtonStyle(primary: false))
+
+                                Button("Dismiss") {
+                                    updateCoordinator.clearError()
+                                }
+                                .buttonStyle(SettingsSmallButtonStyle(primary: false))
+                            }
+                        }
+                        .padding(VaniScriptTheme.Density.space8)
+                        .background(VaniScriptTheme.errorSurface)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+
+                    if !updateCoordinator.isPublicKeyConfigured {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "info.circle")
+                                    .foregroundStyle(VaniScriptTheme.warningText)
+                                Text("Diagnostic Note: Development Build")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(VaniScriptTheme.warningText)
+                            }
+                            Text("SUPublicEDKey is not configured in this bundle. In-app update verification requires a valid release signature.")
+                                .font(.caption)
+                                .foregroundStyle(VaniScriptTheme.text2)
+                        }
+                        .padding(VaniScriptTheme.Density.space8)
+                        .background(VaniScriptTheme.warningSurface)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+                }
+            }
+
+            SettingsSection(title: "Feed Configuration") {
+                ReadOnlyRow(
+                    title: "Feed URL",
+                    value: updateCoordinator.feedURL?.absoluteString ?? UpdateConfiguration.defaultFeedURL.absoluteString
+                )
+                ReadOnlyRow(
+                    title: "Verification Key (SUPublicEDKey)",
+                    value: updateCoordinator.isPublicKeyConfigured ? "Configured" : "Not configured (Dev mode)"
+                )
+            }
+        }
     }
 
     private var promptsSidebar: some View {
@@ -1676,7 +1949,8 @@ private struct ProviderCardView: View {
                             customLeadingView: AnyView(
                                 Button {
                                     store.updateSettings { settings in
-                                        settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : engineID
+                                        let fallback = ProviderRegistry.availableTranscriptionProviders(settings: settings).first(where: { $0.id != engineID })?.id ?? ""
+                                        settings.transcriptionProvider = isTranscription ? fallback : engineID
                                     }
                                 } label: {
                                     HStack(spacing: 4) {
@@ -1739,7 +2013,8 @@ private struct ProviderCardView: View {
                             customLeadingView: AnyView(
                                 Button {
                                     store.updateSettings { settings in
-                                        settings.translationProvider = isTranslation ? "mlx-native" : engineID
+                                        let fallback = ProviderRegistry.availableTranslationProviders(settings: settings, targetLang: store.workflow.targetLang).providers.first(where: { $0.id != engineID })?.id ?? ""
+                                        settings.translationProvider = isTranslation ? fallback : engineID
                                     }
                                 } label: {
                                     HStack(spacing: 4) {
@@ -1830,7 +2105,8 @@ private struct ProviderCardView: View {
         VStack(alignment: .leading, spacing: 4) {
             Button {
                 store.updateSettings { settings in
-                    settings.transcriptionProvider = isTranscription ? "coreml-whisperkit" : engineID
+                    let fallback = ProviderRegistry.availableTranscriptionProviders(settings: settings).first(where: { $0.id != engineID })?.id ?? ""
+                    settings.transcriptionProvider = isTranscription ? fallback : engineID
                 }
             } label: {
                 HStack(spacing: 4) {
@@ -1850,7 +2126,8 @@ private struct ProviderCardView: View {
 
             Button {
                 store.updateSettings { settings in
-                    settings.translationProvider = isTranslation ? "mlx-native" : engineID
+                    let fallback = ProviderRegistry.availableTranslationProviders(settings: settings, targetLang: store.workflow.targetLang).providers.first(where: { $0.id != engineID })?.id ?? ""
+                    settings.translationProvider = isTranslation ? fallback : engineID
                 }
             } label: {
                 HStack(spacing: 4) {
@@ -2632,10 +2909,12 @@ private struct CloudKeyModelRow: View {
             }
         }()
         if store.settings.transcriptionProvider == engineID {
-            store.updateSettings { $0.transcriptionProvider = "coreml-whisperkit" }
+            let fallback = ProviderRegistry.availableTranscriptionProviders(settings: store.settings).first(where: { $0.id != engineID })?.id ?? ""
+            store.updateSettings { $0.transcriptionProvider = fallback }
         }
         if store.settings.translationProvider == engineID {
-            store.updateSettings { $0.translationProvider = "mlx-native" }
+            let fallback = ProviderRegistry.availableTranslationProviders(settings: store.settings, targetLang: store.workflow.targetLang).providers.first(where: { $0.id != engineID })?.id ?? ""
+            store.updateSettings { $0.translationProvider = fallback }
         }
     }
 
@@ -2664,6 +2943,7 @@ private struct CloudKeyModelRow: View {
 // MARK: - Smart Model Picker Sheet (A5: Search bar + capability filter chips)
 
 private struct SmartModelPickerSheet: View {
+    @EnvironmentObject private var store: WorkflowStore
     let descriptor: CloudProviderDescriptor
     let models: [CloudModel]
     @Binding var selectedModel: String
@@ -2671,6 +2951,7 @@ private struct SmartModelPickerSheet: View {
     var initialCategory: ModelFilterCategory = .all
 
     @State private var searchText = ""
+    @State private var showFavoritesOnly = false
     @State private var selectedFilter: ModelFilterCategory
 
     init(
@@ -2704,32 +2985,36 @@ private struct SmartModelPickerSheet: View {
     }
 
     private var filteredModels: [CloudModel] {
-        models.filter { model in
-            let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-            let matchesSearch = query.isEmpty || model.id.localizedCaseInsensitiveContains(query)
-            let matchesCategory: Bool = {
-                switch selectedFilter {
-                case .all:
-                    return true
-                case .transcribing:
-                    return CloudProviderCatalog.supportsTranscription(providerID: descriptor.id, modelID: model.id)
-                case .translation:
-                    // Text LLMs suitable for translation (excludes dedicated audio-only STT models like Whisper/Grok STT/Nova-3)
-                    let lower = model.id.lowercased()
-                    let isDedicatedAudioSTT = lower.contains("whisper")
-                        || lower.contains("grok-stt")
-                        || lower.contains("deepgram")
-                        || lower.contains("parakeet")
-                        || lower.contains("mai-transcribe")
-                        || lower.contains("voxtral-mini")
-                        || lower.contains("chirp")
-                        || lower.contains("asr-flash")
-                        || lower.contains("mini-transcribe")
-                    return !isDedicatedAudioSTT
-                }
-            }()
-            return matchesSearch && matchesCategory
+        var result = models
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !query.isEmpty {
+            result = result.filter { $0.id.localizedCaseInsensitiveContains(query) }
         }
+        if showFavoritesOnly {
+            result = result.filter { store.settings.isFavoriteModel($0.id) }
+        }
+        switch selectedFilter {
+        case .all:
+            break
+        case .transcribing:
+            result = result.filter { CloudProviderCatalog.supportsTranscription(providerID: descriptor.id, modelID: $0.id) }
+        case .translation:
+            let lowerDedicatedSTT = ["whisper", "grok-stt", "deepgram", "parakeet", "mai-transcribe", "voxtral-mini", "chirp", "asr-flash", "mini-transcribe"]
+            result = result.filter { model in
+                let lower = model.id.lowercased()
+                return !lowerDedicatedSTT.contains(where: { lower.contains($0) })
+            }
+        }
+        return result.sorted { a, b in
+            let aFav = store.settings.isFavoriteModel(a.id)
+            let bFav = store.settings.isFavoriteModel(b.id)
+            if aFav != bFav { return aFav }
+            return a.id.localizedCaseInsensitiveCompare(b.id) == .orderedAscending
+        }
+    }
+
+    private var favoriteCount: Int {
+        models.filter { store.settings.isFavoriteModel($0.id) }.count
     }
 
     var body: some View {
@@ -2740,9 +3025,20 @@ private struct SmartModelPickerSheet: View {
                     Text("Select Model for \(descriptor.label)")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(VaniScriptTheme.text0)
-                    Text("\(filteredModels.count) of \(models.count) models matching filter")
-                        .font(.system(size: 11))
-                        .foregroundStyle(VaniScriptTheme.text2)
+                    HStack(spacing: 8) {
+                        Text("\(filteredModels.count) of \(models.count) models matching filter")
+                        if favoriteCount > 0 {
+                            Text("•")
+                            HStack(spacing: 3) {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 9))
+                                Text("\(favoriteCount) favorite\(favoriteCount == 1 ? "" : "s")")
+                            }
+                            .foregroundStyle(.yellow)
+                        }
+                    }
+                    .font(.system(size: 11))
+                    .foregroundStyle(VaniScriptTheme.text2)
                 }
                 Spacer()
                 Button {
@@ -2760,32 +3056,57 @@ private struct SmartModelPickerSheet: View {
 
             Divider().background(VaniScriptTheme.separator)
 
-            // Search Bar & Filter Chips
+            // Search Bar & Favorites Filter Bar
             VStack(spacing: 10) {
-                // Search Input
                 HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(VaniScriptTheme.text2)
-                        .font(.system(size: 13))
-                    TextField("Search models (e.g. omni, gemini, qwen, flash)...", text: $searchText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12))
-                        .foregroundStyle(VaniScriptTheme.text0)
-                    if !searchText.isEmpty {
-                        Button {
-                            searchText = ""
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(VaniScriptTheme.text2)
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(VaniScriptTheme.text2)
+                            .font(.system(size: 13))
+                        TextField("Search models (e.g. omni, gemini, qwen, flash)...", text: $searchText)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 12))
+                            .foregroundStyle(VaniScriptTheme.text0)
+                        if !searchText.isEmpty {
+                            Button {
+                                searchText = ""
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(VaniScriptTheme.text2)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
+                    .padding(.horizontal, 10)
+                    .frame(height: 32)
+                    .background(VaniScriptTheme.input)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
+
+                    Button {
+                        showFavoritesOnly.toggle()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: showFavoritesOnly ? "star.fill" : "star")
+                                .font(.system(size: 11, weight: .semibold))
+                            Text(showFavoritesOnly ? "Favorites" : "All")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            showFavoritesOnly ? Color.yellow.opacity(0.18) : VaniScriptTheme.input,
+                            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        )
+                        .foregroundStyle(showFavoritesOnly ? .yellow : VaniScriptTheme.text2)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(showFavoritesOnly ? Color.yellow.opacity(0.4) : VaniScriptTheme.controlBorder, lineWidth: 1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .help(showFavoritesOnly ? "Show all models" : "Filter by favorites")
                 }
-                .padding(.horizontal, 10)
-                .frame(height: 32)
-                .background(VaniScriptTheme.input)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(VaniScriptTheme.controlBorder, lineWidth: 1))
 
                 // Filter Chips
                 HStack(spacing: 6) {
@@ -2843,89 +3164,110 @@ private struct SmartModelPickerSheet: View {
             // Models List
             if filteredModels.isEmpty {
                 VStack(spacing: 8) {
-                    Image(systemName: "slash.circle")
+                    Image(systemName: showFavoritesOnly ? "star.slash" : "slash.circle")
                         .font(.system(size: 26))
                         .foregroundStyle(VaniScriptTheme.text2)
-                    Text("No matching models found")
+                    Text(showFavoritesOnly ? "No favorite models for \(descriptor.label)" : "No matching models found")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(VaniScriptTheme.text1)
-                    Text("Try clearing your search query or filter.")
+                    Text(showFavoritesOnly ? "Star models to quickly find them here." : "Try clearing your search query or filter.")
                         .font(.system(size: 11))
                         .foregroundStyle(VaniScriptTheme.text2)
+                    if showFavoritesOnly {
+                        Button("Show All Models") {
+                            showFavoritesOnly = false
+                        }
+                        .font(.system(size: 11, weight: .medium))
+                        .buttonStyle(.borderless)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 2) {
                         ForEach(filteredModels, id: \.id) { model in
+                            let isFav = store.settings.isFavoriteModel(model.id)
                             let isSelected = selectedModel == model.id
                             let isAudio = CloudProviderCatalog.supportsTranscription(providerID: descriptor.id, modelID: model.id)
                             let isVision = CloudProviderCatalog.supportsVision(modelID: model.id)
 
-                            Button {
-                                selectedModel = model.id
-                                isPresented = false
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                        .foregroundStyle(isSelected ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+                            HStack(spacing: 8) {
+                                Button {
+                                    store.updateSettings { $0.toggleFavoriteModel(model.id) }
+                                } label: {
+                                    Image(systemName: isFav ? "star.fill" : "star")
                                         .font(.system(size: 14))
+                                        .foregroundStyle(isFav ? .yellow : VaniScriptTheme.text2.opacity(0.35))
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .help(isFav ? "Remove from favorites" : "Add to favorites")
 
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text(model.id)
-                                            .font(.system(size: 12, weight: isSelected ? .bold : .medium, design: .monospaced))
-                                            .foregroundStyle(isSelected ? VaniScriptTheme.onAccent : VaniScriptTheme.text0)
+                                Button {
+                                    selectedModel = model.id
+                                    isPresented = false
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                            .foregroundStyle(isSelected ? VaniScriptTheme.accent : VaniScriptTheme.text2)
+                                            .font(.system(size: 14))
 
-                                        HStack(spacing: 4) {
-                                            if isAudio {
-                                                HStack(spacing: 3) {
-                                                    Image(systemName: "waveform")
-                                                        .font(.system(size: 8, weight: .bold))
-                                                    Text("Audio STT")
-                                                }
-                                                .font(.system(size: 9, weight: .bold))
-                                                .padding(.horizontal, 5)
-                                                .padding(.vertical, 2)
-                                                .background(VaniScriptTheme.green.opacity(0.22))
-                                                .foregroundStyle(VaniScriptTheme.green)
-                                                .clipShape(RoundedRectangle(cornerRadius: 4))
-                                            } else {
-                                                HStack(spacing: 3) {
-                                                    Image(systemName: "text.bubble")
-                                                        .font(.system(size: 8, weight: .semibold))
-                                                    Text("Text LLM")
-                                                }
-                                                .font(.system(size: 9))
-                                                .padding(.horizontal, 5)
-                                                .padding(.vertical, 2)
-                                                .background(VaniScriptTheme.control)
-                                                .foregroundStyle(VaniScriptTheme.text2)
-                                                .clipShape(RoundedRectangle(cornerRadius: 4))
-                                            }
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            Text(model.id)
+                                                .font(.system(size: 12, weight: isSelected ? .bold : .medium, design: .monospaced))
+                                                .foregroundStyle(isSelected ? VaniScriptTheme.onAccent : VaniScriptTheme.text0)
 
-                                            if isVision {
-                                                HStack(spacing: 3) {
-                                                    Image(systemName: "camera")
-                                                        .font(.system(size: 8, weight: .bold))
-                                                    Text("Vision")
+                                            HStack(spacing: 4) {
+                                                if isAudio {
+                                                    HStack(spacing: 3) {
+                                                        Image(systemName: "waveform")
+                                                            .font(.system(size: 8, weight: .bold))
+                                                        Text("Audio STT")
+                                                    }
+                                                    .font(.system(size: 9, weight: .bold))
+                                                    .padding(.horizontal, 5)
+                                                    .padding(.vertical, 2)
+                                                    .background(VaniScriptTheme.green.opacity(0.22))
+                                                    .foregroundStyle(VaniScriptTheme.green)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                                                } else {
+                                                    HStack(spacing: 3) {
+                                                        Image(systemName: "text.bubble")
+                                                            .font(.system(size: 8, weight: .semibold))
+                                                        Text("Text LLM")
+                                                    }
+                                                    .font(.system(size: 9))
+                                                    .padding(.horizontal, 5)
+                                                    .padding(.vertical, 2)
+                                                    .background(VaniScriptTheme.control)
+                                                    .foregroundStyle(VaniScriptTheme.text2)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 4))
                                                 }
-                                                .font(.system(size: 9, weight: .bold))
-                                                .padding(.horizontal, 5)
-                                                .padding(.vertical, 2)
-                                                .background(Color.blue.opacity(0.22))
-                                                .foregroundStyle(Color(red: 0.35, green: 0.72, blue: 1.0))
-                                                .clipShape(RoundedRectangle(cornerRadius: 4))
+
+                                                if isVision {
+                                                    HStack(spacing: 3) {
+                                                        Image(systemName: "camera")
+                                                            .font(.system(size: 8, weight: .bold))
+                                                        Text("Vision")
+                                                    }
+                                                    .font(.system(size: 9, weight: .bold))
+                                                    .padding(.horizontal, 5)
+                                                    .padding(.vertical, 2)
+                                                    .background(Color.blue.opacity(0.22))
+                                                    .foregroundStyle(Color(red: 0.35, green: 0.72, blue: 1.0))
+                                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                                                }
                                             }
                                         }
+                                        Spacer()
                                     }
-                                    Spacer()
+                                    .contentShape(Rectangle())
                                 }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(isSelected ? VaniScriptTheme.accent.opacity(0.18) : Color.clear)
-                                .contentShape(Rectangle())
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(isSelected ? VaniScriptTheme.accent.opacity(0.18) : Color.clear)
                         }
                     }
                     .padding(.vertical, 4)

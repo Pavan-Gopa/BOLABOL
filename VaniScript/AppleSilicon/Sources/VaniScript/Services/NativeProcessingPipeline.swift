@@ -1,5 +1,6 @@
 import Foundation
 import VaniScriptCore
+import VaniScriptRuntime
 import AVFoundation
 
 protocol NativeLocalMLXEngine: Sendable {
@@ -61,15 +62,20 @@ extension MLXTextGenerationEngine: NativeLocalMLXEngine {}
 actor NativeProcessingPipeline {
     private let mlxEngine: any NativeLocalMLXEngine
     private let cloudEngine = CloudTextTranslationEngine()
-    private let cloudTranscriptionEngine = CloudAudioTranscriptionEngine()
+    private let cloudTranscriptionEngine: any NativeCloudAudioTranscribing
     private let localASRRouter: LocalASREngineRouter
+    private let transcriptionScheduler: TranscriptionScheduler
 
     init(
         localASRRouter: LocalASREngineRouter = LocalASREngineRouter(),
-        mlxEngine: any NativeLocalMLXEngine = MLXTextGenerationEngine()
+        mlxEngine: any NativeLocalMLXEngine = MLXTextGenerationEngine(),
+        transcriptionScheduler: TranscriptionScheduler = TranscriptionScheduler(),
+        cloudTranscriptionEngine: any NativeCloudAudioTranscribing = CloudAudioTranscriptionEngine()
     ) {
         self.localASRRouter = localASRRouter
         self.mlxEngine = mlxEngine
+        self.transcriptionScheduler = transcriptionScheduler
+        self.cloudTranscriptionEngine = cloudTranscriptionEngine
     }
 
     func unloadModels() async {
@@ -81,24 +87,291 @@ actor NativeProcessingPipeline {
     }
 
     func invalidateASRBinding() async {
-        await localASRRouter.unload()
+        do {
+            try await transcriptionScheduler.run(priority: .manual) {
+                await localASRRouter.unload()
+            }
+        } catch is CancellationError {
+            // The detached invalidation task may be cancelled while queued.
+        } catch {
+            preconditionFailure("Unexpected ASR invalidation scheduler failure: \(error)")
+        }
     }
 
     func transcribeLocalASR(
         audioURL: URL,
         sourceLang: String,
         settings: AppSettings,
-        providerID: String
+        providerID: String,
+        progress: @escaping LocalASRProgressObserver
     ) async throws -> LocalASRResult {
-        try await localASRRouter.transcribe(
+        try await transcriptionScheduler.run(priority: .manual) {
+            try await localASRRouter.transcribe(
+                settings: settings,
+                providerID: providerID,
+                request: LocalASRRequest(
+                    audioFileURL: audioURL,
+                    languageHint: NativeLanguagePolicy.canonicalCode(sourceLang),
+                    translateToEnglish: false
+                ),
+                progress: progress
+            )
+        }
+    }
+    nonisolated func makeBatchAudioTranscriber(
+        workspaceRoot: URL,
+        sourceLang: String,
+        settings: AppSettings,
+        providerID: String
+    ) -> some BatchAudioTranscribing {
+        PipelineBatchAudioTranscriber(
+            pipeline: self,
+            workspaceRoot: workspaceRoot,
+            sourceLang: sourceLang,
             settings: settings,
-            providerID: providerID,
-            request: LocalASRRequest(
-                audioFileURL: audioURL,
-                languageHint: NativeLanguagePolicy.canonicalCode(sourceLang),
-                translateToEnglish: false
+            providerID: providerID
+        )
+    }
+    fileprivate func transcribeBatchFile(
+        sourceURL: URL,
+        workspaceRoot: URL,
+        sourceLang: String,
+        settings: AppSettings,
+        providerID: String,
+        resumedCheckpoints: [BatchChunkCheckpoint],
+        progress: @escaping @Sendable (BatchTranscriptionProgress) async throws -> Void,
+        checkpoint: @escaping @Sendable ([BatchChunkCheckpoint]) async throws -> Void
+    ) async throws -> BatchTranscriptionResult {
+        let duration = await MediaDurationReader.durationSeconds(for: sourceURL)
+        guard duration > 0 else { throw CocoaError(.fileReadCorruptFile) }
+        let batchSourceLang = NativeLanguagePolicy.autoCode
+
+        try await progress(
+            BatchTranscriptionProgress(
+                fraction: 0.0,
+                totalChunks: nil,
+                detail: BatchProgressDetail(phase: .planning)
             )
         )
+
+        let planned = await planChunks(
+            sourceURL: sourceURL,
+            sourcePath: sourceURL.path,
+            durationSec: duration,
+            settings: settings,
+            progress: { _, _ in }
+        )
+        let chunks = planned.map {
+            FileTranscriptionChunk(index: $0.index, startSec: $0.startSec, endSec: $0.endSec)
+        }
+        let totalCount = chunks.count
+        guard totalCount > 0 else { throw CocoaError(.fileReadCorruptFile) }
+        let resumed = Dictionary(uniqueKeysWithValues: resumedCheckpoints.map { ($0.index, $0) })
+        let pendingChunks = chunks.filter { resumed[$0.index] == nil }
+        let accumulator = BatchCheckpointAccumulator(initial: resumedCheckpoints)
+
+        if let cloudProvider = ActiveCloudTranscriptionProvider.resolve(settings: settings, providerID: providerID) {
+            let workspaceOwner = TranscriptionWorkspaceOwner(rootURL: workspaceRoot)
+            let workspaceURL = try workspaceOwner.workspace(for: UUID().uuidString)
+            defer { try? workspaceOwner.remove(workspaceURL) }
+            for (ordinal, chunk) in pendingChunks.enumerated() {
+                let completedBeforeCurrent = resumedCheckpoints.count + ordinal
+                let chunkFraction = Double(completedBeforeCurrent) / Double(max(totalCount, 1))
+                let chunkDuration = max(0, chunk.endSec - chunk.startSec)
+                try await progress(
+                    BatchTranscriptionProgress(
+                        fraction: chunkFraction,
+                        totalChunks: totalCount,
+                        detail: BatchProgressDetail(
+                            phase: .transcribing,
+                            currentChunkAudioPositionSec: 0.0,
+                            currentChunkDurationSec: chunkDuration
+                        )
+                    )
+                )
+                let result = try await transcriptionScheduler.run(priority: .background) {
+                    let audioURL = try await AudioChunkExporter.exportChunk(
+                        sourceURL: sourceURL,
+                        chunk: chunk,
+                        workspaceURL: workspaceURL
+                    )
+                    return try await cloudTranscriptionEngine.transcribe(
+                        audioURL: audioURL,
+                        sourceLang: batchSourceLang,
+                        metadata: .empty,
+                        glossary: settings.glossary,
+                        provider: cloudProvider,
+                        promptPresets: settings.promptPresets,
+                        chunkStartSec: chunk.startSec,
+                        chunkEndSec: chunk.endSec
+                    )
+                }
+                let checkpoints = await accumulator.append(
+                    BatchChunkCheckpoint(index: chunk.index, text: result.text, cues: result.cues)
+                )
+                try await checkpoint(checkpoints)
+                let fraction = Double(checkpoints.count) / Double(max(totalCount, 1))
+                try await progress(
+                    BatchTranscriptionProgress(
+                        fraction: fraction,
+                        totalChunks: totalCount,
+                        detail: BatchProgressDetail(
+                            phase: .transcribing,
+                            currentChunkAudioPositionSec: chunkDuration,
+                            currentChunkDurationSec: chunkDuration
+                        )
+                    )
+                )
+            }
+        } else {
+            let readiness = NativeProcessingReadiness.evaluate(
+                settings: settings,
+                sourceLang: batchSourceLang,
+                targetLang: NativeLanguagePolicy.keepOriginalCode,
+                transcriptionProvider: providerID,
+                translationProvider: ""
+            )
+            guard readiness.canTranscribe else { throw BatchTranscriptionReadinessError(message: readiness.transcriptionMessage) }
+
+            let pendingOrdinalByIndex = Dictionary(uniqueKeysWithValues: pendingChunks.enumerated().map { ($1.index, $0) })
+            let processor = AudioChunkProcessingService(
+                export: { sourceURL, chunk, workspaceURL in
+                    try await AudioChunkExporter.exportChunk(sourceURL: sourceURL, chunk: chunk, workspaceURL: workspaceURL)
+                },
+                transcribe: { [localASRRouter, pendingOrdinalByIndex, resumedCheckpoints, totalCount, progress] audioURL, chunk in
+                    let pendingOrdinal = try Self.pendingOrdinal(for: chunk.index, pendingOrdinalByIndex: pendingOrdinalByIndex)
+                    let completedBeforeCurrent = resumedCheckpoints.count + pendingOrdinal
+                    let chunkDuration = max(0, chunk.endSec - chunk.startSec)
+                    let result = try await localASRRouter.transcribe(
+                        settings: settings,
+                        providerID: providerID,
+                        request: LocalASRRequest(
+                            audioFileURL: audioURL,
+                            languageHint: batchSourceLang,
+                            translateToEnglish: false
+                        ),
+                        progress: { asrProgress in
+                            switch asrProgress {
+                            case .loadingModel:
+                                let fraction = Double(completedBeforeCurrent) / Double(max(totalCount, 1))
+                                try await progress(
+                                    BatchTranscriptionProgress(
+                                        fraction: fraction,
+                                        totalChunks: totalCount,
+                                        detail: BatchProgressDetail(
+                                            phase: .loadingModel,
+                                            currentChunkAudioPositionSec: nil,
+                                            currentChunkDurationSec: chunkDuration
+                                        )
+                                    )
+                                )
+                            case .convertingAudio:
+                                let fraction = Double(completedBeforeCurrent) / Double(max(totalCount, 1))
+                                try await progress(
+                                    BatchTranscriptionProgress(
+                                        fraction: fraction,
+                                        totalChunks: totalCount,
+                                        detail: BatchProgressDetail(
+                                            phase: .convertingAudio,
+                                            currentChunkAudioPositionSec: nil,
+                                            currentChunkDurationSec: chunkDuration
+                                        )
+                                    )
+                                )
+                            case .transcribing(let audioPosition):
+                                let pos = audioPosition.map { min(max($0, 0), chunkDuration) }
+                                let currentChunkFraction = (pos != nil && chunkDuration > 0) ? (pos! / chunkDuration) : 0.0
+                                let fraction = min(
+                                    max((Double(completedBeforeCurrent) + currentChunkFraction) / Double(max(totalCount, 1)), 0),
+                                    1.0
+                                )
+                                try await progress(
+                                    BatchTranscriptionProgress(
+                                        fraction: fraction,
+                                        totalChunks: totalCount,
+                                        detail: BatchProgressDetail(
+                                            phase: .transcribing,
+                                            currentChunkAudioPositionSec: pos,
+                                            currentChunkDurationSec: chunkDuration
+                                        )
+                                    )
+                                )
+                            }
+                        }
+                    )
+                    return RelativeTranscription(text: result.text, cues: result.cues)
+                }
+            )
+            let service = FileTranscriptionService(
+                scheduler: transcriptionScheduler,
+                chunkProcessor: processor,
+                workspaceOwner: TranscriptionWorkspaceOwner(rootURL: workspaceRoot)
+            )
+            if !pendingChunks.isEmpty {
+                _ = try await service.transcribe(
+                    FileTranscriptionRequest(
+                        sourceURL: sourceURL,
+                        chunks: pendingChunks,
+                        workspaceID: UUID().uuidString,
+                        priority: .background
+                    ),
+                    progress: { fileProgress in
+                        switch fileProgress {
+                        case .started:
+                            break
+                        case .transcribing(let index, _):
+                            let pendingOrdinal = try Self.pendingOrdinal(for: index, pendingOrdinalByIndex: pendingOrdinalByIndex)
+                            let completedBeforeCurrent = resumedCheckpoints.count + pendingOrdinal
+                            let chunk = pendingChunks[pendingOrdinal]
+                            let chunkDuration = max(0, chunk.endSec - chunk.startSec)
+                            let fraction = Double(completedBeforeCurrent) / Double(max(totalCount, 1))
+                            try await progress(
+                                BatchTranscriptionProgress(
+                                    fraction: fraction,
+                                    totalChunks: totalCount,
+                                    detail: BatchProgressDetail(
+                                        phase: .transcribing,
+                                        currentChunkAudioPositionSec: 0.0,
+                                        currentChunkDurationSec: chunkDuration
+                                    )
+                                )
+                            )
+                        case .completed:
+                            break
+                        }
+                    },
+                    checkpoint: { value in
+                        let checkpoints = await accumulator.replaceNew(value.completedChunks, resumed: resumedCheckpoints)
+                        try await checkpoint(checkpoints)
+                        let fraction = Double(checkpoints.count) / Double(max(totalCount, 1))
+                        try await progress(
+                            BatchTranscriptionProgress(
+                                fraction: fraction,
+                                totalChunks: totalCount,
+                                detail: BatchProgressDetail(
+                                    phase: .transcribing,
+                                    currentChunkAudioPositionSec: nil,
+                                    currentChunkDurationSec: nil
+                                )
+                            )
+                        )
+                    }
+                )
+            }
+        }
+        let checkpoints = await accumulator.values
+        try await progress(
+            BatchTranscriptionProgress(
+                fraction: 1.0,
+                totalChunks: totalCount,
+                detail: BatchProgressDetail(
+                    phase: .transcribing,
+                    currentChunkAudioPositionSec: nil,
+                    currentChunkDurationSec: nil
+                )
+            )
+        )
+        return BatchTranscriptionResult(duration: duration, checkpoints: checkpoints)
     }
 
     func processCurrentChunk(
@@ -236,7 +509,8 @@ actor NativeProcessingPipeline {
                 audioURL: audioURL,
                 sourceLang: next.sourceLang,
                 settings: settings,
-                providerID: next.transcriptionProvider
+                providerID: next.transcriptionProvider,
+                progress: { _ in }
             )
             let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
             let rawOriginalCues = Self.transcriptCues(from: result, chunk: next.chunks[index], fallbackText: text)
@@ -449,7 +723,8 @@ actor NativeProcessingPipeline {
                     audioURL: audioURL,
                     sourceLang: next.sourceLang,
                     settings: settings,
-                    providerID: next.transcriptionProvider
+                    providerID: next.transcriptionProvider,
+                    progress: { _ in }
                 )
                 let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
                 let rawOriginalCues = Self.transcriptCues(from: result, chunk: next.chunks[index], fallbackText: text)
@@ -544,6 +819,16 @@ actor NativeProcessingPipeline {
         session.chunks[index].originalCues = glossaryOriginal.cues
         session.chunks[index].translated = ""
         session.chunks[index].status = .done
+    }
+
+    nonisolated internal static func pendingOrdinal(
+        for index: Int,
+        pendingOrdinalByIndex: [Int: Int]
+    ) throws -> Int {
+        guard let pendingOrdinal = pendingOrdinalByIndex[index] else {
+            throw InvalidProgressIndexError(index: index)
+        }
+        return pendingOrdinal
     }
 
     nonisolated internal static func transcriptCues(
@@ -1062,5 +1347,111 @@ actor NativeProcessingPipeline {
         session.chunks[session.currentChunkIndex].status = status
         session.chunks[session.currentChunkIndex].original = original
         session.chunks[session.currentChunkIndex].translated = translated
+    }
+}
+
+protocol NativeCloudAudioTranscribing: Sendable {
+    func transcribe(
+        audioURL: URL,
+        sourceLang: String,
+        metadata: AudioMetadata,
+        glossary: [GlossaryEntry],
+        provider: ActiveCloudTranscriptionProvider,
+        promptPresets: [String: PromptPresetSettings],
+        chunkStartSec: Double,
+        chunkEndSec: Double
+    ) async throws -> CloudAudioTranscriptionResult
+}
+
+extension CloudAudioTranscriptionEngine: NativeCloudAudioTranscribing {}
+
+struct InvalidProgressIndexError: LocalizedError, Equatable {
+    let index: Int
+    var errorDescription: String? {
+        "Invalid progress chunk index: \(index)"
+    }
+}
+
+private struct BatchTranscriptionReadinessError: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
+}
+
+private struct PipelineBatchAudioTranscriber: BatchAudioTranscribing {
+    let pipeline: NativeProcessingPipeline
+    let workspaceRoot: URL
+    let sourceLang: String
+    let settings: AppSettings
+    let providerID: String
+
+    func transcribe(
+        sourceURL: URL,
+        resumedCheckpoints: [BatchChunkCheckpoint],
+        progress: @escaping @Sendable (BatchTranscriptionProgress) async throws -> Void,
+        checkpoint: @escaping @Sendable ([BatchChunkCheckpoint]) async throws -> Void
+    ) async throws -> BatchTranscriptionResult {
+        try await pipeline.transcribeBatchFile(
+            sourceURL: sourceURL,
+            workspaceRoot: workspaceRoot,
+            sourceLang: sourceLang,
+            settings: settings,
+            providerID: providerID,
+            resumedCheckpoints: resumedCheckpoints,
+            progress: progress,
+            checkpoint: checkpoint
+        )
+    }
+}
+
+private actor BatchCheckpointAccumulator {
+    private var checkpoints: [BatchChunkCheckpoint]
+
+    init(initial: [BatchChunkCheckpoint]) {
+        checkpoints = initial.sorted { $0.index < $1.index }
+    }
+
+    var count: Int { checkpoints.count }
+    var values: [BatchChunkCheckpoint] { checkpoints }
+    func append(_ checkpoint: BatchChunkCheckpoint) -> [BatchChunkCheckpoint] {
+        checkpoints.append(checkpoint)
+        checkpoints.sort { $0.index < $1.index }
+        return checkpoints
+    }
+
+    func replaceNew(
+        _ chunks: [ChunkTranscription],
+        resumed: [BatchChunkCheckpoint]
+    ) -> [BatchChunkCheckpoint] {
+        checkpoints = (resumed + chunks.map {
+            BatchChunkCheckpoint(index: $0.index, text: $0.text, cues: $0.cues)
+        }).sorted { $0.index < $1.index }
+        return checkpoints
+    }
+}
+
+private extension FileTranscriptionProgress {
+    var isCompleted: Bool {
+        if case .completed = self { return true }
+        return false
+    }
+}
+
+extension AtomicCompanionWriter: BatchCompanionWriting {
+    public func write(
+        _ data: Data,
+        sourceURL: URL,
+        outputURL: URL,
+        expectedSourceFingerprint: SourceFileFingerprint,
+        knownGeneratedOutput: GeneratedOutputFingerprint?
+    ) async throws -> GeneratedOutputFingerprint {
+        try write(
+            data,
+            request: CompanionWriteRequest(
+                sourceURL: sourceURL,
+                outputURL: outputURL,
+                expectedSourceFingerprint: expectedSourceFingerprint,
+                knownGeneratedOutput: knownGeneratedOutput
+            )
+        ).outputFingerprint
     }
 }

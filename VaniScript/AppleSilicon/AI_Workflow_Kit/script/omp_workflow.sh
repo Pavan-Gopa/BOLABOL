@@ -20,7 +20,7 @@ done
 
 INSTRUCTION="${*:-onboard}"
 
-# Check whether @workflow_orchestrator alias resolves; fall back to default model if not configured.
+# Check whether @workflow_orchestrator alias resolves; fall back to default model if not configured
 if bash "$SCRIPT_DIR/workflow_models.sh" validate-level main >/dev/null 2>&1; then
   exec omp --cwd "$PROJECT_ROOT" --model "${WF_OMP_MODEL:-@workflow_orchestrator}" "/workflow $INSTRUCTION"
 else

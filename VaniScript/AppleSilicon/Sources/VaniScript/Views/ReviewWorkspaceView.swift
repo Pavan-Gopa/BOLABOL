@@ -220,8 +220,21 @@ struct ReviewWorkspaceView: View {
                             get: { store.editingProviderID },
                             set: { store.setEditingProvider($0) }
                         )) {
-                            ForEach(store.editingProviders, id: \.id) { provider in
-                                Text(provider.label).tag(provider.id)
+                            let cloudProviders = store.editingProviders.filter { $0.group == .cloud }
+                            let localProviders = store.editingProviders.filter { $0.group == .local }
+                            if !cloudProviders.isEmpty {
+                                Section("Cloud") {
+                                    ForEach(cloudProviders, id: \.id) { provider in
+                                        Text(provider.label).tag(provider.id)
+                                    }
+                                }
+                            }
+                            if !localProviders.isEmpty {
+                                Section("Local") {
+                                    ForEach(localProviders, id: \.id) { provider in
+                                        Text(provider.label).tag(provider.id)
+                                    }
+                                }
                             }
                         }
                         .labelsHidden()

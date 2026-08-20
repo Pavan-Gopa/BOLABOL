@@ -49,27 +49,32 @@ struct LocalASREngineRouterTests {
         _ = try await router.transcribe(
             settings: whisperSettings,
             providerID: whisper.id,
-            request: request
+            request: request,
+            progress: { _ in }
         )
         _ = try await router.transcribe(
             settings: whisperSettings,
             providerID: whisper.id,
-            request: request
+            request: request,
+            progress: { _ in }
         )
         _ = try await router.transcribe(
             settings: parakeetSettings,
             providerID: parakeet.id,
-            request: request
+            request: request,
+            progress: { _ in }
         )
         _ = try await router.transcribe(
             settings: canarySettings,
             providerID: canary.id,
-            request: request
+            request: request,
+            progress: { _ in }
         )
         _ = try await router.transcribe(
             settings: whisperSettingsWithNewPath,
             providerID: whisper.id,
-            request: request
+            request: request,
+            progress: { _ in }
         )
         await router.unload()
 
@@ -130,6 +135,81 @@ struct LocalASREngineRouterTests {
             )
         }
         #expect(await factoryCalls.createdIDs.isEmpty)
+    }
+    @Test("WhisperKit local engine reports loadingModel on first load and skips on second resident call")
+    func whisperKitProgressLoadingAndResidentReuse() async throws {
+        let root = try makeFixtureRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let whisper = try #require(NativeModelCatalog.descriptor(for: "whisper-small-multilingual"))
+        let whisperSettings = try settings(for: whisper, under: root.appendingPathComponent("whisper-resident"))
+        let audioURL = root.appendingPathComponent("dictation.wav")
+        try Data([1]).write(to: audioURL)
+
+        let progressEvents = LockedValue<[LocalASRProgress]>([])
+        let engineLog = RouterEventLog()
+
+        // Custom spy engine that simulates loading and transcription progress
+        actor ProgressEmittingEngine: LocalASREngine {
+            nonisolated let descriptor: LocalASRModelDescriptor
+            private var isLoaded = false
+            init(descriptor: LocalASRModelDescriptor) { self.descriptor = descriptor }
+            func transcribe(_ request: LocalASRRequest, progress: @escaping LocalASRProgressObserver) async throws -> LocalASRResult {
+                if !isLoaded {
+                    try await progress(.loadingModel)
+                    isLoaded = true
+                }
+                try await progress(.convertingAudio)
+                try await progress(.transcribing(audioPositionSec: 0.0))
+                try await progress(.transcribing(audioPositionSec: 30.0))
+                return LocalASRResult(text: "transcribed text")
+            }
+            func unload() async { isLoaded = false }
+        }
+
+        let factories = LocalASREngineRouterFactories(
+            whisperKit: { model in
+                await engineLog.created(model.id)
+                return ProgressEmittingEngine(descriptor: model.descriptor)
+            },
+            parakeet: { model in SpyLocalASREngine(descriptor: model.descriptor, log: engineLog) },
+            canary: { model in SpyLocalASREngine(descriptor: model.descriptor, log: engineLog) }
+        )
+        let router = LocalASREngineRouter(factories: factories)
+        let request = LocalASRRequest(audioFileURL: audioURL, languageHint: "en")
+
+        // First call: should emit loadingModel -> convertingAudio -> transcribing(0) -> transcribing(30)
+        let firstResult = try await router.transcribe(
+            settings: whisperSettings,
+            providerID: whisper.id,
+            request: request,
+            progress: { event in
+                progressEvents.set(progressEvents.get() + [event])
+            }
+        )
+        #expect(firstResult.text == "transcribed text")
+        #expect(progressEvents.get() == [
+            .loadingModel,
+            .convertingAudio,
+            .transcribing(audioPositionSec: 0.0),
+            .transcribing(audioPositionSec: 30.0)
+        ])
+
+        // Second call: resident reuse skips loadingModel
+        progressEvents.set([])
+        let secondResult = try await router.transcribe(
+            settings: whisperSettings,
+            providerID: whisper.id,
+            request: request,
+            progress: { event in
+                progressEvents.set(progressEvents.get() + [event])
+            }
+        )
+        #expect(secondResult.text == "transcribed text")
+        #expect(progressEvents.get() == [
+            .convertingAudio,
+            .transcribing(audioPositionSec: 0.0),
+            .transcribing(audioPositionSec: 30.0)
+        ])
     }
 
     private func makeFixtureRoot() throws -> URL {
@@ -207,12 +287,22 @@ private actor SpyLocalASREngine: LocalASREngine {
         self.log = log
     }
 
-    func transcribe(_ request: LocalASRRequest) async throws -> LocalASRResult {
+    func transcribe(
+        _ request: LocalASRRequest,
+        progress: @escaping LocalASRProgressObserver
+    ) async throws -> LocalASRResult {
         await log.transcribed()
         return LocalASRResult(text: descriptor.id)
     }
-
     func unload() async {
         await log.unloaded()
     }
+}
+
+private final class LockedValue<T: Sendable>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: T
+    init(_ value: T) { self.value = value }
+    func get() -> T { lock.withLock { value } }
+    func set(_ newValue: T) { lock.withLock { value = newValue } }
 }

@@ -1,0 +1,277 @@
+# Live orchestration state — Orchestrator owns this file.
+# Keep it simple. Project-agnostic template.
+
+project_prefix: vaniscript-as
+onboarding:
+  status: complete
+  model_pairs_confirmed: true
+  completed_at: 2026-08-11T05:55:29Z
+current_work_item: null
+step_description: >-
+  S13 project-library hardening. Add multi-file Finder drop support, preserve
+  document/media bundle routing, make renamed archive filenames authoritative
+  for project display names without rewriting source metadata, and make project
+  deletion safe for imported versus new projects.
+target_files:
+  - Sources/VaniScript/Views/ReviewWorkspaceView.swift
+  - Sources/VaniScript/Theme/VaniScriptTheme.swift
+  - Tests/VaniScriptTests/VaniScriptThemeTests.swift
+  - Tests/VaniScriptTests/DocumentReviewScrollSyncTests.swift
+completed_steps:
+  - S0
+  - S1
+  - S2
+  - S3
+  - S4
+  - S14
+  - S15
+  - S16
+  - S17
+  - S18
+  - S20
+skipped_steps: []
+parked_steps:
+  - S5
+implementation:
+  # pending | running | waiting_review | changes_requested | blocked | complete
+ status: pending
+ attempts: 4
+ # Increment only after evidence evaluates an implementation attempt.
+ note: >-
+   S13DarkThemeHighlightFix1 candidate gate is green: Human accepted, Reviewer
+   approved, and Tester returned qa_green. The proofreading-highlight work item
+   is complete; broader S13 Light-mode chrome, fresh Light/Dark smoke, and
+   remaining Judgment Gates stay open.
+retry_guard:
+ max_attempts_without_progress: 3
+ last_failure_signature: null
+ repeated_failure_count: 0
+omp:
+ last_result_artifact: history://S13DarkThemeHighlightTester1
+ active_agent: null
+ active_role: null
+model_failure:
+  # none | awaiting_human | backup_authorized
+  status: none
+  role: null
+  primary_agent: null
+  failed_model: null
+  evidence: null
+  backup_agent: null
+  human_instruction: null
+  authorized_at: null
+interruption:
+  # none | interrupted_no_changes | recovered_result | indeterminate
+  status: none
+  role: null
+  run_id: null
+  candidate_id: null
+  classification: null
+  recovered_artifact: null
+  recorded_at: null
+human_acceptance:
+ # pending | accepted | changes_requested
+ status: accepted
+ candidate_id: S13DarkThemeHighlightFix1
+ evidence: >-
+   Human inspected the unchanged repaired signed app in the fresh Dark Aqua
+   workflow and selected Accept and route Reviewer at 2026-08-18T04:35:21Z.
+review:
+ status: approved
+ last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
+ verdict: approved
+ note: >-
+   Reviewer approved the S13DarkThemeHighlightFix1 candidate. Its focused QA
+   gate is green; broader S13 hardening remains open.
+qa:
+ status: qa_green
+ suite: S13 dark appearance and proofreading highlight
+ bugs_open: 0
+ note: >-
+   Focused QA is green with 29 tests and 0 failures, including Tester-added
+   coverage for highlight restoration after content rewrite. Residual S13
+   hardening gates remain open.
+next_actor: human
+plan_files:
+  - PIPELINE.md
+  - AI_Workflow_Kit/docs/DECISIONS.md
+  - AI_Workflow_Kit/docs/PROJECT_CONTEXT.md
+  - docs/PRD-Document-Literary-Translation.md
+  - docs/PRD-Editorial-Review-Workspace.md
+coder_brief: |
+  S13 Human-rejected Dark Aqua candidate. Fix the fresh-app failure where
+  imported document text is practically invisible in Dark Aqua and make the
+  proofreading highlight more visually prominent. Treat persisted/exported
+  RichTextSpan foreground colors as canonical data: any display-only contrast
+  adaptation must not mutate source/translation models, serialization, or
+  rich export. Re-check the full dark primary Review workflow, including
+  default and explicit-colored spans, dual panes, proof banner/controls,
+  editor caret/typing color, selection/editing, and error/disabled/action
+  surfaces. Add deterministic tests for the rendering contract and highlight
+  contrast in the approved test path. Run only focused tests/build checks
+  relevant to these files; skip formatters, linters, and project-wide suites.
+checkpoint:
+  last_pre_tag: vaniscript-as/pre-S1
+  last_post_tag: vaniscript-as/S1-done
+  last_commit: 87bee27
+  last_attempt: post-S2-refused-unrelated-worktree
+  note: >-
+coder_brief: |
+  S13 Human-rejected Dark Aqua candidate. Fix the fresh-app failure where
+  imported document text is practically invisible in Dark Aqua and make the
+  proofreading highlight more visually prominent. Treat persisted/exported
+  RichTextSpan foreground colors as canonical data: any display-only contrast
+  adaptation must not mutate source/translation models, serialization, or
+  rich export. Re-check the full dark primary Review workflow, including
+  default and explicit-colored spans, dual panes, proof banner/controls,
+  editor caret/typing color, selection/editing, and error/disabled/action
+  surfaces. Add deterministic tests for the rendering contract and highlight
+  contrast in the approved test path. Run only focused tests/build checks
+  relevant to these files; skip formatters, linters, and project-wide suites.
+notes: |
+  Human requested all three BOLABOL Core ML engines. Existing LASR-01 catalog,
+  LASR-02 download/presence, and completed S1 Parakeet work are preserved.
+  Canary 1B cloud metadata remains intentionally deferred; S2 assumes a
+  verified local package and must not fabricate a download source.
+  No Git remote is configured for the workspace repository, so checkpoints are
+  local only.
+  Human explicitly resumed the workflow after the S1 pause and framework update.
+  Human set the default to one completed Reviewer verdict and one completed
+  Tester verdict per unchanged Coder candidate. Failed launches do not count;
+  a changed candidate after a real gate failure must pass the normal gates again.
+  Pre-S2 checkpoint was not created because the workspace repository contains
+  extensive unrelated Human changes outside this project's authorized paths;
+  the checkpoint helper refused to stage across that boundary.
+  Post-S2 checkpoint was also refused for the same unrelated-worktree boundary;
+  no unrelated paths were staged.
+  Human explicitly requested an extra Tester rerun. Two synthetic/hf primary
+  launches failed before execution with 401; the authorized backup rerun passed
+  9 tests with no file changes.
+  S3 opened after the Human reported that Canary 1B was not auto-connected and
+  selecting it produced a spinning wait cursor. The verified package is at
+  /Users/pavan/AI_LOCAL_MODELS/whisperkit/canary/1b-v2 with BOLABOL's
+  MANIFEST.json; its files match the catalog allowlist, but current presence
+  requires a VaniScript-only sidecar and synchronous callers can hash 1.88 GB
+  on MainActor.
+  Human reproduced BUG-001 in the fresh 20260811133359 build by selecting
+  Canary 1B and starting native re-transcription for chunk 1. Crash report
+  B03A6D52-4873-4BE1-A51C-E4178E24E8D7 faults in SmartAudioAnalyzer.swift:64.
+  Main reproduced the identical Swift Int64 conversion trap: the no-range
+  sentinel Double.greatestFiniteMagnitude multiplied by sampleRate becomes
+  infinity before AVAudioFramePosition conversion.
+  Candidate 4 passed build, focused tests, and all 387 tests, but a fresh-app
+  debugger trace found ConfigWorkspaceView calling ProviderRegistry on
+  MainActor, which synchronously hashed Canary 1B's 1.58 GB encoder. The app
+  exposed no window and MCP timed out while the hash ran. Candidate 5 must
+  make provider listing consume reconciled state without full caller-thread
+  revalidation.
+
+  Candidate 5's Reviewer correctly found a pathless local ASR active badge and
+  a candidate-created translation Locate validation regression. Main rejected
+  the manifest finding after reading the real shared package: MANIFEST.json
+  identifies `bolabol-canary-1b-v2-coreml-r1`, matching the current catalog
+  and tests; the Reviewer assignment had supplied incorrect alternate metadata.
+  Human then selected Canary Flash in the fresh candidate 7 app. Initialize
+  Engine failed with `Core ML transcription requires a downloaded or located
+  WhisperKit model.` Settings persisted Canary Flash as the selected provider;
+  NativeProcessingReadiness still called activeWhisperKitModel. MCP timeouts
+  after relaunch were expected because persisted `mcpServerEnabled` is false.
+  Human changed the default gate order: Coder, then Main verification/build and
+  fresh app, then Human acceptance. Only an accepted unchanged candidate gets
+  one Reviewer and then one Tester. Human-rejected candidates return directly
+  to Coder.
+  Human confirmed BUG-002's next requirement: Target Language does not satisfy
+  Canary's explicit source-language requirement. Config must expose separate
+  Source Language and Target Language controls like BOLABOL Language and
+  Secondary Language. Equal normalized languages must not invoke translation.
+  S3 formal QA was explicitly deferred into the first working S4 candidate.
+  Human explicitly skipped the optional S4 Architect advisory after both the
+  primary and authorized backup failed before reading source. The bounded S4
+  contract proceeds directly to Coder.
+  Human rejected S4 candidate 2 with four screenshots from a meaningful
+  10-minute speech test. Parakeet and Canary Flash produced one whole-chunk cue
+  instead of review-ready timestamped cues, the processing UI said only
+  "local ASR" rather than naming the active model, and local scan did not
+  discover the verified Canary 1B package. Future cloud distribution for
+  Canary 1B is desired, but the current fix must not fabricate a package URL.
+  Human rejected S4 candidate 5. The exact progress label correctly exposed
+  that processing used Whisper Large v3 while Models displayed Canary Flash as
+  Active. Persisted settings select Canary Flash, but the reopened project's
+  persisted session selects Whisper Large v3. Scan finds six models but not
+  Canary 1B; its 19 manifest-listed files all match size/hash, while a harmless
+  Finder-created `.DS_Store` is the only unexpected regular file.
+  Human rejected candidate 9 after the app disappeared during Canary Flash
+  processing. App logs prove Canary Flash itself completed segment 1/5 with
+  3382 characters before termination. The fresh builder emitted
+  `mlx.metallib not found in cache`; MLX Swift's runtime requires that library
+  when downstream local translation begins. The build must produce or bundle
+  the required Metal library deterministically instead of shipping a warning.
+  Candidate 11 builds MLX's complete official Metal kernel library from the
+  pinned mlx-swift checkout, fails hard on missing tools/output/copy mismatch,
+  and installs identical mlx.metallib copies beside the executable and under
+  Contents/Resources. Main executed an MLX array operation inside the packaged
+  app process and received [2, 3, 4], proving the prior missing-library crash
+  boundary no longer fails. Human meaningful-speech acceptance remains required.
+  Architect PR 9891897 (`docs/PRD-Document-Literary-Translation.md`) is now the
+  document-train source of truth. STEPS S7–S13 map PRD §20 slices 1–9 (S11 merges
+  coordinator+UX; S12 merges writer+package). Human parked S5 and S6 on
+  2026-08-14 and opened S7. Default literary profile until publisher answers:
+  protected Sanskrit exact, translate existing English gloss, glossary names,
+  free repagination.
+
+  2026-08-15: Human parked S13 and opened the editorial workspace train from
+  docs/PRD-Editorial-Review-Workspace.md (branch
+  agent/editorial-review-workspace-architecture, fetched via the
+  vaniscript-export remote). S13 candidate 24 remains Main-verified but
+  unaccepted; its import-tier/PDF/limits code already exists and will be
+  re-verified on resume; media regression is still outstanding. PRD claims
+  were verified against local source before adoption. S14–S19 map PRD
+  slices E1–E6 one-to-one.
+
+  2026-08-15 (resume): the session was interrupted after S14 Coder 02 yielded.
+  Main reconciled the parked agents, recovered the artifact, verified all four
+  Coder 01 rejection fixes in source, and re-ran every Objective Gate green
+  (build, 31 focused tests, 705 full tests, fresh app pid 49388). S14
+  candidate 02 now awaits Human acceptance. Human instructed Main to
+  communicate in Russian and to avoid screenshots because the current
+  orchestrator model cannot view images; visual verification is delegated to
+  the Human.
+  2026-08-15 (S14 rejection): Human rejected candidate 02 in the fresh app —
+  the custom Formatting submenu items are inactive and change nothing;
+  standard macOS right-click formatting already provides full formatting.
+  Human redefined S14 to a single feature: a `Retranslate Selection with AI…`
+  context-menu item that retranslates the selected translated phrase from its
+  source context through AI (PRD §10 / slice E4 pulled forward). ADR-003
+  records the scope change; the S14 card is rewritten accordingly.
+  2026-08-15 (S14 backup): after two primary 401 failures the Human authorized
+  the backup Coder. The backup completed the rescoped implementation and all
+  gates, then hit the subagent runtime limit before yielding; Main recovered
+  the result from the working tree and re-verified every gate green (build,
+  30 focused tests, 714 full tests, fresh app pid 65786). The model-failure
+  record is cleared after the verified backup result. Candidate 04 awaits
+  Human acceptance.
+  2026-08-15 (S14 closed): Reviewer APPROVED with no blockers (Main confirmed
+  the DocumentState update flows through the canonical
+  WorkflowStore.updateCurrentDocumentTranslated path before rendering).
+  Tester added five deterministic gap tests (same-phrase-two-blocks,
+  mixed-format safe failure, block-context fallback, protected-term request
+  tokens, span-ID preservation) and was aborted at the runtime limit; Main
+  reconciled the test diff, confirmed assertions were not weakened, and ran
+  the full suite green (719 tests / 96 suites). S14 stop-gate closed.
+  2026-08-15 (S15 open): S15FreshnessCoder01 failed before any work with a
+  provider 503 (cache-only admission rejected, 10 internal retries, 4m07s) —
+  a model/provider failure, not an implementation attempt. No code changes
+  were made. Main retried once on the primary alias as
+  S15FreshnessCoder02; a second identical provider failure pauses routing
+  for Human direction per the S14 precedent.
+  2026-08-15 (S15 attempts 02/03): Coder 02 spent its full 30-min runtime on
+  exploration and was aborted with zero code changes. Coder 03 (with the
+  pre-digested brief) was also aborted at the runtime limit after writing only
+  DocumentTranslationFreshness.swift, but it surfaced and Main verified a
+  load-bearing bug: DocumentTranslationCoordinator.commit stores the composite
+  plan.sourceHash into TranslatedBlock.sourceHash, which would mark every
+  AI-translated block permanently stale under the PRD §9.1 freshness contract.
+  ADR-004 accepted: commit must store the source block hash (one-line fix);
+  DocumentTranslationCoordinator.swift added to the S15 target list. Coder 04
+  must preserve the existing DocumentTranslationFreshness.swift and start
+  implementing immediately from the updated brief.

@@ -17,6 +17,7 @@ struct MLXPolishWorkerRequest: Codable, Sendable {
     let templateID: String
     let templateTitle: String
     let templateBody: String
+    let humorLevel: Int?
 }
 
 struct MLXPolishWorkerResponse: Codable, Sendable {
@@ -232,16 +233,19 @@ struct NativeBolabolPolishWorker {
         // (C) Reasoning models (Qwopus/Opus) emit a long <think> block before
         // the answer. With the default cap they get cut off mid-reasoning,
         // never close </think>, and never produce usable text. Give them far
-        // more headroom. All polishing runs greedily (temperature 0) so text
-        // transformation remains deterministic and does not drift into chat.
+        // more headroom. Sampling stays greedy (temperature 0) unless the
+        // Variant 2 humor slider supplies a level; PolishingGenerationPolicy
+        // then raises temperature while topP/minP guard coherence.
         let isReasoning = request.model.isReasoningModel
+        let sampling = PolishingGenerationPolicy.localSamplingParameters(humorLevel: request.humorLevel)
         let session = ChatSession(
             container,
             instructions: systemInstructions,
             generateParameters: GenerateParameters(
                 maxTokens: generationTokenLimit(for: request.rawText, isReasoningModel: isReasoning),
-                temperature: PolishingGenerationPolicy.localTemperature,
-                topP: 0.9,
+                temperature: sampling.temperature,
+                topP: sampling.topP,
+                minP: sampling.minP,
                 repetitionPenalty: 1.08
             ),
             additionalContext: modelAdditionalContext(for: request.model)

@@ -29,11 +29,21 @@ public struct PolishingRequest: Equatable, Sendable {
     public var rawText: String
     public var variant: ProcessingVariant
     public var template: PromptTemplate
+    /// Variant 2 humor slider level (0...100); nil when the slider is off or
+    /// the variant carries no humor control. Engines may use it to modulate
+    /// local sampling parameters; cloud engines ignore it.
+    public var humorLevel: Int?
 
-    public init(rawText: String, variant: ProcessingVariant, template: PromptTemplate) {
+    public init(
+        rawText: String,
+        variant: ProcessingVariant,
+        template: PromptTemplate,
+        humorLevel: Int? = nil
+    ) {
         self.rawText = rawText
         self.variant = variant
         self.template = template
+        self.humorLevel = humorLevel
     }
 }
 

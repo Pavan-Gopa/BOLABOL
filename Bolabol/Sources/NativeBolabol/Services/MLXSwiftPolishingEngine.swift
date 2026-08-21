@@ -61,7 +61,8 @@ actor MLXSwiftPolishingEngine: PolishingEngine {
                 variant: request.variant,
                 templateID: request.template.id,
                 templateTitle: request.template.title,
-                templateBody: request.template.body
+                templateBody: request.template.body,
+                humorLevel: request.humorLevel
             )
         )
 
@@ -174,6 +175,7 @@ struct MLXPolishWorkerRequest: Codable, Sendable {
     let templateID: String
     let templateTitle: String
     let templateBody: String
+    let humorLevel: Int?
 }
 
 struct MLXPolishWorkerResponse: Codable, Sendable {

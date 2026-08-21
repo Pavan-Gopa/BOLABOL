@@ -470,7 +470,8 @@ struct SecWorkerIPCContract {
                 variant: .variantOne,
                 templateID: "t",
                 templateTitle: "T",
-                templateBody: "INPUT:\n${transcription}"
+                templateBody: "INPUT:\n${transcription}",
+                humorLevel: nil
             )
             let data = try JSONEncoder().encode(request)
             let decoded = try JSONDecoder().decode(MLXPolishWorkerRequest.self, from: data)

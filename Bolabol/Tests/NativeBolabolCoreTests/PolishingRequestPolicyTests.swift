@@ -422,3 +422,33 @@ func polishingPromptPolicyEditorContractBansConversationalBehavior() {
   #expect(reminder.contains("mandatory"))
   #expect(reminder.contains("do not answer"))
 }
+
+// MARK: - Local humor sampling ramp
+
+@Test
+func localSamplingParametersStayGreedyWithoutHumor() {
+    let off = PolishingGenerationPolicy.localSamplingParameters(humorLevel: nil)
+    #expect(off.temperature == 0.0)
+    #expect(off.topP == 0.9)
+    #expect(off.minP == 0.0)
+
+    let zero = PolishingGenerationPolicy.localSamplingParameters(humorLevel: 0)
+    #expect(zero == off)
+}
+
+@Test
+func localSamplingParametersRampWithHumorLevel() {
+    let low = PolishingGenerationPolicy.localSamplingParameters(humorLevel: 30)
+    #expect(low.temperature > 0.2)
+    #expect(low.topP == 0.95)
+    #expect(low.minP == 0.05)
+
+    let mid = PolishingGenerationPolicy.localSamplingParameters(humorLevel: 60)
+    let top = PolishingGenerationPolicy.localSamplingParameters(humorLevel: 100)
+    #expect(low.temperature < mid.temperature)
+    #expect(mid.temperature < top.temperature)
+    #expect(top.temperature == 0.75)
+
+    let clamped = PolishingGenerationPolicy.localSamplingParameters(humorLevel: 500)
+    #expect(clamped == top)
+}

@@ -65,6 +65,19 @@ public enum PolishingInstructionRole: String, Equatable, Sendable {
     case developer
 }
 
+/// Sampling settings the local MLX engine applies to one polish request.
+public struct LocalSamplingParameters: Equatable, Sendable {
+    public let temperature: Float
+    public let topP: Float
+    public let minP: Float
+
+    public init(temperature: Float, topP: Float, minP: Float) {
+        self.temperature = temperature
+        self.topP = topP
+        self.minP = minP
+    }
+}
+
 /// Provider-aware generation settings for deterministic text transformation.
 ///
 /// Some current model families reject or explicitly discourage a custom
@@ -72,6 +85,22 @@ public enum PolishingInstructionRole: String, Equatable, Sendable {
 /// sending an incompatible value.
 public enum PolishingGenerationPolicy {
     public static let localTemperature: Float = 0.0
+
+    /// Humor-slider-driven sampling for the local engine. Level 0/nil keeps
+    /// the deterministic greedy polish; higher levels raise temperature
+    /// (capped) while topP/minP guard coherence, making the slider audible
+    /// without letting small models drift into chat or invented facts.
+    public static func localSamplingParameters(humorLevel: Int?) -> LocalSamplingParameters {
+        guard let humorLevel, humorLevel > 0 else {
+            return LocalSamplingParameters(temperature: localTemperature, topP: 0.9, minP: 0.0)
+        }
+        let fraction = Double(min(max(humorLevel, 1), 100)) / 100.0
+        return LocalSamplingParameters(
+            temperature: Float(max(0.2, 0.75 * fraction)),
+            topP: 0.95,
+            minP: 0.05
+        )
+    }
 
     public static func cloudTemperature(
         provider: APIProviderKind,

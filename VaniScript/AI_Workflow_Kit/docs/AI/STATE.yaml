@@ -4,28 +4,16 @@ onboarding:
   status: complete
   model_pairs_confirmed: true
   completed_at: 2026-08-21T00:00:00Z
-current_work_item_id: DOC-01
+current_step: P3A
+current_work_item_id: P3A.D1
 current_work_item: >-
-  [ ] [DOC-01] Document import/preflight: DOCX/PDF/RTF/TXT/MD normalized state. Gate: golden imports.
+  Document import/preflight: DOCX/PDF/RTF/TXT/MD normalized state. Gate: golden imports.
 step_description: >-
-  Starting P3A with DOC-01.
+  P3A Document lane; active item P3A.D1 (legacy DOC-01) — Reviewer changes requested.
 completed_steps:
-  - FND-00
-  - FND-01
-  - FND-02
-  - FND-03
-  - SEC-01
-  - NAV-01
-  - SET-01
-  - SET-02
-  - SET-03
-  - SET-04
-  - PROJ-01
-  - PROJ-02
-  - PROJ-03
-  - CAP-01
-  - PRV-01
-  - MOD-01
+  - P0
+  - P1
+  - P2
 skipped_steps: []
 parked_steps: []
 implementation:
@@ -81,8 +69,22 @@ checkpoint:
   last_pre_tag: null
   last_post_tag: null
   last_commit: null
-  last_attempt: MOD-01
-  note: P2 closed; P3A started with DOC-01. Will pause after DOC-01 completes.
+  last_attempt: P3A.D1
+  note: P2 closed; P3A.D1 (legacy DOC-01) in progress — Reviewer changes requested. Pause after P3A.D1 closes.
 notes: |
-  Workflow updated by Human. Ready to dispatch Coder for DOC-01 edge cases.
-  Will pause immediately after DOC-01 completes (including its review/qa cycle) per user instruction.
+  2026-08-21 canonical state repair: STEPS.md rewritten as Step Cards (P0..P5) with
+  stable IDs <step>.D/O/J; current_step restored; completed_steps limited to
+  current-plan card IDs. Dashboard contract restored without dashboard changes.
+  Legacy work-package ID map (historical; FEEDBACK.md still uses old IDs):
+  FND-00->P0.D1; FND-01->P1.D1; FND-02->P1.D2; FND-03->P1.D3; SEC-01->P1.D4;
+  NAV-01->P1.D5; SET-01->P2.D1; SET-02->P2.D2; SET-03->P2.D3; SET-04->P2.D4;
+  PROJ-01->P2.D5; PROJ-02->P2.D6; PROJ-03->P2.D7; CAP-01->P2.D8; PRV-01->P2.D9;
+  MOD-01->P2.D10; DOC-01..08->P3A.D1..D8; BAT-01..06->P3B.D1..D6;
+  MCP-01..05->P3C.D1..D5; UPD-01..03->P3D.D1..D3; MED-01..03->P3E.D1..D3;
+  SHT-01..02->P3E.D4..D5; HLP-01->P4.D1; OBS-01->P4.D2; PERF-01->P4.D3;
+  QA-01->P4.D4; QA-02->P4.D5; REL-01->P5.D1; REL-02->P5.D2.
+  Pre-repair completed_steps (all covered by cards P0, P1, P2): FND-00, FND-01,
+  FND-02, FND-03, SEC-01, NAV-01, SET-01, SET-02, SET-03, SET-04, PROJ-01, PROJ-02,
+  PROJ-03, CAP-01, PRV-01, MOD-01.
+  Human instruction: dispatch Coder for P3A.D1 Reviewer edge cases; pause after
+  P3A.D1 completes (including its review/qa cycle).

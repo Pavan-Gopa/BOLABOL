@@ -166,6 +166,28 @@ public extension PolishingModelCatalog {
                 description: "Strong compact NVIDIA model. Verified working via local scan.",
                 quality: 4,
                 speed: 4
+            ),
+            PolishingModelDescriptor(
+                id: "lfm25-12b-instruct-4bit",
+                displayName: "Liquid LFM2.5 1.2B 4-bit",
+                repositoryID: "mlx-community/LFM2.5-1.2B-Instruct-4bit",
+                backend: .mlxSwiftLLM,
+                downloadSize: "~0.65 GB",
+                badge: "Experiment",
+                description: "Liquid hybrid LFM2.5. Fastest local option in this experiment; Russian support is unofficial.",
+                quality: 3,
+                speed: 5
+            ),
+            PolishingModelDescriptor(
+                id: "lfm25-26b-4bit",
+                displayName: "Liquid LFM2.5 2.6B 4-bit",
+                repositoryID: "mlx-community/LFM2.5-2.6B-4bit",
+                backend: .mlxSwiftLLM,
+                downloadSize: "~1.5 GB",
+                badge: "Experiment",
+                description: "Liquid hybrid LFM2.5. Stronger rewrite quality in this experiment; Russian support is unofficial.",
+                quality: 4,
+                speed: 4
             )
         ]
     )

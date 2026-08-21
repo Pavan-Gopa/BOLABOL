@@ -41,7 +41,7 @@ jobs:
           set -euo pipefail
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             version="${GITHUB_REF_NAME#v}"
-            build="$GITHUB_RUN_NUMBER"
+            build="$(date -u +%Y%m%d%H%M%S)"
           else
             version="$INPUT_VERSION"
             build="$INPUT_BUILD"
@@ -60,7 +60,10 @@ jobs:
             exit 1
           fi
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-            git rev-parse "refs/tags/$tag" >/dev/null 2>&1 || { echo "protected release tag does not exist: $tag" >&2; exit 1; }
+            tag_commit="$(git rev-parse --verify "refs/tags/$tag^{commit}" 2>/dev/null || true)"
+            [[ -n "$tag_commit" ]] || { echo "protected release tag does not exist: $tag" >&2; exit 1; }
+            target_commit="${GITHUB_SHA:-$(git rev-parse HEAD)}"
+            [[ "$tag_commit" == "$target_commit" ]] || { echo "release tag $tag commit ($tag_commit) does not match target commit ($target_commit)" >&2; exit 1; }
           fi
           rm -rf previous-release && mkdir previous-release
           latest_tag="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --json tagName --jq '.[0].tagName // empty')"
@@ -75,7 +78,9 @@ jobs:
             previous_version="$(plutil -extract version raw -o - "$previous_manifest")"
             previous_build="$(plutil -extract buildNumber raw -o - "$previous_manifest")"
             [[ "$previous_build" =~ ^[0-9]+$ ]] || { echo "latest release manifest has invalid build number: $previous_build" >&2; exit 1; }
-            VERSION="$version" PREVIOUS_VERSION="$previous_version" python3 - <<'PY'
+            VERSION="$version" PREVIOUS_VERSION="$previous_version" \
+            CURRENT_BUILD="$build" PREVIOUS_BUILD="$previous_build" \
+            python3 - <<'PY'
           # BEGIN SEMVER_COMPARATOR
           import os
           import re
@@ -115,8 +120,12 @@ jobs:
           previous = os.environ['PREVIOUS_VERSION']
           if compare(current, previous) <= 0:
               raise SystemExit(f"release version must increase: {current} <= {previous}")
+
+          current_build = int(os.environ['CURRENT_BUILD'])
+          previous_build = int(os.environ['PREVIOUS_BUILD'])
+          if current_build <= previous_build:
+              raise SystemExit(f"build number must increase: {current_build} <= {previous_build}")
           PY
-            (( 10#$build > 10#$previous_build )) || { echo "build number must increase: $build <= $previous_build" >&2; exit 1; }
           else
             echo "No prior release found; allowing first release without a baseline manifest."
           fi
@@ -174,11 +183,16 @@ jobs:
           tag="${{ steps.identity.outputs.tag }}"
           mkdir -p dist/appcast-input
           cp "dist/VaniScript-$version.zip" dist/appcast-input/
-          gh api --method POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" --jq .body > "dist/VaniScript-$version.md"
+          if [[ -f "docs/releases/VaniScript-$version.md" ]]; then
+            cp "docs/releases/VaniScript-$version.md" "dist/VaniScript-$version.md"
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" -f tag_name="$tag" -f target_commitish="$GITHUB_SHA" --jq .body > "dist/VaniScript-$version.md"
+          fi
           cp "dist/VaniScript-$version.md" dist/appcast-input/
-          printf '%s' "$SPARKLE_PRIVATE_ED_KEY" | .build/artifacts/sparkle/Sparkle/bin/generate_appcast --ed-key-file - --download-url-prefix "https://github.com/Pavan-Gopa/VaniScript/releases/download/$tag/" -o appcast.xml dist/appcast-input
-          mv dist/appcast-input/appcast.xml dist/appcast.xml
+          printf '%s' "$SPARKLE_PRIVATE_ED_KEY" | .build/artifacts/sparkle/Sparkle/bin/generate_appcast --ed-key-file - --download-url-prefix "https://github.com/Pavan-Gopa/VaniScript/releases/download/$tag/" -o dist/appcast.xml dist/appcast-input
           test -s dist/appcast.xml
+          printf '%s' "$SPARKLE_PRIVATE_ED_KEY" | .build/artifacts/sparkle/Sparkle/bin/sign_update --ed-key-file - dist/appcast.xml
+          grep -q '<!-- sparkle-signatures:' dist/appcast.xml
 
       - name: Create draft and upload release assets
         env:

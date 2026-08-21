@@ -181,8 +181,8 @@ struct VaniScriptApp: App {
                 transcriber: initial.transcriber,
                 writer: AtomicCompanionWriter(),
                 maxAttempts: 3,
-                eventHandler: { [weak bridge] event in
-                    await MainActor.run { bridge?.store?.record(event) }
+                eventHandler: { event in
+                    await bridge.store?.record(event)
                 }
             )
             let watcher = WatchedFolderService(
@@ -191,8 +191,8 @@ struct VaniScriptApp: App {
                 configuration: initial.configuration,
                 stabilityProbe: FileStabilityProbe(),
                 requireCanonicalNames: initial.requireCanonicalNames,
-                didReconcile: { [weak bridge] event in
-                    await MainActor.run { bridge?.store?.recordReconciliation(event) }
+                didReconcile: { event in
+                    await MainActor.run { bridge.store?.recordReconciliation(event) }
                 }
             )
             let store = BatchTranscriptionStore(

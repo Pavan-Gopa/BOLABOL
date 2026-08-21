@@ -1578,7 +1578,12 @@ public extension SessionState {
             for index in markers.indices { markers[index].startSec += startSec }
         }
 
-        var cues: [TranscriptCue] = []
+        struct RawCue {
+            let startSec: Double
+            let text: String
+        }
+
+        var rawCues: [RawCue] = []
         for (index, marker) in markers.enumerated() {
             let bodyStart = marker.range.location + marker.range.length
             let bodyEnd = index + 1 < markers.count ? markers[index + 1].range.location : nsNormalized.length
@@ -1587,10 +1592,27 @@ public extension SessionState {
                 .substring(with: NSRange(location: bodyStart, length: bodyEnd - bodyStart))
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             guard !body.isEmpty else { continue }
+            rawCues.append(RawCue(startSec: marker.startSec, text: body))
+        }
+        guard !rawCues.isEmpty else { return [] }
 
-            let cueEnd = index + 1 < markers.count ? markers[index + 1].startSec : endSec
-            let resolvedEnd = cueEnd > marker.startSec ? cueEnd : max(marker.startSec + 1, endSec)
-            cues.append(TranscriptCue(startSec: marker.startSec, endSec: resolvedEnd, text: body, words: nil))
+        let chunkStart = startSec
+        let chunkEnd = max(startSec, endSec)
+
+        var starts: [Double] = []
+        var runningStart = chunkStart
+        for raw in rawCues {
+            let bounded = min(max(raw.startSec, chunkStart), chunkEnd)
+            let monotonicStart = max(runningStart, bounded)
+            starts.append(monotonicStart)
+            runningStart = monotonicStart
+        }
+
+        var cues: [TranscriptCue] = []
+        for (index, raw) in rawCues.enumerated() {
+            let cueStart = starts[index]
+            let cueEnd = (index + 1 < rawCues.count) ? starts[index + 1] : chunkEnd
+            cues.append(TranscriptCue(startSec: cueStart, endSec: cueEnd, text: raw.text, words: nil))
         }
         return cues
     }
@@ -1638,10 +1660,9 @@ public extension SessionState {
     private static func shouldOffsetRelativeTimestamps(_ startSeconds: [Double], fallbackStartSec: Double, fallbackEndSec: Double) -> Bool {
         if fallbackStartSec <= 0 || startSeconds.isEmpty { return false }
         let chunkDurationSec = max(0, fallbackEndSec - fallbackStartSec)
-        let maxStartSec = startSeconds.max() ?? 0
         let allTimestampsBeforeChunk = startSeconds.allSatisfy { $0 < fallbackStartSec - 0.5 }
-        let timestampsFitInsideChunk = chunkDurationSec <= 0 || maxStartSec <= chunkDurationSec + 10
-        return allTimestampsBeforeChunk && timestampsFitInsideChunk
+        let startsNearZero = (startSeconds.first ?? 0) < fallbackStartSec - 0.5 && (startSeconds.last ?? 0) <= chunkDurationSec + max(30.0, chunkDurationSec * 0.2)
+        return allTimestampsBeforeChunk || startsNearZero
     }
 
     static func reconstructTranslationCues(from text: String, matching sourceCues: [TranscriptCue]) -> [TranscriptCue] {

@@ -7,30 +7,16 @@ onboarding:
   status: complete
   model_pairs_confirmed: true
   completed_at: 2026-08-11T05:55:29Z
-current_work_item_id: S31.J1
+current_work_item_id: S32.J2
 current_work_item: >-
-  D16 implementation is complete, compiled, verified, and approved. A fresh
-  `dist/VaniScript.app` candidate is prepared. Human must visually and
-  operationally test the staged Batch UI.
+  VaniScript 3.1.0 is published. The exact final DMG is Developer ID signed,
+  Apple-notarized, stapled, Gatekeeper-accepted, and byte-identical to the
+  verified local artifact. The signed appcast was uploaded last. Installed
+  3.0.0 discovered, installed, and relaunched 3.1.0 through Sparkle.
 step_description: >-
-  S31.J1 — Human test the unchanged D16 Batch candidate: start a long local-ASR
-  job, observe stage updates, audio-position movement, Start/Stop, and explicit
-  output-collision routing without duplicate inference.
-  - Sources/VaniScriptRuntime/Batch/WatchedFolderService.swift
-  - Sources/VaniScriptRuntime/Batch/FileStabilityProbe.swift
-  - Sources/VaniScriptRuntime/Batch/FolderReconciler.swift
-  - Sources/VaniScriptRuntime/Batch/SQLiteBatchJobRepository.swift
-  - Sources/VaniScript/Services/NativeProcessingPipeline.swift
-  - Tests/VaniScriptTests/BatchWorkspaceIntegrationTests.swift
-  - Tests/VaniScriptTests/WatchedFolderServiceTests.swift
-  - Tests/VaniScriptTests/FileStabilityProbeTests.swift
-  - Tests/VaniScriptTests/SQLiteBatchJobRepositoryTests.swift
-  - Tests/VaniScriptTests/NativeProcessingPipelineASRTests.swift
-  - Sources/VaniScriptRuntime/Batch/BatchTranscriptionCoordinator.swift
-  - Sources/VaniScript/App/VaniScriptApp.swift
-  - Tests/VaniScriptTests/BatchTranscriptionCoordinatorTests.swift
-  - Tests/VaniScriptTests/BatchArchitectureAcceptanceTests.swift
-  - Tests/VaniScriptCoreTests/NativeProcessingReadinessTests.swift
+  S32.J2 — Human visually accepts the installed VaniScript 3.1.0 and published
+  release notes. Release URL:
+  https://github.com/Pavan-Gopa/VaniScript/releases/tag/v3.1.0
 completed_steps:
   - S0
   - S1
@@ -53,33 +39,36 @@ completed_steps:
   - S28
   - S29
   - S30
+  - S31
 skipped_steps: []
 parked_steps:
   - S5
   - S6
 
 implementation:
-  status: incomplete
-  attempts: 24
+  status: complete
+  attempts: 30
   # Increment only after evidence evaluates an implementation attempt.
   note: >-
-    S31.J1 rejected again by Human. 1) UI stuck on "Starting..." spinner instead of progress bar. 2) User wants to overwrite existing files instead of output conflict. 3) Start button clickable when empty. 4) Doesn't auto-stop when finished.
+    D23 normalizes future cloud cue timelines and repairs malformed completed
+    checkpoints on resume. Both real 11-chunk jobs completed and wrote their
+    companions from preserved checkpoint text.
 retry_guard:
   max_attempts_without_progress: 3
   last_failure_signature: null
   repeated_failure_count: 0
   blocker: null
 omp:
-  last_result_artifact: agent://TesterD16QA
+  last_result_artifact: agent://ReviewerS32AppcastTrustFinalBackup
   active_agent: null
-  active_role: coder
-  status: pending
-  role: workflow-coder
+  active_role: null
+  status: none
+  role: null
   primary_agent: null
   failed_model: null
-  evidence: null
+  evidence: Published v3.1.0 artifacts verified; real Sparkle 3.0.0→3.1.0 upgrade succeeded.
   backup_agent: null
-  human_instruction: null
+  human_instruction: Inspect installed 3.1.0 and release notes.
   authorized_at: null
 interruption:
   status: none
@@ -90,27 +79,20 @@ interruption:
   recovered_artifact: null
   recorded_at: null
 human_acceptance:
-  status: rejected
-  candidate_id: S31D16TruthfulProgress2
-  evidence: >-
-    Human visually rejected the build due to progress bar stuck on spinner, output conflict instead of overwrite, empty start button, and missing auto-stop.
+  status: accepted
+  candidate_id: Candidate10TimedTextRecovery
+  evidence: Human reports the recovered Batch workflow now works as required and is satisfied.
 review:
   status: approved
   last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
   verdict: approved
-  note: Reviewer approved S31.D16 and S31.J2; no issues remain.
+  note: Reviewer approved D23 recovery and Candidate 10.
 qa:
   status: qa_green
-  suite: >-
-    LocalASREngineRouterTests; NativeProcessingPipelineASRTests;
-    SQLiteBatchJobRepositoryTests; BatchTranscriptionCoordinatorTests;
-    BatchJobStateMachineTests; FileTranscriptionServiceTests;
-    ParakeetTranscriptionEngineTests; CanaryCoreMLEngineTests;
-    BatchWorkspaceIntegrationTests; WatchedFolderServiceTests;
-    BatchArchitectureAcceptanceTests
+  suite: Batch module full focused inventory
   bugs_open: 0
-  note: Tester returned qa_green with 114 passing tests.
-next_actor: agent
+  note: 151/151 focused Batch and readiness tests pass; 0 failures. Tester backup was explicitly Human-authorized after all primary Antigravity Claude accounts exhausted quota.
+next_actor: human
 plan_files:
   - PIPELINE.md
   - AI_Workflow_Kit/docs/DECISIONS.md
@@ -119,11 +101,12 @@ plan_files:
   - docs/PRD-Editorial-Review-Workspace.md
   - docs/BATCH_TRANSCRIPTION_ARCHITECTURE_PLAN.md
 coder_brief: |
-  Human rejected S31.J1 candidate 23. Fix 4 bugs:
-  1. UI stuck on "Starting..." spinner: The backend processing works (finishes in 5 mins), but the UI never transitions to a determinate progress bar. Fix the progress relay (`LocalASREngineRouter` / `NativeProcessingPipeline`) so `BatchJobDetailsView` / `BatchWorkspaceView` shows real progress.
-  2. Overwrite Output: Remove the output collision safety block. Silently overwrite existing companion `.txt` files when processing.
-  3. Disable Empty Start: The "Start" button must be disabled when there are no jobs/folders.
-  4. Auto-Stop: When all jobs are completed (queue is empty), automatically toggle `isRunning` back to false so the "Stop" button reverts to "Start".
+  ponytail_mode: full
+  Implement FEEDBACK.md Candidate 9 D23. Fix per-chunk cloud timestamp
+  normalization and repair malformed all-complete resumed checkpoints from
+  preserved text and planned chunk bounds. Zero repeat provider calls. Preserve
+  strict non-timeline validation, atomic writing, and Candidate 9 UI behavior.
+designer_brief: null
 checkpoint:
   last_pre_tag: vaniscript-as/pre-S1
   last_post_tag: vaniscript-as/S1-done

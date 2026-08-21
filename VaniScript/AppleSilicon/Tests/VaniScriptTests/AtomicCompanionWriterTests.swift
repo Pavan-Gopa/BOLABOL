@@ -20,7 +20,7 @@ struct AtomicCompanionWriterTests {
         #expect(fixture.ownedTemporaryFiles.isEmpty)
     }
 
-    @Test("replaces output only when its known generated hash is unchanged")
+    @Test("replaces output when a matching prior fingerprint is supplied")
     func generatedReplacement() throws {
         let fixture = try Fixture(output: "generated")
         defer { fixture.remove() }
@@ -33,41 +33,49 @@ struct AtomicCompanionWriterTests {
         #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "replacement")
     }
 
-    @Test("preserves unknown existing output")
+    @Test("replaces unknown existing output at exact path (ADR-013)")
     func unknownOutput() throws {
         let fixture = try Fixture(output: "user work")
         defer { fixture.remove() }
 
-        #expect(throws: AtomicCompanionWriterError.existingOutputNotKnownGenerated) {
-            try AtomicCompanionWriter().write(Data("replacement".utf8), request: try fixture.request())
-        }
-        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "user work")
+        let result = try AtomicCompanionWriter().write(Data("replacement".utf8), request: try fixture.request())
+
+        #expect(result.disposition == .replacedGenerated)
+        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "replacement")
     }
 
-    @Test("refuses initial symlink and nonregular outputs")
+    @Test("initial symlink path becomes regular replacement; directory yields typed rename failure")
     func initialNonregularOutputs() throws {
+        // Symlink: rename atomically replaces the symlink path; target bytes stay intact.
         let symlinkFixture = try Fixture()
         defer { symlinkFixture.remove() }
         let target = symlinkFixture.directory.appendingPathComponent("user-target.txt")
         try Data("target bytes".utf8).write(to: target)
         try FileManager.default.createSymbolicLink(at: symlinkFixture.output, withDestinationURL: target)
 
-        #expect(throws: AtomicCompanionWriterError.existingOutputNotKnownGenerated) {
-            try AtomicCompanionWriter().write(
-                Data("replacement".utf8),
-                request: try symlinkFixture.request(knownGeneratedOutput: GeneratedOutputFingerprint(sha256: symlinkFixture.outputHash()))
-            )
-        }
+        let result = try AtomicCompanionWriter().write(
+            Data("replacement".utf8),
+            request: try symlinkFixture.request()
+        )
+
+        #expect(result.disposition == .replacedGenerated)
+        // The output path is now a regular file, not a symlink.
+        var outputMeta = stat()
+        symlinkFixture.output.withUnsafeFileSystemRepresentation { lstat($0, &outputMeta) }
+        #expect(outputMeta.st_mode & S_IFMT == S_IFREG)
+        #expect(try String(contentsOf: symlinkFixture.output, encoding: .utf8) == "replacement")
+        // The original symlink target is untouched.
         #expect(try String(contentsOf: target, encoding: .utf8) == "target bytes")
 
+        // Directory: rename(2) cannot atomically replace a directory → typed failure.
         let directoryFixture = try Fixture()
         defer { directoryFixture.remove() }
         try FileManager.default.createDirectory(at: directoryFixture.output, withIntermediateDirectories: false)
 
-        #expect(throws: AtomicCompanionWriterError.existingOutputNotKnownGenerated) {
+        #expect(throws: AtomicCompanionWriterError.renameFailed(code: EISDIR)) {
             try AtomicCompanionWriter().write(
                 Data("replacement".utf8),
-                request: try directoryFixture.request(knownGeneratedOutput: GeneratedOutputFingerprint(sha256: String(repeating: "0", count: 64)))
+                request: try directoryFixture.request()
             )
         }
         var isDirectory: ObjCBool = false
@@ -75,22 +83,22 @@ struct AtomicCompanionWriterTests {
         #expect(isDirectory.boolValue)
     }
 
-    @Test("preserves output modified after generation")
+    @Test("replaces output with stale fingerprint at exact path (ADR-013)")
     func modifiedOutput() throws {
         let fixture = try Fixture(output: "user edit")
         defer { fixture.remove() }
         let stale = GeneratedOutputFingerprint(sha256: String(repeating: "0", count: 64))
 
-        #expect(throws: AtomicCompanionWriterError.existingOutputModified) {
-            try AtomicCompanionWriter().write(
-                Data("replacement".utf8),
-                request: try fixture.request(knownGeneratedOutput: stale)
-            )
-        }
-        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "user edit")
+        let result = try AtomicCompanionWriter().write(
+            Data("replacement".utf8),
+            request: try fixture.request(knownGeneratedOutput: stale)
+        )
+
+        #expect(result.disposition == .replacedGenerated)
+        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "replacement")
     }
 
-    @Test("output created immediately before commit is preserved")
+    @Test("output created immediately before commit is replaced atomically (ADR-013)")
     func outputCreatedBeforeCommit() throws {
         let fixture = try Fixture()
         defer { fixture.remove() }
@@ -98,14 +106,16 @@ struct AtomicCompanionWriterTests {
             try! Data("user work".utf8).write(to: fixture.output)
         })
 
-        #expect(throws: AtomicCompanionWriterError.existingOutputNotKnownGenerated) {
-            try writer.write(Data("generated".utf8), request: try fixture.request())
-        }
-        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "user work")
+        // Initial lstat sees ENOENT → disposition is .created; rename atomically replaces
+        // the file that appeared between lstat and commit.
+        let result = try writer.write(Data("generated".utf8), request: try fixture.request())
+
+        #expect(result.disposition == .created)
+        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "generated")
         #expect(fixture.ownedTemporaryFiles.isEmpty)
     }
 
-    @Test("output edited immediately before replacement is preserved")
+    @Test("output edited immediately before commit is replaced atomically (ADR-013)")
     func outputEditedBeforeCommit() throws {
         let fixture = try Fixture(output: "generated")
         defer { fixture.remove() }
@@ -114,17 +124,19 @@ struct AtomicCompanionWriterTests {
             try! Data("user edit".utf8).write(to: fixture.output)
         })
 
-        #expect(throws: AtomicCompanionWriterError.existingOutputModified) {
-            try writer.write(
-                Data("replacement".utf8),
-                request: try fixture.request(knownGeneratedOutput: known)
-            )
-        }
-        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "user edit")
+        // Initial lstat saw the file → .replacedGenerated; rename atomically replaces
+        // the modified content that appeared between lstat and commit.
+        let result = try writer.write(
+            Data("replacement".utf8),
+            request: try fixture.request(knownGeneratedOutput: known)
+        )
+
+        #expect(result.disposition == .replacedGenerated)
+        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "replacement")
         #expect(fixture.ownedTemporaryFiles.isEmpty)
     }
 
-    @Test("symlink substituted immediately before replacement is preserved without touching target")
+    @Test("symlink substituted before commit is replaced without touching target (ADR-013)")
     func outputSymlinkedBeforeCommit() throws {
         let fixture = try Fixture(output: "generated")
         defer { fixture.remove() }
@@ -136,14 +148,19 @@ struct AtomicCompanionWriterTests {
             try! FileManager.default.createSymbolicLink(at: fixture.output, withDestinationURL: target)
         })
 
-        #expect(throws: AtomicCompanionWriterError.existingOutputModified) {
-            try writer.write(
-                Data("replacement".utf8),
-                request: try fixture.request(knownGeneratedOutput: known)
-            )
-        }
-        let destination = try FileManager.default.destinationOfSymbolicLink(atPath: fixture.output.path)
-        #expect(destination == target.path)
+        // Rename atomically replaces the symlink at the output path with a regular file.
+        let result = try writer.write(
+            Data("replacement".utf8),
+            request: try fixture.request(knownGeneratedOutput: known)
+        )
+
+        #expect(result.disposition == .replacedGenerated)
+        // The output path is now a regular file, not a symlink.
+        var outputMeta = stat()
+        fixture.output.withUnsafeFileSystemRepresentation { lstat($0, &outputMeta) }
+        #expect(outputMeta.st_mode & S_IFMT == S_IFREG)
+        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "replacement")
+        // The symlink target is untouched.
         #expect(try String(contentsOf: target, encoding: .utf8) == "target bytes")
         #expect(fixture.ownedTemporaryFiles.isEmpty)
     }
@@ -167,17 +184,28 @@ struct AtomicCompanionWriterTests {
         #expect(fixture.ownedTemporaryFiles.isEmpty)
     }
 
-    @Test("case-insensitive sibling collision blocks before writing")
-    func collision() throws {
+    @Test("exact-destination write succeeds regardless of case-variant sibling")
+    func caseVariantSibling() throws {
         let fixture = try Fixture()
         defer { fixture.remove() }
-        let collision = fixture.directory.appendingPathComponent(fixture.output.lastPathComponent.uppercased())
-        try Data("collision".utf8).write(to: collision)
+        let siblingName = fixture.output.lastPathComponent.uppercased()
+        let sibling = fixture.directory.appendingPathComponent(siblingName)
+        try Data("sibling".utf8).write(to: sibling)
+        let siblingAliasesOutput = FileManager.default.fileExists(atPath: fixture.output.path)
 
-        #expect(throws: AtomicCompanionWriterError.caseInsensitiveCollision(existingName: collision.lastPathComponent)) {
-            try AtomicCompanionWriter().write(Data("text".utf8), request: try fixture.request())
+        let result = try AtomicCompanionWriter().write(Data("text".utf8), request: try fixture.request())
+
+        // On case-insensitive FS (default macOS APFS): sibling and output resolve to
+        // the same inode, so lstat sees a file → .replacedGenerated.
+        // On case-sensitive FS: sibling is a separate file, output is absent → .created.
+        // ADR-013: no collision error either way.
+        #expect(result.disposition == .replacedGenerated || result.disposition == .created)
+        #expect(try String(contentsOf: fixture.output, encoding: .utf8) == "text")
+        if siblingAliasesOutput {
+            #expect(try String(contentsOf: sibling, encoding: .utf8) == "text")
+        } else {
+            #expect(try String(contentsOf: sibling, encoding: .utf8) == "sibling")
         }
-        #expect(try String(contentsOf: collision, encoding: .utf8) == "collision")
     }
 
     @Test("permission failure is typed and preserves output")

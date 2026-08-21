@@ -1,0 +1,88 @@
+schema_version: 2
+project_prefix: vaniscript-electron
+onboarding:
+  status: complete
+  model_pairs_confirmed: true
+  completed_at: 2026-08-21T00:00:00Z
+current_work_item_id: DOC-01
+current_work_item: >-
+  [ ] [DOC-01] Document import/preflight: DOCX/PDF/RTF/TXT/MD normalized state. Gate: golden imports.
+step_description: >-
+  Starting P3A with DOC-01.
+completed_steps:
+  - FND-00
+  - FND-01
+  - FND-02
+  - FND-03
+  - SEC-01
+  - NAV-01
+  - SET-01
+  - SET-02
+  - SET-03
+  - SET-04
+  - PROJ-01
+  - PROJ-02
+  - PROJ-03
+  - CAP-01
+  - PRV-01
+  - MOD-01
+skipped_steps: []
+parked_steps: []
+implementation:
+  status: none
+  attempts: 2
+  note: DOC01CoderRetry1 fixed RTF loop but Reviewer requested changes (PDF, DOCX edge cases). Human workflow updates applied.
+retry_guard:
+  max_attempts_without_progress: 3
+  last_failure_signature: "DOC01Reviewer requested changes (PDF hangs, zlib errors, DOCX metadata)"
+  repeated_failure_count: 0
+  blocker: null
+omp:
+  last_result_artifact: null
+  active_agent: null
+  active_role: null
+  status: none
+  role: null
+  primary_agent: null
+  failed_model: null
+  evidence: null
+  backup_agent: null
+  human_instruction: >-
+    Сначала приведи file-backed workflow state проекта в полностью согласованное состояние и запушь текущую рабочую ветку на GitHub.
+  authorized_at: 2026-08-21T00:00:00Z
+interruption:
+  status: none
+  role: null
+  run_id: null
+  candidate_id: null
+  classification: null
+  recovered_artifact: null
+  recorded_at: null
+human_acceptance:
+  status: required
+  evidence: Automated coder-reviewer-tester cycle authorized by Human.
+review:
+  status: rejected
+  last_feedback_file: AI_Workflow_Kit/docs/AI/FEEDBACK.md
+  verdict: changes_requested
+  note: DOC01Reviewer1 requested changes for PDF hangs, zlib errors, and DOCX metadata loss.
+qa:
+  status: pending
+  suite: null
+  bugs_open: 0
+  note: QA pending review approval.
+next_actor: workflow-coder
+plan_files:
+  - Electron/docs/VANISCRIPT_APPLE_SILICON_TO_ELECTRON_MIGRATION_PLAN.md
+  - AI_Workflow_Kit/docs/STEPS.md
+coder_brief: null
+designer_brief: null
+checkpoint:
+  last_pre_tag: null
+  last_post_tag: null
+  last_commit: null
+  last_attempt: MOD-01
+  note: P2 closed; P3A started with DOC-01. Will pause after DOC-01 completes.
+notes: |
+  Workflow updated by Human. Ready to dispatch Coder for DOC-01 edge cases.
+  Will pause immediately after DOC-01 completes (including its review/qa cycle) per user instruction.

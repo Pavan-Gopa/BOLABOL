@@ -1418,6 +1418,8 @@ issue, folder, and job states one clear hierarchy.
 - [x] [S31.D14] Activate watched folders and claim existing current-configuration pending work without waiting for full-folder stability/readability reconciliation; reconciliation continues safely and newly admitted jobs are processed
 - [ ] [S31.D15] Forward local-ASR per-chunk progress and total-chunk count through the batch progress/checkpoint path so the UI reports honest progress instead of permanent 0%
 - [ ] [S31.D16] Replace the 1% alive placeholder with truthful persisted Batch phases and real WhisperKit sub-chunk audio coverage; show planning/model-load/audio-conversion/inference/finalizing state in row, detail, and workspace status, and route existing-output safety failures to actionable output-conflict state instead of generic Failed
+- [x] [S31.D22] Move live time/chunk/percentage into each job row; add shared Chunk Duration, Silence Threshold, and Minimum Silence controls to Batch configuration without Slice Mode; style Start green/play and Stop red/stop while preserving disabled semantics
+- [x] [S31.D23] Normalize malformed cloud cue timelines per planned chunk and repair already persisted completed checkpoints during resume so all transcribed text reaches atomic companion writing without duplicate provider inference
 
 **Out of scope:** background/login agent, parallel ASR, automatic provider
 fallback, Batch translation, unrelated screens, new dependencies, or duplicated
@@ -1436,17 +1438,61 @@ progress phase/detail is in scope for S31.D16.
 - [x] [S31.O8] deterministic and fresh-app crash-recovery gates prove Canary performs zero watch/claim/provider calls while interrupted rows become pending with honest recovery state
 - [x] [S31.O9] deterministic concurrency gate proves provider-change invalidation waits for active Batch local ASR, unloads only after inference exits, and permits the next selected binding without overlap or process trap
 - [x] [S31.O10] deterministic startup gate proves an existing current pending job reaches processing before a blocked folder reconciliation completes, while newly reconciled jobs are still processed afterward
-- [ ] [S31.O11] deterministic WhisperKit callback gate proves planning/load/conversion phases are visible and segment timestamps advance persisted progress within one long outer chunk before completion
-- [ ] [S31.O12] row/detail/workspace UI gates prove indeterminate preparation stages and determinate inference progress render honest stage text, audio position/total, percent, duration, and VoiceOver values without claiming work that has not completed
-- [ ] [S31.O13] output-safety gate proves an existing unknown or modified companion routes to `blockedOutputCollision` with an actionable message while preserved checkpoints avoid retranscribing completed audio
-- [ ] [S31.O14] fresh packaged app with a real long WhisperKit file visibly advances through preparation and inference, then either writes the safe companion or reports the exact output conflict
+- [x] [S31.O11] deterministic WhisperKit callback gate proves planning/load/conversion phases are visible and segment timestamps advance persisted progress within one long outer chunk before completion
+- [x] [S31.O12] packaged-app runtime proves callback bridge lifetime keeps stable-height rows live: while the third real file was still processing, the first two fixed rows already showed Completed with green-check semantics
+- [x] [S31.O13] companion replacement gate and Human runtime evidence prove an existing same-stem `.txt` companion is atomically overwritten without a collision stop or duplicate manual cleanup
+- [ ] [S31.O14] fresh packaged app with several real local-ASR files visibly moves one compact spinner from the active row to the next, leaves green completed checkmarks behind, writes companions, and returns the primary action to Start without resizing the sheet
+- [x] [S31.O15] fresh packaged Batch sheet shows row-owned live progress, edits the same three persisted chunking settings as Settings, keeps configuration order readable, and renders unmistakable green Start/red Stop states without geometry regressions
+- [x] [S31.O16] focused regression proves oversized/equal/outlier cloud timestamps become bounded monotonic cues without losing or reordering transcript text
+- [x] [S31.O17] all-11-checkpoint resume repairs persisted malformed cues, writes the complete companion, and performs zero cloud transcription calls
+- [x] [S31.O18] Tester inventories observable Batch contracts across profiles, reconciliation, repository/state machine, coordinator/resume, cloud/local routing, timed-text recovery, atomic companions, store/UI publication, readiness, cancellation, and sequential queue behavior
+- [x] [S31.O19] focused deterministic tests close every material uncovered Batch contract gap without network calls, real model weights, source-text assertions, or duplicating existing coverage
+- [x] [S31.O20] complete Batch-focused test inventory passes together and the exact suite/count/evidence is recorded before release packaging
 
 ### Judgment gates
-- [ ] [S31.J1] Human visually and operationally accepts the unchanged final candidate
-- [ ] [S31.J2] Reviewer confirms one primary action, honest state/readiness presentation, preserved accessibility/output safety, exact provider binding, shared chunking, and bounded ADR-011 scope
+- [x] [S31.J1] Human visually and operationally accepts Candidate 10
+- [x] [S31.J2] Reviewer confirms the app-level callback bridge survives `makeBatchStore`, fixes the packaged stale-spinner path, and corresponds to the Human-requested live sequential file-state presentation without test-only bridge retention
+- [x] [S31.J3] Reviewer confirms the candidate matches every Candidate 8 screenshot request and preserves the accepted sequential callback/runtime behavior
+- [x] [S31.J4] Reviewer confirms long-file recovery is text-lossless, avoids duplicate inference, retains strict non-timeline validation, and preserves atomic output safety
 
-**Ready for Human test when:** Main verifies the final diff, build, focused
-runtime gates, and fresh app. Human tests the unchanged candidate before
-Reviewer and Tester.
+**Ready for release qualification when:** Main verifies the final diff, build,
+complete Batch-focused QA, and fresh app; Reviewer approves and Tester returns
+`qa_green`.
 
 **Stop-gate:** Human ACCEPTED + Reviewer APPROVED + Tester qa_green.
+
+---
+
+## S32 — VaniScript 3.1.0 Batch release and first Sparkle upgrade
+
+**Goal:** Ship the Human-accepted Batch module as VaniScript 3.1.0 through the
+existing signed/notarized GitHub channel, while proving users on 3.0.0 can
+upgrade from inside the app and new users can install the stapled DMG.
+
+**Depends on:** S31; S21–S24 release/update architecture
+
+**Source of truth:** Human release instruction (2026-08-20);
+`AI_Workflow_Kit/docs/DECISIONS.md` ADR-013; `.github/workflows/release.yml`;
+`script/build_release_dmg.sh`; `Tests/VaniScriptCoreTests/UpdateQualificationTests.swift`
+
+- [x] [S32.D1] Cut an isolated VaniScript release source commit containing the accepted 3.1.0 app and tests without unrelated workspace-project changes
+- [x] [S32.D2] Produce version 3.1.0 with a strictly increasing numeric build and the existing VaniScript bundle/feed identity
+- [x] [S32.D3] Build arm64 Release, sign nested code with hardened runtime, notarize the final DMG, staple and validate the final versioned copy, and generate the signed Sparkle update ZIP/manifests/checksums
+- [x] [S32.D4] Publish GitHub release notes centered on the new Batch module while identifying 3.0.0 as the editorial-workspace release; upload appcast last
+
+### Objective gates
+
+- [x] [S32.O1] complete Batch-focused gate passes 151/151 with zero failures
+- [x] [S32.O2] live 3.0.0 appcast identity is valid and 21/21 deterministic update/release qualification tests pass
+- [x] [S32.O3] release app, ZIP, DMG, manifest, notes, and checksums match version/build/arm64/bundle/feed requirements
+- [x] [S32.O4] codesign, notarization, stapler, Gatekeeper, architecture, minimum macOS, and local-Xcode-coupling checks pass on the exact final artifacts
+- [x] [S32.O5] installed 3.0.0 discovers and installs 3.1.0 through Sparkle, relaunches healthy, and preserves user data
+- [x] [S32.O6] GitHub v3.1.0 exposes DMG for new users plus signed ZIP, notes, manifest, checksums, and appcast published last
+
+### Judgment gates
+
+- [x] [S32.J1] release chain of custody is fail-closed and the published appcast references only the verified immutable 3.1.0 ZIP
+- [ ] [S32.J2] Human accepts release notes and the installed/upgraded 3.1.0 application
+
+**Stop-gate:** verified release source + signed/notarized/stapled artifacts +
+successful 3.0.0 → 3.1.0 Sparkle upgrade + published GitHub release.

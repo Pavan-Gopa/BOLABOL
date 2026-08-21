@@ -434,19 +434,26 @@ final class BatchTranscriptionStore: ObservableObject {
     }
 
     func stop() async {
+        await tearDown(cancelProcessingTask: true)
+    }
+
+    private func tearDown(cancelProcessingTask: Bool) async {
         guard isAvailable, let coordinator else { return }
         let token = advanceLifecycle()
         isRunning = false
+        isReconciling = false
         processingRequested = false
         let task = processingTask
+        processingTask = nil
         processingRunToken = nil
-        task?.cancel()
+        startTransitionToken = nil
+        if cancelProcessingTask {
+            task?.cancel()
+        }
         let watcherGeneration = activeWatcherGeneration
         activeWatcherGeneration = nil
 
         await coordinator.cancelAllAndWait()
-        await task?.value
-        processingTask = nil
 
         if let watcher, let watcherGeneration {
             await watcher.stop(generation: watcherGeneration)
@@ -506,30 +513,32 @@ final class BatchTranscriptionStore: ObservableObject {
     }
 
     func refreshJobs() {
+        guard isAvailable, repository != nil else { return }
+        Task { [weak self] in
+            await self?.refreshJobsAndApplyStatus()
+        }
+    }
+
+    private func refreshJobsAndApplyStatus() async {
         guard isAvailable, let repository else { return }
-        Task { [weak self, repository] in
-            let values = (try? await repository.list()) ?? []
-            await MainActor.run {
-                guard let self else { return }
-                let activeProfileIDs = Set(self.profiles.map(\.id))
-                self.jobs = values.filter { activeProfileIDs.contains($0.profileID) }.sorted { $0.updatedAt > $1.updatedAt }
-                if let startBlockMessage = self.startBlockMessage {
-                    self.statusMessage = startBlockMessage
-                } else if let processing = self.jobs.first(where: { $0.state == .processing }) {
-                    self.statusMessage = self.processingStatus(for: processing)
-                } else if self.isRunning {
-                    let hasIncompleteJobs = self.jobs.contains(where: { $0.state == .pending || $0.state == .processing })
-                    if !hasIncompleteJobs && !self.isReconciling {
-                        Task { [weak self] in await self?.stop() }
-                        self.statusMessage = "Batch transcription is stopped."
-                    } else {
-                        let activeCount = self.profiles.filter(\.enabled).count
-                        self.statusMessage = activeCount == 0 ? "No enabled folder is available." : "Watching \(activeCount) folder\(activeCount == 1 ? "" : "s")."
-                    }
-                } else {
-                    self.statusMessage = "Batch transcription is stopped."
-                }
+        let values = (try? await repository.list()) ?? []
+        let activeProfileIDs = Set(profiles.map(\.id))
+        jobs = values.filter { activeProfileIDs.contains($0.profileID) }
+        if let startBlockMessage {
+            statusMessage = startBlockMessage
+        } else if let processing = jobs.first(where: { $0.state == .processing }) {
+            statusMessage = processingStatus(for: processing)
+        } else if isRunning {
+            let hasIncompleteJobs = jobs.contains(where: { $0.state == .pending || $0.state == .processing })
+            if !hasIncompleteJobs && !isReconciling {
+                Task { [weak self] in await self?.stop() }
+                statusMessage = "Batch transcription is stopped."
+            } else {
+                let activeCount = profiles.filter(\.enabled).count
+                statusMessage = activeCount == 0 ? "No enabled folder is available." : "Watching \(activeCount) folder\(activeCount == 1 ? "" : "s")."
             }
+        } else {
+            statusMessage = "Batch transcription is stopped."
         }
     }
 
@@ -559,8 +568,8 @@ final class BatchTranscriptionStore: ObservableObject {
         }
     }
 
-    func record(_ event: BatchProcessingEvent) {
-        refreshJobs()
+    func record(_ event: BatchProcessingEvent) async {
+        await refreshJobsAndApplyStatus()
         switch event {
         case let .updated(jobID):
             if let job = jobs.first(where: { $0.id == jobID }) {
@@ -599,8 +608,7 @@ final class BatchTranscriptionStore: ObservableObject {
                 await coordinator.processPending()
                 self.refreshJobs()
 
-                if !self.isReconciling,
-                   let activeJobs = try? await repository.list(states: [.pending, .processing]) {
+                if let activeJobs = try? await repository.list(states: [.pending, .processing]) {
                     let activeProfileIDs = Set(self.profiles.map(\.id))
                     shouldAutoStop = !activeJobs.contains {
                         activeProfileIDs.contains($0.profileID)
@@ -620,7 +628,7 @@ final class BatchTranscriptionStore: ObservableObject {
             self.processingTask = nil
             self.processingRunToken = nil
             if shouldAutoStop, self.isRunning {
-                await self.stop()
+                await self.tearDown(cancelProcessingTask: false)
             } else if self.isRunning, self.processingRequested {
                 self.requestProcessing()
             }
@@ -732,8 +740,12 @@ final class BatchTranscriptionStore: ObservableObject {
 
     private static func sendNotification(title: String, body: String) async {
         let center = UNUserNotificationCenter.current()
-        let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else { return }
+        let status: UNAuthorizationStatus = await withCheckedContinuation { continuation in
+            center.getNotificationSettings { settings in
+                continuation.resume(returning: settings.authorizationStatus)
+            }
+        }
+        guard status == .authorized || status == .provisional else { return }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body

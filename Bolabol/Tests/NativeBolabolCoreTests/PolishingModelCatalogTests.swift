@@ -27,6 +27,25 @@ func nativePolishingCatalogIncludesQwenLadderAndNemotronOption() {
 }
 
 @Test
+func nativePolishingCatalogIncludesLiquidLFM25ExperimentModels() throws {
+    let catalog = PolishingModelCatalog.nativeMLX
+    let modelIDs = Set(catalog.models.map(\.id))
+
+    #expect(modelIDs.contains("lfm25-12b-instruct-4bit"))
+    #expect(modelIDs.contains("lfm25-26b-4bit"))
+
+    let small = try #require(catalog.model(withID: "lfm25-12b-instruct-4bit"))
+    #expect(small.repositoryID == "mlx-community/LFM2.5-1.2B-Instruct-4bit")
+    #expect(small.backend == .mlxSwiftLLM)
+    #expect(!small.isReasoningModel)
+
+    let large = try #require(catalog.model(withID: "lfm25-26b-4bit"))
+    #expect(large.repositoryID == "mlx-community/LFM2.5-2.6B-4bit")
+    #expect(large.backend == .mlxSwiftLLM)
+    #expect(!large.isReasoningModel)
+}
+
+@Test
 func nativePolishingCatalogRejectsDuplicateModelIDs() {
     let model = PolishingModelDescriptor(
         id: "duplicate",

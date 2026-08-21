@@ -103,7 +103,7 @@ struct BatchWorkspaceView: View {
                 .frame(minWidth: 24)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(store.statusMessage)
+                Text(statusHeadline)
                     .font(.callout.weight(.medium))
                     .lineLimit(2)
                 Text("\(store.providerDisplayName) · \(NativeLanguagePolicy.displayName(for: store.configuration.sourceLanguage))")
@@ -119,10 +119,17 @@ struct BatchWorkspaceView: View {
                     .help("Files rejected by the latest reconciliation are listed below.")
                     .accessibilityLabel("\(store.issues.count) rejected file\(store.issues.count == 1 ? "" : "s")")
             }
-            Button(store.isRunning ? "Stop" : "Start") {
+            Button {
                 Task { store.isRunning ? await store.stop() : await store.start() }
+            } label: {
+                Label(
+                    store.isRunning ? "Stop" : "Start",
+                    systemImage: store.isRunning ? "stop.fill" : "play.fill"
+                )
+                .frame(minWidth: 68)
             }
             .buttonStyle(.borderedProminent)
+            .tint(store.isRunning ? .red : .green)
             .accessibilityLabel(store.isRunning ? "Stop batch transcription" : "Start batch transcription")
             .disabled(
                 !store.isAvailable
@@ -138,21 +145,10 @@ struct BatchWorkspaceView: View {
 
     /// Secondary zone: execution configuration, visually subordinate to the state row.
     private var configurationStrip: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 16) {
-                    providerControls
-                    Spacer(minLength: 8)
-                    canonicalToggle
-                }
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 16) {
-                        providerControls
-                        Spacer()
-                    }
-                    canonicalToggle
-                }
-            }
+        VStack(alignment: .leading, spacing: 8) {
+            providerControls
+            chunkingControls
+            canonicalToggle
             Text(policyHint)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -175,48 +171,128 @@ struct BatchWorkspaceView: View {
     private var providerControls: some View {
         let cloudProviders = availableTranscriptionProviders.filter { $0.group == .cloud }
         let localProviders = availableTranscriptionProviders.filter { $0.group == .local }
-        return HStack(spacing: 12) {
-            HStack(spacing: 6) {
-                Text("Provider")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                Picker("Provider", selection: providerBinding) {
-                    if !cloudProviders.isEmpty {
-                        Section("Cloud") {
-                            ForEach(cloudProviders, id: \.id) { provider in
-                                Text(provider.label).tag(provider.id)
-                            }
-                        }
-                    }
-                    if !localProviders.isEmpty {
-                        Section("Local") {
-                            ForEach(localProviders, id: \.id) { provider in
-                                Text(provider.label).tag(provider.id)
-                            }
-                        }
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .accessibilityLabel("Transcription provider")
-            }
-            if showsModelPicker {
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
                 HStack(spacing: 6) {
-                    Text("Model")
+                    Text("Provider")
                         .font(.callout)
                         .foregroundStyle(.secondary)
-                    Picker("Model", selection: batchModelBinding) {
-                        ForEach(batchModelOptions, id: \.self) { modelID in
-                            Text(modelID).tag(modelID)
+                    Picker("Provider", selection: providerBinding) {
+                        if !cloudProviders.isEmpty {
+                            Section("Cloud") {
+                                ForEach(cloudProviders, id: \.id) { provider in
+                                    Text(provider.label).tag(provider.id)
+                                }
+                            }
+                        }
+                        if !localProviders.isEmpty {
+                            Section("Local") {
+                                ForEach(localProviders, id: \.id) { provider in
+                                    Text(provider.label).tag(provider.id)
+                                }
+                            }
                         }
                     }
                     .labelsHidden()
                     .pickerStyle(.menu)
-                    .frame(maxWidth: 240)
-                    .accessibilityLabel("Transcription model")
+                    .accessibilityLabel("Transcription provider")
+                }
+                if showsModelPicker {
+                    HStack(spacing: 6) {
+                        Text("Model")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        Picker("Model", selection: batchModelBinding) {
+                            ForEach(batchModelOptions, id: \.self) { modelID in
+                                Text(modelID).tag(modelID)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: 240)
+                        .accessibilityLabel("Transcription model")
+                    }
+                }
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Text("Provider")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    Picker("Provider", selection: providerBinding) {
+                        if !cloudProviders.isEmpty {
+                            Section("Cloud") {
+                                ForEach(cloudProviders, id: \.id) { provider in
+                                    Text(provider.label).tag(provider.id)
+                                }
+                            }
+                        }
+                        if !localProviders.isEmpty {
+                            Section("Local") {
+                                ForEach(localProviders, id: \.id) { provider in
+                                    Text(provider.label).tag(provider.id)
+                                }
+                            }
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .accessibilityLabel("Transcription provider")
+                }
+                if showsModelPicker {
+                    HStack(spacing: 6) {
+                        Text("Model")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        Picker("Model", selection: batchModelBinding) {
+                            ForEach(batchModelOptions, id: \.self) { modelID in
+                                Text(modelID).tag(modelID)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: 240)
+                        .accessibilityLabel("Transcription model")
+                    }
                 }
             }
         }
+    }
+
+    private var chunkingControls: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                chunkDurationStepper
+                silenceThresholdStepper
+                minSilenceStepper
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 12) {
+                    chunkDurationStepper
+                    silenceThresholdStepper
+                }
+                minSilenceStepper
+            }
+        }
+        .font(.callout)
+    }
+
+    private var chunkDurationStepper: some View {
+        Stepper("Chunk: \(workflowStore.settings.chunkDurationMin) min", value: chunkDurationBinding, in: 1...60)
+            .accessibilityLabel("Chunk duration")
+            .accessibilityValue("\(workflowStore.settings.chunkDurationMin) minutes")
+    }
+
+    private var silenceThresholdStepper: some View {
+        Stepper("Silence: \(workflowStore.settings.silenceThreshDb) dB", value: silenceThreshDbBinding, in: -60 ... -1)
+            .accessibilityLabel("Silence threshold")
+            .accessibilityValue("\(workflowStore.settings.silenceThreshDb) decibels")
+    }
+
+    private var minSilenceStepper: some View {
+        Stepper("Min silence: \(workflowStore.settings.minSilenceMs) ms", value: minSilenceMsBinding, in: 100...3000)
+            .accessibilityLabel("Minimum silence duration")
+            .accessibilityValue("\(workflowStore.settings.minSilenceMs) milliseconds")
     }
 
     private var canonicalToggle: some View {
@@ -343,6 +419,12 @@ struct BatchWorkspaceView: View {
     }
 
     // MARK: - State presentation
+    private var statusHeadline: String {
+        if !store.isAvailable { return store.statusMessage }
+        if store.isProcessing { return "Transcribing batch jobs…" }
+        return store.statusMessage
+    }
+
 
     private var statusIconName: String {
         if !store.isAvailable { return "exclamationmark.octagon" }
@@ -423,6 +505,30 @@ struct BatchWorkspaceView: View {
             }
         }
     }
+    private var chunkDurationBinding: Binding<Int> {
+        Binding {
+            workflowStore.settings.chunkDurationMin
+        } set: { newValue in
+            workflowStore.updateSettings { $0.chunkDurationMin = newValue }
+        }
+    }
+
+    private var silenceThreshDbBinding: Binding<Int> {
+        Binding {
+            workflowStore.settings.silenceThreshDb
+        } set: { newValue in
+            workflowStore.updateSettings { $0.silenceThreshDb = newValue }
+        }
+    }
+
+    private var minSilenceMsBinding: Binding<Int> {
+        Binding {
+            workflowStore.settings.minSilenceMs
+        } set: { newValue in
+            workflowStore.updateSettings { $0.minSilenceMs = newValue }
+        }
+    }
+
 
     private var availableTranscriptionProviders: [ProviderOption] {
         ProviderRegistry.availableTranscriptionProviders(settings: workflowStore.settings)

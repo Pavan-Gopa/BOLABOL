@@ -179,9 +179,7 @@ copy_optional_asset() {
 
 copy_required_asset "$APPLE_SILICON_ASSETS_DIR/AppIconAS.icns" "$APP_RESOURCES/AppIcon.icns"
 copy_required_asset "$APPLE_SILICON_ASSETS_DIR/AppIconAS.png" "$APP_RESOURCES/AppIcon.png"
-copy_required_asset "$WORKSPACE_DIR/Shared/VaniScript_Logo.svg" "$APP_RESOURCES/VaniScript_Logo.svg"
-copy_optional_asset "$WORKSPACE_DIR/Shared/VaniScript_Logo.png" "$APP_RESOURCES/VaniScript_Logo.png"
-copy_optional_asset "$WORKSPACE_DIR/Shared/New_Logo.svg" "$APP_RESOURCES/New_Logo.svg"
+copy_required_asset "$APPLE_SILICON_ASSETS_DIR/VaniScript_Logo.svg" "$APP_RESOURCES/VaniScript_Logo.svg"
 
 if [[ -d "$ROOT_DIR/Sources/VaniScript/Resources/Fonts" ]]; then
   mkdir -p "$APP_RESOURCES/Fonts"

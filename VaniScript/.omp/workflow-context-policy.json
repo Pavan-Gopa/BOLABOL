@@ -1,0 +1,20 @@
+{
+  "schema_version": 3,
+  "name": "context-economy",
+  "overlay_mode": "additive",
+  "branch": "experiment/context-economy-v3.2",
+  "source_commit": "a20f9ac00f3e49f11138c1d197e93db4301dc2b7",
+  "installed_at": "2026-08-21T09:53:41.446580+00:00",
+  "arm_percent": 23,
+  "hard_percent": 28,
+  "reset_percent": 18,
+  "method_order": [
+    "shake",
+    "soft"
+  ],
+  "scope": "top-level-interactive-main-only",
+  "worker_auto_compaction": false,
+  "omp_auto_compaction": false,
+  "base_dashboard_owned_by_experiment": false,
+  "alt_a_owned_by_experiment": false
+}

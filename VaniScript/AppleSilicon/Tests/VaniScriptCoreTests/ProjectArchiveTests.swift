@@ -312,6 +312,69 @@ struct ProjectArchiveTests {
         #expect(cues[1].startSec == 605)
     }
 
+    @Test("timestamp markers with equal out-of-order and oversized values produce bounded monotonic renderable cues")
+    func reconstructsBoundedMonotonicCuesFromNoisyMarkers() throws {
+        // Equal markers:
+        let equalCues = SessionState.reconstructCuesFromTimestampedText(
+            "[01:40] First sentence.\n\n[01:40] Second sentence.\n\n[02:00] Third sentence.",
+            startSec: 0,
+            endSec: 180
+        )
+        #expect(equalCues.map(\.text) == ["First sentence.", "Second sentence.", "Third sentence."])
+        #expect(equalCues[0].startSec == 100)
+        #expect(equalCues[0].endSec == 100)
+        #expect(equalCues[1].startSec == 100)
+        #expect(equalCues[1].endSec == 120)
+        #expect(equalCues[2].startSec == 120)
+        #expect(equalCues[2].endSec == 180)
+        let equalValidation = BatchTimedTextRenderer.validate(duration: 180, cues: equalCues)
+        #expect(equalValidation.isValid)
+        let equalRendered = try BatchTimedTextRenderer.render(duration: 180, cues: equalCues)
+        #expect(equalRendered.contains("First sentence."))
+        #expect(equalRendered.contains("Second sentence."))
+        #expect(equalRendered.contains("Third sentence."))
+
+        // Out-of-order markers:
+        let outOfOrderCues = SessionState.reconstructCuesFromTimestampedText(
+            "[01:00] First segment.\n\n[00:30] Second segment.\n\n[01:30] Third segment.",
+            startSec: 0,
+            endSec: 120
+        )
+        #expect(outOfOrderCues.map(\.text) == ["First segment.", "Second segment.", "Third segment."])
+        #expect(outOfOrderCues[0].startSec == 60)
+        #expect(outOfOrderCues[0].endSec == 60)
+        #expect(outOfOrderCues[1].startSec == 60)
+        #expect(outOfOrderCues[1].endSec == 90)
+        #expect(outOfOrderCues[2].startSec == 90)
+        #expect(outOfOrderCues[2].endSec == 120)
+        let outOfOrderValidation = BatchTimedTextRenderer.validate(duration: 120, cues: outOfOrderCues)
+        #expect(outOfOrderValidation.isValid)
+        let outOfOrderRendered = try BatchTimedTextRenderer.render(duration: 120, cues: outOfOrderCues)
+        #expect(outOfOrderRendered.contains("First segment."))
+        #expect(outOfOrderRendered.contains("Second segment."))
+        #expect(outOfOrderRendered.contains("Third segment."))
+
+        // Relative and oversized markers in later chunk (Candidate 9 failure shape 2):
+        let laterChunkCues = SessionState.reconstructCuesFromTimestampedText(
+            "[04:55] Alpha chunk.\n\n[04:55] Beta chunk.\n\n[05:45] Gamma chunk.",
+            startSec: 1800,
+            endSec: 2100
+        )
+        #expect(laterChunkCues.map(\.text) == ["Alpha chunk.", "Beta chunk.", "Gamma chunk."])
+        #expect(laterChunkCues[0].startSec == 2095)
+        #expect(laterChunkCues[0].endSec == 2095)
+        #expect(laterChunkCues[1].startSec == 2095)
+        #expect(laterChunkCues[1].endSec == 2100)
+        #expect(laterChunkCues[2].startSec == 2100)
+        #expect(laterChunkCues[2].endSec == 2100)
+        let laterValidation = BatchTimedTextRenderer.validate(duration: 2100, cues: laterChunkCues)
+        #expect(laterValidation.isValid)
+        let laterRendered = try BatchTimedTextRenderer.render(duration: 2100, cues: laterChunkCues)
+        #expect(laterRendered.contains("Alpha chunk."))
+        #expect(laterRendered.contains("Beta chunk."))
+        #expect(laterRendered.contains("Gamma chunk."))
+    }
+
     @Test("strips inline timestamp markers without dropping surrounding text")
     func stripsTimestampMarkers() {
         let cleaned = SessionState.strippingInlineTimestampMarkers("[00:03] First.\n\n[00:06] Second.")

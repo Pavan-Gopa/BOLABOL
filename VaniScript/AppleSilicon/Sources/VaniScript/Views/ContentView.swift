@@ -131,7 +131,7 @@ struct ContentView: View {
         .sheet(isPresented: $isBatchWorkspacePresented) {
             BatchWorkspaceView()
                 .environmentObject(batchStore)
-                .frame(minWidth: 900, minHeight: 620)
+                .frame(width: 900, height: 620)
         }
     }
 

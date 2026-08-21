@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import Testing
 import VaniScriptCore
 import VaniScriptRuntime
@@ -371,6 +372,11 @@ struct BatchWorkspaceIntegrationTests {
 
         #expect(FileManager.default.fileExists(atPath: output.path))
         #expect(try await repository.list().map(\.state) == [.completed])
+        for _ in 0..<100 where store.isRunning || store.isReconciling {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(!store.isRunning)
+        #expect(!store.isReconciling)
         await store.stop()
     }
 
@@ -464,7 +470,7 @@ struct BatchWorkspaceIntegrationTests {
             configuration: configuration,
             transcriber: transcriber,
             writer: AtomicCompanionWriter(),
-            eventHandler: { event in await MainActor.run { bridge.store?.record(event) } }
+            eventHandler: { event in await bridge.store?.record(event) }
         )
         let watcher = WatchedFolderService(
             store: profileStore,
@@ -506,6 +512,7 @@ struct BatchWorkspaceIntegrationTests {
 
         await store.stop()
         #expect(!store.isRunning)
+        #expect(!store.isReconciling)
         for _ in 0..<100 where store.jobs.first(where: { $0.state == .cancelled }) == nil {
             try await Task.sleep(for: .milliseconds(5))
         }
@@ -547,7 +554,7 @@ struct BatchWorkspaceIntegrationTests {
             configuration: configuration,
             transcriber: transcriber,
             writer: AtomicCompanionWriter(),
-            eventHandler: { event in await MainActor.run { bridge.store?.record(event) } }
+            eventHandler: { event in await bridge.store?.record(event) }
         )
         let watcher = WatchedFolderService(
             store: profileStore,
@@ -632,7 +639,7 @@ struct BatchWorkspaceIntegrationTests {
             configuration: configuration,
             transcriber: transcriber,
             writer: AtomicCompanionWriter(),
-            eventHandler: { event in await MainActor.run { bridge.store?.record(event) } }
+            eventHandler: { event in await bridge.store?.record(event) }
         )
         let watcher = WatchedFolderService(
             store: profileStore,
@@ -822,7 +829,7 @@ struct BatchWorkspaceIntegrationTests {
         let watcher = WatchedFolderService(store: profileStore, repository: repository, configuration: job.configuration, stabilityProbe: FileStabilityProbe(delay: .zero, sleep: { _ in }, audioReadable: { _ in true }))
         let bridge = BatchStoreBridge()
         let transcriber = PausingFixtureTranscriber()
-        let coordinator = BatchTranscriptionCoordinator(repository: repository, configuration: job.configuration, transcriber: transcriber, writer: AtomicCompanionWriter(), eventHandler: { event in await MainActor.run { bridge.store?.record(event) } })
+        let coordinator = BatchTranscriptionCoordinator(repository: repository, configuration: job.configuration, transcriber: transcriber, writer: AtomicCompanionWriter(), eventHandler: { event in await bridge.store?.record(event) })
         let store = BatchTranscriptionStore(profileStore: profileStore, repository: repository, watcher: watcher, coordinator: coordinator, configuration: job.configuration, providerDisplayName: "Fixture", notify: { _, _ in })
         bridge.store = store
         let processing = Task { await coordinator.processPending(in: fixture.root) }
@@ -830,9 +837,14 @@ struct BatchWorkspaceIntegrationTests {
         for _ in 0..<100 where store.jobs.first?.checkpoints.isEmpty != false {
             try await Task.sleep(for: .milliseconds(5))
         }
+        for _ in 0..<100 where abs((store.jobs.first?.progress ?? 0) - 0.42) > 0.001 {
+            try await Task.sleep(for: .milliseconds(5))
+        }
 
         #expect(store.jobs.first?.state == .processing)
         #expect(store.jobs.first?.checkpoints.count == 1)
+        #expect(abs((store.jobs.first?.progress ?? 0) - 0.42) < 0.001)
+        #expect(store.jobs.first?.progressStageText.contains("42%") == true)
         #expect(store.statusMessage.contains(sourceName))
         await transcriber.resume()
         await processing.value
@@ -997,6 +1009,242 @@ struct BatchWorkspaceIntegrationTests {
         await store.stop()
     }
 
+    @Test("two queued jobs keep exactly one processing then auto-stop to idle")
+    @MainActor
+    func twoQueuedJobsKeepExactlyOneProcessingThenAutoStop() async throws {
+        let fixture = try BatchFixture()
+        defer { fixture.remove() }
+        let repository = try SQLiteBatchJobRepository(url: fixture.database)
+        let profileStore = SecurityScopedFolderStore(
+            profilesURL: fixture.root.appendingPathComponent("profiles.json"),
+            resolveBookmark: { _ in (fixture.root, false) },
+            startAccess: { _ in true },
+            stopAccess: { _ in }
+        )
+        let configuration = BatchTranscriptionConfiguration(identifier: "provider|en", sourceLanguage: "en")
+        let transcriber = ImmediateClaimTranscriber()
+        let bridge = BatchStoreBridge()
+        let coordinator = BatchTranscriptionCoordinator(
+            repository: repository,
+            configuration: configuration,
+            transcriber: transcriber,
+            writer: AtomicCompanionWriter(),
+            eventHandler: { event in await bridge.store?.record(event) }
+        )
+        let watcher = WatchedFolderService(
+            store: profileStore,
+            repository: repository,
+            configuration: configuration,
+            stabilityProbe: FileStabilityProbe(delay: .zero, sleep: { _ in }, audioReadable: { _ in true }),
+            didReconcile: { event in
+                await MainActor.run { bridge.store?.recordReconciliation(event) }
+            }
+        )
+        let store = BatchTranscriptionStore(
+            profileStore: profileStore,
+            repository: repository,
+            watcher: watcher,
+            coordinator: coordinator,
+            configuration: configuration,
+            providerDisplayName: "Fixture",
+            notify: { _, _ in }
+        )
+        bridge.store = store
+
+        let source1 = fixture.root.appendingPathComponent("2026_seq1_story_rome_it.wav")
+        let source2 = fixture.root.appendingPathComponent("2026_seq2_story_rome_it.wav")
+        try Data("audio 1".utf8).write(to: source1)
+        try Data("audio 2".utf8).write(to: source2)
+
+        store.addFolder(fixture.root)
+        for _ in 0..<100 where store.jobs.count < 2 {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(store.jobs.count == 2)
+        #expect(store.jobs.allSatisfy { $0.state == .pending })
+        let originalJobIDs = store.jobs.map(\.id)
+
+        let started = Task { await store.start() }
+        for _ in 0..<100 where store.jobs.filter({ $0.state == .processing }).count != 1 {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(store.jobs.filter({ $0.state == .processing }).count == 1)
+        #expect(store.jobs.filter({ $0.state == .pending }).count == 1)
+        #expect(store.jobs.map(\.id) == originalJobIDs)
+        let first = try #require(store.jobs.first { $0.state == .processing })
+        await transcriber.waitUntilStarted(first.relativeSourcePath)
+        #expect(await transcriber.maximumConcurrency() == 1)
+
+        await transcriber.allow(first.relativeSourcePath)
+        await transcriber.waitUntilFinished(first.relativeSourcePath)
+
+        for _ in 0..<100 {
+            let firstDone = store.jobs.first(where: { $0.id == first.id })?.state == .completed
+            let processingCount = store.jobs.filter({ $0.state == .processing }).count
+            if firstDone && processingCount == 1 { break }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(store.jobs.first(where: { $0.id == first.id })?.state == .completed)
+        #expect(store.jobs.filter({ $0.state == .processing }).count == 1)
+        #expect(store.jobs.filter({ $0.state == .pending }).count == 0)
+        #expect(store.jobs.map(\.id) == originalJobIDs)
+        #expect(await transcriber.maximumConcurrency() == 1)
+
+        let second = try #require(store.jobs.first { $0.state == .processing })
+        #expect(second.id != first.id)
+        await transcriber.waitUntilStarted(second.relativeSourcePath)
+        await transcriber.allow(second.relativeSourcePath)
+
+        for _ in 0..<200 where store.jobs.filter({ $0.state == .completed }).count < 2 || store.isRunning {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        await started.value
+        #expect(store.jobs.allSatisfy { $0.state == .completed })
+        #expect(store.jobs.map(\.id) == originalJobIDs)
+        #expect(store.jobs.filter({ $0.state == .processing }).isEmpty)
+        #expect(!store.isRunning)
+        #expect(!store.isProcessing)
+        #expect(await transcriber.maximumConcurrency() == 1)
+        #expect(FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("2026_seq1_story_rome_it.txt").path))
+        #expect(FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("2026_seq2_story_rome_it.txt").path))
+        await store.stop()
+    }
+
+    @Test("three queued jobs publish each sequential handoff before advancing")
+    @MainActor
+    func threeQueuedJobsPublishEachSequentialHandoffBeforeAdvancing() async throws {
+        let fixture = try BatchFixture()
+        defer { fixture.remove() }
+        let repository = try SQLiteBatchJobRepository(url: fixture.database)
+        let profileStore = SecurityScopedFolderStore(
+            profilesURL: fixture.root.appendingPathComponent("profiles.json"),
+            resolveBookmark: { _ in (fixture.root, false) },
+            startAccess: { _ in true },
+            stopAccess: { _ in }
+        )
+        let configuration = BatchTranscriptionConfiguration(identifier: "provider|en", sourceLanguage: "en")
+        let transcriber = ImmediateClaimTranscriber()
+        let bridge = BatchStoreBridge()
+        let coordinator = BatchTranscriptionCoordinator(
+            repository: repository,
+            configuration: configuration,
+            transcriber: transcriber,
+            writer: AtomicCompanionWriter(),
+            eventHandler: { event in await bridge.store?.record(event) }
+        )
+        let watcher = WatchedFolderService(
+            store: profileStore,
+            repository: repository,
+            configuration: configuration,
+            stabilityProbe: FileStabilityProbe(delay: .zero, sleep: { _ in }, audioReadable: { _ in true }),
+            didReconcile: { event in
+                await MainActor.run { bridge.store?.recordReconciliation(event) }
+            }
+        )
+        let store = BatchTranscriptionStore(
+            profileStore: profileStore,
+            repository: repository,
+            watcher: watcher,
+            coordinator: coordinator,
+            configuration: configuration,
+            providerDisplayName: "Fixture",
+            notify: { _, _ in }
+        )
+        bridge.store = store
+
+        for (index, name) in [
+            "2026_seq1_story_rome_it.wav",
+            "2026_seq2_story_rome_it.wav",
+            "2026_seq3_story_rome_it.wav"
+        ].enumerated() {
+            try Data("audio \(index)".utf8).write(to: fixture.root.appendingPathComponent(name))
+        }
+
+        store.addFolder(fixture.root)
+        for _ in 0..<100 where store.jobs.count < 3 {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(store.jobs.count == 3)
+        #expect(store.jobs.allSatisfy { $0.state == .pending })
+        let originalJobIDs = store.jobs.map(\.id)
+        let orderedSourceNames = store.jobs.map(\.relativeSourcePath)
+
+        var publications: [([UUID], [BatchJobState])] = []
+        let subscription = store.$jobs
+            .dropFirst()
+            .sink { jobs in
+                guard jobs.count == originalJobIDs.count else { return }
+                let states = jobs.map(\.state)
+                guard publications.last?.1 != states else { return }
+                publications.append((jobs.map(\.id), states))
+            }
+        defer { subscription.cancel() }
+
+        func waitForPublication(_ expected: [BatchJobState]) async throws {
+            for _ in 0..<200 {
+                if publications.contains(where: { $0.1 == expected }) { return }
+                try await Task.sleep(for: .milliseconds(5))
+            }
+        }
+
+        let started = Task { await store.start() }
+        for _ in 0..<100 where store.jobs.filter({ $0.state == .processing }).count != 1 {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(store.jobs.filter({ $0.state == .processing }).count == 1)
+        #expect(store.jobs.map(\.id) == originalJobIDs)
+
+        await transcriber.waitUntilStarted(orderedSourceNames[0])
+        await transcriber.allow(orderedSourceNames[0])
+        await transcriber.waitUntilFinished(orderedSourceNames[0])
+        try await waitForPublication([.completed, .pending, .pending])
+        try await waitForPublication([.completed, .processing, .pending])
+
+        await transcriber.waitUntilStarted(orderedSourceNames[1])
+        await transcriber.allow(orderedSourceNames[1])
+        await transcriber.waitUntilFinished(orderedSourceNames[1])
+        try await waitForPublication([.completed, .completed, .pending])
+        try await waitForPublication([.completed, .completed, .processing])
+
+        await transcriber.waitUntilStarted(orderedSourceNames[2])
+        await transcriber.allow(orderedSourceNames[2])
+        await transcriber.waitUntilFinished(orderedSourceNames[2])
+        try await waitForPublication([.completed, .completed, .completed])
+        for _ in 0..<200 where store.isRunning {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        await started.value
+
+        let expectedStates: [[BatchJobState]] = [
+            [.processing, .pending, .pending],
+            [.completed, .pending, .pending],
+            [.completed, .processing, .pending],
+            [.completed, .completed, .pending],
+            [.completed, .completed, .processing],
+            [.completed, .completed, .completed]
+        ]
+        var matched = 0
+        for publication in publications where matched < expectedStates.count {
+            if publication.1 == expectedStates[matched] {
+                matched += 1
+            }
+        }
+        #expect(matched == expectedStates.count)
+        #expect(publications.allSatisfy { $0.0 == originalJobIDs })
+        #expect(publications.allSatisfy {
+            $0.1.filter { $0 == .processing }.count <= 1
+        })
+        #expect(publications.filter { $0.1.contains(.processing) }.allSatisfy {
+            $0.1.filter { $0 == .processing }.count == 1
+        })
+        #expect(store.jobs.map(\.id) == originalJobIDs)
+        #expect(store.jobs.allSatisfy { $0.state == .completed })
+        #expect(!store.isRunning)
+        #expect(!store.isProcessing)
+        #expect(await transcriber.maximumConcurrency() == 1)
+        await store.stop()
+    }
+
     @Test("stop cancels blocked startup reconciliation and balances its lease")
     @MainActor
     func stopCancelsBlockedStartupReconciliationAndBalancesLease() async throws {
@@ -1152,6 +1400,7 @@ private actor ImmediateClaimTranscriber: BatchAudioTranscribing {
         let checkpointValue = BatchChunkCheckpoint(index: 0, text: name, cues: [TranscriptCue(startSec: 0, endSec: 1, text: name)])
         try await checkpoint([checkpointValue])
         try await progress(BatchTranscriptionProgress(fraction: 1, totalChunks: 1, detail: BatchProgressDetail(phase: .transcribing)))
+        finished.insert(name)
         finishedWaiters[name, default: []].forEach { $0.resume() }
         finishedWaiters[name] = nil
         return BatchTranscriptionResult(duration: 1, checkpoints: [checkpointValue])
@@ -1219,6 +1468,15 @@ private actor PausingFixtureTranscriber: BatchAudioTranscribing {
         checkpointed = true
         checkpointWaiters.forEach { $0.resume() }
         checkpointWaiters.removeAll()
+        try await progress(BatchTranscriptionProgress(
+            fraction: 0.42,
+            totalChunks: 1,
+            detail: BatchProgressDetail(
+                phase: .transcribing,
+                currentChunkAudioPositionSec: 0.42,
+                currentChunkDurationSec: 1
+            )
+        ))
         if shouldPause {
             await withTaskCancellationHandler {
                 await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in

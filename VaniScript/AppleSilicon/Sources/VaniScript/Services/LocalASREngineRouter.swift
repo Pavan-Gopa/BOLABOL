@@ -236,6 +236,10 @@ actor WhisperKitLocalASREngine: LocalASREngine {
                 try Task.checkCancellation()
                 switch event {
                 case .phase(let phaseProgress):
+                    if case .transcribing(audioPositionSec: nil) = phaseProgress,
+                       lastEmittedPosition >= 0 {
+                        continue
+                    }
                     try await progress(phaseProgress)
                 case .segmentPosition(let pos):
                     if pos > lastEmittedPosition {

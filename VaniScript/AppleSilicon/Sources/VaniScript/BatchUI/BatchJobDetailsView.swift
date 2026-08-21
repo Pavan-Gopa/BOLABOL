@@ -18,29 +18,18 @@ struct BatchJobDetailsView: View {
                     Label(stateLabel, systemImage: stateIcon)
                         .foregroundStyle(stateColor)
                 }
-                if job.state == .processing {
-                    if job.isDeterminateProgress {
-                        ProgressView(value: min(max(job.progress, 0), 1)) {
-                            Text(job.progressStageText)
-                        } currentValueLabel: {
-                            Text(job.chunkProgressLabel)
-                                .foregroundStyle(.secondary)
+                // One always-present progress row: a compact indeterminate spinner
+                // while processing, chunk counts otherwise — never a value bar.
+                LabeledContent("Progress") {
+                    if job.state == .processing {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Processing…")
                         }
-                        .accessibilityLabel("Transcription progress")
-                        .accessibilityValue(job.voiceOverProgressValue)
                     } else {
-                        VStack(alignment: .leading, spacing: 4) {
-                            ProgressView {
-                                Text(job.progressStageText)
-                            }
-                            Text(job.chunkProgressLabel)
-                                .foregroundStyle(.secondary)
-                        }
-                        .accessibilityLabel("Transcription progress")
-                        .accessibilityValue(job.voiceOverProgressValue)
+                        Text(job.chunkProgressLabel)
                     }
-                } else {
-                    LabeledContent("Progress", value: job.chunkProgressLabel)
                 }
                 LabeledContent("Attempts", value: String(job.attempt))
                 if job.state == .processing, let startedAt = job.startedAt ?? Optional(job.createdAt) {

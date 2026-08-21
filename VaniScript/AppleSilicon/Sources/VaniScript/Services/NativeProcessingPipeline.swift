@@ -145,8 +145,9 @@ actor NativeProcessingPipeline {
         let duration = await MediaDurationReader.durationSeconds(for: sourceURL)
         guard duration > 0 else { throw CocoaError(.fileReadCorruptFile) }
         let batchSourceLang = NativeLanguagePolicy.autoCode
+        let progressGate = BatchProgressGate(progress: progress)
 
-        try await progress(
+        try await progressGate.report(
             BatchTranscriptionProgress(
                 fraction: 0.0,
                 totalChunks: nil,
@@ -178,7 +179,7 @@ actor NativeProcessingPipeline {
                 let completedBeforeCurrent = resumedCheckpoints.count + ordinal
                 let chunkFraction = Double(completedBeforeCurrent) / Double(max(totalCount, 1))
                 let chunkDuration = max(0, chunk.endSec - chunk.startSec)
-                try await progress(
+                try await progressGate.report(
                     BatchTranscriptionProgress(
                         fraction: chunkFraction,
                         totalChunks: totalCount,
@@ -189,6 +190,7 @@ actor NativeProcessingPipeline {
                         )
                     )
                 )
+
                 let result = try await transcriptionScheduler.run(priority: .background) {
                     let audioURL = try await AudioChunkExporter.exportChunk(
                         sourceURL: sourceURL,
@@ -211,7 +213,7 @@ actor NativeProcessingPipeline {
                 )
                 try await checkpoint(checkpoints)
                 let fraction = Double(checkpoints.count) / Double(max(totalCount, 1))
-                try await progress(
+                try await progressGate.report(
                     BatchTranscriptionProgress(
                         fraction: fraction,
                         totalChunks: totalCount,
@@ -238,11 +240,12 @@ actor NativeProcessingPipeline {
                 export: { sourceURL, chunk, workspaceURL in
                     try await AudioChunkExporter.exportChunk(sourceURL: sourceURL, chunk: chunk, workspaceURL: workspaceURL)
                 },
-                transcribe: { [localASRRouter, pendingOrdinalByIndex, resumedCheckpoints, totalCount, progress] audioURL, chunk in
+                transcribe: { [localASRRouter, pendingOrdinalByIndex, resumedCheckpoints, totalCount, progressGate] audioURL, chunk in
+
                     let pendingOrdinal = try Self.pendingOrdinal(for: chunk.index, pendingOrdinalByIndex: pendingOrdinalByIndex)
                     let completedBeforeCurrent = resumedCheckpoints.count + pendingOrdinal
                     let chunkDuration = max(0, chunk.endSec - chunk.startSec)
-                    try await progress(
+                    try await progressGate.report(
                         BatchTranscriptionProgress(
                             fraction: Double(completedBeforeCurrent) / Double(max(totalCount, 1)),
                             totalChunks: totalCount,
@@ -253,6 +256,7 @@ actor NativeProcessingPipeline {
                             )
                         )
                     )
+
                     let result = try await localASRRouter.transcribe(
                         settings: settings,
                         providerID: providerID,
@@ -265,7 +269,7 @@ actor NativeProcessingPipeline {
                             switch asrProgress {
                             case .loadingModel:
                                 let fraction = Double(completedBeforeCurrent) / Double(max(totalCount, 1))
-                                try await progress(
+                                try await progressGate.report(
                                     BatchTranscriptionProgress(
                                         fraction: fraction,
                                         totalChunks: totalCount,
@@ -276,9 +280,10 @@ actor NativeProcessingPipeline {
                                         )
                                     )
                                 )
+
                             case .convertingAudio:
                                 let fraction = Double(completedBeforeCurrent) / Double(max(totalCount, 1))
-                                try await progress(
+                                try await progressGate.report(
                                     BatchTranscriptionProgress(
                                         fraction: fraction,
                                         totalChunks: totalCount,
@@ -289,6 +294,7 @@ actor NativeProcessingPipeline {
                                         )
                                     )
                                 )
+
                             case .transcribing(let audioPosition):
                                 let pos = audioPosition.map { min(max($0, 0), chunkDuration) }
                                 let currentChunkFraction = (pos != nil && chunkDuration > 0) ? (pos! / chunkDuration) : 0.0
@@ -296,7 +302,7 @@ actor NativeProcessingPipeline {
                                     max((Double(completedBeforeCurrent) + currentChunkFraction) / Double(max(totalCount, 1)), 0),
                                     1.0
                                 )
-                                try await progress(
+                                try await progressGate.report(
                                     BatchTranscriptionProgress(
                                         fraction: fraction,
                                         totalChunks: totalCount,
@@ -307,6 +313,7 @@ actor NativeProcessingPipeline {
                                         )
                                     )
                                 )
+
                             }
                         }
                     )
@@ -336,7 +343,7 @@ actor NativeProcessingPipeline {
                             let chunk = pendingChunks[pendingOrdinal]
                             let chunkDuration = max(0, chunk.endSec - chunk.startSec)
                             let fraction = Double(completedBeforeCurrent) / Double(max(totalCount, 1))
-                            try await progress(
+                            try await progressGate.report(
                                 BatchTranscriptionProgress(
                                     fraction: fraction,
                                     totalChunks: totalCount,
@@ -347,6 +354,7 @@ actor NativeProcessingPipeline {
                                     )
                                 )
                             )
+
                         case .completed:
                             break
                         }
@@ -355,7 +363,7 @@ actor NativeProcessingPipeline {
                         let checkpoints = await accumulator.replaceNew(value.completedChunks, resumed: resumedCheckpoints)
                         try await checkpoint(checkpoints)
                         let fraction = Double(checkpoints.count) / Double(max(totalCount, 1))
-                        try await progress(
+                        try await progressGate.report(
                             BatchTranscriptionProgress(
                                 fraction: fraction,
                                 totalChunks: totalCount,
@@ -366,12 +374,36 @@ actor NativeProcessingPipeline {
                                 )
                             )
                         )
+
                     }
                 )
             }
         }
         let checkpoints = await accumulator.values
-        try await progress(
+        let chunkByIndex = Dictionary(uniqueKeysWithValues: chunks.map { ($0.index, $0) })
+        var repairedCheckpoints: [BatchChunkCheckpoint] = []
+        var anyRepaired = false
+        for cp in checkpoints {
+            guard let plannedChunk = chunkByIndex[cp.index] else {
+                repairedCheckpoints.append(cp)
+                continue
+            }
+            if Self.isCheckpointTimelineValid(checkpoint: cp, chunk: plannedChunk) {
+                repairedCheckpoints.append(cp)
+            } else {
+                let repairedCues = SessionState.reconstructCuesFromRawText(
+                    cp.text,
+                    startSec: plannedChunk.startSec,
+                    endSec: plannedChunk.endSec
+                )
+                repairedCheckpoints.append(BatchChunkCheckpoint(index: cp.index, text: cp.text, cues: repairedCues))
+                anyRepaired = true
+            }
+        }
+        if anyRepaired {
+            try await checkpoint(repairedCheckpoints)
+        }
+        try await progressGate.report(
             BatchTranscriptionProgress(
                 fraction: 1.0,
                 totalChunks: totalCount,
@@ -382,7 +414,7 @@ actor NativeProcessingPipeline {
                 )
             )
         )
-        return BatchTranscriptionResult(duration: duration, checkpoints: checkpoints)
+        return BatchTranscriptionResult(duration: duration, checkpoints: repairedCheckpoints)
     }
 
     func processCurrentChunk(
@@ -840,6 +872,31 @@ actor NativeProcessingPipeline {
             throw InvalidProgressIndexError(index: index)
         }
         return pendingOrdinal
+    }
+
+    nonisolated internal static func isCheckpointTimelineValid(
+        checkpoint: BatchChunkCheckpoint,
+        chunk: FileTranscriptionChunk
+    ) -> Bool {
+        let trimmedText = checkpoint.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if checkpoint.cues.isEmpty {
+            return trimmedText.isEmpty
+        }
+        if trimmedText.isEmpty {
+            return false
+        }
+        var previousStart = chunk.startSec
+        var previousEnd = chunk.startSec
+        let tolerance = 1e-4
+        for cue in checkpoint.cues {
+            guard cue.startSec.isFinite, cue.endSec.isFinite else { return false }
+            guard cue.startSec >= chunk.startSec - tolerance, cue.endSec <= chunk.endSec + tolerance else { return false }
+            guard cue.startSec <= cue.endSec + tolerance else { return false }
+            guard cue.startSec >= previousStart - tolerance, cue.endSec >= previousEnd - tolerance else { return false }
+            previousStart = cue.startSec
+            previousEnd = cue.endSec
+        }
+        return true
     }
 
     nonisolated internal static func transcriptCues(
@@ -1410,6 +1467,29 @@ private struct PipelineBatchAudioTranscriber: BatchAudioTranscribing {
             resumedCheckpoints: resumedCheckpoints,
             progress: progress,
             checkpoint: checkpoint
+        )
+    }
+}
+
+private actor BatchProgressGate {
+    private let progress: @Sendable (BatchTranscriptionProgress) async throws -> Void
+    private var lastFraction = 0.0
+
+    init(progress: @escaping @Sendable (BatchTranscriptionProgress) async throws -> Void) {
+        self.progress = progress
+    }
+
+    func report(_ update: BatchTranscriptionProgress) async throws {
+        guard update.fraction.isFinite else { return }
+        let fraction = min(max(update.fraction, 0), 1)
+        guard fraction >= lastFraction else { return }
+        lastFraction = fraction
+        try await progress(
+            BatchTranscriptionProgress(
+                fraction: fraction,
+                totalChunks: update.totalChunks,
+                detail: update.detail
+            )
         )
     }
 }

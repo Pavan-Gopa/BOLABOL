@@ -336,3 +336,22 @@ then unload runs, then new queued transcription may start/load its binding.
 ASR concurrency remains one. Other direct unload paths are unchanged unless
 separate evidence proves they can overlap active scheduler work.
 
+---
+
+## ADR-013 — Batch companion retries replace the same-stem text file
+
+**Status:** Accepted
+**Date:** 2026-08-20
+**Decision:** A successful Batch retry atomically replaces the exact same-stem
+`.txt` companion at the watched-folder destination. It does not stop at
+`blockedOutputCollision` because a companion already exists or differs from a
+prior generated fingerprint. The existing temporary-file write and atomic
+rename remain mandatory.
+**Rationale:** Human acceptance repeatedly rejected manual deletion of an old
+companion before retranscribing the same source with another model and
+explicitly accepted automatic replacement in the next candidate.
+**Consequences:** Batch may overwrite user-edited content at that exact
+same-stem `.txt` path. It still never overwrites the source audio, changes the
+destination extension, writes outside the watched folder, or bypasses atomic
+commit behavior.
+

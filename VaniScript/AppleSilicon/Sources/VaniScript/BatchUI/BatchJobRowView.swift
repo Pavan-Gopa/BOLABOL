@@ -6,10 +6,21 @@ struct BatchJobRowView: View {
     var onOpenCompanion: (() -> Void)? = nil
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .foregroundStyle(color)
-                .padding(.top, 2)
-                .accessibilityHidden(true)
+            // Fixed-size status slot: one compact indeterminate spinner while this
+            // job is processing, state icons otherwise. The identical frame keeps
+            // row geometry stable across state transitions.
+            Group {
+                if job.state == .processing {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Image(systemName: icon)
+                        .foregroundStyle(color)
+                }
+            }
+            .frame(width: 16, height: 16)
+            .padding(.top, 2)
+            .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(job.relativeSourcePath)
                     .lineLimit(1)
@@ -17,22 +28,8 @@ struct BatchJobRowView: View {
                 Text(metadataLine)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                if job.state == .processing {
-                    if job.isDeterminateProgress {
-                        ProgressView(value: min(max(job.progress, 0), 1)) {
-                            Text(job.progressStageText)
-                        }
-                        .accessibilityLabel("Transcription progress")
-                        .accessibilityValue(job.voiceOverProgressValue)
-                    } else {
-                        ProgressView {
-                            Text(job.progressStageText)
-                        }
-                        .accessibilityLabel("Transcription progress")
-                        .accessibilityValue(job.voiceOverProgressValue)
-                    }
-                } else if let error = job.lastError,
-                          job.state == .failed || job.state == .blockedOutputCollision {
+                if let error = job.lastError,
+                   job.state == .failed || job.state == .blockedOutputCollision {
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(.red)
@@ -64,9 +61,8 @@ struct BatchJobRowView: View {
         .accessibilityHint(job.state == .completed ? "Double-click to open companion transcript" : "")
     }
     private var accessibilityLabel: String {
-        let status = job.state == .processing ? job.progressStageText : stateLabel
-        let chunk = job.state == .processing ? nil : job.chunkProgressLabel
-        return [job.relativeSourcePath, status, chunk, "attempt \(job.attempt)", job.formattedDuration, job.lastError]
+        let progressInfo = job.state == .processing ? job.voiceOverProgressValue : job.chunkProgressLabel
+        return [job.relativeSourcePath, stateLabel, progressInfo, "attempt \(job.attempt)", job.formattedDuration, job.lastError]
             .compactMap { $0 }
             .joined(separator: ", ")
     }

@@ -3524,10 +3524,12 @@ struct DocumentAttributedTextView: NSViewRepresentable {
         private func registerUndo(previousBlocks: [DocumentEditorBlockItem], previousText: String) {
             guard let undoManager = textView?.undoManager else { return }
             undoManager.registerUndo(withTarget: self) { target in
-                guard let textView = target.textView else { return }
-                target.setAttributedString(from: previousBlocks, fallbackText: previousText, textView: textView)
-                target.parent.text = previousText
-                target.parent.onBlocksChanged?(previousBlocks, previousText)
+                MainActor.assumeIsolated {
+                    guard let textView = target.textView else { return }
+                    target.setAttributedString(from: previousBlocks, fallbackText: previousText, textView: textView)
+                    target.parent.text = previousText
+                    target.parent.onBlocksChanged?(previousBlocks, previousText)
+                }
             }
             undoManager.setActionName("Retranslate Selection with AI")
         }

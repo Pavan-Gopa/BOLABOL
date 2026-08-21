@@ -1262,13 +1262,217 @@ struct NativeProcessingPipelineASRTests {
         #expect(phases.contains(.convertingAudio))
         #expect(phases.contains(.transcribing))
 
-        // Verify monotonic progress
         var previousFraction: Double = 0.0
         for update in updates {
             #expect(update.fraction >= previousFraction)
             previousFraction = update.fraction
         }
         #expect(updates.last?.fraction == 1.0)
+
+        let positioned = updates.compactMap { update -> (position: Double, fraction: Double)? in
+            guard update.detail.phase == .transcribing,
+                  let position = update.detail.currentChunkAudioPositionSec else { return nil }
+            return (position, update.fraction)
+        }
+        #expect(positioned.contains { abs($0.position - 1.0) < 0.05 })
+        #expect(positioned.contains { abs($0.position - 2.0) < 0.05 })
+        var sawIntraChunkIncrease = false
+        for (previous, current) in zip(positioned, positioned.dropFirst()) where current.position > previous.position + 0.25 {
+            #expect(current.fraction > previous.fraction + 0.05)
+            sawIntraChunkIncrease = true
+        }
+        #expect(sawIntraChunkIncrease)
+        #expect(updates.contains { $0.detail.phase == .transcribing && $0.fraction > 0.2 && $0.fraction < 0.9 })
+    }
+
+    @Test("all-complete resumed multi-chunk batch with malformed checkpoint timelines performs zero cloud calls and recovers valid rendered output")
+    func batchAllCompleteResumedRecoveryZeroCloudCalls() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("VaniScriptBatch11Recovery-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+
+        let audioURL = root.appendingPathComponent("long_lecture.wav")
+        try writeTestAudioWAV(to: audioURL, durationSec: 3300)
+
+        var settings = AppSettings.defaults
+        settings.sliceMode = .fixed
+        settings.chunkDurationMin = 5
+        settings.geminiKey = "test-cloud-key"
+        settings.geminiKeys = ["test-cloud-key"]
+        let providerID = "gemini-cloud"
+        let spyCloud = PipelineSpyCloudTranscriber()
+        let pipeline = NativeProcessingPipeline(cloudTranscriptionEngine: spyCloud)
+
+        // 11 checkpoints matching real 55-minute lecture chunking (300s each).
+        // Chunks 2, 6, 8 contain the observed real failure shapes (equal markers, relative timestamps in late chunk, reversed/oversized).
+        let resumedCheckpoints: [BatchChunkCheckpoint] = [
+            BatchChunkCheckpoint(
+                index: 0,
+                text: "Introductory lecture concepts.",
+                cues: [
+                    TranscriptCue(startSec: 0, endSec: 150, text: "Introductory"),
+                    TranscriptCue(startSec: 150, endSec: 300, text: "lecture concepts.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 1,
+                text: "Second chapter discussion.",
+                cues: [
+                    TranscriptCue(startSec: 300, endSec: 450, text: "Second chapter"),
+                    TranscriptCue(startSec: 450, endSec: 600, text: "discussion.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 2,
+                text: "Equal marker start bug. Second sentence here.",
+                cues: [
+                    // Malformed: cue 0 ends at 900, cue 1 ends at 750 (nonMonotonic violation)
+                    TranscriptCue(startSec: 600, endSec: 900, text: "Equal marker start bug."),
+                    TranscriptCue(startSec: 600, endSec: 750, text: "Second sentence here.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 3,
+                text: "Fourth chunk content here.",
+                cues: [
+                    TranscriptCue(startSec: 900, endSec: 1050, text: "Fourth chunk"),
+                    TranscriptCue(startSec: 1050, endSec: 1200, text: "content here.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 4,
+                text: "Fifth chunk content here.",
+                cues: [
+                    TranscriptCue(startSec: 1200, endSec: 1350, text: "Fifth chunk"),
+                    TranscriptCue(startSec: 1350, endSec: 1500, text: "content here.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 5,
+                text: "Sixth chunk content here.",
+                cues: [
+                    TranscriptCue(startSec: 1500, endSec: 1650, text: "Sixth chunk"),
+                    TranscriptCue(startSec: 1650, endSec: 1800, text: "content here.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 6,
+                text: "Relative timestamp artifact in late chunk.",
+                cues: [
+                    // Malformed: retains relative timestamps 295..345 for chunk 1800..2100 (< 1800)
+                    TranscriptCue(startSec: 295, endSec: 310, text: "Relative timestamp"),
+                    TranscriptCue(startSec: 310, endSec: 345, text: "artifact in late chunk.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 7,
+                text: "Eighth chunk content here.",
+                cues: [
+                    TranscriptCue(startSec: 2100, endSec: 2250, text: "Eighth chunk"),
+                    TranscriptCue(startSec: 2250, endSec: 2400, text: "content here.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 8,
+                text: "Oversized marker artifact in ninth chunk.",
+                cues: [
+                    // Malformed: reversed timestamps (2550 > 2500) and exceeds chunk end (2800 > 2700)
+                    TranscriptCue(startSec: 2550, endSec: 2500, text: "Oversized marker"),
+                    TranscriptCue(startSec: 2500, endSec: 2800, text: "artifact in ninth chunk.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 9,
+                text: "Tenth chunk content here.",
+                cues: [
+                    TranscriptCue(startSec: 2700, endSec: 2850, text: "Tenth chunk"),
+                    TranscriptCue(startSec: 2850, endSec: 3000, text: "content here.")
+                ]
+            ),
+            BatchChunkCheckpoint(
+                index: 10,
+                text: "Eleventh final summary.",
+                cues: [
+                    TranscriptCue(startSec: 3000, endSec: 3150, text: "Eleventh"),
+                    TranscriptCue(startSec: 3150, endSec: 3300, text: "final summary.")
+                ]
+            )
+        ]
+
+        actor CallbackRecorder {
+            private(set) var saved: [[BatchChunkCheckpoint]] = []
+            func record(_ checkpoints: [BatchChunkCheckpoint]) {
+                saved.append(checkpoints)
+            }
+        }
+        let recorder = CallbackRecorder()
+
+        let transcriber = pipeline.makeBatchAudioTranscriber(
+            workspaceRoot: root,
+            sourceLang: "en",
+            settings: settings,
+            providerID: providerID
+        )
+
+        let result = try await transcriber.transcribe(
+            sourceURL: audioURL,
+            resumedCheckpoints: resumedCheckpoints,
+            progress: { _ in },
+            checkpoint: { checkpoints in
+                await recorder.record(checkpoints)
+            }
+        )
+
+        // Acceptance assertion: zero cloud provider calls when all chunks are resumed.
+        let cloudCalls = await spyCloud.callCount
+        #expect(cloudCalls == 0)
+
+        #expect(result.checkpoints.count == 11)
+        #expect(result.duration >= 3300.0)
+
+        // Valid checkpoints remain byte-for-value identical.
+        #expect(result.checkpoints[0].cues == resumedCheckpoints[0].cues)
+        #expect(result.checkpoints[1].cues == resumedCheckpoints[1].cues)
+        #expect(result.checkpoints[3].cues == resumedCheckpoints[3].cues)
+        #expect(result.checkpoints[4].cues == resumedCheckpoints[4].cues)
+        #expect(result.checkpoints[5].cues == resumedCheckpoints[5].cues)
+        #expect(result.checkpoints[7].cues == resumedCheckpoints[7].cues)
+        #expect(result.checkpoints[9].cues == resumedCheckpoints[9].cues)
+        #expect(result.checkpoints[10].cues == resumedCheckpoints[10].cues)
+
+        // Malformed checkpoints are repaired.
+        #expect(result.checkpoints[2].cues != resumedCheckpoints[2].cues)
+        #expect(result.checkpoints[6].cues != resumedCheckpoints[6].cues)
+        #expect(result.checkpoints[8].cues != resumedCheckpoints[8].cues)
+
+        // Repaired checkpoints were persisted through the callback.
+        let savedCalls = await recorder.saved
+        #expect(!savedCalls.isEmpty)
+        #expect(savedCalls.last == result.checkpoints)
+
+        // Complete text and order preserved across entire file.
+        let flattenedCues: [TranscriptCue] = result.checkpoints.flatMap { $0.cues }
+        let allText: String = flattenedCues.map { $0.text }.joined(separator: " ")
+        #expect(allText.contains("Introductory"))
+        #expect(allText.contains("Second chapter"))
+        #expect(allText.contains("Equal marker start bug"))
+        #expect(allText.contains("Fourth chunk"))
+        #expect(allText.contains("Fifth chunk"))
+        #expect(allText.contains("Sixth chunk"))
+        #expect(allText.contains("Relative timestamp"))
+        #expect(allText.contains("Eighth chunk"))
+        #expect(allText.contains("Oversized marker"))
+        #expect(allText.contains("Tenth chunk"))
+        #expect(allText.contains("Eleventh final summary"))
+
+        // Full flattened timeline is strictly valid and renders.
+        let validation = BatchTimedTextRenderer.validate(duration: result.duration, cues: flattenedCues)
+        #expect(validation.isValid)
+        let rendered = try BatchTimedTextRenderer.render(duration: result.duration, cues: flattenedCues)
+        #expect(!rendered.isEmpty)
+        #expect(rendered.contains("Introductory"))
+        #expect(rendered.contains("final summary"))
     }
 }
 private struct MLXRequestRecord: Sendable {
@@ -1582,4 +1786,47 @@ private func writeValidTestWAV(to url: URL) throws {
         interleaved: false
     )
     try file.write(from: buffer)
+}
+
+private func writeTestAudioWAV(to url: URL, durationSec: Double, sampleRate: Double = 8_000) throws {
+    let settings: [String: Any] = [
+        AVFormatIDKey: Int(kAudioFormatLinearPCM),
+        AVSampleRateKey: sampleRate,
+        AVNumberOfChannelsKey: 1,
+        AVLinearPCMBitDepthKey: 32,
+        AVLinearPCMIsFloatKey: true,
+        AVLinearPCMIsBigEndianKey: false,
+        AVLinearPCMIsNonInterleaved: true
+    ]
+    guard let format = AVAudioFormat(
+        commonFormat: .pcmFormatFloat32,
+        sampleRate: sampleRate,
+        channels: 1,
+        interleaved: false
+    ) else {
+        throw TestAudioCreationError.cannotCreateFormatOrBuffer
+    }
+    let oneSecondFrames = AVAudioFrameCount(sampleRate)
+    guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: oneSecondFrames) else {
+        throw TestAudioCreationError.cannotCreateFormatOrBuffer
+    }
+    buffer.frameLength = oneSecondFrames
+    let file = try AVAudioFile(
+        forWriting: url,
+        settings: settings,
+        commonFormat: .pcmFormatFloat32,
+        interleaved: false
+    )
+    let wholeSeconds = Int(durationSec)
+    for _ in 0..<wholeSeconds {
+        try file.write(from: buffer)
+    }
+    let remainingSeconds = durationSec - Double(wholeSeconds)
+    if remainingSeconds > 0 {
+        let remainderFrames = AVAudioFrameCount(sampleRate * remainingSeconds)
+        if let remainderBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: remainderFrames) {
+            remainderBuffer.frameLength = remainderFrames
+            try file.write(from: remainderBuffer)
+        }
+    }
 }

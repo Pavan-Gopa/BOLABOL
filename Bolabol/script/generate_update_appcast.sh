@@ -6,7 +6,7 @@ DIST_DIR="$ROOT_DIR/dist"
 
 DMG_PATH="${1:-$DIST_DIR/BOLABOL.dmg}"
 OUTPUT_APPCAST="${2:-$DIST_DIR/appcast.xml}"
-APP_VERSION="${APP_VERSION:-1.0.5}"
+APP_VERSION="${APP_VERSION:-1.0.6}"
 APP_BUILD="${APP_BUILD:-$(date +%Y%m%d%H%M)}"
 DOWNLOAD_URL_PREFIX="${DOWNLOAD_URL_PREFIX:-https://github.com/Pavan-Gopa/BOLABOL/releases/download/v${APP_VERSION}/}"
 

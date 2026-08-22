@@ -301,23 +301,22 @@ private enum OverlayHUDLayout {
     static let baseHeight: CGFloat = 42
     static let shadowPad: CGFloat = 6
     static let capsuleHPad: CGFloat = 3
-    static let controlButtonDiameter: CGFloat = 24
+    static let controlButtonDiameter: CGFloat = CGFloat(HUDQuickSwitcherLayout.controlButtonDiameter)
     static let buttonSpectrumGap: CGFloat = 6
     static let classicButtonSpectrumGap: CGFloat = 2.5
     static let techButtonSpectrumGap: CGFloat = 3
     static let verticalButtonSpectrumGap: CGFloat = 3
     static let humorSliderBaseWidth: CGFloat = 90
-    static let humorSliderVerticalWidth: CGFloat = 42
 
     static let minScale: Double = 0.8
     static let maxScale: Double = 1.6
 
     static func promptBarHeight(for scale: Double) -> CGFloat {
-        18 * visualScale(for: scale)
+        CGFloat(HUDQuickSwitcherLayout.promptBarHeight(for: scale))
     }
 
     static func promptBarSpacing(for scale: Double) -> CGFloat {
-        4 * visualScale(for: scale)
+        CGFloat(HUDQuickSwitcherLayout.promptBarSpacing(for: scale))
     }
 
     static func humorControlHeight(for scale: Double) -> CGFloat {
@@ -331,13 +330,46 @@ private enum OverlayHUDLayout {
         CGFloat(HUDQuickSwitcherLayout.controlHitMargin(for: scale))
     }
 
-    static func humorSliderWidth(for scale: Double, style: OverlayHUDStyle) -> CGFloat {
-        switch style {
-        case .vertical:
-            humorSliderVerticalWidth * visualScale(for: scale)
-        case .capsule, .tech:
-            humorSliderBaseWidth * visualScale(for: scale)
-        }
+    /// Width of the horizontal humor slider used by the capsule and tech
+    /// styles. Vertical Pulse renders its humor control as a rail whose
+    /// thickness is `humorRailWidth(for:)` instead.
+    static func humorSliderWidth(for scale: Double) -> CGFloat {
+        humorSliderBaseWidth * visualScale(for: scale)
+    }
+
+    /// Three-zone rail metrics, forwarded from the shared layout policy so the
+    /// SwiftUI views, the AppKit hit guards, and the panel sizing cannot drift
+    /// apart.
+    static func promptRailColumnWidth(for scale: Double) -> CGFloat {
+        CGFloat(HUDQuickSwitcherLayout.promptRailColumnWidth(for: scale))
+    }
+
+    static func promptRailColumnHeight(for scale: Double) -> CGFloat {
+        CGFloat(HUDQuickSwitcherLayout.promptRailColumnHeight(for: scale))
+    }
+
+    static func humorRailWidth(for scale: Double) -> CGFloat {
+        CGFloat(HUDQuickSwitcherLayout.humorRailWidth(for: scale))
+    }
+
+    static func humorRailHeight(for scale: Double) -> CGFloat {
+        CGFloat(HUDQuickSwitcherLayout.humorRailHeight(for: scale))
+    }
+
+    static func railGap(for scale: Double) -> CGFloat {
+        CGFloat(HUDQuickSwitcherLayout.railGap(for: scale))
+    }
+
+    /// Vertical band by which the capsule is lifted above a bottom-mounted
+    /// humor slider. The three-zone vertical layout mounts its humor control
+    /// on the right edge, so it never lifts the capsule.
+    static func humorAnchorOffset(
+        for scale: Double,
+        style: OverlayHUDStyle,
+        showsHumorControl: Bool
+    ) -> CGFloat {
+        guard showsHumorControl, style != .vertical else { return 0 }
+        return humorControlSpacing(for: scale) + humorControlHeight(for: scale)
     }
 
     static func panelSize(
@@ -358,10 +390,7 @@ private enum OverlayHUDLayout {
     }
 
     static func visualScale(for scale: Double) -> CGFloat {
-        if scale <= 1 {
-            return CGFloat(0.88 + 0.12 * normalized(scale, from: minScale, to: 1))
-        }
-        return CGFloat(1 + 0.12 * smoothStep(normalized(scale, from: 1, to: maxScale)))
+        CGFloat(HUDQuickSwitcherLayout.overlayVisualScale(for: scale))
     }
 
     static func spectrumBarCount(for scale: Double, style: OverlayHUDStyle) -> Int {
@@ -382,16 +411,7 @@ private enum OverlayHUDLayout {
     }
 
     static func controlDiameter(for scale: Double, style: OverlayHUDStyle) -> CGFloat {
-        guard style == .capsule else {
-            return controlButtonDiameter * visualScale(for: scale)
-        }
-
-        if scale <= 1 {
-            let progress = CGFloat(normalized(scale, from: minScale, to: 1))
-            return 23.5 + 1.5 * progress
-        }
-        let progress = CGFloat(smoothStep(normalized(scale, from: 1, to: maxScale)))
-        return 25 + 3 * progress
+        CGFloat(HUDQuickSwitcherLayout.controlDiameter(for: scale, style: style))
     }
 
     static func classicProcessingSpectrumWidth(for scale: Double) -> CGFloat {
@@ -455,7 +475,13 @@ final class DraggableOverlayPanel: NSPanel {
             backing: .buffered,
             defer: false
         )
-        isMovableByWindowBackground = true
+        // AppKit's implicit background drag is disarmed: it reached under
+        // SwiftUI and stole press-drags that started on the humor rail or
+        // the prompt-rail buttons, yanking the whole panel out from under a
+        // control gesture (plain clicks survived, drags did not). The
+        // explicit left-mouse path in `sendEvent` is now the single owner of
+        // panel moves, and it defers to any interactive control first.
+        isMovableByWindowBackground = false
         contentView = rootView
         rootView.translatesAutoresizingMaskIntoConstraints = false
         setContentSize(initialSize)
@@ -517,10 +543,11 @@ final class DraggableOverlayPanel: NSPanel {
             return
         }
 
-        // Left mouse down outside interactive control buttons initiates native window drag
+        // Left mouse down outside interactive controls initiates the native
+        // window drag. This is the panel's only move route: controls win
+        // their own drags, empty panel still moves in every mode.
         if event.type == .leftMouseDown,
-           overlayState.mode == .listening,
-           !isClickInInteractiveControl(contentPoint(for: event)) {
+           initiatesWindowDrag(at: contentPoint(for: event)) {
             perform(NSSelectorFromString("performWindowDragWithEvent:"), with: event)
             updateTrackedCapsuleAfterExternalMove()
             return
@@ -573,9 +600,11 @@ final class DraggableOverlayPanel: NSPanel {
         )
         let origin: CGPoint
         if let storedOrigin = settings.origin(for: settings.style) {
-            let humorOffset = overlayState.showsHumorControl
-                ? (OverlayHUDLayout.humorControlHeight(for: settings.scale) + OverlayHUDLayout.humorControlSpacing(for: settings.scale))
-                : 0
+            let humorOffset = OverlayHUDLayout.humorAnchorOffset(
+                for: settings.scale,
+                style: settings.style,
+                showsHumorControl: overlayState.showsHumorControl
+            )
             let newOriginX = CGFloat(storedOrigin.x) + baseSize.width / 2 - frame.width / 2
             let newOriginY = CGFloat(storedOrigin.y) - humorOffset
             origin = clamp(
@@ -621,9 +650,11 @@ final class DraggableOverlayPanel: NSPanel {
 
         let newOrigin: CGPoint
         if (restoreStoredOrigin || laidOutCapsuleScreenFrame == nil), let storedOrigin = settings.origin(for: settings.style) {
-            let humorOffset = overlayState.showsHumorControl
-                ? (OverlayHUDLayout.humorControlHeight(for: settings.scale) + OverlayHUDLayout.humorControlSpacing(for: settings.scale))
-                : 0
+            let humorOffset = OverlayHUDLayout.humorAnchorOffset(
+                for: settings.scale,
+                style: settings.style,
+                showsHumorControl: overlayState.showsHumorControl
+            )
             let topAlignedOrigin = CGPoint(
                 x: CGFloat(storedOrigin.x) + baseSize.width / 2 - newSize.width / 2,
                 y: CGFloat(storedOrigin.y) - humorOffset
@@ -643,6 +674,7 @@ final class DraggableOverlayPanel: NSPanel {
                 scale: settings.scale,
                 style: settings.style,
                 isProcessing: overlayState.mode == .processing,
+                showsPromptBar: overlayState.showsPromptBar,
                 showsHumorSlider: overlayState.showsHumorControl
             )
             let anchored = HUDQuickSwitcherLayout.anchoredPanelFrame(
@@ -696,9 +728,11 @@ final class DraggableOverlayPanel: NSPanel {
             showsPromptBar: false,
             showsHumorSlider: false
         )
-        let humorOffset = overlayState.showsHumorControl
-            ? (OverlayHUDLayout.humorControlHeight(for: overlayState.scale) + OverlayHUDLayout.humorControlSpacing(for: overlayState.scale))
-            : 0
+        let humorOffset = OverlayHUDLayout.humorAnchorOffset(
+            for: overlayState.scale,
+            style: overlayState.style,
+            showsHumorControl: overlayState.showsHumorControl
+        )
         let baseOriginY = frame.origin.y + humorOffset
         let baseOriginX = frame.midX - baseSize.width / 2
         originDidChange?(OverlayHUDOrigin(x: Double(baseOriginX), y: Double(baseOriginY)))
@@ -718,6 +752,7 @@ final class DraggableOverlayPanel: NSPanel {
             scale: overlayState.scale,
             style: overlayState.style,
             isProcessing: overlayState.mode == .processing,
+            showsPromptBar: overlayState.showsPromptBar,
             showsHumorSlider: overlayState.showsHumorControl
         )
         let screenFrame = HUDQuickSwitcherLayout.screenCapsuleFrame(
@@ -739,99 +774,59 @@ final class DraggableOverlayPanel: NSPanel {
 
     private func languageControlHitRect() -> CGRect {
         let panelSize = frame.size
-        let visualScale = OverlayHUDLayout.visualScale(for: overlayState.scale)
-        let shadowInset = OverlayHUDLayout.shadowPad * visualScale
-        let humorOffset = overlayState.showsHumorControl
-            ? OverlayHUDLayout.humorControlSpacing(for: overlayState.scale)
-                + OverlayHUDLayout.humorControlHeight(for: overlayState.scale)
-            : 0
-        if overlayState.style == .vertical {
-            let shared = HUDQuickSwitcherLayout.verticalControlHitFrame(
-                slot: .language,
-                panelSize: HUDOverlaySize(width: panelSize.width, height: panelSize.height),
-                scale: overlayState.scale,
-                style: overlayState.style,
-                isProcessing: overlayState.mode == .processing,
-                showsPromptBar: false,
-                showsHumorSlider: overlayState.showsHumorControl
-            )
-            return CGRect(
-                x: shared.x,
-                y: shared.y,
-                width: shared.width,
-                height: shared.height
-            )
-        }
-        let pillSize = OverlayHUDLayout.panelSize(
-            for: overlayState.scale,
+        let shared = HUDQuickSwitcherLayout.controlHitFrame(
+            slot: .language,
+            panelSize: HUDOverlaySize(
+                width: Double(panelSize.width),
+                height: Double(panelSize.height)
+            ),
+            scale: overlayState.scale,
             style: overlayState.style,
-            mode: overlayState.mode,
-            showsPromptBar: false,
-            showsHumorSlider: false
-        )
-        let pillOriginX = (panelSize.width - pillSize.width) / 2
-        let pillBottom = shadowInset + humorOffset
-        let controlDiameter = OverlayHUDLayout.controlDiameter(
-            for: overlayState.scale,
-            style: overlayState.style
+            isProcessing: overlayState.mode == .processing,
+            showsPromptBar: overlayState.showsPromptBar,
+            showsHumorSlider: overlayState.showsHumorControl
         )
         return CGRect(
-            x: pillOriginX - 4 * visualScale,
-            y: pillBottom - 4 * visualScale,
-            width: controlDiameter + 12 * visualScale,
-            height: controlDiameter + 8 * visualScale
+            x: shared.x,
+            y: shared.y,
+            width: shared.width,
+            height: shared.height
         )
     }
 
     private func targetControlHitRect() -> CGRect {
         let panelSize = frame.size
-        let visualScale = OverlayHUDLayout.visualScale(for: overlayState.scale)
-        let shadowInset = OverlayHUDLayout.shadowPad * visualScale
-        let humorOffset = overlayState.showsHumorControl
-            ? OverlayHUDLayout.humorControlSpacing(for: overlayState.scale)
-                + OverlayHUDLayout.humorControlHeight(for: overlayState.scale)
-            : 0
-        if overlayState.style == .vertical {
-            let shared = HUDQuickSwitcherLayout.verticalControlHitFrame(
-                slot: .target,
-                panelSize: HUDOverlaySize(width: panelSize.width, height: panelSize.height),
-                scale: overlayState.scale,
-                style: overlayState.style,
-                isProcessing: overlayState.mode == .processing,
-                showsPromptBar: false,
-                showsHumorSlider: overlayState.showsHumorControl
-            )
-            return CGRect(
-                x: shared.x,
-                y: shared.y,
-                width: shared.width,
-                height: shared.height
-            )
-        }
-        let pillSize = OverlayHUDLayout.panelSize(
-            for: overlayState.scale,
+        let shared = HUDQuickSwitcherLayout.controlHitFrame(
+            slot: .target,
+            panelSize: HUDOverlaySize(
+                width: Double(panelSize.width),
+                height: Double(panelSize.height)
+            ),
+            scale: overlayState.scale,
             style: overlayState.style,
-            mode: overlayState.mode,
-            showsPromptBar: false,
-            showsHumorSlider: false
+            isProcessing: overlayState.mode == .processing,
+            showsPromptBar: overlayState.showsPromptBar,
+            showsHumorSlider: overlayState.showsHumorControl
         )
-        let pillOriginX = (panelSize.width - pillSize.width) / 2
-        let pillBottom = shadowInset + humorOffset
-        let controlDiameter = OverlayHUDLayout.controlDiameter(
-            for: overlayState.scale,
-            style: overlayState.style
-        )
-        let targetX = pillOriginX + pillSize.width - controlDiameter - shadowInset
         return CGRect(
-            x: targetX - 4 * visualScale,
-            y: pillBottom - 4 * visualScale,
-            width: controlDiameter + 12 * visualScale,
-            height: controlDiameter + 8 * visualScale
+            x: shared.x,
+            y: shared.y,
+            width: shared.width,
+            height: shared.height
         )
     }
 
     private func promptBarHitRect() -> CGRect {
         let panelSize = frame.size
+        if overlayState.style == .vertical {
+            // Share the rail strip with the SwiftUI rail so neither surface
+            // can accept a point the other one treats as inert.
+            let strip = HUDQuickSwitcherLayout.verticalPromptRailStripFrame(
+                panelSize: HUDOverlaySize(width: panelSize.width, height: panelSize.height),
+                scale: overlayState.scale
+            )
+            return CGRect(x: strip.x, y: strip.y, width: strip.width, height: strip.height)
+        }
         let visualScale = OverlayHUDLayout.visualScale(for: overlayState.scale)
         let shadowInset = OverlayHUDLayout.shadowPad * visualScale
         let barHeight = OverlayHUDLayout.promptBarHeight(for: overlayState.scale)
@@ -846,10 +841,17 @@ final class DraggableOverlayPanel: NSPanel {
 
     private func humorSliderHitRect() -> CGRect {
         let panelSize = frame.size
+        if overlayState.style == .vertical {
+            let strip = HUDQuickSwitcherLayout.verticalHumorRailStripFrame(
+                panelSize: HUDOverlaySize(width: panelSize.width, height: panelSize.height),
+                scale: overlayState.scale
+            )
+            return CGRect(x: strip.x, y: strip.y, width: strip.width, height: strip.height)
+        }
         let visualScale = OverlayHUDLayout.visualScale(for: overlayState.scale)
         let shadowInset = OverlayHUDLayout.shadowPad * visualScale
         let sliderHeight = OverlayHUDLayout.humorControlHeight(for: overlayState.scale)
-        let sliderWidth = OverlayHUDLayout.humorSliderWidth(for: overlayState.scale, style: overlayState.style) + 24 * visualScale
+        let sliderWidth = OverlayHUDLayout.humorSliderWidth(for: overlayState.scale) + 24 * visualScale
         let originX = (panelSize.width - sliderWidth) / 2
         return CGRect(
             x: originX,
@@ -862,19 +864,24 @@ final class DraggableOverlayPanel: NSPanel {
     private func verticalControlHitRegion(_ slot: HUDVerticalControlSlot) -> HUDVerticalControlHitRegion? {
         guard overlayState.style == .vertical else { return nil }
         let panelSize = frame.size
-        return HUDQuickSwitcherLayout.verticalControlHitRegion(
+        return HUDQuickSwitcherLayout.controlHitRegion(
             slot: slot,
-            panelSize: HUDOverlaySize(width: panelSize.width, height: panelSize.height),
+            panelSize: HUDOverlaySize(
+                width: Double(panelSize.width),
+                height: Double(panelSize.height)
+            ),
             scale: overlayState.scale,
             style: overlayState.style,
             isProcessing: overlayState.mode == .processing,
-            showsPromptBar: false,
+            showsPromptBar: overlayState.showsPromptBar,
             showsHumorSlider: overlayState.showsHumorControl
         )
     }
 
     private func isClickInLanguageControl(_ point: NSPoint) -> Bool {
-        guard overlayState.showsControls, overlayState.languageControlEnabled else { return false }
+        guard overlayState.mode == .listening,
+              overlayState.showsControls,
+              overlayState.languageControlEnabled else { return false }
         if let region = verticalControlHitRegion(.language) {
             return region.contains(pointX: Double(point.x), pointY: Double(point.y))
         }
@@ -882,11 +889,21 @@ final class DraggableOverlayPanel: NSPanel {
     }
 
     private func isClickInTargetControl(_ point: NSPoint) -> Bool {
-        guard overlayState.showsControls else { return false }
+        guard overlayState.mode == .listening,
+              overlayState.showsControls else { return false }
         if let region = verticalControlHitRegion(.target) {
             return region.contains(pointX: Double(point.x), pointY: Double(point.y))
         }
         return targetControlHitRect().contains(point)
+    }
+
+    /// Single point of decision for the panel's explicit background drag,
+    /// consumed by `sendEvent` and pinned directly by tests: an empty-area
+    /// left press moves the panel, a press on any interactive control does
+    /// not. Apply to every mode so the panel stays movable in processing
+    /// exactly as when AppKit's background drag was armed.
+    func initiatesWindowDrag(at point: NSPoint) -> Bool {
+        !isClickInInteractiveControl(point)
     }
 
     private func isClickInInteractiveControl(_ point: NSPoint) -> Bool {
@@ -1014,7 +1031,7 @@ private final class OverlayRootView: NSView {
 
 private struct HotkeySessionOverlayView: View {
     @ObservedObject var state: OverlayState
-
+    @Environment(\.displayScale) private var displayScale
     var body: some View {
         hudContent
             .frame(
@@ -1027,27 +1044,15 @@ private struct HotkeySessionOverlayView: View {
 
     private var hudContent: some View {
         ZStack {
-            promptBar
-                .frame(
-                    width: innerContentSize.width,
-                    height: OverlayHUDLayout.promptBarHeight(for: state.scale)
-                )
-                .position(
-                    x: innerContentSize.width / 2,
-                    y: promptBarCenterY
-                )
+            promptAccessory
 
             hudPill
                 .position(
-                    x: innerContentSize.width / 2,
+                    x: capsuleCenterX,
                     y: capsuleCenterY
                 )
 
-            humorSlider
-                .position(
-                    x: innerContentSize.width / 2,
-                    y: humorSliderCenterY
-                )
+            humorAccessory
         }
         .frame(
             width: innerContentSize.width,
@@ -1061,13 +1066,83 @@ private struct HotkeySessionOverlayView: View {
         )
     }
 
+    /// Accessory placement follows the style's composition: capsule and tech
+    /// park the prompt slots in a hover row above the pill, while the
+    /// three-zone vertical layout parks them as a rail hugging the left edge.
+    @ViewBuilder
+    private var promptAccessory: some View {
+        switch state.style {
+        case .capsule, .tech:
+            promptBar
+                .frame(
+                    width: innerContentSize.width,
+                    height: OverlayHUDLayout.promptBarHeight(for: state.scale)
+                )
+                .position(
+                    x: innerContentSize.width / 2,
+                    y: promptBarCenterY
+                )
+        case .vertical:
+            promptRail
+                .frame(
+                    width: OverlayHUDLayout.promptRailColumnWidth(for: state.scale),
+                    height: OverlayHUDLayout.promptRailColumnHeight(for: state.scale)
+                )
+                .position(
+                    x: OverlayHUDLayout.promptRailColumnWidth(for: state.scale) / 2,
+                    y: innerContentSize.height / 2
+                )
+        }
+    }
+
+    /// The humor control follows the same rule: a short row under the pill
+    /// for capsule and tech, and a full-height vertical rail on the right
+    /// edge for the vertical style. Higher always means more humor.
+    @ViewBuilder
+    private var humorAccessory: some View {
+        switch state.style {
+        case .capsule, .tech:
+            humorSlider
+                .position(
+                    x: innerContentSize.width / 2,
+                    y: humorSliderCenterY
+                )
+        case .vertical:
+            humorRail
+                .frame(
+                    width: OverlayHUDLayout.humorRailWidth(for: state.scale),
+                    height: OverlayHUDLayout.humorRailHeight(for: state.scale)
+                )
+                .position(
+                    x: innerContentSize.width - OverlayHUDLayout.humorRailWidth(for: state.scale) / 2,
+                    y: innerContentSize.height / 2
+                )
+        }
+    }
+
     private var promptBar: some View {
-        HStack(spacing: 3 * visualScale) {
+        HStack(spacing: CGFloat(HUDQuickSwitcherLayout.promptSlotSpacing(for: state.scale))) {
             ForEach(PromptSlot.allCases) { slot in
                 promptSlotButton(slot: slot)
             }
         }
         .frame(height: OverlayHUDLayout.promptBarHeight(for: state.scale))
+        .opacity(state.showsPromptBar && state.isHovered ? 0.95 : 0.0)
+        .allowsHitTesting(HUDInteractionPolicy.allowsHitTesting(isVisible: state.showsPromptBar && state.isHovered))
+        .accessibilityHidden(HUDInteractionPolicy.isAccessibilityHidden(isVisible: state.showsPromptBar && state.isHovered))
+        .animation(.easeInOut(duration: 0.2), value: state.isHovered)
+        .animation(.easeInOut(duration: 0.2), value: state.showsPromptBar)
+    }
+
+    /// Left-edge vertical column of the same five prompt slot buttons used by
+    /// the horizontal prompt row. Its height matches the row's width exactly,
+    /// which is what the right humor rail's height is pinned to as well.
+    private var promptRail: some View {
+        VStack(spacing: CGFloat(HUDQuickSwitcherLayout.promptSlotSpacing(for: state.scale))) {
+            ForEach(PromptSlot.allCases) { slot in
+                promptSlotButton(slot: slot)
+            }
+        }
         .opacity(state.showsPromptBar && state.isHovered ? 0.95 : 0.0)
         .allowsHitTesting(HUDInteractionPolicy.allowsHitTesting(isVisible: state.showsPromptBar && state.isHovered))
         .accessibilityHidden(HUDInteractionPolicy.isAccessibilityHidden(isVisible: state.showsPromptBar && state.isHovered))
@@ -1085,21 +1160,52 @@ private struct HotkeySessionOverlayView: View {
             unselectedState: state.promptSlotUnselectedLabel,
             switchHint: state.promptSlotSwitchHint
         )
+        let slotSize = CGFloat(HUDQuickSwitcherLayout.promptSlotButtonSize(for: state.scale))
+        let glyphCenter = HUDQuickSwitcherLayout.promptSlotGlyphLocalCenter(
+            for: state.scale,
+            label: slot.shortTitle
+        )
+        let glyphFontSize = CGFloat(HUDQuickSwitcherLayout.promptSlotGlyphFontSize(for: state.scale))
+        let glyphImage = HUDQuickSwitcherLayout.glyphRasterImage(
+            for: slot.shortTitle,
+            fontSize: Double(glyphFontSize),
+            frameLogicalSize: HUDOverlaySize(
+                width: Double(slotSize),
+                height: Double(slotSize)
+            ),
+            backingScale: Double(displayScale)
+        )
+        let glyphForeground = isSelected ? Color.white : Color.white.opacity(0.85)
 
         return Button {
             state.activePromptSlot = slot
             state.promptSlotChangeHandler?(slot)
         } label: {
-            ZStack {
+            ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 4 * visualScale, style: .continuous)
                     .fill(isSelected ? Color.accentColor : Color.white.opacity(0.12))
                 RoundedRectangle(cornerRadius: 4 * visualScale, style: .continuous)
                     .strokeBorder(isSelected ? Color.white.opacity(0.8) : Color.white.opacity(0.25), lineWidth: 1 * visualScale)
-                Text(slot.shortTitle)
-                    .font(.system(size: 11 * visualScale, weight: .bold, design: .rounded))
-                    .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.85))
+                if let glyphImage {
+                    Image(
+                        decorative: glyphImage,
+                        scale: max(1, displayScale),
+                        orientation: .up
+                    )
+                    .renderingMode(.template)
+                    .foregroundStyle(glyphForeground)
+                    .accessibilityHidden(true)
+                    .frame(width: slotSize, height: slotSize)
+                    .position(x: slotSize / 2, y: slotSize / 2)
+                } else {
+                    Text(slot.shortTitle)
+                        .font(.system(size: glyphFontSize, weight: .semibold, design: .rounded))
+                        .foregroundStyle(glyphForeground)
+                        .frame(width: slotSize, height: slotSize)
+                        .position(x: CGFloat(glyphCenter.x), y: CGFloat(glyphCenter.y))
+                }
             }
-            .frame(width: 17 * visualScale, height: 17 * visualScale)
+            .frame(width: slotSize, height: slotSize)
         }
         .buttonStyle(.plain)
         .help(slotName)
@@ -1110,6 +1216,15 @@ private struct HotkeySessionOverlayView: View {
         .accessibilityAddTraits(accessibility.isSelected ? .isSelected : [])
     }
 
+    /// Pill chrome (material fill, strokes, drop shadows) wraps horizontal
+    /// HUD states (capsule listening/processing, tech listening) while
+    /// vertical remains shell-free and tech processing is additionally
+    /// excluded to let the swarm draw free-form without a capsule border.
+    private var showsPillChrome: Bool {
+        state.style != .vertical
+            && !(state.style == .tech && state.mode == .processing)
+    }
+
     private var hudPill: some View {
         layoutContent
             .padding(contentPadding)
@@ -1118,7 +1233,7 @@ private struct HotkeySessionOverlayView: View {
                 height: max(1, pillSize.height - shadowInset * 2)
             )
             .background {
-                if state.style != .vertical {
+                if showsPillChrome {
                     ZStack {
                         containerShape
                             .fill(.ultraThinMaterial)
@@ -1138,28 +1253,28 @@ private struct HotkeySessionOverlayView: View {
                 }
             }
             .overlay {
-                if state.style != .vertical {
+                if showsPillChrome {
                     containerShape
                         .stroke(.white.opacity(0.24), lineWidth: 1.0 * visualScale)
                 }
             }
             .overlay {
-                if state.style != .vertical {
+                if showsPillChrome {
                     containerShape
                         .stroke(.black.opacity(0.08), lineWidth: 0.7 * visualScale)
                         .padding(2 * visualScale)
                 }
             }
             .shadow(
-                color: state.style == .vertical
-                    ? .clear
-                    : tint.opacity(state.style == .capsule ? 0.08 : 0.14),
+                color: showsPillChrome
+                    ? tint.opacity(state.style == .capsule ? 0.08 : 0.14)
+                    : .clear,
                 radius: 12 * visualScale,
                 x: 0,
                 y: 4 * visualScale
             )
             .shadow(
-                color: state.style == .vertical ? .clear : .black.opacity(0.18),
+                color: showsPillChrome ? .black.opacity(0.18) : .clear,
                 radius: 14 * visualScale,
                 x: 0,
                 y: 6
@@ -1173,11 +1288,22 @@ private struct HotkeySessionOverlayView: View {
     }
 
     private var humorSlider: some View {
+        humorAccessoryChrome(humorSliderContainer)
+    }
+
+    private var humorRail: some View {
+        humorAccessoryChrome(humorRailContainer)
+    }
+
+    /// Shared hover reveal and VoiceOver wiring for every humor control
+    /// orientation, so the horizontal slider and the vertical rail can never
+    /// drift apart in interaction or accessibility behavior.
+    private func humorAccessoryChrome<Content: View>(_ content: Content) -> some View {
         let accessibility = HUDAccessibilityMetadataPolicy.humorSlider(
             label: state.humorAccessibilityLabel,
             level: state.humorLevel
         )
-        return humorSliderContainer
+        return content
             .opacity(state.showsHumorControl && state.isHovered ? 0.95 : 0.0)
             .allowsHitTesting(HUDInteractionPolicy.allowsHitTesting(isVisible: state.showsHumorControl && state.isHovered))
             .accessibilityHidden(HUDInteractionPolicy.isAccessibilityHidden(isVisible: state.showsHumorControl && state.isHovered))
@@ -1204,9 +1330,136 @@ private struct HotkeySessionOverlayView: View {
                     .strokeBorder(Color.white.opacity(0.25), lineWidth: 0.75 * visualScale)
             }
             .frame(
-                width: OverlayHUDLayout.humorSliderWidth(for: state.scale, style: state.style) + 12 * visualScale,
+                width: OverlayHUDLayout.humorSliderWidth(for: state.scale) + 12 * visualScale,
                 height: OverlayHUDLayout.humorControlHeight(for: state.scale)
             )
+    }
+
+    /// Vertical humor rail for the three-zone layout: a tinted fill rises
+    /// from the bottom stop to the knob, so pushing the knob up always means
+    /// more humor. Dragging or tapping anywhere along the rail snaps to the
+    /// same six level marks the horizontal slider exposes.
+    private var humorRailContainer: some View {
+        humorRailVisual
+            .padding(.horizontal, 2.5 * visualScale)
+            .padding(.vertical, 5 * visualScale)
+            .background {
+                Capsule(style: .continuous)
+                    .fill(Color.black.opacity(0.50))
+            }
+            .overlay {
+                Capsule(style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.25), lineWidth: 0.75 * visualScale)
+            }
+    }
+
+    /// Canvas size shared by the rail drawing and the drag math so both
+    /// always agree where the knob sits.
+    private var humorRailCanvasSize: CGSize {
+        CGSize(
+            width: max(1, OverlayHUDLayout.humorRailWidth(for: state.scale) - 5 * visualScale),
+            height: max(1, OverlayHUDLayout.humorRailHeight(for: state.scale) - 10 * visualScale)
+        )
+    }
+
+    private var humorRailKnobTravelInset: CGFloat {
+        4.9 * visualScale
+    }
+
+    private var humorRailVisual: some View {
+        Canvas { context, size in
+            drawHumorRail(in: &context, size: size)
+        }
+        .frame(width: humorRailCanvasSize.width, height: humorRailCanvasSize.height)
+        .contentShape(Rectangle())
+        .gesture(humorRailDrag)
+    }
+
+    private var humorRailDrag: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                let height = humorRailCanvasSize.height
+                let inset = humorRailKnobTravelInset
+                let travel = max(1, height - 2 * inset)
+                let clamped = min(travel, max(0, value.location.y - inset))
+                humorLevelBinding.wrappedValue = Double(1 - clamped / travel) * 100
+            }
+    }
+
+    private func drawHumorRail(in context: inout GraphicsContext, size: CGSize) {
+        guard size.width > 0, size.height > 0 else { return }
+
+        let inset = humorRailKnobTravelInset
+        let travel = max(1, size.height - 2 * inset)
+        let centerX = size.width / 2
+        let trackWidth = 2.6 * visualScale
+        let progress = min(1, max(0, CGFloat(state.humorLevel.rawValue) / 100))
+        // Top-left canvas coordinates: higher level -> smaller y.
+        let knobCenterY = inset + travel * (1 - progress)
+
+        // Level marks for the six HumorLevel stops along the track.
+        for level in HumorLevel.allCases {
+            let markProgress = min(1, max(0, CGFloat(level.rawValue) / 100))
+            let markY = inset + travel * (1 - markProgress)
+            let mark = CGRect(
+                x: centerX - trackWidth / 2 - (1 + 2) * visualScale,
+                y: markY - 0.45 * visualScale,
+                width: 2 * visualScale,
+                height: 0.9 * visualScale
+            )
+            context.fill(
+                Path(roundedRect: mark, cornerRadius: 0.45 * visualScale),
+                with: .color(.white.opacity(0.5))
+            )
+        }
+
+        // Track: a thin spine with a tinted fill rising from the bottom stop
+        // up to the knob.
+        let trackRect = CGRect(
+            x: centerX - trackWidth / 2,
+            y: inset,
+            width: trackWidth,
+            height: travel
+        )
+        context.fill(
+            Path(roundedRect: trackRect, cornerRadius: trackWidth / 2),
+            with: .color(.white.opacity(0.20))
+        )
+        let fillRect = CGRect(
+            x: centerX - trackWidth / 2,
+            y: knobCenterY,
+            width: trackWidth,
+            height: max(trackWidth, inset + travel - knobCenterY)
+        )
+        context.fill(
+            Path(roundedRect: fillRect, cornerRadius: trackWidth / 2),
+            with: .linearGradient(
+                Gradient(colors: [tint.opacity(0.65), tint.opacity(0.95)]),
+                startPoint: CGPoint(x: centerX, y: fillRect.minY),
+                endPoint: CGPoint(x: centerX, y: fillRect.maxY)
+            )
+        )
+
+        // Knob: solid tinted dot with a white halo, following the level.
+        let knobDiameter = 6.8 * visualScale
+        let knobRect = CGRect(
+            x: centerX - knobDiameter / 2,
+            y: knobCenterY - knobDiameter / 2,
+            width: knobDiameter,
+            height: knobDiameter
+        )
+        var glow = context
+        glow.addFilter(.blur(radius: 2 * visualScale))
+        glow.fill(
+            Path(ellipseIn: knobRect.insetBy(dx: -1.1 * visualScale, dy: -1.1 * visualScale)),
+            with: .color(tint.opacity(0.35))
+        )
+        context.fill(Path(ellipseIn: knobRect), with: .color(tint.opacity(0.95)))
+        context.stroke(
+            Path(ellipseIn: knobRect),
+            with: .color(.white.opacity(0.85)),
+            lineWidth: 0.8 * visualScale
+        )
     }
 
     private func adjustHumorLevel(_ direction: AccessibilityAdjustmentDirection) {
@@ -1233,12 +1486,12 @@ private struct HotkeySessionOverlayView: View {
                 .controlSize(.mini)
                 .tint(tint.opacity(0.85))
                 .frame(
-                    width: OverlayHUDLayout.humorSliderWidth(for: state.scale, style: state.style),
+                    width: OverlayHUDLayout.humorSliderWidth(for: state.scale),
                     height: 12 * visualScale
                 )
 
             humorSliderMarks
-            .frame(width: OverlayHUDLayout.humorSliderWidth(for: state.scale, style: state.style))
+            .frame(width: OverlayHUDLayout.humorSliderWidth(for: state.scale))
         }
     }
 
@@ -1282,6 +1535,7 @@ private struct HotkeySessionOverlayView: View {
             } else {
                 HStack(spacing: OverlayHUDLayout.classicButtonSpectrumGap * visualScale) {
                     controlSlot(
+                        slot: .language,
                         label: languageButtonLabel,
                         isActive: languageButtonIsActive,
                         isEnabled: state.languageControlEnabled,
@@ -1295,6 +1549,7 @@ private struct HotkeySessionOverlayView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                     controlSlot(
+                        slot: .target,
                         label: state.hotkeyTarget.hudLabel,
                         isActive: state.hotkeyTarget != .raw,
                         action: {
@@ -1305,12 +1560,15 @@ private struct HotkeySessionOverlayView: View {
             }
         case .tech:
             if state.mode == .processing {
-                techSpectrum
-                    .frame(width: OverlayHUDLayout.techSpectrumWidth(for: state.scale))
-                    .frame(maxHeight: .infinity)
+                ElectricSwarmView(
+                    color: tint,
+                    isVisible: state.isVisible
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 HStack(spacing: OverlayHUDLayout.techButtonSpectrumGap * visualScale) {
                     controlSlot(
+                        slot: .language,
                         label: languageButtonLabel,
                         isActive: languageButtonIsActive,
                         isEnabled: state.languageControlEnabled,
@@ -1324,6 +1582,7 @@ private struct HotkeySessionOverlayView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                     controlSlot(
+                        slot: .target,
                         label: state.hotkeyTarget.hudLabel,
                         isActive: state.hotkeyTarget != .raw,
                         action: {
@@ -1340,6 +1599,7 @@ private struct HotkeySessionOverlayView: View {
             } else {
                 VStack(spacing: OverlayHUDLayout.verticalButtonSpectrumGap * visualScale) {
                     controlSlot(
+                        slot: .language,
                         label: languageButtonLabel,
                         isActive: languageButtonIsActive,
                         isEnabled: state.languageControlEnabled,
@@ -1355,6 +1615,7 @@ private struct HotkeySessionOverlayView: View {
                         .scaleEffect(y: verticalDragStretch, anchor: .top)
 
                     controlSlot(
+                        slot: .target,
                         label: state.hotkeyTarget.hudLabel,
                         isActive: state.hotkeyTarget != .raw,
                         action: {
@@ -1497,10 +1758,24 @@ private struct HotkeySessionOverlayView: View {
     }
 
     private var humorAccessoryOffset: CGFloat {
-        state.showsHumorControl
-            ? OverlayHUDLayout.humorControlSpacing(for: state.scale)
-                + OverlayHUDLayout.humorControlHeight(for: state.scale)
+        OverlayHUDLayout.humorAnchorOffset(
+            for: state.scale,
+            style: state.style,
+            showsHumorControl: state.showsHumorControl
+        )
+    }
+
+    /// The pill is centered horizontally for the stacked capsule/tech
+    /// compositions. In the three-zone vertical layout it sits directly
+    /// behind the reserved left prompt-rail extent, mirroring the shared
+    /// `mainCapsuleFrame` policy.
+    private var capsuleCenterX: CGFloat {
+        guard state.style == .vertical else { return innerContentSize.width / 2 }
+        let leftExtent: CGFloat = state.showsPromptBar
+            ? OverlayHUDLayout.promptRailColumnWidth(for: state.scale)
+                + OverlayHUDLayout.railGap(for: state.scale)
             : 0
+        return leftExtent + capsuleVisibleSize.width / 2
     }
 
     private var capsuleCenterY: CGFloat {
@@ -1556,8 +1831,7 @@ private struct HotkeySessionOverlayView: View {
         EnergyZigzagSpectrumView(
             bands: state.spectrumBands,
             color: tint,
-            isVisible: state.isVisible,
-            isProcessing: state.mode == .processing
+            isVisible: state.isVisible
         )
     }
 
@@ -1581,33 +1855,65 @@ private struct HotkeySessionOverlayView: View {
         return 1 + min(0.08, magnitude * 0.012)
     }
 
-    private var controlDiameter: CGFloat {
-        OverlayHUDLayout.controlDiameter(
-            for: state.scale,
-            style: state.style
-        )
-    }
 
-    private var controlTextScale: CGFloat {
-        controlDiameter / OverlayHUDLayout.controlButtonDiameter
-    }
 
     @ViewBuilder
     private func controlSlot(
+        slot: HUDVerticalControlSlot,
         label: String,
         isActive: Bool,
         isEnabled: Bool = true,
         action: (() -> Void)? = nil
     ) -> some View {
+        let policyPanelSize = HUDOverlaySize(
+            width: Double(panelSize.width),
+            height: Double(panelSize.height)
+        )
+        let frame = HUDQuickSwitcherLayout.controlFrame(
+            slot: slot,
+            panelSize: policyPanelSize,
+            scale: state.scale,
+            style: state.style,
+            isProcessing: state.mode == .processing,
+            showsPromptBar: state.showsPromptBar,
+            showsHumorSlider: state.showsHumorControl
+        )
+        let glyphCenter = HUDQuickSwitcherLayout.controlGlyphCenter(
+            slot: slot,
+            label: label,
+            panelSize: policyPanelSize,
+            scale: state.scale,
+            style: state.style,
+            isProcessing: state.mode == .processing,
+            showsPromptBar: state.showsPromptBar,
+            showsHumorSlider: state.showsHumorControl
+        )
+        let glyphLocalCenter = HUDQuickSwitcherLayout.controlGlyphLocalCenter(
+            for: state.scale,
+            style: state.style,
+            label: label
+        )
+        let glyphFrame = HUDOverlayFrame(
+            x: glyphCenter.x - glyphLocalCenter.x,
+            y: glyphCenter.y - glyphLocalCenter.y,
+            width: glyphLocalCenter.x * 2,
+            height: glyphLocalCenter.y * 2
+        )
         let margin = OverlayHUDLayout.controlHitMargin(for: state.scale)
         if state.showsControls {
             Button {
                 action?()
             } label: {
-                controlButton(label: label, isActive: isActive)
-                    .padding(margin)
-                    .contentShape(controlHitShape)
+                controlButton(
+                    label: label,
+                    isActive: isActive,
+                    frame: frame,
+                    glyphFrame: glyphFrame
+                )
+                .padding(margin)
+                .contentShape(controlHitShape)
             }
+            .accessibilityLabel(Text(label))
             .buttonStyle(.plain)
             .padding(-margin)
             .opacity(isEnabled ? 1 : 0.34)
@@ -1616,33 +1922,72 @@ private struct HotkeySessionOverlayView: View {
         } else {
             Color.clear
                 .frame(
-                    width: controlDiameter,
-                    height: controlDiameter
+                    width: CGFloat(frame.width),
+                    height: CGFloat(frame.height)
                 )
         }
     }
-
-    private func controlButton(label: String, isActive: Bool) -> some View {
-        let xOffset: CGFloat = (label == "1" ? 0.35 : 0) * visualScale
-        let yOffset: CGFloat = (0.65 + (state.style == .vertical ? 0.35 : 0)) * visualScale
-
-        return ZStack {
-            Text(label)
-                .font(
-                    .system(
-                        size: 12 * controlTextScale,
-                        weight: .semibold,
-                        design: state.style == .vertical ? .monospaced : .rounded
-                    )
+    private func controlButton(
+        label: String,
+        isActive: Bool,
+        frame: HUDOverlayFrame,
+        glyphFrame: HUDOverlayFrame
+    ) -> some View {
+        let buttonWidth = CGFloat(frame.width)
+        let buttonHeight = CGFloat(frame.height)
+        let glyphPosition = CGPoint(
+            x: CGFloat(glyphFrame.x - frame.x + glyphFrame.width / 2),
+            y: CGFloat(glyphFrame.y - frame.y + glyphFrame.height / 2)
+        )
+        let glyphFontSize = 12 * buttonWidth / OverlayHUDLayout.controlButtonDiameter
+        let glyphImage = HUDQuickSwitcherLayout.glyphRasterImage(
+            for: label,
+            fontSize: Double(glyphFontSize),
+            frameLogicalSize: HUDOverlaySize(
+                width: glyphFrame.width,
+                height: glyphFrame.height
+            ),
+            backingScale: Double(displayScale)
+        )
+        return ZStack(alignment: .topLeading) {
+            if let glyphImage {
+                Image(
+                    decorative: glyphImage,
+                    scale: max(1, displayScale),
+                    orientation: .up
                 )
-                .monospacedDigit()
+                .renderingMode(.template)
                 .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .multilineTextAlignment(.center)
-                .offset(x: xOffset, y: yOffset)
+                .accessibilityHidden(true)
+                .frame(
+                    width: CGFloat(glyphFrame.width),
+                    height: CGFloat(glyphFrame.height)
+                )
+                .position(
+                    x: buttonWidth / 2,
+                    y: buttonHeight / 2
+                )
+            } else {
+                Text(label)
+                    .font(
+                        .system(
+                            size: glyphFontSize,
+                            weight: .semibold,
+                            design: .rounded
+                        )
+                    )
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .multilineTextAlignment(.center)
+                    .frame(
+                        width: CGFloat(glyphFrame.width),
+                        height: CGFloat(glyphFrame.height)
+                    )
+                    .position(glyphPosition)
+            }
         }
-        .frame(width: controlDiameter, height: controlDiameter, alignment: .center)
+        .frame(width: buttonWidth, height: buttonHeight)
         .background {
             controlShape.fill(.ultraThinMaterial)
         }
@@ -1813,12 +2158,14 @@ private struct MinimalBarSpectrumView: View {
 
 /// A deliberately technical alternative to the classic equalizer. The live
 /// signal is rendered as a connected, angular energy trace with travelling
-/// phase and luminous node markers instead of a row of ordinary bars.
+/// phase and luminous node markers instead of a row of ordinary bars. Its
+/// voice response comes from `HUDSpectrumResponse.techListeningValues`, which
+/// keeps the resting trace subtly alive but answers speech with a markedly
+/// brighter deflection.
 private struct EnergyZigzagSpectrumView: View {
     let bands: [Float]
     let color: Color
     let isVisible: Bool
-    let isProcessing: Bool
 
     @State private var phase = Date().timeIntervalSinceReferenceDate
 
@@ -1842,26 +2189,21 @@ private struct EnergyZigzagSpectrumView: View {
 
     private var signalValues: [CGFloat] {
         let pointCount = 9
-        if isProcessing {
+        let idleFloor: Float = 0.10
+        let mapped = HUDSpectrumResponse.techListeningValues(
+            bands: bands,
+            pointCount: pointCount,
+            idleFloor: idleFloor
+        )
+        // The mapping answers silence with a flat floor; the trace stays
+        // gently alive on top of it and snaps bright the moment voice lands.
+        guard mapped.contains(where: { $0 > idleFloor }) else {
             return (0..<pointCount).map { index in
-                let offset = phase * 4.2 - Double(index) * 0.74
-                let primary = 0.5 + 0.5 * sin(offset)
-                let harmonic = 0.5 + 0.5 * sin(offset * 1.9 + 0.8)
-                return 0.20 + 0.55 * CGFloat(primary) + 0.25 * CGFloat(harmonic)
+                CGFloat(idleFloor)
+                    + 0.030 * sin(CGFloat(index) * 1.35 + CGFloat(phase * 1.7))
             }
         }
-
-        let resampled = resample(bands, count: pointCount)
-        let peak = resampled.max() ?? 0
-        guard peak >= 0.10 else {
-            return (0..<pointCount).map { index in
-                0.10 + 0.025 * sin(CGFloat(index) * 1.35 + CGFloat(phase * 1.7))
-            }
-        }
-        return resampled.map { value in
-            let cleaned = max(0, (value - 0.10) / 0.90)
-            return max(0.12, min(1, pow(cleaned * 2.15, 0.78)))
-        }
+        return mapped.map { CGFloat($0) }
     }
 
     private func drawCenterLine(in context: inout GraphicsContext, size: CGSize) {
@@ -1926,7 +2268,7 @@ private struct EnergyZigzagSpectrumView: View {
         )
 
         for (index, point) in points.enumerated() where index.isMultiple(of: 2) {
-            let nodeSize: CGFloat = isProcessing ? 3.2 : 2.6
+            let nodeSize: CGFloat = 2.6
             let nodeRect = CGRect(
                 x: point.x - nodeSize / 2,
                 y: point.y - nodeSize / 2,
@@ -1937,6 +2279,198 @@ private struct EnergyZigzagSpectrumView: View {
                 Path(roundedRect: nodeRect, cornerRadius: 0.8),
                 with: .color(index == points.count / 2 ? .white : color)
             )
+        }
+    }
+}
+
+/// Tech processing visual v2: a free-form electric particle swarm replacing
+/// the modest bitstream. Sixteen small particles twinkle actively while
+/// electric-arc discharges crackle between neighbours; the whole field
+/// gathers toward its centre as it charges, and each cycle releases a
+/// bright strike bolt through the swarm. Every position comes from
+/// `HUDElectricSwarmPolicy`, so frames are deterministic from phase and the
+/// render loop stays cheap: most drawing is unfiltered, with at most two
+/// soft glow passes per frame.
+private struct ElectricSwarmView: View {
+    let color: Color
+    let isVisible: Bool
+    var particleCount: Int = 16
+
+    @State private var phase = Date().timeIntervalSinceReferenceDate
+
+    private let animationTimer = Timer.publish(
+        every: 1.0 / 36.0,
+        on: .main,
+        in: .common
+    ).autoconnect()
+
+    var body: some View {
+        Canvas { context, size in
+            let frame = HUDElectricSwarmPolicy.frame(
+                for: phase,
+                width: Double(size.width),
+                height: Double(size.height),
+                particleCount: particleCount
+            )
+            drawBloom(in: &context, size: size, bloom: frame.bloom)
+            drawArcs(in: &context, frame: frame)
+            drawParticles(in: &context, frame: frame)
+        }
+        .onReceive(animationTimer) { date in
+            guard isVisible else { return }
+            phase = date.timeIntervalSinceReferenceDate
+        }
+        .accessibilityHidden(true)
+    }
+
+    private func drawBloom(in context: inout GraphicsContext, size: CGSize, bloom: Double) {
+        guard bloom > 0 else { return }
+        let center = CGPoint(x: size.width / 2, y: size.height / 2)
+        let rect = CGRect(origin: .zero, size: size).insetBy(dx: -6, dy: -4)
+        context.fill(
+            Path(ellipseIn: rect),
+            with: .radialGradient(
+                Gradient(colors: [color.opacity(0.20 * bloom), .clear]),
+                center: center,
+                startRadius: 0,
+                endRadius: max(size.width, size.height) * 0.62
+            )
+        )
+    }
+
+    /// Lightning segments between arc endpoints. The jagged midpoint jitter
+    /// is quantized to the frame's flicker step so arcs crackle frame to
+    /// frame while remaining a pure function of phase.
+    private func drawArcs(in context: inout GraphicsContext, frame: HUDElectricSwarmFrame) {
+        guard !frame.arcs.isEmpty else { return }
+        let particles = frame.particles
+        let normalizedPhase = phase.isFinite ? phase.truncatingRemainder(dividingBy: 1_000_000_000) : 0
+        let flickerStep = floor(normalizedPhase * 24)
+
+        var dimPath = Path()
+        var webPath = Path()
+        var strikePath = Path()
+
+        for arc in frame.arcs {
+            let a = particles[arc.from]
+            let b = particles[arc.to]
+            let start = CGPoint(x: a.x, y: a.y)
+            let end = CGPoint(x: b.x, y: b.y)
+            let segment = lightningSegment(from: start, to: end, flicker: flickerStep, arc: arc)
+            if arc.isStrike {
+                strikePath.addPath(segment)
+            } else if arc.intensity >= 0.5 {
+                webPath.addPath(segment)
+            } else {
+                dimPath.addPath(segment)
+            }
+        }
+
+        if !dimPath.isEmpty {
+            context.stroke(
+                dimPath,
+                with: .color(color.opacity(0.30)),
+                style: StrokeStyle(lineWidth: 0.6, lineCap: .round, lineJoin: .round)
+            )
+        }
+        if !webPath.isEmpty {
+            context.stroke(
+                webPath,
+                with: .color(color.opacity(0.62 + 0.30 * frame.energy)),
+                style: StrokeStyle(lineWidth: 0.8, lineCap: .round, lineJoin: .round)
+            )
+        }
+        if !strikePath.isEmpty {
+            var glow = context
+            glow.addFilter(.blur(radius: 1.8))
+            glow.stroke(
+                strikePath,
+                with: .color(color.opacity(0.75)),
+                style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round)
+            )
+            context.stroke(
+                strikePath,
+                with: .color(.white.opacity(0.92)),
+                style: StrokeStyle(lineWidth: 0.75, lineCap: .round, lineJoin: .round)
+            )
+        }
+
+        // One shared halo pass over the brightest web, so the discharge
+        // reads as light emitted rather than flat lines — a single filtered
+        // draw regardless of arc count.
+        if !webPath.isEmpty {
+            var halo = context
+            halo.addFilter(.blur(radius: 2.4))
+            halo.stroke(
+                webPath,
+                with: .color(color.opacity(0.30)),
+                style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round)
+            )
+        }
+    }
+
+    private func lightningSegment(
+        from start: CGPoint,
+        to end: CGPoint,
+        flicker: Double,
+        arc: HUDSwarmArc
+    ) -> Path {
+        let dx = end.x - start.x
+        let dy = end.y - start.y
+        let length = max(0.001, sqrt(dx * dx + dy * dy))
+        let normal = CGPoint(x: -dy / length, y: dx / length)
+        let jitter = arc.isStrike ? min(4.5, length * 0.22) : min(3.0, length * 0.16)
+
+        var jittered = Path()
+        jittered.move(to: start)
+        for step in 1...3 {
+            let t = CGFloat(step) / 4
+            let flickerSeed = UInt64(bitPattern: Int64(flicker.truncatingRemainder(dividingBy: 1_000_000_000)))
+            let seed = flickerSeed &+ UInt64(arc.from * 131 + arc.to * 17 + step * 7 &+ 61)
+            let offset = jitterOffset(seed) * jitter
+            jittered.addLine(
+                to: CGPoint(
+                    x: start.x + dx * t + normal.x * offset,
+                    y: start.y + dy * t + normal.y * offset
+                )
+            )
+        }
+        jittered.addLine(to: end)
+        return jittered
+    }
+
+    /// Same fold the policy uses, kept local so the jitter needs no extra
+    /// public surface: a quick zigzag-shaped unit wobble from a seed.
+    private func jitterOffset(_ seed: UInt64) -> CGFloat {
+        var z = seed &+ 0x9E3779B97F4A7C15
+        z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+        z = (z ^ (z >> 31))
+        return CGFloat(Int64(z >> 11) % 2001 - 1000) / 1000
+    }
+
+    private func drawParticles(in context: inout GraphicsContext, frame: HUDElectricSwarmFrame) {
+        for particle in frame.particles {
+            let rect = CGRect(
+                x: particle.x - particle.radius,
+                y: particle.y - particle.radius,
+                width: particle.radius * 2,
+                height: particle.radius * 2
+            )
+            let dot = Path(ellipseIn: rect)
+            context.fill(dot, with: .color(color.opacity(0.45 + 0.55 * particle.brightness)))
+            if particle.heat > 0.55 {
+                let coreSide = particle.radius * 0.9
+                let core = CGRect(
+                    x: particle.x - coreSide / 2,
+                    y: particle.y - coreSide / 2,
+                    width: coreSide,
+                    height: coreSide
+                )
+                context.fill(
+                    Path(ellipseIn: core),
+                    with: .color(.white.opacity(0.9 * particle.heat))
+                )
+            }
         }
     }
 }

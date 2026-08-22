@@ -47,11 +47,12 @@ struct MaxHUDOverlayGeometryMatrix {
         #expect(cases == maxStyles.count * maxScales.count * 8)
     }
 
-    @Test("Vertical Pulse panel always fits the full D/1/2/3/4 prompt row unclipped")
-    func verticalPromptRowNeverClipped() {
+    @Test("Vertical Pulse left rail keeps five full targets in a column beside the capsule")
+    func verticalPromptRailNeverClipped() {
         for scale in maxScales {
-            let promptRowWidth = HUDQuickSwitcherLayout.promptBarWidth(for: scale)
-            // Product contract: the prompt bar is only presented while listening.
+            let visualScale = HUDQuickSwitcherLayout.overlayVisualScale(for: scale)
+            let railColumnHeight = HUDQuickSwitcherLayout.promptRailColumnHeight(for: scale)
+            // Product contract: the prompt rail is only presented while listening.
             let size = HUDQuickSwitcherLayout.overlayPanelSize(
                 for: scale,
                 style: .vertical,
@@ -59,9 +60,15 @@ struct MaxHUDOverlayGeometryMatrix {
                 showsPromptBar: true,
                 showsHumorSlider: false
             )
+            let interiorHeight = size.height
+                - 2 * HUDQuickSwitcherLayout.overlayShadowPad * visualScale
             #expect(
-                size.width >= promptRowWidth,
-                "scale \(scale): panel \(size.width) must fit prompt row \(promptRowWidth)"
+                railColumnHeight <= interiorHeight + 1e-9,
+                "scale \(scale): rail column \(railColumnHeight) must fit interior \(interiorHeight)"
+            )
+            #expect(
+                railColumnHeight == HUDQuickSwitcherLayout.promptBarWidth(for: scale),
+                "scale \(scale): the column keeps all five full-size targets"
             )
             let withHumor = HUDQuickSwitcherLayout.overlayPanelSize(
                 for: scale,
@@ -70,12 +77,13 @@ struct MaxHUDOverlayGeometryMatrix {
                 showsPromptBar: true,
                 showsHumorSlider: true
             )
-            #expect(withHumor.width >= promptRowWidth, "scale \(scale): humor must not narrow the row")
+            #expect(withHumor.width > size.width, "scale \(scale): humor rail must add panel width")
+            #expect(withHumor.height == size.height, "scale \(scale): rails never grow panel height")
         }
     }
 
-    @Test("Prompt bar grows panel height by exactly bar + spacing")
-    func promptBarHeightAccounting() {
+    @Test("Prompt accessories grow capsule/tech panel height and vertical panel width exactly")
+    func promptAccessoryAccounting() {
         for style in maxStyles {
             for scale in maxScales {
                 let base = HUDQuickSwitcherLayout.overlayPanelSize(
@@ -86,18 +94,36 @@ struct MaxHUDOverlayGeometryMatrix {
                     for: scale, style: style, isProcessing: false,
                     showsPromptBar: true, showsHumorSlider: false
                 )
-                let delta = HUDQuickSwitcherLayout.promptBarSpacing(for: scale)
-                    + HUDQuickSwitcherLayout.promptBarHeight(for: scale)
-                #expect(
-                    abs((withBar.height - base.height) - delta) < 1e-9,
-                    "\(style) \(scale): height delta must equal bar+spacing"
-                )
+                switch style {
+                case .capsule, .tech:
+                    let delta = HUDQuickSwitcherLayout.promptBarSpacing(for: scale)
+                        + HUDQuickSwitcherLayout.promptBarHeight(for: scale)
+                    #expect(
+                        abs((withBar.height - base.height) - delta) < 1e-9,
+                        "\(style) \(scale): height delta must equal bar+spacing"
+                    )
+                    #expect(
+                        withBar.width == base.width,
+                        "\(style) \(scale): prompt bar must not change width"
+                    )
+                case .vertical:
+                    let delta = HUDQuickSwitcherLayout.promptRailColumnWidth(for: scale)
+                        + HUDQuickSwitcherLayout.railGap(for: scale)
+                    #expect(
+                        abs((withBar.width - base.width) - delta) < 1e-9,
+                        "\(style) \(scale): width delta must equal rail+gap"
+                    )
+                    #expect(
+                        withBar.height == base.height,
+                        "\(style) \(scale): the left rail must not change height"
+                    )
+                }
             }
         }
     }
 
-    @Test("Humor slider grows panel height by exactly its reserved band")
-    func humorBandAccounting() {
+    @Test("Humor accessories grow capsule/tech panel height and vertical panel width exactly")
+    func humorAccessoryAccounting() {
         for style in maxStyles {
             for scale in maxScales {
                 let visualScale = HUDQuickSwitcherLayout.overlayVisualScale(for: scale)
@@ -109,8 +135,17 @@ struct MaxHUDOverlayGeometryMatrix {
                     for: scale, style: style, isProcessing: false,
                     showsPromptBar: false, showsHumorSlider: true
                 )
-                let band = 4 * visualScale + 24 * visualScale
-                #expect(abs((withHumor.height - base.height) - band) < 1e-9)
+                switch style {
+                case .capsule, .tech:
+                    let band = 4 * visualScale + 24 * visualScale
+                    #expect(abs((withHumor.height - base.height) - band) < 1e-9)
+                    #expect(withHumor.width == base.width)
+                case .vertical:
+                    let flank = HUDQuickSwitcherLayout.humorRailWidth(for: scale)
+                        + HUDQuickSwitcherLayout.railGap(for: scale)
+                    #expect(abs((withHumor.width - base.width) - flank) < 1e-9)
+                    #expect(withHumor.height == base.height)
+                }
             }
         }
     }

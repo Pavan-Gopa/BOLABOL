@@ -1,4 +1,4 @@
-# Bolabol 1.0.5 release checklist
+# Bolabol 1.0.6 release checklist
 
 ## Branch
 
@@ -28,7 +28,7 @@ Required release credentials:
 ## Build, sign, and notarize the DMG
 
 ```bash
-RELEASE_BUILD=1 NOTARIZE=1 APP_VERSION=1.0.5 \
+RELEASE_BUILD=1 NOTARIZE=1 APP_VERSION=1.0.6 \
   ./script/build_release_dmg.sh --release --notarize
 ```
 
@@ -43,7 +43,7 @@ The build embeds Sparkle 2.9.4, signs nested Sparkle code inside-out, and uses
 the immutable update URL prefix:
 
 ```text
-https://github.com/Pavan-Gopa/BOLABOL/releases/download/v1.0.5/
+https://github.com/Pavan-Gopa/BOLABOL/releases/download/v1.0.6/
 ```
 
 ## Generate and validate the signed appcast
@@ -97,12 +97,12 @@ checksum, and release notes:
 
 ```bash
 git push -u origin HEAD
-git push origin v1.0.5
+git push origin v1.0.6
 
-gh release create v1.0.5 \
+gh release create v1.0.6 \
   dist/BOLABOL.dmg \
   dist/handoff/SHA256SUMS.txt \
-  --title "Bolabol 1.0.5" \
+  --title "Bolabol 1.0.6" \
   --notes-file docs/RELEASE_NOTES.md \
   --target main \
   --latest
@@ -111,7 +111,7 @@ gh release create v1.0.5 \
 If a draft already exists:
 
 ```bash
-gh release edit v1.0.5 \
+gh release edit v1.0.6 \
   --notes-file docs/RELEASE_NOTES.md \
   --draft=false \
   --prerelease=false \

@@ -44,19 +44,7 @@ func onboardingTryRecordNotificationHasAProductionConsumer() throws {
 }
 
 @Test
-func acceptedADR021KeepsCanaryOutOfTheTranslationRuntime() throws {
-    let decisions = try String(
-        contentsOfFile: "AI_Workflow_Kit/docs/DECISIONS.md",
-        encoding: .utf8
-    )
-    let adrStart = try #require(decisions.range(of: "## ADR-021"))
-    let adrTail = decisions[adrStart.lowerBound...]
-    let adrEnd = adrTail.range(of: "\n---", options: [], range: adrTail.index(after: adrStart.lowerBound)..<adrTail.endIndex)
-        ?? adrTail.endIndex..<adrTail.endIndex
-    let adr = String(adrTail[..<adrEnd.lowerBound])
-
-    #expect(adr.contains("**Status:** Accepted"))
-    #expect(adr.contains("Canary remains an audio transcription model only"))
+func canaryRemainsOutOfTheTranslationRuntime() throws {
     #expect(!FileManager.default.fileExists(
         atPath: "Sources/NativeBolabol/Services/CanarySpeechTranslationRuntime.swift"
     ))

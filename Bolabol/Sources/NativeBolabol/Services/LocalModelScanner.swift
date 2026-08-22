@@ -8,12 +8,17 @@ import NativeBolabolCore
 /// - At least one `.safetensors` weight file (single or sharded via `model.safetensors.index.json`)
 struct LocalModelScanner: Sendable {
     private let excludedPrefixes: [String]
+    private let sharedMLXDirectoryOverride: URL?
 
     /// Maximum directory depth when scanning Documents / Downloads.
     private static let maxScanDepth = 3
 
-    init(excludedDirectories: [URL] = []) {
+    init(
+        excludedDirectories: [URL] = [],
+        sharedMLXDirectory: URL? = nil
+    ) {
         self.excludedPrefixes = excludedDirectories.map(\.path)
+        self.sharedMLXDirectoryOverride = sharedMLXDirectory
     }
 
     struct ScanResult: Sendable {
@@ -30,18 +35,46 @@ struct LocalModelScanner: Sendable {
 
     /// Scans all well-known locations and returns discovered models.
     /// This performs synchronous disk I/O — call from a background context.
-    func scanAll() -> ScanResult {
+    func scanAll(sharedMLXDirectory: URL? = nil) -> ScanResult {
         let fm = FileManager.default
         var results = ScanResult()
         var seenPaths = Set<String>()
 
+        let effectiveSharedMLXDir = sharedMLXDirectory
+            ?? sharedMLXDirectoryOverride
+            ?? (try? SharedModelsRoot.modelsDirectory(for: .mlx))
+
         // 1. Shared app root (drop-ins and downloads from every app)
-        if let sharedMLXDir = try? SharedModelsRoot.modelsDirectory(for: .mlx),
+        if let sharedMLXDir = effectiveSharedMLXDir,
            fm.fileExists(atPath: sharedMLXDir.path) {
-            let sharedResult = scanDirectory(sharedMLXDir, maxDepth: Self.maxScanDepth, fm: fm)
+            let sharedResult = scanDirectory(
+                sharedMLXDir,
+                maxDepth: Self.maxScanDepth,
+                skipsHubLayoutChildren: true,
+                fm: fm
+            )
             results.skippedUnsupportedCount += sharedResult.skippedUnsupportedCount
             for model in sharedResult.models where seenPaths.insert(model.localDirectoryURL!.path).inserted {
                 results.models.append(model)
+            }
+        }
+
+        // 1b. Hub-style layouts inside the shared root: this app's hub fallback
+        // (`mlx/models--…`) and direct-download packages (`mlx/Direct/models--…`,
+        // e.g. snapshots published by PolishingEngineStore or other apps sharing
+        // the pool). Reuses the HF-cache scanner; flat-ID folders were already
+        // covered by the generic scan above.
+        if let sharedMLXDir = effectiveSharedMLXDir {
+            let hubLayoutDirs = [
+                sharedMLXDir,
+                sharedMLXDir.appendingPathComponent("Direct", isDirectory: true)
+            ]
+            for hubLayoutDir in hubLayoutDirs where fm.fileExists(atPath: hubLayoutDir.path) {
+                let hubResult = scanHuggingFaceCache(hubLayoutDir, fm: fm)
+                results.skippedUnsupportedCount += hubResult.skippedUnsupportedCount
+                for model in hubResult.models where seenPaths.insert(model.localDirectoryURL!.path).inserted {
+                    results.models.append(model)
+                }
             }
         }
 
@@ -100,6 +133,9 @@ struct LocalModelScanner: Sendable {
     private func scanHuggingFaceCache(_ cacheDir: URL, fm: FileManager) -> ScanResult {
         var results = ScanResult()
 
+        guard !isExcluded(cacheDir) else {
+            return results
+        }
         guard let modelDirs = try? fm.contentsOfDirectory(
             at: cacheDir,
             includingPropertiesForKeys: [.isDirectoryKey]
@@ -149,11 +185,12 @@ struct LocalModelScanner: Sendable {
     // MARK: - Generic Directory Scanner
 
     /// Recursively scans a directory for valid MLX model folders up to `maxDepth` levels.
-    private func scanDirectory(
+    func scanDirectory(
         _ directory: URL,
-        maxDepth: Int,
+        maxDepth: Int = Self.maxScanDepth,
         currentDepth: Int = 0,
-        fm: FileManager
+        skipsHubLayoutChildren: Bool = false,
+        fm: FileManager = .default
     ) -> ScanResult {
         guard currentDepth < maxDepth else { return ScanResult() }
         guard !isExcluded(directory) else { return ScanResult() }
@@ -171,8 +208,12 @@ struct LocalModelScanner: Sendable {
             guard isDirectory(child, fm: fm) else { continue }
 
             let childName = child.lastPathComponent
-            // Skip hidden directories and common non-model directories
+            // Skip hidden directories, HuggingFace cache folders (when requested), and common non-model directories
             guard !childName.hasPrefix(".") else { continue }
+            if skipsHubLayoutChildren {
+                guard !childName.hasPrefix("models--") else { continue }
+                guard childName != "Direct" else { continue }
+            }
             guard !Self.skipDirectoryNames.contains(childName) else { continue }
 
             switch inspectModelDirectory(child, repositoryID: nil, fm: fm) {
@@ -187,7 +228,13 @@ struct LocalModelScanner: Sendable {
             case .unsupported:
                 results.skippedUnsupportedCount += 1
             case .notModel:
-                let subResults = scanDirectory(child, maxDepth: maxDepth, currentDepth: currentDepth + 1, fm: fm)
+                let subResults = scanDirectory(
+                    child,
+                    maxDepth: maxDepth,
+                    currentDepth: currentDepth + 1,
+                    skipsHubLayoutChildren: skipsHubLayoutChildren,
+                    fm: fm
+                )
                 results.append(contentsOf: subResults)
             }
         }

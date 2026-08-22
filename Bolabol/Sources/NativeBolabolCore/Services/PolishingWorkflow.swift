@@ -139,7 +139,8 @@ public final class PolishingWorkflow {
             PolishingRequest(
                 rawText: rawText,
                 variant: variant,
-                template: guardedTemplate
+                template: guardedTemplate,
+                humorLevel: variant == .variantTwo ? humorLevel?.rawValue : nil
             )
         )
 
@@ -152,7 +153,8 @@ public final class PolishingWorkflow {
             PolishingRequest(
                 rawText: rawText,
                 variant: variant,
-                template: strictTemplate
+                template: strictTemplate,
+                humorLevel: variant == .variantTwo ? humorLevel?.rawValue : nil
             )
         )
         return result

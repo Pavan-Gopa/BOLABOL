@@ -451,6 +451,10 @@ struct HUDLanguagePickerPopoverTests {
         state.mode = .listening
         state.scale = scale
         state.showsControls = showsControls
+        // The three-zone layout shows the prompt rail for note/x2 targets,
+        // which widens the panel sideways. Keep the fixture on the raw
+        // target so the bare panel size above models a real panel.
+        state.hotkeyTarget = .raw
         let panel = DraggableOverlayPanel(
             overlayState: state,
             initialSize: CGSize(width: panelSize.width, height: panelSize.height)
@@ -993,6 +997,353 @@ struct HUDLanguagePickerPopoverTests {
             #expect(margin >= 8, "margin \(margin) at scale \(scale) is below the 8pt floor")
             #expect(margin <= 10, "margin \(margin) at scale \(scale) exceeds the 10pt ceiling")
         }
+    }
+
+    // MARK: - S7 round 2: controls win press-drags over the panel move
+
+    /// Vertical panel with the full three-zone accessory set: left prompt
+    /// rail and right humor rail both reserved and — when hovered — visible.
+    @MainActor
+    private func makeThreeZonePanel(
+        scale: Double = 1.0,
+        hovered: Bool = true
+    ) throws -> (DraggableOverlayPanel, OverlayState, HUDOverlaySize) {
+        let panelSize = HUDQuickSwitcherLayout.overlayPanelSize(
+            for: scale,
+            style: .vertical,
+            isProcessing: false,
+            showsPromptBar: true,
+            showsHumorSlider: true
+        )
+        let state = OverlayState()
+        state.style = .vertical
+        state.mode = .listening
+        state.scale = scale
+        state.showsControls = true
+        state.hotkeyTarget = .x2
+        state.humorSliderEnabled = true
+        state.isHovered = hovered
+        #expect(state.showsPromptBar)
+        #expect(state.showsHumorControl)
+        let panel = DraggableOverlayPanel(
+            overlayState: state,
+            initialSize: CGSize(width: panelSize.width, height: panelSize.height)
+        )
+        panel.updateControlsVisibility(true)
+        return (panel, state, panelSize)
+    }
+
+    @MainActor
+    @Test("Implicit AppKit background drag is disarmed on the production panel")
+    func implicitBackgroundDragDisarmedOnProductionPanel() throws {
+        let (panel, _, _) = try makeThreeZonePanel()
+        // The old armed flag let AppKit steal press-drags that started on
+        // the humor rail or prompt buttons out from under SwiftUI.
+        #expect(!panel.isMovableByWindowBackground)
+    }
+
+    @MainActor
+    @Test("A press on the humor rail or prompt rail never starts the panel drag")
+    func pressOnVerticalRailsNeverStartsPanelDrag() throws {
+        let (panel, _, panelSize) = try makeThreeZonePanel()
+
+        let humorStrip = HUDQuickSwitcherLayout.verticalHumorRailStripFrame(
+            panelSize: panelSize,
+            scale: 1.0
+        )
+        let humorCenter = NSPoint(
+            x: humorStrip.x + humorStrip.width / 2,
+            y: humorStrip.y + humorStrip.height / 2
+        )
+        #expect(!panel.initiatesWindowDrag(at: humorCenter), "humor rail must win its own drag")
+
+        let promptStrip = HUDQuickSwitcherLayout.verticalPromptRailStripFrame(
+            panelSize: panelSize,
+            scale: 1.0
+        )
+        let promptCenter = NSPoint(
+            x: promptStrip.x + promptStrip.width / 2,
+            y: promptStrip.y + promptStrip.height / 2
+        )
+        #expect(!panel.initiatesWindowDrag(at: promptCenter), "prompt rail must win its own drag")
+    }
+
+    @MainActor
+    @Test("Empty three-zone panel areas and control circles still route correctly")
+    func emptyVerticalPanelAreasStillMoveAndCirclesStillWin() throws {
+        let (panel, _, panelSize) = try makeThreeZonePanel()
+
+        // The pulse capsule centre is empty panel: a press there still moves
+        // the panel (regression pin for the accepted drag-to-move gesture).
+        let empty = NSPoint(x: panelSize.width / 2, y: panelSize.height / 2)
+        #expect(panel.initiatesWindowDrag(at: empty), "drag-start-on-empty-panel must still move the panel")
+
+        // The rail-shifted language circle stays interactive.
+        let region = HUDQuickSwitcherLayout.verticalControlHitRegion(
+            slot: .language,
+            panelSize: panelSize,
+            scale: 1.0,
+            style: .vertical,
+            isProcessing: false,
+            showsPromptBar: true,
+            showsHumorSlider: true
+        )
+        #expect(!panel.initiatesWindowDrag(at: NSPoint(x: region.centerX, y: region.centerY)))
+    }
+
+    @MainActor
+    @Test("Invisible hover rails stay inert to the drag owner instead of stealing grabs")
+    func invisibleHoverRailsStayInertToDragOwner() throws {
+        let (panel, _, panelSize) = try makeThreeZonePanel(hovered: false)
+        let humorStrip = HUDQuickSwitcherLayout.verticalHumorRailStripFrame(
+            panelSize: panelSize,
+            scale: 1.0
+        )
+        let humorCenter = NSPoint(
+            x: humorStrip.x + humorStrip.width / 2,
+            y: humorStrip.y + humorStrip.height / 2
+        )
+        // Not rendered and not hit-testable while hidden — an empty press.
+        #expect(panel.initiatesWindowDrag(at: humorCenter))
+    }
+
+    @MainActor
+    @Test("Processing-mode empty panel drags stay movable exactly as before")
+    func processingEmptyPanelStillMoves() throws {
+        let (panel, state, panelSize) = try makeThreeZonePanel()
+        state.mode = .processing
+
+        let empty = NSPoint(x: panelSize.width / 2, y: panelSize.height / 2)
+        #expect(panel.initiatesWindowDrag(at: empty), "processing empty-area drags must keep moving the panel")
+
+        // No phantom rails in processing: the old strip area is empty too.
+        let humorStrip = HUDQuickSwitcherLayout.verticalHumorRailStripFrame(
+            panelSize: panelSize,
+            scale: 1.0
+        )
+        let humorCenter = NSPoint(
+            x: humorStrip.x + humorStrip.width / 2,
+            y: humorStrip.y + humorStrip.height / 2
+        )
+        #expect(panel.initiatesWindowDrag(at: humorCenter))
+    }
+
+    // MARK: - S7 round 3: mode-aware drag ownership & sendEvent route matrix
+
+    @MainActor
+    private func makeOverlayPanel(
+        style: OverlayHUDStyle,
+        mode: HotkeySessionOverlayManager.Mode,
+        showsControls: Bool = true,
+        scale: Double = 1.0
+    ) -> (DraggableOverlayPanel, OverlayState, HUDOverlaySize) {
+        let isProcessing = mode == .processing
+        let showsPromptBar = style == .vertical && !isProcessing && showsControls
+        let showsHumorSlider = style == .vertical && !isProcessing && showsControls
+        let panelSize = HUDQuickSwitcherLayout.overlayPanelSize(
+            for: scale,
+            style: style,
+            isProcessing: isProcessing,
+            showsPromptBar: showsPromptBar,
+            showsHumorSlider: showsHumorSlider
+        )
+        let state = OverlayState()
+        state.style = style
+        state.mode = mode
+        state.scale = scale
+        state.showsControls = showsControls
+        state.hotkeyTarget = style == .vertical ? .x2 : .raw
+        state.humorSliderEnabled = style == .vertical
+        state.isHovered = style == .vertical
+        let panel = DraggableOverlayPanel(
+            overlayState: state,
+            initialSize: CGSize(width: panelSize.width, height: panelSize.height)
+        )
+        panel.updateControlsVisibility(showsControls)
+        return (panel, state, panelSize)
+    }
+
+    @MainActor
+    private func controlAndEmptyPoints(
+        for style: OverlayHUDStyle,
+        scale: Double = 1.0
+    ) -> (language: NSPoint, target: NSPoint, empty: NSPoint) {
+        let panelSize = HUDQuickSwitcherLayout.overlayPanelSize(
+            for: scale,
+            style: style,
+            isProcessing: false,
+            showsPromptBar: style == .vertical,
+            showsHumorSlider: style == .vertical
+        )
+        if style == .vertical {
+            let langHit = HUDQuickSwitcherLayout.verticalControlHitRegion(
+                slot: .language,
+                panelSize: panelSize,
+                scale: scale,
+                style: .vertical,
+                isProcessing: false,
+                showsPromptBar: true,
+                showsHumorSlider: true
+            )
+            let targetHit = HUDQuickSwitcherLayout.verticalControlHitRegion(
+                slot: .target,
+                panelSize: panelSize,
+                scale: scale,
+                style: .vertical,
+                isProcessing: false,
+                showsPromptBar: true,
+                showsHumorSlider: true
+            )
+            return (
+                language: NSPoint(x: langHit.centerX, y: langHit.centerY),
+                target: NSPoint(x: targetHit.centerX, y: targetHit.centerY),
+                empty: NSPoint(x: panelSize.width / 2, y: panelSize.height / 2)
+            )
+        } else {
+            let visualScale = HUDQuickSwitcherLayout.overlayVisualScale(for: scale)
+            let shadowInset = HUDQuickSwitcherLayout.overlayShadowPad * visualScale
+            let pillSize = HUDQuickSwitcherLayout.overlayPanelSize(
+                for: scale,
+                style: style,
+                isProcessing: false,
+                showsPromptBar: false,
+                showsHumorSlider: false
+            )
+            let pillOriginX = (panelSize.width - pillSize.width) / 2
+            let pillCenterY = shadowInset + pillSize.height / 2
+            let controlDiameter = HUDQuickSwitcherLayout.controlDiameter(for: scale, style: style)
+            let langX = pillOriginX + shadowInset + controlDiameter / 2
+            let targetX = pillOriginX + pillSize.width - shadowInset - controlDiameter / 2
+            let centerX = panelSize.width / 2
+            return (
+                language: NSPoint(x: langX, y: pillCenterY),
+                target: NSPoint(x: targetX, y: pillCenterY),
+                empty: NSPoint(x: centerX, y: pillCenterY)
+            )
+        }
+    }
+
+    @MainActor
+    @Test("Drag ownership matrix across all styles and modes honors rendered controls")
+    func dragOwnershipMatrixAcrossAllStylesAndModes() throws {
+        let styles: [OverlayHUDStyle] = [.capsule, .tech, .vertical]
+
+        for style in styles {
+            let points = controlAndEmptyPoints(for: style, scale: 1.0)
+
+            // 1. Listening mode with controls enabled: controls must win drags, empty panel moves
+            let (listeningPanel, _, _) = makeOverlayPanel(style: style, mode: .listening, showsControls: true)
+            #expect(!listeningPanel.initiatesWindowDrag(at: points.language), "\(style) listening language control must suppress drag")
+            #expect(!listeningPanel.initiatesWindowDrag(at: points.target), "\(style) listening target control must suppress drag")
+            #expect(listeningPanel.initiatesWindowDrag(at: points.empty), "\(style) listening empty panel must initiate drag")
+
+            // 2. Processing mode with retained showsControls=true: no controls rendered, whole panel must drag
+            let (retainedPanel, _, _) = makeOverlayPanel(style: style, mode: .processing, showsControls: true)
+            #expect(retainedPanel.initiatesWindowDrag(at: points.language), "\(style) processing (retained controls) language coordinate must allow drag")
+            #expect(retainedPanel.initiatesWindowDrag(at: points.target), "\(style) processing (retained controls) target coordinate must allow drag")
+            #expect(retainedPanel.initiatesWindowDrag(at: points.empty), "\(style) processing (retained controls) empty coordinate must allow drag")
+
+            // 3. Processing mode production state (showsControls=false): whole panel must drag
+            let (prodProcessingPanel, _, _) = makeOverlayPanel(style: style, mode: .processing, showsControls: false)
+            #expect(prodProcessingPanel.initiatesWindowDrag(at: points.language), "\(style) processing production language coordinate must allow drag")
+            #expect(prodProcessingPanel.initiatesWindowDrag(at: points.target), "\(style) processing production target coordinate must allow drag")
+            #expect(prodProcessingPanel.initiatesWindowDrag(at: points.empty), "\(style) processing production empty coordinate must allow drag")
+        }
+    }
+
+    @MainActor
+    @Test("sendEvent route matrix across all styles and modes enforces single move owner")
+    func sendEventRouteMatrixAcrossAllStylesAndModes() throws {
+        let styles: [OverlayHUDStyle] = [.capsule, .tech, .vertical]
+
+        for style in styles {
+            let points = controlAndEmptyPoints(for: style, scale: 1.0)
+
+            // In listening mode: controls receive the event without drag, empty panel routes through drag
+            let (listeningPanel, _, _) = makeOverlayPanel(style: style, mode: .listening, showsControls: true)
+            for (label, point, shouldDrag) in [
+                ("language", points.language, false),
+                ("target", points.target, false),
+                ("empty", points.empty, true)
+            ] {
+                let event = try #require(
+                    NSEvent.mouseEvent(
+                        with: .leftMouseDown,
+                        location: point,
+                        modifierFlags: [],
+                        timestamp: 0,
+                        windowNumber: 0,
+                        context: nil,
+                        eventNumber: 0,
+                        clickCount: 1,
+                        pressure: 0
+                    )
+                )
+                #expect(
+                    listeningPanel.initiatesWindowDrag(at: point) == shouldDrag,
+                    "\(style) listening \(label) initiatesWindowDrag mismatch"
+                )
+                listeningPanel.sendEvent(event)
+            }
+
+            // In processing mode (both retained controls and production showsControls=false):
+            // ALL coordinates must initiate drag
+            for showsControls in [true, false] {
+                let (procPanel, _, _) = makeOverlayPanel(style: style, mode: .processing, showsControls: showsControls)
+                for (label, point) in [
+                    ("language", points.language),
+                    ("target", points.target),
+                    ("empty", points.empty)
+                ] {
+                    let event = try #require(
+                        NSEvent.mouseEvent(
+                            with: .leftMouseDown,
+                            location: point,
+                            modifierFlags: [],
+                            timestamp: 0,
+                            windowNumber: 0,
+                            context: nil,
+                            eventNumber: 0,
+                            clickCount: 1,
+                            pressure: 0
+                        )
+                    )
+                    #expect(
+                        procPanel.initiatesWindowDrag(at: point) == true,
+                        "\(style) processing (showsControls:\(showsControls)) \(label) must initiate drag"
+                    )
+                    procPanel.sendEvent(event)
+                }
+            }
+        }
+    }
+
+    @Test("sendEvent source contract pins single move owner across all modes")
+    func sendEventSourceContractPinsSingleMoveOwner() throws {
+        let source = try String(
+            contentsOfFile: "Sources/NativeBolabol/Services/HotkeySessionOverlayManager.swift",
+            encoding: .utf8
+        )
+
+        let sendEventStart = try #require(source.range(of: "override func sendEvent(_ event: NSEvent)"))
+        let sendEventEnd = try #require(
+            source.range(of: "super.sendEvent(event)", range: sendEventStart.lowerBound..<source.endIndex)
+        )
+        let sendEventBody = String(source[sendEventStart.lowerBound..<sendEventEnd.upperBound])
+
+        // The leftMouseDown drag route MUST NOT be restricted to listening mode:
+        // it must use initiatesWindowDrag directly so processing mode also moves.
+        let leftMouseDownRange = try #require(sendEventBody.range(of: "event.type == .leftMouseDown"))
+        let leftMouseDownBlock = sendEventBody[leftMouseDownRange.lowerBound...].prefix(300)
+
+        #expect(
+            leftMouseDownBlock.contains("initiatesWindowDrag(at: contentPoint(for: event))"),
+            "sendEvent must delegate leftMouseDown dragging to initiatesWindowDrag"
+        )
+        #expect(
+            !leftMouseDownBlock.contains("overlayState.mode == .listening"),
+            "sendEvent leftMouseDown drag must NOT be restricted to listening mode"
+        )
     }
 
 }

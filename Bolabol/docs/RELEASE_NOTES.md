@@ -1,27 +1,24 @@
-# Bolabol 1.0.5
+# Bolabol 1.0.6
 
 Native Apple Silicon release for local and cloud dictation, polishing,
-translation, and hotkey insertion into other apps.
+translation, and signed Sparkle updates.
 
-**Version:** 1.0.5
+**Version:** 1.0.6
 
 ## What's new
 
-The project previously known as **SmartScribe** is now **Bolabol**.
-The app bundle, bundle identifier (`com.bolabol.app`), repository, and download
-asset (`BOLABOL.dmg`) carry the new name. Signed and notarized with Developer ID
-Application: Stichting Kadamba Foundation (438UQRF7JV).
-
-- Signed in-app updates through Sparkle 2.9.4 and the stable GitHub appcast.
-- A visible update action in the main window title bar with safe retry and
-  relaunch handling.
-- Update installation is gated while recording or other app work is active;
-  cancellation and failure keep the current installation intact.
-- Native click-to-record hotkey controls replace manual shortcut text fields.
-- Right Option and Right Command primary hotkey taps are captured directly,
-  with keyboard-layout-independent modifier-plus-key recording.
-- Recording, rejection, help, and accessibility states remain localized across
-  all supported UI languages.
+- Compatible local MLX models can be discovered from the shared model pool by
+  the app and companion tooling. Model licenses remain separate from Bolabol's
+  license; follow each model package's terms before use or redistribution.
+- Tech-processing visuals use the accepted deterministic electric particle
+  swarm, with the vertical HUD layout and centered glyph rendering.
+- Audio archive cleanup fails safe when note metadata cannot load; orphaned
+  microphone recordings move to Trash, and files newer than the 15-minute
+  minimum age are left alone.
+- The reviewed security surface keeps hard-coded network endpoints on an HTTPS
+  allowlist and rejects unreviewed hosts or plaintext URLs.
+- Sparkle delivery requires a signed appcast and immutable release asset URLs
+  before an update can be offered.
 
 ## Existing product surface
 
@@ -43,5 +40,5 @@ Application: Stichting Kadamba Foundation (438UQRF7JV).
   text for translation.
 - The release bundle uses identity `com.bolabol.app` and is signed with
   Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV).
-- Updates require a signed Sparkle appcast and a notarized DMG; no unsigned
-  GitHub asset or mutable download URL is trusted.
+- Updates require a signed Sparkle appcast and an immutable release URL; the
+  release checklist remains the source of truth for packaging steps.

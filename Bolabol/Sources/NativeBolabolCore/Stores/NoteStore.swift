@@ -1,8 +1,24 @@
 import Combine
 import Foundation
-
+import os
 @MainActor
 public final class NoteStore: ObservableObject {
+    public enum LoadState: Equatable, Sendable {
+        case freshInstall
+        case loaded
+        case failed(errorDescription: String)
+
+        public var isLoaded: Bool {
+            if case .loaded = self { return true }
+            return false
+        }
+
+        public var isGuarded: Bool {
+            if case .failed = self { return true }
+            return false
+        }
+    }
+
     @Published public private(set) var notes: [BolabolNote] {
         didSet {
             saveNotes()
@@ -13,27 +29,45 @@ public final class NoteStore: ObservableObject {
             saveNotes()
         }
     }
+    @Published public private(set) var loadState: LoadState = .freshInstall
+
+    public var loadErrorDescription: String? {
+        if case .failed(let description) = loadState {
+            return description
+        }
+        return nil
+    }
+
+    public var isDestructiveMaintenanceGuarded: Bool {
+        loadState.isGuarded
+    }
+
+    public static let minimumOrphanAge: TimeInterval = 15 * 60
 
     private let fileManager: FileManager
     private let notesFileURL: URL
     private let isPersistenceEnabled: Bool
     private var isSavingEnabled = false
     private var protectedImportedAudioPaths: Set<String> = []
+    private let now: () -> Date
 
     public init(
         notes: [BolabolNote]? = nil,
         fileManager: FileManager = .default,
         notesFileURL: URL? = nil,
-        isPersistenceEnabled: Bool = false
+        isPersistenceEnabled: Bool = false,
+        now: @escaping () -> Date = Date.init
     ) {
         self.fileManager = fileManager
         self.notesFileURL = notesFileURL ?? Self.defaultNotesFileURL(fileManager: fileManager)
         self.isPersistenceEnabled = isPersistenceEnabled
         self.isSavingEnabled = false
+        self.now = now
 
         if let notes = notes {
             self.notes = notes
             self.selection = notes.first?.id
+            self.loadState = .loaded
             self.protectedImportedAudioPaths = Set(
                 notes.compactMap { note in
                     guard note.audioRecording?.source == .importedFile,
@@ -43,15 +77,34 @@ public final class NoteStore: ObservableObject {
                     return fileURL.standardizedFileURL.resolvingSymlinksInPath().standardizedFileURL.path
                 }
             )
+            self.isSavingEnabled = true
         } else {
             self.notes = []
             self.selection = nil
             if isPersistenceEnabled {
-                if let container = Self.loadNotes(from: self.notesFileURL, fileManager: fileManager) {
-                    self.notes = container.notes
-                    self.selection = container.selection
-                    self.protectedImportedAudioPaths = Set(container.protectedImportedAudioPaths)
+                if !fileManager.fileExists(atPath: self.notesFileURL.path) {
+                    self.loadState = .freshInstall
+                    self.isSavingEnabled = true
+                    NativeBolabolLog.audio.info("NoteStore init: fresh install (no metadata file at \(self.notesFileURL.path, privacy: .public))")
+                } else {
+                    do {
+                        let container = try Self.loadNotes(from: self.notesFileURL, fileManager: fileManager)
+                        self.notes = container.notes
+                        self.selection = container.selection
+                        self.protectedImportedAudioPaths = Set(container.protectedImportedAudioPaths)
+                        self.loadState = .loaded
+                        self.isSavingEnabled = true
+                        NativeBolabolLog.audio.info("NoteStore init: loaded \(container.notes.count) note(s) from \(self.notesFileURL.path, privacy: .public)")
+                    } catch {
+                        let errorDescription = error.localizedDescription
+                        self.loadState = .failed(errorDescription: errorDescription)
+                        self.isSavingEnabled = false
+                        NativeBolabolLog.audio.error("NoteStore init: failed to read or decode notes metadata at \(self.notesFileURL.path, privacy: .public): \(errorDescription, privacy: .public). Destructive maintenance disabled.")
+                    }
                 }
+            } else {
+                self.loadState = .freshInstall
+                self.isSavingEnabled = true
             }
         }
         self.protectedImportedAudioPaths.formUnion(
@@ -63,7 +116,6 @@ public final class NoteStore: ObservableObject {
                 return fileURL.standardizedFileURL.resolvingSymlinksInPath().standardizedFileURL.path
             }
         )
-        self.isSavingEnabled = true
     }
 
     public var selectedNote: BolabolNote? {
@@ -122,6 +174,10 @@ public final class NoteStore: ObservableObject {
     }
 
     public func clearAll() {
+        guard !loadState.isGuarded else {
+            NativeBolabolLog.audio.warning("clearAll skipped: NoteStore is in guarded failure state.")
+            return
+        }
         let importedPaths = Set(
             notes.compactMap { note -> String? in
                 guard note.audioRecording?.source == .importedFile,
@@ -151,14 +207,23 @@ public final class NoteStore: ObservableObject {
         }
         _ = purgeUnreferencedFiles(
             in: recordingsDirectoryURL,
-            referencedPaths: protectedImportedAudioPaths
+            referencedPaths: protectedImportedAudioPaths,
+            olderThan: 0
         )
     }
 
-    /// Deletes microphone recordings under Application Support that are no longer
-    /// referenced by any note. Safe to call on launch after loading notes.
+    /// Moves microphone recordings under Application Support that are no longer
+    /// referenced by any note to Trash. Skips in-flight recordings modified within
+    /// the minimum orphan age (15 minutes). Safe to call on launch after loading notes.
     @discardableResult
-    public func purgeOrphanedRecordings() -> Int {
+    public func purgeOrphanedRecordings(
+        olderThan ageThreshold: TimeInterval? = nil,
+        asOf referenceDate: Date? = nil
+    ) -> Int {
+        guard !loadState.isGuarded else {
+            NativeBolabolLog.audio.warning("purgeOrphanedRecordings skipped: NoteStore is in guarded failure state.")
+            return 0
+        }
         var referenced = protectedImportedAudioPaths
         referenced.formUnion(
             notes.compactMap { note -> String? in
@@ -166,7 +231,12 @@ public final class NoteStore: ObservableObject {
                 return canonicalFilePath(url)
             }
         )
-        return purgeUnreferencedFiles(in: recordingsDirectoryURL, referencedPaths: referenced)
+        return purgeUnreferencedFiles(
+            in: recordingsDirectoryURL,
+            referencedPaths: referenced,
+            olderThan: ageThreshold ?? Self.minimumOrphanAge,
+            asOf: referenceDate ?? now()
+        )
     }
 
     @discardableResult
@@ -189,15 +259,22 @@ public final class NoteStore: ObservableObject {
     }
 
     public func enforceAudioArchiveLimit(maxRecordings: Int) {
+        guard !loadState.isGuarded else {
+            NativeBolabolLog.audio.warning("enforceAudioArchiveLimit skipped: NoteStore is in guarded failure state.")
+            return
+        }
         let limit = max(0, maxRecordings)
         let audioNoteIDs = notes.compactMap { note in
             note.audioRecording == nil ? nil : note.id
         }
         guard audioNoteIDs.count > limit else { return }
 
+        let excessNotes = audioNoteIDs.dropFirst(limit)
+        NativeBolabolLog.audio.info("enforceAudioArchiveLimit: removing \(excessNotes.count) excess audio note(s) (limit=\(limit), count=\(audioNoteIDs.count))")
+
         // `notes` is the persisted newest-first ordering. Keeping its order
         // makes equal timestamps deterministic and avoids deleting text notes.
-        for noteID in audioNoteIDs.dropFirst(limit) {
+        for noteID in excessNotes {
             deleteNote(noteID)
         }
     }
@@ -364,20 +441,27 @@ public final class NoteStore: ObservableObject {
         let fileManager = FileManager.default
         let url = defaultNotesFileURL(fileManager: fileManager)
         let store = NoteStore(notes: nil, fileManager: fileManager, notesFileURL: url, isPersistenceEnabled: true)
-        // One-shot hygiene: drop microphone .caf files no note still points at.
-        let removed = store.purgeOrphanedRecordings()
-        if removed > 0 {
-            // Logging stays optional in Core; no Logger dependency here.
-        }
-        if let limit = store.loadSavedRetentionLimit() {
-            store.enforceAudioArchiveLimit(maxRecordings: limit)
+        // One-shot hygiene: drop microphone .caf files no note still points at,
+        // executed ONLY when the metadata load fully succeeded.
+        if store.loadState == .loaded {
+            let removed = store.purgeOrphanedRecordings()
+            if removed > 0 {
+                NativeBolabolLog.audio.info("live() startup hygiene: trashed \(removed) orphaned audio recording(s).")
+            }
+            if let limit = store.loadSavedRetentionLimit() {
+                store.enforceAudioArchiveLimit(maxRecordings: limit)
+            }
+        } else if case .failed(let errorDescription) = store.loadState {
+            NativeBolabolLog.audio.error("live() startup hygiene skipped: NoteStore load failed (\(errorDescription, privacy: .public)).")
+        } else if store.loadState == .freshInstall {
+            NativeBolabolLog.audio.info("live() startup hygiene skipped: fresh install (no metadata file).")
         }
         store.observeRetentionSettings()
         return store
     }
 
     private func saveNotes() {
-        guard isSavingEnabled, isPersistenceEnabled else { return }
+        guard isSavingEnabled, isPersistenceEnabled, !loadState.isGuarded else { return }
         let container = NoteStorePersistenceContainer(
             notes: notes,
             selection: selection,
@@ -389,9 +473,10 @@ public final class NoteStore: ObservableObject {
             let data = try JSONEncoder().encode(container)
             try data.write(to: notesFileURL, options: .atomic)
         } catch {
-            // Silently ignore
+            NativeBolabolLog.audio.error("NoteStore saveNotes failed for \(self.notesFileURL.path, privacy: .public): \(error.localizedDescription, privacy: .public)")
         }
     }
+
 
     public static var defaultRecordingsDirectoryURL: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
@@ -410,6 +495,7 @@ public final class NoteStore: ObservableObject {
 
     private func removeManagedAudioFile(_ recording: AudioRecording?) {
         guard let recording, recording.source == .microphone else { return }
+        guard !loadState.isGuarded else { return }
         let url = canonicalFileURL(recording.fileURL)
         guard isManagedAudioPath(url) else { return }
         let path = url.path
@@ -419,7 +505,13 @@ public final class NoteStore: ObservableObject {
         }
         guard !stillReferenced,
               !protectedImportedAudioPaths.contains(path) else { return }
-        try? fileManager.removeItem(at: url)
+        do {
+            var resultingURL: NSURL?
+            try fileManager.trashItem(at: url, resultingItemURL: &resultingURL)
+            NativeBolabolLog.audio.info("removeManagedAudioFile trashed: \(url.lastPathComponent, privacy: .public)")
+        } catch {
+            NativeBolabolLog.audio.warning("removeManagedAudioFile failed to trash \(url.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private func isManagedAudioPath(_ url: URL) -> Bool {
@@ -442,45 +534,81 @@ public final class NoteStore: ObservableObject {
     @discardableResult
     private func purgeUnreferencedFiles(
         in directory: URL,
-        referencedPaths: Set<String>
+        referencedPaths: Set<String>,
+        olderThan ageThreshold: TimeInterval = minimumOrphanAge,
+        asOf referenceDate: Date? = nil
     ) -> Int {
+        guard !loadState.isGuarded else {
+            NativeBolabolLog.audio.warning("purgeUnreferencedFiles skipped: NoteStore is in guarded failure state.")
+            return 0
+        }
         guard fileManager.fileExists(atPath: directory.path),
               let contents = try? fileManager.contentsOfDirectory(
                 at: directory,
-                includingPropertiesForKeys: nil,
+                includingPropertiesForKeys: [.contentModificationDateKey, .creationDateKey],
                 options: [.skipsHiddenFiles]
               )
         else {
             return 0
         }
 
+        let clockNow = referenceDate ?? now()
         var removed = 0
+        var skippedReferenced = 0
+        var skippedTooYoung = 0
+        var skippedErrors = 0
+
         for item in contents {
             let path = canonicalFilePath(item)
-            guard !referencedPaths.contains(path) else { continue }
+            if referencedPaths.contains(path) {
+                skippedReferenced += 1
+                continue
+            }
+
+            guard let attributes = try? fileManager.attributesOfItem(atPath: item.path) else {
+                NativeBolabolLog.audio.warning("purgeUnreferencedFiles skipped \(item.lastPathComponent, privacy: .public): unable to read attributes")
+                skippedErrors += 1
+                continue
+            }
+
+            let modificationDate = (attributes[.modificationDate] as? Date) ?? (attributes[.creationDate] as? Date)
+            guard let modificationDate else {
+                NativeBolabolLog.audio.warning("purgeUnreferencedFiles skipped \(item.lastPathComponent, privacy: .public): missing modification date")
+                skippedErrors += 1
+                continue
+            }
+
+            let age = clockNow.timeIntervalSince(modificationDate)
+            if age < ageThreshold {
+                NativeBolabolLog.audio.info("purgeUnreferencedFiles skipped recent file \(item.lastPathComponent, privacy: .public): age=\(Int(age))s < threshold=\(Int(ageThreshold))s")
+                skippedTooYoung += 1
+                continue
+            }
+
             do {
-                try fileManager.removeItem(at: item)
+                var resultingURL: NSURL?
+                try fileManager.trashItem(at: item, resultingItemURL: &resultingURL)
                 removed += 1
+                let trashPath = resultingURL?.path ?? "Trash"
+                NativeBolabolLog.audio.info("purgeUnreferencedFiles trashed orphan \(item.lastPathComponent, privacy: .public) -> \(trashPath, privacy: .public) age=\(Int(age))s")
             } catch {
+                NativeBolabolLog.audio.warning("purgeUnreferencedFiles failed to trash \(item.lastPathComponent, privacy: .public): \(error.localizedDescription, privacy: .public). Skipping deletion.")
+                skippedErrors += 1
                 continue
             }
         }
+
+        NativeBolabolLog.audio.info("purgeUnreferencedFiles summary: directory=\(directory.lastPathComponent, privacy: .public) trashed=\(removed) skippedReferenced=\(skippedReferenced) skippedTooYoung=\(skippedTooYoung) skippedErrors=\(skippedErrors)")
         return removed
     }
 
     private static func loadNotes(
         from url: URL,
         fileManager: FileManager
-    ) -> NoteStorePersistenceContainer? {
-        guard fileManager.fileExists(atPath: url.path),
-              let data = try? Data(contentsOf: url),
-              let container = try? JSONDecoder().decode(NoteStorePersistenceContainer.self, from: data)
-        else {
-            return nil
-        }
-        return container
+    ) throws -> NoteStorePersistenceContainer {
+        let data = try Data(contentsOf: url)
+        return try JSONDecoder().decode(NoteStorePersistenceContainer.self, from: data)
     }
-
     private static func defaultNotesFileURL(fileManager: FileManager) -> URL {
         let baseURL = fileManager.urls(
             for: .applicationSupportDirectory,

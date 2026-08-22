@@ -170,7 +170,7 @@ func releaseDmgEmbedsSwiftCompatibilityRuntime() throws {
 func releaseDmgEmbedsSparkleFrameworkAndFeedConfiguration() throws {
     let source = try String(contentsOfFile: "script/build_release_dmg.sh", encoding: .utf8)
 
-    #expect(source.contains("APP_VERSION=\"${APP_VERSION:-1.0.5}\""))
+    #expect(source.contains("APP_VERSION=\"${APP_VERSION:-1.0.6}\""))
     #expect(source.contains("RELEASE_BUILD"))
     #expect(source.contains("embed_sparkle_framework"))
     #expect(source.contains("Sparkle.framework"))
@@ -264,6 +264,7 @@ func publishUpdateScriptValidatesSemverAndReleasePipeline() throws {
     #expect(source.contains("NOTARIZE=1"))
     #expect(source.contains("AUTO_COMMIT_FEED=\"${AUTO_COMMIT_FEED:-1}\""))
     #expect(source.contains("VERIFY_REMOTE_HTTPS=\"${VERIFY_REMOTE_HTTPS:-1}\""))
+    #expect(source.contains("FORCE_TAG=\"${FORCE_TAG:-0}\""))
     #expect(source.contains("Error: Cannot verify remote HTTPS feed when feed deployment (AUTO_COMMIT_FEED) is disabled. Set VERIFY_REMOTE_HTTPS=0 for local-only dry runs."))
     #expect(source.contains("check_updater_release.sh"))
     #expect(source.contains("generate_update_appcast.sh"))
@@ -274,6 +275,7 @@ func publishUpdateScriptValidatesSemverAndReleasePipeline() throws {
     #expect(source.contains("gh release view \"$TAG_NAME\" --json tagName,isDraft,assets"))
     #expect(source.contains("--jq"))
     #expect(source.contains("Error: GitHub CLI ('gh') is required to publish updates but was not found in PATH."))
+    #expect(source.contains("Use FORCE_TAG=1 to override."))
     #expect(source.contains("Error: Failed to verify published GitHub release '$TAG_NAME'."))
     #expect(source.contains("Error: GitHub release '$TAG_NAME' is still in draft state after publishing (isDraft=$RELEASE_IS_DRAFT)."))
     #expect(source.contains("Error: GitHub release tag mismatch: expected '$TAG_NAME', got '$VIEW_TAG_NAME'."))
@@ -392,6 +394,7 @@ func publishUpdateFailsClosedWithoutRequiredInputs() throws {
     // 3. Valid semver but missing SPARKLE_PUBLIC_ED_KEY (with ALLOW_DIRTY=1)
     var baseEnv = ProcessInfo.processInfo.environment
     baseEnv["ALLOW_DIRTY"] = "1"
+    baseEnv["FORCE_TAG"] = "1"
     baseEnv.removeValue(forKey: "SPARKLE_PUBLIC_ED_KEY")
     let res2 = runScript(args: ["1.0.5"], env: baseEnv)
     #expect(res2.exitCode != 0)
@@ -427,6 +430,7 @@ func publishUpdateFailsClosedWhenFeedDeploymentDisabledWithRemoteHttpsVerificati
 
     var env = ProcessInfo.processInfo.environment
     env["ALLOW_DIRTY"] = "1"
+    env["FORCE_TAG"] = "1"
     env["AUTO_COMMIT_FEED"] = "0"
     env["VERIFY_REMOTE_HTTPS"] = "1"
     let res = runScript(args: ["1.0.5"], env: env)

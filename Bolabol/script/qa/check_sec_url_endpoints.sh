@@ -20,6 +20,9 @@ ALLOWED_HOSTS=(
     "token-plan.ap-southeast-1.maas.aliyuncs.com"
     "modelstudio.console.alibabacloud.com"
     "dashscope.aliyuncs.com"
+    # Reviewed in pre-1.0.6 security audit (FEEDBACK «Pre-release security audit», 2026-08-22); benign feature endpoints.
+    "drive.usercontent.google.com"
+    "github.com"
 )
 
 validate_endpoints() {

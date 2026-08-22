@@ -163,7 +163,10 @@ func noteStoreClearAllAndPurgeRemoveMicrophoneRecordingsAndOrphans() throws {
     let orphan = recordings.appendingPathComponent("orphan.caf")
     try Data("linked".utf8).write(to: linked)
     try Data("orphan".utf8).write(to: orphan)
-
+    try fileManager.setAttributes(
+        [.modificationDate: Date.now.addingTimeInterval(-1200)],
+        ofItemAtPath: orphan.path
+    )
     let notesURL = root.appendingPathComponent("notes.json")
     let recording = AudioRecording(
         fileURL: linked,
@@ -569,4 +572,238 @@ func audioRetentionAndOwnershipMatrixKeepsOrderingAndFilesSafe() throws {
     symlinkStore.deleteNote(symlinkStore.notes[0].id)
     #expect(fileManager.fileExists(atPath: symlinkTarget.path))
     #expect(fileManager.fileExists(atPath: symlinkURL.path))
+}
+
+@MainActor
+@Test
+func corruptMetadataEntersGuardedStateAndPerformsNoDeletions() throws {
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-corrupt-guard-\(UUID().uuidString)", isDirectory: true)
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try fileManager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+
+    let audioFile = recordings.appendingPathComponent("precious_audio.caf")
+    try Data("precious_audio_bytes".utf8).write(to: audioFile)
+    // Backdate the audio file so age guard alone would not prevent deletion
+    try fileManager.setAttributes(
+        [.modificationDate: Date.now.addingTimeInterval(-3600)],
+        ofItemAtPath: audioFile.path
+    )
+
+    let notesURL = root.appendingPathComponent("notes.json")
+    let corruptData = Data("{ corrupt_json: true, ...".utf8)
+    try corruptData.write(to: notesURL)
+
+    let store = NoteStore(
+        notes: nil,
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true
+    )
+
+    #expect(store.loadState.isGuarded)
+    #expect(store.isDestructiveMaintenanceGuarded)
+    #expect(store.loadErrorDescription != nil)
+    #expect(store.notes.isEmpty)
+    #expect(fileManager.fileExists(atPath: audioFile.path))
+
+    // All destructive operations must be safely refused
+    #expect(store.purgeOrphanedRecordings() == 0)
+    #expect(fileManager.fileExists(atPath: audioFile.path))
+
+    store.enforceAudioArchiveLimit(maxRecordings: 0)
+    #expect(fileManager.fileExists(atPath: audioFile.path))
+
+    store.clearAll()
+    #expect(fileManager.fileExists(atPath: audioFile.path))
+
+    // Corrupted metadata file must NEVER be overwritten with an empty array
+    let currentData = try Data(contentsOf: notesURL)
+    #expect(currentData == corruptData)
+}
+
+@MainActor
+@Test
+func successfulLoadWithOrphanMovesOrphanToTrashAndKeepsReferencedFiles() throws {
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-trash-orphan-\(UUID().uuidString)", isDirectory: true)
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try fileManager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+
+    let linked = recordings.appendingPathComponent("linked.caf")
+    let orphan = recordings.appendingPathComponent("orphan.caf")
+    try Data("linked_data".utf8).write(to: linked)
+    try Data("orphan_data".utf8).write(to: orphan)
+    try fileManager.setAttributes(
+        [.modificationDate: Date.now.addingTimeInterval(-1800)],
+        ofItemAtPath: orphan.path
+    )
+
+    let notesURL = root.appendingPathComponent("notes.json")
+    let recording = AudioRecording(
+        fileURL: linked,
+        duration: 2,
+        sampleRate: 48_000,
+        channelCount: 1,
+        source: .microphone
+    )
+
+    // Seed persistence file
+    let initialStore = NoteStore(
+        notes: [],
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true
+    )
+    initialStore.addRecordedNote(recording: recording, rawText: "test")
+    let store = NoteStore(
+        notes: nil,
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true
+    )
+    #expect(store.loadState == .loaded)
+    #expect(store.notes.count == 1)
+
+    let removedCount = store.purgeOrphanedRecordings()
+    #expect(removedCount == 1)
+    #expect(fileManager.fileExists(atPath: linked.path))
+    #expect(!fileManager.fileExists(atPath: orphan.path))
+}
+
+@MainActor
+@Test
+func freshRecordingYoungerThanAgeGuardSurvivesPurge() throws {
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-in-flight-\(UUID().uuidString)", isDirectory: true)
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try fileManager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+
+    let inFlightFile = recordings.appendingPathComponent("in_flight.caf")
+    try Data("in_flight_bytes".utf8).write(to: inFlightFile)
+    // Fresh file: modification date is now (0s old < 15min)
+
+    let notesURL = root.appendingPathComponent("notes.json")
+    let store = NoteStore(
+        notes: [],
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true
+    )
+
+    let purged = store.purgeOrphanedRecordings()
+    #expect(purged == 0)
+    #expect(fileManager.fileExists(atPath: inFlightFile.path))
+}
+
+@MainActor
+@Test
+func freshInstallCaseAllowsNormalOperation() throws {
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-fresh-install-\(UUID().uuidString)", isDirectory: true)
+    let notesURL = root.appendingPathComponent("notes.json")
+    defer { try? fileManager.removeItem(at: root) }
+
+    let store = NoteStore(
+        notes: nil,
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true
+    )
+
+    #expect(store.loadState == .freshInstall)
+    #expect(store.loadErrorDescription == nil)
+    #expect(!store.isDestructiveMaintenanceGuarded)
+    #expect(store.notes.isEmpty)
+
+    let note = store.addEmptyNote(title: "Brand New Note")
+    #expect(store.notes.count == 1)
+    #expect(fileManager.fileExists(atPath: notesURL.path))
+
+    let reloadedStore = NoteStore(
+        notes: nil,
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true
+    )
+    #expect(reloadedStore.loadState == .loaded)
+    #expect(reloadedStore.notes.count == 1)
+    #expect(reloadedStore.notes.first?.id == note.id)
+    #expect(reloadedStore.notes.first?.title == "Brand New Note")
+}
+
+@MainActor
+@Test
+func corruptMetadataFollowedByNoteAdditionDoesNotOverwriteCorruptFile() throws {
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-corrupt-no-overwrite-\(UUID().uuidString)", isDirectory: true)
+    let notesURL = root.appendingPathComponent("notes.json")
+    try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+
+    let corruptBytes = Data("corrupted-raw-content-that-must-not-be-lost".utf8)
+    try corruptBytes.write(to: notesURL)
+
+    let store = NoteStore(
+        notes: nil,
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true
+    )
+    #expect(store.loadState.isGuarded)
+
+    // Adding a note in memory must not overwrite the corrupt file on disk
+    _ = store.addEmptyNote(title: "Emergency Note")
+    let onDisk = try Data(contentsOf: notesURL)
+    #expect(onDisk == corruptBytes)
+}
+
+@MainActor
+@Test
+func clockInjectionAllowsDeterministicTestingOfAgeGuard() throws {
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-clock-injection-\(UUID().uuidString)", isDirectory: true)
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try fileManager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+
+    let orphan = recordings.appendingPathComponent("custom_clock_orphan.caf")
+    try Data("audio_content".utf8).write(to: orphan)
+
+    // Fixed reference point in time
+    let fileCreationTime = Date()
+    try fileManager.setAttributes([.modificationDate: fileCreationTime], ofItemAtPath: orphan.path)
+
+    let notesURL = root.appendingPathComponent("notes.json")
+
+    // Store with simulated clock at +10 minutes (younger than 15-minute minimum age)
+    let storeAt10Min = NoteStore(
+        notes: [],
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true,
+        now: { fileCreationTime.addingTimeInterval(10 * 60) }
+    )
+    #expect(storeAt10Min.purgeOrphanedRecordings() == 0)
+    #expect(fileManager.fileExists(atPath: orphan.path))
+
+    // Store with simulated clock at +20 minutes (older than 15-minute minimum age)
+    let storeAt20Min = NoteStore(
+        notes: [],
+        fileManager: fileManager,
+        notesFileURL: notesURL,
+        isPersistenceEnabled: true,
+        now: { fileCreationTime.addingTimeInterval(20 * 60) }
+    )
+    #expect(storeAt20Min.purgeOrphanedRecordings() == 1)
+    #expect(!fileManager.fileExists(atPath: orphan.path))
 }

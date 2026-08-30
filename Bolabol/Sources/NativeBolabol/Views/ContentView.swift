@@ -643,11 +643,16 @@ struct ContentView: View {
             }
             let languageCode = plan.requestedLanguageCode
             let route = plan.route
-            let sessionForceTargetLanguage = forceTargetLanguage
-                || plan.isWhisperTargetMode
-                || (plan.backend == .fluidAudioCoreML && forceTargetLanguage)
-            let postASRTextTranslationTargetCode = route.postASRTextTranslationTargetLanguageCode
-                ?? (forceTargetLanguage ? languageCode : nil)
+            let isRawHotkey = hotkeyTarget == .raw
+            let hudWantsTargetOutput = !isRawHotkey
+                && (persistentHUDForceTargetLanguage || forceTargetLanguage || plan.isWhisperTargetMode)
+            let polishingTargetCode = HUDPolishingTranslation.targetLanguageCode(
+                hudShowsForcedTarget: hudWantsTargetOutput,
+                hudTargetLanguageCode: targetLanguageCode,
+                sessionPostASRTargetLanguageCode: route.postASRTextTranslationTargetLanguageCode
+            )
+            let sessionForceTargetLanguage = polishingTargetCode != nil || route.translateToEnglish
+            let postASRTextTranslationTargetCode = polishingTargetCode
 
             let noteID = await workflow.transcribeRecording(
                 recording,
@@ -666,14 +671,14 @@ struct ContentView: View {
             //   language natively, so we must run a translation pass (translation
             //   provider / polishing engine) before inserting raw text.
             if let hotkeyTarget, hotkeyTarget == .raw {
-                if sessionForceTargetLanguage,
+                if !route.translateToEnglish,
                    let targetCode = postASRTextTranslationTargetCode,
                    let rawText = noteStore.note(withID: noteID)?.rawText,
                    !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     let targetLanguageName = autoTranslationTargetLanguage
                         ?? TranscriptionLanguageOption.displayName(for: targetCode)
                     NativeBolabolLog.hotkey.info(
-                        "Raw hotkey non-English target path forceTargetLanguage=true target=\(targetCode, privacy: .public) (LLM translation after Whisper)"
+                        "Raw hotkey non-English target path forceTargetLanguage=true target=\(targetCode, privacy: .public) (LLM translation after ASR)"
                     )
                     await autoTranslateRawText(
                         noteID: noteID,
@@ -693,15 +698,16 @@ struct ContentView: View {
 
             // E1 / E2 (and non-raw flows): optional LLM translation + polishing.
             let rawText = noteStore.note(withID: noteID)?.rawText ?? ""
+            let conversionTargetCode = polishingTargetCode ?? languageCode
             let rawTextLooksForeign = rawTextNeedsTargetLanguageConversion(
                 rawText,
-                targetLanguageCode: languageCode
+                targetLanguageCode: conversionTargetCode
             )
-            let needsTranslation = sessionForceTargetLanguage
-                && (postASRTextTranslationTargetCode != nil || rawTextLooksForeign)
+            let needsTranslation = polishingTargetCode != nil
+                && (rawTextLooksForeign || !route.translateToEnglish)
 
             NativeBolabolLog.hotkey.info(
-                "Transcription routing forceTargetLanguage=\(sessionForceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) autoTranslationTarget=\(autoTranslationTargetLanguage ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) needsTranslation=\(needsTranslation) rawLooksForeign=\(rawTextLooksForeign)"
+                "Transcription routing forceTargetLanguage=\(sessionForceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) autoTranslationTarget=\(autoTranslationTargetLanguage ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) polishingTarget=\(polishingTargetCode ?? "none", privacy: .public) needsTranslation=\(needsTranslation) rawLooksForeign=\(rawTextLooksForeign)"
             )
             // Variant B: only native-translation models (multilingual Whisper)
             // pre-translate the raw text here. For Parakeet / English-only Whisper
@@ -738,7 +744,10 @@ struct ContentView: View {
 
             let requestedVariants = hotkeyTarget?.requestedPolishingVariants ?? [.variantOne, .variantTwo]
             selectedVariant = hotkeyTarget?.processingVariant ?? requestedVariants.first ?? .variantOne
-            let polishingTargetLang = sessionForceTargetLanguage ? targetLanguageCode : nil
+            let polishingTargetLang = polishingTargetCode
+            NativeBolabolLog.polishing.info(
+                "Polishing with targetLanguage=\(polishingTargetLang ?? "none", privacy: .public) variants=\(requestedVariants.map(\.rawValue).joined(separator: ","), privacy: .public)"
+            )
             await polish(
                 noteID,
                 variants: requestedVariants,
@@ -753,8 +762,12 @@ struct ContentView: View {
 
     private func polishNote(_ noteID: BolabolNote.ID) {
         selectedVariant = .variantOne
+        let target = HUDPolishingTranslation.targetLanguageCode(
+            hudShowsForcedTarget: persistentHUDForceTargetLanguage,
+            hudTargetLanguageCode: targetLanguageCode
+        )
         Task { @MainActor in
-            await polish(noteID)
+            await polish(noteID, targetLanguage: target)
         }
     }
 
@@ -1011,13 +1024,8 @@ struct ContentView: View {
             }
 
             let languageControlEnabled = isHUDLanguageControlEnabled(for: resolvedTarget)
-            let forceTargetLanguage: Bool
-            if let session {
-                forceTargetLanguage = session.plan.isWhisperTargetMode
-                    || (session.plan.backend == .fluidAudioCoreML && requestedForceTargetLanguage)
-            } else {
-                forceTargetLanguage = requestedForceTargetLanguage
-            }
+            let forceTargetLanguage = requestedForceTargetLanguage
+                || session?.plan.isWhisperTargetMode == true
             pendingHotkeySession = session
             pendingHotkeyTarget = resolvedTarget
             pendingHotkeyOutputMode = settings.mode
@@ -1422,25 +1430,11 @@ struct ContentView: View {
     /// Target language for HUD forced-target mode and post-ASR translation.
     /// The transient HUD choice takes precedence over configured language fallbacks.
     private var targetLanguageCode: String {
-        let speech = generalSettingsStore.speechLanguages
-        let primary = normalizeLanguageCode(speech.primaryLanguageCode)
-        let additional = normalizeLanguageCode(speech.additionalLanguageCode)
-
-        if let override = hudTargetLanguageOverride,
-           speech.orderedDistinctCodes.contains(override) || LanguagePickerOrder.isKnownSpeechCode(override) {
-            return override
-        }
-
-        if !speech.usesSameAdditionalAsPrimary, !additional.isEmpty, additional != "auto" {
-            return additional
-        }
-
-        let glossaryAuto = normalizeLanguageCode(glossaryStore.settings.autoTranslationLanguage)
-        if !glossaryAuto.isEmpty && glossaryAuto != primary && glossaryAuto != "auto" {
-            return glossaryAuto
-        }
-
-        return primary == "en" ? "ru" : "en"
+        HUDPolishingTranslation.resolvedHUDTargetLanguageCode(
+            override: hudTargetLanguageOverride,
+            speechLanguages: generalSettingsStore.speechLanguages,
+            glossaryAutoLanguage: glossaryStore.settings.autoTranslationLanguage
+        )
     }
 
     private func normalizeLanguageCode(_ value: String) -> String {
@@ -1542,7 +1536,7 @@ struct ContentView: View {
     }
 
     private var effectiveHUDForceTargetLanguage: Bool {
-        isHUDLanguageControlEnabled && persistentHUDForceTargetLanguage
+        currentHUDTarget != .raw && persistentHUDForceTargetLanguage
     }
 
     private var effectiveHUDLanguageMode: TranscriptionLanguageMode {
@@ -2090,7 +2084,10 @@ struct ContentView: View {
             }
 
             let variant = resolvedTarget.processingVariant
-            let polishingTargetLanguage = forceTargetLanguage ? targetLanguageCode : nil
+            let polishingTargetLanguage = HUDPolishingTranslation.targetLanguageCode(
+                hudShowsForcedTarget: forceTargetLanguage || persistentHUDForceTargetLanguage,
+                hudTargetLanguageCode: targetLanguageCode
+            )
             await polish(
                 noteID,
                 variants: [variant],

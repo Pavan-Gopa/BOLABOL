@@ -1,24 +1,22 @@
-# Bolabol 1.0.6
+# Bolabol 1.0.7
 
 Native Apple Silicon release for local and cloud dictation, polishing,
 translation, and signed Sparkle updates.
 
-**Version:** 1.0.6
+**Version:** 1.0.7
 
 ## What's new
 
-- Compatible local MLX models can be discovered from the shared model pool by
-  the app and companion tooling. Model licenses remain separate from Bolabol's
-  license; follow each model package's terms before use or redistribution.
-- Tech-processing visuals use the accepted deterministic electric particle
-  swarm, with the vertical HUD layout and centered glyph rendering.
-- Audio archive cleanup fails safe when note metadata cannot load; orphaned
-  microphone recordings move to Trash, and files newer than the 15-minute
-  minimum age are left alone.
-- The reviewed security surface keeps hard-coded network endpoints on an HTTPS
-  allowlist and rejects unreviewed hosts or plaintext URLs.
-- Sparkle delivery requires a signed appcast and immutable release asset URLs
-  before an update can be offered.
+- HUD target language (the capsule letter, for example **E** for English) is
+  now a hard contract for polishing. With Parakeet or another ASR-only engine,
+  Variant 1/2 inserts text in the selected target language instead of leaving
+  the spoken-language transcript.
+- The polishing prompt keeps the translation instruction in the system task
+  and rewrites conflicting "never translate" template rules, so cloud and
+  local models cannot ignore the HUD target.
+- If the first polish pass still returns the source script (for example
+  Russian when the HUD shows **E**), Bolabol retries once with a stricter
+  translation instruction.
 
 ## Existing product surface
 

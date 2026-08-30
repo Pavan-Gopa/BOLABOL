@@ -171,11 +171,12 @@ private struct PolishingLanguageGuard {
     private let sourceIsCyrillicDominant: Bool
     private let translationInstruction: String?
     private let translationFooter: String?
+    private let targetLanguageName: String?
+    private let targetUsesCyrillicScript: Bool
 
     init?(sourceText: String, targetLanguage: String? = nil) {
-        let normalizedTarget = targetLanguage?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
+        let sourceProfile = ScriptProfile(text: sourceText)
+        let normalizedTarget = HUDPolishingTranslation.concreteLanguageCode(targetLanguage)
 
         // Explicit translation request (HUD "A" → target language): instruct the
         // polishing model to translate the output into the target language. This
@@ -183,8 +184,10 @@ private struct PolishingLanguageGuard {
         // rendered as Spanish/English/etc. text by the polishing model. The raw
         // transcription itself is left untouched upstream; only the polished
         // variant is translated.
-        if let normalizedTarget, !normalizedTarget.isEmpty {
+        if let normalizedTarget {
             let languageName = TranscriptionLanguageOption.displayName(for: normalizedTarget)
+            targetLanguageName = languageName
+            targetUsesCyrillicScript = Self.cyrillicLanguageCodes.contains(normalizedTarget)
             translationInstruction = """
             === TRANSLATION OVERRIDE - READ THIS FIRST, HIGHEST PRIORITY ===
             For THIS task you MUST translate the ENTIRE text into \(languageName).
@@ -198,14 +201,13 @@ private struct PolishingLanguageGuard {
             === FINAL TRANSLATION REMINDER ===
             Return the text above entirely in \(languageName). Ignore any earlier instruction that says to keep the original language or not to translate. Output ONLY the final polished text in \(languageName) - no explanations, no notes, no source-language text.
             """
-            sourceIsCyrillicDominant = false
+            sourceIsCyrillicDominant = sourceProfile.isCyrillicDominant
             return
         }
 
         // No translation requested: keep the output in the source language. When the
         // source is primarily Russian/Cyrillic, lock the output to Cyrillic so the
         // polishing model does not drift into English.
-        let sourceProfile = ScriptProfile(text: sourceText)
         guard sourceProfile.isCyrillicDominant else {
             return nil
         }
@@ -213,18 +215,35 @@ private struct PolishingLanguageGuard {
         sourceIsCyrillicDominant = true
         translationInstruction = nil
         translationFooter = nil
+        targetLanguageName = nil
+        targetUsesCyrillicScript = false
     }
 
     func applying(to template: PromptTemplate, strict: Bool) -> PromptTemplate {
-        if let translationInstruction {
-            var body = "\(translationInstruction)\n\n\(template.body)"
-            if let translationFooter {
-                body += "\n\n\(translationFooter)"
+        if let translationInstruction, let translationFooter, let targetLanguageName {
+            let rewritten = Self.rewritingConflictingLanguageRules(
+                in: template.body,
+                languageName: targetLanguageName
+            )
+            let header: String
+            if strict {
+                header = """
+                \(translationInstruction)
+
+                CRITICAL: Previous output was still in the source language. You MUST translate every sentence into \(targetLanguageName) now. Do not keep source-language prose.
+
+                """
+            } else {
+                header = "\(translationInstruction)\n\n"
             }
             return PromptTemplate(
                 id: template.id,
                 title: template.title,
-                body: body
+                body: Self.insertingInstruction(
+                    header: header,
+                    footer: translationFooter,
+                    into: rewritten
+                )
             )
         }
 
@@ -274,12 +293,81 @@ private struct PolishingLanguageGuard {
     }
 
     func requiresStrictRetry(for outputText: String) -> Bool {
-        // When translating, the output is expected to be in the target language, so
-        // the Cyrillic-drift retry must never trigger.
-        guard translationInstruction == nil else { return false }
         let outputProfile = ScriptProfile(text: outputText)
+        if translationInstruction != nil {
+            if targetUsesCyrillicScript {
+                return outputProfile.latinCount >= 4 && outputProfile.cyrillicCount * 2 < outputProfile.latinCount
+            }
+            return outputProfile.isCyrillicDominant
+        }
         return sourceIsCyrillicDominant && outputProfile.isClearlyNonCyrillicComparedToCyrillicSource
     }
+
+    /// `PolishingPromptPolicy` fences everything after `INPUT:` as source data.
+    /// Translation instructions must stay before that marker so they remain
+    /// task instructions instead of being ignored as transcription content.
+    private static func insertingInstruction(
+        header: String,
+        footer: String,
+        into body: String
+    ) -> String {
+        if let inputRange = body.range(of: "INPUT:", options: [.backwards, .caseInsensitive]) {
+            let before = body[..<inputRange.lowerBound]
+            let after = body[inputRange.lowerBound...]
+            return "\(header)\(before)\n\(footer)\n\n\(after)"
+        }
+        return "\(header)\(body)\n\n\(footer)"
+    }
+
+    private static func rewritingConflictingLanguageRules(
+        in body: String,
+        languageName: String
+    ) -> String {
+        var result = body
+        let replacements: [(String, String)] = [
+            (
+                "Keep the language of the input. Never translate the text or replace established technical terms with awkward translated equivalents.",
+                "The result MUST be written entirely in \(languageName). Translate the source if it is in another language. Preserve established technical terms rather than replacing them with awkward translated equivalents."
+            ),
+            (
+                "Keep the main language of the input. Never translate the whole text.",
+                "The result MUST be written entirely in \(languageName). Translate the whole text if the source is in another language."
+            ),
+            (
+                "Never translate unless the input itself is already in the target language.",
+                "If the input is already in \(languageName), keep it in \(languageName). Otherwise translate the entire text into \(languageName)."
+            ),
+            (
+                "Keep the same language as input",
+                "Write the result in \(languageName)"
+            ),
+            (
+                "Keep the language of the input",
+                "Write the result in \(languageName)"
+            ),
+            (
+                "Keep the main language of the input",
+                "Write the result in \(languageName)"
+            ),
+            (
+                "Never translate the whole text",
+                "Translate the whole text into \(languageName)"
+            ),
+            (
+                "Never translate the text",
+                "Translate the text into \(languageName)"
+            )
+        ]
+        for (from, to) in replacements {
+            result = result.replacingOccurrences(of: from, with: to, options: [.caseInsensitive])
+        }
+        return result
+    }
+
+    private static let cyrillicLanguageCodes: Set<String> = [
+        "ru", "uk", "bg", "sr", "be", "mk",
+        "russian", "ukrainian", "bulgarian", "serbian", "belarusian", "macedonian"
+    ]
 }
 
 private struct ScriptProfile {

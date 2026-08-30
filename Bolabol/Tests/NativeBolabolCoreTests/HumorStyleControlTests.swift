@@ -423,7 +423,8 @@ func humorRuntimeControlCoexistsWithTranslationWithoutLeakingIntoRawOrVariantOne
     )
 
     let requests = await engine.requests
-    #expect(requests.count == 2)
+    #expect(requests.contains(where: { $0.variant == .variantOne }))
+    #expect(requests.contains(where: { $0.variant == .variantTwo }))
     let variantOne = requests.first(where: { $0.variant == .variantOne })?.template.body ?? ""
     let variantTwo = requests.first(where: { $0.variant == .variantTwo })?.template.body ?? ""
     #expect(markerCount("RUNTIME CONTROL:", in: variantOne) == 0)

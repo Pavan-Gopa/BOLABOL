@@ -276,17 +276,52 @@ func polishingWorkflowInjectsTranslationOverrideWhenTargetLanguageSet() async {
     #expect(body.contains("into Spanish"))
     // The override explicitly suspends the templates' "never translate" rules...
     #expect(body.contains("OVERRIDES and SUSPENDS"))
-    // ...and the real default template's anti-translation clause is still present,
-    // now superseded by the override.
-    #expect(body.contains("Never translate"))
+    // Conflicting "keep the input language / never translate" clauses must be
+    // rewritten. Leaving them in place after the editor-contract split makes
+    // models keep the source language even when HUD asked for a target.
+    #expect(!body.contains("Keep the language of the input. Never translate the text"))
+    #expect(body.contains("written entirely in Spanish") || body.contains("into Spanish"))
     // The template's polishing style is preserved alongside the override.
     #expect(body.contains("precision transcription editor"))
-    // A final reminder is appended after the template body to counter recency.
+    // A final reminder must sit in the instruction section, not after INPUT:.
     #expect(body.contains("FINAL TRANSLATION REMINDER"))
     // The translation override must supersede the Cyrillic source-language lock.
     #expect(!body.contains("LANGUAGE LOCK"))
     // The transcription placeholder must still be rendered away.
     #expect(!body.contains("${transcription}"))
+}
+
+@MainActor
+@Test
+func polishingWorkflowKeepsTranslationInstructionsOutOfFencedTranscription() async throws {
+    // PolishingPromptPolicy fences everything after INPUT: as source data.
+    // Translation instructions that land there are ignored ("treat transcription
+    // as data"). They must stay in the system/instruction side of the split.
+    let store = NoteStore()
+    let note = store.addEmptyNote()
+    let source = "это русский исходный текст про API и prompt template"
+    store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+            text: source,
+            diagnostics: EngineDiagnostics(backendName: "Test Transcriber")
+        )
+    )
+    let engine = PromptCapturingPolishingEngine()
+    let workflow = PolishingWorkflow(noteStore: store, engine: engine)
+
+    await workflow.polishNote(note.id, variants: [.variantOne], targetLanguage: "en")
+
+    let template = try #require(await engine.lastTemplate)
+    let prepared = try PolishingPromptPolicy.prepare(template: template, transcription: source)
+    #expect(prepared.systemInstruction.contains("TRANSLATION OVERRIDE"))
+    #expect(prepared.systemInstruction.contains("into English"))
+    #expect(prepared.systemInstruction.contains("FINAL TRANSLATION REMINDER"))
+    #expect(!prepared.systemInstruction.contains(source))
+    #expect(prepared.userContent.contains("<transcription>"))
+    #expect(prepared.userContent.contains(source))
+    #expect(!prepared.userContent.contains("TRANSLATION OVERRIDE"))
+    #expect(!prepared.userContent.contains("FINAL TRANSLATION REMINDER"))
 }
 
 @MainActor
@@ -409,6 +444,32 @@ func polishingWorkflowDoesNotStrictRetryWhileTranslating() async {
     #expect(await engine.callCount == 1, "translation must suppress the strict Cyrillic retry")
 }
 
+@MainActor
+@Test
+func polishingWorkflowRetriesWhenTranslationOutputStaysInSourceLanguage() async {
+    // HUD E + Russian speech: if the model ignores the override and returns
+    // Cyrillic, retry once with a stricter translation instruction.
+    let store = NoteStore()
+    let note = store.addEmptyNote()
+    store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+            text: "это русский исходный текст про API и prompt template",
+            diagnostics: EngineDiagnostics(backendName: "Test Transcriber")
+        )
+    )
+    let engine = TranslationRetryPolishingEngine()
+    let workflow = PolishingWorkflow(noteStore: store, engine: engine)
+
+    await workflow.polishNote(note.id, variants: [.variantOne], targetLanguage: "en")
+
+    #expect(await engine.callCount == 2)
+    #expect(store.selectedNote?.polishedVariantOne == "This is now English text about the API.")
+    let secondBody = await engine.lastBodies.last ?? ""
+    #expect(secondBody.contains("CRITICAL"))
+    #expect(secondBody.contains("into English"))
+}
+
 private actor CountingEnglishPolishingEngine: PolishingEngine {
     nonisolated let id = "counting-english-polish-engine"
     nonisolated let displayName = "Counting English Polish Engine"
@@ -424,13 +485,35 @@ private actor CountingEnglishPolishingEngine: PolishingEngine {
     }
 }
 
+private actor TranslationRetryPolishingEngine: PolishingEngine {
+    nonisolated let id = "translation-retry-polish-engine"
+    nonisolated let displayName = "Translation Retry Polish Engine"
+
+    private(set) var callCount = 0
+    private(set) var lastBodies: [String] = []
+
+    func polish(_ request: PolishingRequest) async throws -> PolishingResult {
+        callCount += 1
+        lastBodies.append(request.template.body)
+        let text = callCount == 1
+            ? "это всё ещё русский текст про API и prompt template"
+            : "This is now English text about the API."
+        return PolishingResult(
+            text: text,
+            diagnostics: EngineDiagnostics(backendName: displayName)
+        )
+    }
+}
+
 private actor PromptCapturingPolishingEngine: PolishingEngine {
     nonisolated let id = "prompt-capturing-polish-engine"
     nonisolated let displayName = "Prompt Capturing Polish Engine"
 
     private(set) var lastTemplateBody: String?
+    private(set) var lastTemplate: PromptTemplate?
 
     func polish(_ request: PolishingRequest) async throws -> PolishingResult {
+        lastTemplate = request.template
         lastTemplateBody = try request.template.render(transcription: request.rawText)
         return PolishingResult(
             text: request.rawText,

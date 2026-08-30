@@ -1,4 +1,4 @@
-# Bolabol 1.0.6 release checklist
+# Bolabol 1.0.7 release checklist
 
 ## Branch
 
@@ -22,13 +22,14 @@ export SPARKLE_PUBLIC_ED_KEY="$("$PWD/.build/artifacts/sparkle/Sparkle/bin/gener
 Required release credentials:
 
 - Developer ID Application: Stichting Kadamba Foundation (438UQRF7JV)
-- `xcrun notarytool` profile `Bolabol-Notary`
+- `xcrun notarytool` profile `Bolabol` (`NOTARY_KEYCHAIN_PROFILE=Bolabol`)
 - Authenticated GitHub CLI
 
 ## Build, sign, and notarize the DMG
 
 ```bash
-RELEASE_BUILD=1 NOTARIZE=1 APP_VERSION=1.0.6 \
+RELEASE_BUILD=1 NOTARIZE=1 APP_VERSION=1.0.7 \
+  NOTARY_KEYCHAIN_PROFILE=Bolabol \
   ./script/build_release_dmg.sh --release --notarize
 ```
 
@@ -43,7 +44,7 @@ The build embeds Sparkle 2.9.4, signs nested Sparkle code inside-out, and uses
 the immutable update URL prefix:
 
 ```text
-https://github.com/Pavan-Gopa/BOLABOL/releases/download/v1.0.6/
+https://github.com/Pavan-Gopa/BOLABOL/releases/download/v1.0.7/
 ```
 
 ## Generate and validate the signed appcast
@@ -97,12 +98,12 @@ checksum, and release notes:
 
 ```bash
 git push -u origin HEAD
-git push origin v1.0.6
+git push origin v1.0.7
 
-gh release create v1.0.6 \
+gh release create v1.0.7 \
   dist/BOLABOL.dmg \
   dist/handoff/SHA256SUMS.txt \
-  --title "Bolabol 1.0.6" \
+  --title "Bolabol 1.0.7" \
   --notes-file docs/RELEASE_NOTES.md \
   --target main \
   --latest
@@ -111,7 +112,7 @@ gh release create v1.0.6 \
 If a draft already exists:
 
 ```bash
-gh release edit v1.0.6 \
+gh release edit v1.0.7 \
   --notes-file docs/RELEASE_NOTES.md \
   --draft=false \
   --prerelease=false \

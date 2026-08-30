@@ -398,7 +398,18 @@ struct AudioPlaybackModalView: View {
                         : .none,
                     humorPromptMode: hotkeySettingsStore.settings.humorPromptMode
                 )
-                await polishingWorkflow.polishNote(note.id, variants: requestedVariants)
+                let polishingTarget = HUDPolishingTranslation.targetLanguageCode(
+                    hudShowsForcedTarget: HUDPolishingTranslation.hudShowsForcedTarget(),
+                    hudTargetLanguageCode: HUDPolishingTranslation.resolvedHUDTargetLanguageCode(
+                        speechLanguages: generalSettingsStore.speechLanguages,
+                        glossaryAutoLanguage: glossaryStore.settings.autoTranslationLanguage
+                    )
+                )
+                await polishingWorkflow.polishNote(
+                    note.id,
+                    variants: requestedVariants,
+                    targetLanguage: polishingTarget
+                )
             }
         }
     }

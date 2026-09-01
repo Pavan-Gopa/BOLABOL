@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#08090c">
+  <meta name="description" content="BOLABOL — native AI voice input for Apple Silicon Macs. Speak, polish, translate, and insert text anywhere on macOS, locally when you want and with cloud models when you need them.">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BOLABOL — Speak. Polish. Translate. Anywhere on your Mac.">
+  <meta property="og:description" content="Native AI voice input for Apple Silicon. Local-first transcription, polishing, translation, and a floating HUD that stays in your workflow.">
+  <meta property="og:image" content="https://raw.githubusercontent.com/Pavan-Gopa/BOLABOL/main/Bolabol/for%20GITHUB/BOLABOL_LOGO_BLACK.png">
+  <meta property="og:url" content="https://local.ai/bolabol">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="BOLABOL">
+  <meta name="twitter:description" content="Speak. Polish. Translate. Anywhere on your Mac.">
+  <link rel="icon" href="https://raw.githubusercontent.com/Pavan-Gopa/BOLABOL/main/Bolabol/for%20GITHUB/BOLABOL_LOGO_BLACK.png">
+  <link rel="preconnect" href="https://raw.githubusercontent.com">
+  <link rel="stylesheet" href="styles.css">
+  <title>BOLABOL — Native AI Voice Input for Mac</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "BOLABOL",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "macOS 14+ on Apple Silicon",
+    "description": "Native AI voice input for Apple Silicon Macs with local-first transcription, text polishing and translation.",
+    "downloadUrl": "https://github.com/Pavan-Gopa/BOLABOL/releases/latest/download/BOLABOL.dmg",
+    "softwareRequirements": "Apple Silicon Mac, macOS 14 or later",
+    "codeRepository": "https://github.com/Pavan-Gopa/BOLABOL"
+  }
+  </script>
+</head>
+<body>
+  <div class="ambient ambient-a" aria-hidden="true"></div>
+  <div class="ambient ambient-b" aria-hidden="true"></div>
+
+  <header class="site-header" data-header>
+    <a class="brand" href="#top" aria-label="BOLABOL home">
+      <img src="https://raw.githubusercontent.com/Pavan-Gopa/BOLABOL/main/Bolabol/for%20GITHUB/BOLABOL_LOGO_WHITE.png" alt="" width="34" height="34">
+      <span>BOLABOL</span>
+    </a>
+
+    <nav class="desktop-nav" aria-label="Primary navigation">
+      <a href="#hud">HUD</a>
+      <a href="#local">Local AI</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#license">License</a>
+    </nav>
+
+    <div class="header-actions">
+      <a class="text-link github-link" href="https://github.com/Pavan-Gopa/BOLABOL" target="_blank" rel="noreferrer">GitHub</a>
+      <a class="button button-small button-primary" href="https://github.com/Pavan-Gopa/BOLABOL/releases/latest/download/BOLABOL.dmg">Download</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero section-shell">
+      <div class="hero-copy reveal">
+        <div class="eyebrow"><span class="status-dot"></span> Native AI voice input for Apple Silicon</div>
+        <h1>Your Mac already has a voice.<br><span>Give it yours.</span></h1>
+        <p class="hero-lede">Speak naturally. Keep the raw transcript. Polish it your way. Translate when needed. Insert the result into the app you are already using.</p>
+
+        <div class="hero-actions">
+          <a class="button button-primary button-large" href="https://github.com/Pavan-Gopa/BOLABOL/releases/latest/download/BOLABOL.dmg">
+            <span class="apple-mark">●</span>
+            Download BOLABOL
+          </a>
+          <a class="button button-ghost button-large" href="#hud">See the HUD</a>
+        </div>
+
+        <div class="hero-meta" aria-label="System requirements">
+          <span>macOS 14+</span>
+          <span>Apple Silicon M1+</span>
+          <span>Local-first</span>
+        </div>
+      </div>
+
+      <div class="hero-stage reveal" data-delay="120">
+        <div class="hero-orbit orbit-one" aria-hidden="true"></div>
+        <div class="hero-orbit orbit-two" aria-hidden="true"></div>
+        <div class="hud-frame hero-hud">
+          <div class="frame-top">
+            <div class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></div>
+            <span>Interactive HUD</span>
+            <span class="live-pill"><b></b> live</span>
+          </div>
+          <div class="media-pad">
+            <img src="https://raw.githubusercontent.com/Pavan-Gopa/BOLABOL/main/Bolabol/for%20GITHUB/Hud-demo.gif" alt="BOLABOL interactive floating HUD switching transcription, polishing and AI controls" fetchpriority="high">
+          </div>
+        </div>
+        <div class="floating-chip chip-left"><span>⌥S</span> Speak anywhere</div>
+        <div class="floating-chip chip-right">Raw → Polish → Insert</div>
+      </div>
+    </section>
+
+    <section class="trust-strip section-shell reveal" aria-label="BOLABOL highlights">
+      <p>One shortcut. One floating HUD. Your whole voice workflow.</p>
+      <div class="trust-items">
+        <span>WhisperKit</span>
+        <span>Parakeet</span>
+        <span>Canary</span>
+        <span>GigaAM</span>
+        <span>MLX</span>
+        <span>Gemini</span>
+        <span>OpenAI</span>
+        <span>Qwen</span>
+      </div>
+    </section>
+
+    <section id="hud" class="feature-section section-shell">
+      <div class="section-heading reveal">
+        <div class="eyebrow">The control surface</div>
+        <h2>One HUD.<br><span>No trips to Settings.</span></h2>
+        <p>The floating HUD stays available while you work in another app. Change the current voice workflow without stealing keyboard focus from the place where your words belong.</p>
+      </div>
+
+      <div class="hud-showcase">
+        <div class="showcase-media reveal">
+          <div class="screen-frame">
+            <div class="screen-toolbar"><span>BOLABOL</span><span>System-wide dictation</span></div>
+            <img src="https://raw.githubusercontent.com/Pavan-Gopa/BOLABOL/main/Bolabol/for%20GITHUB/%D0%BA%D0%B0%D0%BA%20%D1%8D%D1%82%D0%BE%20%D0%B2%D1%8B%D0%B3%D0%BB%D1%8F%D0%B4%D0%B8%D1%82%20%D0%BD%D0%B0%20%D1%84%D0%BE%D0%BD%D0%B5%20%D0%B4%D1%80%D1%83%D0%B3%D0%BE%D0%B3%D0%BE%20%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F.png" alt="BOLABOL floating HUD over another macOS application" loading="lazy">
+          </div>
+        </div>
+
+        <div class="hud-capabilities reveal" data-delay="100">
+          <article class="capability-card">
+            <span class="card-number">01</span>
+            <h3>Raw or polished</h3>
+            <p>Switch between untouched transcription and AI polishing on the fly. The original text stays available.</p>
+          </article>
+          <article class="capability-card">
+            <span class="card-number">02</span>
+            <h3>Profiles at hand</h3>
+            <p>Choose D / 1 / 2 / 3 / 4 prompt profiles and adjust Humor when the profile supports it.</p>
+          </article>
+          <article class="capability-card">
+            <span class="card-number">03</span>
+            <h3>Change the brain</h3>
+            <p>Switch provider and model from the HUD, without interrupting the app you are dictating into.</p>
+          </article>
+          <article class="capability-card">
+            <span class="card-number">04</span>
+            <h3>Speak your language</h3>
+            <p>Choose primary and additional languages directly from the language popover.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="local" class="local-section">
+      <div class="section-shell local-grid">
+        <div class="local-copy reveal">
+          <div class="eyebrow">Local-first. Not local-only.</div>
+          <h2>Your voice can stay<br><span>on your Mac.</span></h2>
+          <p>Run speech recognition and text polishing on-device when privacy, latency or independence matter. Connect cloud models only when you want their extra reach.</p>
+          <ul class="check-list">
+            <li><span>✓</span><div><strong>Local speech recognition</strong><small>Core ML / ANE engines for fast on-device ASR.</small></div></li>
+            <li><span>✓</span><div><strong>Local text polishing</strong><small>MLX Swift models can rewrite text without sending it away.</small></div></li>
+            <li><span>✓</span><div><strong>Your keys, your choice</strong><small>Cloud providers are optional and use API keys you supply.</small></div></li>
+          </ul>
+        </div>
+
+        <div class="engine-stack reveal" data-delay="120">
+          <div class="engine-card engine-card-featured">
+            <div><span class="engine-kicker">ON DEVICE</span><h3>Speech</h3></div>
+            <div class="engine-tags"><span>WhisperKit</span><span>Parakeet</span><span>Canary</span><span>GigaAM</span></div>
+            <p>Transcribe locally with engines tuned for Apple Silicon.</p>
+          </div>
+          <div class="engine-card">
+            <div><span class="engine-kicker">ON DEVICE</span><h3>Polishing</h3></div>
+            <div class="engine-tags"><span>MLX Swift</span><span>Qwen 3.5</span><span>Nemotron-3 Nano</span></div>
+            <p>Turn a rough transcript into clean, reusable text without leaving your Mac.</p>
+          </div>
+          <div class="engine-card cloud-card">
+            <div><span class="engine-kicker">OPTIONAL CLOUD</span><h3>More models</h3></div>
+            <div class="engine-tags"><span>Gemini</span><span>OpenAI</span><span>Qwen</span><span>OpenRouter</span></div>
+            <p>Bring your own API keys when a cloud model fits the job better.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow" class="workflow-section section-shell">
+      <div class="section-heading centered reveal">
+        <div class="eyebrow">The workflow</div>
+        <h2>From thought to usable text<br><span>without changing context.</span></h2>
+      </div>
+
+      <div class="workflow-line reveal" data-delay="80">
+        <div class="workflow-step"><b>01</b><strong>Speak</strong><small>⌥S from anywhere</small></div>
+        <i aria-hidden="true">→</i>
+        <div class="workflow-step"><b>02</b><strong>Transcribe</strong><small>local or cloud ASR</small></div>
+        <i aria-hidden="true">→</i>
+        <div class="workflow-step"><b>03</b><strong>Keep Raw</strong><small>original preserved</small></div>
+        <i aria-hidden="true">→</i>
+        <div class="workflow-step"><b>04</b><strong>Polish</strong><small>your prompt profile</small></div>
+        <i aria-hidden="true">→</i>
+        <div class="workflow-step"><b>05</b><strong>Translate</strong><small>only if needed</small></div>
+        <i aria-hidden="true">→</i>
+        <div class="workflow-step"><b>06</b><strong>Insert</strong><small>back into your app</small></div>
+      </div>
+
+      <div class="workspace-panel reveal">
+        <div class="workspace-copy">
+          <div class="eyebrow">More than dictation</div>
+          <h3>A workspace for the words worth keeping.</h3>
+          <p>Notes history, raw and polished variants, glossaries, prompt templates, translation tools and statistics live together when you need more than a one-shot transcription.</p>
+          <div class="shortcut-row"><span><kbd>⌥</kbd><kbd>1</kbd> Full translation</span><span><kbd>⌥</kbd><kbd>2</kbd> Quick translation</span></div>
+        </div>
+        <div class="workspace-image">
+          <img src="https://raw.githubusercontent.com/Pavan-Gopa/BOLABOL/main/Bolabol/for%20GITHUB/%D0%93%D0%BB%D0%B0%D0%B2%D0%BD%D1%8B%D0%B9%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD.png" alt="BOLABOL main workspace" loading="lazy">
+        </div>
+      </div>
+    </section>
+
+    <section id="license" class="freedom-section section-shell">
+      <div class="freedom-panel reveal">
+        <div class="freedom-copy">
+          <div class="eyebrow">The Freedom Clock</div>
+          <h2>Free for people.<br><span>Open with time.</span></h2>
+          <p>BOLABOL uses Business Source License 1.1 with a Five-Person Grant. Up to five active human users in one organization can use the current release in production for free.</p>
+          <a class="text-arrow" href="https://github.com/Pavan-Gopa/BOLABOL/blob/main/LICENSING.md" target="_blank" rel="noreferrer">Read the licensing guide <span>↗</span></a>
+        </div>
+
+        <div class="freedom-clock" aria-label="BOLABOL licensing timeline">
+          <div class="clock-stat"><strong>5</strong><span>humans free</span></div>
+          <div class="clock-divider"><i></i><span>The 6th funds the future</span><i></i></div>
+          <div class="clock-timeline">
+            <div><b>Release</b><small>BSL 1.1 + Five-Person Grant</small></div>
+            <span class="timeline-arrow">→</span>
+            <div><b>3 years</b><small>Freedom Clock runs</small></div>
+            <span class="timeline-arrow">→</span>
+            <div class="timeline-open"><b>Open Source</b><small>GPL v3 or later</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta section-shell reveal">
+      <div class="cta-glow" aria-hidden="true"></div>
+      <div class="cta-logo"><img src="https://raw.githubusercontent.com/Pavan-Gopa/BOLABOL/main/Bolabol/for%20GITHUB/BOLABOL_LOGO_WHITE.png" alt="BOLABOL logo" loading="lazy"></div>
+      <div class="eyebrow">Your voice. Your words. Ready to use.</div>
+      <h2>Stop typing the first draft.</h2>
+      <p>Speak it. Shape it. Put it where it belongs.</p>
+      <div class="hero-actions centered-actions">
+        <a class="button button-primary button-large" href="https://github.com/Pavan-Gopa/BOLABOL/releases/latest/download/BOLABOL.dmg">Download for Apple Silicon</a>
+        <a class="button button-ghost button-large" href="https://github.com/Pavan-Gopa/BOLABOL" target="_blank" rel="noreferrer">View source on GitHub</a>
+      </div>
+      <small class="requirements">Requires Apple Silicon · macOS 14 Sonoma or later · Canary 1B requires macOS 15+</small>
+    </section>
+  </main>
+
+  <footer class="site-footer section-shell">
+    <div class="footer-brand"><strong>BOLABOL</strong><span>Speak. Polish. Translate.</span></div>
+    <div class="footer-links">
+      <a href="https://github.com/Pavan-Gopa/BOLABOL/releases/latest/download/BOLABOL.dmg">Download</a>
+      <a href="https://github.com/Pavan-Gopa/BOLABOL" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://github.com/Pavan-Gopa/BOLABOL/blob/main/LICENSE" target="_blank" rel="noreferrer">License</a>
+      <a href="https://github.com/Pavan-Gopa/BOLABOL/blob/main/COMMERCIAL.md" target="_blank" rel="noreferrer">Commercial</a>
+    </div>
+    <p class="footer-note">BOLABOL was previously released as SmartScribe.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

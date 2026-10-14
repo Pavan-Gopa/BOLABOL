@@ -4,16 +4,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Bolabol</title>
         <item>
-            <title>1.0.7</title>
-            <pubDate>Sun, 30 Aug 2026 12:25:15 +0530</pubDate>
-            <sparkle:version>202608301222</sparkle:version>
-            <sparkle:shortVersionString>1.0.7</sparkle:shortVersionString>
+            <title>1.0.8</title>
+            <pubDate>Wed, 14 Oct 2026 17:02:22 +0530</pubDate>
+            <sparkle:version>202610141644</sparkle:version>
+            <sparkle:shortVersionString>1.0.8</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/Pavan-Gopa/BOLABOL/releases/download/v1.0.7/BOLABOL.dmg" length="27550494" type="application/octet-stream" sparkle:edSignature="cqpbg6HKvUKiH8ZknUPIA0QbOp0RBcFvhy5bzonXQMMIezrJQWgeiG0fNW5Yc90Ku81m/+YdwlaMyAWbkw7tDw=="></enclosure>
+            <enclosure url="https://github.com/Pavan-Gopa/BOLABOL/releases/download/v1.0.8/BOLABOL.dmg" length="26052655" type="application/octet-stream" sparkle:edSignature="V9ESoMOqdGJ9qyhPcgSISpalcbPnPp7eJF3p9a8nLjECvQl7udFmbyy9i+j5fpOenVkgk9wvxp/2WLHKkdfvAA=="></enclosure>
         </item>
     </channel>
 </rss><!-- sparkle-signatures:
-edSignature: 07qnWXdx+CB1+ZazfkKyW/aXnj9aiqd51O2kCWqjHOf3Id6DgBwG/SVShUHxeHmZGdAFtaH9neLMyn3dl5dRDA==
+edSignature: X9gCucKWqmEB3H5RsmzfWDWR3RYybFCzx/tpmj/b/fUJjwUHagT6hPe+tn07UNs2376nTSBu4PrYWTlHXhLVAw==
 length: 1125
 -->

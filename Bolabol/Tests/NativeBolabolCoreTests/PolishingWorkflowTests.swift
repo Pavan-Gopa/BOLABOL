@@ -76,7 +76,7 @@ func polishingWorkflowRetriesVariantTwoWhenRussianSourceReturnsEnglishOutput() a
         engine: engine
     )
 
-    await workflow.polishNote(note.id, variants: [.variantTwo])
+    await workflow.polishNote(note.id, variants: [.variantTwo], primaryLanguageCode: "ru", additionalLanguageCode: "en")
 
     #expect(store.selectedNote?.polishedVariantTwo == "Это русский исходный текст про API и prompt template.")
     #expect(await engine.callCount == 2)
@@ -99,7 +99,7 @@ func polishingWorkflowAppliesLanguageGuardToShortRussianPhrases() async {
         engine: engine
     )
 
-    await workflow.polishNote(note.id, variants: [.variantOne])
+    await workflow.polishNote(note.id, variants: [.variantOne], primaryLanguageCode: "ru", additionalLanguageCode: "en")
 
     #expect(store.selectedNote?.polishedVariantOne == "Это русский исходный текст про API и prompt template.")
     #expect(await engine.callCount == 2)
@@ -461,7 +461,7 @@ func polishingWorkflowRetriesWhenTranslationOutputStaysInSourceLanguage() async 
     let engine = TranslationRetryPolishingEngine()
     let workflow = PolishingWorkflow(noteStore: store, engine: engine)
 
-    await workflow.polishNote(note.id, variants: [.variantOne], targetLanguage: "en")
+    await workflow.polishNote(note.id, variants: [.variantOne], targetLanguage: "en", primaryLanguageCode: "ru", additionalLanguageCode: "en")
 
     #expect(await engine.callCount == 2)
     #expect(store.selectedNote?.polishedVariantOne == "This is now English text about the API.")
@@ -517,6 +517,331 @@ private actor PromptCapturingPolishingEngine: PolishingEngine {
         lastTemplateBody = try request.template.render(transcription: request.rawText)
         return PolishingResult(
             text: request.rawText,
+            diagnostics: EngineDiagnostics(backendName: displayName)
+        )
+    }
+}
+
+@MainActor
+@Test
+func polishingWorkflowKeepsSourceTextWhenWrongLanguageSurvivesStrictRetry() async {
+    // ADR-029/Q3a: a still-wrong language after the strict retry is a
+    // translation failure, not a polishing failure — the polished
+    // source-language text is kept so the output pipeline can translate it
+    // (or fall back to it with a signal). Raw is the fallback only when
+    // polishing produced no text.
+    let store = NoteStore()
+    let note = store.addEmptyNote()
+    store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+            text: "это русский исходный текст про API и prompt template",
+            diagnostics: EngineDiagnostics(backendName: "Test Transcriber")
+        )
+    )
+    let engine = AlwaysRussianPolishingEngine()
+    let workflow = PolishingWorkflow(noteStore: store, engine: engine)
+
+    let results = await workflow.polishNote(
+        note.id,
+        variants: [.variantOne],
+        targetLanguage: "en",
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en"
+    )
+
+    #expect(await engine.callCount == 2, "one normal attempt plus one strict retry")
+    #expect(results[.variantOne]?.text == "это всё ещё русский текст про API и prompt template")
+    #expect(store.selectedNote?.polishedVariantOne == "это всё ещё русский текст про API и prompt template")
+    #expect(store.selectedNote?.polishingStatus(for: .variantOne).phase == .completed)
+}
+
+private actor AlwaysRussianPolishingEngine: PolishingEngine {
+    nonisolated let id = "always-russian-polish-engine"
+    nonisolated let displayName = "Always Russian Polish Engine"
+
+    private(set) var callCount = 0
+
+    func polish(_ request: PolishingRequest) async throws -> PolishingResult {
+        callCount += 1
+        return PolishingResult(
+            text: "это всё ещё русский текст про API и prompt template",
+            diagnostics: EngineDiagnostics(backendName: displayName)
+        )
+    }
+}
+
+@MainActor
+@Test
+func polishingWorkflowSkipsNewWorkAfterChainDeadline() async {
+    // Q5a: no new polish work starts at or after the chain cap.
+    let store = NoteStore()
+    let note = store.addEmptyNote()
+    store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+            text: "raw transcript",
+            diagnostics: EngineDiagnostics(backendName: "Test Transcriber")
+        )
+    )
+    let engine = LanguageRetryPolishingEngine()
+    let workflow = PolishingWorkflow(noteStore: store, engine: engine)
+
+    let results = await workflow.polishNote(
+        note.id,
+        variants: [.variantOne],
+        deadline: Date(timeIntervalSinceNow: -1)
+    )
+
+    #expect(await engine.callCount == 0, "no engine call starts after the cap")
+    #expect(results.isEmpty)
+    #expect(store.selectedNote?.polishingStatus(for: .variantOne).phase == .failed)
+}
+
+@MainActor
+@Test
+func polishingWorkflowMissFallsBackToPolishedSourceWhenProviderFails() async {
+    // Production-shaped Q3a flow: V2 returns Russian twice, so the polished
+    // Russian survives; a failing provider inserts it with a signal, while a
+    // succeeding provider delivers English.
+    let store = NoteStore()
+    let note = store.addEmptyNote()
+    let rawRussian = "это русский исходный текст про API и prompt template"
+    store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+            text: rawRussian,
+            diagnostics: EngineDiagnostics(backendName: "Test Transcriber")
+        )
+    )
+    let workflow = PolishingWorkflow(noteStore: store, engine: AlwaysRussianPolishingEngine())
+    _ = await workflow.polishNote(
+        note.id,
+        variants: [.variantOne],
+        targetLanguage: "en",
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en"
+    )
+    let polished = store.selectedNote?.polishedVariantOne ?? ""
+    #expect(!polished.isEmpty, "polished source text must survive a language miss")
+    // Production derives this from the stored variant phase.
+    let polishSucceeded = store.selectedNote?.polishingStatus(for: .variantOne).phase == .completed
+    #expect(polishSucceeded)
+    let context = TargetLanguageOutputPipeline.Context(
+        snapshot: HotkeyLanguageSnapshot(
+            wantsTarget: true,
+            targetCode: "en",
+            mechanism: .polishing,
+            hudLetter: "E",
+            letterEnabled: true,
+            hotkeyTarget: .note
+        ),
+        requestedVariant: .variantOne,
+        primaryCode: "ru",
+        additionalCode: "en"
+    )
+    struct ProviderDown: Error {}
+    let fallback = await TargetLanguageOutputPipeline.run(
+        rawText: rawRussian,
+        polishText: polished,
+        polishSucceeded: polishSucceeded,
+        context: context,
+        translate: { _, _ in throw ProviderDown() }
+    )
+    #expect(fallback.kind == .sourceFallback)
+    #expect(fallback.text == polished, "Q3a: polished source variant, not Raw")
+    let translated = await TargetLanguageOutputPipeline.run(
+        rawText: rawRussian,
+        polishText: polished,
+        polishSucceeded: polishSucceeded,
+        context: context,
+        translate: { _, _ in "This is the English translation about API and prompt template." }
+    )
+    #expect(translated.kind == .translated)
+    #expect(translated.text == "This is the English translation about API and prompt template.")
+}
+
+@MainActor
+@Test
+func polishingWorkflowStrictRetryCancelledAtCapKeepsFirstPass() async {
+    // ADR-029/Q5a (J2): a strict retry started before the cap but cancelled
+    // at the cap (throw/cancellation) keeps the first-pass polished
+    // source-language text as completed. The pipeline then inserts it with
+    // a signal — never Raw. Fails on code that marks the variant failed.
+    let store = NoteStore()
+    let note = store.addEmptyNote()
+    let rawRussian = "это русский исходный текст про API и prompt template"
+    store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+            text: rawRussian,
+            diagnostics: EngineDiagnostics(backendName: "Test Transcriber")
+        )
+    )
+    let engine = StrictCancelledAtCapEngine()
+    let workflow = PolishingWorkflow(noteStore: store, engine: engine)
+    let firstPass = "это первый проход полированный русский текст про API и prompt template"
+    let results = await workflow.polishNote(
+        note.id,
+        variants: [.variantOne],
+        targetLanguage: "en",
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en",
+        deadline: Date(timeIntervalSinceNow: 60)
+    )
+    #expect(await engine.callCount == 2, "first pass plus a strict retry cancelled at the cap")
+    #expect(results[.variantOne]?.text == firstPass, "cancelled strict retry keeps first-pass text")
+    #expect(store.selectedNote?.polishedVariantOne == firstPass)
+    #expect(store.selectedNote?.polishingStatus(for: .variantOne).phase == .completed)
+    let polishSucceeded = store.selectedNote?.polishingStatus(for: .variantOne).phase == .completed
+    #expect(polishSucceeded)
+    let context = TargetLanguageOutputPipeline.Context(
+        snapshot: HotkeyLanguageSnapshot(
+            wantsTarget: true,
+            targetCode: "en",
+            mechanism: .polishing,
+            hudLetter: "E",
+            letterEnabled: true,
+            hotkeyTarget: .note
+        ),
+        requestedVariant: .variantOne,
+        primaryCode: "ru",
+        additionalCode: "en"
+    )
+    struct ProviderDown: Error {}
+    let fallback = await TargetLanguageOutputPipeline.run(
+        rawText: rawRussian,
+        polishText: store.selectedNote?.polishedVariantOne,
+        polishSucceeded: polishSucceeded,
+        context: context,
+        translate: { _, _ in throw ProviderDown() }
+    )
+    #expect(fallback.kind == .sourceFallback)
+    #expect(fallback.text == firstPass, "Q5a cap abort inserts the polished variant, not Raw")
+}
+
+private actor StrictCancelledAtCapEngine: PolishingEngine {
+    nonisolated let id = "strict-cancelled-at-cap-engine"
+    nonisolated let displayName = "Strict Cancelled At Cap Engine"
+
+    private(set) var callCount = 0
+
+    func polish(_ request: PolishingRequest) async throws -> PolishingResult {
+        callCount += 1
+        if callCount == 1 {
+            return PolishingResult(
+                text: "это первый проход полированный русский текст про API и prompt template",
+                diagnostics: EngineDiagnostics(backendName: displayName)
+            )
+        }
+        // Second call (strict retry) is cancelled when the chain cap fires.
+        throw CancellationError()
+    }
+}
+
+@MainActor
+@Test
+func polishingWorkflowPassesChainDeadlineToBothPolishPasses() async {
+    // Q5a: the first pass and the strict retry share the chain deadline so
+    // no new cloud key starts at or after the cap. Fails when the workflow
+    // calls the plain `polish(_:)` overload instead of the deadline-aware one.
+    let store = NoteStore()
+    let note = store.addEmptyNote()
+    store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+            text: "это русский исходный текст про API и prompt template",
+            diagnostics: EngineDiagnostics(backendName: "Test Transcriber")
+        )
+    )
+    let engine = DeadlineCapturingEngine()
+    let workflow = PolishingWorkflow(noteStore: store, engine: engine)
+    let chainDeadline = Date(timeIntervalSinceNow: 60)
+    _ = await workflow.polishNote(
+        note.id,
+        variants: [.variantOne],
+        targetLanguage: "en",
+        primaryLanguageCode: "ru",
+        additionalLanguageCode: "en",
+        deadline: chainDeadline
+    )
+    #expect(await engine.plainCalls == 0, "both passes use the deadline-aware overload")
+    #expect(await engine.deadlineCalls == 2, "first pass plus strict retry")
+    let deadlines = await engine.deadlines
+    #expect(deadlines.count == 2)
+    #expect(deadlines[0] == chainDeadline)
+    #expect(deadlines[1] == chainDeadline)
+}
+
+private actor DeadlineCapturingEngine: DeadlineAwarePolishingEngine {
+    nonisolated let id = "deadline-capturing-engine"
+    nonisolated let displayName = "Deadline Capturing Engine"
+
+    private(set) var plainCalls = 0
+    private(set) var deadlineCalls = 0
+    private(set) var deadlines: [Date?] = []
+
+    func polish(_ request: PolishingRequest) async throws -> PolishingResult {
+        plainCalls += 1
+        return PolishingResult(
+            text: "This is an English polished result about the API.",
+            diagnostics: EngineDiagnostics(backendName: displayName)
+        )
+    }
+
+    func polish(
+        _ request: PolishingRequest,
+        keyChainSeconds: TimeInterval,
+        deadline: Date?
+    ) async throws -> PolishingResult {
+        deadlineCalls += 1
+        deadlines.append(deadline)
+        if deadlineCalls == 1 {
+            return PolishingResult(
+                text: "это русский полированный текст про API и prompt template",
+                diagnostics: EngineDiagnostics(backendName: displayName)
+            )
+        }
+        return PolishingResult(
+            text: "This is an English polished result about the API.",
+            diagnostics: EngineDiagnostics(backendName: displayName)
+        )
+    }
+}
+
+@MainActor
+@Test
+func polishingWorkflowKeepsShortLatinFirstPassForCyrillicSource() async {
+    // S11 J2: A mode (Cyrillic source lock, no translation target) must not
+    // strict-retry short output — `OK` keeps the first pass with one call.
+    let store = NoteStore()
+    let note = store.addEmptyNote()
+    store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+            text: "Привет, это короткая заметка для проверки",
+            diagnostics: EngineDiagnostics(backendName: "Test Transcriber")
+        )
+    )
+    let engine = FixedShortPolishingEngine()
+    let workflow = PolishingWorkflow(noteStore: store, engine: engine)
+
+    await workflow.polishNote(note.id, variants: [.variantOne], primaryLanguageCode: "ru", additionalLanguageCode: "en")
+
+    #expect(await engine.callCount == 1, "short A-mode output must not trigger the strict retry")
+    #expect(store.selectedNote?.polishedVariantOne == "OK")
+}
+
+private actor FixedShortPolishingEngine: PolishingEngine {
+    nonisolated let id = "fixed-short-polish-engine"
+    nonisolated let displayName = "Fixed Short Polish Engine"
+
+    private(set) var callCount = 0
+
+    func polish(_ request: PolishingRequest) async throws -> PolishingResult {
+        callCount += 1
+        return PolishingResult(
+            text: "OK",
             diagnostics: EngineDiagnostics(backendName: displayName)
         )
     }

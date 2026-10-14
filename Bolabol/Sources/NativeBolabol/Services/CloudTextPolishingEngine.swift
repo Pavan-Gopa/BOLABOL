@@ -4,7 +4,12 @@ import NativeBolabolCore
 struct CloudTextPolishingEngine: PolishingEngine {
     let kind: APIProviderKind
     let configuration: APIProviderConfiguration
-
+    /// Custom instance identity (ADR-031). Nil for built-ins and for engines
+    /// built directly from a kind + configuration; then the id/displayName
+    /// fall back to the kind (with the configuration name for custom),
+    /// preserving single-custom behavior.
+    let engineIDOverride: String?
+    let displayNameOverride: String?
     private static let googleSession: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest =
@@ -14,10 +19,58 @@ struct CloudTextPolishingEngine: PolishingEngine {
         return URLSession(configuration: configuration)
     }()
 
-    var id: String { kind.polishingEngineID }
-    var displayName: String { kind.displayName }
+
+    init(
+        kind: APIProviderKind,
+        configuration: APIProviderConfiguration,
+        engineIDOverride: String? = nil,
+        displayNameOverride: String? = nil
+    ) {
+        self.kind = kind
+        self.configuration = configuration
+        self.engineIDOverride = engineIDOverride
+        self.displayNameOverride = displayNameOverride
+    }
+
+    init(
+        kind: APIProviderKind,
+        configuration: APIProviderConfiguration,
+        customInstance: CustomAPIProviderInstance
+    ) {
+        self.init(
+            kind: kind,
+            configuration: configuration,
+            engineIDOverride: customInstance.engineID,
+            displayNameOverride: customInstance.displayName
+        )
+    }
+
+    var id: String { engineIDOverride ?? kind.polishingEngineID }
+    var displayName: String {
+        if let displayNameOverride, !displayNameOverride.isEmpty { return displayNameOverride }
+        if kind == .custom {
+            let name = configuration.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty ? kind.displayName : name
+        }
+        return kind.displayName
+    }
 
     func polish(_ request: PolishingRequest) async throws -> PolishingResult {
+        try await polish(
+            request,
+            keyChainSeconds: CloudKeyFailover.TimeBudget.default.keyChainSeconds,
+            deadline: nil
+        )
+    }
+
+    /// Q5a: deadline-aware polish for the translation-provider step. The key
+    /// chain shares `keyChainSeconds` and never starts a new key at or after
+    /// `deadline` (the output-language chain cap).
+    func polish(
+        _ request: PolishingRequest,
+        keyChainSeconds: TimeInterval,
+        deadline: Date? = nil
+    ) async throws -> PolishingResult {
         let prompt = try PolishingPromptPolicy.prepare(
             template: request.template,
             transcription: request.rawText
@@ -25,13 +78,15 @@ struct CloudTextPolishingEngine: PolishingEngine {
         let startedAt = Date()
         let response = try await generateText(
             systemInstruction: prompt.systemInstruction,
-            userContent: prompt.userContent
+            userContent: prompt.userContent,
+            keyChainSeconds: keyChainSeconds,
+            deadline: deadline
         )
 
         return PolishingResult(
             text: ModelOutputSanitizer.sanitize(response.text),
             diagnostics: EngineDiagnostics(
-                backendName: "\(kind.displayName) \(configuration.textModel)",
+                backendName: "\(displayName) \(configuration.textModel)",
                 loadTimeMilliseconds: Int(Date().timeIntervalSince(startedAt) * 1000),
                 promptTokens: response.promptTokens,
                 completionTokens: response.completionTokens
@@ -41,7 +96,9 @@ struct CloudTextPolishingEngine: PolishingEngine {
 
     private func generateText(
         systemInstruction: String,
-        userContent: String
+        userContent: String,
+        keyChainSeconds: TimeInterval,
+        deadline: Date?
     ) async throws -> CloudTextResponse {
         let keys = try sanitizedAPIKeys()
         let textModel = configuration.textModel.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -51,36 +108,40 @@ struct CloudTextPolishingEngine: PolishingEngine {
             )
         }
 
+        // ADR-029/Q5a: every cloud provider fails over across its full key list.
+        // Timeout / transport / 5xx / 429 / 401-403 / empty-2xx → next key
+        // immediately, no same-key retry. Other 4xx / decode → stop.
+        // Disabled keys are already excluded by `sanitizedAPIKeys`.
+        // No new key starts at or after the chain-cap deadline.
         var lastError: Error?
+        let keyChainDeadline = Date().addingTimeInterval(max(0, keyChainSeconds))
+        let effectiveDeadline = deadline.map { min($0, keyChainDeadline) } ?? keyChainDeadline
         for (index, apiKey) in keys.enumerated() {
+            try Task.checkCancellation()
+            guard Date() < effectiveDeadline else { break }
             do {
-                return try await executeGenerateText(
-                    systemInstruction: systemInstruction,
-                    userContent: userContent,
-                    apiKey: apiKey,
-                    textModel: textModel
-                )
-            } catch let error as CloudTextPolishingError {
-                lastError = error
-                let isQuotaError: Bool
-                switch error {
-                case .apiError(let statusCode, let message):
-                    isQuotaError = statusCode == 429
-                        || message.localizedCaseInsensitiveContains("RESOURCE_EXHAUSTED")
-                        || message.localizedCaseInsensitiveContains("quota")
-                        || message.localizedCaseInsensitiveContains("rate limit")
-                default:
-                    isQuotaError = false
-                }
-
-                if isQuotaError && index < keys.count - 1 {
-                    NativeBolabolLog.polishing.warning(
-                        "\(self.kind.displayName) API Key #\(index + 1) quota exhausted. Rotating to Key #\(index + 2)."
+                // Q5a: the chain cap bounds the in-flight request itself, not
+                // just admission of the next key — a reply arriving past the
+                // cap is cancelled, never accepted as successful output.
+                let remaining = effectiveDeadline.timeIntervalSinceNow
+                return try await CloudKeyFailover.withTimeout(seconds: remaining) {
+                    try await self.executeGenerateText(
+                        systemInstruction: systemInstruction,
+                        userContent: userContent,
+                        apiKey: apiKey,
+                        textModel: textModel
                     )
+                }
+            } catch {
+                lastError = error
+                let failure = Self.failoverFailure(for: error)
+                let verdict = CloudKeyFailover.action(for: failure)
+                NativeBolabolLog.polishing.warning(
+                    "\(self.displayName) API Key #\(index + 1)/\(keys.count) failed class=\(String(describing: failure), privacy: .public) verdict=\(String(describing: verdict), privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+                )
+                if verdict == .nextKey, index < keys.count - 1 {
                     continue
                 }
-                throw error
-            } catch {
                 throw error
             }
         }
@@ -91,6 +152,18 @@ struct CloudTextPolishingEngine: PolishingEngine {
         throw CloudTextPolishingError.invalidConfiguration("API key is invalid or missing. Please check Settings > API Providers.")
     }
 
+    /// Maps any polishing failure onto the shared pure failover policy.
+    static func failoverFailure(for error: any Error) -> CloudKeyFailover.Failure {
+        if let polishing = error as? CloudTextPolishingError {
+            switch polishing {
+            case .apiError(let statusCode, let message):
+                return CloudKeyFailover.classifyHTTPStatus(statusCode, message: message)
+            case .invalidResponse, .invalidConfiguration:
+                return .decodeError
+            }
+        }
+        return CloudKeyFailover.classify(error: error)
+    }
     private func executeGenerateText(
         systemInstruction: String,
         userContent: String,
@@ -126,10 +199,16 @@ struct CloudTextPolishingEngine: PolishingEngine {
                 ),
                 useSnakeCaseCoding: false,
                 decode: { (data: GoogleGenerateResponse) in
-                    CloudTextResponse(
-                        text: data.candidates?.first?.content.parts.compactMap(\.text).joined(separator: "\n")
-                            ?? data.text
-                            ?? "",
+                    // ADR-029: an empty 2xx reply fails over to the next key,
+                    // never silently inserts nothing.
+                    let text = data.candidates?.first?.content.parts.compactMap(\.text).joined(separator: "\n")
+                        ?? data.text
+                        ?? ""
+                    guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                        throw CloudRequestRetryError.emptySuccessfulResponse
+                    }
+                    return CloudTextResponse(
+                        text: text,
                         promptTokens: data.usageMetadata?.promptTokenCount,
                         completionTokens: data.usageMetadata?.candidatesTokenCount
                     )
@@ -175,8 +254,14 @@ struct CloudTextPolishingEngine: PolishingEngine {
                     messages: [.init(role: "user", content: userContent)]
                 ),
                 decode: { (data: AnthropicResponse) in
-                    CloudTextResponse(
-                        text: data.content.compactMap(\.text).joined(separator: "\n"),
+                    // ADR-029: an empty 2xx reply fails over to the next key,
+                    // never silently inserts nothing.
+                    let text = data.content.compactMap(\.text).joined(separator: "\n")
+                    guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                        throw CloudRequestRetryError.emptySuccessfulResponse
+                    }
+                    return CloudTextResponse(
+                        text: text,
                         promptTokens: data.usage?.inputTokens,
                         completionTokens: data.usage?.outputTokens
                     )
@@ -288,54 +373,40 @@ struct CloudTextPolishingEngine: PolishingEngine {
         }
     }
 
+    /// ADR-029/Q5a: one attempt per key with a 15 s per-request timeout for
+    /// every provider. Key failover (not same-key retry) is owned by
+    /// `generateText` via `CloudKeyFailover`.
     private func performDataRequest(_ sourceRequest: URLRequest) async throws -> (Data, URLResponse) {
-        guard kind == .google else {
-            return try await URLSession.shared.data(for: sourceRequest)
-        }
-
         let policy = CloudRequestRetryPolicy.googleTextGeneration
         var request = sourceRequest
         request.timeoutInterval = policy.timeoutInterval
 
-        for attempt in 1...policy.maxAttempts {
-            let startedAt = Date()
-            NativeBolabolLog.polishing.info(
-                "Cloud polishing request started provider=\(self.kind.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) attempt=\(attempt)/\(policy.maxAttempts) requestBytes=\(request.httpBody?.count ?? 0) timeoutSeconds=\(Int(policy.timeoutInterval))"
-            )
+        let startedAt = Date()
+        NativeBolabolLog.polishing.info(
+            "Cloud polishing request started provider=\(self.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) requestBytes=\(request.httpBody?.count ?? 0) timeoutSeconds=\(Int(policy.timeoutInterval))"
+        )
 
-            do {
-                let (data, response) = try await Self.googleSession.data(for: request)
-                let elapsedMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
-                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+        do {
+            let session = kind == .google ? Self.googleSession : URLSession.shared
+            let (data, response) = try await session.data(for: request)
+            let elapsedMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
 
-                if (200..<300).contains(statusCode), data.isEmpty {
-                    throw CloudRequestRetryError.emptySuccessfulResponse
-                }
-
-                NativeBolabolLog.polishing.info(
-                    "Cloud polishing request completed provider=\(self.kind.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) attempt=\(attempt)/\(policy.maxAttempts) status=\(statusCode) responseBytes=\(data.count) elapsedMs=\(elapsedMilliseconds)"
-                )
-                return (data, response)
-            } catch {
-                let elapsedMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
-                let willRetry = attempt < policy.maxAttempts && policy.shouldRetry(error)
-
-                if willRetry {
-                    NativeBolabolLog.polishing.warning(
-                        "Cloud polishing request retry provider=\(self.kind.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) attempt=\(attempt)/\(policy.maxAttempts) elapsedMs=\(elapsedMilliseconds) error=\(error.localizedDescription, privacy: .public)"
-                    )
-                    try await Task.sleep(nanoseconds: policy.retryDelayNanoseconds)
-                    continue
-                }
-
-                NativeBolabolLog.polishing.error(
-                    "Cloud polishing request failed provider=\(self.kind.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) attempt=\(attempt)/\(policy.maxAttempts) elapsedMs=\(elapsedMilliseconds) error=\(error.localizedDescription, privacy: .public)"
-                )
-                throw error
+            if (200..<300).contains(statusCode), data.isEmpty {
+                throw CloudRequestRetryError.emptySuccessfulResponse
             }
-        }
 
-        throw CloudTextPolishingError.invalidResponse
+            NativeBolabolLog.polishing.info(
+                "Cloud polishing request completed provider=\(self.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) status=\(statusCode) responseBytes=\(data.count) elapsedMs=\(elapsedMilliseconds)"
+            )
+            return (data, response)
+        } catch {
+            let elapsedMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
+            NativeBolabolLog.polishing.error(
+                "Cloud polishing request failed provider=\(self.displayName, privacy: .public) model=\(self.configuration.textModel, privacy: .public) elapsedMs=\(elapsedMilliseconds) error=\(error.localizedDescription, privacy: .public)"
+            )
+            throw error
+        }
     }
 
     private func authorizationHeaders(apiKey: String) -> [String: String] {
@@ -369,7 +440,7 @@ struct CloudTextPolishingEngine: PolishingEngine {
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard !trimmed.isEmpty, let url = URL(string: "\(trimmed)/chat/completions") else {
             throw CloudTextPolishingError.invalidConfiguration(
-                "\(kind.displayName) base URL is invalid."
+                "\(displayName) base URL is invalid."
             )
         }
         return url
@@ -388,14 +459,13 @@ struct CloudTextPolishingEngine: PolishingEngine {
     private func openAIResponse(_ data: ChatCompletionResponse) throws -> CloudTextResponse {
         let message = data.choices.first?.message
         // Never surface reasoning_content as polished prose. If a reasoning
-        // model does not produce a final content field, fail safely instead of
-        // inserting its analysis or conclusions into the note.
+        // model produces no final content field (e.g. OpenRouter choices[0]
+        // .message.content == ""), that is an empty 2xx: fail over to the
+        // next key (ADR-029), never stop the chain or insert nothing.
         let text = message?.content?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !text.isEmpty else {
-            throw CloudTextPolishingError.invalidConfiguration(
-                "The provider returned no final edited text. Choose a non-reasoning instruct model for polishing or reduce the model's reasoning mode."
-            )
+            throw CloudRequestRetryError.emptySuccessfulResponse
         }
         return CloudTextResponse(
             text: text,
@@ -418,7 +488,11 @@ struct CloudTextPolishingEngine: PolishingEngine {
     }
 }
 
-private struct CloudTextResponse {
+// Q5a: the key chain respects the output-language chain cap via the
+// deadline-aware overload used for the first pass and the strict retry.
+extension CloudTextPolishingEngine: DeadlineAwarePolishingEngine {}
+
+private struct CloudTextResponse: Sendable {
     let text: String
     let promptTokens: Int?
     let completionTokens: Int?

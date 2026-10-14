@@ -14,8 +14,14 @@ struct APIProvidersSettingsView: View {
     @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
     @EnvironmentObject private var usageStatisticsStore: UsageStatisticsStore
 
-    /// Selected provider kind in the UI dropdown.
-    @State private var selectedProviderKind: APIProviderKind = .google
+    /// Selected provider in the UI dropdown, as an engine ID: built-ins use
+    /// `kind.polishingEngineID`, custom instances their own `cloud-custom…`
+    /// ID (ADR-031).
+    @State private var selectedProviderID: String = APIProviderKind.google.polishingEngineID
+
+    private var customInstances: [CustomAPIProviderInstance] {
+        polishingEngineStore.apiSettings.customProviders
+    }
 
     var body: some View {
         ScrollView {
@@ -23,25 +29,44 @@ struct APIProvidersSettingsView: View {
                 headerCard
 
                 ProviderDetailCard(
-                    kind: selectedProviderKind,
-                    configuration: configurationBinding(for: selectedProviderKind)
+                    providerID: selectedProviderID,
+                    configuration: configurationBinding(forEngineID: selectedProviderID),
+                    onRemoveCustomInstance: handleRemovedCustomInstance
                 )
 
                 UsageInlineCard(
-                    providerKind: selectedProviderKind,
-                    activeModelID: polishingEngineStore.apiSettings.configuration(for: selectedProviderKind).textModel
+                    providerID: selectedProviderID,
+                    activeModelID: polishingEngineStore.apiSettings.configuration(
+                        forEngineID: selectedProviderID)?.textModel ?? ""
                 )
             }
             .padding(16)
         }
         .onAppear {
-            if let kind = APIProviderKind(polishingEngineID: polishingEngineStore.selectedEngineID),
-               APIProviderKind.polishingUICases.contains(kind) {
-                selectedProviderKind = kind
-            } else {
-                selectedProviderKind = .google
-            }
+            selectStoredEngine()
         }
+    }
+
+    private func selectStoredEngine() {
+        let engineID = polishingEngineStore.selectedEngineID
+        if polishingEngineStore.apiSettings.configuration(forEngineID: engineID) != nil {
+            selectedProviderID = engineID
+        } else {
+            selectedProviderID = APIProviderKind.google.polishingEngineID
+        }
+    }
+
+    private func handleRemovedCustomInstance(engineID: String) {
+        guard selectedProviderID == engineID else { return }
+        selectedProviderID = customInstances.first?.engineID
+            ?? APIProviderKind.google.polishingEngineID
+    }
+
+    private func addCustomProvider() {
+        let name = polishingEngineStore.apiSettings.defaultCustomName(
+            language: generalSettingsStore.settings.uiLanguage)
+        let instance = polishingEngineStore.addCustomProvider(name: name)
+        selectedProviderID = instance.engineID
     }
 
     // MARK: - Header Card
@@ -59,9 +84,24 @@ struct APIProvidersSettingsView: View {
 
                 Spacer()
 
-                Picker("", selection: $selectedProviderKind) {
-                    ForEach(APIProviderKind.polishingUICases) { kind in
-                        Text(kind.displayName).tag(kind)
+                Button {
+                    addCustomProvider()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 11, weight: .bold))
+                        Text(generalSettingsStore.text(.addCustomProvider))
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                }
+                .buttonStyle(.borderless)
+
+                Picker("", selection: $selectedProviderID) {
+                    ForEach(APIProviderKind.polishingUICases.filter { $0 != .custom }, id: \.polishingEngineID) { kind in
+                        Text(kind.displayName).tag(kind.polishingEngineID)
+                    }
+                    ForEach(customInstances) { instance in
+                        Text(instance.displayName).tag(instance.engineID)
                     }
                 }
                 .pickerStyle(.menu)
@@ -90,13 +130,13 @@ struct APIProvidersSettingsView: View {
     }
 
     private var isCurrentEngineSelected: Bool {
-        polishingEngineStore.selectedEngineID == selectedProviderKind.polishingEngineID
+        polishingEngineStore.selectedEngineID == selectedProviderID
     }
 
-    private func configurationBinding(for kind: APIProviderKind) -> Binding<APIProviderConfiguration> {
+    private func configurationBinding(forEngineID engineID: String) -> Binding<APIProviderConfiguration> {
         Binding(
-            get: { polishingEngineStore.apiSettings.configuration(for: kind) },
-            set: { polishingEngineStore.updateAPIConfiguration($0, for: kind) }
+            get: { polishingEngineStore.apiSettings.configuration(forEngineID: engineID) ?? APIProviderConfiguration() },
+            set: { _ = polishingEngineStore.updateAPIConfiguration($0, forEngineID: engineID) }
         )
     }
 }
@@ -104,8 +144,12 @@ struct APIProvidersSettingsView: View {
 // MARK: - Provider Detail Card
 
 private struct ProviderDetailCard: View {
-    let kind: APIProviderKind
+    /// Engine ID: built-ins use `kind.polishingEngineID`, custom instances
+    /// their own `cloud-custom…` ID (ADR-031).
+    let providerID: String
     @Binding var configuration: APIProviderConfiguration
+    /// Called after a custom instance is removed so the parent can reselect.
+    var onRemoveCustomInstance: (String) -> Void = { _ in }
 
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
     @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
@@ -119,12 +163,32 @@ private struct ProviderDetailCard: View {
     @State private var isLoadingBalance = false
     @State private var showModelPicker = false
     @State private var budgetLimit: Double = 5.0
+    @State private var nameDraft: String = ""
+    @State private var nameError: String?
+    @State private var showRemoveConfirmation = false
+
+    private var kind: APIProviderKind {
+        polishingEngineStore.apiSettings.resolve(engineID: providerID)?.kind ?? .google
+    }
+
+    private var customInstance: CustomAPIProviderInstance? {
+        guard
+            let resolved = polishingEngineStore.apiSettings.resolve(engineID: providerID),
+            resolved.kind == .custom,
+            let id = resolved.customInstanceID
+        else { return nil }
+        return polishingEngineStore.apiSettings.customInstance(id: id)
+    }
+
+    private var title: String {
+        customInstance?.displayName ?? kind.displayName
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             // Title Header
             HStack {
-                Text(kind.displayName)
+                Text(title)
                     .font(.system(size: 14, weight: .bold))
                 Spacer()
                 if let url = kind.getAPIKeyURL {
@@ -133,6 +197,35 @@ private struct ProviderDetailCard: View {
                             .font(.system(size: 11, weight: .medium))
                     }
                     .buttonStyle(.borderless)
+                }
+                if customInstance != nil {
+                    Button(role: .destructive) {
+                        showRemoveConfirmation = true
+                    } label: {
+                        Label(generalSettingsStore.text(.remove), systemImage: "trash")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .buttonStyle(.borderless)
+                }
+            }
+
+            // Custom instance name (rename with validation feedback)
+            if customInstance != nil {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(generalSettingsStore.text(.providerName))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    TextField(generalSettingsStore.text(.providerName), text: $nameDraft, onCommit: commitRename)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 12))
+                        .onChange(of: nameDraft) { _, newValue in
+                            nameError = validationError(for: newValue)
+                        }
+                    if let nameError {
+                        Text(nameError)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.red)
+                    }
                 }
             }
 
@@ -202,21 +295,43 @@ private struct ProviderDetailCard: View {
         }
         .sheet(isPresented: $showModelPicker) {
             SmartModelPickerSheet(
-                providerName: kind.displayName,
+                providerName: title,
                 models: availableModels,
                 selectedModelID: $configuration.textModel,
-                isPresented: $showModelPicker
+                isPresented: $showModelPicker,
+                engineID: providerID
             )
             .frame(minWidth: 480, minHeight: 420)
         }
         .onAppear {
+            syncNameDraft()
             scheduleModelsFetch(force: true)
             refreshBalance()
         }
-        .onChange(of: kind) { _, _ in
+        .confirmationDialog(
+            "",
+            isPresented: $showRemoveConfirmation,
+            titleVisibility: .hidden
+        ) {
+            Button(role: .destructive) {
+                removeCustomInstance()
+            } label: {
+                Text(generalSettingsStore.text(.remove))
+            }
+            Button(role: .cancel) {
+            } label: {
+                Text(generalSettingsStore.text(.cancel))
+            }
+        } message: {
+            Text(
+                generalSettingsStore.formattedText(
+                    .removeCustomProviderConfirmation, customInstance?.displayName ?? title))
+        }
+        .onChange(of: providerID) { _, _ in
             availableModels = []
             modelsError = nil
             openRouterBalance = nil
+            syncNameDraft()
             scheduleModelsFetch(force: true)
             refreshBalance()
         }
@@ -240,6 +355,38 @@ private struct ProviderDetailCard: View {
         let configured = configuration.baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
         if !configured.isEmpty { return configured }
         return kind.defaultBaseURL
+    }
+
+    private func syncNameDraft() {
+        nameDraft = customInstance?.configuration.name ?? ""
+        nameError = nil
+    }
+
+    private func validationError(for name: String) -> String? {
+        guard let instance = customInstance else { return nil }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || polishingEngineStore.apiSettings.isCustomNameTaken(
+            trimmed, excludingID: instance.id)
+        {
+            return generalSettingsStore.text(.duplicateCustomProviderName)
+        }
+        return nil
+    }
+
+    private func commitRename() {
+        guard let instance = customInstance else { return }
+        if polishingEngineStore.renameCustomProvider(id: instance.id, name: nameDraft) {
+            syncNameDraft()
+        } else {
+            nameError = validationError(for: nameDraft)
+                ?? generalSettingsStore.text(.duplicateCustomProviderName)
+        }
+    }
+
+    private func removeCustomInstance() {
+        guard let instance = customInstance else { return }
+        polishingEngineStore.removeCustomProvider(id: instance.id)
+        onRemoveCustomInstance(instance.engineID)
     }
 
     // MARK: - OpenRouter Balance Section
@@ -558,7 +705,7 @@ private struct ProviderDetailCard: View {
 
                 // Fixed Width Action Button (142px) — Prevents any shift / jittering on click!
                 Button {
-                    polishingEngineStore.selectAPIProvider(kind)
+                    polishingEngineStore.selectAPIProvider(engineID: providerID)
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: isSelectedEngine ? "checkmark.circle.fill" : "sparkles")
@@ -577,7 +724,7 @@ private struct ProviderDetailCard: View {
     }
 
     private var isSelectedEngine: Bool {
-        polishingEngineStore.selectedEngineID == kind.polishingEngineID
+        polishingEngineStore.selectedEngineID == providerID
     }
 
     // MARK: - Model Specs Chip Row
@@ -655,6 +802,9 @@ private struct ProviderDetailCard: View {
         let delay: UInt64 = force ? 0 : 400_000_000
         let snapshot = configuration
         let providerKind = kind
+        // Engine ID at schedule time: a completed fetch waiting for the main
+        // actor must not write another instance selected meanwhile.
+        let scheduledEngineID = providerID
         isLoadingModels = true
         modelsFetchTask = Task {
             if delay > 0 {
@@ -673,6 +823,11 @@ private struct ProviderDetailCard: View {
             )
             guard !Task.isCancelled else { return }
             await MainActor.run {
+                // The previous task is cancelled on reschedule, but a fetch
+                // that already finished may still be queued for the main
+                // actor: ignore it unless this instance is still selected.
+                guard !Task.isCancelled else { return }
+                guard scheduledEngineID == providerID else { return }
                 isLoadingModels = false
                 if let error = result.errorMessage, result.models.isEmpty {
                     modelsError = error
@@ -754,23 +909,43 @@ private struct ProviderDetailCard: View {
 enum FavoriteModelsStore {
     private static let key = "favorite.cloud.model.ids"
 
-    static func loadFavorites() -> Set<String> {
-        let array = UserDefaults.standard.stringArray(forKey: key) ?? []
-        return Set(array)
+    private static func scopedKey(for engineID: String) -> String {
+        "\(key).\(engineID)"
     }
 
-    static func isFavorite(_ modelID: String) -> Bool {
-        loadFavorites().contains(modelID)
+    private static func isCustomEngineID(_ engineID: String) -> Bool {
+        CustomAPIProviderInstance.instanceID(forEngineID: engineID) != nil
     }
 
-    static func toggleFavorite(_ modelID: String) -> Set<String> {
-        var set = loadFavorites()
+    /// Engine-scoped favourites (ADR-031): built-in engine IDs share the
+    /// existing global key; each custom instance uses its own scoped key.
+    /// The legacy `cloud-custom` engine falls back to the global set until
+    /// its scoped key exists, so pre-existing favourites persist.
+    static func loadFavorites(engineID: String, defaults: UserDefaults = .standard) -> Set<String> {
+        guard isCustomEngineID(engineID) else {
+            return Set(defaults.stringArray(forKey: key) ?? [])
+        }
+        let scoped = scopedKey(for: engineID)
+        if engineID == CustomAPIProviderInstance.legacyEngineID,
+           defaults.object(forKey: scoped) == nil {
+            return Set(defaults.stringArray(forKey: key) ?? [])
+        }
+        return Set(defaults.stringArray(forKey: scoped) ?? [])
+    }
+
+    static func isFavorite(_ modelID: String, engineID: String, defaults: UserDefaults = .standard) -> Bool {
+        loadFavorites(engineID: engineID, defaults: defaults).contains(modelID)
+    }
+
+    @discardableResult
+    static func toggleFavorite(_ modelID: String, engineID: String, defaults: UserDefaults = .standard) -> Set<String> {
+        var set = loadFavorites(engineID: engineID, defaults: defaults)
         if set.contains(modelID) {
             set.remove(modelID)
         } else {
             set.insert(modelID)
         }
-        UserDefaults.standard.set(Array(set), forKey: key)
+        defaults.set(Array(set), forKey: isCustomEngineID(engineID) ? scopedKey(for: engineID) : key)
         return set
     }
 }
@@ -780,10 +955,12 @@ private struct SmartModelPickerSheet: View {
     let models: [CloudRemoteModel]
     @Binding var selectedModelID: String
     @Binding var isPresented: Bool
+    /// Engine ID (ADR-031) scoping the favourites set.
+    let engineID: String
 
     @State private var searchText = ""
     @State private var showFavoritesOnly = false
-    @State private var favoriteIDs: Set<String> = FavoriteModelsStore.loadFavorites()
+    @State private var favoriteIDs: Set<String> = []
 
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
 
@@ -925,7 +1102,7 @@ private struct SmartModelPickerSheet: View {
                     HStack(alignment: .center, spacing: 10) {
                         // Star Favorite Button
                         Button {
-                            favoriteIDs = FavoriteModelsStore.toggleFavorite(model.id)
+                            favoriteIDs = FavoriteModelsStore.toggleFavorite(model.id, engineID: engineID)
                         } label: {
                             Image(systemName: isFav ? "star.fill" : "star")
                                 .font(.system(size: 14))
@@ -1000,18 +1177,33 @@ private struct SmartModelPickerSheet: View {
                 .listStyle(.plain)
             }
         }
+        .onAppear {
+            favoriteIDs = FavoriteModelsStore.loadFavorites(engineID: engineID)
+        }
+        .onChange(of: engineID) { _, newID in
+            favoriteIDs = FavoriteModelsStore.loadFavorites(engineID: newID)
+        }
     }
 }
 
 // MARK: - Usage Inline Card
 
 private struct UsageInlineCard: View {
-    let providerKind: APIProviderKind
+    /// Engine ID (ADR-031); the reset label and stats scope use the instance
+    /// name for custom providers so usage separates per instance.
+    let providerID: String
     let activeModelID: String
 
     @EnvironmentObject private var generalSettingsStore: GeneralSettingsStore
+    @EnvironmentObject private var polishingEngineStore: PolishingEngineStore
     @EnvironmentObject private var usageStatisticsStore: UsageStatisticsStore
     @State private var selectedModelID: String?
+
+    /// Instance name for custom providers, kind name for built-ins.
+    private var providerTitle: String {
+        polishingEngineStore.apiSettings.displayName(forEngineID: providerID)
+            ?? generalSettingsStore.text(.provider)
+    }
 
     private var availableModelIDs: [String] {
         usageStatisticsStore.modelIDs()
@@ -1041,13 +1233,13 @@ private struct UsageInlineCard: View {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.system(size: 10, weight: .bold))
-                        Text(generalSettingsStore.formattedText(.resetProviderStats, providerKind.displayName))
+                        Text(generalSettingsStore.formattedText(.resetProviderStats, providerTitle))
                             .font(.system(size: 11, weight: .semibold))
                     }
                     .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.borderless)
-                .help(generalSettingsStore.formattedText(.resetProviderStatsHelp, providerKind.displayName))
+                .help(generalSettingsStore.formattedText(.resetProviderStatsHelp, providerTitle))
             }
 
             Divider()
@@ -1180,9 +1372,20 @@ private struct UsageInlineCard: View {
     }
 
     private var providerModelIDs: [String] {
-        availableModelIDs.filter { modelID in
+        // Usage buckets are keyed by `backendName` ("<Provider> <model>"), so
+        // custom instances scope stats through the shared matcher: display
+        // name plus a trailing space, yielding to a longer sibling name.
+        let settings = polishingEngineStore.apiSettings
+        let resolved = settings.resolve(engineID: providerID)
+        if resolved?.kind == .custom,
+           let name = settings.displayName(forEngineID: providerID), !name.isEmpty {
+            return availableModelIDs.filter {
+                settings.usageBucketMatchesCustomInstance(bucketKey: $0, displayName: name)
+            }
+        }
+        return availableModelIDs.filter { modelID in
             let lower = modelID.lowercased()
-            switch providerKind {
+            switch resolved?.kind ?? .google {
             case .google:
                 return lower.contains("gemini") || lower.contains("google")
             case .openAI:

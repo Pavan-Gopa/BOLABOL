@@ -120,3 +120,14 @@ func appTextBilingualHelpKeysExistAndDocumentLanguages() {
   #expect(intro.lowercased().contains("primary"))
 }
 
+
+@Test
+func appTextS11NotTranslatedBadgeHasLocalizedTextInEveryConcreteLocale() {
+  let english = AppText.localized(.noteNotTranslated, language: .english)
+  #expect(english == "Not translated")
+  for language in concreteLanguages where language != .english {
+    let badge = AppText.localized(.noteNotTranslated, language: language)
+    #expect(!badge.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+    #expect(badge != english, "fallback badge must be localized, not an English dictionary fallback: \(language)")
+  }
+}

@@ -166,7 +166,7 @@ public extension PolishingModelCatalog {
                 description: "Strong compact NVIDIA model. Verified working via local scan.",
                 quality: 4,
                 speed: 4
-            )
+            ),
         ]
     )
     } catch {

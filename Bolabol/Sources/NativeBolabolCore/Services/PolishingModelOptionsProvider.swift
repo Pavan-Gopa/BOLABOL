@@ -16,13 +16,26 @@ public struct PolishingModelOption: Identifiable, Equatable, Hashable, Sendable 
 ///
 /// The logic is pure (no `UserDefaults`, no UI, no localization) so it can be
 /// shared and unit tested. Favorite model identifiers are supplied by the
-/// caller (for example from `FavoriteModelsStore.loadFavorites()`), keeping
-/// persistence concerns out of this type.
+/// caller (for example from `FavoriteModelsStore.loadFavorites(engineID:defaults:)`),
+/// keeping persistence concerns out of this type.
 public struct PolishingModelOptionsProvider: Sendable {
   public var apiSettings: APIProviderSettings
 
   public init(apiSettings: APIProviderSettings) {
     self.apiSettings = apiSettings
+  }
+
+  /// Instance-aware variant of `providerModelOptions(for:favorites:)` keyed
+  /// by engine ID (ADR-031). Custom engine IDs resolve to their own
+  /// configuration; anything else behaves exactly like the kind-based path.
+  /// Returns [] when the engine ID is unknown or its instance is gone.
+  public func providerModelOptions(
+    forEngineID engineID: String,
+    favorites: Set<String>
+  ) -> [PolishingModelOption] {
+    guard let (kind, config) = configurationForEngineID(engineID) else { return [] }
+    return providerModelOptions(
+      for: kind, favorites: favorites, configuration: config)
   }
 
   /// The ordered, de-duplicated model options to present for `kind`.
@@ -38,7 +51,16 @@ public struct PolishingModelOptionsProvider: Sendable {
     for kind: APIProviderKind,
     favorites: Set<String>
   ) -> [PolishingModelOption] {
-    let baseOptions = availableModels(for: kind)
+    providerModelOptions(
+      for: kind, favorites: favorites, configuration: apiSettings.configuration(for: kind))
+  }
+
+  private func providerModelOptions(
+    for kind: APIProviderKind,
+    favorites: Set<String>,
+    configuration: APIProviderConfiguration
+  ) -> [PolishingModelOption] {
+    let baseOptions = availableModels(for: kind, configuration: configuration)
     var result = baseOptions.filter { favorites.contains($0.id) }
 
     for id in favorites {
@@ -51,7 +73,7 @@ public struct PolishingModelOptionsProvider: Sendable {
       result = baseOptions
     }
 
-    let currentID = apiSettings.configuration(for: kind).textModel
+    let currentID = configuration.textModel
     if !currentID.isEmpty
       && !result.contains(where: { $0.id == currentID })
       && matchesProvider(modelID: currentID, kind: kind) {
@@ -71,6 +93,22 @@ public struct PolishingModelOptionsProvider: Sendable {
       }
     }
     return deduplicated
+  }
+
+  /// Built-in, curated model suggestions per provider, parameterized by the
+  /// live configuration so custom engine IDs use their own model.
+  private func availableModels(
+    for kind: APIProviderKind,
+    configuration: APIProviderConfiguration
+  ) -> [PolishingModelOption] {
+    if kind == .custom {
+      return [
+        PolishingModelOption(
+          id: configuration.textModel,
+          displayName: cleanModelDisplayName(configuration.textModel))
+      ]
+    }
+    return availableModels(for: kind)
   }
 
   /// Built-in, curated model suggestions per provider.
@@ -119,6 +157,20 @@ public struct PolishingModelOptionsProvider: Sendable {
       ]
     }
   }
+  /// Instance-aware variant of `availableModels(for:)` keyed by engine ID
+  /// (ADR-031). Custom engine IDs resolve to their own configured model.
+  /// Returns [] when the engine ID is unknown or its instance is gone.
+  public func availableModels(forEngineID engineID: String) -> [PolishingModelOption] {
+    guard let (kind, config) = configurationForEngineID(engineID) else { return [] }
+    if kind == .custom {
+      return [
+        PolishingModelOption(
+          id: config.textModel, displayName: cleanModelDisplayName(config.textModel))
+      ]
+    }
+    return availableModels(for: kind)
+  }
+
 
   /// Heuristic mapping of a raw model identifier to a provider kind. Used to
   /// decide whether a globally-stored favorite belongs to a given provider.
@@ -154,6 +206,16 @@ public struct PolishingModelOptionsProvider: Sendable {
     }
     return cleanModelDisplayName(id)
   }
+  /// Instance-aware variant of `modelDisplayName(id:kind:)` keyed by engine
+  /// ID (ADR-031).
+  public func modelDisplayName(id: String, engineID: String) -> String {
+    let available = availableModels(forEngineID: engineID)
+    if let match = available.first(where: { $0.id == id }) {
+      return cleanModelDisplayName(match.displayName)
+    }
+    return cleanModelDisplayName(id)
+  }
+
 
   /// Strips a leading `vendor/` prefix (e.g. `google/gemini-2.5-flash` →
   /// `gemini-2.5-flash`).
@@ -163,5 +225,14 @@ public struct PolishingModelOptionsProvider: Sendable {
       name = String(name[name.index(after: slashIndex)...])
     }
     return name
+  }
+  /// Resolves an engine ID to its kind and live configuration for the model
+  /// menus. Nil when the engine ID is unknown or its custom instance is gone.
+  public func configurationForEngineID(_ engineID: String) -> (
+    kind: APIProviderKind, configuration: APIProviderConfiguration
+  )? {
+    guard let resolved = apiSettings.resolve(engineID: engineID) else { return nil }
+    guard let config = apiSettings.configuration(forEngineID: engineID) else { return nil }
+    return (resolved.kind, config)
   }
 }

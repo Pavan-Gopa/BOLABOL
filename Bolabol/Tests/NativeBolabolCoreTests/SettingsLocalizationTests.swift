@@ -42,6 +42,9 @@ private let settingsKeys: [AppTextKey] = [
     .apiKeyNumber, .apiKeyNumberPrimary, .enterAPIKey, .hideAPIKey, .showAPIKey,
     .favoritesFilter, .allFilter, .filterByFavorites, .noFavoriteModels,
     .noMatchingModels, .removeFromFavorites, .addToFavorites,
+    // S12 — named custom providers (ADR-031)
+    .addCustomProvider, .customProviderDefaultName, .duplicateCustomProviderName,
+    .removeCustomProviderConfirmation,
     // Misc screens (notes, translation modal, hotkey, local models, polishing, prompts, sidebar)
     .showVariant, .generateMarkdown, .model, .pasteFromClipboard,
     .pasteFromClipboardHelp, .hotkeyOptionHint, .translationWindowLabel,

@@ -12,9 +12,11 @@ public enum CloudRequestRetryError: LocalizedError, Sendable {
 }
 
 public struct CloudRequestRetryPolicy: Sendable {
+    /// Q5a budget: 15 s per request; key failover (not same-key retry)
+    /// is owned by `CloudKeyFailover`, so a single attempt per key.
     public static let googleTextGeneration = CloudRequestRetryPolicy(
-        timeoutInterval: 20,
-        maxAttempts: 2,
+        timeoutInterval: 15,
+        maxAttempts: 1,
         retryDelayNanoseconds: 250_000_000
     )
 

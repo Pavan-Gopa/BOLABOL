@@ -5,6 +5,11 @@ import Security
 protocol APIProviderCredentialStoring {
   func loadKeys(for kind: APIProviderKind) -> [String]
   func saveKeys(_ keys: [String], for kind: APIProviderKind) throws
+  /// Account-string variants for named custom instances (ADR-031). The
+  /// migrated legacy instance keeps `api-provider.custom.keys`; new ones use
+  /// `api-provider.custom.<uuid>.keys` (see `CustomAPIProviderInstance`).
+  func loadKeys(account: String) -> [String]
+  func saveKeys(_ keys: [String], account: String) throws
 }
 
 struct KeychainAPIProviderCredentialStore: APIProviderCredentialStoring {
@@ -18,10 +23,14 @@ struct KeychainAPIProviderCredentialStore: APIProviderCredentialStoring {
   }
 
   func loadKeys(for kind: APIProviderKind) -> [String] {
+    loadKeys(account: account(for: kind))
+  }
+
+  func loadKeys(account: String) -> [String] {
     let query: [CFString: Any] = [
       kSecClass: kSecClassGenericPassword,
       kSecAttrService: service,
-      kSecAttrAccount: account(for: kind),
+      kSecAttrAccount: account,
       kSecReturnData: true,
       kSecMatchLimit: kSecMatchLimitOne,
     ]
@@ -38,10 +47,14 @@ struct KeychainAPIProviderCredentialStore: APIProviderCredentialStoring {
   }
 
   func saveKeys(_ keys: [String], for kind: APIProviderKind) throws {
+    try saveKeys(keys, account: account(for: kind))
+  }
+
+  func saveKeys(_ keys: [String], account: String) throws {
     let baseQuery: [CFString: Any] = [
       kSecClass: kSecClassGenericPassword,
       kSecAttrService: service,
-      kSecAttrAccount: account(for: kind),
+      kSecAttrAccount: account,
     ]
 
     if keys.isEmpty {
@@ -81,7 +94,11 @@ struct KeychainAPIProviderCredentialStore: APIProviderCredentialStoring {
   }
 
   private func account(for kind: APIProviderKind) -> String {
-    "api-provider.\(kind.rawValue).keys"
+    if kind == .custom {
+      return CustomAPIProviderInstance.keychainAccount(
+        forInstanceID: CustomAPIProviderInstance.legacyInstanceID)
+    }
+    return "api-provider.\(kind.rawValue).keys"
   }
 }
 

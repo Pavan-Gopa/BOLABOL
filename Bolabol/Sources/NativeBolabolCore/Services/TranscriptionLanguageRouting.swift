@@ -645,8 +645,7 @@ public enum TranscriptionSessionResolver {
             hudLanguageLabel: hudLanguageLabel,
             languageControlEnabled: languageControlEnabled,
             route: route,
-            supportsNativeWhisperTranslation: model.backend == .whisperKitCoreML
-                && model.languageSupport == .multilingual,
+            supportsNativeWhisperTranslation: model.supportsNativeTranslationToEnglish,
             request: TranscriptionRequest(
                 forcedLanguageCode: route.forcedLanguageCode,
                 translateToEnglish: route.translateToEnglish,

@@ -292,6 +292,17 @@ public enum ModelInstallSource: Equatable, Sendable, Codable {
         capabilities.explicitSupportedLanguageCodes
     }
 
+    /// Native X→English speech translation (Whisper `task: .translate`).
+    /// ADR-029: Whisper Large v3 Turbo is excluded — upstream documents it is
+    /// not trained for translation and returns the original language.
+    /// Only full/medium/small multilingual Whisper models qualify.
+    public var supportsNativeTranslationToEnglish: Bool {
+        guard backend == .whisperKitCoreML, languageSupport == .multilingual else {
+            return false
+        }
+        return !id.lowercased().contains("turbo")
+    }
+
     public func sourceLanguageProjection(
         primary: String?,
         additional: String?

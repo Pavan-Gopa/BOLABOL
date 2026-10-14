@@ -32,6 +32,7 @@ final class HotkeySessionOverlayManager {
     private var languageRightClickHandler: ((_ anchorView: NSView, _ locationInAnchor: NSPoint) -> Void)?
     private var targetTapHandler: (() -> Void)?
     private var scrollHandler: ((_ deltaY: CGFloat) -> Void)?
+    private var fallbackTintTask: Task<Void, Never>?
 
     func show(
         mode: Mode,
@@ -60,6 +61,9 @@ final class HotkeySessionOverlayManager {
     ) {
         let styleChanged = state.style != settings.style
         let modeChanged = state.mode != mode
+        fallbackTintTask?.cancel()
+        fallbackTintTask = nil
+        state.showsFallbackTint = false
         currentSettings = settings
         state.isHovered = false
         state.isVisible = true
@@ -206,11 +210,28 @@ final class HotkeySessionOverlayManager {
     }
 
     func hide() {
+        fallbackTintTask?.cancel()
+        fallbackTintTask = nil
+        state.showsFallbackTint = false
         state.isVisible = false
         state.isHovered = false
         state.dragOffset = .zero
         panel?.invalidatePendingLayoutCallbacks()
         panel?.orderOut(nil)
+    }
+
+    /// ADR-029/Q4d: source fallback keeps the HUD visible with an amber tint
+    /// for ~600 ms, then hides as normal. All HUD chrome derives from the
+    /// shared `tint`, so flipping the flag recolors the pill with no new UI.
+    func flashSourceFallbackTintThenHide() {
+        fallbackTintTask?.cancel()
+        state.showsFallbackTint = true
+        fallbackTintTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            guard let self, !Task.isCancelled else { return }
+            self.fallbackTintTask = nil
+            self.hide()
+        }
     }
 
     func playCue(_ cue: AudioCuePlayer.Cue, settings: OverlayHUDSettings) {
@@ -282,6 +303,7 @@ final class OverlayState: ObservableObject {
     @Published var isVisible: Bool = false
     @Published var dragOffset: CGSize = .zero
     @Published var isHovered: Bool = false
+    @Published var showsFallbackTint = false
     var languageTapHandler: (() -> Void)?
     var targetTapHandler: (() -> Void)?
     var promptSlotChangeHandler: ((PromptSlot) -> Void)?
@@ -1802,7 +1824,10 @@ private struct HotkeySessionOverlayView: View {
     }
 
     private var tint: Color {
-        state.mode.tint(for: state.style)
+        if state.showsFallbackTint {
+            return Color(red: 1.0, green: 0.72, blue: 0.16)
+        }
+        return state.mode.tint(for: state.style)
     }
 
     private var spectrumBarCount: Int {

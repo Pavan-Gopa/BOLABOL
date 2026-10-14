@@ -44,10 +44,16 @@ struct ContentView: View {
     @State private var hotkeySessionOverlayManager = HotkeySessionOverlayManager()
     @State private var providerQuickSwitcher = ProviderQuickSwitcher()
     @State private var pendingHotkeySession: TranscriptionEngineSession?
-    @State private var pendingHotkeyForceTargetLanguage = false
+    /// ADR-029: frozen per-session target snapshot. Captured once at hotkey
+    /// start; only explicit HUD actions during that recording replace it;
+    /// stop hands it unchanged to the pipeline.
+    @State private var pendingHotkeySnapshot: HotkeyLanguageSnapshot?
     @State private var pendingHotkeyHumorSession: HumorSessionState?
     @AppStorage("hud.forceTargetLanguage") private var persistentHUDForceTargetLanguage = false
-    @State private var hudTargetLanguageOverride: String?
+    /// ADR-029: the old dual-purpose `hudTargetLanguageOverride` is split.
+    /// Canary ASR source vs post-ASR target language are separate concerns.
+    @State private var canarySourceOverride: String?
+    @State private var hudTargetOverride: String?
     @State private var lastObservedAdditionalLanguageCode: String?
     @State private var languagePickerController = LanguagePickerPopoverController()
 
@@ -491,13 +497,18 @@ struct ContentView: View {
     ) async throws -> PolishingResult {
         let prompt = try TranslationPrompt.render(text: text, targetLanguage: targetLanguage)
 
-        // Resolve engine: per-model MLX tag vs. cloud provider ID
+        // Resolve engine: per-model MLX tag vs. cloud provider ID. A deleted
+        // custom instance resolves to nil and throws instead of polishing
+        // with an empty configuration.
         let engine: any PolishingEngine
         if let modelID = TranslationModalView.localMLXModelID(from: providerID),
            let model = polishingEngineStore.allModels.first(where: { $0.id == modelID }) {
             engine = polishingEngineStore.engine(forLocalMLXModel: model)
         } else {
-            engine = polishingEngineStore.engine(for: providerID)
+            guard let resolved = polishingEngineStore.engine(for: providerID) else {
+                throw CloudRequestRetryError.emptySuccessfulResponse
+            }
+            engine = resolved
         }
 
         let startedAt = Date()
@@ -545,7 +556,7 @@ struct ContentView: View {
         if transcriptionModelStore.settings.backend == .geminiCloud {
             let google = polishingEngineStore.apiSettings.configuration(for: .google)
             let engine = GeminiCloudDictationEngine(
-                apiKey: google.apiKey,
+                apiKeys: google.sanitizedAPIKeys,
                 modelID: google.textModel
             )
             let result = try await engine.dictate(
@@ -585,6 +596,7 @@ struct ContentView: View {
         outputMode: HotkeyOutputMode?,
         forceTargetLanguage: Bool = false,
         session: TranscriptionEngineSession? = nil,
+        languageSnapshot: HotkeyLanguageSnapshot? = nil,
         humorSnapshot: HumorSessionSnapshot? = nil
     ) {
         Task { @MainActor in
@@ -596,17 +608,29 @@ struct ContentView: View {
                     hotkeyTarget: hotkeyTarget,
                     outputMode: outputMode,
                     forceTargetLanguage: forceTargetLanguage,
+                    languageSnapshot: languageSnapshot,
                     humorSnapshot: humorSnapshot
                 )
                 return
             }
 
+            // ADR-029: the frozen hotkey snapshot (or an idle resolution for
+            // non-hotkey flows) is the only target truth. Main-window flows
+            // (hotkeyTarget == nil) polish like Variant 1 when E is on.
+            let snapshot = languageSnapshot ?? frozenSnapshot(
+                for: hotkeyTarget ?? .note,
+                wantsTarget: HotkeyLanguageSnapshotResolver.userWantsTargetOutput(
+                    for: hotkeyTarget ?? .note,
+                    forceTargetLanguage: persistentHUDForceTargetLanguage || forceTargetLanguage
+                )
+            )
+            let wantsWhisperTarget = sessionWantsWhisperTarget(snapshot)
             let resolution: TranscriptionEngineSessionResolution
-            if let session, session.plan.isWhisperTargetMode == forceTargetLanguage {
+            if let session, session.plan.isWhisperTargetMode == wantsWhisperTarget {
                 resolution = .available(session)
             } else {
                 resolution = makeLocalSession(
-                    forceTargetLanguage: forceTargetLanguage,
+                    forceTargetLanguage: wantsWhisperTarget,
                     hotkeySession: hotkeyTarget != nil
                 )
             }
@@ -641,131 +665,231 @@ struct ContentView: View {
             if let warning = plan.sourceLanguageWarning {
                 sessionWarningMessage = languageWarningMessage(for: warning)
             }
-            let languageCode = plan.requestedLanguageCode
-            let route = plan.route
-            let isRawHotkey = hotkeyTarget == .raw
-            let hudWantsTargetOutput = !isRawHotkey
-                && (persistentHUDForceTargetLanguage || forceTargetLanguage || plan.isWhisperTargetMode)
-            let polishingTargetCode = HUDPolishingTranslation.targetLanguageCode(
-                hudShowsForcedTarget: hudWantsTargetOutput,
-                hudTargetLanguageCode: targetLanguageCode,
-                sessionPostASRTargetLanguageCode: route.postASRTextTranslationTargetLanguageCode
+            SessionLedger.shared.record(
+                sessionID: hotkeyOwnerID.uuidString,
+                event: "transcription.start",
+                fields: [
+                    "model": plan.modelID,
+                    "whisperTarget": "\(plan.isWhisperTargetMode)",
+                    "wantsTarget": "\(snapshot.wantsTarget)",
+                    "targetCode": snapshot.targetCode ?? "none",
+                ]
             )
-            let sessionForceTargetLanguage = polishingTargetCode != nil || route.translateToEnglish
-            let postASRTextTranslationTargetCode = polishingTargetCode
 
             let noteID = await workflow.transcribeRecording(
                 recording,
                 plan: plan
             )
-
-            // Target language display name for any post-ASR text translation.
-            let autoTranslationTargetLanguage = postASRTextTranslationTargetCode.map {
-                TranscriptionLanguageOption.displayName(for: $0)
-            } ?? (sessionForceTargetLanguage ? TranscriptionLanguageOption.displayName(for: languageCode) : nil)
-
-            // Raw + force-target:
-            // - English target: Whisper `task: .translate` already produced English.
-            //   No LLM/MLX (fast path the user expects for E+R).
-            // - Any other target (Spanish, French, …): Whisper cannot output that
-            //   language natively, so we must run a translation pass (translation
-            //   provider / polishing engine) before inserting raw text.
-            if let hotkeyTarget, hotkeyTarget == .raw {
-                if !route.translateToEnglish,
-                   let targetCode = postASRTextTranslationTargetCode,
-                   let rawText = noteStore.note(withID: noteID)?.rawText,
-                   !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    let targetLanguageName = autoTranslationTargetLanguage
-                        ?? TranscriptionLanguageOption.displayName(for: targetCode)
-                    NativeBolabolLog.hotkey.info(
-                        "Raw hotkey non-English target path forceTargetLanguage=true target=\(targetCode, privacy: .public) (LLM translation after ASR)"
-                    )
-                    await autoTranslateRawText(
-                        noteID: noteID,
-                        rawText: rawText,
-                        targetLanguage: targetLanguageName
-                    )
-                } else {
-                    NativeBolabolLog.hotkey.info(
-                        "Raw hotkey path forceTargetLanguage=\(sessionForceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) (legacy route)"
-                    )
-                }
-                selectedVariant = .raw
-                applyHotkeyOutputIfNeeded(for: noteID, target: hotkeyTarget, mode: outputMode)
-                finishHotkeySessionIfNeeded(target: hotkeyTarget)
-                return
-            }
-
-            // E1 / E2 (and non-raw flows): optional LLM translation + polishing.
-            let rawText = noteStore.note(withID: noteID)?.rawText ?? ""
-            let conversionTargetCode = polishingTargetCode ?? languageCode
-            let rawTextLooksForeign = rawTextNeedsTargetLanguageConversion(
-                rawText,
-                targetLanguageCode: conversionTargetCode
+            let transcribedChars = noteStore.note(withID: noteID)?.rawText.trimmingCharacters(in: .whitespacesAndNewlines).count ?? 0
+            SessionLedger.shared.record(
+                sessionID: hotkeyOwnerID.uuidString,
+                event: "transcription.done",
+                fields: ["chars": "\(transcribedChars)"]
             )
-            let needsTranslation = polishingTargetCode != nil
-                && (rawTextLooksForeign || !route.translateToEnglish)
 
-            NativeBolabolLog.hotkey.info(
-                "Transcription routing forceTargetLanguage=\(sessionForceTargetLanguage) translateToEnglish=\(route.translateToEnglish) forcedLanguageCode=\(route.forcedLanguageCode ?? "none", privacy: .public) autoTranslationTarget=\(autoTranslationTargetLanguage ?? "none", privacy: .public) resolvedLanguageCode=\(languageCode, privacy: .public) polishingTarget=\(polishingTargetCode ?? "none", privacy: .public) needsTranslation=\(needsTranslation) rawLooksForeign=\(rawTextLooksForeign)"
-            )
-            // Variant B: only native-translation models (multilingual Whisper)
-            // pre-translate the raw text here. For Parakeet / English-only Whisper
-            // the raw transcript stays in the source language and the translation is
-            // produced by the polishing pass below (the target language is forwarded
-            // to `polish` via `polishingTargetLang`).
-            let needsRawPreTranslation = plan.supportsNativeWhisperTranslation && needsTranslation
-            if needsRawPreTranslation,
-               let targetLanguageName = autoTranslationTargetLanguage,
-               !rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                await autoTranslateRawText(
-                    noteID: noteID,
-                    rawText: rawText,
-                    targetLanguage: targetLanguageName
-                )
-            }
-
+            // ADR-029: Raw + native ASR verifies only, never an LLM; V1/V2
+            // runs polish(target) → verify → provider → source fallback.
+            // Raw is never overwritten by translation.
             if let hotkeyTarget {
                 selectedVariant = hotkeyTarget.processingVariant
             }
-
-            guard polishingEngineStore.canAutoPolishAfterTranscription else {
-                NativeBolabolLog.polishing.info("Skipped automatic polishing because no local polishing model is ready.")
-                // Show the raw transcription tab so the user sees the (potentially
-                // English-translated) text even when no polishing model is active.
-                selectedVariant = hotkeyTarget?.processingVariant ?? .raw
-                if polishingEngineStore.selectedEngineID != PolishingEngineStore.disabledEngineID {
-                    markPolishingUnavailable(for: noteID)
-                }
-                applyHotkeyOutputIfNeeded(for: noteID, target: hotkeyTarget, mode: outputMode)
-                finishHotkeySessionIfNeeded(target: hotkeyTarget)
-                return
+            let polishVariants = hotkeyTarget?.requestedPolishingVariants ?? [.variantOne, .variantTwo]
+            if hotkeyTarget == .raw {
+                selectedVariant = .raw
+            } else if hotkeyTarget == nil {
+                selectedVariant = polishVariants.first ?? .variantOne
             }
-
-            let requestedVariants = hotkeyTarget?.requestedPolishingVariants ?? [.variantOne, .variantTwo]
-            selectedVariant = hotkeyTarget?.processingVariant ?? requestedVariants.first ?? .variantOne
-            let polishingTargetLang = polishingTargetCode
-            NativeBolabolLog.polishing.info(
-                "Polishing with targetLanguage=\(polishingTargetLang ?? "none", privacy: .public) variants=\(requestedVariants.map(\.rawValue).joined(separator: ","), privacy: .public)"
-            )
-            await polish(
-                noteID,
-                variants: requestedVariants,
-                targetLanguage: polishingTargetLang,
+            let resolved = await polishAndResolveOutput(
+                noteID: noteID,
+                hotkeyTarget: hotkeyTarget,
+                snapshot: snapshot,
+                polishVariants: hotkeyTarget == .raw ? [] : polishVariants,
                 humorSnapshot: humorSnapshot
             )
             selectedVariant = hotkeyTarget?.processingVariant ?? selectedVariant
-            applyHotkeyOutputIfNeeded(for: noteID, target: hotkeyTarget, mode: outputMode)
-            finishHotkeySessionIfNeeded(target: hotkeyTarget)
+            applyHotkeyOutputIfNeeded(for: noteID, target: hotkeyTarget, mode: outputMode, dispatchText: resolved.dispatchText)
+            finishHotkeySessionIfNeeded(target: hotkeyTarget, fallbackSignalled: resolved.fallbackSignalled)
         }
+    }
+
+    /// ADR-029/Q3a/Q4d/Q5a: polishes (when requested) then resolves the single
+    /// verified output. Returns the exact dispatch text and whether the source
+    /// fallback signal (Funk cue + badge) is required. Never rewrites Raw.
+    private func polishAndResolveOutput(
+        noteID: BolabolNote.ID,
+        hotkeyTarget: HotkeyTarget?,
+        snapshot: HotkeyLanguageSnapshot,
+        polishVariants: [ProcessingVariant],
+        humorSnapshot: HumorSessionSnapshot?
+    ) async -> (dispatchText: String?, fallbackSignalled: Bool) {
+        // Q5a: one clock for the whole output-language chain — polish first
+        // pass included. No new key, strict retry, or provider call starts at
+        // or after the hard cap; the pipeline aborts to the signalled source
+        // fallback instead.
+        let chainStartedAt = Date()
+        let chainBudget = CloudKeyFailover.TimeBudget.default
+        let chainDeadline = chainStartedAt.addingTimeInterval(chainBudget.hardCapSeconds)
+        let languages = generalSettingsStore.speechLanguages
+        let rawText = noteStore.note(withID: noteID)?.rawText ?? ""
+
+        if !polishVariants.isEmpty {
+            if polishingEngineStore.canAutoPolishAfterTranscription {
+                let polishingTarget = snapshot.wantsTarget && snapshot.mechanism == .polishing
+                    ? snapshot.targetCode
+                    : nil
+                NativeBolabolLog.polishing.info(
+                    "Polishing with targetLanguage=\(polishingTarget ?? "none", privacy: .public) variants=\(polishVariants.map(\.rawValue).joined(separator: ","), privacy: .public)"
+                )
+                let polishStarted = Date()
+                do {
+                    // Q5a: cancel in-flight polish at the chain cap instead of
+                    // letting key chains run past it.
+                    try await CloudKeyFailover.withTimeout(seconds: chainDeadline.timeIntervalSinceNow) { [self] in
+                        await self.polish(
+                            noteID,
+                            variants: polishVariants,
+                            targetLanguage: polishingTarget,
+                            primaryLanguageCode: languages.primaryLanguageCode,
+                            additionalLanguageCode: languages.additionalLanguageCode,
+                            humorSnapshot: humorSnapshot,
+                            deadline: chainDeadline
+                        )
+                    }
+                } catch {
+                    // Polish blew the chain cap: mark requested variants failed
+                    // so the pipeline falls back with a signal — but never
+                    // downgrade a variant that already holds polished text
+                    // (Q5a: strict retry cancelled after the first pass kept
+                    // it as completed; the pipeline must insert it, not Raw).
+                    for variant in polishVariants where variant != .raw {
+                        if let note = noteStore.note(withID: noteID),
+                           note.polishingStatus(for: variant).phase == .completed {
+                            let stored: String
+                            switch variant {
+                            case .raw: stored = note.rawText
+                            case .variantOne: stored = note.polishedVariantOne
+                            case .variantTwo: stored = note.polishedVariantTwo
+                            }
+                            if !stored.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                continue
+                            }
+                        }
+                        noteStore.markPolishingFailed(
+                            for: noteID,
+                            variant: variant,
+                            message: CloudKeyFailover.TimeoutError().localizedDescription,
+                            backendName: polishingEngineStore.activeEngine.displayName
+                        )
+                    }
+                }
+                SessionLedger.shared.record(
+                    sessionID: hotkeyOwnerID.uuidString,
+                    event: "polish",
+                    fields: [
+                        "variants": polishVariants.map(\.rawValue).joined(separator: ","),
+                        "engine": polishingEngineStore.activeEngine.displayName,
+                        "target": polishingTarget ?? "none",
+                        "ms": "\(Int(Date().timeIntervalSince(polishStarted) * 1000))",
+                    ]
+                )
+            } else {
+                NativeBolabolLog.polishing.info("Skipped automatic polishing because no local polishing model is ready.")
+                if polishingEngineStore.selectedEngineID != PolishingEngineStore.disabledEngineID {
+                    markPolishingUnavailable(for: noteID)
+                }
+            }
+        }
+
+        guard snapshot.wantsTarget, let targetCode = snapshot.targetCode else {
+            // Auto mode: no language claim, no badge. Requested slot wins;
+            // an empty polish slot dispatches Raw so nothing is lost.
+            if let hotkeyTarget {
+                let slot = HotkeyOutputTextResolver.text(
+                    from: noteStore.note(withID: noteID) ?? BolabolNote(title: "", rawText: rawText),
+                    target: hotkeyTarget
+                )
+                let text = slot.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? rawText : slot
+                return (text, false)
+            }
+            return (nil, false)
+        }
+
+        let variant = (hotkeyTarget ?? .note).processingVariant
+        let note = noteStore.note(withID: noteID)
+        let polishedText: String? = {
+            switch variant {
+            case .raw: return nil
+            case .variantOne: return note?.polishedVariantOne
+            case .variantTwo: return note?.polishedVariantTwo
+            }
+        }()
+        let polishSucceeded: Bool = {
+            guard let note else { return false }
+            if note.polishingStatus(for: variant).phase == .completed {
+                return !(polishedText?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+            }
+            return false
+        }()
+        let context = TargetLanguageOutputPipeline.Context(
+            snapshot: snapshot,
+            requestedVariant: variant,
+            primaryCode: languages.primaryLanguageCode,
+            additionalCode: languages.additionalLanguageCode,
+            budget: chainBudget,
+            startedAt: chainStartedAt
+        )
+        let outcome = await TargetLanguageOutputPipeline.run(
+            rawText: rawText,
+            polishText: polishSucceeded ? polishedText : nil,
+            polishSucceeded: polishSucceeded,
+            context: context,
+            polish: nil,
+            translate: { [self] text, target in
+                try await self.translateForPipeline(
+                    text: text,
+                    targetCode: target,
+                    translationSeconds: chainBudget.translationSeconds,
+                    deadline: chainDeadline
+                )
+            }
+        )
+        let translated = outcome.kind != .sourceFallback
+        SessionLedger.shared.record(
+            sessionID: hotkeyOwnerID.uuidString,
+            event: "lang.verify",
+            fields: [
+                "target": targetCode,
+                "verified": outcome.verifiedCode ?? "none",
+                "kind": outcome.kind.rawValue,
+                "via": outcome.via ?? "none",
+                "reason": outcome.reason ?? "none",
+            ]
+        )
+        SessionLedger.shared.record(
+            sessionID: hotkeyOwnerID.uuidString,
+            event: "output.dispatch",
+            fields: ["chars": "\(outcome.text.count)", "kind": outcome.kind.rawValue]
+        )
+        noteStore.setOutputLanguage(
+            for: noteID,
+            record: NoteOutputLanguage(
+                targetCode: targetCode,
+                verifiedCode: outcome.verifiedCode,
+                translated: translated,
+                reason: translated ? nil : outcome.reason
+            )
+        )
+        // A provider win is the delivered output: persist it on the variant.
+        if outcome.kind == .translated, outcome.via == "translation-provider", variant != .raw {
+            noteStore.updateText(for: noteID, variant: variant, text: outcome.text)
+        }
+        return (outcome.text, !translated)
     }
 
     private func polishNote(_ noteID: BolabolNote.ID) {
         selectedVariant = .variantOne
-        let target = HUDPolishingTranslation.targetLanguageCode(
-            hudShowsForcedTarget: persistentHUDForceTargetLanguage,
-            hudTargetLanguageCode: targetLanguageCode
-        )
+        // Manual polish action: E on → explicit target override, else source.
+        let target = persistentHUDForceTargetLanguage ? targetLanguageCode : nil
         Task { @MainActor in
             await polish(noteID, targetLanguage: target)
         }
@@ -775,7 +899,10 @@ struct ContentView: View {
         _ noteID: BolabolNote.ID,
         variants: [ProcessingVariant] = [.variantOne, .variantTwo],
         targetLanguage: String? = nil,
-        humorSnapshot: HumorSessionSnapshot? = nil
+        primaryLanguageCode: String? = nil,
+        additionalLanguageCode: String? = nil,
+        humorSnapshot: HumorSessionSnapshot? = nil,
+        deadline: Date? = nil
     ) async {
         let settings = hotkeySettingsStore.settings
         let workflow = PolishingWorkflow.make(
@@ -794,7 +921,14 @@ struct ContentView: View {
             humorLevel: humorSnapshot?.level ?? settings.humorLevel,
             humorPromptMode: humorSnapshot?.promptMode ?? settings.humorPromptMode
         )
-        let results = await workflow.polishNote(noteID, variants: variants, targetLanguage: targetLanguage)
+        let results = await workflow.polishNote(
+            noteID,
+            variants: variants,
+            targetLanguage: targetLanguage,
+            primaryLanguageCode: primaryLanguageCode,
+            additionalLanguageCode: additionalLanguageCode,
+            deadline: deadline
+        )
         for result in results.values {
             usageStatisticsStore.record(
                 modelID: result.diagnostics.backendName,
@@ -804,67 +938,84 @@ struct ContentView: View {
         }
     }
 
-    /// Translates raw transcription into the requested target language through
-    /// the active polishing engine after transcription.
-    private func autoTranslateRawText(
-        noteID: BolabolNote.ID,
-        rawText: String,
-        targetLanguage: String
-    ) async {
+    /// ADR-029: translation-provider step for the output pipeline. Translates
+    /// the polished text (else Raw) and returns it — never writes to the note.
+    /// Raw is never overwritten by translation. Q5a: the step shares
+    /// `translationSeconds` and the chain-cap deadline. Throws when no
+    /// provider is available, the provider errors, or it returns empty text.
+    private func translateForPipeline(
+        text: String,
+        targetCode: String,
+        translationSeconds: TimeInterval,
+        deadline: Date
+    ) async throws -> String {
         // Resolve the translation engine the same way the in-app Translation
         // modal does: prefer the user-selected translation provider (which may be
         // a local MLX model tagged "local-mlx:<modelID>"), and only fall back to
         // the active polishing engine when no translation provider is configured.
-        // This keeps HUD auto-translation working even when the active polishing
-        // engine (e.g. a cloud provider with a missing API key) is unavailable.
         let engine: any PolishingEngine
         if let resolved = resolveTranslationEngine(providerID: translationProviderID) {
             engine = resolved
         } else if polishingEngineStore.canAutoPolishAfterTranscription {
             engine = polishingEngineStore.activeEngine
         } else {
-            NativeBolabolLog.polishing.info(
-                "Skipped auto-translation — no translation provider or polishing engine available."
-            )
-            return
+            throw CloudRequestRetryError.emptySuccessfulResponse
         }
 
-        do {
-            let prompt = try TranslationPrompt.render(
-                text: rawText,
-                targetLanguage: targetLanguage
+        let targetLanguage = TranscriptionLanguageOption.displayName(for: targetCode)
+        let startedAt = Date()
+        let prompt = try TranslationPrompt.render(text: text, targetLanguage: targetLanguage)
+        let translationRequest = PolishingRequest(
+            rawText: prompt,
+            variant: .variantOne,
+            template: PromptTemplate(
+                id: "pipeline-translation-pass-through",
+                title: "Pipeline Translation",
+                body: PromptTemplate.transcriptionPlaceholder
             )
-            let result = try await engine.polish(
-                PolishingRequest(
-                    rawText: prompt,
-                    variant: .variantOne,
-                    template: PromptTemplate(
-                        id: "auto-translation-pass-through",
-                        title: "Auto Translation",
-                        body: PromptTemplate.transcriptionPlaceholder
-                    )
-                )
+        )
+        // Q5a: the provider step (including its key failover) shares the
+        // translation budget and never starts a new key at or after the
+        // chain-cap deadline. Other engines are bounded by the pipeline's
+        // timeout race around this call.
+        let result: PolishingResult
+        if let cloud = engine as? CloudTextPolishingEngine {
+            let keyChainSeconds = min(translationSeconds, max(0, deadline.timeIntervalSinceNow))
+            guard keyChainSeconds > 0 else { throw CloudRequestRetryError.emptySuccessfulResponse }
+            result = try await cloud.polish(
+                translationRequest,
+                keyChainSeconds: keyChainSeconds,
+                deadline: deadline
             )
-
-            let translatedText = glossaryStore.apply(
-                to: result.text,
-                target: .translation,
-                language: targetLanguage
-            ).text
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !translatedText.isEmpty else { return }
-
-            noteStore.updateRawText(for: noteID, text: translatedText)
-            usageStatisticsStore.record(
-                modelID: result.diagnostics.backendName,
-                modelName: result.diagnostics.backendName,
-                diagnostics: result.diagnostics
-            )
-        } catch {
-            NativeBolabolLog.polishing.error(
-                "Auto-translation failed: \(error.localizedDescription, privacy: .public)"
-            )
+        } else {
+            result = try await engine.polish(translationRequest)
         }
+        let translatedText = glossaryStore.apply(
+            to: result.text,
+            target: .translation,
+            language: targetLanguage
+        ).text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        SessionLedger.shared.record(
+            sessionID: hotkeyOwnerID.uuidString,
+            event: "polish",
+            fields: [
+                "variants": "translation-provider",
+                "engine": result.diagnostics.backendName,
+                "target": targetCode,
+                "ms": "\(Int(Date().timeIntervalSince(startedAt) * 1000))",
+                "chars": "\(translatedText.count)",
+            ]
+        )
+        usageStatisticsStore.record(
+            modelID: result.diagnostics.backendName,
+            modelName: result.diagnostics.backendName,
+            diagnostics: result.diagnostics
+        )
+        guard !translatedText.isEmpty else {
+            throw CloudRequestRetryError.emptySuccessfulResponse
+        }
+        return translatedText
     }
 
     /// Resolves the polishing engine to use for translation from a translation
@@ -996,13 +1147,33 @@ struct ContentView: View {
             pendingHotkeySourcePID = sourceApplication?.processIdentifier
             pendingHotkeyFocusedElement = AccessibilityPermissionService.focusedElement()
             let resolvedTarget = settings.target
-            let requestedForceTargetLanguage = effectiveHUDForceTargetLanguage
+            // ADR-029: freeze the target snapshot once, before any audio.
+            // Only explicit HUD actions during this recording replace it.
+            let frozen = frozenSnapshot(
+                for: resolvedTarget,
+                wantsTarget: HotkeyLanguageSnapshotResolver.userWantsTargetOutput(
+                    for: resolvedTarget,
+                    forceTargetLanguage: persistentHUDForceTargetLanguage
+                )
+            )
+            SessionLedger.shared.record(
+                sessionID: hotkeyOwnerID.uuidString,
+                event: "hotkey.press",
+                fields: [
+                    "target": resolvedTarget.rawValue,
+                    "wantsTarget": "\(frozen.wantsTarget)",
+                    "targetCode": frozen.targetCode ?? "none",
+                    "mechanism": frozen.mechanism.rawValue,
+                    "backend": isGeminiCloudBackend ? "geminiCloud" : (transcriptionModelStore.activeModel?.backend.rawValue ?? "none"),
+                    "model": transcriptionModelStore.activeModel?.id ?? "none",
+                ]
+            )
             let session: TranscriptionEngineSession?
             if transcriptionModelStore.settings.backend == .geminiCloud {
                 session = nil
             } else {
                 let resolution = makeLocalSession(
-                    forceTargetLanguage: requestedForceTargetLanguage,
+                    forceTargetLanguage: sessionWantsWhisperTarget(frozen),
                     hotkeySession: true
                 )
                 guard case .available(let resolvedSession) = resolution else {
@@ -1011,12 +1182,28 @@ struct ContentView: View {
                         NativeBolabolLog.hotkey.error(
                             "Hotkey session unavailable reason=\(reason.localizedDescription, privacy: .public)"
                         )
+                        SessionLedger.shared.record(
+                            sessionID: hotkeyOwnerID.uuidString,
+                            event: "session.resolve",
+                            fields: ["available": "false", "reason": String(describing: reason)]
+                        )
                     }
                     HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
                     pendingHotkeyHumorSession = nil
+                    pendingHotkeySnapshot = nil
                     return
                 }
                 session = resolvedSession
+                SessionLedger.shared.record(
+                    sessionID: hotkeyOwnerID.uuidString,
+                    event: "session.resolve",
+                    fields: [
+                        "available": "true",
+                        "model": resolvedSession.plan.modelID,
+                        "backend": resolvedSession.plan.backend.rawValue,
+                        "whisperTarget": "\(resolvedSession.plan.isWhisperTargetMode)",
+                    ]
+                )
             }
 
             if let warning = session?.plan.sourceLanguageWarning {
@@ -1024,12 +1211,10 @@ struct ContentView: View {
             }
 
             let languageControlEnabled = isHUDLanguageControlEnabled(for: resolvedTarget)
-            let forceTargetLanguage = requestedForceTargetLanguage
-                || session?.plan.isWhisperTargetMode == true
             pendingHotkeySession = session
+            pendingHotkeySnapshot = frozen
             pendingHotkeyTarget = resolvedTarget
             pendingHotkeyOutputMode = settings.mode
-            pendingHotkeyForceTargetLanguage = forceTargetLanguage
             pendingHotkeyHumorSession = makeHotkeyHumorSessionState(
                 for: resolvedTarget,
                 settings: settings
@@ -1038,7 +1223,12 @@ struct ContentView: View {
                 polishingEngineStore.ensurePolishingEnabledForWidgetTarget()
             }
             NativeBolabolLog.hotkey.info(
-                "Started hotkey recording activeTargetLang=\(forceTargetLanguage) languageControlEnabled=\(languageControlEnabled) target=\(settings.target.rawValue, privacy: .public) mode=\(settings.mode.rawValue, privacy: .public) sourcePID=\(sourceApplication?.processIdentifier ?? -1, privacy: .public) sourceBundle=\(sourceApplication?.bundleIdentifier ?? "unknown", privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
+                "Started hotkey recording wantsTarget=\(frozen.wantsTarget) targetCode=\(frozen.targetCode ?? "none", privacy: .public) mechanism=\(frozen.mechanism.rawValue, privacy: .public) languageControlEnabled=\(languageControlEnabled) target=\(settings.target.rawValue, privacy: .public) mode=\(settings.mode.rawValue, privacy: .public) sourcePID=\(sourceApplication?.processIdentifier ?? -1, privacy: .public) sourceBundle=\(sourceApplication?.bundleIdentifier ?? "unknown", privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
+            )
+            SessionLedger.shared.record(
+                sessionID: hotkeyOwnerID.uuidString,
+                event: "recorder.start",
+                fields: ["target": resolvedTarget.rawValue]
             )
             await audioRecorder.start()
 
@@ -1079,7 +1269,7 @@ struct ContentView: View {
                 pendingHotkeyTarget = nil
                 pendingHotkeyOutputMode = nil
                 pendingHotkeySession = nil
-                pendingHotkeyForceTargetLanguage = false
+                pendingHotkeySnapshot = nil
                 pendingHotkeyHumorSession = nil
                 hotkeySessionOverlayManager.hide()
                 HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
@@ -1128,20 +1318,34 @@ struct ContentView: View {
             )
             let mode = pendingHotkeyOutputMode ?? settings.mode
             let session = pendingHotkeySession
-            let forceTargetValue = effectiveHUDForceTargetLanguage
+            // ADR-029: stop hands the frozen snapshot unchanged to the
+            // pipeline. No re-derivation from ambient state here.
+            let snapshot = pendingHotkeySnapshot ?? frozenSnapshot(
+                for: target,
+                wantsTarget: HotkeyLanguageSnapshotResolver.userWantsTargetOutput(
+                    for: target,
+                    forceTargetLanguage: persistentHUDForceTargetLanguage
+                )
+            )
             pendingHotkeyTarget = nil
             pendingHotkeyOutputMode = nil
             pendingHotkeySession = nil
-            pendingHotkeyForceTargetLanguage = forceTargetValue
+            pendingHotkeySnapshot = nil
             NativeBolabolLog.hotkey.info(
-                "Stopped hotkey recording target=\(target.rawValue, privacy: .public) mode=\(mode.rawValue, privacy: .public) forceTargetLanguage=\(forceTargetValue) capturedSourcePID=\(pendingHotkeySourcePID ?? -1, privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
+                "Stopped hotkey recording target=\(target.rawValue, privacy: .public) mode=\(mode.rawValue, privacy: .public) wantsTarget=\(snapshot.wantsTarget) targetCode=\(snapshot.targetCode ?? "none", privacy: .public) mechanism=\(snapshot.mechanism.rawValue, privacy: .public) capturedSourcePID=\(pendingHotkeySourcePID ?? -1, privacy: .public) hasFocusedElement=\(pendingHotkeyFocusedElement != nil, privacy: .public)"
+            )
+            SessionLedger.shared.record(
+                sessionID: hotkeyOwnerID.uuidString,
+                event: "recorder.stop",
+                fields: ["target": target.rawValue, "wantsTarget": "\(snapshot.wantsTarget)"]
             )
             transcribeRecording(
                 recording,
                 hotkeyTarget: target,
                 outputMode: mode,
-                forceTargetLanguage: forceTargetValue,
+                forceTargetLanguage: snapshot.wantsTarget,
                 session: session,
+                languageSnapshot: snapshot,
                 humorSnapshot: humorSnapshot
             )
         }
@@ -1158,11 +1362,14 @@ struct ContentView: View {
     private func applyHotkeyOutputIfNeeded(
         for noteID: BolabolNote.ID,
         target: HotkeyTarget?,
-        mode: HotkeyOutputMode?
+        mode: HotkeyOutputMode?,
+        dispatchText: String? = nil
     ) {
         guard let mode, let target, let note = noteStore.note(withID: noteID) else { return }
 
-        let text = HotkeyOutputTextResolver.text(from: note, target: target)
+        // ADR-029: the verified pipeline outcome wins. The strict resolver
+        // (no silent fallback) is the Auto-mode backstop only.
+        let text = dispatchText ?? HotkeyOutputTextResolver.text(from: note, target: target)
         let targetApplication = pendingHotkeySourcePID.flatMap(NSRunningApplication.init(processIdentifier:))
         NativeBolabolLog.hotkey.info(
             "Resolved hotkey output target=\(target.rawValue, privacy: .public) mode=\(mode.rawValue, privacy: .public) textLength=\(text.trimmingCharacters(in: .whitespacesAndNewlines).count, privacy: .public) sourcePID=\(pendingHotkeySourcePID ?? -1, privacy: .public) sourceBundle=\(targetApplication?.bundleIdentifier ?? "unknown", privacy: .public)"
@@ -1177,10 +1384,28 @@ struct ContentView: View {
         pendingHotkeyFocusedElement = nil
     }
 
-    private func finishHotkeySessionIfNeeded(target: HotkeyTarget?) {
+    /// ADR-029/Q4d: a source fallback plays the distinct Funk cue (plus the
+    /// persistent note badge) and flashes the HUD amber for ~600 ms before it
+    /// hides; success hides immediately with the normal finish cue.
+    private func finishHotkeySessionIfNeeded(target: HotkeyTarget?, fallbackSignalled: Bool = false) {
         languagePickerController.invalidateForFinishedHotkeySession()
-        hotkeySessionOverlayManager.playCue(.finish, settings: generalSettingsStore.settings.overlay)
-        hotkeySessionOverlayManager.hide()
+        hotkeySessionOverlayManager.playCue(
+            fallbackSignalled ? .fallback : .finish,
+            settings: generalSettingsStore.settings.overlay
+        )
+        SessionLedger.shared.record(
+            sessionID: hotkeyOwnerID.uuidString,
+            event: "finish",
+            fields: [
+                "cue": fallbackSignalled ? "Funk" : "Bottle",
+                "reason": fallbackSignalled ? "source-fallback" : "completed",
+            ]
+        )
+        if fallbackSignalled {
+            hotkeySessionOverlayManager.flashSourceFallbackTintThenHide()
+        } else {
+            hotkeySessionOverlayManager.hide()
+        }
         providerQuickSwitcher.hide()
         pendingHotkeyHumorSession = nil
         HotkeySessionCoordinator.shared.finish(ownerID: hotkeyOwnerID)
@@ -1233,8 +1458,8 @@ struct ContentView: View {
     private static func applyQuickSwitchProvider(providerID: String, store: PolishingEngineStore) {
         if providerID == PolishingEngineStore.mlxSwiftEngineID {
             store.selectedEngineID = PolishingEngineStore.mlxSwiftEngineID
-        } else if let kind = APIProviderKind(polishingEngineID: providerID) {
-            store.selectAPIProvider(kind)
+        } else {
+            store.selectAPIProvider(engineID: providerID)
         }
     }
 
@@ -1283,24 +1508,24 @@ struct ContentView: View {
             return
         }
 
-        guard let kind = APIProviderKind(polishingEngineID: providerID) else { return }
         let optionsProvider = PolishingModelOptionsProvider(apiSettings: store.apiSettings)
+        guard optionsProvider.configurationForEngineID(providerID) != nil else { return }
         let options = optionsProvider.providerModelOptions(
-            for: kind,
-            favorites: FavoriteModelsStore.loadFavorites()
+            forEngineID: providerID,
+            favorites: FavoriteModelsStore.loadFavorites(engineID: providerID)
         )
-        guard !options.isEmpty else { return }
 
-        let currentModel = store.apiSettings.configuration(for: kind).textModel
+        let currentModel = store.apiSettings.configuration(forEngineID: providerID)?.textModel ?? ""
         let menu = NSMenu()
         menu.autoenablesItems = false
         var targets: [QuickSwitcherMenuTarget] = []
         for option in options {
             let target = QuickSwitcherMenuTarget {
-                var config = store.apiSettings.configuration(for: kind)
-                config.textModel = option.id
-                store.updateAPIConfiguration(config, for: kind)
-                store.selectAPIProvider(kind)
+                if var config = store.apiSettings.configuration(forEngineID: providerID) {
+                    config.textModel = option.id
+                    _ = store.updateAPIConfiguration(config, forEngineID: providerID)
+                }
+                store.selectAPIProvider(engineID: providerID)
                 switcher.hide()
             }
             targets.append(target)
@@ -1335,13 +1560,15 @@ struct ContentView: View {
         return backend == .canaryCoreML || backend == .gigaAMCoreML
     }
 
+    /// ADR-029: capability-truthful backend. Gemini cloud dictation has no
+    /// local backend — callers branch on `settings.backend == .geminiCloud`
+    /// instead of receiving a fake Whisper backend here.
     private var hudLanguageBackend: TranscriptionModelDescriptor.Backend? {
         if let pendingBackend = pendingHotkeySession?.plan.backend {
             return pendingBackend
         }
         if transcriptionModelStore.settings.backend == .geminiCloud {
-            // Cloud mode can retain a stale local activeModel for settings UI.
-            return .whisperKitCoreML
+            return nil
         }
         return transcriptionModelStore.activeModel?.backend
     }
@@ -1360,7 +1587,7 @@ struct ContentView: View {
                 modelStore: transcriptionModelStore,
                 operation: .asr,
                 sourceLanguageOverride: transcriptionModelStore.activeModel?.backend == .canaryCoreML
-                    ? (sourceLanguageOverride ?? hudTargetLanguageOverride)
+                    ? (sourceLanguageOverride ?? canarySourceOverride)
                     : nil
             )
         }
@@ -1376,6 +1603,34 @@ struct ContentView: View {
             operation: operation,
             legacyLanguageCode: legacyLanguageCode
         )
+    }
+    private var isGeminiCloudBackend: Bool {
+        transcriptionModelStore.settings.backend == .geminiCloud
+    }
+
+    /// ADR-029: the one resolver for idle HUD and session freeze.
+    /// Capability-truthful: Raw+E only for native ASR translation, V1/V2+E
+    /// only when the polishing engine can translate.
+    private func frozenSnapshot(for target: HotkeyTarget, wantsTarget: Bool) -> HotkeyLanguageSnapshot {
+        HotkeyLanguageSnapshotResolver.resolve(
+            hotkeyTarget: target,
+            wantsTargetOutput: wantsTarget,
+            requestedTargetCode: targetLanguageCode,
+            backend: hudLanguageBackend,
+            modelSupportsNativeTranslation: activeModelSupportsNativeTranslation,
+            isGeminiCloud: isGeminiCloudBackend,
+            polishingCanTranslate: polishingEngineStore.isActiveEngineTranslationCapable
+        )
+    }
+
+    /// Whisper native-target sessions exist only for native-ASR snapshots
+    /// (multilingual full/medium/small → English). Every other target intent
+    /// stays `.asr`; the polishing pipeline owns the output language.
+    private func sessionWantsWhisperTarget(_ snapshot: HotkeyLanguageSnapshot) -> Bool {
+        snapshot.wantsTarget
+            && snapshot.mechanism == .nativeASR
+            && snapshot.targetCode?.lowercased() == "en"
+            && !isGeminiCloudBackend
     }
 
     private func localizedSessionError(
@@ -1431,56 +1686,12 @@ struct ContentView: View {
     /// The transient HUD choice takes precedence over configured language fallbacks.
     private var targetLanguageCode: String {
         HUDPolishingTranslation.resolvedHUDTargetLanguageCode(
-            override: hudTargetLanguageOverride,
+            override: hudTargetOverride,
             speechLanguages: generalSettingsStore.speechLanguages,
             glossaryAutoLanguage: glossaryStore.settings.autoTranslationLanguage
         )
     }
 
-    private func normalizeLanguageCode(_ value: String) -> String {
-        let code = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if code.isEmpty || code == "auto" {
-            return "en"
-        }
-        if code.hasPrefix("en") || code == "english" {
-            return "en"
-        }
-        if let option = TranscriptionLanguageOption.builtIn.first(where: {
-            $0.displayName.lowercased() == code || $0.code == code
-        }) {
-            return option.code
-        }
-        return code
-    }
-
-    /// Heuristic: after Whisper, does the raw transcript still look like it is
-    /// not in the requested target language? Used to trigger an LLM fallback
-    /// for ER (target language + Raw) when native Whisper translate fails.
-    private func rawTextNeedsTargetLanguageConversion(
-        _ text: String,
-        targetLanguageCode: String
-    ) -> Bool {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return false }
-
-        let target = normalizeLanguageCode(targetLanguageCode)
-        let hasCyrillic = trimmed.range(of: "\\p{Cyrillic}", options: .regularExpression) != nil
-        let hasLatin = trimmed.range(of: "[A-Za-z]", options: .regularExpression) != nil
-
-        if target == "en" || target.hasPrefix("en") {
-            // English target: any substantial Cyrillic means conversion failed.
-            return hasCyrillic
-        }
-
-        if target == "ru" || target == "uk" || target == "bg" || target == "sr" {
-            // Cyrillic target: Latin-only text likely still needs conversion.
-            return hasLatin && !hasCyrillic
-        }
-
-        // Other targets: if the spoken language left Cyrillic and the target is
-        // not Cyrillic, conversion is still needed.
-        return hasCyrillic
-    }
 
     /// Compact HUD letter for the configured target language
     /// (English → E, Spanish → S, French → F, Chinese → C, …).
@@ -1489,13 +1700,11 @@ struct ContentView: View {
     }
 
     /// Whether the active transcription model can translate speech natively.
-    /// Only multilingual Whisper supports this (WhisperKit `task: .translate`,
-    /// X→English). Parakeet and English-only Whisper cannot translate natively;
-    /// for them translation happens during the polishing pass instead.
+    /// ADR-029: only full/medium/small multilingual Whisper (X→English).
+    /// Turbo is excluded (returns the source language); Parakeet, English-only
+    /// Whisper, Canary, and GigaAM cannot translate natively.
     private var activeModelSupportsNativeTranslation: Bool {
-        guard let activeModel = transcriptionModelStore.activeModel else { return false }
-        return activeModel.backend == .whisperKitCoreML
-            && activeModel.languageSupport == .multilingual
+        transcriptionModelStore.activeModel?.supportsNativeTranslationToEnglish ?? false
     }
 
     /// The processing target currently reflected by the HUD (R / 1 / 2).
@@ -1521,59 +1730,84 @@ struct ContentView: View {
             if activeModelSupportsNativeTranslation {
                 return true
             }
-            if isExplicitCoreMLBackend {
-                guard case .available(let session) = makeLocalSession(
-                    forceTargetLanguage: false,
-                    hotkeySession: false
-                ) else {
-                    return false
-                }
-                return session.plan.languageControlEnabled
+            // ADR-029: no session construction in HUD computed properties.
+            // Canary offers a source switcher iff it has >1 verified source.
+            if transcriptionModelStore.activeModel?.backend == .canaryCoreML {
+                return idleCanarySourceChoices.count > 1
             }
             return false
         }
         return polishingEngineStore.isActiveEngineTranslationCapable
     }
 
-    private var effectiveHUDForceTargetLanguage: Bool {
-        currentHUDTarget != .raw && persistentHUDForceTargetLanguage
+    /// Verified Canary source choices from capabilities + the speech pair —
+    /// the same policy the session resolver uses, without building a session.
+    private var idleCanarySourceChoices: [String] {
+        let languages = generalSettingsStore.speechLanguages
+        return HUDLanguageMenuPolicy.canarySourceCodes(
+            primary: languages.primaryLanguageCode,
+            additional: languages.additionalLanguageCode,
+            supportedCodes: transcriptionModelStore.activeModel?.capabilities.explicitSupportedLanguageCodes ?? []
+        )
     }
 
+    private var effectiveHUDForceTargetLanguage: Bool {
+        HotkeyLanguageSnapshotResolver.userWantsTargetOutput(
+            for: currentHUDTarget,
+            forceTargetLanguage: persistentHUDForceTargetLanguage
+        )
+    }
+
+    /// ADR-029: idle HUD uses the same resolver as the session freeze, and a
+    /// recording HUD reflects the frozen snapshot — never ambient state, and
+    /// no session is constructed here. The letter is active only when the
+    /// snapshot is capability-truthful (Raw+E native-only; V1/V2+E iff the
+    /// polishing engine can translate).
     private var effectiveHUDLanguageMode: TranscriptionLanguageMode {
-        if currentHUDTarget != .raw && persistentHUDForceTargetLanguage {
-            return .target
+        if audioRecorder.isRecording, let snapshot = pendingHotkeySnapshot {
+            if snapshot.wantsTarget {
+                return .target
+            }
+            return pendingHotkeySession?.plan.languageMode ?? .auto
         }
         if let sessionPlan = pendingHotkeySession?.plan {
             return sessionPlan.languageMode
         }
+        let idle = frozenSnapshot(for: currentHUDTarget, wantsTarget: effectiveHUDForceTargetLanguage)
+        if idle.wantsTarget {
+            return .target
+        }
+        if transcriptionModelStore.activeModel?.backend == .canaryCoreML {
+            return idleCanarySourceChoices.count > 1 ? .switchable : .fixed
+        }
         if isExplicitCoreMLBackend {
-            if case .available(let session) = makeLocalSession(
-                forceTargetLanguage: false,
-                hotkeySession: false
-            ) {
-                return session.plan.languageMode
-            }
             return .switchable
         }
-        return persistentHUDForceTargetLanguage ? .target : .auto
+        return .auto
     }
 
     private var effectiveHUDLanguageLabel: String {
-        if currentHUDTarget != .raw && persistentHUDForceTargetLanguage {
-            return autoTranslationLanguageLabel
+        if audioRecorder.isRecording, let snapshot = pendingHotkeySnapshot {
+            if snapshot.wantsTarget {
+                return snapshot.hudLetter
+            }
+            return pendingHotkeySession?.plan.hudLanguageLabel ?? snapshot.hudLetter
         }
         if let sessionPlan = pendingHotkeySession?.plan {
             return sessionPlan.hudLanguageLabel
         }
-        if isExplicitCoreMLBackend {
-            if case .available(let session) = makeLocalSession(
-                forceTargetLanguage: false,
-                hotkeySession: false
-            ) {
-                return session.plan.hudLanguageLabel
-            }
+        let idle = frozenSnapshot(for: currentHUDTarget, wantsTarget: effectiveHUDForceTargetLanguage)
+        if idle.wantsTarget {
+            return idle.hudLetter
+        }
+        if transcriptionModelStore.activeModel?.backend == .canaryCoreML {
             let languages = generalSettingsStore.speechLanguages
-            let sourceCode = hudTargetLanguageOverride ?? languages.primaryLanguageCode
+            let sourceCode = canarySourceOverride ?? languages.primaryLanguageCode
+            return TranscriptionLanguageOption.hudLabel(for: sourceCode)
+        }
+        if isExplicitCoreMLBackend {
+            let languages = generalSettingsStore.speechLanguages
+            let sourceCode = canarySourceOverride ?? languages.primaryLanguageCode
             return TranscriptionLanguageOption.hudLabel(for: sourceCode)
         }
         return autoTranslationLanguageLabel
@@ -1589,14 +1823,14 @@ struct ContentView: View {
             if let session = pendingHotkeySession {
                 switch session.plan.backend {
                 case .canaryCoreML:
-                    let current = session.plan.sourceLanguageCode ?? hudTargetLanguageOverride ?? languages.primaryLanguageCode
+                    let current = session.plan.sourceLanguageCode ?? canarySourceOverride ?? languages.primaryLanguageCode
                     let choices = HUDLanguageMenuPolicy.canarySourceCodes(
                         primary: languages.primaryLanguageCode,
                         additional: languages.additionalLanguageCode,
                         supportedCodes: session.plan.capabilities.explicitSupportedLanguageCodes
                     )
                     if let nextSource = HUDLanguageMenuPolicy.nextCode(current: current, choices: choices) {
-                        hudTargetLanguageOverride = nextSource
+                        canarySourceOverride = nextSource
                         _ = replacePendingCanarySession(withSourceLanguageCode: nextSource)
                     }
                     return
@@ -1608,14 +1842,14 @@ struct ContentView: View {
             } else if isExplicitCoreMLBackend {
                 let activeModel = transcriptionModelStore.activeModel
                 if activeModel?.backend == .canaryCoreML {
-                    let current = hudTargetLanguageOverride ?? languages.primaryLanguageCode
+                    let current = canarySourceOverride ?? languages.primaryLanguageCode
                     let choices = HUDLanguageMenuPolicy.canarySourceCodes(
                         primary: languages.primaryLanguageCode,
                         additional: languages.additionalLanguageCode,
                         supportedCodes: activeModel?.capabilities.explicitSupportedLanguageCodes ?? []
                     )
                     if let nextSource = HUDLanguageMenuPolicy.nextCode(current: current, choices: choices) {
-                        hudTargetLanguageOverride = nextSource
+                        canarySourceOverride = nextSource
                         hotkeySessionOverlayManager.update(
                             languageMode: .switchable,
                             targetLanguageLabel: TranscriptionLanguageOption.hudLabel(for: nextSource)
@@ -1635,14 +1869,30 @@ struct ContentView: View {
         }
 
         persistentHUDForceTargetLanguage.toggle()
-        pendingHotkeyForceTargetLanguage = persistentHUDForceTargetLanguage
         if !persistentHUDForceTargetLanguage {
             transcriptionEngineStore.resetAllEnginesState()
         }
         if audioRecorder.isRecording {
+            // ADR-029: explicit HUD action during recording always replaces
+            // the frozen snapshot for this session only — even when no local
+            // session exists (Gemini cloud dictation). Only the local-session
+            // replacement is gated on `.available`.
+            let refreshed = frozenSnapshot(
+                for: currentHUDTarget,
+                wantsTarget: HotkeyLanguageSnapshotResolver.userWantsTargetOutput(
+                    for: currentHUDTarget,
+                    forceTargetLanguage: persistentHUDForceTargetLanguage
+                )
+            )
             let resolution = makeLocalSession(
-                forceTargetLanguage: persistentHUDForceTargetLanguage,
+                forceTargetLanguage: sessionWantsWhisperTarget(refreshed),
                 hotkeySession: true
+            )
+            let localSessionAvailable = if case .available = resolution { true } else { false }
+            pendingHotkeySnapshot = HotkeyLanguageSnapshot.snapshotAfterExplicitHUDAction(
+                current: pendingHotkeySnapshot,
+                refreshed: refreshed,
+                localSessionAvailable: localSessionAvailable
             )
             if case .available(let newSession) = resolution {
                 pendingHotkeySession = newSession
@@ -1677,7 +1927,6 @@ struct ContentView: View {
         let replacement = pendingSession.replacing(plan: replacementPlan)
 
         pendingHotkeySession = replacement
-        pendingHotkeyForceTargetLanguage = false
         hotkeySessionOverlayManager.update(
             languageMode: replacement.plan.languageMode,
             targetLanguageLabel: replacement.plan.hudLanguageLabel,
@@ -1694,14 +1943,17 @@ struct ContentView: View {
         dismissLanguagePickerPopover()
 
         let sessionPlan = pendingHotkeySession?.plan
+        // ADR-029: Gemini cloud has no local backend; the menu policy only
+        // needs a routing key here (Gemini branches below stay authoritative).
         let backend = sessionPlan?.backend ?? hudLanguageBackend
+            ?? (transcriptionModelStore.settings.backend == .geminiCloud ? .whisperKitCoreML : nil)
         guard let backend else { return }
 
         let languages = generalSettingsStore.speechLanguages
         if lastObservedAdditionalLanguageCode != languages.additionalLanguageCode {
             // Settings is authoritative for the default Additional language. A
             // previous transient HUD target must not keep the picker marker stale.
-            hudTargetLanguageOverride = nil
+            hudTargetOverride = nil
             lastObservedAdditionalLanguageCode = languages.additionalLanguageCode
         }
         let isAutomatic: Bool
@@ -1712,23 +1964,23 @@ struct ContentView: View {
             if currentHUDTarget == .raw {
                 isAutomatic = false
                 currentCode = sessionPlan?.sourceLanguageCode
-                    ?? hudTargetLanguageOverride
+                    ?? canarySourceOverride
                     ?? (backend == .gigaAMCoreML ? "ru" : languages.additionalLanguageCode)
                 purpose = .explicitASRSource
             } else {
                 isAutomatic = !persistentHUDForceTargetLanguage
-                currentCode = persistentHUDForceTargetLanguage ? (hudTargetLanguageOverride ?? languages.additionalLanguageCode) : "auto"
+                currentCode = persistentHUDForceTargetLanguage ? (hudTargetOverride ?? languages.additionalLanguageCode) : "auto"
                 purpose = .targetLanguageSelection
             }
         case .whisperKitCoreML, .fluidAudioCoreML:
             if transcriptionModelStore.settings.backend == .geminiCloud {
                 isAutomatic = !persistentHUDForceTargetLanguage
-                currentCode = persistentHUDForceTargetLanguage ? (hudTargetLanguageOverride ?? languages.additionalLanguageCode) : "auto"
+                currentCode = persistentHUDForceTargetLanguage ? (hudTargetOverride ?? languages.additionalLanguageCode) : "auto"
             } else {
                 isAutomatic = sessionPlan?.isWhisperTargetMode == false && !persistentHUDForceTargetLanguage
                 currentCode = sessionPlan?.isWhisperTargetMode == true
                     ? (sessionPlan?.requestedLanguageCode ?? languages.additionalLanguageCode)
-                    : (hudTargetLanguageOverride ?? languages.additionalLanguageCode)
+                    : (hudTargetOverride ?? languages.additionalLanguageCode)
             }
             purpose = .targetLanguageSelection
         }
@@ -1775,35 +2027,12 @@ struct ContentView: View {
         guard languagePickerController.popoverID == nil || languagePickerController.popoverID == popoverID else { return }
 
         let backend = pendingHotkeySession?.plan.backend ?? hudLanguageBackend
+            ?? (transcriptionModelStore.settings.backend == .geminiCloud ? .whisperKitCoreML : nil)
         guard let backend else { return }
 
         let normalizedCode = code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if currentHUDTarget != .raw {
-            let automatic = normalizedCode == "auto"
-            hudTargetLanguageOverride = automatic ? nil : normalizedCode
-            persistentHUDForceTargetLanguage = !automatic
-            pendingHotkeyForceTargetLanguage = !automatic
-
-            if !automatic {
-                applyHUDAdditionalLanguageSelection(normalizedCode)
-            } else {
-                transcriptionEngineStore.resetAllEnginesState()
-            }
-
-            if audioRecorder.isRecording {
-                let resolution = makeLocalSession(
-                    forceTargetLanguage: !automatic,
-                    hotkeySession: true
-                )
-                if case .available(let replacement) = resolution {
-                    pendingHotkeySession = replacement
-                }
-            }
-
-            hotkeySessionOverlayManager.update(
-                languageMode: effectiveHUDLanguageMode,
-                targetLanguageLabel: effectiveHUDLanguageLabel
-            )
+            applyTargetSelection(normalizedCode, backend: backend)
             return
         }
 
@@ -1811,7 +2040,7 @@ struct ContentView: View {
         case .canaryCoreML:
             let automatic = normalizedCode == "auto"
             if !automatic {
-                hudTargetLanguageOverride = normalizedCode
+                canarySourceOverride = normalizedCode
             }
             if audioRecorder.isRecording {
                 _ = replacePendingCanarySession(withSourceLanguageCode: normalizedCode)
@@ -1824,32 +2053,54 @@ struct ContentView: View {
         case .gigaAMCoreML:
             return
         case .whisperKitCoreML, .fluidAudioCoreML:
-            let automatic = normalizedCode == "auto"
-            hudTargetLanguageOverride = automatic ? nil : normalizedCode
-            persistentHUDForceTargetLanguage = !automatic
-            pendingHotkeyForceTargetLanguage = !automatic
-
-            if !automatic {
-                applyHUDAdditionalLanguageSelection(normalizedCode)
-            } else {
-                transcriptionEngineStore.resetAllEnginesState()
-            }
-
-            if audioRecorder.isRecording {
-                let resolution = makeLocalSession(
-                    forceTargetLanguage: !automatic,
-                    hotkeySession: true
-                )
-                if case .available(let replacement) = resolution {
-                    pendingHotkeySession = replacement
-                }
-            }
-
-            hotkeySessionOverlayManager.update(
-                languageMode: automatic ? .auto : .target,
-                targetLanguageLabel: autoTranslationLanguageLabel
-            )
+            applyTargetSelection(normalizedCode, backend: backend)
         }
+    }
+
+    /// ADR-029: explicit target pick (E on/off). During a recording it also
+    /// replaces the frozen snapshot; otherwise it affects the next session.
+    private func applyTargetSelection(_ normalizedCode: String, backend: TranscriptionModelDescriptor.Backend) {
+        _ = backend
+        let automatic = normalizedCode == "auto"
+        hudTargetOverride = automatic ? nil : normalizedCode
+        persistentHUDForceTargetLanguage = !automatic
+
+        if !automatic {
+            applyHUDAdditionalLanguageSelection(normalizedCode)
+        } else {
+            transcriptionEngineStore.resetAllEnginesState()
+        }
+        if audioRecorder.isRecording {
+            // ADR-029: explicit target pick during recording always replaces
+            // the frozen snapshot — even when no local session exists (Gemini
+            // cloud dictation). Only the local-session replacement is gated
+            // on `.available`.
+            let refreshed = frozenSnapshot(
+                for: currentHUDTarget,
+                wantsTarget: HotkeyLanguageSnapshotResolver.userWantsTargetOutput(
+                    for: currentHUDTarget,
+                    forceTargetLanguage: !automatic
+                )
+            )
+            let resolution = makeLocalSession(
+                forceTargetLanguage: sessionWantsWhisperTarget(refreshed),
+                hotkeySession: true
+            )
+            let localSessionAvailable = if case .available = resolution { true } else { false }
+            pendingHotkeySnapshot = HotkeyLanguageSnapshot.snapshotAfterExplicitHUDAction(
+                current: pendingHotkeySnapshot,
+                refreshed: refreshed,
+                localSessionAvailable: localSessionAvailable
+            )
+            if case .available(let replacement) = resolution {
+                pendingHotkeySession = replacement
+            }
+        }
+
+        hotkeySessionOverlayManager.update(
+            languageMode: automatic ? effectiveHUDLanguageMode : .target,
+            targetLanguageLabel: automatic ? effectiveHUDLanguageLabel : autoTranslationLanguageLabel
+        )
     }
     private func handleOverlayPrimaryLanguageSelection(_ code: String, popoverID: UUID) {
         guard languagePickerController.popoverID == nil || languagePickerController.popoverID == popoverID else { return }
@@ -1905,6 +2156,17 @@ struct ContentView: View {
         let activeSlot = promptTemplateStore.activeSlot(for: targetVariant)
         let slotNames = hudPromptSlotNames(for: targetVariant)
         updatePendingHotkeyPromptSnapshot(for: next)
+        if audioRecorder.isRecording {
+            // ADR-029: explicit HUD target cycle replaces the frozen snapshot.
+            pendingHotkeyTarget = next
+            pendingHotkeySnapshot = frozenSnapshot(
+                for: next,
+                wantsTarget: HotkeyLanguageSnapshotResolver.userWantsTargetOutput(
+                    for: next,
+                    forceTargetLanguage: persistentHUDForceTargetLanguage
+                )
+            )
+        }
 
         hotkeySessionOverlayManager.update(
             languageMode: effectiveHUDLanguageMode,
@@ -2022,25 +2284,42 @@ struct ContentView: View {
         hotkeyTarget: HotkeyTarget?,
         outputMode: HotkeyOutputMode?,
         forceTargetLanguage: Bool,
+        languageSnapshot: HotkeyLanguageSnapshot? = nil,
         humorSnapshot: HumorSessionSnapshot? = nil
     ) async {
         let google = polishingEngineStore.apiSettings.configuration(for: .google)
         let resolvedTarget = hotkeyTarget ?? hotkeySettingsStore.settings.target
-        let targetName = TranscriptionLanguageOption.displayName(for: targetLanguageCode)
+        // ADR-029: frozen snapshot or idle resolution; Gemini natively
+        // translates to any target (mechanism nativeASR).
+        let snapshot = languageSnapshot ?? frozenSnapshot(
+            for: hotkeyTarget ?? .note,
+            wantsTarget: HotkeyLanguageSnapshotResolver.userWantsTargetOutput(
+                for: hotkeyTarget ?? .note,
+                forceTargetLanguage: persistentHUDForceTargetLanguage || forceTargetLanguage
+            )
+        )
+        let targetName = TranscriptionLanguageOption.displayName(
+            for: snapshot.targetCode ?? targetLanguageCode
+        )
 
         let note = noteStore.addRecordedNote(recording: recording, now: .now)
         let noteID = note.id
         noteStore.markTranscriptionStarted(for: noteID, backendName: "Google Gemini")
+        SessionLedger.shared.record(
+            sessionID: hotkeyOwnerID.uuidString,
+            event: "transcription.start",
+            fields: ["model": "gemini-cloud", "wantsTarget": "\(snapshot.wantsTarget)"]
+        )
 
         do {
             let engine = GeminiCloudDictationEngine(
-                apiKey: google.apiKey,
+                apiKeys: google.sanitizedAPIKeys,
                 modelID: google.textModel
             )
             let result = try await engine.dictate(
                 GeminiCloudDictationEngine.DictationRequest(
                     audioFileURL: recording.fileURL,
-                    forceTargetLanguage: forceTargetLanguage,
+                    forceTargetLanguage: snapshot.wantsTarget && snapshot.mechanism == .nativeASR,
                     targetLanguageName: targetName
                 )
             )
@@ -2067,37 +2346,24 @@ struct ContentView: View {
                 modelName: result.diagnostics.backendName,
                 diagnostics: result.diagnostics
             )
-
-            if resolvedTarget == .raw {
-                selectedVariant = .raw
-                applyHotkeyOutputIfNeeded(for: noteID, target: resolvedTarget, mode: outputMode)
-                finishHotkeySessionIfNeeded(target: hotkeyTarget == nil ? nil : resolvedTarget)
-                return
-            }
-
-            guard polishingEngineStore.canAutoPolishAfterTranscription else {
-                selectedVariant = resolvedTarget.processingVariant
-                markPolishingUnavailable(for: noteID)
-                applyHotkeyOutputIfNeeded(for: noteID, target: resolvedTarget, mode: outputMode)
-                finishHotkeySessionIfNeeded(target: hotkeyTarget == nil ? nil : resolvedTarget)
-                return
-            }
-
-            let variant = resolvedTarget.processingVariant
-            let polishingTargetLanguage = HUDPolishingTranslation.targetLanguageCode(
-                hudShowsForcedTarget: forceTargetLanguage || persistentHUDForceTargetLanguage,
-                hudTargetLanguageCode: targetLanguageCode
+            SessionLedger.shared.record(
+                sessionID: hotkeyOwnerID.uuidString,
+                event: "transcription.done",
+                fields: ["chars": "\(rewrittenRaw.text.count)"]
             )
-            await polish(
-                noteID,
-                variants: [variant],
-                targetLanguage: polishingTargetLanguage,
+
+            let polishVariants = resolvedTarget == .raw ? [] : [resolvedTarget.processingVariant]
+            selectedVariant = resolvedTarget.processingVariant
+            let resolved = await polishAndResolveOutput(
+                noteID: noteID,
+                hotkeyTarget: hotkeyTarget,
+                snapshot: snapshot,
+                polishVariants: polishVariants,
                 humorSnapshot: humorSnapshot
             )
-
-            selectedVariant = variant
-            applyHotkeyOutputIfNeeded(for: noteID, target: resolvedTarget, mode: outputMode)
-            finishHotkeySessionIfNeeded(target: hotkeyTarget == nil ? nil : resolvedTarget)
+            selectedVariant = resolvedTarget.processingVariant
+            applyHotkeyOutputIfNeeded(for: noteID, target: resolvedTarget, mode: outputMode, dispatchText: resolved.dispatchText)
+            finishHotkeySessionIfNeeded(target: hotkeyTarget == nil ? nil : resolvedTarget, fallbackSignalled: resolved.fallbackSignalled)
         } catch {
             NativeBolabolLog.transcription.error(
                 "Gemini cloud dictation failed: \(error.localizedDescription, privacy: .public)"

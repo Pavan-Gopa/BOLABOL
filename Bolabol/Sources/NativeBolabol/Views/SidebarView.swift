@@ -292,8 +292,17 @@ private struct SidebarNoteRow: View {
                     .bolabolFont(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-            }
 
+                // ADR-029/Q4d: persistent localized signal that the target
+                // language failed and source text was inserted instead.
+                if let output = note.outputLanguage, !output.translated {
+                    Text(generalSettingsStore.text(.noteNotTranslated))
+                        .bolabolFont(.caption)
+                        .foregroundStyle(.orange)
+                        .lineLimit(1)
+                        .accessibilityLabel(generalSettingsStore.text(.noteNotTranslated))
+                }
+            }
             Spacer(minLength: 4)
 
             if let onOpenAudio {

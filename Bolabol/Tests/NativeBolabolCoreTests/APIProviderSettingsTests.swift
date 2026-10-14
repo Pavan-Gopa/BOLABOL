@@ -134,18 +134,59 @@ func apiProviderConfiguredKeyCountIgnoresBlankEntries() {
 }
 
 @Test
-func apiProviderSettingsDeduplicatesAvailablePolishingProviders() {
+func apiProviderSettingsKeepsCustomInstancesSharingABuiltInDisplayName() {
+  // ADR-031: availability de-duplicates by engine ID only, so a custom
+  // endpoint named "Qwen" appears next to the built-in Qwen provider with
+  // its own engine ID.
   var settings = APIProviderSettings()
   settings.qwen.apiKey = "qwen-key"
   settings.qwen.textModel = "qwen3.7-plus"
 
-  // Custom provider with same display name or kind as Qwen
+  // Custom provider with same display name as Qwen
   settings.custom.name = "Qwen"
   settings.custom.apiKey = "custom-key"
   settings.custom.baseURL = "https://example.com/v1"
   settings.custom.textModel = "custom-model"
 
   let available = settings.availablePolishingProviders
-  let names = available.map(\.displayName)
-  #expect(names.count == Set(names).count)
+  let ids = available.map(\.engineID)
+  #expect(ids.contains("cloud-qwen"))
+  #expect(ids.contains("cloud-custom"))
+  #expect(ids.count == Set(ids).count)
+}
+
+@Test
+func customUsageBucketsMatchInstanceNamePlusSpaceWithLongerSiblingPriority() {
+  // Buckets are keyed by backend name ("<DisplayName> <model>"). A migrated
+  // blank name displays as "Custom", and the next default is "Custom 2":
+  // resetting "Custom" must not reset "Custom 2" buckets, and "Custom 1"
+  // must not reset "Custom 10" buckets.
+  var settings = APIProviderSettings()
+  settings.customProviders = [
+    CustomAPIProviderInstance(
+      id: "legacy", configuration: APIProviderConfiguration(name: "")),
+    CustomAPIProviderInstance(
+      id: "uuid-2", configuration: APIProviderConfiguration(name: "Custom 2")),
+    CustomAPIProviderInstance(
+      id: "uuid-1", configuration: APIProviderConfiguration(name: "Custom 1")),
+    CustomAPIProviderInstance(
+      id: "uuid-10", configuration: APIProviderConfiguration(name: "Custom 10")),
+  ]
+
+  #expect(settings.usageBucketMatchesCustomInstance(bucketKey: "Custom legacy-model", displayName: "Custom"))
+  #expect(
+    !settings.usageBucketMatchesCustomInstance(bucketKey: "Custom 2 gpt-4o-mini", displayName: "Custom"))
+  #expect(settings.usageBucketMatchesCustomInstance(bucketKey: "Custom 2 gpt-4o-mini", displayName: "Custom 2"))
+  #expect(
+    !settings.usageBucketMatchesCustomInstance(bucketKey: "Custom legacy-model", displayName: "Custom 2"))
+  #expect(
+    !settings.usageBucketMatchesCustomInstance(bucketKey: "Custom 10 some-model", displayName: "Custom 1"))
+  #expect(settings.usageBucketMatchesCustomInstance(bucketKey: "Custom 1 some-model", displayName: "Custom 1"))
+  #expect(
+    settings.usageBucketMatchesCustomInstance(bucketKey: "Custom 10 some-model", displayName: "Custom 10"))
+  // Matching is case-insensitive and requires the trailing space.
+  #expect(settings.usageBucketMatchesCustomInstance(bucketKey: "custom 2 GPT-4O-MINI", displayName: "Custom 2"))
+  #expect(!settings.usageBucketMatchesCustomInstance(bucketKey: "Custom", displayName: "Custom"))
+  #expect(!settings.usageBucketMatchesCustomInstance(bucketKey: "Other m", displayName: "Custom"))
+  #expect(!settings.usageBucketMatchesCustomInstance(bucketKey: "Custom m", displayName: ""))
 }

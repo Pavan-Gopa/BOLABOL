@@ -254,3 +254,29 @@ struct BUGVPH006ParakeetRussianRoutingTests {
         #expect(plan.route.translateToEnglish == false)
     }
 }
+
+@Test("Whisper Turbo is never a native-translation model (ADR-029)")
+func whisperTurboIsNeverNativeTranslation() throws {
+    let turbo = try #require(TranscriptionModelCatalog.nativeWhisperKit.model(withID: "whisperkit-large-v3-turbo"))
+    #expect(!turbo.supportsNativeTranslationToEnglish, "turbo returns the source language even with translate")
+
+    let resolution = try vph006Resolve(modelID: "whisperkit-large-v3-turbo")
+    guard case .available(let plan) = resolution else {
+        Issue.record("Expected an available Turbo session plan")
+        return
+    }
+    #expect(!plan.supportsNativeWhisperTranslation)
+}
+
+@Test("Whisper Large v3 full stays a native-translation model")
+func whisperFullStaysNativeTranslation() throws {
+    let full = try #require(TranscriptionModelCatalog.nativeWhisperKit.model(withID: "whisperkit-large-v3-full"))
+    #expect(full.supportsNativeTranslationToEnglish)
+
+    let resolution = try vph006Resolve(modelID: "whisperkit-large-v3-full")
+    guard case .available(let plan) = resolution else {
+        Issue.record("Expected an available full session plan")
+        return
+    }
+    #expect(plan.supportsNativeWhisperTranslation)
+}

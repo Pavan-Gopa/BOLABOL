@@ -115,6 +115,13 @@ struct NoteDetailView: View {
             if let recording = note.audioRecording {
                 Text(recordingSummary(for: recording))
             }
+            // ADR-029/Q4d: persistent localized signal that the target
+            // language failed and source text was inserted instead.
+            if let output = note.outputLanguage, !output.translated {
+                Label(generalSettingsStore.text(.noteNotTranslated), systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+                    .accessibilityLabel(generalSettingsStore.text(.noteNotTranslated))
+            }
         }
         .bolabolFont(.caption)
         .foregroundStyle(.secondary)
@@ -860,18 +867,23 @@ struct NoteDetailView: View {
         PolishingModelOptionsProvider(apiSettings: polishingEngineStore.apiSettings)
     }
 
-    private var activeProviderKind: APIProviderKind? {
+    /// Cloud engine ID behind the polishing model menus, or nil for local or
+    /// disabled engines. Custom instances resolve to their own engine ID
+    /// (ADR-031), so each one shows its own model.
+    private var activeEngineID: String? {
         if transcriptionModelStore.settings.backend == .geminiCloud {
-            return .google
+            return APIProviderKind.google.polishingEngineID
         }
-        return APIProviderKind(polishingEngineID: polishingEngineStore.selectedEngineID)
+        let engineID = polishingEngineStore.selectedEngineID
+        return polishingEngineStore.apiSettings.configuration(forEngineID: engineID) != nil
+            ? engineID : nil
     }
 
     private var isPolishingModelPickerAvailable: Bool {
         if transcriptionModelStore.settings.backend == .geminiCloud {
             return true
         }
-        if activeProviderKind != nil { return true }
+        if activeEngineID != nil { return true }
         if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID && !downloadedPolishingModels.isEmpty {
             return true
         }
@@ -899,9 +911,10 @@ struct NoteDetailView: View {
     }
 
     private func currentPolishingModelDisplayName() -> String {
-        if let kind = activeProviderKind {
-            let currentID = polishingEngineStore.apiSettings.configuration(for: kind).textModel
-            let name = modelOptionsProvider.modelDisplayName(id: currentID, kind: kind)
+        if let engineID = activeEngineID {
+            let currentID = polishingEngineStore.apiSettings.configuration(
+                forEngineID: engineID)?.textModel ?? ""
+            let name = modelOptionsProvider.modelDisplayName(id: currentID, engineID: engineID)
             return name.isEmpty ? generalSettingsStore.text(.defaultModelName) : name
         }
         if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID,
@@ -912,8 +925,8 @@ struct NoteDetailView: View {
     }
 
     private var currentProviderModelOptions: [PolishingModelOption] {
-        if let kind = activeProviderKind {
-            return modelOptionsProvider.providerModelOptions(for: kind, favorites: FavoriteModelsStore.loadFavorites())
+        if let engineID = activeEngineID {
+            return modelOptionsProvider.providerModelOptions(forEngineID: engineID, favorites: FavoriteModelsStore.loadFavorites(engineID: engineID))
         }
         if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID {
             return downloadedPolishingModels.map { PolishingModelOption(id: $0.id, displayName: $0.displayName) }
@@ -922,8 +935,8 @@ struct NoteDetailView: View {
     }
 
     private func isPolishingModelSelected(id: String) -> Bool {
-        if let kind = activeProviderKind {
-            return polishingEngineStore.apiSettings.configuration(for: kind).textModel == id
+        if let engineID = activeEngineID {
+            return polishingEngineStore.apiSettings.configuration(forEngineID: engineID)?.textModel == id
         }
         if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID {
             return polishingEngineStore.activeModel?.id == id
@@ -932,10 +945,11 @@ struct NoteDetailView: View {
     }
 
     private func selectPolishingModel(id: String) {
-        if let kind = activeProviderKind {
-            var config = polishingEngineStore.apiSettings.configuration(for: kind)
+        if let engineID = activeEngineID,
+          var config = polishingEngineStore.apiSettings.configuration(forEngineID: engineID)
+        {
             config.textModel = id
-            polishingEngineStore.updateAPIConfiguration(config, for: kind)
+            _ = polishingEngineStore.updateAPIConfiguration(config, forEngineID: engineID)
         } else if polishingEngineStore.selectedEngineID == PolishingEngineStore.mlxSwiftEngineID {
             if let model = polishingEngineStore.allModels.first(where: { $0.id == id }) {
                 polishingEngineStore.activate(model)

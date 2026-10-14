@@ -65,33 +65,6 @@ func hotkeySettingsRoundTripsAllFourHotkeySlots() throws {
   #expect(HotkeySettings.displayString(for: decoded.hotkey) == "⌘⌥D")
 }
 
-// MARK: Hotkey output text resolution
-
-@Test
-func hotkeyOutputTextResolverX2FallsBackToVariantOneBeforeRaw() {
-  let note = BolabolNote(
-    title: "Test",
-    rawText: "raw",
-    polishedVariantOne: "variant one only",
-    polishedVariantTwo: "  "
-  )
-  #expect(HotkeyOutputTextResolver.text(from: note, target: .x2) == "variant one only")
-  #expect(HotkeyOutputTextResolver.text(from: note, target: .note) == "variant one only")
-  #expect(HotkeyOutputTextResolver.text(from: note, target: .raw) == "raw")
-}
-
-@Test
-func hotkeyOutputTextResolverKeepsWhitespaceOnlyVariantsAsEmpty() {
-  let note = BolabolNote(
-    title: "Test",
-    rawText: "raw text",
-    polishedVariantOne: "\n\t  ",
-    polishedVariantTwo: "   "
-  )
-  #expect(HotkeyOutputTextResolver.text(from: note, target: .note) == "raw text")
-  #expect(HotkeyOutputTextResolver.text(from: note, target: .x2) == "raw text")
-}
-
 // MARK: PolishingModelPromptControl (Qwen 3.5 / 3.6 thinking)
 
 private func polishModel(

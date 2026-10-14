@@ -179,16 +179,21 @@ struct TranslationModalView: View {
 
     // MARK: – Controls
 
-    private var activeProviderKind: APIProviderKind? {
-        APIProviderKind.allCases.first(where: { $0.polishingEngineID == providerID })
+    /// Cloud engine ID backing the model picker, or nil for local MLX tags
+    /// and unknown IDs. Custom instances resolve to their own engine ID
+    /// (ADR-031), so each one gets its own model menu.
+    private var activeEngineID: String? {
+        if Self.localMLXModelID(from: providerID) != nil { return nil }
+        return polishingEngineStore.apiSettings.resolve(engineID: providerID) != nil
+            ? providerID : nil
     }
 
     private var controls: some View {
         HStack(spacing: 10) {
             labeledProviderPicker
 
-            if let activeKind = activeProviderKind {
-                labeledModelPicker(for: activeKind)
+            if let engineID = activeEngineID {
+                labeledModelPicker(forEngineID: engineID)
             }
 
             Spacer(minLength: 0)
@@ -218,14 +223,14 @@ struct TranslationModalView: View {
         .layoutPriority(1)
     }
 
-    private func labeledModelPicker(for kind: APIProviderKind) -> some View {
-        let favs = favoriteModels(for: kind)
-        let currentModelID = polishingEngineStore.apiSettings.configuration(for: kind).textModel
+    private func labeledModelPicker(forEngineID engineID: String) -> some View {
+        let favs = favoriteModels(forEngineID: engineID)
+        let currentModelID = polishingEngineStore.apiSettings.configuration(forEngineID: engineID)?.textModel ?? ""
 
         return HStack(spacing: 5) {
             compactControlLabel(generalSettingsStore.text(.model))
             if favs.isEmpty {
-                Text(modelDisplayName(id: currentModelID, kind: kind))
+                Text(modelDisplayName(id: currentModelID, engineID: engineID))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -234,7 +239,7 @@ struct TranslationModalView: View {
                     .padding(.vertical, 3)
                     .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
             } else {
-                Picker(generalSettingsStore.text(.model), selection: selectedModelBinding(for: kind)) {
+                Picker(generalSettingsStore.text(.model), selection: selectedModelBinding(forEngineID: engineID)) {
                     ForEach(favs, id: \.id) { model in
                         Text(model.displayName).tag(model.id)
                     }
@@ -565,149 +570,43 @@ struct TranslationModalView: View {
         }
     }
 
-    private struct ModelOption: Identifiable, Equatable {
-        let id: String
-        let displayName: String
+    /// Shared model menus (ADR-031): favorites, current-model fallback and
+    /// display names all come from `PolishingModelOptionsProvider` keyed by
+    /// engine ID, so custom instances use their own configuration instead of
+    /// a duplicated per-kind path.
+    private var modelOptionsProvider: PolishingModelOptionsProvider {
+        PolishingModelOptionsProvider(apiSettings: polishingEngineStore.apiSettings)
     }
 
-    private func cleanModelDisplayName(_ raw: String) -> String {
-        var name = raw
-        // If format is provider/model-id (e.g. google/gemini-3.5-flash-lite), strip the provider/ prefix
-        if let slashIndex = name.firstIndex(of: "/") {
-            name = String(name[name.index(after: slashIndex)...])
-        }
-        return name
+    private func favoriteModels(forEngineID engineID: String) -> [PolishingModelOption] {
+        modelOptionsProvider.providerModelOptions(
+            forEngineID: engineID,
+            favorites: FavoriteModelsStore.loadFavorites(engineID: engineID)
+        )
     }
 
-    private func availableModels(for kind: APIProviderKind) -> [ModelOption] {
-        switch kind {
-        case .google:
-            return [
-                ModelOption(id: "gemini-3.5-flash", displayName: "Gemini 3.5 Flash"),
-                ModelOption(id: "gemini-2.5-flash", displayName: "Gemini 2.5 Flash"),
-                ModelOption(id: "gemini-2.5-flash-lite", displayName: "Gemini 2.5 Flash Lite"),
-                ModelOption(id: "gemini-2.5-pro", displayName: "Gemini 2.5 Pro"),
-                ModelOption(id: "gemini-2.0-flash", displayName: "Gemini 2.0 Flash")
-            ]
-        case .openAI:
-            return [
-                ModelOption(id: "gpt-4o-mini", displayName: "GPT-4o Mini"),
-                ModelOption(id: "gpt-4o", displayName: "GPT-4o"),
-                ModelOption(id: "o3-mini", displayName: "o3-mini"),
-                ModelOption(id: "gpt-4-turbo", displayName: "GPT-4 Turbo")
-            ]
-        case .qwen:
-            return [
-                ModelOption(id: "qwen3.6-flash", displayName: "Qwen 3.6 Flash"),
-                ModelOption(id: "qwen3.7-plus", displayName: "Qwen 3.7 Plus"),
-                ModelOption(id: "qwen3.8-max-preview", displayName: "Qwen 3.8 Max"),
-                ModelOption(id: "qwen-turbo", displayName: "Qwen Turbo"),
-                ModelOption(id: "qwen-max", displayName: "Qwen Max")
-            ]
-        case .openRouter:
-            return [
-                ModelOption(id: "google/gemini-3.5-flash", displayName: "Gemini 3.5 Flash"),
-                ModelOption(id: "deepseek/deepseek-v4-flash", displayName: "DeepSeek V4 Flash"),
-                ModelOption(id: "qwen/qwen3.6-flash", displayName: "Qwen 3.6 Flash"),
-                ModelOption(id: "openai/gpt-4o-mini", displayName: "GPT-4o Mini"),
-                ModelOption(id: "anthropic/claude-3.5-haiku", displayName: "Claude 3.5 Haiku"),
-                ModelOption(id: "google/gemini-2.5-flash", displayName: "Gemini 2.5 Flash"),
-                ModelOption(id: "deepseek/deepseek-chat", displayName: "DeepSeek V3")
-            ]
-        case .custom:
-            let current = polishingEngineStore.apiSettings.configuration(for: .custom).textModel
-            return [ModelOption(id: current, displayName: cleanModelDisplayName(current))]
-        case .anthropic:
-            return [
-                ModelOption(id: "claude-3-5-haiku-latest", displayName: "Claude 3.5 Haiku"),
-                ModelOption(id: "claude-3-5-sonnet-latest", displayName: "Claude 3.5 Sonnet")
-            ]
-        }
+    private func modelDisplayName(id: String, engineID: String) -> String {
+        let name = modelOptionsProvider.modelDisplayName(id: id, engineID: engineID)
+        return name.isEmpty ? generalSettingsStore.text(.defaultModelName) : name
     }
 
-    private func favoriteModels(for kind: APIProviderKind) -> [ModelOption] {
-        let favSet = FavoriteModelsStore.loadFavorites()
-        let baseOptions = availableModels(for: kind)
-        var result = baseOptions.filter { favSet.contains($0.id) }
-
-        // Also dynamically include any starred model IDs from settings matching this provider
-        for id in favSet {
-            if !result.contains(where: { $0.id == id }) && matchesProvider(modelID: id, kind: kind) {
-                result.append(ModelOption(id: id, displayName: modelDisplayName(id: id, kind: kind)))
-            }
-        }
-
-        // If no favorites are saved for this provider, show all available models
-        if result.isEmpty {
-            result = baseOptions
-        }
-
-        // Always ensure the currently active model is present so SwiftUI Picker tag matches
-        let currentID = polishingEngineStore.apiSettings.configuration(for: kind).textModel
-        if !currentID.isEmpty && !result.contains(where: { $0.id == currentID }) && matchesProvider(modelID: currentID, kind: kind) {
-            result.insert(ModelOption(id: currentID, displayName: modelDisplayName(id: currentID, kind: kind)), at: 0)
-        }
-
-        // Clean display names and deduplicate entries by clean display name and ID
-        var seenKeys = Set<String>()
-        var deduplicated: [ModelOption] = []
-        for option in result {
-            let cleanName = cleanModelDisplayName(option.displayName)
-            let key = cleanName.lowercased()
-            if !seenKeys.contains(key) {
-                seenKeys.insert(key)
-                deduplicated.append(ModelOption(id: option.id, displayName: cleanName))
-            }
-        }
-
-        return deduplicated
-    }
-
-    private func matchesProvider(modelID: String, kind: APIProviderKind) -> Bool {
-        let lower = modelID.lowercased()
-        // OpenRouter and Custom model IDs contain slashes (e.g. google/gemini-3.5-flash-lite).
-        // Direct providers (Google, OpenAI, Anthropic, Qwen) do not use slashes in model IDs.
-        if kind != .openRouter && kind != .custom && lower.contains("/") {
-            return false
-        }
-        switch kind {
-        case .google:
-            return lower.contains("gemini") || lower.contains("gemma") || lower.contains("google") || lower.contains("lyra")
-        case .openAI:
-            return lower.contains("gpt") || lower.contains("o3") || lower.contains("o1") || lower.contains("openai")
-        case .qwen:
-            return lower.contains("qwen") || lower.contains("deepseek") || lower.contains("glm")
-        case .openRouter:
-            return lower.contains("/")
-        case .anthropic:
-            return lower.contains("claude") || lower.contains("anthropic")
-        case .custom:
-            return true
-        }
-    }
-
-    private func modelDisplayName(id: String, kind: APIProviderKind) -> String {
-        let available = availableModels(for: kind)
-        if let match = available.first(where: { $0.id == id }) {
-            return cleanModelDisplayName(match.displayName)
-        }
-        return id.isEmpty ? generalSettingsStore.text(.defaultModelName) : cleanModelDisplayName(id)
-    }
-
-    private func selectedModelBinding(for kind: APIProviderKind) -> Binding<String> {
+    private func selectedModelBinding(forEngineID engineID: String) -> Binding<String> {
         Binding(
             get: {
-                let current = polishingEngineStore.apiSettings.configuration(for: kind).textModel
-                let favs = favoriteModels(for: kind)
+                let current = polishingEngineStore.apiSettings.configuration(
+                    forEngineID: engineID)?.textModel ?? ""
+                let favs = favoriteModels(forEngineID: engineID)
                 if favs.contains(where: { $0.id == current }) {
                     return current
                 }
                 return favs.first?.id ?? current
             },
             set: { newModelID in
-                var config = polishingEngineStore.apiSettings.configuration(for: kind)
+                guard var config = polishingEngineStore.apiSettings.configuration(
+                    forEngineID: engineID)
+                else { return }
                 config.textModel = newModelID
-                polishingEngineStore.updateAPIConfiguration(config, for: kind)
+                _ = polishingEngineStore.updateAPIConfiguration(config, forEngineID: engineID)
             }
         )
     }

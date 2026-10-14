@@ -9,8 +9,22 @@ import NativeBolabolCore
 /// Uses inline audio for ordinary dictation and the Files API for larger recordings.
 /// Model id is taken from Settings → API Providers → Google (never overridden to an older Flash).
 struct GeminiCloudDictationEngine: Sendable {
-    let apiKey: String
+    /// Full Google key list (ADR-029): every enabled key is tried in order
+    /// with immediate failover on timeout/transport/5xx/429/401-403/empty-2xx.
+    /// Disabled (`#DISABLED#`) and blank keys are skipped.
+    let apiKeys: [String]
     let modelID: String
+
+    init(apiKeys: [String], modelID: String) {
+        self.apiKeys = apiKeys
+        self.modelID = modelID
+    }
+
+    /// Single-key convenience (tests, one-key configurations).
+    init(apiKey: String, modelID: String) {
+        self.apiKeys = [apiKey]
+        self.modelID = modelID
+    }
 
     /// Only used when the Google text-model field is empty.
     static let preferredDefaultModel = APIProviderKind.google.defaultTextModel
@@ -70,8 +84,12 @@ struct GeminiCloudDictationEngine: Sendable {
     }
 
     func dictate(_ request: DictationRequest) async throws -> DictationResult {
-        let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !key.isEmpty else { throw DictationError.missingAPIKey }
+        // ADR-029: use the full enabled key list, not just the first key.
+        let candidates = CloudKeyFailover.plan(apiKeys: apiKeys).keyIndices.map { apiKeys[$0] }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !candidates.isEmpty else { throw DictationError.missingAPIKey }
+
 
         let model = Self.resolvedModelID(modelID)
         let startedAt = Date()
@@ -96,44 +114,39 @@ struct GeminiCloudDictationEngine: Sendable {
             targetLanguageName: request.targetLanguageName
         )
 
-        let response: GeminiResponse
-
-        // For audio <= 12 MB (almost all dictation clips), use direct inlineData (fast & 100% reliable)
-        if audioData.count <= 12 * 1024 * 1024 {
-            let base64 = audioData.base64EncodedString()
-            response = try await generateWithInlineData(
-                apiKey: key,
-                model: model,
-                base64Audio: base64,
-                mimeType: "audio/wav",
-                instruction: instruction
-            )
-        } else {
-            // For large files > 12 MB, upload via Files API
-            let uploaded = try await uploadFile(
-                apiKey: key,
-                data: audioData,
-                mimeType: "audio/wav",
-                displayName: "bolabol-dictation.wav"
-            )
-
-            response = try await generateWithFile(
-                apiKey: key,
-                model: model,
-                fileURI: uploaded.uri,
-                mimeType: "audio/wav",
-                instruction: instruction
-            )
-
-            Task {
-                do {
-                    try await self.deleteFile(apiKey: key, name: uploaded.name)
-                } catch {
-                    NativeBolabolLog.transcription.error(
-                        "Failed to delete uploaded Gemini file \(uploaded.name, privacy: .public): \(error.localizedDescription, privacy: .public)"
-                    )
+        // ADR-029/Q5a: try every enabled key in order until the 40 s key-chain
+        // budget. Timeout/transport/5xx/429/401-403/empty-2xx → next key
+        // immediately, no same-key retry. Other 4xx/decode → stop.
+        let keyChainDeadline = Date().addingTimeInterval(
+            CloudKeyFailover.TimeBudget.default.keyChainSeconds
+        )
+        var lastError: Error?
+        var response: GeminiResponse?
+        for (index, key) in candidates.enumerated() {
+            guard Date() < keyChainDeadline else { break }
+            do {
+                response = try await generateResponse(
+                    apiKey: key,
+                    model: model,
+                    audioData: audioData,
+                    instruction: instruction
+                )
+                break
+            } catch {
+                lastError = error
+                let failure = Self.failoverFailure(for: error)
+                let verdict = CloudKeyFailover.action(for: failure)
+                NativeBolabolLog.transcription.warning(
+                    "Gemini dictation key #\(index + 1)/\(candidates.count) failed class=\(String(describing: failure), privacy: .public) verdict=\(String(describing: verdict), privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+                )
+                if verdict == .nextKey, index < candidates.count - 1 {
+                    continue
                 }
+                throw error
             }
+        }
+        guard let response else {
+            throw lastError ?? DictationError.missingAPIKey
         }
 
         var cleaned = ModelOutputSanitizer.sanitize(response.text)
@@ -163,6 +176,68 @@ struct GeminiCloudDictationEngine: Sendable {
                 completionTokens: response.completionTokens
             )
         )
+    }
+
+    /// One key attempt: inline audio for ordinary clips, Files API above 12 MB.
+    private func generateResponse(
+        apiKey key: String,
+        model: String,
+        audioData: Data,
+        instruction: String
+    ) async throws -> GeminiResponse {
+        // For audio <= 12 MB (almost all dictation clips), use direct inlineData (fast & 100% reliable)
+        if audioData.count <= 12 * 1024 * 1024 {
+            let base64 = audioData.base64EncodedString()
+            return try await generateWithInlineData(
+                apiKey: key,
+                model: model,
+                base64Audio: base64,
+                mimeType: "audio/wav",
+                instruction: instruction
+            )
+        }
+        // For large files > 12 MB, upload via Files API
+        let uploaded = try await uploadFile(
+            apiKey: key,
+            data: audioData,
+            mimeType: "audio/wav",
+            displayName: "bolabol-dictation.wav"
+        )
+
+        let response = try await generateWithFile(
+            apiKey: key,
+            model: model,
+            fileURI: uploaded.uri,
+            mimeType: "audio/wav",
+            instruction: instruction
+        )
+
+        Task {
+            do {
+                try await self.deleteFile(apiKey: key, name: uploaded.name)
+            } catch {
+                NativeBolabolLog.transcription.error(
+                    "Failed to delete uploaded Gemini file \(uploaded.name, privacy: .public): \(error.localizedDescription, privacy: .public)"
+                )
+            }
+        }
+        return response
+    }
+
+    /// Maps any dictation failure onto the shared pure failover policy.
+    static func failoverFailure(for error: any Error) -> CloudKeyFailover.Failure {
+        if let dictation = error as? DictationError {
+            switch dictation {
+            case .apiError(let status, let message):
+                return CloudKeyFailover.classifyHTTPStatus(status, message: message)
+            case .emptyResponse:
+                return .emptyResponse
+            case .missingAPIKey, .cannotReadAudio, .exportFailed,
+                .audioNotUnderstood, .invalidEndpoint, .uploadFailed:
+                return .decodeError
+            }
+        }
+        return CloudKeyFailover.classify(error: error)
     }
 
     static func looksLikeAudioNotReceived(_ text: String) -> Bool {
@@ -265,7 +340,7 @@ struct GeminiCloudDictationEngine: Sendable {
         upload.setValue(mimeType, forHTTPHeaderField: "Content-Type")
         upload.setValue("\(data.count)", forHTTPHeaderField: "Content-Length")
         upload.httpBody = data
-        upload.timeoutInterval = 45
+        upload.timeoutInterval = CloudRequestRetryPolicy.googleTextGeneration.timeoutInterval
 
         let (uploadData, uploadResponse) = try await URLSession.shared.data(for: upload)
         let status = (uploadResponse as? HTTPURLResponse)?.statusCode ?? -1
@@ -372,7 +447,7 @@ struct GeminiCloudDictationEngine: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 45
+        request.timeoutInterval = CloudRequestRetryPolicy.googleTextGeneration.timeoutInterval
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -449,7 +524,7 @@ struct GeminiCloudDictationEngine: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 45
+        request.timeoutInterval = CloudRequestRetryPolicy.googleTextGeneration.timeoutInterval
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await URLSession.shared.data(for: request)

@@ -137,11 +137,22 @@ func noteStoreDeletesSelectedNoteAndSelectsNextAvailableNote() {
 
 @MainActor
 @Test
-func noteStoreClearsAllNotesAndSelection() {
-    let store = NoteStore(notes: [
-        BolabolNote(title: "One", rawText: "One"),
-        BolabolNote(title: "Two", rawText: "Two")
-    ])
+func noteStoreClearsAllNotesAndSelection() throws {
+    // S11: destructive fixtures own a unique root. Explicit nonpersistent
+    // stores may clean only their own nondefault root — never default audio.
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-clearall-text-\(UUID().uuidString)", isDirectory: true)
+    try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+    let store = NoteStore(
+        notes: [
+            BolabolNote(title: "One", rawText: "One"),
+            BolabolNote(title: "Two", rawText: "Two")
+        ],
+        fileManager: fileManager,
+        notesFileURL: root.appendingPathComponent("notes.json")
+    )
 
     store.clearAll()
 
@@ -296,10 +307,15 @@ func noteStoreMarksPolishingFailureForVariantTwo() {
 @Test
 func noteStorePersistenceSavesAndLoadsCorrectly() throws {
     let fileManager = FileManager.default
-    let tempURL = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+    // S11: metadata lives in a unique owned directory so the derived
+    // Recordings root is private, not the shared temporary directory.
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-persistence-roundtrip-\(UUID().uuidString)", isDirectory: true)
+    try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
     defer {
-        try? fileManager.removeItem(at: tempURL)
+        try? fileManager.removeItem(at: root)
     }
+    let tempURL = root.appendingPathComponent("notes.json")
 
     let store1 = NoteStore(notes: [], fileManager: fileManager, notesFileURL: tempURL, isPersistenceEnabled: true)
     let note = store1.addEmptyNote(title: "Persistent Note")
@@ -806,4 +822,379 @@ func clockInjectionAllowsDeterministicTestingOfAgeGuard() throws {
     )
     #expect(storeAt20Min.purgeOrphanedRecordings() == 1)
     #expect(!fileManager.fileExists(atPath: orphan.path))
+}
+
+// The live() + retention-notification tests below share the global
+// NotificationCenter and the live-instance registry, so they run serialized.
+// (Parallel execution lets one test's retention post evict another's notes.)
+@Suite("S11 NoteStore live writer", .serialized)
+@MainActor
+struct S11NoteStoreLiveTests {
+// MARK: - S11/ADR-030: single writer + cap FIFO
+
+@MainActor
+@Test
+func noteStoreLiveReturnsSingleInstancePerURL() {
+    NoteStore.resetLiveInstancesForTesting()
+    defer { NoteStore.resetLiveInstancesForTesting() }
+    let url = FileManager.default.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-live-\(UUID().uuidString)", isDirectory: true)
+        .appendingPathComponent("notes.json")
+
+    let first = NoteStore.live(notesFileURL: url)
+    let second = NoteStore.live(notesFileURL: url)
+    #expect(first === second, "two live() calls on one notes.json must share one instance")
+    #expect(first.ledger?.ledgerURL == url.deletingLastPathComponent().appendingPathComponent("Logs", isDirectory: true).appendingPathComponent("session-ledger.log"))
+}
+
+@MainActor
+@Test
+func noteStoreStaleWriterCannotDropNewNote() throws {
+    // Probe-proven defect class: a stale twin overwrote the disk without the
+    // new note. With one instance per URL the note survives on disk and its
+    // audio is never an orphan purge candidate.
+    NoteStore.resetLiveInstancesForTesting()
+    defer { NoteStore.resetLiveInstancesForTesting() }
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-stale-\(UUID().uuidString)", isDirectory: true)
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try fileManager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+    let notesURL = root.appendingPathComponent("notes.json")
+
+    let store = NoteStore.live(notesFileURL: notesURL)
+    // S11: live() roots the ledger at the owning store, so the factory
+    // ledger — not a late replacement — is asserted and exercised.
+    #expect(store.ledger?.ledgerURL == root.appendingPathComponent("Logs", isDirectory: true).appendingPathComponent("session-ledger.log"))
+    let audioURL = recordings.appendingPathComponent("session-1.caf")
+    try Data("audio".utf8).write(to: audioURL)
+    let recording = AudioRecording(
+        fileURL: audioURL,
+        createdAt: Date(timeIntervalSince1970: 1_775_030_000),
+        duration: 5,
+        sampleRate: 48_000,
+        channelCount: 1,
+        fileSizeBytes: 5,
+        suggestedTitle: "Session 1"
+    )
+    let note = store.addRecordedNote(recording: recording, maxRecordingsLimit: 50)
+
+    // A second live() call is the same writer, not a stale twin.
+    let twin = NoteStore.live(notesFileURL: notesURL)
+    #expect(twin === store)
+
+    // Reload straight from disk: the new note is present…
+    let reloaded = NoteStore(notes: nil, fileManager: fileManager, notesFileURL: notesURL, isPersistenceEnabled: true)
+    #expect(reloaded.note(withID: note.id) != nil)
+    // …and its audio is referenced, therefore not orphan-eligible.
+    #expect(fileManager.fileExists(atPath: audioURL.path))
+    #expect(reloaded.purgeOrphanedRecordings(olderThan: 0) == 0)
+}
+
+@MainActor
+@Test
+func noteStoreCap50FIFO80SessionsWithRetentionNotification() async throws {
+    // S11.O2: 80 sessions at cap 50 with a mid-transcription retention
+    // notification. Oldest evicted first; disk reload matches memory.
+    NoteStore.resetLiveInstancesForTesting()
+    defer { NoteStore.resetLiveInstancesForTesting() }
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-fifo-\(UUID().uuidString)", isDirectory: true)
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try fileManager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+    let notesURL = root.appendingPathComponent("notes.json")
+
+    let store = NoteStore.live(notesFileURL: notesURL)
+    #expect(store.ledger?.ledgerURL == root.appendingPathComponent("Logs", isDirectory: true).appendingPathComponent("session-ledger.log"))
+    store.observeRetentionSettings()
+    var firstIDs: [BolabolNote.ID] = []
+    for session in 0..<80 {
+        let audioURL = recordings.appendingPathComponent("session-\(session).caf")
+        try Data("audio-\(session)".utf8).write(to: audioURL)
+        let recording = AudioRecording(
+            fileURL: audioURL,
+            createdAt: Date(timeIntervalSince1970: 1_775_040_000 + Double(session)),
+            duration: 5,
+            sampleRate: 48_000,
+            channelCount: 1,
+            fileSizeBytes: 8,
+            suggestedTitle: "Session \(session)"
+        )
+        let note = store.addRecordedNote(recording: recording, maxRecordingsLimit: 50)
+        if session == 0 { firstIDs.append(note.id) }
+        if session == 40 {
+            // Mid-transcription retention notification with the same pair:
+            // must not disturb the cap window.
+            NotificationCenter.default.post(
+                name: .didChangeAudioRetentionSettings,
+                object: GeneralSettings(isAutoArchiveCleanupEnabled: true, maxSavedAudioRecordings: 50)
+            )
+            try await Task.sleep(nanoseconds: 200_000_000)
+        }
+    }
+
+    let audioNotes = store.notes.filter { $0.audioRecording != nil }
+    #expect(audioNotes.count == 50)
+    #expect(store.notes.first?.title == "Session 79")
+    #expect(store.notes.last?.title == "Session 30")
+    #expect(!audioNotes.map(\.id).contains(firstIDs[0]), "oldest session must be evicted first")
+
+    let reloaded = NoteStore(notes: nil, fileManager: fileManager, notesFileURL: notesURL, isPersistenceEnabled: true)
+    #expect(reloaded.notes.count == store.notes.count)
+    #expect(reloaded.notes.map(\.id) == store.notes.map(\.id))
+}
+
+@Test
+func noteStoreCap50FIFO80CompletionsReleaseDeferredOldestAudio() async throws {
+    // The insertion-only 80-session test never completes protected work.
+    // Keep session 0 decoding across the boundary, then prove completion
+    // removes only that deferred oldest file without increasing the saved cap.
+    NoteStore.resetLiveInstancesForTesting()
+    defer { NoteStore.resetLiveInstancesForTesting() }
+    let manager = FileManager.default
+    let root = manager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-fifo-completion-\(UUID().uuidString)", isDirectory: true)
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try manager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? manager.removeItem(at: root) }
+    let notesURL = root.appendingPathComponent("notes.json")
+    let suiteName = "bolabol-s11-fifo-completion-\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
+    defaults.set(
+        try JSONEncoder().encode(GeneralSettings(isAutoArchiveCleanupEnabled: true, maxSavedAudioRecordings: 50)),
+        forKey: "general.settings"
+    )
+    let store = NoteStore.live(notesFileURL: notesURL, userDefaults: defaults)
+    var ids: [UUID] = []
+    var urls: [URL] = []
+    for session in 0..<80 {
+        let url = recordings.appendingPathComponent("session-\(session).caf")
+        try Data("audio-\(session)".utf8).write(to: url)
+        urls.append(url)
+        let note = store.addRecordedNote(
+            recording: AudioRecording(fileURL: url, duration: 1, sampleRate: 48_000, channelCount: 1)
+        )
+        ids.append(note.id)
+        store.markTranscriptionStarted(for: note.id)
+        if session == 50 {
+            let twin = NoteStore.live(notesFileURL: notesURL, userDefaults: defaults)
+            #expect(twin === store)
+            twin.updateRawText(for: note.id, text: "shared writer at cap")
+            NotificationCenter.default.post(
+                name: .didChangeAudioRetentionSettings,
+                object: GeneralSettings(isAutoArchiveCleanupEnabled: true, maxSavedAudioRecordings: 50)
+            )
+            try await Task.sleep(nanoseconds: 200_000_000)
+            let reloaded = NoteStore(notes: nil, notesFileURL: notesURL, isPersistenceEnabled: true)
+            #expect(reloaded.note(withID: note.id)?.rawText == "shared writer at cap")
+            #expect(reloaded.purgeOrphanedRecordings(olderThan: 0) == 0)
+        }
+        if session != 0 {
+            store.applyTranscriptionResult(
+                for: note.id,
+                result: TranscriptionResult(text: "Session \(session)", diagnostics: EngineDiagnostics(backendName: "QA"))
+            )
+        }
+        #expect(store.notes.count == (session < 50 ? session + 1 : 51))
+        #expect(manager.fileExists(atPath: urls[0].path), "active oldest session must survive every cap/completion pass")
+        #expect(manager.fileExists(atPath: url.path), "newest session must survive")
+    }
+    #expect(store.note(withID: ids[0])?.transcriptionStatus.phase == .transcribing)
+    store.applyTranscriptionResult(
+        for: ids[0],
+        result: TranscriptionResult(text: "Oldest finished", diagnostics: EngineDiagnostics(backendName: "QA"))
+    )
+    #expect(store.notes.map(\.id) == Array(ids.suffix(50).reversed()))
+    #expect(store.notes.allSatisfy { $0.transcriptionStatus.phase == .completed })
+    for session in 0..<80 {
+        #expect(manager.fileExists(atPath: urls[session].path) == (session >= 30))
+    }
+    let reloaded = NoteStore(notes: nil, notesFileURL: notesURL, isPersistenceEnabled: true)
+    #expect(reloaded.notes == store.notes)
+    #expect(reloaded.purgeOrphanedRecordings(olderThan: 0) == 0)
+}
+
+@MainActor
+@Test
+func noteStoreRetentionNotificationIgnoresNonRetentionChanges() async throws {
+    NoteStore.resetLiveInstancesForTesting()
+    defer { NoteStore.resetLiveInstancesForTesting() }
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-retention-\(UUID().uuidString)", isDirectory: true)
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try fileManager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+    let notesURL = root.appendingPathComponent("notes.json")
+
+    let store = NoteStore.live(notesFileURL: notesURL)
+    #expect(store.ledger?.ledgerURL == root.appendingPathComponent("Logs", isDirectory: true).appendingPathComponent("session-ledger.log"))
+    store.observeRetentionSettings()
+    for session in 0..<5 {
+        let audioURL = recordings.appendingPathComponent("r-\(session).caf")
+        try Data("a".utf8).write(to: audioURL)
+        _ = store.addRecordedNote(
+            recording: AudioRecording(
+                fileURL: audioURL,
+                createdAt: Date(timeIntervalSince1970: 1_775_050_000 + Double(session)),
+                duration: 5,
+                sampleRate: 48_000,
+                channelCount: 1,
+                fileSizeBytes: 1,
+                suggestedTitle: "R \(session)"
+            ),
+            maxRecordingsLimit: 50
+        )
+    }
+    #expect(store.notes.count == 5)
+
+    // Same (enabled, cap) pair with other settings changed: no enforcement.
+    NotificationCenter.default.post(
+        name: .didChangeAudioRetentionSettings,
+        object: GeneralSettings(theme: .light, isAutoArchiveCleanupEnabled: true, maxSavedAudioRecordings: 50)
+    )
+    try await Task.sleep(nanoseconds: 200_000_000)
+    #expect(store.notes.count == 5)
+
+    // An actual cap change is honored.
+    NotificationCenter.default.post(
+        name: .didChangeAudioRetentionSettings,
+        object: GeneralSettings(isAutoArchiveCleanupEnabled: true, maxSavedAudioRecordings: 3)
+    )
+    try await Task.sleep(nanoseconds: 200_000_000)
+    #expect(store.notes.filter { $0.audioRecording != nil }.count == 3)
+}
+
+@MainActor
+@Test
+func oldNotesJSONWithoutOutputLanguageStillDecodes() throws {
+    // ADR-029: `outputLanguage` is optional; pre-S11 notes.json files that
+    // lack it must decode with a nil record.
+    let fileManager = FileManager.default
+    let root = fileManager.temporaryDirectory
+        .appendingPathComponent("NativeBolabol-legacy-\(UUID().uuidString)", isDirectory: true)
+    try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
+    defer { try? fileManager.removeItem(at: root) }
+    let notesURL = root.appendingPathComponent("notes.json")
+
+    // Encode a real note, then strip `outputLanguage` to simulate pre-S11 disk.
+    let legacyNote = BolabolNote(title: "Old", rawText: "hello")
+    var noteObject = try JSONSerialization.jsonObject(
+        with: JSONEncoder().encode(legacyNote)
+    ) as! [String: Any]
+    noteObject.removeValue(forKey: "outputLanguage")
+    #expect(noteObject["outputLanguage"] == nil)
+    let container: [String: Any] = [
+        "notes": [noteObject],
+        "selection": NSNull(),
+        "protectedImportedAudioPaths": [],
+    ]
+    try JSONSerialization.data(withJSONObject: container).write(to: notesURL, options: .atomic)
+
+    let store = NoteStore(notes: nil, fileManager: fileManager, notesFileURL: notesURL, isPersistenceEnabled: true)
+    #expect(store.loadState == .loaded)
+    #expect(store.notes.count == 1)
+    #expect(store.notes.first?.outputLanguage == nil)
+
+    // …and a new record round-trips.
+    let id = store.notes.first!.id
+    store.setOutputLanguage(
+        for: id,
+        record: NoteOutputLanguage(targetCode: "en", verifiedCode: "ru", translated: false, reason: "translation-error")
+    )
+    #expect(store.note(withID: id)?.outputLanguage?.translated == false)
+    let reloaded = NoteStore(notes: nil, fileManager: fileManager, notesFileURL: notesURL, isPersistenceEnabled: true)
+    #expect(reloaded.note(withID: id)?.outputLanguage?.targetCode == "en")
+}
+}
+
+@MainActor
+@Test
+func s11ReloadedInFlightTranscriptionIsNotExemptFromCap() throws {
+    // S11 J3: a `.transcribing` phase left on disk is stale work from a
+    // previous launch — nothing resumes it — so the cap applies after reload.
+    let manager = FileManager.default
+    let root = manager.temporaryDirectory.appendingPathComponent("bolabol-s11-reload-\(UUID().uuidString)")
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try manager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? manager.removeItem(at: root) }
+    let notesURL = root.appendingPathComponent("notes.json")
+    let store = NoteStore(notes: [], notesFileURL: notesURL, isPersistenceEnabled: true)
+    let olderURL = recordings.appendingPathComponent("older.caf")
+    let newerURL = recordings.appendingPathComponent("newer.caf")
+    try Data("older".utf8).write(to: olderURL)
+    try Data("newer".utf8).write(to: newerURL)
+    let older = store.addRecordedNote(
+        recording: AudioRecording(fileURL: olderURL, duration: 1, sampleRate: 48_000, channelCount: 1),
+        maxRecordingsLimit: 50
+    )
+    store.markTranscriptionStarted(for: older.id)
+    let newer = store.addRecordedNote(
+        recording: AudioRecording(fileURL: newerURL, duration: 1, sampleRate: 48_000, channelCount: 1),
+        maxRecordingsLimit: 50
+    )
+
+    // Simulate relaunch: the persisted `.transcribing` phase is failed on
+    // load instead of staying exempt.
+    let reloaded = NoteStore(notes: nil, fileManager: manager, notesFileURL: notesURL, isPersistenceEnabled: true)
+    #expect(reloaded.note(withID: older.id) != nil)
+    #expect(reloaded.note(withID: older.id)?.transcriptionStatus.phase == .failed)
+    reloaded.enforceAudioArchiveLimit(maxRecordings: 1)
+    #expect(reloaded.note(withID: newer.id) != nil)
+    #expect(reloaded.note(withID: older.id) == nil, "stale in-flight work from a previous launch must not dodge the cap")
+}
+
+@MainActor
+@Test
+func s11CompletionAfterCleanupDisabledDeletesNothing() throws {
+    // S11 J3: once the user turns auto cleanup off, finishing a
+    // transcription must not trim down to the earlier cap.
+    // S11 isolation: policy lives in a private suite injected into the
+    // store — UserDefaults.standard is never touched.
+    let suiteName = "bolabol-s11-cleanup-\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
+    defaults.set(
+        try JSONEncoder().encode(GeneralSettings(isAutoArchiveCleanupEnabled: true, maxSavedAudioRecordings: 50)),
+        forKey: "general.settings"
+    )
+    let manager = FileManager.default
+    let root = manager.temporaryDirectory.appendingPathComponent("bolabol-s11-cleanup-\(UUID().uuidString)")
+    let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
+    try manager.createDirectory(at: recordings, withIntermediateDirectories: true)
+    defer { try? manager.removeItem(at: root) }
+    let notesURL = root.appendingPathComponent("notes.json")
+    let store = NoteStore(notes: [], notesFileURL: notesURL, isPersistenceEnabled: true, userDefaults: defaults)
+    let firstURL = recordings.appendingPathComponent("first.caf")
+    let secondURL = recordings.appendingPathComponent("second.caf")
+    try Data("first".utf8).write(to: firstURL)
+    try Data("second".utf8).write(to: secondURL)
+    let first = store.addRecordedNote(
+        recording: AudioRecording(fileURL: firstURL, duration: 1, sampleRate: 48_000, channelCount: 1),
+        maxRecordingsLimit: 50
+    )
+    store.markTranscriptionStarted(for: first.id)
+    let second = store.addRecordedNote(
+        recording: AudioRecording(fileURL: secondURL, duration: 1, sampleRate: 48_000, channelCount: 1),
+        maxRecordingsLimit: 50
+    )
+    store.enforceAudioArchiveLimit(maxRecordings: 1)
+    #expect(store.note(withID: first.id) != nil)
+    #expect(store.note(withID: second.id) != nil)
+
+    // The user turns cleanup off; a later completion deletes nothing.
+    defaults.set(
+        try JSONEncoder().encode(GeneralSettings(isAutoArchiveCleanupEnabled: false, maxSavedAudioRecordings: 50)),
+        forKey: "general.settings"
+    )
+    store.applyTranscriptionResult(
+        for: first.id,
+        result: TranscriptionResult(text: "done", diagnostics: EngineDiagnostics(backendName: "QA"))
+    )
+    #expect(store.note(withID: first.id) != nil)
+    #expect(store.note(withID: second.id) != nil, "disabling cleanup must stop completion-time trimming")
 }

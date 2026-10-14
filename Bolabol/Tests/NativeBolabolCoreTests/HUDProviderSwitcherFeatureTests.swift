@@ -60,9 +60,9 @@ func hudProviderListAppendsConfiguredCloudProvidersInUIOrder() {
 }
 
 @Test
-func hudProviderListDeduplicatesCustomNamedLikeQwen() {
-  // Regression: HUD previously showed "Qwen" twice when a custom endpoint was
-  // also named "Qwen". Display-name dedupe keeps the list unique.
+func hudProviderListKeepsCustomInstancesSharingABuiltInDisplayName() {
+  // ADR-031: the HUD list de-duplicates by engine id only, so a custom
+  // endpoint named "Qwen" appears next to the built-in Qwen row.
   var settings = APIProviderSettings()
   settings.qwen.apiKey = "qwen-key"
   settings.qwen.textModel = "qwen3.7-plus"
@@ -76,8 +76,10 @@ func hudProviderListDeduplicatesCustomNamedLikeQwen() {
 
   #expect(names.contains("Local.AI"))
   #expect(names.contains("Qwen"))
-  #expect(names.filter { $0 == "Qwen" }.count == 1)
-  #expect(Set(names).count == names.count)
+  #expect(names.filter { $0 == "Qwen" }.count == 2)
+  #expect(list.map(\.id).contains("cloud-qwen"))
+  #expect(list.map(\.id).contains("cloud-custom"))
+  #expect(Set(list.map(\.id)).count == list.count)
 }
 
 @Test

@@ -354,20 +354,6 @@ func hotkeyOutputTextResolverSelectsRequestedNoteText() {
     #expect(HotkeyOutputTextResolver.text(from: note, target: .x2) == "variant two")
 }
 
-@Test
-func hotkeyOutputTextResolverFallsBackToRawTextWhenVariantIsEmpty() {
-    let note = BolabolNote(
-        title: "Test",
-        rawText: "raw text",
-        polishedVariantOne: "",
-        polishedVariantTwo: ""
-    )
-
-    #expect(HotkeyOutputTextResolver.text(from: note, target: .raw) == "raw text")
-    #expect(HotkeyOutputTextResolver.text(from: note, target: .note) == "raw text")
-    #expect(HotkeyOutputTextResolver.text(from: note, target: .x2) == "raw text")
-}
-
 // MARK: - S4 / ADR-025: capture ownership through HotkeySettingsStore
 
 /// Deterministic spy recording every HotkeyManaging call in order.

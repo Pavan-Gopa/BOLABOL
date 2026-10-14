@@ -1,5 +1,21 @@
 import Foundation
 
+/// ADR-029/Q3a: a wrong-language result after the strict retry keeps the
+/// polished source-language text (translation failure, not polishing
+/// failure). The output pipeline translates it — or falls back to it with a
+/// signal — instead of dropping it for Raw.
+
+/// Q5a: cloud engines whose key chain must respect the output-language chain
+/// cap. The workflow passes the chain deadline through this overload (first
+/// pass and strict retry); the engine must not start a new key at/after it.
+public protocol DeadlineAwarePolishingEngine: PolishingEngine {
+    func polish(
+        _ request: PolishingRequest,
+        keyChainSeconds: TimeInterval,
+        deadline: Date?
+    ) async throws -> PolishingResult
+}
+
 @MainActor
 public final class PolishingWorkflow {
     private let noteStore: NoteStore
@@ -59,12 +75,20 @@ public final class PolishingWorkflow {
     public func polishNote(
         _ noteID: BolabolNote.ID,
         variants: [ProcessingVariant] = [.variantOne, .variantTwo],
-        targetLanguage: String? = nil
+        targetLanguage: String? = nil,
+        primaryLanguageCode: String? = nil,
+        additionalLanguageCode: String? = nil,
+        deadline: Date? = nil
     ) async -> [ProcessingVariant: PolishingResult] {
         var results: [ProcessingVariant: PolishingResult] = [:]
         guard let note = noteStore.note(withID: noteID) else { return results }
         let rawText = note.rawText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let languageGuard = PolishingLanguageGuard(sourceText: rawText, targetLanguage: targetLanguage)
+        let languageGuard = PolishingLanguageGuard(
+            sourceText: rawText,
+            targetLanguage: targetLanguage,
+            primaryLanguageCode: primaryLanguageCode,
+            additionalLanguageCode: additionalLanguageCode
+        )
 
         guard !rawText.isEmpty else {
             for variant in variants.polishableVariants {
@@ -79,6 +103,16 @@ public final class PolishingWorkflow {
         }
 
         for variant in variants.polishableVariants {
+            // Q5a: never start new polish work at or after the chain cap.
+            if let deadline, Date() >= deadline {
+                noteStore.markPolishingFailed(
+                    for: noteID,
+                    variant: variant,
+                    message: CloudKeyFailover.TimeoutError().localizedDescription,
+                    backendName: engine.displayName
+                )
+                continue
+            }
             noteStore.markPolishingStarted(
                 for: noteID,
                 variant: variant,
@@ -90,7 +124,8 @@ public final class PolishingWorkflow {
                     rawText: rawText,
                     variant: variant,
                     template: templateProvider(variant),
-                    languageGuard: languageGuard
+                    languageGuard: languageGuard,
+                    deadline: deadline
                 )
                 guard !result.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                     noteStore.markPolishingFailed(
@@ -119,7 +154,8 @@ public final class PolishingWorkflow {
         rawText: String,
         variant: ProcessingVariant,
         template: PromptTemplate,
-        languageGuard: PolishingLanguageGuard?
+        languageGuard: PolishingLanguageGuard?,
+        deadline: Date? = nil
     ) async throws -> PolishingResult {
         let configuredTemplate: PromptTemplate
         if variant == .variantTwo, let humorLevel {
@@ -135,29 +171,66 @@ public final class PolishingWorkflow {
 
         let guardedTemplate = languageGuard?.applying(to: configuredTemplate, strict: false)
             ?? configuredTemplate
-        var result = try await engine.polish(
+        let firstPass = try await polishWithDeadline(
             PolishingRequest(
                 rawText: rawText,
                 variant: variant,
                 template: guardedTemplate,
                 humorLevel: variant == .variantTwo ? humorLevel?.rawValue : nil
-            )
+            ),
+            deadline: deadline
         )
 
-        guard let languageGuard, languageGuard.requiresStrictRetry(for: result.text) else {
-            return result
+        guard let languageGuard, languageGuard.requiresStrictRetry(for: firstPass.text) else {
+            return firstPass
+        }
+
+        // Q5a: never start the strict retry at or after the chain cap; keep
+        // the first-pass polished text so the pipeline can translate it (Q3a).
+        if let deadline, Date() >= deadline {
+            return firstPass
         }
 
         let strictTemplate = languageGuard.applying(to: configuredTemplate, strict: true)
-        result = try await engine.polish(
-            PolishingRequest(
-                rawText: rawText,
-                variant: variant,
-                template: strictTemplate,
-                humorLevel: variant == .variantTwo ? humorLevel?.rawValue : nil
+        do {
+            let strict = try await polishWithDeadline(
+                PolishingRequest(
+                    rawText: rawText,
+                    variant: variant,
+                    template: strictTemplate,
+                    humorLevel: variant == .variantTwo ? humorLevel?.rawValue : nil
+                ),
+                deadline: deadline
             )
-        )
-        return result
+            // ADR-029/Q3a: a still-wrong language after the strict retry keeps
+            // the polished source-language text (translation failure, not
+            // polishing failure). The pipeline verifies it, translates it via
+            // the provider, or falls back to it with a signal. Inconclusive
+            // (short/mixed) text is kept as-is.
+            return strict
+        } catch {
+            // Q5a cap abort (throw or cancellation mid-retry): the first pass
+            // already produced polished source-language text, so keep it as
+            // completed instead of failing the variant. The pipeline then
+            // translates it or falls back to it with a signal — never Raw.
+            return firstPass
+        }
+    }
+
+    /// Q5a: first pass and strict retry share the chain deadline. Cloud key
+    /// chains must not start a new key at or after the cap.
+    private func polishWithDeadline(
+        _ request: PolishingRequest,
+        deadline: Date?
+    ) async throws -> PolishingResult {
+        if let cloud = engine as? any DeadlineAwarePolishingEngine {
+            return try await cloud.polish(
+                request,
+                keyChainSeconds: CloudKeyFailover.TimeBudget.default.keyChainSeconds,
+                deadline: deadline
+            )
+        }
+        return try await engine.polish(request)
     }
 }
 
@@ -172,10 +245,19 @@ private struct PolishingLanguageGuard {
     private let translationInstruction: String?
     private let translationFooter: String?
     private let targetLanguageName: String?
-    private let targetUsesCyrillicScript: Bool
+    private let verifyTargetCode: String?
+    private let primaryLanguageCode: String?
+    private let additionalLanguageCode: String?
 
-    init?(sourceText: String, targetLanguage: String? = nil) {
-        let sourceProfile = ScriptProfile(text: sourceText)
+    init?(
+        sourceText: String,
+        targetLanguage: String? = nil,
+        primaryLanguageCode: String? = nil,
+        additionalLanguageCode: String? = nil
+    ) {
+        self.primaryLanguageCode = primaryLanguageCode
+        self.additionalLanguageCode = additionalLanguageCode
+        let sourceIsCyrillic = Self.isCyrillicDominant(sourceText)
         let normalizedTarget = HUDPolishingTranslation.concreteLanguageCode(targetLanguage)
 
         // Explicit translation request (HUD "A" → target language): instruct the
@@ -187,7 +269,7 @@ private struct PolishingLanguageGuard {
         if let normalizedTarget {
             let languageName = TranscriptionLanguageOption.displayName(for: normalizedTarget)
             targetLanguageName = languageName
-            targetUsesCyrillicScript = Self.cyrillicLanguageCodes.contains(normalizedTarget)
+            verifyTargetCode = normalizedTarget
             translationInstruction = """
             === TRANSLATION OVERRIDE - READ THIS FIRST, HIGHEST PRIORITY ===
             For THIS task you MUST translate the ENTIRE text into \(languageName).
@@ -201,14 +283,14 @@ private struct PolishingLanguageGuard {
             === FINAL TRANSLATION REMINDER ===
             Return the text above entirely in \(languageName). Ignore any earlier instruction that says to keep the original language or not to translate. Output ONLY the final polished text in \(languageName) - no explanations, no notes, no source-language text.
             """
-            sourceIsCyrillicDominant = sourceProfile.isCyrillicDominant
+            sourceIsCyrillicDominant = sourceIsCyrillic
             return
         }
 
         // No translation requested: keep the output in the source language. When the
         // source is primarily Russian/Cyrillic, lock the output to Cyrillic so the
         // polishing model does not drift into English.
-        guard sourceProfile.isCyrillicDominant else {
+        guard sourceIsCyrillic else {
             return nil
         }
 
@@ -216,7 +298,25 @@ private struct PolishingLanguageGuard {
         translationInstruction = nil
         translationFooter = nil
         targetLanguageName = nil
-        targetUsesCyrillicScript = false
+        verifyTargetCode = primaryLanguageCode ?? "ru"
+    }
+
+    /// Minimal script census for the *source* lock trigger only. Output gating
+    /// uses `OutputLanguageVerifier`, never this count.
+    private static func isCyrillicDominant(_ text: String) -> Bool {
+        var cyrillic = 0
+        var latin = 0
+        for scalar in text.unicodeScalars {
+            switch scalar.value {
+            case 0x0041...0x005A, 0x0061...0x007A:
+                latin += 1
+            case 0x0400...0x04FF, 0x0500...0x052F, 0x2DE0...0x2DFF, 0xA640...0xA69F:
+                cyrillic += 1
+            default:
+                continue
+            }
+        }
+        return cyrillic >= 4 || (cyrillic >= 1 && cyrillic >= latin)
     }
 
     func applying(to template: PromptTemplate, strict: Bool) -> PromptTemplate {
@@ -292,15 +392,27 @@ private struct PolishingLanguageGuard {
         )
     }
 
+    /// ADR-029: the retry decision is an explicit wrong-language verdict from
+    /// `OutputLanguageVerifier`. Inconclusive (short/mixed) text never retries.
+    /// A-mode short text never retries either: identifiers, numbers, and
+    /// interjections (`OK`, `42`) keep the first pass instead of being
+    /// rewritten (S11 J2). Translation (E) mode and long text are unchanged.
     func requiresStrictRetry(for outputText: String) -> Bool {
-        let outputProfile = ScriptProfile(text: outputText)
-        if translationInstruction != nil {
-            if targetUsesCyrillicScript {
-                return outputProfile.latinCount >= 4 && outputProfile.cyrillicCount * 2 < outputProfile.latinCount
-            }
-            return outputProfile.isCyrillicDominant
+        guard verifyTargetCode != nil else { return false }
+        if translationInstruction == nil, OutputLanguageVerifier.isShortText(outputText) {
+            return false
         }
-        return sourceIsCyrillicDominant && outputProfile.isClearlyNonCyrillicComparedToCyrillicSource
+        if case .fail = verify(outputText) { return true }
+        return false
+    }
+
+    private func verify(_ outputText: String) -> OutputLanguageVerifier.Decision {
+        OutputLanguageVerifier.verify(
+            text: outputText,
+            targetCode: verifyTargetCode ?? "en",
+            primaryCode: primaryLanguageCode,
+            additionalCode: additionalLanguageCode
+        )
     }
 
     /// `PolishingPromptPolicy` fences everything after `INPUT:` as source data.
@@ -356,6 +468,36 @@ private struct PolishingLanguageGuard {
             (
                 "Never translate the text",
                 "Translate the text into \(languageName)"
+            ),
+            // ADR-029: residual slot locks proven to survive the rewrite above.
+            // Under an explicit translation override they are neutralized, not kept.
+            (
+                "Do not translate the entire message",
+                "Translate the entire message into \(languageName)"
+            ),
+            (
+                "Do not translate the whole message",
+                "Translate the whole message into \(languageName)"
+            ),
+            (
+                "stay in the input language",
+                "be written entirely in \(languageName)"
+            ),
+            (
+                "native to the input language",
+                "native to \(languageName)"
+            ),
+            (
+                "in the input language",
+                "in \(languageName)"
+            ),
+            (
+                "same language as the input",
+                "the \(languageName) language"
+            ),
+            (
+                "matches the input language",
+                "is entirely in \(languageName)"
             )
         ]
         for (from, to) in replacements {
@@ -363,41 +505,5 @@ private struct PolishingLanguageGuard {
         }
         return result
     }
-
-    private static let cyrillicLanguageCodes: Set<String> = [
-        "ru", "uk", "bg", "sr", "be", "mk",
-        "russian", "ukrainian", "bulgarian", "serbian", "belarusian", "macedonian"
-    ]
 }
 
-private struct ScriptProfile {
-    let cyrillicCount: Int
-    let latinCount: Int
-
-    init(text: String) {
-        var cyrillicCount = 0
-        var latinCount = 0
-
-        for scalar in text.unicodeScalars {
-            switch scalar.value {
-            case 0x0041...0x005A, 0x0061...0x007A:
-                latinCount += 1
-            case 0x0400...0x04FF, 0x0500...0x052F, 0x2DE0...0x2DFF, 0xA640...0xA69F:
-                cyrillicCount += 1
-            default:
-                continue
-            }
-        }
-
-        self.cyrillicCount = cyrillicCount
-        self.latinCount = latinCount
-    }
-
-    var isCyrillicDominant: Bool {
-        cyrillicCount >= 4 || (cyrillicCount >= 1 && cyrillicCount >= latinCount)
-    }
-
-    var isClearlyNonCyrillicComparedToCyrillicSource: Bool {
-        (cyrillicCount == 0 && latinCount >= 2) || (latinCount >= 4 && cyrillicCount * 2 < latinCount)
-    }
-}

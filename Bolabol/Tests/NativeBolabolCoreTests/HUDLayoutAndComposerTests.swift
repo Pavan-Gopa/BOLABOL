@@ -1439,3 +1439,4 @@ func hudOverlayManagerConsumesSharedCenteringPolicyAndForbidsManualGeometry() th
   #expect(layout.contains("CTFontCreateWithFontDescriptor"), "policy must create the rounded CTFont descriptor directly")
   #expect(layout.contains("glyphsBase"), "outline bounds must use resolved glyphs")
 }
+

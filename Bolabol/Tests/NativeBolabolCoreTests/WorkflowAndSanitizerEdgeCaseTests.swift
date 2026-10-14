@@ -1,4 +1,5 @@
 import Foundation
+@testable import NativeBolabol
 import NativeBolabolCore
 import Testing
 
@@ -131,6 +132,100 @@ func modelOutputSanitizerStripsMarkdownFencesWhenPresent() {
   let output = ModelOutputSanitizer.sanitize(input)
   #expect(output.contains("Clean answer only"))
   #expect(!output.contains("```"))
+}
+
+// Exercise the real cloud engine and workflow without contacting a provider.
+// The protocol accepts only a reserved fixture host; the store is in-memory.
+@Suite("Model output sanitizer cloud workflow", .serialized)
+struct ModelOutputSanitizerCloudWorkflowTests {
+  @MainActor
+  @Test
+  func modelOutputSanitizerCloudPolishKeepsLegitimateEnglishNonempty() async throws {
+    #expect(URLProtocol.registerClass(SanitizerCloudOutputURLProtocol.self))
+    defer { URLProtocol.unregisterClass(SanitizerCloudOutputURLProtocol.self) }
+
+    for (path, expected) in [
+      ("plain", SanitizerCloudOutputURLProtocol.english),
+      ("fenced", SanitizerCloudOutputURLProtocol.english),
+      ("literal-closing", SanitizerCloudOutputURLProtocol.literalClosingTag),
+      ("inline-closing-text", SanitizerCloudOutputURLProtocol.inlineClosingTagWithTrailingText),
+    ] {
+      let engine = CloudTextPolishingEngine(
+        kind: .openRouter,
+        configuration: APIProviderConfiguration(
+          apiKeys: ["sanitizer-fixture-key"],
+          textModel: "sanitizer-fixture-model",
+          baseURL: "https://sanitizer-qa.invalid/\(path)"
+        )
+      )
+      let store = NoteStore(notes: [], isPersistenceEnabled: false)
+      let note = store.addEmptyNote()
+      store.applyTranscriptionResult(
+        for: note.id,
+        result: TranscriptionResult(
+          text: expected,
+          diagnostics: EngineDiagnostics(backendName: "Fixture transcript")
+        )
+      )
+
+      let cloudResult = try await engine.polish(PolishingRequest(
+        rawText: expected,
+        variant: .variantOne,
+        template: .defaultTemplate(for: .variantOne)
+      ))
+      #expect(cloudResult.text == expected, "cloud polish deleted or changed legitimate English: \(path)")
+
+      let workflow = PolishingWorkflow(noteStore: store, engine: engine)
+      let results = await workflow.polishNote(note.id)
+      for variant in [ProcessingVariant.variantOne, .variantTwo] {
+        #expect(results[variant]?.text == expected, "sanitized cloud output was rejected by workflow: \(path)")
+        #expect(store.note(withID: note.id)?.polishingStatus(for: variant).phase == .completed)
+      }
+      #expect(store.note(withID: note.id)?.polishedVariantOne == expected)
+      #expect(store.note(withID: note.id)?.polishedVariantTwo == expected)
+    }
+  }
+}
+
+private final class SanitizerCloudOutputURLProtocol: URLProtocol {
+  static let english = "I would finally like to open the calendar. I really see the horizon at this moment. 👩🏽‍💻"
+  static let literalClosingTag = "To close the block, write </think>"
+  static let inlineClosingTagWithTrailingText = "Write </think> to close it. I would finally like to open the calendar."
+
+  override class func canInit(with request: URLRequest) -> Bool {
+    request.url?.host == "sanitizer-qa.invalid"
+  }
+
+  override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+  override func startLoading() {
+    let path = request.url?.path ?? ""
+    let content: String
+    if path.contains("/literal-closing/") {
+      content = Self.literalClosingTag
+    } else if path.contains("/inline-closing-text/") {
+      content = Self.inlineClosingTagWithTrailingText
+    } else if path.contains("/fenced/") {
+      content = "```text\n\(Self.english)\n```"
+    } else {
+      content = Self.english
+    }
+    do {
+      let data = try JSONSerialization.data(withJSONObject: [
+        "choices": [["message": ["content": content]]]
+      ])
+      let response = HTTPURLResponse(
+        url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil
+      )!
+      client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+      client?.urlProtocol(self, didLoad: data)
+      client?.urlProtocolDidFinishLoading(self)
+    } catch {
+      client?.urlProtocol(self, didFailWithError: error)
+    }
+  }
+
+  override func stopLoading() {}
 }
 
 // MARK: Markdown post-processor

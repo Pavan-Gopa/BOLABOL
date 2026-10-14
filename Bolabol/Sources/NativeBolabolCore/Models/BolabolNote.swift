@@ -1,5 +1,20 @@
 import Foundation
 
+/// Verified target-language output record (ADR-029, Q4d).
+/// Optional for backward-compatible decode of older notes.json.
+public struct NoteOutputLanguage: Codable, Equatable, Sendable {
+    public var targetCode: String
+    public var verifiedCode: String?
+    public var translated: Bool
+    public var reason: String?
+    public init(targetCode: String, verifiedCode: String? = nil, translated: Bool, reason: String? = nil) {
+        self.targetCode = targetCode
+        self.verifiedCode = verifiedCode
+        self.translated = translated
+        self.reason = reason
+    }
+}
+
 public struct BolabolNote: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID
     public var title: String
@@ -10,6 +25,7 @@ public struct BolabolNote: Identifiable, Codable, Equatable, Sendable {
     public var audioRecording: AudioRecording?
     public var transcriptionStatus: TranscriptionStatus
     public var polishingStatuses: [ProcessingVariant: PolishingStatus]
+    public var outputLanguage: NoteOutputLanguage?
 
     public init(
         id: UUID = UUID(),
@@ -20,7 +36,8 @@ public struct BolabolNote: Identifiable, Codable, Equatable, Sendable {
         polishedVariantTwo: String = "",
         audioRecording: AudioRecording? = nil,
         transcriptionStatus: TranscriptionStatus = .idle,
-        polishingStatuses: [ProcessingVariant: PolishingStatus] = [:]
+        polishingStatuses: [ProcessingVariant: PolishingStatus] = [:],
+        outputLanguage: NoteOutputLanguage? = nil
     ) {
         self.id = id
         self.title = title
@@ -31,6 +48,7 @@ public struct BolabolNote: Identifiable, Codable, Equatable, Sendable {
         self.audioRecording = audioRecording
         self.transcriptionStatus = transcriptionStatus
         self.polishingStatuses = polishingStatuses
+        self.outputLanguage = outputLanguage
     }
 
     public func polishingStatus(for variant: ProcessingVariant) -> PolishingStatus {

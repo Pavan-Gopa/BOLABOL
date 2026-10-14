@@ -4,10 +4,12 @@ import Testing
 
 @Test
 func googleTextGenerationRetryPolicyUsesBoundedAttempts() {
+    // Q5a: 15 s per request; a single attempt per key (key failover, not
+    // same-key retry, is owned by CloudKeyFailover).
     let policy = CloudRequestRetryPolicy.googleTextGeneration
 
-    #expect(policy.timeoutInterval == 20)
-    #expect(policy.maxAttempts == 2)
+    #expect(policy.timeoutInterval == 15)
+    #expect(policy.maxAttempts == 1)
     #expect(policy.retryDelayNanoseconds == 250_000_000)
 }
 

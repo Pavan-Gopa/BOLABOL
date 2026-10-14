@@ -14,6 +14,9 @@ final class PolishingEngineStore: ObservableObject {
     private static let lastActiveModelDefaultsKey = "polishing.lastActiveModelID"
     private static let modelSettingsDefaultsKey = "polishing.modelSettings"
     private static let apiSettingsDefaultsKey = "polishing.apiProviderSettings"
+    /// Shared with the `translation.providerID` AppStorage in ContentView /
+    /// TranslationModalView so provider removal can clear a stale selection.
+    private static let translationProviderDefaultsKey = "translation.providerID"
 
     let catalog: PolishingModelCatalog
 
@@ -108,22 +111,44 @@ final class PolishingEngineStore: ObservableObject {
     }
 
     var activeEngine: any PolishingEngine {
-        engine(for: selectedEngineID)
+        engine(for: selectedEngineID) ?? ruleEngine
     }
 
-    func engine(for engineID: String) -> any PolishingEngine {
+    /// Resolves a stored engine ID to a polishing engine, or nil when a
+    /// custom instance is gone (deleted). Nil lets translation callers fall
+    /// back to the active engine instead of polishing with an empty config.
+    func engine(for engineID: String) -> (any PolishingEngine)? {
         if engineID == Self.disabledEngineID {
             return MissingPolishingModelEngine()
         }
 
-        if let providerKind = APIProviderKind(polishingEngineID: engineID) {
-            let cacheKey = providerKind.polishingEngineID
+        if let resolved = apiSettings.resolve(engineID: engineID) {
+            if resolved.kind == .custom {
+                // Deleted instances resolve to nil so the active-engine
+                // fallback runs, the same way an unavailable provider is
+                // handled today.
+                guard let instance = resolved.customInstanceID.flatMap({ apiSettings.customInstance(id: $0) }) else {
+                    return nil
+                }
+                let cacheKey = instance.engineID
+                if let cached = cloudEngines[cacheKey] {
+                    return cached
+                }
+                let engine = CloudTextPolishingEngine(
+                    kind: .custom,
+                    configuration: instance.configuration,
+                    customInstance: instance
+                )
+                cloudEngines[cacheKey] = engine
+                return engine
+            }
+            let cacheKey = resolved.kind.polishingEngineID
             if let cached = cloudEngines[cacheKey] {
                 return cached
             }
             let engine = CloudTextPolishingEngine(
-                kind: providerKind,
-                configuration: apiSettings.configuration(for: providerKind)
+                kind: resolved.kind,
+                configuration: apiSettings.configuration(for: resolved.kind)
             )
             cloudEngines[cacheKey] = engine
             return engine
@@ -142,7 +167,6 @@ final class PolishingEngineStore: ObservableObject {
             localURL: localURL
         )
     }
-
     /// Returns an MLX engine for the given model, regardless of which model
     /// is currently "active" in polishing settings. Used by the Translation modal
     /// so users can pick any downloaded model independently.
@@ -175,9 +199,9 @@ final class PolishingEngineStore: ObservableObject {
         ]
         let cloudDescriptors = apiSettings.availablePolishingProviders.map { provider in
             PolishingEngineDescriptor(
-                id: provider.kind.polishingEngineID,
+                id: provider.engineID,
                 displayName: provider.displayName,
-                isActive: selectedEngineID == provider.kind.polishingEngineID
+                isActive: selectedEngineID == provider.engineID
             )
         }
 
@@ -209,8 +233,8 @@ final class PolishingEngineStore: ObservableObject {
             return false
         }
 
-        if let providerKind = APIProviderKind(polishingEngineID: selectedEngineID) {
-            return apiSettings.availablePolishingProviders.contains { $0.kind == providerKind }
+        if apiSettings.resolve(engineID: selectedEngineID) != nil {
+            return apiSettings.availablePolishingProviders.contains { $0.engineID == selectedEngineID }
         }
 
         reconcileModelStates()
@@ -225,8 +249,8 @@ final class PolishingEngineStore: ObservableObject {
     var isActiveEngineTranslationCapable: Bool {
         guard selectedEngineID != Self.disabledEngineID else { return false }
 
-        if let providerKind = APIProviderKind(polishingEngineID: selectedEngineID) {
-            return apiSettings.availablePolishingProviders.contains { $0.kind == providerKind }
+        if apiSettings.resolve(engineID: selectedEngineID) != nil {
+            return apiSettings.availablePolishingProviders.contains { $0.engineID == selectedEngineID }
         }
 
         // Rule-based fallback engine: no LLM, cannot translate.
@@ -255,6 +279,79 @@ final class PolishingEngineStore: ObservableObject {
         }
 
         selectedEngineID = kind.polishingEngineID
+    }
+    /// Instance-aware configuration write (ADR-031). Returns false when the
+    /// engine ID is unknown or its custom instance is gone.
+    @discardableResult
+    func updateAPIConfiguration(
+        _ configuration: APIProviderConfiguration,
+        forEngineID engineID: String
+    ) -> Bool {
+        var settings = apiSettings
+        guard settings.setConfiguration(configuration, forEngineID: engineID) else { return false }
+        apiSettings = settings
+
+        if !Self.validEngineIDs(apiSettings: apiSettings).contains(selectedEngineID) {
+            selectedEngineID = Self.defaultEngineID
+        } else {
+            refreshPreparationSnapshot()
+        }
+        return true
+    }
+
+    /// Instance-aware provider selection (ADR-031). Ignores engine IDs that
+    /// are not currently available, the same way `selectAPIProvider(_:)` does.
+    func selectAPIProvider(engineID: String) {
+        guard apiSettings.availablePolishingProviders.contains(where: { $0.engineID == engineID }) else {
+            return
+        }
+
+        selectedEngineID = engineID
+    }
+
+    /// Appends a custom provider instance with a fresh UUID id and persists
+    /// it (keys go to the keychain via `saveAPISettings`).
+    @discardableResult
+    func addCustomProvider(name: String) -> CustomAPIProviderInstance {
+        var settings = apiSettings
+        let instance = settings.addCustomProvider(name: name)
+        apiSettings = settings
+        return instance
+    }
+
+    /// Renames a custom provider instance. Returns false (and changes
+    /// nothing) when the name is blank or taken case-insensitively.
+    @discardableResult
+    func renameCustomProvider(id: String, name: String) -> Bool {
+        var settings = apiSettings
+        guard settings.renameCustomProvider(id: id, name: name) else { return false }
+        apiSettings = settings
+        refreshPreparationSnapshot()
+        return true
+    }
+
+    /// Removes a custom provider instance (ADR-031): deletes its keychain
+    /// item and repairs `selectedEngineID` / last-non-disabled when they
+    /// pointed at its engine ID, the same way an unavailable provider is
+    /// handled today. A `translation.providerID` pointing at its engine ID
+    /// is cleared too, so pipeline translation falls back to the active
+    /// engine instead of resolving a deleted instance.
+    func removeCustomProvider(id: String) {
+        var settings = apiSettings
+        guard let removed = settings.removeCustomProvider(id: id) else { return }
+        apiSettings = settings
+        try? credentialStore.saveKeys([], account: removed.keychainAccount)
+        if selectedEngineID == removed.engineID {
+            selectedEngineID = Self.defaultEngineID
+        } else {
+            refreshPreparationSnapshot()
+        }
+        if userDefaults.string(forKey: Self.lastNonDisabledEngineDefaultsKey) == removed.engineID {
+            userDefaults.removeObject(forKey: Self.lastNonDisabledEngineDefaultsKey)
+        }
+        if userDefaults.string(forKey: Self.translationProviderDefaultsKey) == removed.engineID {
+            userDefaults.removeObject(forKey: Self.translationProviderDefaultsKey)
+        }
     }
 
     func isPreparing(_ model: PolishingModelDescriptor) -> Bool {
@@ -432,10 +529,13 @@ final class PolishingEngineStore: ObservableObject {
             return
         }
 
-        if let providerKind = APIProviderKind(polishingEngineID: selectedEngineID) {
-            let configuration = apiSettings.configuration(for: providerKind)
+        if let resolved = apiSettings.resolve(engineID: selectedEngineID),
+          let configuration = apiSettings.configuration(forEngineID: selectedEngineID)
+        {
+            let name = apiSettings.displayName(forEngineID: selectedEngineID)
+              ?? resolved.kind.displayName
             preparationSnapshot = .ready(
-                message: "\(providerKind.displayName) \(configuration.textModel) is configured."
+                message: "\(name) \(configuration.textModel) is configured."
             )
             return
         }
@@ -831,16 +931,27 @@ final class PolishingEngineStore: ObservableObject {
     }
 
     private func saveAPISettings() {
-        for kind in APIProviderKind.allCases {
+        for kind in APIProviderKind.allCases where kind != .custom {
             let keys = apiSettings.configuration(for: kind).apiKeys
             try? credentialStore.saveKeys(keys, for: kind)
         }
+        // Custom instances persist per-instance accounts; the kind-based
+        // `.custom` loop would only cover the legacy account.
+        for instance in apiSettings.customProviders {
+            try? credentialStore.saveKeys(
+                instance.configuration.apiKeys, account: instance.keychainAccount)
+        }
 
         var redactedSettings = apiSettings
-        for kind in APIProviderKind.allCases {
+        for kind in APIProviderKind.allCases where kind != .custom {
             var configuration = redactedSettings.configuration(for: kind)
             configuration.apiKeys = []
             redactedSettings.setConfiguration(configuration, for: kind)
+        }
+        for instance in redactedSettings.customProviders {
+            var configuration = instance.configuration
+            configuration.apiKeys = []
+            redactedSettings.setConfiguration(configuration, forCustomInstanceID: instance.id)
         }
 
         guard let data = try? JSONEncoder().encode(redactedSettings) else { return }
@@ -853,7 +964,7 @@ final class PolishingEngineStore: ObservableObject {
     ) -> APIProviderSettings {
         var hydratedSettings = storedSettings
 
-        for kind in APIProviderKind.allCases {
+        for kind in APIProviderKind.allCases where kind != .custom {
             var configuration = hydratedSettings.configuration(for: kind)
             let keychainKeys = credentialStore.loadKeys(for: kind)
 
@@ -864,6 +975,20 @@ final class PolishingEngineStore: ObservableObject {
             }
 
             hydratedSettings.setConfiguration(configuration, for: kind)
+        }
+
+        for instance in hydratedSettings.customProviders {
+            var configuration = instance.configuration
+            let keychainKeys = credentialStore.loadKeys(account: instance.keychainAccount)
+
+            if !keychainKeys.isEmpty {
+                configuration.apiKeys = keychainKeys
+            } else if !configuration.apiKeys.isEmpty {
+                try? credentialStore.saveKeys(
+                    configuration.apiKeys, account: instance.keychainAccount)
+            }
+
+            hydratedSettings.setConfiguration(configuration, forCustomInstanceID: instance.id)
         }
 
         return hydratedSettings
@@ -899,7 +1024,7 @@ final class PolishingEngineStore: ObservableObject {
 
     private static func validEngineIDs(apiSettings: APIProviderSettings) -> Set<String> {
         Set([disabledEngineID, LocalRuleBasedPolishingEngine().id, mlxSwiftEngineID] + apiSettings.availablePolishingProviders.map {
-            $0.kind.polishingEngineID
+            $0.engineID
         })
     }
 

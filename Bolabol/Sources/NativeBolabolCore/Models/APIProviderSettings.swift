@@ -262,11 +262,97 @@ public struct AvailableAPIProvider: Codable, Equatable, Sendable {
   public var kind: APIProviderKind
   public var displayName: String
   public var modelName: String
+  /// Stable engine identity. Built-ins use `kind.polishingEngineID`; each
+  /// custom instance uses its own `cloud-custom` / `cloud-custom-<id>`
+  /// (ADR-031), so several instances can appear side by side.
+  public var engineID: String
 
-  public init(kind: APIProviderKind, displayName: String, modelName: String) {
+  public init(
+    kind: APIProviderKind,
+    displayName: String,
+    modelName: String,
+    engineID: String? = nil
+  ) {
     self.kind = kind
     self.displayName = displayName
     self.modelName = modelName
+    self.engineID = engineID ?? kind.polishingEngineID
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case kind, displayName, modelName, engineID
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    kind = try container.decode(APIProviderKind.self, forKey: .kind)
+    displayName = try container.decode(String.self, forKey: .displayName)
+    modelName = try container.decode(String.self, forKey: .modelName)
+    engineID =
+      try container.decodeIfPresent(String.self, forKey: .engineID) ?? kind.polishingEngineID
+  }
+}
+
+/// One named OpenAI-compatible custom provider instance (ADR-031).
+///
+/// `APIProviderKind.custom` stays the behaviour kind (request policy, model
+/// catalog, URL building); this type carries the per-instance identity: a
+/// stable string id, the configuration (whose `name` is the display name),
+/// the engine ID and the keychain account. The migrated legacy provider keeps
+/// engine ID `cloud-custom` and account `api-provider.custom.keys`; new
+/// instances use `cloud-custom-<uuid>` and `api-provider.custom.<uuid>.keys`.
+public struct CustomAPIProviderInstance: Codable, Equatable, Sendable, Identifiable {
+  public static let legacyInstanceID = "legacy"
+  public static let legacyEngineID = "cloud-custom"
+  private static let engineIDPrefix = "cloud-custom-"
+
+  public var id: String
+  public var configuration: APIProviderConfiguration
+
+  public init(
+    id: String = legacyInstanceID,
+    configuration: APIProviderConfiguration = APIProviderConfiguration()
+  ) {
+    self.id = id
+    self.configuration = configuration
+  }
+
+  public static func engineID(forInstanceID id: String) -> String {
+    id == legacyInstanceID ? legacyEngineID : "\(engineIDPrefix)\(id)"
+  }
+
+  public static func keychainAccount(forInstanceID id: String) -> String {
+    id == legacyInstanceID ? "api-provider.custom.keys" : "api-provider.custom.\(id).keys"
+  }
+
+  /// Maps an engine ID back to a custom instance id (`nil` when not a custom
+  /// engine ID). Structural only — the instance may not exist (anymore).
+  public static func instanceID(forEngineID engineID: String) -> String? {
+    if engineID == legacyEngineID { return legacyInstanceID }
+    guard engineID.hasPrefix(engineIDPrefix) else { return nil }
+    let suffix = String(engineID.dropFirst(engineIDPrefix.count))
+    return suffix.isEmpty ? nil : suffix
+  }
+
+  public var engineID: String { Self.engineID(forInstanceID: id) }
+  public var keychainAccount: String { Self.keychainAccount(forInstanceID: id) }
+
+  public var displayName: String {
+    let trimmed = configuration.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? APIProviderKind.custom.displayName : trimmed
+  }
+}
+
+/// Structural resolution of a stored engine ID (ADR-031): the behaviour kind
+/// plus, for custom providers, the instance id. Availability (keys, model,
+/// base URL) is checked separately against the resolved configuration.
+public struct ResolvedAPIProvider: Equatable, Sendable {
+  public var kind: APIProviderKind
+  public var customInstanceID: String?
+
+  public init(kind: APIProviderKind, customInstanceID: String? = nil) {
+    self.kind = kind
+    self.customInstanceID = customInstanceID
   }
 }
 
@@ -328,7 +414,22 @@ public struct APIProviderSettings: Codable, Equatable, Sendable {
   public var anthropic: APIProviderConfiguration
   public var qwen: APIProviderConfiguration
   public var openRouter: APIProviderConfiguration
-  public var custom: APIProviderConfiguration
+  /// Named custom provider instances (ADR-031). The first entry is the
+  /// migrated legacy provider (`cloud-custom`).
+  public var customProviders: [CustomAPIProviderInstance]
+
+  /// Backwards-compatible alias for the first (migrated legacy) custom
+  /// instance, so existing single-custom call sites keep working.
+  public var custom: APIProviderConfiguration {
+    get { customProviders.first?.configuration ?? APIProviderConfiguration() }
+    set {
+      if customProviders.isEmpty {
+        customProviders = [CustomAPIProviderInstance(configuration: newValue)]
+      } else {
+        customProviders[0].configuration = newValue
+      }
+    }
+  }
 
   public init(
     google: APIProviderConfiguration = APIProviderConfiguration(textModel: "gemini-3.5-flash"),
@@ -343,18 +444,23 @@ public struct APIProviderSettings: Codable, Equatable, Sendable {
       textModel: "openai/gpt-4o-mini",
       baseURL: "https://openrouter.ai/api/v1"
     ),
-    custom: APIProviderConfiguration = APIProviderConfiguration()
+    custom: APIProviderConfiguration = APIProviderConfiguration(),
+    customProviders: [CustomAPIProviderInstance]? = nil
   ) {
     self.google = google
     self.openAI = openAI
     self.anthropic = anthropic
     self.qwen = qwen
     self.openRouter = openRouter
-    self.custom = custom
+    if let customProviders {
+      self.customProviders = customProviders
+    } else {
+      self.customProviders = [CustomAPIProviderInstance(configuration: custom)]
+    }
   }
 
   private enum CodingKeys: String, CodingKey {
-    case google, openAI, anthropic, qwen, openRouter, custom
+    case google, openAI, anthropic, qwen, openRouter, custom, customProviders
   }
 
   public init(from decoder: Decoder) throws {
@@ -378,9 +484,18 @@ public struct APIProviderSettings: Codable, Equatable, Sendable {
       try container.decodeIfPresent(APIProviderConfiguration.self, forKey: .openRouter)
       ?? APIProviderConfiguration(
         textModel: "openai/gpt-4o-mini", baseURL: "https://openrouter.ai/api/v1")
-    custom =
-      try container.decodeIfPresent(APIProviderConfiguration.self, forKey: .custom)
-      ?? APIProviderConfiguration()
+    if let instances = try container.decodeIfPresent(
+      [CustomAPIProviderInstance].self, forKey: .customProviders)
+    {
+      customProviders = instances
+    } else {
+      // Migration: legacy `custom` JSON becomes the first instance, keeping
+      // base URL, model, name and keys.
+      let legacy =
+        try container.decodeIfPresent(APIProviderConfiguration.self, forKey: .custom)
+        ?? APIProviderConfiguration()
+      customProviders = [CustomAPIProviderInstance(configuration: legacy)]
+    }
 
     if qwen.baseURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
       qwen.baseURL = APIProviderKind.qwen.defaultBaseURL
@@ -390,27 +505,46 @@ public struct APIProviderSettings: Codable, Equatable, Sendable {
     }
   }
 
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(google, forKey: .google)
+    try container.encode(openAI, forKey: .openAI)
+    try container.encode(anthropic, forKey: .anthropic)
+    try container.encode(qwen, forKey: .qwen)
+    try container.encode(openRouter, forKey: .openRouter)
+    // Downgrade: an older build decodes only `custom`, so it still sees one
+    // custom provider (the first instance).
+    try container.encode(custom, forKey: .custom)
+    try container.encode(customProviders, forKey: .customProviders)
+  }
+
   public var availablePolishingProviders: [AvailableAPIProvider] {
     var result: [AvailableAPIProvider] = []
-    for kind in APIProviderKind.polishingUICases {
+    for kind in APIProviderKind.polishingUICases where kind != .custom {
       let config = configuration(for: kind)
       guard config.hasAPIKey else { continue }
       let model = config.textModel.trimmingCharacters(in: .whitespacesAndNewlines)
       guard !model.isEmpty else { continue }
-      if kind == .custom || kind == .qwen {
-        // Qwen needs its base URL; custom always needs a base URL.
-        let base = config.baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        if kind == .custom, base.isEmpty { continue }
-      }
-      let label: String
-      if kind == .custom {
-        let name = config.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        label = name.isEmpty ? "Custom" : name
-      } else {
-        label = kind.displayName
-      }
-      if !result.contains(where: { $0.kind == kind || $0.displayName == label }) {
-        result.append(AvailableAPIProvider(kind: kind, displayName: label, modelName: model))
+      result.append(
+        AvailableAPIProvider(kind: kind, displayName: kind.displayName, modelName: model))
+    }
+    for instance in customProviders {
+      let config = instance.configuration
+      guard config.hasAPIKey else { continue }
+      let model = config.textModel.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !model.isEmpty else { continue }
+      let base = config.baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !base.isEmpty else { continue }
+      let entry = AvailableAPIProvider(
+        kind: .custom,
+        displayName: instance.displayName,
+        modelName: model,
+        engineID: instance.engineID
+      )
+      // De-duplicate by engine ID only, so several custom instances appear
+      // side by side even when they share a display name.
+      if !result.contains(where: { $0.engineID == entry.engineID }) {
+        result.append(entry)
       }
     }
     return result
@@ -438,5 +572,161 @@ public struct APIProviderSettings: Codable, Equatable, Sendable {
     case .openRouter: openRouter = configuration
     case .custom: custom = configuration
     }
+  }
+
+  // MARK: - Custom instances (ADR-031)
+
+  public func customInstance(id: String) -> CustomAPIProviderInstance? {
+    customProviders.first(where: { $0.id == id })
+  }
+
+  public func customInstance(engineID: String) -> CustomAPIProviderInstance? {
+    guard let id = CustomAPIProviderInstance.instanceID(forEngineID: engineID) else {
+      return nil
+    }
+    return customInstance(id: id)
+  }
+
+  public func configuration(forCustomInstanceID id: String) -> APIProviderConfiguration? {
+    customInstance(id: id)?.configuration
+  }
+
+  @discardableResult
+  public mutating func setConfiguration(
+    _ configuration: APIProviderConfiguration, forCustomInstanceID id: String
+  ) -> Bool {
+    guard let index = customProviders.firstIndex(where: { $0.id == id }) else { return false }
+    customProviders[index].configuration = configuration
+    return true
+  }
+
+  /// The single resolver from a stored engine ID to (kind, custom instance).
+  /// `APIProviderKind(polishingEngineID:)` stays exact-match; this method
+  /// additionally maps `cloud-custom-<id>` to (`.custom`, id). The resolution
+  /// is structural — the instance may be missing (deleted), in which case
+  /// configuration lookups return nil and availability checks fail.
+  public func resolve(engineID: String) -> ResolvedAPIProvider? {
+    if let kind = APIProviderKind(polishingEngineID: engineID) {
+      if kind == .custom {
+        return ResolvedAPIProvider(
+          kind: .custom,
+          customInstanceID: CustomAPIProviderInstance.legacyInstanceID)
+      }
+      return ResolvedAPIProvider(kind: kind)
+    }
+    if let instanceID = CustomAPIProviderInstance.instanceID(forEngineID: engineID) {
+      return ResolvedAPIProvider(kind: .custom, customInstanceID: instanceID)
+    }
+    return nil
+  }
+
+  public func configuration(forEngineID engineID: String) -> APIProviderConfiguration? {
+    guard let resolved = resolve(engineID: engineID) else { return nil }
+    if resolved.kind == .custom {
+      return resolved.customInstanceID.flatMap { configuration(forCustomInstanceID: $0) }
+    }
+    return configuration(for: resolved.kind)
+  }
+
+  @discardableResult
+  public mutating func setConfiguration(
+    _ configuration: APIProviderConfiguration, forEngineID engineID: String
+  ) -> Bool {
+    guard let resolved = resolve(engineID: engineID) else { return false }
+    if resolved.kind == .custom {
+      guard let id = resolved.customInstanceID else { return false }
+      return setConfiguration(configuration, forCustomInstanceID: id)
+    }
+    setConfiguration(configuration, for: resolved.kind)
+    return true
+  }
+
+  /// Display name for an engine ID: the instance name for custom providers,
+  /// the kind name for built-ins, nil when the engine ID is unknown.
+  public func displayName(forEngineID engineID: String) -> String? {
+    guard let resolved = resolve(engineID: engineID) else { return nil }
+    if resolved.kind == .custom {
+      return resolved.customInstanceID.flatMap { customInstance(id: $0)?.displayName }
+    }
+    return resolved.kind.displayName
+  }
+
+  /// Whether a usage bucket key belongs to the custom instance named
+  /// `displayName`. Buckets are keyed by backend name ("<DisplayName>
+  /// <model>"), so the bucket must start with the display name plus a
+  /// trailing space. When sibling instance names share a prefix ("Custom"
+  /// vs "Custom 2"), a longer sibling name that is also a prefix of the
+  /// bucket wins, so resetting one instance never resets a sibling's
+  /// buckets.
+  public func usageBucketMatchesCustomInstance(bucketKey: String, displayName: String) -> Bool {
+    let bucket = bucketKey.lowercased()
+    let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    guard !name.isEmpty, bucket.hasPrefix(name + " ") else { return false }
+    return !customProviders.contains {
+      let other = $0.displayName.lowercased()
+      return other.count > name.count && bucket.hasPrefix(other + " ")
+    }
+  }
+
+  /// Names are required, trimmed and unique case-insensitively.
+  public func isCustomNameTaken(_ name: String, excludingID: String? = nil) -> Bool {
+    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return true }
+    return customProviders.contains {
+      $0.id != excludingID
+        && $0.displayName.compare(trimmed, options: .caseInsensitive) == .orderedSame
+    }
+  }
+
+  /// Default name for a new instance: localized "Custom N" with the smallest
+  /// free N.
+  public func defaultCustomName(language: UILanguagePreference) -> String {
+    let format = AppText.localized(.customProviderDefaultName, language: language)
+    var index = customProviders.count + 1
+    // ponytail: linear probe; upgrade when custom instance counts grow large.
+    while index < customProviders.count + 1000 {
+      let candidate = String(format: format, index)
+      if !isCustomNameTaken(candidate) { return candidate }
+      index += 1
+    }
+    return String(format: format, customProviders.count + 1)
+  }
+
+  /// Appends a new instance with a fresh UUID id. An empty or taken name
+  /// falls back to the default name, so this always succeeds.
+  @discardableResult
+  public mutating func addCustomProvider(
+    name: String? = nil,
+    language: UILanguagePreference = .english
+  ) -> CustomAPIProviderInstance {
+    let trimmed = (name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    let finalName = (!trimmed.isEmpty && !isCustomNameTaken(trimmed))
+      ? trimmed : defaultCustomName(language: language)
+    let instance = CustomAPIProviderInstance(
+      id: UUID().uuidString,
+      configuration: APIProviderConfiguration(name: finalName)
+    )
+    customProviders.append(instance)
+    return instance
+  }
+
+  /// Removes the instance, returning it so the caller can delete its keychain
+  /// item and repair selections pointing at its engine ID.
+  @discardableResult
+  public mutating func removeCustomProvider(id: String) -> CustomAPIProviderInstance? {
+    guard let index = customProviders.firstIndex(where: { $0.id == id }) else { return nil }
+    return customProviders.remove(at: index)
+  }
+
+  /// Renames the instance. Returns false (and changes nothing) when the name
+  /// is blank or taken case-insensitively.
+  @discardableResult
+  public mutating func renameCustomProvider(id: String, name: String) -> Bool {
+    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty, !isCustomNameTaken(trimmed, excludingID: id),
+      let index = customProviders.firstIndex(where: { $0.id == id })
+    else { return false }
+    customProviders[index].configuration.name = trimmed
+    return true
   }
 }

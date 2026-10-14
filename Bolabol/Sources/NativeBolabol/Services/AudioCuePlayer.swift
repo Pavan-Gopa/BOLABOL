@@ -9,6 +9,9 @@ final class AudioCuePlayer {
     enum Cue {
         case start
         case finish
+        /// ADR-029/Q4d: distinct finish cue when the target language failed
+        /// and the source text was inserted instead.
+        case fallback
 
         var soundName: String {
             switch self {
@@ -16,6 +19,8 @@ final class AudioCuePlayer {
                 "Tink"
             case .finish:
                 "Bottle"
+            case .fallback:
+                "Funk"
             }
         }
 
@@ -25,6 +30,8 @@ final class AudioCuePlayer {
                 Tone(frequencies: [659.25, 987.77], duration: 0.28)
             case .finish:
                 Tone(frequencies: [523.25, 783.99], duration: 0.36)
+            case .fallback:
+                Tone(frequencies: [196.0, 147.0], duration: 0.4)
             }
         }
     }
@@ -128,7 +135,10 @@ final class AudioCuePlayer {
     }
 
     private func cueFileURL(for cue: Cue) throws -> URL {
-        if let url = cueFiles[cue] {
+        // ADR-029: the temp directory can be emptied (or the file removed)
+        // between sessions; a stale cached URL must be recreated, not failed.
+        if let url = cueFiles[cue],
+           FileManager.default.fileExists(atPath: url.path) {
             return url
         }
 

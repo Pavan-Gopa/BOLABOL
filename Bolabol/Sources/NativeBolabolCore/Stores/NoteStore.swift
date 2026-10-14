@@ -44,25 +44,44 @@ public final class NoteStore: ObservableObject {
 
     public static let minimumOrphanAge: TimeInterval = 15 * 60
 
+    /// ADR-030 session ledger. Wired by `live()`; tests may inject a
+    /// temp-file ledger. Never receives transcript text or API keys.
+    public var ledger: SessionLedger?
+
     private let fileManager: FileManager
     private let notesFileURL: URL
     private let isPersistenceEnabled: Bool
     private var isSavingEnabled = false
     private var protectedImportedAudioPaths: Set<String> = []
     private let now: () -> Date
+    private let userDefaults: UserDefaults?
+    /// S11 storage isolation: filesystem-deletion authority recorded at init.
+    /// Persisted stores manage their root; nonpersistent stores only with an
+    /// explicitly supplied nondefault root. Checked at both deletion choke
+    /// points; in-memory note/selection mutation is unaffected.
+    private let canManageAudioFiles: Bool
 
     public init(
         notes: [BolabolNote]? = nil,
         fileManager: FileManager = .default,
         notesFileURL: URL? = nil,
         isPersistenceEnabled: Bool = false,
+        userDefaults: UserDefaults? = nil,
         now: @escaping () -> Date = Date.init
     ) {
         self.fileManager = fileManager
-        self.notesFileURL = notesFileURL ?? Self.defaultNotesFileURL(fileManager: fileManager)
+        let resolvedNotesURL = notesFileURL ?? Self.defaultNotesFileURL(fileManager: fileManager)
+        self.notesFileURL = resolvedNotesURL
         self.isPersistenceEnabled = isPersistenceEnabled
         self.isSavingEnabled = false
         self.now = now
+        self.userDefaults = userDefaults
+        self.canManageAudioFiles = Self.isAudioManagementAuthorized(
+            isPersistenceEnabled: isPersistenceEnabled,
+            explicitNotesURL: notesFileURL,
+            resolvedNotesURL: resolvedNotesURL,
+            fileManager: fileManager
+        )
 
         if let notes = notes {
             self.notes = notes
@@ -93,6 +112,7 @@ public final class NoteStore: ObservableObject {
                         self.selection = container.selection
                         self.protectedImportedAudioPaths = Set(container.protectedImportedAudioPaths)
                         self.loadState = .loaded
+                        self.failPersistedInFlightPhases()
                         self.isSavingEnabled = true
                         NativeBolabolLog.audio.info("NoteStore init: loaded \(container.notes.count) note(s) from \(self.notesFileURL.path, privacy: .public)")
                     } catch {
@@ -251,6 +271,15 @@ public final class NoteStore: ObservableObject {
         )
         notes.insert(note, at: 0)
         selection = note.id
+        ledger?.record(
+            sessionID: note.id.uuidString,
+            event: "note.add",
+            fields: [
+                "kind": "empty",
+                "store": notesFileURL.lastPathComponent,
+                "count": "\(notes.count)",
+            ]
+        )
         return note
     }
 
@@ -264,23 +293,47 @@ public final class NoteStore: ObservableObject {
             return
         }
         let limit = max(0, maxRecordings)
+        // J3: retention never removes work this process actually started.
+        // Persisted phases left over from a previous launch were failed on
+        // load, so only live work in `inFlightNoteIDs` is skipped — not every
+        // persisted `.transcribing`/`.polishing` phase. Deferred excess is
+        // re-enforced when the work finishes.
+        let protectedIDs = inFlightNoteIDs
         let audioNoteIDs = notes.compactMap { note in
             note.audioRecording == nil ? nil : note.id
         }
         guard audioNoteIDs.count > limit else { return }
 
-        let excessNotes = audioNoteIDs.dropFirst(limit)
+        let excessNotes = audioNoteIDs.dropFirst(limit).filter { !protectedIDs.contains($0) }
+        guard !excessNotes.isEmpty else { return }
         NativeBolabolLog.audio.info("enforceAudioArchiveLimit: removing \(excessNotes.count) excess audio note(s) (limit=\(limit), count=\(audioNoteIDs.count))")
 
         // `notes` is the persisted newest-first ordering. Keeping its order
         // makes equal timestamps deterministic and avoids deleting text notes.
-        for noteID in excessNotes {
+        // Retention never removes the newest (index 0) or in-flight recording:
+        // excess is taken from the tail only.
+        let removedIDs = Array(excessNotes)
+        for noteID in removedIDs {
             deleteNote(noteID)
         }
+        ledger?.record(
+            sessionID: "-",
+            event: "retention.enforce",
+            fields: [
+                "store": notesFileURL.lastPathComponent,
+                "limit": "\(limit)",
+                "countBefore": "\(audioNoteIDs.count)",
+                "removed": "\(removedIDs.count)",
+                "countAfter": "\(notes.compactMap { $0.audioRecording == nil ? nil : $0.id }.count)",
+            ]
+        )
     }
 
     private func loadSavedRetentionLimit() -> Int? {
-        let userDefaults = UserDefaults.standard
+        // S11: nil means no ambient saved policy. Default stores stay
+        // deterministic; only live() supplies .standard and custom-root live
+        // callers pass an explicit suite.
+        guard let userDefaults else { return nil }
         guard let data = userDefaults.data(forKey: "general.settings"),
               let settings = try? JSONDecoder().decode(GeneralSettings.self, from: data),
               settings.isAutoArchiveCleanupEnabled else {
@@ -305,6 +358,16 @@ public final class NoteStore: ObservableObject {
         )
         notes.insert(note, at: 0)
         selection = note.id
+        ledger?.record(
+            sessionID: note.id.uuidString,
+            event: "note.add",
+            fields: [
+                "kind": "recorded",
+                "store": notesFileURL.lastPathComponent,
+                "count": "\(notes.count)",
+                "limit": maxRecordingsLimit.map(String.init) ?? "saved",
+            ]
+        )
 
         if let maxRecordingsLimit {
             enforceAudioArchiveLimit(maxRecordings: maxRecordingsLimit)
@@ -318,6 +381,7 @@ public final class NoteStore: ObservableObject {
         for noteID: BolabolNote.ID,
         backendName: String? = nil
     ) {
+        inFlightNoteIDs.insert(noteID)
         updateNote(noteID) { note in
             note.transcriptionStatus = .transcribing(backendName: backendName)
         }
@@ -331,6 +395,8 @@ public final class NoteStore: ObservableObject {
             note.rawText = result.text
             note.transcriptionStatus = .completed(backendName: result.diagnostics.backendName)
         }
+        inFlightNoteIDs.remove(noteID)
+        reenforceArchiveLimitIfNeeded()
     }
 
     public func updateRawText(for noteID: BolabolNote.ID, text: String) {
@@ -364,6 +430,8 @@ public final class NoteStore: ObservableObject {
         updateNote(noteID) { note in
             note.transcriptionStatus = .failed(message: message, backendName: backendName)
         }
+        inFlightNoteIDs.remove(noteID)
+        reenforceArchiveLimitIfNeeded()
     }
 
     public func markPolishingStarted(
@@ -371,6 +439,7 @@ public final class NoteStore: ObservableObject {
         variant: ProcessingVariant,
         backendName: String? = nil
     ) {
+        inFlightNoteIDs.insert(noteID)
         updateNote(noteID) { note in
             note.polishingStatuses[variant] = .polishing(backendName: backendName)
         }
@@ -395,6 +464,8 @@ public final class NoteStore: ObservableObject {
                 backendName: result.diagnostics.backendName
             )
         }
+        inFlightNoteIDs.remove(noteID)
+        reenforceArchiveLimitIfNeeded()
     }
 
     public func markPolishingFailed(
@@ -409,7 +480,21 @@ public final class NoteStore: ObservableObject {
                 backendName: backendName
             )
         }
+        inFlightNoteIDs.remove(noteID)
+        reenforceArchiveLimitIfNeeded()
     }
+
+    /// ADR-029/Q4d: optional verified-output record for the "Not translated"
+    /// badge. Backward-compatible: older notes.json files simply lack it.
+    public func setOutputLanguage(
+        for noteID: BolabolNote.ID,
+        record: NoteOutputLanguage?
+    ) {
+        updateNote(noteID) { note in
+            note.outputLanguage = record
+        }
+    }
+
 
     private func updateNote(
         _ noteID: BolabolNote.ID,
@@ -422,6 +507,44 @@ public final class NoteStore: ObservableObject {
     }
 
     private var retentionSubscription: AnyCancellable?
+    private var lastRetentionPair: (enabled: Bool, limit: Int)?
+
+    /// J3: notes with transcription/polishing started by this process and not
+    /// yet finished or failed. Only these are exempt from the archive cap.
+    /// Never persisted: phases left over on disk from a previous launch are
+    /// failed on load, so a relaunch never exempts stale work.
+    private var inFlightNoteIDs: Set<BolabolNote.ID> = []
+
+    /// Trims excess deferred while protected, now that a transcription or
+    /// polishing pass finished. Only trims while auto cleanup is still
+    /// enabled, using the current saved limit; when the user turns cleanup
+    /// off, later completions delete nothing.
+    private func reenforceArchiveLimitIfNeeded() {
+        guard let savedLimit = loadSavedRetentionLimit() else { return }
+        enforceAudioArchiveLimit(maxRecordings: savedLimit)
+    }
+
+    /// J3: a persisted `.transcribing`/`.polishing` phase means the app quit
+    /// mid-work — nothing resumes it. Fail it on load so the archive cap
+    /// applies instead of exempting it forever.
+    private func failPersistedInFlightPhases() {
+        notes = notes.map { note in
+            var note = note
+            if note.transcriptionStatus.phase == .transcribing {
+                note.transcriptionStatus = .failed(
+                    message: "Interrupted before completion",
+                    backendName: note.transcriptionStatus.backendName
+                )
+            }
+            for (variant, status) in note.polishingStatuses where status.phase == .polishing {
+                note.polishingStatuses[variant] = .failed(
+                    message: "Interrupted before completion",
+                    backendName: status.backendName
+                )
+            }
+            return note
+        }
+    }
 
     public func observeRetentionSettings() {
         retentionSubscription = NotificationCenter.default.publisher(for: .didChangeAudioRetentionSettings)
@@ -429,6 +552,9 @@ public final class NoteStore: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] settings in
                 guard let self else { return }
+                let pair = (settings.isAutoArchiveCleanupEnabled, settings.maxSavedAudioRecordings)
+                if let last = self.lastRetentionPair, last == pair { return }
+                self.lastRetentionPair = pair
                 if settings.isAutoArchiveCleanupEnabled {
                     self.enforceAudioArchiveLimit(maxRecordings: settings.maxSavedAudioRecordings)
                 }
@@ -437,10 +563,23 @@ public final class NoteStore: ObservableObject {
 
     public static let preview: NoteStore = NoteStore(notes: .preview)
 
-    public static func live() -> NoteStore {
+    private static var liveInstances: [String: NoteStore] = [:]
+    private static let liveLock = NSLock()
+
+    public static func live(notesFileURL: URL? = nil, userDefaults: UserDefaults? = nil) -> NoteStore {
         let fileManager = FileManager.default
-        let url = defaultNotesFileURL(fileManager: fileManager)
-        let store = NoteStore(notes: nil, fileManager: fileManager, notesFileURL: url, isPersistenceEnabled: true)
+        let url = (notesFileURL ?? defaultNotesFileURL(fileManager: fileManager)).standardizedFileURL
+        liveLock.lock()
+        if let existing = liveInstances[url.path] {
+            liveLock.unlock()
+            return existing
+        }
+        liveLock.unlock()
+        // S11: default production invocation keeps process-standard policy;
+        // custom-root callers receive only explicitly passed preferences —
+        // never an implicit borrow of .standard.
+        let resolvedDefaults: UserDefaults? = notesFileURL == nil ? (userDefaults ?? .standard) : userDefaults
+        let store = NoteStore(notes: nil, fileManager: fileManager, notesFileURL: url, isPersistenceEnabled: true, userDefaults: resolvedDefaults)
         // One-shot hygiene: drop microphone .caf files no note still points at,
         // executed ONLY when the metadata load fully succeeded.
         if store.loadState == .loaded {
@@ -456,8 +595,31 @@ public final class NoteStore: ObservableObject {
         } else if store.loadState == .freshInstall {
             NativeBolabolLog.audio.info("live() startup hygiene skipped: fresh install (no metadata file).")
         }
+        // S11: ledger lives under the owning store's root so custom-root
+        // stores never append to or rotate the production log. For the
+        // default production URL this resolves to the shipped destination.
+        store.ledger = SessionLedger(
+            fileURL: url.deletingLastPathComponent()
+                .appendingPathComponent("Logs", isDirectory: true)
+                .appendingPathComponent("session-ledger.log", isDirectory: false),
+            fileManager: fileManager
+        )
         store.observeRetentionSettings()
+        liveLock.lock()
+        if let existing = liveInstances[url.path] {
+            liveLock.unlock()
+            return existing
+        }
+        liveInstances[url.path] = store
+        liveLock.unlock()
         return store
+    }
+
+    /// Test-only reset for the process-wide live registry.
+    public static func resetLiveInstancesForTesting() {
+        liveLock.lock()
+        liveInstances.removeAll()
+        liveLock.unlock()
     }
 
     private func saveNotes() {
@@ -472,8 +634,23 @@ public final class NoteStore: ObservableObject {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
             let data = try JSONEncoder().encode(container)
             try data.write(to: notesFileURL, options: .atomic)
+            ledger?.record(
+                sessionID: "-",
+                event: "notes.save",
+                fields: [
+                    "store": notesFileURL.lastPathComponent,
+                    "count": "\(notes.count)",
+                    "bytes": "\(data.count)",
+                    "ok": "true",
+                ]
+            )
         } catch {
             NativeBolabolLog.audio.error("NoteStore saveNotes failed for \(self.notesFileURL.path, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            ledger?.record(
+                sessionID: "-",
+                event: "notes.save",
+                fields: ["store": notesFileURL.lastPathComponent, "ok": "false"]
+            )
         }
     }
 
@@ -496,6 +673,10 @@ public final class NoteStore: ObservableObject {
     private func removeManagedAudioFile(_ recording: AudioRecording?) {
         guard let recording, recording.source == .microphone else { return }
         guard !loadState.isGuarded else { return }
+        // S11: implicit nonpersistent stores never trash audio. Explicit
+        // fixture stores only their own nondefault root. Memory mutation
+        // above (delete/clear/retention) still proceeds.
+        guard canManageAudioFiles else { return }
         let url = canonicalFileURL(recording.fileURL)
         guard isManagedAudioPath(url) else { return }
         let path = url.path
@@ -531,6 +712,39 @@ public final class NoteStore: ObservableObject {
         url.standardizedFileURL.resolvingSymlinksInPath().standardizedFileURL
     }
 
+    /// S11: filesystem-deletion authority. Persisted stores keep current
+    /// cleanup. Nonpersistent stores qualify only with an explicitly supplied
+    /// notes URL whose canonical derived recordings root differs from the
+    /// canonical default root (resolved with the injected FileManager).
+    /// Roots — not filenames — are compared, so another JSON filename in the
+    /// production root or a symlink alias of it grants no authority.
+    private static func isAudioManagementAuthorized(
+        isPersistenceEnabled: Bool,
+        explicitNotesURL: URL?,
+        resolvedNotesURL: URL,
+        fileManager: FileManager
+    ) -> Bool {
+        if isPersistenceEnabled { return true }
+        guard explicitNotesURL != nil else { return false }
+        return canonicalRecordingsRoot(forNotesURL: resolvedNotesURL)
+            != canonicalDefaultRecordingsRoot(fileManager: fileManager)
+    }
+
+    private static func canonicalRecordingsRoot(forNotesURL notesURL: URL) -> String {
+        notesURL.deletingLastPathComponent()
+            .appendingPathComponent("Recordings", isDirectory: true)
+            .standardizedFileURL.resolvingSymlinksInPath().standardizedFileURL.path
+    }
+
+    private static func canonicalDefaultRecordingsRoot(fileManager: FileManager) -> String {
+        let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? fileManager.temporaryDirectory
+        return base
+            .appendingPathComponent("NativeBolabol", isDirectory: true)
+            .appendingPathComponent("Recordings", isDirectory: true)
+            .standardizedFileURL.resolvingSymlinksInPath().standardizedFileURL.path
+    }
+
     @discardableResult
     private func purgeUnreferencedFiles(
         in directory: URL,
@@ -542,6 +756,10 @@ public final class NoteStore: ObservableObject {
             NativeBolabolLog.audio.warning("purgeUnreferencedFiles skipped: NoteStore is in guarded failure state.")
             return 0
         }
+        // S11: without filesystem authority this store must not enumerate
+        // for deletion. Callers (clearAll/purgeOrphanedRecordings) keep
+        // their in-memory behavior and simply trash nothing.
+        guard canManageAudioFiles else { return 0 }
         guard fileManager.fileExists(atPath: directory.path),
               let contents = try? fileManager.contentsOfDirectory(
                 at: directory,

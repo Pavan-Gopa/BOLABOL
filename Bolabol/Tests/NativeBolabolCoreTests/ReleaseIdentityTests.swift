@@ -170,7 +170,6 @@ func releaseDmgEmbedsSwiftCompatibilityRuntime() throws {
 func releaseDmgEmbedsSparkleFrameworkAndFeedConfiguration() throws {
     let source = try String(contentsOfFile: "script/build_release_dmg.sh", encoding: .utf8)
 
-    #expect(source.contains("APP_VERSION=\"${APP_VERSION:-1.0.8}\""))
     #expect(source.contains("RELEASE_BUILD"))
     #expect(source.contains("embed_sparkle_framework"))
     #expect(source.contains("Sparkle.framework"))

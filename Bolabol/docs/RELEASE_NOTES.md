@@ -1,36 +1,22 @@
-# Bolabol 1.0.8
+# Bolabol 1.0.9
 
 Native Apple Silicon release for local and cloud dictation, polishing,
 translation, and signed Sparkle updates.
 
-**Version:** 1.0.8
+**Version:** 1.0.9
 
 ## What's new
 
-- **English output no longer gets Russian words.** Model output cleanup used
-  to replace some English words (for example "really") with Russian ones and
-  could delete ordinary sentences starting with "I will", "I can", "Let me" or
-  "Okay", which made **E** fall back to the source language. Cleanup now only
-  removes explicit model wrappers and never rewrites dictated text.
-- **Reliable HUD target language.** The capsule language (for example **E**)
-  is captured when recording starts and checked before insertion. If the result
-  is still in the wrong language, Bolabol retries, then uses the translation
-  provider, and only then inserts the source-language text with a distinct
-  sound, an amber HUD flash and a "Not translated" badge on the note.
-- **Cloud key failover.** Timeouts, network errors, rate limits and empty
-  replies move to the next enabled API key immediately, for every cloud
-  provider including OpenRouter, within bounded time limits.
-- **Several named custom providers.** Add any number of OpenAI-compatible
-  custom providers in Settings, each with its own name, base URL, keys, model
-  and favourites. They appear by name in polishing, translation, the HUD
-  provider switcher and note detail. An existing Custom provider, its keys and
-  saved selections carry over unchanged.
-- **Recording archive.** The configured FIFO limit keeps working: when a new
-  recording exceeds it, the oldest one moves to Trash and new recordings keep
-  being transcribed. A recording that is still being processed is never
-  removed.
-- A private rotating session log records recording lifecycle metadata (no
-  transcript text, no API keys) to diagnose any future recording loss.
+- **No more crash when the microphone changes.** If the default input device
+  changed or reconnected between recordings (for example a USB audio interface,
+  dock or headset re-appearing under a new device ID), the next hotkey
+  recording crashed Bolabol. Each recording now binds to the current input
+  device and its real hardware format; an input that reports no usable format
+  shows "no input device" instead of crashing.
+
+Includes everything from 1.0.8: English output cleanup fix, reliable HUD
+target language, cloud key failover, named custom providers, FIFO recording
+archive, and the private session log.
 
 ## Existing product surface
 

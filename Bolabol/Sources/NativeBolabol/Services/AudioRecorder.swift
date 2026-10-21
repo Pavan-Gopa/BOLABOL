@@ -42,7 +42,11 @@ final class AudioRecorder: ObservableObject {
     @Published private(set) var inputDeviceStatus: InputDeviceStatus = .unknown
     @Published private(set) var errorMessage: String?
 
-    private let engine = AVAudioEngine()
+    /// Recreated on every `start()`: a long-lived engine keeps the input device and
+    /// hardware format it saw first, so after the default input changes (dock, USB,
+    /// AirPods) `installTap` gets a stale format and AVFAudio raises an ObjC
+    /// exception that Swift cannot catch.
+    private var engine = AVAudioEngine()
     private var textProvider: (AppTextKey) -> String
     private let fileManager: FileManager
     private let recordingsDirectory: URL
@@ -110,8 +114,15 @@ final class AudioRecorder: ObservableObject {
             )
 
             let fileURL = Self.makeRecordingURL(in: recordingsDirectory)
+            removeInputTapIfNeeded()
+            engine.stop()
+            engine = AVAudioEngine()
             let inputNode = engine.inputNode
             let format = inputNode.outputFormat(forBus: 0)
+            guard format.sampleRate > 0, format.channelCount > 0 else {
+                errorMessage = textProvider(.audioInputNoDevice)
+                return
+            }
 
             let monoFormat = AVAudioFormat(
                 commonFormat: .pcmFormatFloat32,
@@ -140,7 +151,6 @@ final class AudioRecorder: ObservableObject {
             frequencyBands = Array(repeating: 0.08, count: 40)
             smoothedFrequencyBands = Array(repeating: 0.08, count: 40)
 
-            removeInputTapIfNeeded()
             inputNode.installTap(
                 onBus: 0,
                 bufferSize: 4096,

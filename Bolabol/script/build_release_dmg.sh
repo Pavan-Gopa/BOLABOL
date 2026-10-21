@@ -7,7 +7,7 @@ DISPLAY_NAME="Bolabol"
 BUNDLE_ID="com.bolabol.app"
 MIN_SYSTEM_VERSION="14.0"
 # Marketing / build versions embedded in Info.plist (override with env).
-APP_VERSION="${APP_VERSION:-1.0.8}"
+APP_VERSION="${APP_VERSION:-1.0.9}"
 APP_BUILD="${APP_BUILD:-$(date +%Y%m%d%H%M)}"
 SU_FEED_URL="${SU_FEED_URL:-https://raw.githubusercontent.com/Pavan-Gopa/BOLABOL/main/Bolabol/appcast.xml}"
 SPARKLE_PUBLIC_ED_KEY="${SPARKLE_PUBLIC_ED_KEY:-}"
